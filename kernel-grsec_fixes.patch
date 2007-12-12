@@ -1,0 +1,271 @@
+audits
+rename
+netlink
+diff -urp a/grsecurity/gracl.c c/grsecurity/gracl.c
+--- a/grsecurity/gracl.c	2007-12-10 23:52:36.040492750 +0100
++++ c/grsecurity/gracl.c	2007-12-11 00:32:38.094611750 +0100
+@@ -329,7 +329,7 @@ to_gr_audit(const __u32 reqmode)
+ 	/* masks off auditable permission flags, then shifts them to create
+ 	   auditing flags, and adds the special case of append auditing if
+ 	   we're requesting write */
+-	return (((reqmode & GR_AUDIT_READ) << 10) | ((reqmode & GR_WRITE) ? GR_AUDIT_APPEND : 0));
++	return (((reqmode & ~GR_AUDITS) << 10) | ((reqmode & GR_WRITE) ? GR_AUDIT_APPEND : 0));
+ }
+ 
+ struct acl_subject_label *
+@@ -519,6 +519,35 @@ lookup_name_entry(const char *name)
+ 	return match;
+ }
+ 
++static struct name_entry *
++lookup_name_entry_create(const char *name)
++{
++	unsigned int len = strlen(name);
++	unsigned int key = full_name_hash(name, len);
++	unsigned int index = key % name_set.n_size;
++	struct name_entry *match;
++
++	match = name_set.n_hash[index];
++
++	while (match && (match->key != key || !gr_streq(match->name, name, match->len, len) ||
++			 !match->deleted))
++		match = match->next;
++
++	if (match && match->deleted)
++		return match;
++
++	match = name_set.n_hash[index];
++
++	while (match && (match->key != key || !gr_streq(match->name, name, match->len, len) ||
++			 match->deleted))
++		match = match->next;
++
++	if (match && !match->deleted)
++		return match;
++	else
++		return NULL;
++}
++
+ static struct inodev_entry *
+ lookup_inodev_entry(const ino_t ino, const dev_t dev)
+ {
+@@ -584,7 +613,7 @@ insert_acl_role_label(struct acl_role_la
+ }
+ 					
+ static int
+-insert_name_entry(char *name, const ino_t inode, const dev_t device)
++insert_name_entry(char *name, const ino_t inode, const dev_t device, __u8 deleted)
+ {
+ 	struct name_entry **curr, *nentry;
+ 	struct inodev_entry *ientry;
+@@ -613,6 +642,7 @@ insert_name_entry(char *name, const ino_
+ 	nentry->inode = inode;
+ 	nentry->device = device;
+ 	nentry->len = len;
++	nentry->deleted = deleted;
+ 
+ 	nentry->prev = NULL;
+ 	curr = &name_set.n_hash[index];
+@@ -975,7 +1005,7 @@ copy_user_objs(struct acl_object_label *
+ 
+ 		insert_acl_obj_label(o_tmp, subj);
+ 		if (!insert_name_entry(o_tmp->filename, o_tmp->inode,
+-				       o_tmp->device))
++				       o_tmp->device, (o_tmp->mode & GR_DELETED) ? 1 : 0))
+ 			return -ENOMEM;
+ 
+ 		ret = copy_user_glob(o_tmp);
+@@ -1270,7 +1300,7 @@ do_copy_user_subj(struct acl_subject_lab
+ 
+ insert:
+ 	if (!insert_name_entry(s_tmp->filename, s_tmp->inode,
+-			       s_tmp->device))
++			       s_tmp->device, (s_tmp->mode & GR_DELETED) ? 1 : 0))
+ 		return ERR_PTR(-ENOMEM);
+ 
+ 	return s_tmp;
+@@ -1969,7 +1999,7 @@ gr_check_create(const struct dentry * ne
+ 
+ 	preempt_disable();
+ 	path = gr_to_filename_rbac(new_dentry, mnt);
+-	match = lookup_name_entry(path);
++	match = lookup_name_entry_create(path);
+ 
+ 	if (!match)
+ 		goto check_parent;
+@@ -2334,7 +2364,7 @@ gr_set_proc_label(const struct dentry *d
+ }
+ 
+ static void
+-do_handle_delete(const ino_t ino, const dev_t dev)
++do_handle_delete(struct inodev_entry *inodev, const ino_t ino, const dev_t dev)
+ {
+ 	struct acl_object_label *matchpo;
+ 	struct acl_subject_label *matchps;
+@@ -2355,18 +2385,23 @@ do_handle_delete(const ino_t ino, const 
+ 			matchps->mode |= GR_DELETED;
+ 	FOR_EACH_ROLE_END(role,i)
+ 
++	inodev->nentry->deleted = 1;
++
+ 	return;
+ }
+ 
+ void
+ gr_handle_delete(const ino_t ino, const dev_t dev)
+ {
++	struct inodev_entry *inodev;
++
+ 	if (unlikely(!(gr_status & GR_READY)))
+ 		return;
+ 
+ 	write_lock(&gr_inode_lock);
+-	if (unlikely((unsigned long)lookup_inodev_entry(ino, dev)))
+-		do_handle_delete(ino, dev);
++	inodev = lookup_inodev_entry(ino, dev);
++	if (inodev != NULL)
++		do_handle_delete(inodev, ino, dev);
+ 	write_unlock(&gr_inode_lock);
+ 
+ 	return;
+@@ -2460,11 +2495,12 @@ update_inodev_entry(const ino_t oldinode
+ 	match = inodev_set.i_hash[index];
+ 
+ 	while (match && (match->nentry->inode != oldinode ||
+-	       match->nentry->device != olddevice))
++	       match->nentry->device != olddevice || !match->nentry->deleted))
+ 		match = match->next;
+ 
+ 	if (match && (match->nentry->inode == oldinode)
+-	    && (match->nentry->device == olddevice)) {
++	    && (match->nentry->device == olddevice) &&
++	    match->nentry->deleted) {
+ 		if (match->prev == NULL) {
+ 			inodev_set.i_hash[index] = match->next;
+ 			if (match->next != NULL)
+@@ -2478,6 +2514,7 @@ update_inodev_entry(const ino_t oldinode
+ 		match->next = NULL;
+ 		match->nentry->inode = newinode;
+ 		match->nentry->device = newdevice;
++		match->nentry->deleted = 0;
+ 
+ 		insert_inodev_entry(match);
+ 	}
+@@ -2546,6 +2583,7 @@ gr_handle_rename(struct inode *old_dir, 
+ 		 struct vfsmount *mnt, const __u8 replace)
+ {
+ 	struct name_entry *matchn;
++	struct inodev_entry *inodev;
+ 
+ 	if (unlikely(!(gr_status & GR_READY)))
+ 		return;
+@@ -2559,17 +2597,17 @@ gr_handle_rename(struct inode *old_dir, 
+ 
+ 	write_lock(&gr_inode_lock);
+ 	if (unlikely(replace && new_dentry->d_inode)) {
+-		if (unlikely(lookup_inodev_entry(new_dentry->d_inode->i_ino,
+-					new_dentry->d_inode->i_sb->s_dev) &&
+-		    (old_dentry->d_inode->i_nlink <= 1)))
+-			do_handle_delete(new_dentry->d_inode->i_ino,
++		inodev = lookup_inodev_entry(new_dentry->d_inode->i_ino,
++					     new_dentry->d_inode->i_sb->s_dev);
++		if (inodev != NULL && (new_dentry->d_inode->i_nlink<= 1))
++			do_handle_delete(inodev, new_dentry->d_inode->i_ino,
+ 					 new_dentry->d_inode->i_sb->s_dev);
+ 	}
+ 
+-	if (unlikely(lookup_inodev_entry(old_dentry->d_inode->i_ino,
+-				old_dentry->d_inode->i_sb->s_dev) &&
+-	    (old_dentry->d_inode->i_nlink <= 1)))
+-		do_handle_delete(old_dentry->d_inode->i_ino,
++	inodev = lookup_inodev_entry(old_dentry->d_inode->i_ino,
++				     old_dentry->d_inode->i_sb->s_dev);
++	if (inodev != NULL && (old_dentry->d_inode->i_nlink <= 1))
++		do_handle_delete(inodev, old_dentry->d_inode->i_ino,
+ 				 old_dentry->d_inode->i_sb->s_dev);
+ 
+ 	if (unlikely((unsigned long)matchn))
+diff -urp a/include/linux/gracl.h c/include/linux/gracl.h
+--- a/include/linux/gracl.h	2007-12-10 23:52:36.116497500 +0100
++++ c/include/linux/gracl.h	2007-12-11 00:31:52.947790250 +0100
+@@ -52,6 +52,7 @@ struct name_entry {
+ 	dev_t device;
+ 	char *name;
+ 	__u16 len;
++	__u8 deleted;
+ 	struct name_entry *prev;
+ 	struct name_entry *next;
+ };
+diff -upr a/grsecurity/gracl_cap.c c/grsecurity/gracl_cap.c
+--- a/grsecurity/gracl_cap.c	2007-12-01 00:54:57.312774500 +0000
++++ c/grsecurity/gracl_cap.c	2007-12-01 01:09:34.923621750 +0000
+@@ -111,3 +111,10 @@ gr_is_capable_nolog(const int cap)
+ 	return 0;
+ }
+ 
++void
++gr_log_cap_x(const int cap)
++{
++	if (gr_acl_is_enabled())
++		gr_log_cap(GR_DONT_AUDIT, GR_CAP_ACL_MSG, current, captab_log[cap]);
++	return;
++}
+diff -upr a/grsecurity/grsec_sock.c c/grsecurity/grsec_sock.c
+--- a/grsecurity/grsec_sock.c	2007-12-01 00:54:57.316774750 +0000
++++ c/grsecurity/grsec_sock.c	2007-12-01 01:09:34.923621750 +0000
+@@ -251,13 +251,24 @@ __u32
+ gr_cap_rtnetlink(void)
+ {
+ #ifdef CONFIG_GRKERNSEC
++	struct acl_subject_label *curracl;
++	__u32 cap_drop = 0, cap_mask = 0;
++
+ 	if (!gr_acl_is_enabled())
+ 		return current->cap_effective;
+-	else if (cap_raised(current->cap_effective, CAP_NET_ADMIN) &&
+-		 gr_task_is_capable(current, CAP_NET_ADMIN))
+-		return current->cap_effective;
+-	else
+-		return 0;
++	else {
++		curracl = current->acl;
++
++		cap_drop = curracl->cap_lower;
++		cap_mask = curracl->cap_mask;
++
++		while ((curracl = curracl->parent_subject)) {
++			cap_drop |= curracl->cap_lower & \
++				    (cap_mask & ~curracl->cap_mask);
++			cap_mask |= curracl->cap_mask;
++		}
++		return (current->cap_effective & ~(cap_drop & cap_mask));
++	}
+ #else
+ 	return current->cap_effective;
+ #endif
+diff -upr a/include/linux/grsecurity.h c/include/linux/grsecurity.h
+--- a/include/linux/grsecurity.h	2007-12-01 00:54:57.224769000 +0000
++++ c/include/linux/grsecurity.h	2007-12-01 01:09:34.923621750 +0000
+@@ -62,6 +62,7 @@ void gr_log_semrm(const uid_t uid, const
+ void gr_log_shmget(const int err, const int shmflg, const size_t size);
+ void gr_log_shmrm(const uid_t uid, const uid_t cuid);
+ void gr_log_textrel(struct vm_area_struct *vma);
++void gr_log_cap_x(const int cap);
+ 
+ int gr_handle_follow_link(const struct inode *parent,
+ 				 const struct inode *inode,
+diff -upr a/security/commoncap.c c/security/commoncap.c
+--- a/security/commoncap.c	2007-12-01 00:54:57.300773750 +0000
++++ c/security/commoncap.c	2007-12-01 01:09:34.923621750 +0000
+@@ -35,8 +35,10 @@ EXPORT_SYMBOL(cap_netlink_send);
+ 
+ int cap_netlink_recv(struct sk_buff *skb, int cap)
+ {
+-	if (!cap_raised(NETLINK_CB(skb).eff_cap, cap))
++	if (!cap_raised(NETLINK_CB(skb).eff_cap, cap)) {
++		gr_log_cap_x(cap);
+ 		return -EPERM;
++	}
+ 	return 0;
+ }
+ 
