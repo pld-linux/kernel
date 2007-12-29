@@ -117,7 +117,7 @@
 %define		_prepatch		%{nil}
 %define		_pre_rc			%{nil}
 %define		_rc			%{nil}
-%define		_rel			1
+%define		_rel			2
 %define		subname			%{?with_pax:-pax}%{?with_grsec_full:-grsecurity}%{?with_xen0:-xen0}%{?with_xenU:-xenU}
 
 %define		_netfilter_snap		20070806
@@ -338,6 +338,11 @@ Patch131:	kernel-TIOCGDEV.patch
 # http://download.filesystems.org/unionfs/unionfs-2.1/unionfs-2.1.4_for_2.6.22.6.diff.gz
 Patch140:	linux-2.6-unionfs-2.1.1.patch
 Patch141:	kernel-unionfs-vserver.patch
+
+
+# Rationale for ocfs2 patches: http://oss.oracle.com/pipermail/ocfs2-users/2007-November/002175.html
+# http://www.kernel.org/pub/linux/kernel/people/mfasheh/ocfs2/backports/
+Patch150:	ocfs2_2.6.22.14_fixes-20071127-1.patch
 
 # aic94xx patch based on http://georgi.unixsol.org/programs/aic94xx_with_included_firmware_2.6.21.diff
 Patch160:	linux-2.6-aic94xx_with_included_firmware.patch
@@ -896,6 +901,7 @@ install %{SOURCE5} Makefile.ppclibs
 # linux-2.6-sk98lin_v10.0.4.3.patch
 %patch60 -p1
 
+
 # hostap enhancements from/for aircrack-ng
 %patch85 -p1
 
@@ -933,6 +939,10 @@ install %{SOURCE5} Makefile.ppclibs
 # unionfs
 %patch140 -p1
 %{?with_vserver:%patch141 -p1}
+
+
+# ocfs2_2.6.22.14_fixes-20071127-1.patch
+%patch150 -p1
 
 # aic94xx linux-2.6-aic94xx_with_included_firmware.patch
 %patch160 -p1
