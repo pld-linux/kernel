@@ -15,6 +15,7 @@
 # - Remove ROUTE target, its a hack and routing by fwmark should be used instead.
 #
 # Conditional build:
+
 %bcond_without	source		# don't build kernel-source package
 %bcond_without	pcmcia		# don't build pcmcia
 %bcond_without	regparm		# if your blob doesn't work try disable this
@@ -24,6 +25,7 @@
 %bcond_with	xen0		# added Xen0 support
 %bcond_with	xenU		# added XenU support
 %bcond_without	reiser4		# support for reiser4 fs (experimental)
+%bcond_with	lustre		# support lustre
 
 %bcond_without	grsecurity	# don't build grsecurity nor pax at all
 %bcond_without	grsec_minimal	# build only minimal subset (proc,link,fifo,shm)
@@ -44,6 +46,7 @@
 %bcond_without	suspend2	# support for Suspend2 (enabled by default)
 
 %bcond_with	vs22		# use vserver 2.2 instead of 2.3 (see comment near patch 102)
+
 
 %{?debug:%define with_verbose 1}
 
@@ -117,7 +120,7 @@
 %define		_prepatch		%{nil}
 %define		_pre_rc			%{nil}
 %define		_rc			%{nil}
-%define		_rel			2
+%define		_rel			2.2
 %define		subname			%{?with_pax:-pax}%{?with_grsec_full:-grsecurity}%{?with_xen0:-xen0}%{?with_xenU:-xenU}
 
 %define		_netfilter_snap		20070806
@@ -201,6 +204,8 @@ Source51:	kernel-grsec_minimal.config
 Source55:	kernel-imq.config
 Source56:	kernel-reiser4.config
 Source57:	kernel-wrr.config
+Source58:	kernel-lustre.config
+
 
 ###
 #	Patches
@@ -372,6 +377,22 @@ Patch400:	linux-2.6-prefetch.patch
 # Probably not needed anymore - it is bconded and disabled now
 Patch500:	linux-2.6.20_i386_regparm_off.patch
 
+# Lustre
+# Patches stolen from http://packages.debian.org/sid/linux-patch-lustre in version 1.6.3
+Patch600:	kernel-lustre_version.patch
+Patch601:	kernel-vfs_races-2.6.20-vanilla.patch
+Patch602:	kernel-i_filter_data.patch
+Patch603:	kernel-jbd-jcberr-2.6.18-vanilla.patch
+Patch604:	kernel-iopen-misc-2.6.20-vanilla.patch
+Patch605:	kernel-export-truncate-2.6.18-vanilla.patch
+Patch606:	kernel-export_symbols-2.6.20-vanilla.patch
+Patch607:	kernel-dev_read_only-2.6.20-vanilla.patch
+Patch608:	kernel-export-2.6.18-vanilla.patch
+Patch609:	kernel-8kstack-2.6.12.patch
+Patch610:	kernel-export-show_task-2.6.18-vanilla.patch
+Patch611:	kernel-sd_iostats-2.6.22.patch
+Patch612:	kernel-LDISKFS_SUPER_MAGIC-2.6.20.patch
+
 Patch1000:	linux-2.6-grsec-minimal.patch
 
 Patch2000:	kernel-small_fixes.patch
@@ -379,6 +400,7 @@ Patch2001:	linux-2.6.21.1-pwc-uncompress.patch
 
 # kill some thousands of warnings
 Patch2500:	linux-2.6-warnings.patch
+
 
 Patch5000:	apparmor-2.6.20.3-v405-fullseries.diff
 Patch5001:	linux-2.6-apparmor-caps.patch
@@ -955,6 +977,23 @@ install %{SOURCE5} Makefile.ppclibs
 %patch500 -p1
 %endif
 
+
+%if %{with lustre}
+%patch600 -p1
+%patch601 -p1
+%patch602 -p1
+%patch603 -p1
+%patch604 -p1
+%patch605 -p1
+%patch606 -p1
+%patch607 -p1
+%patch608 -p1
+%patch609 -p1
+%patch610 -p1
+%patch611 -p1
+%patch612 -p1
+%endif
+
 %patch2500 -p1
 
 # Apparmor
@@ -1238,6 +1277,10 @@ BuildConfig() {
 %if %{with abi}
 	cat %{SOURCE34} >> arch/%{_target_base_arch}/defconfig
 %endif
+%endif
+
+%if %{with lustre}
+	cat %{SOURCE58} >> arch/%{_target_base_arch}/defconfig
 %endif
 
 %{?debug:sed -i "s:# CONFIG_DEBUG_SLAB is not set:CONFIG_DEBUG_SLAB=y:" arch/%{_target_base_arch}/defconfig}
