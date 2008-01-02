@@ -120,7 +120,7 @@
 %define		_prepatch		%{nil}
 %define		_pre_rc			%{nil}
 %define		_rc			%{nil}
-%define		_rel			2.2
+%define		_rel			3
 %define		subname			%{?with_pax:-pax}%{?with_grsec_full:-grsecurity}%{?with_xen0:-xen0}%{?with_xenU:-xenU}
 
 %define		_netfilter_snap		20070806
@@ -490,7 +490,7 @@ BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 # modules will be looked from /lib/modules/%{kernel_release}
 # _localversion is just that without version for "> localversion"
 %define		_localversion %{release}
-%define		kernel_release %{version}-%{_localversion}
+%define		kernel_release %{version}%{subname}-%{_localversion}
 %define		_kernelsrcdir	/usr/src/linux%{subname}-%{version}
 
 %if "%{_target_base_arch}" != "%{_arch}"
@@ -1058,7 +1058,7 @@ patch -p1 -s < kernel-patch-linuxabi-20060404/linuxabi-2.6.17-0.patch
 %endif
 
 # Fix EXTRAVERSION in main Makefile
-sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{_postver}#g' Makefile
+sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{_postver}%{subname}#g' Makefile
 
 # on sparc this line causes CONFIG_INPUT=m (instead of =y), thus breaking build
 sed -i -e '/select INPUT/d' net/bluetooth/hidp/Kconfig
