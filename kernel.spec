@@ -14,6 +14,9 @@
 # - pax hooks for selinux (experimental)
 # - Remove ROUTE target, its a hack and routing by fwmark should be used instead.
 #
+# NOTE:
+# - kernel kvm module build disabled, it is provided by kvm.spec
+#
 # Conditional build:
 
 %bcond_without	source		# don't build kernel-source package
