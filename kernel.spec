@@ -684,7 +684,6 @@ Sterowniki dźwięku OSS (Open Sound System).
 Summary:	Header files for the Linux kernel
 Summary(pl.UTF-8):	Pliki nagłówkowe jądra Linuksa
 Group:		Development/Building
-Provides:	kernel-headers = %{epoch}:%{version}-%{release}
 Provides:	kernel-headers(agpgart) = %{version}
 Provides:	kernel-headers(alsa-drivers)
 Provides:	kernel-headers(bridging) = %{version}
