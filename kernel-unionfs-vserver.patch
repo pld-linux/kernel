@@ -37,61 +37,61 @@ diff -urp a/fs/unionfs/dirhelper.c b/fs/unionfs/dirhelper.c
 diff -urp a/fs/unionfs/inode.c b/fs/unionfs/inode.c
 --- a/fs/unionfs/inode.c	2007-09-20 16:19:41.996647500 +0200
 +++ b/fs/unionfs/inode.c	2007-09-20 16:25:09.241099000 +0200
-@@ -87,7 +87,7 @@
- 			struct dentry *lower_dir_dentry;
- 
- 			lower_dir_dentry = lock_parent(wh_dentry);
+@@ -89,7 +89,7 @@
+ 			lower_dir_dentry = lock_parent_wh(wh_dentry);
+ 			/* see Documentation/filesystems/unionfs/issues.txt */
+ 			lockdep_off();
 -			err = vfs_unlink(lower_dir_dentry->d_inode, wh_dentry);
 +			err = vfs_unlink(lower_dir_dentry->d_inode, wh_dentry, NULL);
+ 			lockdep_on();
  			unlock_dir(lower_dir_dentry);
  
- 			if (err) {
-@@ -329,7 +329,7 @@ static int unionfs_link(struct dentry *o
- 		err = is_robranch_super(new_dentry->d_sb, dbstart(new_dentry));
- 		if (!err)
+@@ -282,7 +282,7 @@
+ 			/* see Documentation/filesystems/unionfs/issues.txt */
+ 			lockdep_off();
  			err = vfs_unlink(lower_dir_dentry->d_inode,
 -					 whiteout_dentry);
 +					 whiteout_dentry, NULL);
+ 			lockdep_on();
+ 		}
  
- 		fsstack_copy_attr_times(dir, lower_dir_dentry->d_inode);
- 		dir->i_nlink = unionfs_get_nlinks(dir);
-@@ -357,7 +357,7 @@ static int unionfs_link(struct dentry *o
- 	lower_dir_dentry = lock_parent(lower_new_dentry);
- 	if (!(err = is_robranch(old_dentry)))
+@@ -315,7 +315,7 @@
+ 		/* see Documentation/filesystems/unionfs/issues.txt */
+ 		lockdep_off();
  		err = vfs_link(lower_old_dentry, lower_dir_dentry->d_inode,
 -			       lower_new_dentry);
 +			       lower_new_dentry, NULL);
+ 		lockdep_on();
+ 	}
  	unlock_dir(lower_dir_dentry);
- 
- docopyup:
-@@ -383,7 +383,7 @@ docopyup:
+@@ -348,7 +348,7 @@
  				/* do vfs_link */
  				err = vfs_link(lower_old_dentry,
  					       lower_dir_dentry->d_inode,
 -					       lower_new_dentry);
 +					       lower_new_dentry, NULL);
+ 				lockdep_on();
  				unlock_dir(lower_dir_dentry);
  				goto check_link;
- 			}
-@@ -480,7 +480,7 @@ static int unionfs_symlink(struct inode 
+@@ -458,7 +458,7 @@
+ 			struct dentry *lower_dir_dentry;
  
- 		if (!(err = is_robranch_super(dentry->d_sb, bstart)))
- 			err = vfs_unlink(lower_dir_dentry->d_inode,
--					 whiteout_dentry);
-+					 whiteout_dentry, NULL);
- 		dput(whiteout_dentry);
+ 			lower_dir_dentry = lock_parent_wh(wh_dentry);
+-			err = vfs_unlink(lower_dir_dentry->d_inode, wh_dentry);
++			err = vfs_unlink(lower_dir_dentry->d_inode, wh_dentry, NULL);
+ 			unlock_dir(lower_dir_dentry);
  
- 		fsstack_copy_attr_times(dir, lower_dir_dentry->d_inode);
-@@ -536,7 +536,7 @@ static int unionfs_symlink(struct inode 
+ 			/*
+@@ -505,7 +505,7 @@
+ 
+ 	mode = S_IALLUGO;
+ 	err = vfs_symlink(lower_parent_dentry->d_inode, lower_dentry,
+-			  symname, mode);
++			  symname, mode, NULL);
+ 	if (!err) {
+ 		err = PTR_ERR(unionfs_interpose(dentry, parent->i_sb, 0));
  		if (!err) {
- 			mode = S_IALLUGO;
- 			err = vfs_symlink(lower_dir_dentry->d_inode,
--					  lower_dentry, symname, mode);
-+					  lower_dentry, symname, mode, NULL);
- 		}
- 		unlock_dir(lower_dir_dentry);
- 
-@@ -680,7 +680,7 @@ static int unionfs_mkdir(struct inode *p
+@@ -629,7 +629,7 @@
  		}
  
  		err = vfs_mkdir(lower_parent_dentry->d_inode, lower_dentry,
@@ -100,24 +100,24 @@ diff -urp a/fs/unionfs/inode.c b/fs/unionfs/inode.c
  
  		unlock_dir(lower_parent_dentry);
  
-@@ -787,7 +787,7 @@ static int unionfs_mknod(struct inode *d
- 		/* found a.wh.foo entry, remove it then do vfs_mkdir */
- 		if (!(err = is_robranch_super(dentry->d_sb, bstart)))
- 			err = vfs_unlink(lower_parent_dentry->d_inode,
--					 whiteout_dentry);
-+					 whiteout_dentry, NULL);
- 		dput(whiteout_dentry);
+@@ -754,7 +754,7 @@
+ 			struct dentry *lower_dir_dentry;
  
- 		unlock_dir(lower_parent_dentry);
-@@ -824,7 +824,7 @@ static int unionfs_mknod(struct inode *d
- 		}
+ 			lower_dir_dentry = lock_parent_wh(wh_dentry);
+-			err = vfs_unlink(lower_dir_dentry->d_inode, wh_dentry);
++			err = vfs_unlink(lower_dir_dentry->d_inode, wh_dentry, NULL);
+ 			unlock_dir(lower_dir_dentry);
  
- 		err = vfs_mknod(lower_parent_dentry->d_inode,
--				lower_dentry, mode, dev);
-+				lower_dentry, mode, dev, NULL);
+ 			/*
+@@ -799,7 +799,7 @@
+ 		goto out;
+ 	}
  
- 		if (err) {
- 			unlock_dir(lower_parent_dentry);
+-	err = vfs_mknod(lower_parent_dentry->d_inode, lower_dentry, mode, dev);
++	err = vfs_mknod(lower_parent_dentry->d_inode, lower_dentry, mode, dev, NULL);
+ 	if (!err) {
+ 		err = PTR_ERR(unionfs_interpose(dentry, parent->i_sb, 0));
+ 		if (!err) {
 diff -urp a/fs/unionfs/rename.c b/fs/unionfs/rename.c
 --- a/fs/unionfs/rename.c	2007-09-20 16:19:42.000647750 +0200
 +++ b/fs/unionfs/rename.c	2007-09-20 16:25:09.249099500 +0200
@@ -181,21 +181,21 @@ diff -urp a/fs/unionfs/sioq.c b/fs/unionfs/sioq.c
 diff -urp a/fs/unionfs/unlink.c b/fs/unionfs/unlink.c
 --- a/fs/unionfs/unlink.c	2007-09-20 16:19:42.004648000 +0200
 +++ b/fs/unionfs/unlink.c	2007-09-20 16:25:09.253099750 +0200
-@@ -40,7 +40,7 @@ static int unionfs_unlink_whiteout(struc
- 	dget(lower_dentry);
- 	err = is_robranch_super(dentry->d_sb, bindex);
- 	if (!err)
+@@ -44,7 +44,7 @@
+ 	if (!err) {
+ 		/* see Documentation/filesystems/unionfs/issues.txt */
+ 		lockdep_off();
 -		err = vfs_unlink(lower_dir_dentry->d_inode, lower_dentry);
 +		err = vfs_unlink(lower_dir_dentry->d_inode, lower_dentry, NULL);
+ 		lockdep_on();
+ 	}
  	/* if vfs_unlink succeeded, update our inode's times */
- 	if (!err)
- 		unionfs_copy_attr_times(dentry->d_inode);
-@@ -127,7 +127,7 @@ static int unionfs_rmdir_first(struct in
- 	dget(lower_dentry);
- 	err = is_robranch(dentry);
- 	if (!err)
+@@ -153,7 +153,7 @@
+ 	if (!err) {
+ 		/* see Documentation/filesystems/unionfs/issues.txt */
+ 		lockdep_off();
 -		err = vfs_rmdir(lower_dir_dentry->d_inode, lower_dentry);
 +		err = vfs_rmdir(lower_dir_dentry->d_inode, lower_dentry, NULL);
+ 		lockdep_on();
+ 	}
  	dput(lower_dentry);
- 
- 	fsstack_copy_attr_times(dir, lower_dir_dentry->d_inode);
