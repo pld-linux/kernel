@@ -1198,6 +1198,15 @@ BuildConfig() {
 	cat %{SOURCE43} >> arch/%{_target_base_arch}/defconfig
 %if %{with vs22}
 	sed -i "s:CONFIG_IPV6=y:CONFIG_IPV6=m:" arch/%{_target_base_arch}/defconfig
+%else
+	# 13:53 < daniel_hozac> arekm: it requires a feature that conflicts with Linux-VServer.
+	# 13:54 < arekm> daniel_hozac: conflicts on which level? compile, usage? previous patch didn't have this problem visible
+	# 13:55 < Bertl> arekm: 2.6.24 will have that fixed, utilizing user namespaces, for 2.6.22, we cannot allow to enable key
+	#		 retention support because of missing virtualization
+	# 13:55 < daniel_hozac> arekm: usage, security wise.
+	# 13:55 < daniel_hozac> arekm: also limits the number of guests you can run to 50.
+	sed -i 's:CONFIG_AFS_FS=m:# CONFIG_AFS_FS is not set:' arch/%{_target_base_arch}/defconfig
+	sed -i 's:CONFIG_AF_RXRPC=m:# CONFIG_AF_RXRPC is not set:' arch/%{_target_base_arch}/defconfig
 %endif
 %endif
 
