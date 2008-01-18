@@ -1,5 +1,5 @@
 #
-# STATUS: 2.6.23 work in progresss
+# STATUS: 2.6.24 work in progresss
 #
 # NOTE:
 # - suspend2 renamed to tuxonice (as project name)
@@ -114,11 +114,11 @@
 %define		_udev_ver		071
 %define		_mkvmlinuz_ver		1.3
 
-%define		_basever		2.6.23
-%define		_postver		.9
+%define		_basever		2.6.24
+%define		_postver		%{nil}
 %define		_prepatch		%{nil}
 %define		_pre_rc			%{nil}
-%define		_rc			%{nil}
+%define		_rc			-rc8
 %define		_rel			0.1
 %define		subname			%{?with_pax:-pax}%{?with_grsec_full:-grsecurity}%{?with_xen0:-xen0}%{?with_xenU:-xenU}
 
@@ -155,9 +155,9 @@ Release:	0.%{_pre_rc}.%{_rel}
 Epoch:		3
 License:	GPL v2
 Group:		Base/Kernel
-#Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_rc}.tar.bz2
-Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{_basever}%{_rc}.tar.bz2
-# Source0-md5:	2cc2fd4d521dc5d7cfce0d8a9d1b3472
+Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_rc}.tar.bz2
+# Source0-md5:	826448e381fa1fcbd53affcff6127482
+#Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{_basever}%{_rc}.tar.bz2
 %if "%{_prepatch}" != "%{nil}"
 Source90:	http://www.kernel.org/pub/linux/kernel/v2.6/testing/patch-%{_prepatch}-%{_pre_rc}.bz2
 # Source90-md5:	b78873f8a3aff5bdc719fc7fb4c66a9b
@@ -303,7 +303,7 @@ Patch72:	kernel-2.6-ueagle-atm-freezer.patch
 # http://patches.aircrack-ng.org/hostap-kernel-2.6.18.patch
 Patch85:	hostap-kernel-2.6.18.patch
 
-# based on http://vserver.13thfloor.at/Experimental/patch-2.6.22.9-vs2.3.0.26.diff
+# based on http://vserver.13thfloor.at/Experimental/patch-2.6.24-rc7-vs2.2.0.5.0.7-pre.diff
 Patch100:	linux-2.6-vs2.3.patch
 Patch101:	linux-2.6-vs2.1-suspend2.patch
 # based on http://vserver.13thfloor.at/Experimental/patch-2.6.22.2-vs2.2.0.3.diff
@@ -873,7 +873,8 @@ install -m 755 %{SOURCE6} .
 %patch56 -p1
 
 %ifarch %{ix86} %{x8664} ia64
-%patch57 -p1
+# FIXME!!! 2.6.24
+# %patch57 -p1
 %endif
 
 %patch58 -p1
@@ -919,7 +920,8 @@ install -m 755 %{SOURCE6} .
 %patch500 -p1
 %endif
 
-%patch2500 -p1
+# FIXME !!! 2.6.24
+# %patch2500 -p1
 
 # Apparmor
 %patch5000 -p1
