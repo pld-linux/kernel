@@ -123,7 +123,7 @@
 %define		_prepatch		%{nil}
 %define		_pre_rc			%{nil}
 %define		_rc			%{nil}
-%define		_rel			3
+%define		_rel			4
 %define		subname			%{?with_pax:-pax}%{?with_grsec_full:-grsecurity}%{?with_xen0:-xen0}%{?with_xenU:-xenU}
 
 %define		_netfilter_snap		20070806
@@ -252,9 +252,6 @@ Patch21:	kernel-pom-ng-time.patch
 Patch22:	kernel-pom-ng-rsh.patch
 Patch23:	kernel-pom-ng-rpc.patch
 
-# http://people.linux-vserver.org/~dhozac/p/k/delta-nsproxy-fix01.diff
-Patch36:	kernel-nsproxy-fix.patch
-
 # http://ftp.linux-vserver.org/pub/people/dhozac/p/k/delta-owner-xid-feat02.diff
 Patch37:	kernel-owner-xid.patch
 
@@ -324,6 +321,7 @@ Patch90:	linux-2.6.22-NFS_ALL.dif
 Patch91:	linux-2.6.22-rc5-CITI_NFS4_ALL-1.diff
 
 # based on http://vserver.13thfloor.at/Experimental/patch-2.6.22.9-vs2.3.0.26.diff
+# currently based on http://people.linux-vserver.org/~dhozac/p/k/patch-2.6.22.16-vs2.3.0.29.2.diff
 Patch100:	linux-2.6-vs2.3.patch
 Patch101:	linux-2.6-vs2.1-suspend2.patch
 # based on http://vserver.13thfloor.at/Experimental/patch-2.6.22.2-vs2.2.0.3.diff
@@ -939,8 +937,6 @@ install %{SOURCE5} Makefile.ppclibs
 %patch102 -p1
 %else
 %patch100 -p1
-# kernel-nsproxy-fix.patch
-%patch36 -p1
 %endif
 %if %{with suspend2}
 #ifarch %{ix86} %{x8664} ia64
