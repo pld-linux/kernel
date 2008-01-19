@@ -434,7 +434,7 @@ Requires(post):	module-init-tools >= 0.9.9
 Requires:	coreutils
 Requires:	geninitrd >= 2.57
 Requires:	module-init-tools >= 0.9.9
-Provides:	kernel%{subname}(netfilter) = %{netfilter_snap}
+Provides:	%{name}(netfilter) = %{netfilter_snap}
 %if %{with xen0} || %{with xenU}
 Provides:	kernel(xen) = %{_xen_version}
 %endif
@@ -471,6 +471,7 @@ BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 
 # No ELF objects there to strip (skips processing 27k files)
 %define		_noautostrip	.*%{_kernelsrcdir}/.*
+%define		_noautochrpath	.*%{_kernelsrcdir}/.*
 
 %ifarch ia64
 %define		initrd_dir	/boot/efi
@@ -670,7 +671,7 @@ Sterowniki dźwięku OSS (Open Sound System).
 Summary:	Header files for the Linux kernel
 Summary(pl.UTF-8):	Pliki nagłówkowe jądra Linuksa
 Group:		Development/Building
-Provides:	kernel%{subname}-headers(netfilter) = %{netfilter_snap}
+Provides:	%{name}-headers(netfilter) = %{netfilter_snap}
 Autoreqprov:	no
 
 %description headers
@@ -1249,8 +1250,9 @@ BuildConfig() {
 	cat %{SOURCE47} >> arch/%{_target_base_arch}/defconfig
 %endif
 
-	# fbsplash && bootsplash
+	# fbsplash
 	echo "CONFIG_FB_SPLASH=y" >> arch/%{_target_base_arch}/defconfig
+	# bootsplash
 	echo "CONFIG_BOOTSPLASH=y" >> arch/%{_target_base_arch}/defconfig
 
 %if %{with nfsroot}
