@@ -428,32 +428,32 @@ your system. It contains few device drivers for specific hardware.
 Most hardware is instead supported by modules loaded after booting.
 
 %description -l de.UTF-8
-Das Kernel-Paket enth??lt den Linux-Kernel (vmlinuz), den Kern des
-Linux-Betriebssystems. Der Kernel ist f??r grundliegende
+Das Kernel-Paket enthält den Linux-Kernel (vmlinuz), den Kern des
+Linux-Betriebssystems. Der Kernel ist für grundliegende
 Systemfunktionen verantwortlich: Speicherreservierung,
-Proze??-Management, Ger??te Ein- und Ausgaben, usw.
+Prozeß-Management, Geräte Ein- und Ausgaben, usw.
 
 %description -l fr.UTF-8
 Le package kernel contient le kernel linux (vmlinuz), la partie
-centrale d'un syst??me d'exploitation Linux. Le noyau traite les
-fonctions basiques d'un syst??me d'exploitation: allocation m??moire,
-allocation de process, entr??e/sortie de peripheriques, etc.
+centrale d'un système d'exploitation Linux. Le noyau traite les
+fonctions basiques d'un système d'exploitation: allocation mémoire,
+allocation de process, entrée/sortie de peripheriques, etc.
 
 %description -l pl.UTF-8
-Pakiet zawiera j??dro Linuksa niezb??dne do prawid??owego dzia??ania
-Twojego komputera. Zawiera w sobie sterowniki do sprz??tu znajduj??cego
-si?? w komputerze, takiego jak sterowniki dysk??w itp.
+Pakiet zawiera jądro Linuksa niezbędne do prawidłowego działania
+Twojego komputera. Zawiera w sobie sterowniki do sprzętu znajdującego
+się w komputerze, takiego jak sterowniki dysków itp.
 
 %package vmlinux
 Summary:	vmlinux - uncompressed kernel image
-Summary(pl.UTF-8):	vmlinux - rozpakowany obraz j??dra
+Summary(pl.UTF-8):	vmlinux - rozpakowany obraz jądra
 Group:		Base/Kernel
 
 %description vmlinux
 vmlinux - uncompressed kernel image.
 
 %description vmlinux -l pl.UTF-8
-vmlinux - rozpakowany obraz j??dra.
+vmlinux - rozpakowany obraz jądra.
 
 %package drm
 Summary:	DRM kernel modules
@@ -472,7 +472,7 @@ Sterowniki DRM (%{drm_xfree_version}).
 
 %package pcmcia
 Summary:	PCMCIA modules
-Summary(pl.UTF-8):	Modu??y PCMCIA
+Summary(pl.UTF-8):	Moduły PCMCIA
 Group:		Base/Kernel
 Requires(postun):	%{name}-up = %{epoch}:%{version}-%{release}
 Requires:	%{name}-up = %{epoch}:%{version}-%{release}
@@ -486,11 +486,11 @@ Autoreqprov:	no
 PCMCIA modules (%{pcmcia_version}).
 
 %description pcmcia -l pl.UTF-8
-Modu??y PCMCIA (%{pcmcia_version}).
+Moduły PCMCIA (%{pcmcia_version}).
 
 %package libs
 Summary:	Libraries for preparing bootable kernel on PowerPCs
-Summary(pl.UTF-8):	Biblioteki do przygotowania bootowalnego j??dra dla PowerPC
+Summary(pl.UTF-8):	Biblioteki do przygotowania bootowalnego jądra dla PowerPC
 Group:		Base/Kernel
 Requires:	%{name}-up = %{epoch}:%{version}-%{release}
 Requires:	mkvmlinuz >= %{_mkvmlinuz_ver}
@@ -501,12 +501,12 @@ Libraries for preparing bootable kernel on PowerPCs. Script called
 mkvmlinuz may be useful for this.
 
 %description libs -l pl.UTF-8
-Biblioteki do przygotowania bootowalnego j??dra dla PowerPC. Skrypt
-mkvmlinuz mo??e by?? do tego przydatny.
+Biblioteki do przygotowania bootowalnego jądra dla PowerPC. Skrypt
+mkvmlinuz może być do tego przydatny.
 
 %package sound-alsa
 Summary:	ALSA kernel modules
-Summary(pl.UTF-8):	Sterowniki d??wi??ku ALSA
+Summary(pl.UTF-8):	Sterowniki dźwięku ALSA
 Group:		Base/Kernel
 Requires(postun):	%{name}-up = %{epoch}:%{version}-%{release}
 Requires:	%{name}-up = %{epoch}:%{version}-%{release}
@@ -516,11 +516,11 @@ Autoreqprov:	no
 ALSA (Advanced Linux Sound Architecture) sound drivers.
 
 %description sound-alsa -l pl.UTF-8
-Sterowniki d??wi??ku ALSA (Advanced Linux Sound Architecture).
+Sterowniki dźwięku ALSA (Advanced Linux Sound Architecture).
 
 %package sound-oss
 Summary:	OSS kernel modules
-Summary(pl.UTF-8):	Sterowniki d??wi??ku OSS
+Summary(pl.UTF-8):	Sterowniki dźwięku OSS
 Group:		Base/Kernel
 Requires(postun):	%{name}-up = %{epoch}:%{version}-%{release}
 Requires:	%{name}-up = %{epoch}:%{version}-%{release}
@@ -530,13 +530,13 @@ Autoreqprov:	no
 OSS (Open Sound System) drivers.
 
 %description sound-oss -l pl.UTF-8
-Sterowniki d??wi??ku OSS (Open Sound System).
+Sterowniki dźwięku OSS (Open Sound System).
 
 %package smp
 Summary:	Kernel version %{version} compiled for SMP machines
-Summary(de.UTF-8):	Kernel version %{version} f??r Multiprozessor-Maschinen
+Summary(de.UTF-8):	Kernel version %{version} für Multiprozessor-Maschinen
 Summary(fr.UTF-8):	Kernel version %{version} compiler pour les machine Multi-Processeur
-Summary(pl.UTF-8):	J??dro Linuksa w wersji %{version} dla maszyn wieloprocesorowych
+Summary(pl.UTF-8):	Jądro Linuksa w wersji %{version} dla maszyn wieloprocesorowych
 Group:		Base/Kernel
 Requires(post):	coreutils
 Requires(post):	geninitrd >= 2.57
@@ -586,31 +586,31 @@ is required only on machines with two or more CPUs, although it should
 work fine on single-CPU boxes.
 
 %description smp -l de.UTF-8
-Dieses Paket enth??lt eine SMP (Multiprozessor)-Version von
-Linux-Kernel %{version}. Es wird f??r Maschinen mit zwei oder mehr
+Dieses Paket enthält eine SMP (Multiprozessor)-Version von
+Linux-Kernel %{version}. Es wird für Maschinen mit zwei oder mehr
 Prozessoren gebraucht, sollte aber auch auf Computern mit nur einer
 CPU laufen.
 
 %description smp -l fr.UTF-8
 Ce package inclu une version SMP du noyau de Linux version {version}.
-Il et n??cessaire seulement pour les machine avec deux processeurs ou
-plus, il peut quand m??me fonctionner pour les syst??me mono-processeur.
+Il et nécessaire seulement pour les machine avec deux processeurs ou
+plus, il peut quand même fonctionner pour les système mono-processeur.
 
 %description smp -l pl.UTF-8
-Pakiet zawiera j??dro SMP Linuksa w wersji %{version}. Jest ono
-wymagane przez komputery zawieraj??ce dwa lub wi??cej procesor??w.
-Powinno r??wnie?? dobrze dzia??a?? na maszynach z jednym procesorem.
+Pakiet zawiera jądro SMP Linuksa w wersji %{version}. Jest ono
+wymagane przez komputery zawierające dwa lub więcej procesorów.
+Powinno również dobrze działać na maszynach z jednym procesorem.
 
 %package smp-vmlinux
 Summary:	vmlinux - uncompressed SMP kernel image
-Summary(pl.UTF-8):	vmlinux - rozpakowany obraz j??dra SMP
+Summary(pl.UTF-8):	vmlinux - rozpakowany obraz jądra SMP
 Group:		Base/Kernel
 
 %description smp-vmlinux
 vmlinux - uncompressed SMP kernel image.
 
 %description smp-vmlinux -l pl.UTF-8
-vmlinux - rozpakowany obraz j??dra SMP.
+vmlinux - rozpakowany obraz jądra SMP.
 
 %package smp-drm
 Summary:	DRM SMP kernel modules
@@ -629,7 +629,7 @@ Sterowniki DRM dla maszyn wieloprocesorowych (%{drm_xfree_version}).
 
 %package smp-pcmcia
 Summary:	PCMCIA modules for SMP kernel
-Summary(pl.UTF-8):	Modu??y PCMCIA dla maszyn SMP
+Summary(pl.UTF-8):	Moduły PCMCIA dla maszyn SMP
 Group:		Base/Kernel
 Requires(postun):	%{name}-smp = %{epoch}:%{version}-%{release}
 Requires:	%{name}-smp = %{epoch}:%{version}-%{release}
@@ -643,11 +643,11 @@ Autoreqprov:	no
 PCMCIA modules for SMP kernel (%{pcmcia_version}).
 
 %description smp-pcmcia -l pl.UTF-8
-Modu??y PCMCIA dla maszyn SMP (%{pcmcia_version}).
+Moduły PCMCIA dla maszyn SMP (%{pcmcia_version}).
 
 %package smp-libs
 Summary:	Libraries for preparing bootable SMP kernel on PowerPCs
-Summary(pl.UTF-8):	Biblioteki do przygotowania bootowalnego j??dra dla wieloprocesorowych PowerPC
+Summary(pl.UTF-8):	Biblioteki do przygotowania bootowalnego jądra dla wieloprocesorowych PowerPC
 Group:		Base/Kernel
 Requires:	%{name}-smp = %{epoch}:%{version}-%{release}
 Requires:	mkvmlinuz >= %{_mkvmlinuz_ver}
@@ -658,12 +658,12 @@ Libraries for preparing bootable SMP kernel on PowerPCs. Script called
 mkvmlinuz may be useful for this.
 
 %description smp-libs -l pl.UTF-8
-Biblioteki do przygotowania bootowalnego j??dra dla wieloprocesorowych
-PowerPC. Skrypt mkvmlinuz mo??e by?? do tego przydatny.
+Biblioteki do przygotowania bootowalnego jądra dla wieloprocesorowych
+PowerPC. Skrypt mkvmlinuz może być do tego przydatny.
 
 %package smp-sound-alsa
 Summary:	ALSA SMP kernel modules
-Summary(pl.UTF-8):	Sterowniki d??wi??ku ALSA dla maszyn wieloprocesorowych
+Summary(pl.UTF-8):	Sterowniki dźwięku ALSA dla maszyn wieloprocesorowych
 Group:		Base/Kernel
 Requires(postun):	%{name}-smp = %{epoch}:%{version}-%{release}
 Requires:	%{name}-smp = %{epoch}:%{version}-%{release}
@@ -673,12 +673,12 @@ Autoreqprov:	no
 ALSA (Advanced Linux Sound Architecture) SMP sound drivers.
 
 %description smp-sound-alsa -l pl.UTF-8
-Sterowniki d??wi??ku ALSA (Advanced Linux Sound Architecture) dla maszyn
+Sterowniki dźwięku ALSA (Advanced Linux Sound Architecture) dla maszyn
 wieloprocesorowych.
 
 %package smp-sound-oss
 Summary:	OSS SMP kernel modules
-Summary(pl.UTF-8):	Sterowniki d??wi??ku OSS dla maszyn wieloprocesorowych
+Summary(pl.UTF-8):	Sterowniki dźwięku OSS dla maszyn wieloprocesorowych
 Group:		Base/Kernel
 Requires(postun):	%{name}-smp = %{epoch}:%{version}-%{release}
 Requires:	%{name}-smp = %{epoch}:%{version}-%{release}
@@ -692,7 +692,7 @@ Sterowniki OSS (Open Sound System) dla maszyn wieloprocesorowych.
 
 %package headers
 Summary:	Header files for the Linux kernel
-Summary(pl.UTF-8):	Pliki nag????wkowe j??dra Linuksa
+Summary(pl.UTF-8):	Pliki nagłówkowe jądra Linuksa
 Group:		Development/Building
 Provides:	kernel-headers(agpgart) = %{version}
 Provides:	kernel-headers(alsa-drivers)
@@ -707,12 +707,12 @@ structures and constants that are needed when rebuilding the kernel or
 building kernel modules.
 
 %description headers -l pl.UTF-8
-Pakiet zawiera pliki nag????wkowe j??dra, niezb??dne do rekompilacji j??dra
-oraz budowania modu????w j??dra.
+Pakiet zawiera pliki nagłówkowe jądra, niezbędne do rekompilacji jądra
+oraz budowania modułów jądra.
 
 %package module-build
 Summary:	Development files for building kernel modules
-Summary(pl.UTF-8):	Pliki s??u????ce do budowania modu????w j??dra
+Summary(pl.UTF-8):	Pliki służące do budowania modułów jądra
 Group:		Development/Building
 Requires:	%{name}-headers = %{epoch}:%{version}-%{release}
 Provides:	kernel-module-build = %{epoch}:%{_basever}
@@ -724,12 +724,12 @@ Development files from kernel source tree needed to build Linux kernel
 modules from external packages.
 
 %description module-build -l pl.UTF-8
-Pliki ze drzewa ??r??de?? j??dra potrzebne do budowania modu????w j??dra
-Linuksa z zewn??trznych pakiet??w.
+Pliki ze drzewa źródeł jądra potrzebne do budowania modułów jądra
+Linuksa z zewnętrznych pakietów.
 
 %package source
 Summary:	Kernel source tree
-Summary(pl.UTF-8):	Kod ??r??d??owy j??dra Linuksa
+Summary(pl.UTF-8):	Kod źródłowy jądra Linuksa
 Group:		Development/Building
 Requires:	%{name}-module-build = %{epoch}:%{version}-%{release}
 Provides:	kernel-source = %{epoch}:%{version}-%{release}
@@ -740,27 +740,27 @@ This is the source code for the Linux kernel. You can build a custom
 kernel that is better tuned to your particular hardware.
 
 %description source -l de.UTF-8
-Das Kernel-Source-Paket enth??lt den source code (C/Assembler-Code) des
+Das Kernel-Source-Paket enthält den source code (C/Assembler-Code) des
 Linux-Kernels. Die Source-Dateien werden gebraucht, um viele
-C-Programme zu compilieren, da sie auf Konstanten zur??ckgreifen, die
-im Kernel-Source definiert sind. Die Source-Dateien k??nnen auch
+C-Programme zu compilieren, da sie auf Konstanten zurückgreifen, die
+im Kernel-Source definiert sind. Die Source-Dateien können auch
 benutzt werden, um einen Kernel zu compilieren, der besser auf Ihre
 Hardware ausgerichtet ist.
 
 %description source -l fr.UTF-8
 Le package pour le kernel-source contient le code source pour le noyau
-linux. Ces sources sont n??cessaires pour compiler la plupart des
-programmes C, car il d??pend de constantes d??finies dans le code
-source. Les sources peuvent ??tre aussi utilis??e pour compiler un noyau
-personnalis?? pour avoir de meilleures performances sur des mat??riels
+linux. Ces sources sont nécessaires pour compiler la plupart des
+programmes C, car il dépend de constantes définies dans le code
+source. Les sources peuvent être aussi utilisée pour compiler un noyau
+personnalisé pour avoir de meilleures performances sur des matériels
 particuliers.
 
 %description source -l pl.UTF-8
-Pakiet zawiera kod ??r??d??owy j??dra systemu.
+Pakiet zawiera kod źródłowy jądra systemu.
 
 %package doc
 Summary:	Kernel documentation
-Summary(pl.UTF-8):	Dokumentacja do j??dra Linuksa
+Summary(pl.UTF-8):	Dokumentacja do jądra Linuksa
 Group:		Documentation
 Provides:	kernel-doc = %{version}
 Autoreqprov:	no
@@ -770,7 +770,7 @@ This is the documentation for the Linux kernel, as found in
 /usr/src/linux/Documentation directory.
 
 %description doc -l pl.UTF-8
-Pakiet zawiera dokumentacj?? do j??dra Linuksa pochodz??c?? z katalogu
+Pakiet zawiera dokumentację do jądra Linuksa pochodzącą z katalogu
 /usr/src/linux/Documentation.
 
 %prep
