@@ -127,13 +127,13 @@
 
 %define		_basever	2.6.16
 %define		_postver	.59
-%define		_rel		1
-%define		_subname	%{?with_pax:-pax}%{?with_grsec_full:-grsecurity}%{?with_xen0:-xen0}%{?with_xenU:-xenU}
+%define		_rel		2
+%define		subname	%{?with_pax:-pax}%{?with_grsec_full:-grsecurity}%{?with_xen0:-xen0}%{?with_xenU:-xenU}
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de.UTF-8):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr.UTF-8):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl.UTF-8):	J??dro Linuksa
-Name:		kernel%{_subname}
+Name:		kernel%{subname}
 Version:	%{_basever}%{_postver}
 Release:	%{_rel}%{?with_ext2compiled:ext2}
 Epoch:		3
@@ -338,7 +338,7 @@ Requires:	coreutils
 Requires:	geninitrd >= 2.57
 Requires:	module-init-tools >= 0.9.9
 Provides:	%{name}-up = %{epoch}:%{version}-%{release}
-Provides:	kernel(netfilter) = %{netfilter_snap}
+Provides:	kernel%{subname}(netfilter) = %{netfilter_snap}
 %if %{with xen0}
 Provides:	kernel(xen0) = %{xen_version}
 %endif
@@ -388,7 +388,7 @@ BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 # _localversion is just that without version for "> localversion"
 %define		_localversion %{release}%{xen}
 %define		kernel_release %{version}-%{_localversion}
-%define		_kernelsrcdir	/usr/src/linux%{_subname}-%{version}
+%define		_kernelsrcdir	/usr/src/linux%{subname}-%{version}
 
 %if "%{_target_base_arch}" != "%{_arch}"
 	%define	CrossOpts ARCH=%{_target_base_arch} CROSS_COMPILE=%{_target_cpu}-pld-linux-
@@ -527,7 +527,7 @@ Requires(post):	module-init-tools >= 0.9.9
 Requires:	coreutils
 Requires:	geninitrd >= 2.26
 Requires:	module-init-tools >= 0.9.9
-Provides:	kernel(netfilter) = %{netfilter_snap}
+Provides:	kernel%{subname}(netfilter) = %{netfilter_snap}
 %if %{with xen0}
 Provides:	kernel(xen0) = %{xen_version}
 %endif
@@ -1404,14 +1404,13 @@ ln -sf vmlinux-%{kernel_release}smp /boot/vmlinux%{dashxen}
 %depmod %{kernel_release}smp
 
 %post headers
-rm -f %{_prefix}/src/linux%{_subname}
-ln -snf %{basename:%{_kernelsrcdir}} %{_prefix}/src/linux%{_subname}
+ln -snf %{basename:%{_kernelsrcdir}} %{_prefix}/src/linux%{subname}
 
 %postun headers
 if [ "$1" = "0" ]; then
-	if [ -L %{_prefix}/src/linux%{_subname} ]; then
-		if [ "$(readlink %{_prefix}/src/linux%{_subname})" = "linux%{_subname}-%{version}" ]; then
-			rm -f %{_prefix}/src/linux%{_subname}
+	if [ -L %{_prefix}/src/linux%{subname} ]; then
+		if [ "$(readlink %{_prefix}/src/linux%{subname})" = "linux%{subname}-%{version}" ]; then
+			rm -f %{_prefix}/src/linux%{subname}
 		fi
 	fi
 fi
