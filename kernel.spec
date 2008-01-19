@@ -414,11 +414,27 @@ This package contains the Linux kernel that is used to boot and run
 your system. It contains few device drivers for specific hardware.
 Most hardware is instead supported by modules loaded after booting.
 
+Netfilter module dated: %{netfilter_snap}
+%{?with_grsec_full:Grsecurity full support - enabled}
+%{?with_pax:PaX support - enabled}
+%{?with_xen0:Xen 0 - enabled}
+%{?with_xenU:Xen U - enabled}
+%{?with_vesafb_tng:VesaFB New generation - enabled}
+%{?with_nfsroot:Root on NFS - enabled}
+
 %description -l de.UTF-8
 Das Kernel-Paket enthält den Linux-Kernel (vmlinuz), den Kern des
 Linux-Betriebssystems. Der Kernel ist für grundliegende
 Systemfunktionen verantwortlich: Speicherreservierung,
 Prozeß-Management, Geräte Ein- und Ausgaben, usw.
+
+Netfilter module dated: %{netfilter_snap}
+%{?with_grsec_full:Grsecurity full support - enabled}
+%{?with_pax:PaX support - enabled}
+%{?with_xen0:Xen 0 - enabled}
+%{?with_xenU:Xen U - enabled}
+%{?with_vesafb_tng:VesaFB New generation - enabled}
+%{?with_nfsroot:Root on NFS - enabled}
 
 %description -l fr.UTF-8
 Le package kernel contient le kernel linux (vmlinuz), la partie
@@ -426,10 +442,26 @@ centrale d'un système d'exploitation Linux. Le noyau traite les
 fonctions basiques d'un système d'exploitation: allocation mémoire,
 allocation de process, entrée/sortie de peripheriques, etc.
 
+Netfilter module dated: %{netfilter_snap}
+%{?with_grsec_full:Grsecurity full support - enabled}
+%{?with_pax:PaX support - enabled}
+%{?with_xen0:Xen 0 - enabled}
+%{?with_xenU:Xen U - enabled}
+%{?with_vesafb_tng:VesaFB New generation - enabled}
+%{?with_nfsroot:Root on NFS - enabled}
+
 %description -l pl.UTF-8
 Pakiet zawiera jądro Linuksa niezbędne do prawidłowego działania
 Twojego komputera. Zawiera w sobie sterowniki do sprzętu znajdującego
 się w komputerze, takiego jak sterowniki dysków itp.
+
+Netfilter module dated: %{netfilter_snap}
+%{?with_grsec_full:Grsecurity full support - enabled}
+%{?with_pax:PaX support - enabled}
+%{?with_xen0:Xen 0 - enabled}
+%{?with_xenU:Xen U - enabled}
+%{?with_vesafb_tng:VesaFB New generation - enabled}
+%{?with_nfsroot:Root on NFS - enabled}
 
 %package vmlinux
 Summary:	vmlinux - uncompressed kernel image
@@ -559,21 +591,53 @@ This package includes a SMP version of the Linux %{version} kernel. It
 is required only on machines with two or more CPUs, although it should
 work fine on single-CPU boxes.
 
+Netfilter module dated: %{netfilter_snap}
+%{?with_grsec_full:Grsecurity full support - enabled}
+%{?with_pax:PaX support - enabled}
+%{?with_xen0:Xen 0 - enabled}
+%{?with_xenU:Xen U - enabled}
+%{?with_vesafb_tng:VesaFB New generation - enabled}
+%{?with_nfsroot:Root on NFS - enabled}
+
 %description smp -l de.UTF-8
 Dieses Paket enthält eine SMP (Multiprozessor)-Version von
 Linux-Kernel %{version}. Es wird für Maschinen mit zwei oder mehr
 Prozessoren gebraucht, sollte aber auch auf Computern mit nur einer
 CPU laufen.
 
+Netfilter module dated: %{netfilter_snap}
+%{?with_grsec_full:Grsecurity full support - enabled}
+%{?with_pax:PaX support - enabled}
+%{?with_xen0:Xen 0 - enabled}
+%{?with_xenU:Xen U - enabled}
+%{?with_vesafb_tng:VesaFB New generation - enabled}
+%{?with_nfsroot:Root on NFS - enabled}
+
 %description smp -l fr.UTF-8
 Ce package inclu une version SMP du noyau de Linux version {version}.
 Il et nécessaire seulement pour les machine avec deux processeurs ou
 plus, il peut quand même fonctionner pour les système mono-processeur.
 
+Netfilter module dated: %{netfilter_snap}
+%{?with_grsec_full:Grsecurity full support - enabled}
+%{?with_pax:PaX support - enabled}
+%{?with_xen0:Xen 0 - enabled}
+%{?with_xenU:Xen U - enabled}
+%{?with_vesafb_tng:VesaFB New generation - enabled}
+%{?with_nfsroot:Root on NFS - enabled}
+
 %description smp -l pl.UTF-8
 Pakiet zawiera jądro SMP Linuksa w wersji %{version}. Jest ono
 wymagane przez komputery zawierające dwa lub więcej procesorów.
 Powinno również dobrze działać na maszynach z jednym procesorem.
+
+Netfilter module dated: %{netfilter_snap}
+%{?with_grsec_full:Grsecurity full support - enabled}
+%{?with_pax:PaX support - enabled}
+%{?with_xen0:Xen 0 - enabled}
+%{?with_xenU:Xen U - enabled}
+%{?with_vesafb_tng:VesaFB New generation - enabled}
+%{?with_nfsroot:Root on NFS - enabled}
 
 %package smp-vmlinux
 Summary:	vmlinux - uncompressed SMP kernel image
