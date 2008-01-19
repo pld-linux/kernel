@@ -1258,7 +1258,6 @@ touch $RPM_BUILD_ROOT/boot/initrd-%{kernel_release}{,smp}.gz
 rm -rf $RPM_BUILD_ROOT
 
 %preun
-rm -f /lib/modules/%{kernel_release}/modules.*
 if [ -x /sbin/new-kernel-pkg ]; then
 	/sbin/new-kernel-pkg --remove %{kernel_release}
 fi
@@ -1332,7 +1331,6 @@ ln -sf vmlinux-%{kernel_release} /boot/vmlinux%{dashxen}
 %depmod %{kernel_release}
 
 %preun smp
-rm -f /lib/modules/%{kernel_release}smp/modules.*
 if [ -x /sbin/new-kernel-pkg ]; then
 	/sbin/new-kernel-pkg --remove %{kernel_release}smp
 fi
