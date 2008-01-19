@@ -339,7 +339,7 @@ Requires:	coreutils
 Requires:	geninitrd >= 2.57
 Requires:	module-init-tools >= 0.9.9
 Provides:	%{name}-up = %{epoch}:%{version}-%{release}
-Provides:	kernel%{subname}(netfilter) = %{netfilter_snap}
+Provides:	%{name}(netfilter) = %{netfilter_snap}
 %if %{with xen0}
 Provides:	kernel(xen0) = %{xen_version}
 %endif
@@ -560,7 +560,7 @@ Requires(post):	module-init-tools >= 0.9.9
 Requires:	coreutils
 Requires:	geninitrd >= 2.26
 Requires:	module-init-tools >= 0.9.9
-Provides:	kernel%{subname}(netfilter) = %{netfilter_snap}
+Provides:	%{name}(netfilter) = %{netfilter_snap}
 %if %{with xen0}
 Provides:	kernel(xen0) = %{xen_version}
 %endif
@@ -729,7 +729,7 @@ Sterowniki OSS (Open Sound System) dla maszyn wieloprocesorowych.
 Summary:	Header files for the Linux kernel
 Summary(pl.UTF-8):	Pliki nagłówkowe jądra Linuksa
 Group:		Development/Building
-Provides:	kernel-headers(netfilter) = %{netfilter_snap}
+Provides:	%{name}-headers(netfilter) = %{netfilter_snap}
 Autoreqprov:	no
 
 %description headers
@@ -746,6 +746,7 @@ Summary:	Development files for building kernel modules
 Summary(pl.UTF-8):	Pliki służące do budowania modułów jądra
 Group:		Development/Building
 Requires:	%{name}-headers = %{epoch}:%{version}-%{release}
+Conflicts:	rpmbuild(macros) < 1.321
 Autoreqprov:	no
 
 %description module-build
