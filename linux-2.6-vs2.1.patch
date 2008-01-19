@@ -7308,9 +7308,8 @@ diff -NurpP --minimal linux-2.6.16.20/fs/locks.c linux-2.6.16.20-vs2.1.1-rc22/fs
  		lock_get_status(q, fl, ++i, "");
  		move_lock_status(&q, &pos, offset);
  
-diff -NurpP --minimal linux-2.6.16.20/fs/namei.c linux-2.6.16.20-vs2.1.1-rc22/fs/namei.c
---- linux-2.6.16.20/fs/namei.c	2006-04-09 13:49:53 +0200
-+++ linux-2.6.16.20-vs2.1.1-rc22/fs/namei.c	2006-05-21 23:34:46 +0200
+--- linux-2.6.16.59/fs/namei.c~	2008-01-19 19:52:57.000000000 +0200
++++ linux-2.6.16.59/fs/namei.c	2008-01-19 19:55:48.031266357 +0200
 @@ -32,6 +32,10 @@
  #include <linux/file.h>
  #include <linux/fcntl.h>
@@ -7451,13 +7450,12 @@ diff -NurpP --minimal linux-2.6.16.20/fs/namei.c linux-2.6.16.20-vs2.1.1-rc22/fs
  	error = vfs_permission(nd, acc_mode);
  	if (error)
  		return error;
-@@ -1507,7 +1559,8 @@ int may_open(struct nameidata *nd, int a
+@@ -1560,7 +1560,7 @@
  			return -EACCES;
  
  		flag &= ~O_TRUNC;
--	} else if (IS_RDONLY(inode) && (flag & FMODE_WRITE))
-+	} else if ((IS_RDONLY(inode) || MNT_IS_RDONLY(nd->mnt))
-+		&& (flag & FMODE_WRITE))
+-	} else if (IS_RDONLY(inode) && (acc_mode & MAY_WRITE))
++	} else if ((IS_RDONLY(inode) || MNT_IS_RDONLY(nd->mnt)) && (acc_mode & MAY_WRITE))
  		return -EROFS;
  	/*
  	 * An append-only file must be opened in append mode for writing.
