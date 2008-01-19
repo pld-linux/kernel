@@ -116,13 +116,9 @@
 %define		_udev_ver		071
 %define		_mkvmlinuz_ver		1.3
 
-%define		_netfilter_snap		20060504
-%define		_nf_hipac_ver		0.9.1
+%define		netfilter_snap		20060504
 
 %define		_enable_debug_packages			0
-
-%define		pcmcia_version		3.1.22
-%define		drm_xfree_version	4.3.0
 
 %define		squashfs_version	3.1
 %define		suspend_version		2.2.5
@@ -215,30 +211,30 @@ Patch9:		linux-static-dev.patch
 ## submitted
 
 ## base
-Patch10:	pom-ng-IPV4OPTSSTRIP-%{_netfilter_snap}.patch
-Patch11:	pom-ng-connlimit-%{_netfilter_snap}.patch
-Patch12:	pom-ng-expire-%{_netfilter_snap}.patch
-Patch13:	pom-ng-fuzzy-%{_netfilter_snap}.patch
-Patch14:	pom-ng-ipv4options-%{_netfilter_snap}.patch
-Patch15:	pom-ng-nth-%{_netfilter_snap}.patch
-Patch16:	pom-ng-osf-%{_netfilter_snap}.patch
-Patch17:	pom-ng-psd-%{_netfilter_snap}.patch
-Patch18:	pom-ng-quota-%{_netfilter_snap}.patch
-Patch19:	pom-ng-random-%{_netfilter_snap}.patch
-Patch20:	pom-ng-set-%{_netfilter_snap}.patch
-Patch21:	pom-ng-time-%{_netfilter_snap}.patch
-Patch22:	pom-ng-u32-%{_netfilter_snap}.patch
+Patch10:	pom-ng-IPV4OPTSSTRIP-%{netfilter_snap}.patch
+Patch11:	pom-ng-connlimit-%{netfilter_snap}.patch
+Patch12:	pom-ng-expire-%{netfilter_snap}.patch
+Patch13:	pom-ng-fuzzy-%{netfilter_snap}.patch
+Patch14:	pom-ng-ipv4options-%{netfilter_snap}.patch
+Patch15:	pom-ng-nth-%{netfilter_snap}.patch
+Patch16:	pom-ng-osf-%{netfilter_snap}.patch
+Patch17:	pom-ng-psd-%{netfilter_snap}.patch
+Patch18:	pom-ng-quota-%{netfilter_snap}.patch
+Patch19:	pom-ng-random-%{netfilter_snap}.patch
+Patch20:	pom-ng-set-%{netfilter_snap}.patch
+Patch21:	pom-ng-time-%{netfilter_snap}.patch
+Patch22:	pom-ng-u32-%{netfilter_snap}.patch
 
 ## extra
-Patch30:	pom-ng-ACCOUNT-%{_netfilter_snap}.patch
-Patch31:	pom-ng-IPMARK-%{_netfilter_snap}.patch
-Patch32:	pom-ng-ROUTE-%{_netfilter_snap}.patch
-Patch33:	pom-ng-TARPIT-%{_netfilter_snap}.patch
-Patch34:	pom-ng-XOR-%{_netfilter_snap}.patch
-Patch35:	pom-ng-account-%{_netfilter_snap}.patch
+Patch30:	pom-ng-ACCOUNT-%{netfilter_snap}.patch
+Patch31:	pom-ng-IPMARK-%{netfilter_snap}.patch
+Patch32:	pom-ng-ROUTE-%{netfilter_snap}.patch
+Patch33:	pom-ng-TARPIT-%{netfilter_snap}.patch
+Patch34:	pom-ng-XOR-%{netfilter_snap}.patch
+Patch35:	pom-ng-account-%{netfilter_snap}.patch
 Patch36:	ipp2p-0.8.2.patch
-Patch37:	pom-ng-rpc-%{_netfilter_snap}.patch
-Patch38:	pom-ng-unclean-%{_netfilter_snap}.patch
+Patch37:	pom-ng-rpc-%{netfilter_snap}.patch
+Patch38:	pom-ng-unclean-%{netfilter_snap}.patch
 
 ###
 #	End netfilter
@@ -342,20 +338,10 @@ Requires:	coreutils
 Requires:	geninitrd >= 2.57
 Requires:	module-init-tools >= 0.9.9
 Provides:	%{name}-up = %{epoch}:%{version}-%{release}
-Provides:	kernel = %{epoch}:%{version}-%{release}
-Provides:	kernel(netfilter) = %{_netfilter_snap}
-Provides:	kernel(nf-hipac) = %{_nf_hipac_ver}
-Provides:	kernel(realtime-lsm) = 0.1.1
+Provides:	kernel(netfilter) = %{netfilter_snap}
 %if %{with xen0}
 Provides:	kernel(xen0) = %{xen_version}
 %endif
-Provides:	kernel-misc-fuse
-Provides:	kernel-net-hostap = 0.4.4
-Provides:	kernel-net-ieee80211
-Provides:	kernel-net-ipp2p = 1:0.8.0
-Provides:	kernel-net-ipw2100 = 1.1.3
-Provides:	kernel-net-ipw2200 = 1.0.8
-Provides:	module-info
 Obsoletes:	kernel-misc-fuse
 Obsoletes:	kernel-modules
 Obsoletes:	kernel-net-hostap
@@ -461,14 +447,13 @@ Summary(pl.UTF-8):	Sterowniki DRM
 Group:		Base/Kernel
 Requires(postun):	%{name}-up = %{epoch}:%{version}-%{release}
 Requires:	%{name}-up = %{epoch}:%{version}-%{release}
-Provides:	kernel-drm = %{drm_xfree_version}
 Autoreqprov:	no
 
 %description drm
-DRM kernel modules (%{drm_xfree_version}).
+DRM kernel modules.
 
 %description drm -l pl.UTF-8
-Sterowniki DRM (%{drm_xfree_version}).
+Sterowniki DRM.
 
 %package pcmcia
 Summary:	PCMCIA modules
@@ -476,17 +461,15 @@ Summary(pl.UTF-8):	Moduły PCMCIA
 Group:		Base/Kernel
 Requires(postun):	%{name}-up = %{epoch}:%{version}-%{release}
 Requires:	%{name}-up = %{epoch}:%{version}-%{release}
-Provides:	kernel(pcmcia)
-Provides:	kernel-pcmcia = %{pcmcia_version}
 Conflicts:	pcmcia-cs < %{_pcmcia_cs_ver}
 Conflicts:	pcmciautils < %{_pcmciautils_ver}
 Autoreqprov:	no
 
 %description pcmcia
-PCMCIA modules (%{pcmcia_version}).
+PCMCIA modules.
 
 %description pcmcia -l pl.UTF-8
-Moduły PCMCIA (%{pcmcia_version}).
+Moduły PCMCIA.
 
 %package libs
 Summary:	Libraries for preparing bootable kernel on PowerPCs
@@ -544,20 +527,10 @@ Requires(post):	module-init-tools >= 0.9.9
 Requires:	coreutils
 Requires:	geninitrd >= 2.26
 Requires:	module-init-tools >= 0.9.9
-Provides:	kernel = %{epoch}:%{version}-%{release}
-Provides:	kernel(netfilter) = %{_netfilter_snap}
-Provides:	kernel(nf-hipac) = %{_nf_hipac_ver}
-Provides:	kernel(realtime-lsm) = 0.1.1
+Provides:	kernel(netfilter) = %{netfilter_snap}
 %if %{with xen0}
 Provides:	kernel(xen0) = %{xen_version}
 %endif
-Provides:	kernel-smp-misc-fuse
-Provides:	kernel-smp-net-hostap = 0.4.4
-Provides:	kernel-smp-net-ieee80211
-Provides:	kernel-smp-net-ipp2p = 1:0.8.0
-Provides:	kernel-smp-net-ipw2100 = 1.1.3
-Provides:	kernel-smp-net-ipw2200 = 1.0.8
-Provides:	module-info
 Obsoletes:	kernel-smp-misc-fuse
 Obsoletes:	kernel-smp-net-hostap
 Obsoletes:	kernel-smp-net-ieee80211
@@ -618,14 +591,13 @@ Summary(pl.UTF-8):	Sterowniki DRM dla maszyn wieloprocesorowych
 Group:		Base/Kernel
 Requires(postun):	%{name}-smp = %{epoch}:%{version}-%{release}
 Requires:	%{name}-smp = %{epoch}:%{version}-%{release}
-Provides:	kernel-drm = %{drm_xfree_version}
 Autoreqprov:	no
 
 %description smp-drm
-DRM SMP kernel modules (%{drm_xfree_version}).
+DRM SMP kernel modules.
 
 %description smp-drm -l pl.UTF-8
-Sterowniki DRM dla maszyn wieloprocesorowych (%{drm_xfree_version}).
+Sterowniki DRM dla maszyn wieloprocesorowych.
 
 %package smp-pcmcia
 Summary:	PCMCIA modules for SMP kernel
@@ -633,17 +605,15 @@ Summary(pl.UTF-8):	Moduły PCMCIA dla maszyn SMP
 Group:		Base/Kernel
 Requires(postun):	%{name}-smp = %{epoch}:%{version}-%{release}
 Requires:	%{name}-smp = %{epoch}:%{version}-%{release}
-Provides:	kernel(pcmcia)
-Provides:	kernel-pcmcia = %{pcmcia_version}
 Conflicts:	pcmcia-cs < %{_pcmcia_cs_ver}
 Conflicts:	pcmciautils < %{_pcmciautils_ver}
 Autoreqprov:	no
 
 %description smp-pcmcia
-PCMCIA modules for SMP kernel (%{pcmcia_version}).
+PCMCIA modules for SMP kernel.
 
 %description smp-pcmcia -l pl.UTF-8
-Moduły PCMCIA dla maszyn SMP (%{pcmcia_version}).
+Moduły PCMCIA dla maszyn SMP.
 
 %package smp-libs
 Summary:	Libraries for preparing bootable SMP kernel on PowerPCs
@@ -694,11 +664,7 @@ Sterowniki OSS (Open Sound System) dla maszyn wieloprocesorowych.
 Summary:	Header files for the Linux kernel
 Summary(pl.UTF-8):	Pliki nagłówkowe jądra Linuksa
 Group:		Development/Building
-Provides:	kernel-headers(agpgart) = %{version}
-Provides:	kernel-headers(alsa-drivers)
-Provides:	kernel-headers(bridging) = %{version}
-Provides:	kernel-headers(netfilter) = %{_netfilter_snap}
-Provides:	kernel-headers(reiserfs) = %{version}
+Provides:	kernel-headers(netfilter) = %{netfilter_snap}
 Autoreqprov:	no
 
 %description headers
@@ -715,8 +681,6 @@ Summary:	Development files for building kernel modules
 Summary(pl.UTF-8):	Pliki służące do budowania modułów jądra
 Group:		Development/Building
 Requires:	%{name}-headers = %{epoch}:%{version}-%{release}
-Provides:	kernel-module-build = %{epoch}:%{_basever}
-Provides:	kernel-module-build = %{epoch}:%{version}-%{release}
 Autoreqprov:	no
 
 %description module-build
@@ -732,7 +696,6 @@ Summary:	Kernel source tree
 Summary(pl.UTF-8):	Kod źródłowy jądra Linuksa
 Group:		Development/Building
 Requires:	%{name}-module-build = %{epoch}:%{version}-%{release}
-Provides:	kernel-source = %{epoch}:%{version}-%{release}
 Autoreqprov:	no
 
 %description source
@@ -762,7 +725,6 @@ Pakiet zawiera kod źródłowy jądra systemu.
 Summary:	Kernel documentation
 Summary(pl.UTF-8):	Dokumentacja do jądra Linuksa
 Group:		Documentation
-Provides:	kernel-doc = %{version}
 Autoreqprov:	no
 
 %description doc
@@ -935,7 +897,7 @@ sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{_postver}#g' Makefile
 sed -i -e '/select INPUT/d' net/bluetooth/hidp/Kconfig
 
 # cleanup backups after patching
-find . '(' -name '*~' -o -name '*.orig' -o -name '.gitignore' ')' -print0 | xargs -0 -r -l512 rm -f
+find '(' -name '*~' -o -name '*.orig' -o -name '.gitignore' ')' -print0 | xargs -0 -r -l512 rm -f
 
 %build
 TuneUpConfigForIX86 () {
