@@ -15,7 +15,6 @@
 # - pom-ng talk-conntrack-nat -> nf_conntrack ?
 # - nf-hipac ?
 # - pax hooks for selinux (experimental)
-# - Remove ROUTE target, its a hack and routing by fwmark should be used instead.
 #
 # Conditional build:
 %bcond_without	source		# don't build kernel-source package
@@ -207,7 +206,7 @@ Patch10:	kernel-pom-ng-IPV4OPTSSTRIP.patch
 Patch11:	kernel-pom-ng-ipv4options.patch
 Patch12:	kernel-pom-ng-set.patch
 Patch13:	kernel-pom-ng-u32.patch
-Patch14:	kernel-pom-ng-ROUTE.patch
+
 Patch15:	kernel-pom-ng-TARPIT.patch
 Patch16:	kernel-pom-ng-mms-conntrack-nat.patch
 Patch17:	kernel-pom-ng-IPMARK.patch
@@ -292,8 +291,8 @@ Patch102:	linux-2.6-vs2.2.patch
 # Fix verified for that kernel version.
 Patch130:	linux-2.6-forcedeth-WON.patch
 
-# http://download.filesystems.org/unionfs/unionfs-2.1/unionfs-2.1.1_for_2.6.23-rc3.diff.gz
-Patch140:	linux-2.6-unionfs-2.1.1.patch
+# http://download.filesystems.org/unionfs/unionfs-2.x/unionfs-2.2.2_for_2.6.24-rc7.diff.gz
+Patch140:	linux-2.6-unionfs-2.2.2.patch
 Patch141:	kernel-unionfs-vserver.patch
 
 # aic94xx patch based on http://georgi.unixsol.org/programs/aic94xx_with_included_firmware_2.6.21.diff
@@ -744,14 +743,12 @@ install -m 755 %{SOURCE6} .
 # kernel-pom-ng-u32.patch
 %patch13 -p1
 
-# kernel-pom-ng-ROUTE.patch
-%patch14 -p1
-
 # kernel-pom-ng-TARPIT.patch
 %patch15 -p1
 
+# FIXME 2.6.24
 # kernel-pom-ng-mms-conntrack-nat.patch
-%patch16 -p1
+#%patch16 -p1
 
 # kernel-pom-ng-IPMARK.patch
 %patch17 -p1
@@ -759,23 +756,28 @@ install -m 755 %{SOURCE6} .
 # kernel-pom-ng-set.patch
 #patch12 -p1
 
+# FIXME 2.6.24
 # kernel-pom-ng-connlimit.patch
-%patch18 -p1
+#%patch18 -p1
 
 # kernel-pom-ng-geoip.patch
 %patch19 -p1
 
+# FIXME 2.6.24
 # kernel-pom-ng-ipp2p.patch
-%patch20 -p1
+#%patch20 -p1
 
+# FIXME 2.6.24
 # kernel-pom-ng-time.patch
-%patch21 -p1
+#%patch21 -p1
 
+# FIXME 2.6.24 !!!
 # kernel-pom-ng-rsh.patch
-%patch22 -p1
+#%patch22 -p1
 
+# FIXME 2.6.24 !!!
 # kernel-pom-ng-rpc.patch
-%patch23 -p1
+# %patch23 -p1
 
 # kernel-owner-xid.patch
 %patch37 -p1
@@ -866,9 +868,10 @@ install -m 755 %{SOURCE6} .
 # FIXME !!! 2.6.24
 # %patch2500 -p1
 
+# FIXME !!! 2.6.24 (no modular security? crap)
 # Apparmor
-%patch5000 -p1
-%patch5001 -p1
+# %patch5000 -p1
+# %patch5001 -p1
 
 # grsecurity & pax stuff - temporary - work in progress
 #
