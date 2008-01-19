@@ -126,14 +126,12 @@
 %define		_rel			4
 %define		subname			%{?with_pax:-pax}%{?with_grsec_full:-grsecurity}%{?with_xen0:-xen0}%{?with_xenU:-xenU}
 
-%define		_netfilter_snap		20070806
-%define		_nf_hipac_ver		0.9.1
+%define		netfilter_snap		20070806
 
 %define		_enable_debug_packages			0
 %define		no_install_post_strip			1
 %define		no_install_post_chrpath			1
 
-%define		pcmcia_version		3.1.22
 %define		drm_xfree_version	4.3.0
 
 %define		squashfs_version	3.2
@@ -423,8 +421,8 @@ BuildRequires:	binutils >= 3:2.14.90.0.7
 %ifarch sparc sparc64
 BuildRequires:	elftoaout
 %endif
+BuildRequires:	/sbin/depmod
 BuildRequires:	gcc >= 5:3.2
-BuildRequires:	module-init-tools
 # for hostname command
 BuildRequires:	net-tools
 BuildRequires:	perl-base
@@ -436,19 +434,10 @@ Requires(post):	module-init-tools >= 0.9.9
 Requires:	coreutils
 Requires:	geninitrd >= 2.57
 Requires:	module-init-tools >= 0.9.9
-Provides:	kernel(netfilter) = %{_netfilter_snap}
-Provides:	kernel(nf-hipac) = %{_nf_hipac_ver}
-Provides:	kernel(realtime-lsm) = 0.1.1
+Provides:	kernel%{subname}(netfilter) = %{netfilter_snap}
 %if %{with xen0} || %{with xenU}
 Provides:	kernel(xen) = %{_xen_version}
 %endif
-Provides:	kernel-misc-fuse
-Provides:	kernel-net-hostap = 0.4.4
-Provides:	kernel-net-ieee80211
-Provides:	kernel-net-ipp2p = 1:0.8.0
-Provides:	kernel-net-ipw2100 = 1.1.3
-Provides:	kernel-net-ipw2200 = 1.0.8
-Provides:	module-info
 Obsoletes:	kernel-smp
 Obsoletes:	kernel-misc-fuse
 Obsoletes:	kernel-modules
@@ -464,7 +453,9 @@ Conflicts:	oprofile < %{_oprofile_ver}
 Conflicts:	ppp < %{_ppp_ver}
 Conflicts:	procps < %{_procps_ver}
 Conflicts:	quota-tools < %{_quota_tools_ver}
+%if %{with reiserfs4}
 Conflicts:	reiser4progs < %{_reiser4progs_ver}
+%endif
 Conflicts:	reiserfsprogs < %{_reiserfsprogs_ver}
 Conflicts:	udev < %{_udev_ver}
 Conflicts:	util-linux < %{_util_linux_ver}
@@ -527,7 +518,7 @@ This package contains the Linux kernel that is used to boot and run
 your system. It contains few device drivers for specific hardware.
 Most hardware is instead supported by modules loaded after booting.
 
-Netfilter module dated: %{_netfilter_snap}
+Netfilter module dated: %{netfilter_snap}
 %{?with_abi:Linux ABI support - enabled}
 %{?with_grsec_full:Grsecurity full support - enabled}
 %{?with_pax:PaX support - enabled}
@@ -543,7 +534,7 @@ Linux-Betriebssystems. Der Kernel ist für grundliegende
 Systemfunktionen verantwortlich: Speicherreservierung,
 Prozeß-Management, Geräte Ein- und Ausgaben, usw.
 
-Netfilter module dated: %{_netfilter_snap}
+Netfilter module dated: %{netfilter_snap}
 %{?with_abi:Linux ABI support - enabled}
 %{?with_grsec_full:Grsecurity full support - enabled}
 %{?with_pax:PaX support - enabled}
@@ -559,7 +550,7 @@ centrale d'un système d'exploitation Linux. Le noyau traite les
 fonctions basiques d'un système d'exploitation: allocation mémoire,
 allocation de process, entrée/sortie de peripheriques, etc.
 
-Netfilter module dated: %{_netfilter_snap}
+Netfilter module dated: %{netfilter_snap}
 %{?with_abi:Linux ABI support - enabled}
 %{?with_grsec_full:Grsecurity full support - enabled}
 %{?with_pax:PaX support - enabled}
@@ -574,7 +565,7 @@ Pakiet zawiera jądro Linuksa niezbędne do prawidłowego działania
 Twojego komputera. Zawiera w sobie sterowniki do sprzętu znajdującego
 się w komputerze, takiego jak sterowniki dysków itp.
 
-Netfilter module dated: %{_netfilter_snap}
+Netfilter module dated: %{netfilter_snap}
 %{?with_abi:Linux ABI support - enabled}
 %{?with_grsec_full:Grsecurity full support - enabled}
 %{?with_pax:PaX support - enabled}
@@ -602,7 +593,6 @@ Summary(pl.UTF-8):	Sterowniki DRM
 Group:		Base/Kernel
 Requires(postun):	%{name} = %{epoch}:%{version}-%{release}
 Requires:	%{name} = %{epoch}:%{version}-%{release}
-Provides:	kernel-drm = %{drm_xfree_version}
 Obsoletes:	kernel-smp-drm
 Autoreqprov:	no
 
@@ -618,18 +608,16 @@ Summary(pl.UTF-8):	Moduły PCMCIA
 Group:		Base/Kernel
 Requires(postun):	%{name} = %{epoch}:%{version}-%{release}
 Requires:	%{name} = %{epoch}:%{version}-%{release}
-Provides:	kernel(pcmcia)
-Provides:	kernel-pcmcia = %{pcmcia_version}
 Obsoletes:	kernel-smp-pcmcia
 Conflicts:	pcmcia-cs < %{_pcmcia_cs_ver}
 Conflicts:	pcmciautils < %{_pcmciautils_ver}
 Autoreqprov:	no
 
 %description pcmcia
-PCMCIA modules (%{pcmcia_version}).
+PCMCIA modules.
 
 %description pcmcia -l pl.UTF-8
-Moduły PCMCIA (%{pcmcia_version}).
+Moduły PCMCIA.
 
 %package libs
 Summary:	Libraries for preparing bootable kernel on PowerPCs
@@ -682,11 +670,7 @@ Sterowniki dźwięku OSS (Open Sound System).
 Summary:	Header files for the Linux kernel
 Summary(pl.UTF-8):	Pliki nagłówkowe jądra Linuksa
 Group:		Development/Building
-Provides:	kernel-headers(agpgart) = %{version}
-Provides:	kernel-headers(alsa-drivers)
-Provides:	kernel-headers(bridging) = %{version}
-Provides:	kernel-headers(netfilter) = %{_netfilter_snap}
-Provides:	kernel-headers(reiserfs) = %{version}
+Provides:	kernel%{subname}-headers(netfilter) = %{netfilter_snap}
 Autoreqprov:	no
 
 %description headers
@@ -703,8 +687,6 @@ Summary:	Development files for building kernel modules
 Summary(pl.UTF-8):	Pliki służące do budowania modułów jądra
 Group:		Development/Building
 Requires:	%{name}-headers = %{epoch}:%{version}-%{release}
-Provides:	kernel-module-build = %{epoch}:%{_basever}
-Provides:	kernel-module-build = %{epoch}:%{version}-%{release}
 Conflicts:	rpmbuild(macros) < 1.321
 Autoreqprov:	no
 
@@ -721,14 +703,11 @@ Summary:	Kernel source tree
 Summary(pl.UTF-8):	Kod źródłowy jądra Linuksa
 Group:		Development/Building
 Requires:	%{name}-module-build = %{epoch}:%{version}-%{release}
-Provides:	kernel-source = %{epoch}:%{version}-%{release}
 Autoreqprov:	no
 
 %description source
-This is the source code for the Linux kernel. It is required to build
-most C programs as they depend on constants defined in here. You can
-also build a custom kernel that is better tuned to your particular
-hardware.
+This is the source code for the Linux kernel. You can build a custom
+kernel that is better tuned to your particular hardware.
 
 %description source -l de.UTF-8
 Das Kernel-Source-Paket enthält den source code (C/Assembler-Code) des
@@ -753,7 +732,6 @@ Pakiet zawiera kod źródłowy jądra systemu.
 Summary:	Kernel documentation
 Summary(pl.UTF-8):	Dokumentacja do jądra Linuksa
 Group:		Documentation
-Provides:	kernel-doc = %{version}
 Autoreqprov:	no
 
 %description doc
@@ -1065,7 +1043,7 @@ sed -i -e '/select INPUT/d' net/bluetooth/hidp/Kconfig
 sed -i -e 's/^EXTRA_CFLAGS := -Werror/EXTRA_CFLAGS := /' arch/sparc64/kernel/Makefile
 
 # cleanup backups after patching
-find . '(' -name '*~' -o -name '*.orig' -o -name '.gitignore' ')' -print0 | xargs -0 -r -l512 rm -f
+find '(' -name '*~' -o -name '*.orig' -o -name '.gitignore' ')' -print0 | xargs -0 -r -l512 rm -f
 
 %build
 TuneUpConfigForIX86 () {
@@ -1466,7 +1444,6 @@ touch $RPM_BUILD_ROOT/boot/initrd-%{kernel_release}.gz
 rm -rf $RPM_BUILD_ROOT
 
 %preun
-rm -f /lib/modules/%{kernel_release}/modules.*
 if [ -x /sbin/new-kernel-pkg ]; then
 	/sbin/new-kernel-pkg --remove %{kernel_release}
 fi
@@ -1538,7 +1515,6 @@ ln -sf vmlinux-%{kernel_release} /boot/vmlinux
 %depmod %{kernel_release}
 
 %post headers
-rm -f %{_prefix}/src/linux%{subname}
 ln -snf %{basename:%{_kernelsrcdir}} %{_prefix}/src/linux%{subname}
 
 %postun headers
