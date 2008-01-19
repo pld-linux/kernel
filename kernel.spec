@@ -94,26 +94,6 @@
 %define		have_oss	0
 %endif
 
-## Program required by kernel to work.
-%define		_binutils_ver		2.12.1
-%define		_util_linux_ver		2.10o
-%define		_module_init_tool_ver	0.9.10
-%define		_e2fsprogs_ver		1.29
-%define		_jfsutils_ver		1.1.3
-%define		_reiserfsprogs_ver	3.6.3
-%define		_reiser4progs_ver	1.0.0
-%define		_xfsprogs_ver		2.6.0
-%define		_pcmcia_cs_ver		3.1.21
-%define		_pcmciautils_ver	004
-%define		_quota_tools_ver	3.09
-%define		_ppp_ver		1:2.4.0
-%define		_isdn4k_utils_ver	3.1pre1
-%define		_nfs_utils_ver		1.0.5
-%define		_procps_ver		3.2.0
-%define		_oprofile_ver		0.9
-%define		_udev_ver		071
-%define		_mkvmlinuz_ver		1.3
-
 %define		_basever		2.6.24
 %define		_postver		%{nil}
 %define		_prepatch		%{nil}
@@ -122,17 +102,11 @@
 %define		_rel			0.1
 %define		subname			%{?with_pax:-pax}%{?with_grsec_full:-grsecurity}%{?with_xen0:-xen0}%{?with_xenU:-xenU}
 
-%define		netfilter_snap		20070806
-
 %define		_enable_debug_packages			0
-%define		no_install_post_strip			1
-%define		no_install_post_chrpath			1
-
-%define		drm_xfree_version	4.3.0
 
 %define		squashfs_version	3.2
 %define		tuxonice_version	3.0-rc1
-
+%define		netfilter_snap		20070806
 %define		xen_version		3.0.2
 
 Summary:	The Linux kernel (the core of the Linux operating system)
@@ -394,23 +368,23 @@ Obsoletes:	kernel-modules
 Obsoletes:	kernel-net-hostap
 Obsoletes:	kernel-net-ieee80211
 Obsoletes:	kernel-net-ipp2p
-Conflicts:	e2fsprogs < %{_e2fsprogs_ver}
-Conflicts:	isdn4k-utils < %{_isdn4k_utils_ver}
-Conflicts:	jfsutils < %{_jfsutils_ver}
-Conflicts:	module-init-tool < %{_module_init_tool_ver}
-Conflicts:	nfs-utils < %{_nfs_utils_ver}
-Conflicts:	oprofile < %{_oprofile_ver}
-Conflicts:	ppp < %{_ppp_ver}
-Conflicts:	procps < %{_procps_ver}
-Conflicts:	quota-tools < %{_quota_tools_ver}
-%if %{with reiserfs4}
-Conflicts:	reiser4progs < %{_reiser4progs_ver}
-%endif
-Conflicts:	reiserfsprogs < %{_reiserfsprogs_ver}
-Conflicts:	udev < %{_udev_ver}
-Conflicts:	util-linux < %{_util_linux_ver}
 Conflicts:	vserver-packages
-Conflicts:	xfsprogs < %{_xfsprogs_ver}
+Conflicts:	e2fsprogs < 1.29
+Conflicts:	isdn4k-utils < 3.1pre1
+Conflicts:	jfsutils < 1.1.3
+Conflicts:	module-init-tools < 0.9.10
+Conflicts:	nfs-utils < 1.0.5
+Conflicts:	oprofile < 0.9
+Conflicts:	ppp < 1:2.4.0
+Conflicts:	procps < 3.2.0
+Conflicts:	quota-tools < 3.09
+%if %{with reiserfs4}
+Conflicts:	reiser4progs < 1.0.0
+%endif
+Conflicts:	reiserfsprogs < 3.6.3
+Conflicts:	udev < 071
+Conflicts:	util-linux < 2.10o
+Conflicts:	xfsprogs < 2.6.0
 %if %{with xen0} || %{with xenU}
 ExclusiveArch:	%{ix86}
 %else
@@ -554,10 +528,10 @@ Obsoletes:	kernel-smp-drm
 Autoreqprov:	no
 
 %description drm
-DRM kernel modules (%{drm_xfree_version}).
+DRM kernel modules.
 
 %description drm -l pl.UTF-8
-Sterowniki DRM (%{drm_xfree_version}).
+Sterowniki DRM.
 
 %package pcmcia
 Summary:	PCMCIA modules
@@ -581,7 +555,7 @@ Summary:	Libraries for preparing bootable kernel on PowerPCs
 Summary(pl.UTF-8):	Biblioteki do przygotowania bootowalnego jądra dla PowerPC
 Group:		Base/Kernel
 Requires:	%{name} = %{epoch}:%{version}-%{release}
-Requires:	mkvmlinuz >= %{_mkvmlinuz_ver}
+Requires:	mkvmlinuz >= 1.3
 Obsoletes:	kernel-smp-libs
 Autoreqprov:	no
 
