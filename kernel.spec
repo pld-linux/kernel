@@ -275,10 +275,10 @@ Patch72:	kernel-2.6-ueagle-atm-freezer.patch
 # http://patches.aircrack-ng.org/hostap-kernel-2.6.18.patch
 Patch85:	hostap-kernel-2.6.18.patch
 
-# based on http://vserver.13thfloor.at/Experimental/patch-2.6.24-rc7-vs2.2.0.5.0.7-pre.diff
+# there is no 2.3 for 2.6.24 yet
 Patch100:	linux-2.6-vs2.3.patch
 Patch101:	linux-2.6-vs2.1-suspend2.patch
-# based on http://vserver.13thfloor.at/Experimental/patch-2.6.22.2-vs2.2.0.3.diff
+# based on http://vserver.13thfloor.at/Experimental/patch-2.6.24-rc7-vs2.2.0.5.0.7-pre.diff
 Patch102:	linux-2.6-vs2.2.patch
 # note about vserver 2.2 vs 2.3: 2.2 is "stable", 2.3 is "development", currently (2007-09-03)
 # the preferred 2.3 vserver needs CONFIG_IPV6=y config, which break things for some users;
