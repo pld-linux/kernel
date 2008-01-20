@@ -840,7 +840,8 @@ install -m 755 %{SOURCE6} .
 %endif
 %if %{with tuxonice}
 #ifarch %{ix86} %{x8664} ia64
-%patch101 -p1
+# 2.6.24 temporaily disabled to test if still needed
+#%patch101 -p1
 #endif
 %endif
 %endif
