@@ -1,8 +1,9 @@
 #
-# STATUS: 2.6.22.14 ready
+# STATUS: 2.6.22.16 ready
 #
 # TODO:
 # - benchmark NO_HZ & HZ=1000 vs HZ=300 on i686
+# - on ppc -mcpu=440 not supported by ac gcc, add BR
 #
 # FUTURE:
 # - update xen patch for 2.6.21
