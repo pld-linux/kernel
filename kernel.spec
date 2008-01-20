@@ -822,7 +822,8 @@ install -m 755 %{SOURCE6} .
 # %patch57 -p1
 %endif
 
-%patch58 -p1
+# FIXME 2.6.24
+#%patch58 -p1
 
 # linux-2.6-sk98lin_v10.0.4.3.patch
 #patch60 -p1
