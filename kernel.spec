@@ -264,7 +264,7 @@ Patch60:	linux-2.6-sk98lin_v10.0.4.3.patch
 # potrzebuje modyfikacji, ale jest zbyt rano
 
 # Project suspend2 renamed to tuxonice
-# http://www.tuxonice.net/downloads/all/tuxonice-3.0-rc1-for-2.6.23.patch.bz2
+# http://www.tuxonice.net/downloads/all/tuxonice-3.0-rc4-for-2.6.24-rc8.patch.bz2
 Patch69:	linux-2.6-suspend2.patch
 Patch70:	kernel-suspend2-headers.patch
 Patch71:	linux-2.6-suspend2-page.patch
