@@ -1432,7 +1432,6 @@ fi
 
 /lib/modules/%{kernel_release}/kernel/lib
 /lib/modules/%{kernel_release}/kernel/net
-/lib/modules/%{kernel_release}/kernel/security
 %if %{have_sound}
 %dir /lib/modules/%{kernel_release}/kernel/sound
 /lib/modules/%{kernel_release}/kernel/sound/soundcore.*
