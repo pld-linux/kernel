@@ -236,8 +236,9 @@ Patch40:	kernel-layer7.patch
 
 Patch50:	kernel-imq.patch
 
-# based on ftp://ftp.namesys.com/pub/reiser4-for-2.6/2.6.22/reiser4-for-2.6.22-2.patch.gz
-Patch51:	reiser4-for-2.6.22-2.patch
+# previously based on ftp://ftp.namesys.com/pub/reiser4-for-2.6/2.6.22/reiser4-for-2.6.22-2.patch.gz
+# now based on ftp.kernel.org:/pub/linux/kernel/people/akpm/patches/2.6/2.6.24-rc8/2.6.24-rc8-mm1/broken-out/reiser4*
+Patch51:	reiser4-for-2.6.24.patch
 
 # wrr http://www.zz9.dk/patches/wrr-linux-070717-2.6.22.patch.gz
 Patch52:	wrr-linux-070717-2.6.22.patch
