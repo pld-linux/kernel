@@ -77,9 +77,9 @@ diff -urN linux-2.6.16.2/fs/namei.c linux-2.6.16.2-grsec/fs/namei.c
 --- linux-2.6.16.2/fs/namei.c	2006-04-07 18:56:47.000000000 +0200
 +++ linux-2.6.16.2-grsec/fs/namei.c	2006-04-11 18:10:35.961452750 +0200
 @@ -32,6 +32,7 @@
- #include <linux/vs_tag.h>
  #include <linux/vserver/debug.h>
  #include <linux/vs_cowbl.h>
+ #include <linux/vs_context.h>
 +#include <linux/grsecurity.h>
  #include <asm/namei.h>
  #include <asm/uaccess.h>
@@ -180,9 +180,9 @@ diff -urNp linux-2.6.16.2/fs/proc/internal.h linux-2.6.16.2-grsec/fs/proc/intern
 --- linux-2.6.16.2/fs/proc/internal.h	2006-04-07 18:56:47.000000000 +0200
 +++ linux-2.6.16.2-grsec/fs/proc/internal.h	2006-04-11 17:44:40.077707500 +0200
 @@ -36,6 +36,9 @@ extern int proc_tid_stat(struct task_str
- extern int proc_tgid_stat(struct task_struct *, char *);
  extern int proc_pid_status(struct task_struct *, char *);
  extern int proc_pid_statm(struct task_struct *, char *);
+ extern int proc_pid_nsproxy(struct task_struct *, char *);
 +#ifdef CONFIG_GRKERNSEC_PROC_IPADDR
 +extern int proc_pid_ipaddr(struct task_struct*,char*);
 +#endif
@@ -208,9 +208,9 @@ diff -urN linux-2.6.16.2/fs/proc/proc_misc.c linux-2.6.16.2-grsec/fs/proc/proc_m
 +#ifndef CONFIG_GRKERNSEC_PROC_ADD
  		{"cmdline",	cmdline_read_proc},
 +#endif
- 		{"locks",	locks_read_proc},
  		{"execdomains",	execdomains_read_proc},
  		{NULL,}
+ 	};
 @@ -735,6 +735,15 @@ void __init proc_misc_init(void) 
  	for (p = simple_ones; p->name; p++)
  		create_proc_read_entry(p->name, 0, NULL, p->read_proc, NULL);
@@ -228,9 +228,9 @@ diff -urN linux-2.6.16.2/fs/proc/proc_misc.c linux-2.6.16.2-grsec/fs/proc/proc_m
  
  	/* And now for trickier ones */
 @@ -743,7 +752,11 @@
- 	if (entry)
- 		entry->proc_fops = &proc_kmsg_operations;
+ 	}
  #endif
+ 	create_seq_entry("locks", 0, &proc_locks_operations);
 +#ifdef CONFIG_GRKERNSEC_PROC_ADD
 +	create_seq_entry("devices", gr_mode, &proc_devinfo_operations);
 +#else
@@ -242,7 +242,7 @@ diff -urN linux-2.6.16.2/fs/proc/proc_misc.c linux-2.6.16.2-grsec/fs/proc/proc_m
 @@ -707,7 +724,11 @@ void __init proc_misc_init(void)
  	create_seq_entry("stat", 0, &proc_stat_operations);
  	create_seq_entry("interrupts", 0, &proc_interrupts_operations);
- #ifdef CONFIG_SLAB
+ #ifdef CONFIG_SLABINFO
 +#ifdef CONFIG_GRKERNSEC_PROC_ADD
 +	create_seq_entry("slabinfo",S_IWUSR|gr_mode,&proc_slabinfo_operations);
 +#else
@@ -263,20 +263,6 @@ diff -urN linux-2.6.16.2/fs/proc/proc_misc.c linux-2.6.16.2-grsec/fs/proc/proc_m
 diff -urN linux-2.6.16.2/fs/proc/root.c linux-2.6.16.2-grsec/fs/proc/root.c
 --- linux-2.6.16.2/fs/proc/root.c	2006-04-07 18:56:47.000000000 +0200
 +++ linux-2.6.16.2-grsec/fs/proc/root.c	2006-04-11 17:44:40.113709750 +0200
-@@ -53,7 +53,13 @@
- 		return;
- 	}
- 	proc_misc_init();
-+#ifdef CONFIG_GRKERNSEC_PROC_USER
-+	proc_net = proc_mkdir_mode("net", S_IRUSR | S_IXUSR, NULL);
-+#elif defined(CONFIG_GRKERNSEC_PROC_USERGROUP)
-+	proc_net = proc_mkdir_mode("net", S_IRUSR | S_IXUSR | S_IRGRP | S_IXGRP, NULL);
-+#else
- 	proc_net = proc_mkdir("net", NULL);
-+#endif
- 	proc_net_stat = proc_mkdir("net/stat", NULL);
- 
- #ifdef CONFIG_SYSVIPC
 @@ -77,7 +83,15 @@
  #ifdef CONFIG_PROC_DEVICETREE
  	proc_device_tree_init();
@@ -997,9 +983,9 @@ diff -urN linux-2.6.16.2/kernel/exit.c linux-2.6.16.2-grsec/kernel/exit.c
 --- linux-2.6.16.2/kernel/exit.c	2006-04-07 18:56:47.000000000 +0200
 +++ linux-2.6.16.2-grsec/kernel/exit.c	2006-04-11 17:44:40.125710500 +0200
 @@ -36,6 +36,7 @@
+ #include <linux/resource.h>
  #include <linux/blkdev.h>
  #include <linux/task_io_accounting_ops.h>
- #include <linux/freezer.h>
 +#include <linux/grsecurity.h>
  #include <linux/vs_limit.h>
  #include <linux/vs_context.h>
@@ -1187,10 +1173,10 @@ diff -urN linux-2.6.16.2/security/Kconfig linux-2.6.16.2-grsec/security/Kconfig
  config KEYS
  	bool "Enable access key retention support"
  	help
-diff -urN linux-2.6.18/fs/proc/base.c linux-2.6.18-grsec/fs/proc/base.c
---- linux-2.6.18/fs/proc/base.c.orig	2006-11-03 18:27:40.112510768 +0100
-+++ linux-2.6.18/fs/proc/base.c	2006-11-03 18:42:56.408212648 +0100
-@@ -969,7 +969,11 @@ static struct inode *proc_pid_make_inode
+diff -urN linux-2.6.24-rc8/fs/proc/base.c linux-2.6.24-rc8/fs/proc/base.c
+--- linux-2.6.24-rc8/fs/proc/base.c	2008-01-22 00:05:52.571622750 +0100
++++ linux-2.6.24-rc8/fs/proc/base.c	2008-01-22 00:08:58.871265750 +0100
+@@ -1205,7 +1205,11 @@ static struct inode *proc_pid_make_inode
  	if (task_dumpable(task)) {
  		inode->i_uid = task->euid;
  		inode->i_gid = task->egid;
@@ -1202,7 +1188,7 @@ diff -urN linux-2.6.18/fs/proc/base.c linux-2.6.18-grsec/fs/proc/base.c
  	/* procfs is xid tagged */
  	inode->i_tag = (tag_t)vx_task_xid(task);
  	security_task_to_inode(task, inode);
-@@ -985,17 +992,38 @@ static int pid_getattr(struct vfsmount *
+@@ -1222,17 +1226,38 @@ static int pid_getattr(struct vfsmount *
  {
  	struct inode *inode = dentry->d_inode;
  	struct task_struct *task;
@@ -1242,7 +1228,7 @@ diff -urN linux-2.6.18/fs/proc/base.c linux-2.6.18-grsec/fs/proc/base.c
  		}
  	}
  	rcu_read_unlock();
-@@ -1025,9 +1053,18 @@ static int pid_revalidate(struct dentry 
+@@ -1262,9 +1287,18 @@ static int pid_revalidate(struct dentry 
  	struct task_struct *task = get_proc_task(inode);
  	if (task) {
  		if ((inode->i_mode == (S_IFDIR|S_IRUGO|S_IXUGO)) ||
@@ -1261,20 +1247,46 @@ diff -urN linux-2.6.18/fs/proc/base.c linux-2.6.18-grsec/fs/proc/base.c
  		} else {
  			inode->i_uid = 0;
  			inode->i_gid = 0;
-@@ -1791,6 +1833,9 @@ static struct pid_entry tgid_base_stuff[
- #ifdef CONFIG_AUDITSYSCALL
- 	REG("loginuid",   S_IWUSR|S_IRUGO, loginuid),
+@@ -2503,6 +2537,9 @@ int proc_pid_readdir(struct file * filp,
+ {
+ 	unsigned int nr = filp->f_pos - FIRST_PROCESS_ENTRY;
+ 	struct task_struct *reaper = get_proc_task_real(filp->f_path.dentry->d_inode);
++#if defined(CONFIG_GRKERNSEC_PROC_USER) || defined(CONFIG_GRKERNSEC_PROC_USERGROUP)
++	struct task_struct *tmp = current;
++#endif
+ 	struct tgid_iter iter;
+ 	struct pid_namespace *ns;
+ 
+@@ -2524,6 +2561,15 @@ int proc_pid_readdir(struct file * filp,
+ 		filp->f_pos = iter.tgid + TGID_OFFSET;
+ 		if (!vx_proc_task_visible(iter.task))
+ 			continue;
++#if defined(CONFIG_GRKERNSEC_PROC_USER) || defined(CONFIG_GRKERNSEC_PROC_USERGROUP)
++		if (tmp->uid && (iter.task->uid != tmp->uid)
++#ifdef CONFIG_GRKERNSEC_PROC_USERGROUP
++				&& !in_group_p(CONFIG_GRKERNSEC_PROC_GID)
++#endif
++		   )
++			continue;
++#endif
++
+ 		if (proc_pid_fill_cache(filp, dirent, filldir, iter) < 0) {
+ 			put_task_struct(iter.task);
+ 			goto out;
+@@ -2588,6 +2634,9 @@ static const struct pid_entry tid_base_s
+ #ifdef CONFIG_FAULT_INJECTION
+ 	REG("make-it-fail", S_IRUGO|S_IWUSR, fault_inject),
  #endif
 +#ifdef CONFIG_GRKERNSEC_PROC_IPADDR
 +	INF("ipaddr",	  S_IRUSR, pid_ipaddr),
 +#endif
  };
  
- static int proc_tgid_base_readdir(struct file * filp,
-@@ -1893,7 +1938,14 @@ struct dentry *proc_pid_instantiate(stru
+ static int proc_tid_base_readdir(struct file * filp,
+@@ -2622,7 +2671,14 @@ static struct dentry *proc_task_instanti
+ 
  	if (!inode)
  		goto out;
- 
 +#ifdef CONFIG_GRKERNSEC_PROC_USER
 +	inode->i_mode = S_IFDIR|S_IRUSR|S_IXUSR;
 +#elif defined(CONFIG_GRKERNSEC_PROC_USERGROUP)
@@ -1283,33 +1295,22 @@ diff -urN linux-2.6.18/fs/proc/base.c linux-2.6.18-grsec/fs/proc/base.c
 +#else
  	inode->i_mode = S_IFDIR|S_IRUGO|S_IXUGO;
 +#endif
- 	inode->i_op = &proc_tgid_base_inode_operations;
- 	inode->i_fop = &proc_tgid_base_operations;
+ 	inode->i_op = &proc_tid_base_inode_operations;
+ 	inode->i_fop = &proc_tid_base_operations;
  	inode->i_flags|=S_IMMUTABLE;
-@@ -1992,6 +2048,9 @@ int proc_pid_readdir(struct file * filp,
- {
- 	unsigned int nr = filp->f_pos - FIRST_PROCESS_ENTRY;
- 	struct task_struct *reaper = get_proc_task_real(filp->f_path.dentry->d_inode);
-+#if defined(CONFIG_GRKERNSEC_PROC_USER) || defined(CONFIG_GRKERNSEC_PROC_USERGROUP)
-+	struct task_struct *tmp = current;
-+#endif
- 	struct task_struct *task;
- 	int tgid;
+--- linux-2.6.24-rc8/fs/proc/proc_net.c	2008-01-16 05:22:48.000000000 +0100
++++ linux-2.6.24-rc8/fs/proc/proc_net.c	2008-01-21 23:29:18.874525250 +0100
+@@ -110,7 +110,13 @@
  
-@@ -2009,6 +2068,16 @@ int proc_pid_readdir(struct file * filp,
- 	     task;
- 	     put_task_struct(task), task = next_tgid(tgid + 1)) {
- 		tgid = task->pid;
-+
-+#if defined(CONFIG_GRKERNSEC_PROC_USER) || defined(CONFIG_GRKERNSEC_PROC_USERGROUP)
-+		if (tmp->uid && (task->uid != tmp->uid)
-+#ifdef CONFIG_GRKERNSEC_PROC_USERGROUP
-+		        && !in_group_p(CONFIG_GRKERNSEC_PROC_GID)
+ int __init proc_net_init(void)
+ {
++#ifdef CONFIG_GRKERNSEC_PROC_USER
++	shadow_pde = proc_mkdir_mode("net", S_IRUSR | S_IXUSR, NULL);
++#elif defined(CONFIG_GRKERNSEC_PROC_USERGROUP)
++	shadow_pde = proc_mkdir_mode("net", S_IRUSR | S_IXUSR | S_IRGRP | S_IXGRP, NULL);
++#else  
+ 	shadow_pde = proc_mkdir("net", NULL);
 +#endif
-+		)
-+			continue;
-+#endif
-+
- 		filp->f_pos = tgid + TGID_OFFSET;
- 		if (proc_pid_fill_cache(filp, dirent, filldir, task, tgid) < 0) {
- 			put_task_struct(task);
+ 	shadow_pde->shadow_proc = proc_net_shadow;
+ 
+ 	return register_pernet_subsys(&proc_net_ns_ops);
