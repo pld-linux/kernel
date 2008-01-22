@@ -904,7 +904,7 @@ diff -urNp linux-2.6.16.2/ipc/shm.c linux-2.6.16.2-grsec/ipc/shm.c
 +			shm_destroy(ns, shp);
 +		} else
 +			shm_unlock(shp);
-+		mutex_unlock(&shm_ids(ns).mutex);
++		up_write(&shm_ids(ns).rw_mutex);
 +		return;
 +	}
 +#endif
@@ -931,7 +931,7 @@ diff -urNp linux-2.6.16.2/ipc/shm.c linux-2.6.16.2-grsec/ipc/shm.c
  	size = i_size_read(path.dentry->d_inode);
  	shm_unlock(shp);
  
-@@ -1014,3 +1059,27 @@ static int sysvipc_shm_proc_show(struct 
+@@ -1014,3 +1059,28 @@ static int sysvipc_shm_proc_show(struct 
  			  shp->shm_ctim);
  }
  #endif
@@ -939,7 +939,7 @@ diff -urNp linux-2.6.16.2/ipc/shm.c linux-2.6.16.2-grsec/ipc/shm.c
 +void gr_shm_exit(struct task_struct *task)
 +{
 +#ifdef CONFIG_GRKERNSEC_SHM
-+	int i;
++	int in_use, next_id;
 +	struct shmid_kernel *shp;
 +	struct ipc_namespace *ns;
 +
@@ -948,8 +948,9 @@ diff -urNp linux-2.6.16.2/ipc/shm.c linux-2.6.16.2-grsec/ipc/shm.c
 +	if (!grsec_enable_shm)
 +		return;
 +
-+	for (i = 0; i <= shm_ids(ns).max_id; i++) {
-+		shp = shm_get(ns, i);
++	in_use = shm_ids(ns).in_use;
++	for (next_id = 0; next_id < in_use; next_id++) {
++		shp = idr_find(&shm_ids(ns).ipcs_idr, next_id);
 +		if (shp && (shp->shm_cprid == task->pid) &&
 +		    (shp->shm_nattch <= 0)) {
 +			shp->shm_perm.mode |= SHM_DEST;
