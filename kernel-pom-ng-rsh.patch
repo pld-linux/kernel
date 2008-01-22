@@ -84,18 +84,12 @@ diff -NurpP --minimal linux/net/ipv4/netfilter/Kconfig linux/net/ipv4/netfilter/
 diff -NurpP --minimal linux/net/netfilter/Makefile linux/net/netfilter/Makefile
 --- linux/net/netfilter/Makefile	2007-05-30 11:57:07.000000000 +0200
 +++ linux/net/netfilter/Makefile	2007-05-30 11:58:41.000000000 +0200
-@@ -23,6 +23,7 @@
- # connection tracking helpers
- nf_conntrack_h323-objs := nf_conntrack_h323_main.o nf_conntrack_h323_asn1.o
- 
+@@ -0,0 +0,1 @@
 +obj-$(CONFIG_NF_CONNTRACK_RSH) += nf_conntrack_rsh.o
- obj-$(CONFIG_NF_CONNTRACK_AMANDA) += nf_conntrack_amanda.o
- obj-$(CONFIG_NF_CONNTRACK_FTP) += nf_conntrack_ftp.o
- obj-$(CONFIG_NF_CONNTRACK_H323) += nf_conntrack_h323.o
 diff -NurpP --minimal linux/net/netfilter/nf_conntrack_rsh.c linux/net/netfilter/nf_conntrack_rsh.c
 --- linux/net/netfilter/nf_conntrack_rsh.c	1970-01-01 01:00:00.000000000 +0100
 +++ linux/net/netfilter/nf_conntrack_rsh.c	2007-05-30 11:58:41.000000000 +0200
-@@ -0,0 +1,370 @@
+@@ -0,0 +1,353 @@
 +/* RSH extension for IP connection tracking, Version 1.0
 + * (C) 2002 by Ian (Larry) Latter <Ian.Latter@mq.edu.au>
 + * based on HW's ip_conntrack_irc.c	
@@ -328,7 +322,7 @@ diff -NurpP --minimal linux/net/netfilter/nf_conntrack_rsh.c linux/net/netfilter
 +		return NF_ACCEPT;
 +	}
 +
-+	exp = nf_conntrack_expect_alloc(ct);
++	exp = nf_ct_expect_alloc(ct);
 +	if (!exp) {
 +		ret = NF_DROP;
 +		goto out;
@@ -346,11 +340,8 @@ diff -NurpP --minimal linux/net/netfilter/nf_conntrack_rsh.c linux/net/netfilter
 +	exp->tuple.dst.protonum = IPPROTO_TCP;
 +
 +	exp->mask.src.u3.ip = 0xffffffff;
-+	exp->mask.dst.u3.ip = 0xffffffff;
 +
 +	exp->mask.src.u.tcp.port = htons(rangemask);
-+	exp->mask.dst.u.tcp.port = htons(0xffff);
-+	exp->mask.dst.protonum = 0xff;
 +
 +	exp->expectfn = NULL;
 +	exp->master = ct;
@@ -361,19 +352,13 @@ diff -NurpP --minimal linux/net/netfilter/nf_conntrack_rsh.c linux/net/netfilter
 +		NIPQUAD(exp->tuple.dst.ip),
 +		ntohs(exp->tuple.dst.u.tcp.port));
 +
-+	DEBUGP("expect related mask %u.%u.%u.%u:%u-%u.%u.%u.%u:%u\n",
-+		NIPQUAD(exp->mask.src.ip),
-+		ntohs(exp->mask.src.u.tcp.port),
-+		NIPQUAD(exp->mask.dst.ip),
-+		ntohs(exp->mask.dst.u.tcp.port));
-+
 +	if (ip_nat_rsh_hook)
 +		ret = ip_nat_rsh_hook(pskb, ctinfo, rb_ptr - data, exp);
-+	else if (nf_conntrack_expect_related(exp) != 0) {
++	else if (nf_ct_expect_related(exp) != 0) {
 +		ret = NF_DROP;
 +	}
 +
-+	nf_conntrack_expect_put(exp);
++	nf_ct_expect_put(exp);
 +
 +out:
 +	spin_unlock_bh(&rsh_buffer_lock);
@@ -419,12 +404,9 @@ diff -NurpP --minimal linux/net/netfilter/nf_conntrack_rsh.c linux/net/netfilter
 +		rsh_helpers[port].timeout = 5; /* stes bug timeout=0 */
 +
 +		rsh_helpers[port].tuple.dst.protonum = IPPROTO_TCP;
-+		rsh_helpers[port].mask.dst.protonum = 0xff;
 +
 +		/* RSH must come from ports 0:1023 to ports[port] (514) */
 +		rsh_helpers[port].tuple.src.u.tcp.port = htons(ports[port]);
-+		rsh_helpers[port].mask.src.u.tcp.port = htons(rangemask);
-+		rsh_helpers[port].mask.dst.u.tcp.port = htons(rangemask);
 +
 +		rsh_helpers[port].help = help;
 +
@@ -434,11 +416,6 @@ diff -NurpP --minimal linux/net/netfilter/nf_conntrack_rsh.c linux/net/netfilter
 +			ntohs(rsh_helpers[port].tuple.src.u.tcp.port),
 +			NIPQUAD(rsh_helpers[port].tuple.dst.u3.ip),
 +			ntohs(rsh_helpers[port].tuple.dst.u.tcp.port));
-+		PRINTK("helper match mask %u.%u.%u.%u:%u-%u.%u.%u.%u:%u\n",
-+			NIPQUAD(rsh_helpers[port].mask.src.u3.ip),
-+			ntohs(rsh_helpers[port].mask.src.u.tcp.port),
-+			NIPQUAD(rsh_helpers[port].mask.dst.u3.ip),
-+			ntohs(rsh_helpers[port].mask.dst.u.tcp.port));
 +
 +		ret = nf_conntrack_helper_register(&rsh_helpers[port]);
 +
