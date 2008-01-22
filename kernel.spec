@@ -747,9 +747,8 @@ install -m 755 %{SOURCE6} .
 # kernel-pom-ng-TARPIT.patch
 %patch15 -p1
 
-# FIXME 2.6.24
 # kernel-pom-ng-mms-conntrack-nat.patch
-#%patch16 -p1
+%patch16 -p1
 
 # kernel-pom-ng-IPMARK.patch
 %patch17 -p1
@@ -757,28 +756,23 @@ install -m 755 %{SOURCE6} .
 # kernel-pom-ng-set.patch
 #patch12 -p1
 
-# FIXME 2.6.24
 # kernel-pom-ng-connlimit.patch
-#%patch18 -p1
+%patch18 -p1
 
 # kernel-pom-ng-geoip.patch
 %patch19 -p1
 
-# FIXME 2.6.24
 # kernel-pom-ng-ipp2p.patch
-#%patch20 -p1
+%patch20 -p1
 
-# FIXME 2.6.24
 # kernel-pom-ng-time.patch
-#%patch21 -p1
+%patch21 -p1
 
-# FIXME 2.6.24 !!!
 # kernel-pom-ng-rsh.patch
-#%patch22 -p1
+%patch22 -p1
 
-# FIXME 2.6.24 !!!
 # kernel-pom-ng-rpc.patch
-# %patch23 -p1
+%patch23 -p1
 
 # kernel-owner-xid.patch
 %patch37 -p1
@@ -869,7 +863,7 @@ install -m 755 %{SOURCE6} .
 %endif
 
 # FIXME !!! 2.6.24
-# %patch2500 -p1
+%patch2500 -p1
 
 # FIXME !!! 2.6.24 (no modular security? crap)
 # Apparmor
