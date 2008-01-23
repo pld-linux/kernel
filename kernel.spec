@@ -254,9 +254,6 @@ Patch54:	linux-2.6-toshiba_acpi.patch
 Patch55:	linux-2.6-atm-vbr.patch
 Patch56:	linux-2.6-atmdd.patch
 
-# http://www.bullopensource.org/cpuset/ - virtual CPUs
-Patch57:	linux-2.6-cpuset_virtualization.patch
-
 # http://www.ntop.org/PF_RING.html 20070610
 Patch58:	linux-PF_RING.patch
 
@@ -811,11 +808,6 @@ install -m 755 %{SOURCE6} .
 
 %patch55 -p1
 %patch56 -p1
-
-%ifarch %{ix86} %{x8664} ia64
-# FIXME!!! 2.6.24
-# %patch57 -p1
-%endif
 
 %patch58 -p1
 
