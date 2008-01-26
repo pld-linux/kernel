@@ -97,8 +97,8 @@
 %define		_postver		%{nil}
 %define		_prepatch		%{nil}
 %define		_pre_rc			%{nil}
-%define		_rc			-rc8
-%define		_rel			0.1
+%define		_rc			%{nil}
+%define		_rel			0.2
 %define		subname			%{?with_pax:-pax}%{?with_grsec_full:-grsecurity}%{?with_xen0:-xen0}%{?with_xenU:-xenU}
 
 %define		_enable_debug_packages			0
@@ -126,9 +126,9 @@ Release:	0.%{_pre_rc}.%{_rel}
 Epoch:		3
 License:	GPL v2
 Group:		Base/Kernel
-Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_rc}.tar.bz2
-# Source0-md5:	826448e381fa1fcbd53affcff6127482
-#Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{_basever}%{_rc}.tar.bz2
+#Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_rc}.tar.bz2
+Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{_basever}%{_rc}.tar.bz2
+# Source0-md5:	3f23ad4b69d0a552042d1ed0f4399857
 %if "%{_prepatch}" != "%{nil}"
 Source90:	http://www.kernel.org/pub/linux/kernel/v2.6/testing/patch-%{_prepatch}-%{_pre_rc}.bz2
 # Source90-md5:	b78873f8a3aff5bdc719fc7fb4c66a9b
