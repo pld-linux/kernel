@@ -215,7 +215,7 @@ diff -NurpP --minimal linux-2.6.21.a/net/ipv4/netfilter/ipt_ROUTE.c linux-2.6.21
 +	int hh_len = LL_RESERVED_SPACE(dev);
 +
 +	/* Be paranoid, rather than too clever. */
-+	if (unlikely(skb_headroom(skb) < hh_len && dev->hard_header)) {
++	if (unlikely(skb_headroom(skb) < hh_len && dev->header_ops)) {
 +		struct sk_buff *skb2;
 +
 +		skb2 = skb_realloc_headroom(skb, LL_RESERVED_SPACE(dev));
@@ -261,7 +261,7 @@ diff -NurpP --minimal linux-2.6.21.a/net/ipv4/netfilter/ipt_ROUTE.c linux-2.6.21
 +	/* The user set the interface name to use.
 +	 * Getting the current interface index.
 +	 */
-+	if ((dev_out = dev_get_by_name(route_info->oif))) {
++	if ((dev_out = dev_get_by_name(&init_net, route_info->oif))) {
 +		ifindex = dev_out->ifindex;
 +	} else {
 +		/* Unknown interface name : packet dropped */
@@ -327,7 +327,7 @@ diff -NurpP --minimal linux-2.6.21.a/net/ipv4/netfilter/ipt_ROUTE.c linux-2.6.21
 +	struct net_device *dev_in = NULL;
 +
 +	/* Getting the current interface index. */
-+	if (!(dev_in = dev_get_by_name(route_info->iif))) {
++	if (!(dev_in = dev_get_by_name(&init_net, route_info->iif))) {
 +		if (net_ratelimit()) 
 +			DEBUGP("ipt_ROUTE: iif interface %s not found\n", route_info->iif);
 +		return NF_DROP;
@@ -730,7 +730,7 @@ diff -NurpP --minimal linux-2.6.21.a/net/ipv6/netfilter/ip6t_ROUTE.c linux-2.6.2
 +	/* The user set the interface name to use.
 +	 * Getting the current interface index.
 +	 */
-+	if ((dev_out = dev_get_by_name(route_info->oif))) {
++	if ((dev_out = dev_get_by_name(&init_net, route_info->oif))) {
 +		ifindex = dev_out->ifindex;
 +	} else {
 +		/* Unknown interface name : packet dropped */
