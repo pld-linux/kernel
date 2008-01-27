@@ -40,6 +40,7 @@
 
 %bcond_without	imq		# imq support
 %bcond_without	wrr		# wrr support
+%bcond_without	ipv6		# ipv6 support
 
 %bcond_without	vserver		# support for VServer (enabled by default)
 %bcond_without	tuxonice	# support for tuxonice (ex-Suspend2) (enabled by default)
@@ -206,7 +207,7 @@ Patch10:	kernel-pom-ng-IPV4OPTSSTRIP.patch
 Patch11:	kernel-pom-ng-ipv4options.patch
 Patch12:	kernel-pom-ng-set.patch
 Patch13:	kernel-pom-ng-u32.patch
-
+Patch14:	kernel-pom-ng-ROUTE.patch
 Patch15:	kernel-pom-ng-TARPIT.patch
 Patch16:	kernel-pom-ng-mms-conntrack-nat.patch
 Patch17:	kernel-pom-ng-IPMARK.patch
@@ -228,6 +229,9 @@ Patch39:	kernel-ipt_ACCOUNT.patch
 
 # netfilter-layer7-v2.13.tar.gz from http://l7-filter.sf.net/
 Patch40:	kernel-layer7.patch
+
+# http://www.ssi.bg/~ja/nfct/ipvs-nfct-2.6.24-1.diff
+Patch41:	kernel-ipvs-nfct.patch
 
 ### End netfilter
 
@@ -256,6 +260,9 @@ Patch56:	linux-2.6-atmdd.patch
 
 # http://www.ntop.org/PF_RING.html 20070610
 Patch58:	linux-PF_RING.patch
+
+# http://synce.svn.sourceforge.net/svnroot/synce/trunk/patches/linux-2.6.22-rndis_host-wm5.patch
+Patch59:	kernel-rndis_host-wm5.patch
 
 # Derived from http://www.skd.de/e_en/products/adapters/pci_64/sk-98xx_v20/software/linux/driver/install-8_41.tar.bz2
 Patch60:	linux-2.6-sk98lin_v10.0.4.3.patch
@@ -722,7 +729,7 @@ install -m 755 %{SOURCE6} .
 %endif
 
 # squashfs
-%patch6 -p1  
+%patch6 -p1
 
 %patch9 -p1
 
@@ -740,6 +747,9 @@ install -m 755 %{SOURCE6} .
 
 # kernel-pom-ng-u32.patch
 %patch13 -p1
+
+# kernel-pom-ng-ROUTE.patch
+%patch14 -p1
 
 # kernel-pom-ng-TARPIT.patch
 %patch15 -p1
@@ -783,6 +793,9 @@ install -m 755 %{SOURCE6} .
 # kernel-layer7.patch
 %patch40 -p1
 
+# ipvs-nfct
+%patch41 -p1
+
 ##
 # end of netfilter
 
@@ -810,6 +823,9 @@ install -m 755 %{SOURCE6} .
 %patch56 -p1
 
 %patch58 -p1
+
+# kernel-rndis_host-wm5.patch
+%patch59 -p1
 
 # linux-2.6-sk98lin_v10.0.4.3.patch
 #patch60 -p1
@@ -1057,6 +1073,10 @@ BuildConfig() {
 %if %{with vs22}
 	sed -i "s:CONFIG_IPV6=y:CONFIG_IPV6=m:" arch/%{_target_base_arch_dir}/defconfig
 %endif
+%endif
+
+%if %{without ipv6}
+	sed -i "s:CONFIG_IPV6=.:# CONFIG_IPV6 is not set:" arch/%{_target_base_arch_dir}/defconfig
 %endif
 
 # vesafb-tng
