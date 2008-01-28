@@ -1050,17 +1050,6 @@ BuildConfig() {
 		arch/%{target_arch_dir}/defconfig arch/%{target_arch_dir}/defconfig
 	TuneUpConfigForIX86 arch/%{target_arch_dir}/defconfig
 
-## Temporary disabled - we should have the proper config files in defconfig loaded
-##
-## %ifarch ppc
-##	install %{SOURCE25} arch/%{target_arch_dir}/defconfig
-## %endif
-##
-## %ifarch ppc64
-##	install %{SOURCE27} arch/%{target_arch_dir}/defconfig
-##	# sed -i "s:# CONFIG_PPC64 is not set:CONFIG_PPC64=y:" arch/%{target_arch_dir}/defconfig
-## %endif
-
 # netfilter
 	cat %{SOURCE40} >> arch/%{target_arch_dir}/defconfig
 
