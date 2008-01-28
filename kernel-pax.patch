@@ -476,9 +476,9 @@ diff -NurpX linux-2.6.24-pax/Documentation/dontdiff linux-2.6.24/arch/ia64/mm/fa
 --- linux-2.6.24/arch/ia64/mm/fault.c	2008-01-24 23:58:37.000000000 +0100
 +++ linux-2.6.24-pax/arch/ia64/mm/fault.c	2008-01-25 15:28:01.000000000 +0100
 @@ -10,6 +10,7 @@
- #include <linux/interrupt.h>
  #include <linux/kprobes.h>
  #include <linux/kdebug.h>
+ #include <linux/vs_memory.h>
 +#include <linux/binfmts.h>
  
  #include <asm/pgtable.h>
@@ -18960,23 +18960,27 @@ diff -NurpX linux-2.6.24-pax/Documentation/dontdiff linux-2.6.24/init/do_mounts.
  	sys_close(fd);
  	if (len <= 0 || len == 32 || buf[len - 1] != '\n')
  		goto fail;
-@@ -145,8 +147,8 @@ dev_t name_to_dev_t(char *name)
- 	int part;
+@@ -147,12 +145,12 @@ dev_t name_to_dev_t(char *name)
+ 	int part, mount_result;
  
  #ifdef CONFIG_SYSFS
 -	int mkdir_err = sys_mkdir("/sys", 0700);
--	if (sys_mount("sysfs", "/sys", "sysfs", 0, NULL) < 0)
 +	int mkdir_err = sys_mkdir((char __user *)"/sys", 0700);
-+	if (sys_mount((char __user *)"sysfs", (char __user *)"/sys", (char __user *)"sysfs", 0, NULL) < 0)
+ 	/*
+ 	 * When changing resume parameter for TuxOnIce, sysfs may
+ 	 * already be mounted.
+ 	 */
+-	mount_result = sys_mount("sysfs", "/sys", "sysfs", 0, NULL);
++	mount_result = sys_mount((char __user *)"sysfs", (char __user *)"/sys", (char __user *)"sysfs", 0, NULL);
+ 	if (mount_result < 0 && mount_result != -EBUSY)
  		goto out;
  #endif
- 
-@@ -198,10 +200,10 @@ dev_t name_to_dev_t(char *name)
- 	res = try_name(s, part);
+@@ -206,10 +204,10 @@ dev_t name_to_dev_t(char *name)
  done:
  #ifdef CONFIG_SYSFS
--	sys_umount("/sys", 0);
-+	sys_umount((char __user *)"/sys", 0);
+ 	if (mount_result >= 0)
+-		sys_umount("/sys", 0);
++		sys_umount((char __user *)"/sys", 0);
  out:
  	if (!mkdir_err)
 -		sys_rmdir("/sys");
@@ -21235,11 +21239,11 @@ diff -NurpX linux-2.6.24-pax/Documentation/dontdiff linux-2.6.24/mm/mmap.c linux
 +		vma = NULL;
  	}
  out:	
- 	mm->total_vm += len >> PAGE_SHIFT;
+ 	vx_vmpages_add(mm, len >> PAGE_SHIFT);
  	vm_stat_account(mm, vm_flags, file, len >> PAGE_SHIFT);
 +	track_exec_limit(mm, addr, addr + len, vm_flags);
  	if (vm_flags & VM_LOCKED) {
- 		mm->locked_vm += len >> PAGE_SHIFT;
+ 		vx_vmlocked_add(mm, len >> PAGE_SHIFT);
  		make_pages_present(addr, addr + len);
 @@ -1212,6 +1347,12 @@ unmap_and_free_vma:
  	unmap_region(mm, vma, prev, vma->vm_start, vma->vm_end);
@@ -21546,7 +21550,7 @@ diff -NurpX linux-2.6.24-pax/Documentation/dontdiff linux-2.6.24/mm/mmap.c linux
 +		}
 +#endif
 +
- 		mm->total_vm -= nrpages;
+ 		vx_vmpages_sub(mm, nrpages);
  		if (vma->vm_flags & VM_LOCKED)
  			mm->locked_vm -= nrpages;
 @@ -1763,6 +2000,16 @@ detach_vmas_to_be_unmapped(struct mm_str
@@ -21799,7 +21803,7 @@ diff -NurpX linux-2.6.24-pax/Documentation/dontdiff linux-2.6.24/mm/mmap.c linux
  		locked += mm->locked_vm;
  		lock_limit = current->signal->rlim[RLIMIT_MEMLOCK].rlim_cur;
  		lock_limit >>= PAGE_SHIFT;
-@@ -1973,22 +2363,22 @@ unsigned long do_brk(unsigned long addr,
+@@ -1975,23 +2365,23 @@
  	/*
  	 * Clear old maps.  this also does some error checking for us
  	 */
@@ -21821,8 +21825,10 @@ diff -NurpX linux-2.6.24-pax/Documentation/dontdiff linux-2.6.24/mm/mmap.c linux
  	if (mm->map_count > sysctl_max_map_count)
  		return -ENOMEM;
  
--	if (security_vm_enough_memory(len >> PAGE_SHIFT))
-+	if (security_vm_enough_memory(charged))
+-	if (security_vm_enough_memory(len >> PAGE_SHIFT) ||
+-		!vx_vmpages_avail(mm, len >> PAGE_SHIFT))
++	if (security_vm_enough_memory(charged) ||
++		!vx_vmpages_avail(mm, charged))
  		return -ENOMEM;
  
  	/* Can we just expand an old private anonymous mapping? */
@@ -21860,11 +21866,11 @@ diff -NurpX linux-2.6.24-pax/Documentation/dontdiff linux-2.6.24/mm/mmap.c linux
 +#endif
 +
  out:
--	mm->total_vm += len >> PAGE_SHIFT;
-+	mm->total_vm += charged;
+-	vx_vmpages_add(mm, len >> PAGE_SHIFT);
++	vx_vmpages_add(mm, charged);
  	if (flags & VM_LOCKED) {
--		mm->locked_vm += len >> PAGE_SHIFT;
-+		mm->locked_vm += charged;
+-		vx_vmlocked_add(mm, len >> PAGE_SHIFT);
++		vx_vmlocked_add(mm, charged);
  		make_pages_present(addr, addr + len);
  	}
 +	track_exec_limit(mm, addr, addr + len, flags);
