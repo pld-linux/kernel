@@ -6,6 +6,9 @@
 #
 # TODO:
 # - benchmark NO_HZ & HZ=1000 vs HZ=300 on i686
+# - grsec_full (waiting for author)
+# - vserver 2.3 (waiting for authors)
+# - apparmor (no future?)
 #
 # FUTURE:
 # - update xen patch for 2.6.21
@@ -99,7 +102,7 @@
 %define		_prepatch		%{nil}
 %define		_pre_rc			%{nil}
 %define		_rc			%{nil}
-%define		_rel			0.2
+%define		_rel			0.3
 %define		subname			%{?with_pax:-pax}%{?with_grsec_full:-grsecurity}%{?with_xen0:-xen0}%{?with_xenU:-xenU}
 
 %define		_enable_debug_packages			0
@@ -333,7 +336,7 @@ Patch5001:	linux-2.6-apparmor-caps.patch
 # not ready yet
 Patch9997:	pax_selinux_hooks-2.6.20.patch
 
-# based on http://www.grsecurity.net/~paxguy1/pax-linux-2.6.22.6-test26.patch
+# based on http://www.grsecurity.net/~paxguy1/pax-linux-2.6.24-test8.patch
 Patch9998:	kernel-pax.patch
 
 # based on http://www.grsecurity.net/~spender/grsecurity-2.1.11-2.6.23-200710111225.patch
