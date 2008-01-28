@@ -94,7 +94,13 @@ for l in f:
         key = i[0]
         if key != arch and key != "all": 
             continue
-        val = i[1]
+
+        try:
+            val = i[1]
+        except IndexError:
+            print "Invalid line: %s" % l.strip()
+            continue
+
         dict[symbol] = val
     if not par:
         print "Unknown line: %s" % l
