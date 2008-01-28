@@ -90,29 +90,29 @@ for l in f:
     c = l.strip().split()
     symbol = c[0]
     if dict.has_key(symbol):
-        print "Duplicate symbol %s!" % symbol
+        print "Duplicate symbol: %s" % symbol
         rc = 1
         continue
 
-    par = False
-    for i in c[1:]:
-        par = True
-        i = i.split('=')
-        key = i[0]
-        if key != arch and key != "all": 
-            continue
-
+    hash = {}
+    for item in c[1:]:
         try:
-            val = i[1]
+            (key, value) = item.split('=')
+            hash[key] = value
         except IndexError:
             print "Invalid line: %s" % l.strip()
+            err = 1
             continue
 
-        dict[symbol] = val
-    if not par:
-        print "Unknown line: %s" % l
+    if len(hash) == 0:
+        print "Bad line: %s" % l
         rc = 1
-        continue
+
+    # take arch line, otherwise fallback to 'all'
+    if hash.has_key(arch):
+        dict[symbol] = hash[arch]
+    if hash.has_key('all'):
+        dict[symbol] = hash['all']
 
 f.close()
 
