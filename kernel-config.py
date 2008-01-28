@@ -71,20 +71,27 @@ class odict(UserDict):
 
 dict = odict()
 
+rc = 0
 f = open(kernelconfig, 'r')
 for l in f:
     if l[:6] == 'CONFIG_':
         print "Omit CONFIG_ when specifing symbol name: %s" % l
+        rc = 1
         continue
+
     if re.match('^#', l) or re.match('^\s*$', l):
         continue
+
     if not re.match('^[0-9A-Z]+', l):
         print "Unknown line: %s" % l
-        sys.exit(1)
+        rc = 1
+        continue
+
     c = l.strip().split()
     symbol = c[0]
     if dict.has_key(symbol):
         print "Duplicate symbol %s!" % symbol
+        rc = 1
         continue
 
     par = False
@@ -104,9 +111,13 @@ for l in f:
         dict[symbol] = val
     if not par:
         print "Unknown line: %s" % l
-        sys.exit(1)
+        rc = 1
+        continue
 
 f.close()
+
+if not rc == 0:
+    sys.exit(1)
 
 f = open(inconfig, 'r')
 cfg = f.read()
