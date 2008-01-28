@@ -406,7 +406,7 @@ BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 %ifarch ppc ppc64
 %define		target_arch_dir		powerpc
 %endif
-%ifnarch %{ix86} %{x8664}
+%ifnarch %{ix86} %{x8664} ppc ppc64
 %define		target_arch_dir		%{_target_base_arch}
 %endif
 
