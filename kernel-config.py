@@ -85,7 +85,7 @@ for l in f:
     symbol = c[0]
     if dict.has_key(symbol):
         print "Duplicate symbol %s!" % symbol
-        sys.exit(1)
+        continue
 
     par = False
     for i in c[1:]:
