@@ -139,7 +139,11 @@ for symbol in dict.items():
         cfg += "CONFIG_%s=m\n" % key
     elif val == "n":
         cfg += "# CONFIG_%s is not set\n" % key
-    elif re.compile('^[a-zA-Z0-9"\_\/\-]+$').match(val):
+    elif re.compile('^"[^"]*"$').match(val):
+        cfg += "CONFIG_%s=%s\n" % (key, val)
+    elif re.compile('^-?[0-9]+$').match(val):
+        cfg += "CONFIG_%s=%s\n" % (key, val)
+    elif re.compile('^0x[0-9A-F]+$').match(val):
         cfg += "CONFIG_%s=%s\n" % (key, val)
     else:
         print "Unknown value [%s] for key: %s" % (val, key)
