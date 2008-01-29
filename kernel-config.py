@@ -99,7 +99,7 @@ for l in f:
         continue
 
     # inline symbols: for current arch, duplicates allowed
-    if symbol.find('=') >= 0:
+    if symbol.find('=') > 0:
         (symbol, value) = symbol.split('=')
         dict[symbol] = value
         continue
