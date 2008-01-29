@@ -6,14 +6,18 @@
 import sys
 import re
 
-if len(sys.argv) != 5:
-    print "Usage: %s target_arch kernel.conf input-config output-config" % sys.argv[0]
+argc = len(sys.argv)
+if argc < 4 or argc > 5:
+    print "Usage: %s target_arch kernel.conf input-config [output-config]" % sys.argv[0]
     sys.exit(1)
 
 arch = sys.argv[1]
 kernelconfig = sys.argv[2]
 inconfig = sys.argv[3]
-outconfig = sys.argv[4]
+if argc == 5:
+    outconfig = sys.argv[4]
+else:
+    outconfig = inconfig
 
 from UserDict import UserDict
 
@@ -92,6 +96,12 @@ for l in f:
     if dict.has_key(symbol):
         print "Duplicate symbol: %s" % symbol
         rc = 1
+        continue
+
+    # inline symbols: for current arch, duplicates allowed
+    if symbol.find('=') >= 0:
+        (symbol, value) = symbol.split('=')
+        dict[symbol] = value
         continue
 
     hash = {}
