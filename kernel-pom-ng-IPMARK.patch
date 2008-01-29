@@ -45,24 +45,24 @@ diff -NurpP --minimal linux-2.6.21.a/net/ipv4/netfilter/Kconfig linux-2.6.21.b/n
 diff -NurpP --minimal linux-2.6.21.a/net/ipv4/netfilter/Makefile linux-2.6.21.b/net/ipv4/netfilter/Makefile
 --- linux-2.6.21.a/net/ipv4/netfilter/Makefile	2007-05-30 12:01:03.000000000 +0200
 +++ linux-2.6.21.b/net/ipv4/netfilter/Makefile	2007-05-30 12:01:21.000000000 +0200
-@@ -82,6 +82,7 @@
- obj-$(CONFIG_IP_NF_TARGET_TOS) += ipt_TOS.o
- obj-$(CONFIG_IP_NF_TARGET_TTL) += ipt_TTL.o
+@@ -118,6 +118,7 @@ obj-$(CONFIG_IP_NF_TARGET_IPV4OPTSSTRIP)
  obj-$(CONFIG_IP_NF_TARGET_ULOG) += ipt_ULOG.o
+ obj-$(CONFIG_IP_NF_TARGET_CLUSTERIP) += ipt_CLUSTERIP.o
+ obj-$(CONFIG_IP_NF_TARGET_TTL) += ipt_TTL.o
 +obj-$(CONFIG_IP_NF_TARGET_IPMARK) += ipt_IPMARK.o
  
- obj-$(CONFIG_IP_NF_MATCH_IPV4OPTIONS) += ipt_ipv4options.o
- 
+ # generic ARP tables
+ obj-$(CONFIG_IP_NF_ARPTABLES) += arp_tables.o
 diff -NurpP --minimal linux-2.6.21.a/net/ipv4/netfilter/ipt_IPMARK.c linux-2.6.21.b/net/ipv4/netfilter/ipt_IPMARK.c
 --- linux-2.6.21.a/net/ipv4/netfilter/ipt_IPMARK.c	1970-01-01 01:00:00.000000000 +0100
 +++ linux-2.6.21.b/net/ipv4/netfilter/ipt_IPMARK.c	2007-05-30 12:01:21.000000000 +0200
-@@ -0,0 +1,125 @@
+@@ -0,0 +1,96 @@
 +#include <linux/module.h>
 +#include <linux/skbuff.h>
 +#include <linux/version.h>
 +#include <linux/ip.h>
 +#include <net/checksum.h>
-+
++#include <linux/netfilter/x_tables.h>
 +#include <linux/netfilter_ipv4/ip_tables.h>
 +#include <linux/netfilter_ipv4/ipt_IPMARK.h>
 +
@@ -78,19 +78,11 @@ diff -NurpP --minimal linux-2.6.21.a/net/ipv4/netfilter/ipt_IPMARK.c linux-2.6.2
 +#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,17)
 +       const struct xt_target *target,
 +#endif
-+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,19)
-+       const void *targinfo,
-+       void *userinfo)
-+#else
-+       const void *targinfo)
-+#endif
++       const void *targinfo
++       )
 +{
 +	const struct ipt_ipmark_target_info *ipmarkinfo = targinfo;
-+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,22)
 +	struct iphdr *iph = ip_hdr(*pskb);
-+#else
-+	struct iphdr *iph = (*pskb)->nh.iph;
-+#endif
 +	unsigned long mark;
 +
 +	if (ipmarkinfo->addr == IPT_IPMARK_SRC)
@@ -100,14 +92,10 @@ diff -NurpP --minimal linux-2.6.21.a/net/ipv4/netfilter/ipt_IPMARK.c linux-2.6.2
 +
 +	mark &= ipmarkinfo->andmask;
 +	mark |= ipmarkinfo->ormask;
-+
-+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,20)
-+	if ((*pskb)->nfmark != mark)
-+		(*pskb)->nfmark = mark;
-+#else
++	
 +	if ((*pskb)->mark != mark)
 +		(*pskb)->mark = mark;
-+#endif
++
 +	return IPT_CONTINUE;
 +}
 +
@@ -122,9 +110,7 @@ diff -NurpP --minimal linux-2.6.21.a/net/ipv4/netfilter/ipt_IPMARK.c linux-2.6.2
 +	   const struct xt_target *target,
 +#endif
 +           void *targinfo,
-+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,19)
-+           unsigned int targinfosize,
-+#endif
++           
 +           unsigned int hook_mask)
 +{
 +
@@ -145,15 +131,8 @@ diff -NurpP --minimal linux-2.6.21.a/net/ipv4/netfilter/ipt_IPMARK.c linux-2.6.2
 +	return 1;
 +}
 +
-+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,21)
-+static struct xt_target ipt_ipmark_reg = {
-+#else
 +static struct ipt_target ipt_ipmark_reg = { 
-+#endif
 +	.name		= "IPMARK",
-+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,21)
-+	.family		= AF_INET,
-+#endif
 +	.target		= target,
 +#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,17)
 +	.targetsize	= sizeof(struct ipt_ipmark_target_info),
@@ -164,20 +143,12 @@ diff -NurpP --minimal linux-2.6.21.a/net/ipv4/netfilter/ipt_IPMARK.c linux-2.6.2
 +
 +static int __init init(void)
 +{
-+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,21)
 +	return xt_register_target(&ipt_ipmark_reg);
-+#else
-+	return ipt_register_target(&ipt_ipmark_reg);
-+#endif
 +}
 +
 +static void __exit fini(void)
 +{
-+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,21)
 +	xt_unregister_target(&ipt_ipmark_reg);
-+#else
-+	ipt_unregister_target(&ipt_ipmark_reg);
-+#endif
 +}
 +
 +module_init(init);

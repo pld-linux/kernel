@@ -1,9 +1,8 @@
 #
-# STATUS: 2.6.22.16 ready
+# STATUS: 2.6.22.14 ready
 #
 # TODO:
 # - benchmark NO_HZ & HZ=1000 vs HZ=300 on i686
-# - on ppc -mcpu=440 not supported by ac gcc, add BR
 #
 # FUTURE:
 # - update xen patch for 2.6.21
@@ -14,9 +13,6 @@
 # - nf-hipac ?
 # - pax hooks for selinux (experimental)
 # - Remove ROUTE target, its a hack and routing by fwmark should be used instead.
-#
-# NOTE:
-# - kernel kvm module build disabled, it is provided by kvm.spec
 #
 # Conditional build:
 
@@ -99,19 +95,47 @@
 %define		have_oss	0
 %endif
 
+## Program required by kernel to work.
+%define		_binutils_ver		2.12.1
+%define		_util_linux_ver		2.10o
+%define		_module_init_tool_ver	0.9.10
+%define		_e2fsprogs_ver		1.29
+%define		_jfsutils_ver		1.1.3
+%define		_reiserfsprogs_ver	3.6.3
+%define		_reiser4progs_ver	1.0.0
+%define		_xfsprogs_ver		2.6.0
+%define		_pcmcia_cs_ver		3.1.21
+%define		_pcmciautils_ver	004
+%define		_quota_tools_ver	3.09
+%define		_ppp_ver		1:2.4.0
+%define		_isdn4k_utils_ver	3.1pre1
+%define		_nfs_utils_ver		1.0.5
+%define		_procps_ver		3.2.0
+%define		_oprofile_ver		0.9
+%define		_udev_ver		071
+%define		_mkvmlinuz_ver		1.3
+
 %define		_basever		2.6.22
-%define		_postver		.16
+%define		_postver		.15
 %define		_prepatch		%{nil}
 %define		_pre_rc			%{nil}
 %define		_rc			%{nil}
-%define		_rel			4
+%define		_rel			3
 %define		subname			%{?with_pax:-pax}%{?with_grsec_full:-grsecurity}%{?with_xen0:-xen0}%{?with_xenU:-xenU}
 
+%define		_netfilter_snap		20070806
+%define		_nf_hipac_ver		0.9.1
+
 %define		_enable_debug_packages			0
+%define		no_install_post_strip			1
+%define		no_install_post_chrpath			1
+
+%define		pcmcia_version		3.1.22
+%define		drm_xfree_version	4.3.0
 
 %define		squashfs_version	3.2
 %define		suspend_version		2.2.10
-%define		netfilter_snap		20070806
+
 %define		xen_version		3.0.2
 
 Summary:	The Linux kernel (the core of the Linux operating system)
@@ -141,7 +165,7 @@ Source90:	http://www.kernel.org/pub/linux/kernel/v2.6/testing/patch-%{_prepatch}
 %endif
 %if "%{_postver}" != "%{nil}"
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
-# Source1-md5:	677f4eec305e7893e74b24e7349d4b80
+# Source1-md5:	2fc1e9da64cfd045c1d28aed3e786da8
 %endif
 
 Source3:	kernel-autoconf.h
@@ -225,6 +249,9 @@ Patch21:	kernel-pom-ng-time.patch
 Patch22:	kernel-pom-ng-rsh.patch
 Patch23:	kernel-pom-ng-rpc.patch
 
+# http://people.linux-vserver.org/~dhozac/p/k/delta-nsproxy-fix01.diff
+Patch36:	kernel-nsproxy-fix.patch
+
 # http://ftp.linux-vserver.org/pub/people/dhozac/p/k/delta-owner-xid-feat02.diff
 Patch37:	kernel-owner-xid.patch
 
@@ -294,7 +321,6 @@ Patch90:	linux-2.6.22-NFS_ALL.dif
 Patch91:	linux-2.6.22-rc5-CITI_NFS4_ALL-1.diff
 
 # based on http://vserver.13thfloor.at/Experimental/patch-2.6.22.9-vs2.3.0.26.diff
-# currently based on http://people.linux-vserver.org/~dhozac/p/k/patch-2.6.22.16-vs2.3.0.29.2.diff
 Patch100:	linux-2.6-vs2.3.patch
 Patch101:	linux-2.6-vs2.1-suspend2.patch
 # based on http://vserver.13thfloor.at/Experimental/patch-2.6.22.2-vs2.2.0.3.diff
@@ -396,8 +422,8 @@ BuildRequires:	binutils >= 3:2.14.90.0.7
 %ifarch sparc sparc64
 BuildRequires:	elftoaout
 %endif
-BuildRequires:	/sbin/depmod
 BuildRequires:	gcc >= 5:3.2
+BuildRequires:	module-init-tools
 # for hostname command
 BuildRequires:	net-tools
 BuildRequires:	perl-base
@@ -409,33 +435,40 @@ Requires(post):	module-init-tools >= 0.9.9
 Requires:	coreutils
 Requires:	geninitrd >= 2.57
 Requires:	module-init-tools >= 0.9.9
-Provides:	%{name}(netfilter) = %{netfilter_snap}
+Provides:	kernel(netfilter) = %{_netfilter_snap}
+Provides:	kernel(nf-hipac) = %{_nf_hipac_ver}
+Provides:	kernel(realtime-lsm) = 0.1.1
 %if %{with xen0} || %{with xenU}
 Provides:	kernel(xen) = %{_xen_version}
 %endif
+Provides:	kernel-misc-fuse
+Provides:	kernel-net-hostap = 0.4.4
+Provides:	kernel-net-ieee80211
+Provides:	kernel-net-ipp2p = 1:0.8.0
+Provides:	kernel-net-ipw2100 = 1.1.3
+Provides:	kernel-net-ipw2200 = 1.0.8
+Provides:	module-info
 Obsoletes:	kernel-smp
 Obsoletes:	kernel-misc-fuse
 Obsoletes:	kernel-modules
 Obsoletes:	kernel-net-hostap
 Obsoletes:	kernel-net-ieee80211
 Obsoletes:	kernel-net-ipp2p
+Conflicts:	e2fsprogs < %{_e2fsprogs_ver}
+Conflicts:	isdn4k-utils < %{_isdn4k_utils_ver}
+Conflicts:	jfsutils < %{_jfsutils_ver}
+Conflicts:	module-init-tool < %{_module_init_tool_ver}
+Conflicts:	nfs-utils < %{_nfs_utils_ver}
+Conflicts:	oprofile < %{_oprofile_ver}
+Conflicts:	ppp < %{_ppp_ver}
+Conflicts:	procps < %{_procps_ver}
+Conflicts:	quota-tools < %{_quota_tools_ver}
+Conflicts:	reiser4progs < %{_reiser4progs_ver}
+Conflicts:	reiserfsprogs < %{_reiserfsprogs_ver}
+Conflicts:	udev < %{_udev_ver}
+Conflicts:	util-linux < %{_util_linux_ver}
 Conflicts:	vserver-packages
-Conflicts:	e2fsprogs < 1.29
-Conflicts:	isdn4k-utils < 3.1pre1
-Conflicts:	jfsutils < 1.1.3
-Conflicts:	module-init-tools < 0.9.10
-Conflicts:	nfs-utils < 1.0.5
-Conflicts:	oprofile < 0.9
-Conflicts:	ppp < 1:2.4.0
-Conflicts:	procps < 3.2.0
-Conflicts:	quota-tools < 3.09
-%if %{with reiserfs4}
-Conflicts:	reiser4progs < 1.0.0
-%endif
-Conflicts:	reiserfsprogs < 3.6.3
-Conflicts:	udev < 071
-Conflicts:	util-linux < 2.10o
-Conflicts:	xfsprogs < 2.6.0
+Conflicts:	xfsprogs < %{_xfsprogs_ver}
 %if %{with xen0} || %{with xenU}
 ExclusiveArch:	%{ix86}
 %else
@@ -446,7 +479,6 @@ BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 
 # No ELF objects there to strip (skips processing 27k files)
 %define		_noautostrip	.*%{_kernelsrcdir}/.*
-%define		_noautochrpath	.*%{_kernelsrcdir}/.*
 
 %ifarch ia64
 %define		initrd_dir	/boot/efi
@@ -494,7 +526,7 @@ This package contains the Linux kernel that is used to boot and run
 your system. It contains few device drivers for specific hardware.
 Most hardware is instead supported by modules loaded after booting.
 
-Netfilter module dated: %{netfilter_snap}
+Netfilter module dated: %{_netfilter_snap}
 %{?with_abi:Linux ABI support - enabled}
 %{?with_grsec_full:Grsecurity full support - enabled}
 %{?with_pax:PaX support - enabled}
@@ -510,7 +542,7 @@ Linux-Betriebssystems. Der Kernel ist für grundliegende
 Systemfunktionen verantwortlich: Speicherreservierung,
 Prozeß-Management, Geräte Ein- und Ausgaben, usw.
 
-Netfilter module dated: %{netfilter_snap}
+Netfilter module dated: %{_netfilter_snap}
 %{?with_abi:Linux ABI support - enabled}
 %{?with_grsec_full:Grsecurity full support - enabled}
 %{?with_pax:PaX support - enabled}
@@ -526,7 +558,7 @@ centrale d'un système d'exploitation Linux. Le noyau traite les
 fonctions basiques d'un système d'exploitation: allocation mémoire,
 allocation de process, entrée/sortie de peripheriques, etc.
 
-Netfilter module dated: %{netfilter_snap}
+Netfilter module dated: %{_netfilter_snap}
 %{?with_abi:Linux ABI support - enabled}
 %{?with_grsec_full:Grsecurity full support - enabled}
 %{?with_pax:PaX support - enabled}
@@ -541,7 +573,7 @@ Pakiet zawiera jądro Linuksa niezbędne do prawidłowego działania
 Twojego komputera. Zawiera w sobie sterowniki do sprzętu znajdującego
 się w komputerze, takiego jak sterowniki dysków itp.
 
-Netfilter module dated: %{netfilter_snap}
+Netfilter module dated: %{_netfilter_snap}
 %{?with_abi:Linux ABI support - enabled}
 %{?with_grsec_full:Grsecurity full support - enabled}
 %{?with_pax:PaX support - enabled}
@@ -569,14 +601,15 @@ Summary(pl.UTF-8):	Sterowniki DRM
 Group:		Base/Kernel
 Requires(postun):	%{name} = %{epoch}:%{version}-%{release}
 Requires:	%{name} = %{epoch}:%{version}-%{release}
+Provides:	kernel-drm = %{drm_xfree_version}
 Obsoletes:	kernel-smp-drm
 Autoreqprov:	no
 
 %description drm
-DRM kernel modules.
+DRM kernel modules (%{drm_xfree_version}).
 
 %description drm -l pl.UTF-8
-Sterowniki DRM.
+Sterowniki DRM (%{drm_xfree_version}).
 
 %package pcmcia
 Summary:	PCMCIA modules
@@ -584,23 +617,25 @@ Summary(pl.UTF-8):	Moduły PCMCIA
 Group:		Base/Kernel
 Requires(postun):	%{name} = %{epoch}:%{version}-%{release}
 Requires:	%{name} = %{epoch}:%{version}-%{release}
+Provides:	kernel(pcmcia)
+Provides:	kernel-pcmcia = %{pcmcia_version}
 Obsoletes:	kernel-smp-pcmcia
 Conflicts:	pcmcia-cs < %{_pcmcia_cs_ver}
 Conflicts:	pcmciautils < %{_pcmciautils_ver}
 Autoreqprov:	no
 
 %description pcmcia
-PCMCIA modules.
+PCMCIA modules (%{pcmcia_version}).
 
 %description pcmcia -l pl.UTF-8
-Moduły PCMCIA.
+Moduły PCMCIA (%{pcmcia_version}).
 
 %package libs
 Summary:	Libraries for preparing bootable kernel on PowerPCs
 Summary(pl.UTF-8):	Biblioteki do przygotowania bootowalnego jądra dla PowerPC
 Group:		Base/Kernel
 Requires:	%{name} = %{epoch}:%{version}-%{release}
-Requires:	mkvmlinuz >= 1.3
+Requires:	mkvmlinuz >= %{_mkvmlinuz_ver}
 Obsoletes:	kernel-smp-libs
 Autoreqprov:	no
 
@@ -646,7 +681,12 @@ Sterowniki dźwięku OSS (Open Sound System).
 Summary:	Header files for the Linux kernel
 Summary(pl.UTF-8):	Pliki nagłówkowe jądra Linuksa
 Group:		Development/Building
-Provides:	%{name}-headers(netfilter) = %{netfilter_snap}
+Provides:	kernel-headers = %{epoch}:%{version}-%{release}
+Provides:	kernel-headers(agpgart) = %{version}
+Provides:	kernel-headers(alsa-drivers)
+Provides:	kernel-headers(bridging) = %{version}
+Provides:	kernel-headers(netfilter) = %{_netfilter_snap}
+Provides:	kernel-headers(reiserfs) = %{version}
 Autoreqprov:	no
 
 %description headers
@@ -663,6 +703,8 @@ Summary:	Development files for building kernel modules
 Summary(pl.UTF-8):	Pliki służące do budowania modułów jądra
 Group:		Development/Building
 Requires:	%{name}-headers = %{epoch}:%{version}-%{release}
+Provides:	kernel-module-build = %{epoch}:%{_basever}
+Provides:	kernel-module-build = %{epoch}:%{version}-%{release}
 Conflicts:	rpmbuild(macros) < 1.321
 Autoreqprov:	no
 
@@ -679,11 +721,14 @@ Summary:	Kernel source tree
 Summary(pl.UTF-8):	Kod źródłowy jądra Linuksa
 Group:		Development/Building
 Requires:	%{name}-module-build = %{epoch}:%{version}-%{release}
+Provides:	kernel-source = %{epoch}:%{version}-%{release}
 Autoreqprov:	no
 
 %description source
-This is the source code for the Linux kernel. You can build a custom
-kernel that is better tuned to your particular hardware.
+This is the source code for the Linux kernel. It is required to build
+most C programs as they depend on constants defined in here. You can
+also build a custom kernel that is better tuned to your particular
+hardware.
 
 %description source -l de.UTF-8
 Das Kernel-Source-Paket enthält den source code (C/Assembler-Code) des
@@ -708,6 +753,7 @@ Pakiet zawiera kod źródłowy jądra systemu.
 Summary:	Kernel documentation
 Summary(pl.UTF-8):	Dokumentacja do jądra Linuksa
 Group:		Documentation
+Provides:	kernel-doc = %{version}
 Autoreqprov:	no
 
 %description doc
@@ -891,6 +937,8 @@ install %{SOURCE5} Makefile.ppclibs
 %patch102 -p1
 %else
 %patch100 -p1
+# kernel-nsproxy-fix.patch
+%patch36 -p1
 %endif
 %if %{with suspend2}
 #ifarch %{ix86} %{x8664} ia64
@@ -1019,7 +1067,7 @@ sed -i -e '/select INPUT/d' net/bluetooth/hidp/Kconfig
 sed -i -e 's/^EXTRA_CFLAGS := -Werror/EXTRA_CFLAGS := /' arch/sparc64/kernel/Makefile
 
 # cleanup backups after patching
-find '(' -name '*~' -o -name '*.orig' -o -name '.gitignore' ')' -print0 | xargs -0 -r -l512 rm -f
+find . '(' -name '*~' -o -name '*.orig' -o -name '.gitignore' ')' -print0 | xargs -0 -r -l512 rm -f
 
 %build
 TuneUpConfigForIX86 () {
@@ -1152,15 +1200,6 @@ BuildConfig() {
 	cat %{SOURCE43} >> arch/%{_target_base_arch}/defconfig
 %if %{with vs22}
 	sed -i "s:CONFIG_IPV6=y:CONFIG_IPV6=m:" arch/%{_target_base_arch}/defconfig
-%else
-	# 13:53 < daniel_hozac> arekm: it requires a feature that conflicts with Linux-VServer.
-	# 13:54 < arekm> daniel_hozac: conflicts on which level? compile, usage? previous patch didn't have this problem visible
-	# 13:55 < Bertl> arekm: 2.6.24 will have that fixed, utilizing user namespaces, for 2.6.22, we cannot allow to enable key
-	#		 retention support because of missing virtualization
-	# 13:55 < daniel_hozac> arekm: usage, security wise.
-	# 13:55 < daniel_hozac> arekm: also limits the number of guests you can run to 50.
-	sed -i 's:CONFIG_AFS_FS=m:# CONFIG_AFS_FS is not set:' arch/%{_target_base_arch}/defconfig
-	sed -i 's:CONFIG_AF_RXRPC=m:# CONFIG_AF_RXRPC is not set:' arch/%{_target_base_arch}/defconfig
 %endif
 %endif
 
@@ -1225,9 +1264,8 @@ BuildConfig() {
 	cat %{SOURCE47} >> arch/%{_target_base_arch}/defconfig
 %endif
 
-	# fbsplash
+	# fbsplash && bootsplash
 	echo "CONFIG_FB_SPLASH=y" >> arch/%{_target_base_arch}/defconfig
-	# bootsplash
 	echo "CONFIG_BOOTSPLASH=y" >> arch/%{_target_base_arch}/defconfig
 
 %if %{with nfsroot}
@@ -1421,6 +1459,7 @@ touch $RPM_BUILD_ROOT/boot/initrd-%{kernel_release}.gz
 rm -rf $RPM_BUILD_ROOT
 
 %preun
+rm -f /lib/modules/%{kernel_release}/modules.*
 if [ -x /sbin/new-kernel-pkg ]; then
 	/sbin/new-kernel-pkg --remove %{kernel_release}
 fi
@@ -1492,6 +1531,7 @@ ln -sf vmlinux-%{kernel_release} /boot/vmlinux
 %depmod %{kernel_release}
 
 %post headers
+rm -f %{_prefix}/src/linux%{subname}
 ln -snf %{basename:%{_kernelsrcdir}} %{_prefix}/src/linux%{subname}
 
 %postun headers
