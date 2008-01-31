@@ -1530,7 +1530,7 @@ fi
 /lib/modules/%{kernel_release}/build
 %{_kernelsrcdir}/Kbuild
 %{_kernelsrcdir}/localversion
-%{_kernelsrcdir}/arch/*/kernel/asm-offsets.*
+%{_kernelsrcdir}/arch/*/kernel/asm-offsets*
 %{_kernelsrcdir}/arch/*/kernel/sigframe.h
 %dir %{_kernelsrcdir}/scripts
 %dir %{_kernelsrcdir}/scripts/kconfig
@@ -1557,7 +1557,7 @@ fi
 %endif /* abi */
 %{_kernelsrcdir}/arch/*/[!Mk]*
 %{_kernelsrcdir}/arch/*/kernel/[!M]*
-%exclude %{_kernelsrcdir}/arch/*/kernel/asm-offsets.*
+%exclude %{_kernelsrcdir}/arch/*/kernel/asm-offsets*
 %exclude %{_kernelsrcdir}/arch/*/kernel/sigframe.h
 %{_kernelsrcdir}/block
 %{_kernelsrcdir}/crypto
