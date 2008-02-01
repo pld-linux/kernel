@@ -789,7 +789,9 @@ install -m 755 %{SOURCE6} .
 %patch23 -p1
 
 # kernel-owner-xid.patch
+%if %{with vserver}
 %patch37 -p1
+%endif
 
 # kernel-ipt_account.patch
 %patch38 -p1
