@@ -865,7 +865,8 @@ install %{SOURCE5} Makefile.ppclibs
 %patch56 -p1
 
 %ifarch %{ix86} %{x8664} ia64
-%patch57 -p1
+# commented out due to https://bugs.pld-linux.org/show_bug.cgi?id=94
+# %patch57 -p1
 %endif
 
 # linux-PF_RING.patch
