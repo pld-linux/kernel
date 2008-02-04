@@ -2,6 +2,7 @@
 
 # Generate kernel .config file based on special kernel.conf rules file.
 # arekm@pld-linux.org
+# glen@pld-linux.org
 
 import sys
 import re
@@ -121,8 +122,9 @@ for l in f:
     # take arch line, otherwise fallback to 'all'
     if hash.has_key(arch):
         dict[symbol] = hash[arch]
-    if hash.has_key('all'):
-        dict[symbol] = hash['all']
+    else:
+        if hash.has_key('all'):
+            dict[symbol] = hash['all']
 
 f.close()
 
