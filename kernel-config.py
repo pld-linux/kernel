@@ -121,7 +121,9 @@ for l in f:
 
     # take arch line, otherwise fallback to 'all'
     if hash.has_key(arch):
-        dict[symbol] = hash[arch]
+        # allow empty value to skip symbol on this arch
+        if not hash[arch] == "":
+            dict[symbol] = hash[arch]
     else:
         if hash.has_key('all'):
             dict[symbol] = hash['all']
@@ -135,6 +137,7 @@ f = open(inconfig, 'r')
 cfg = f.read()
 f.close()
 
+rc = 0
 cfg += '\n# PLD configs\n'
 for symbol in dict.items():
     (key, val) = symbol
@@ -159,7 +162,10 @@ for symbol in dict.items():
         cfg += "CONFIG_%s=%s\n" % (key, val)
     else:
         print "Unknown value [%s] for key: %s" % (val, key)
-        sys.exit(1)
+        rc = 1
+
+if not rc == 0:
+    sys.exit(rc)
 
 f = open(outconfig, 'w')
 f.write(cfg)
