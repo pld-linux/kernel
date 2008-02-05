@@ -102,7 +102,12 @@ for l in f:
     # inline symbols: for current arch, duplicates allowed
     if symbol.find('=') > 0:
         (symbol, value) = symbol.split('=')
-        dict[symbol] = value
+        # empty value means delete the symbol
+        if value == "":
+            if dict.has_key(symbol):
+                del dict[symbol]
+        else:
+            dict[symbol] = value
         continue
 
     hash = {}
