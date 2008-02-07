@@ -100,11 +100,11 @@
 %endif
 
 %define		_basever		2.6.22
-%define		_postver		.16
+%define		_postver		.17
 %define		_prepatch		%{nil}
 %define		_pre_rc			%{nil}
 %define		_rc			%{nil}
-%define		_rel			4
+%define		_rel			1
 %define		subname			%{?with_pax:-pax}%{?with_grsec_full:-grsecurity}%{?with_xen0:-xen0}%{?with_xenU:-xenU}
 
 %define		_enable_debug_packages			0
@@ -141,7 +141,7 @@ Source90:	http://www.kernel.org/pub/linux/kernel/v2.6/testing/patch-%{_prepatch}
 %endif
 %if "%{_postver}" != "%{nil}"
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
-# Source1-md5:	677f4eec305e7893e74b24e7349d4b80
+# Source1-md5:	ce718cef495696c2d446bd8ff170c519
 %endif
 
 Source3:	kernel-autoconf.h
@@ -265,9 +265,6 @@ Patch54:	linux-2.6-toshiba_acpi.patch
 # derived from ftp://ftp.cmf.nrl.navy.mil/pub/chas/linux-atm/vbr/vbr-kernel-diffs
 Patch55:	linux-2.6-atm-vbr.patch
 Patch56:	linux-2.6-atmdd.patch
-
-# http://www.bullopensource.org/cpuset/ - virtual CPUs
-Patch57:	linux-2.6-cpuset_virtualization.patch
 
 # http://www.ntop.org/PF_RING.html 20070610
 Patch58:	linux-PF_RING.patch
@@ -863,11 +860,6 @@ install %{SOURCE5} Makefile.ppclibs
 
 %patch55 -p1
 %patch56 -p1
-
-%ifarch %{ix86} %{x8664} ia64
-# commented out due to https://bugs.pld-linux.org/show_bug.cgi?id=94
-# %patch57 -p1
-%endif
 
 # linux-PF_RING.patch
 %patch58 -p1
