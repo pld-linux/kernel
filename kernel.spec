@@ -1,5 +1,5 @@
 #
-# STATUS: 2.6.22.16 ready
+# STATUS: ready
 #
 # TODO:
 # - benchmark NO_HZ & HZ=1000 vs HZ=300 on i686
@@ -104,7 +104,7 @@
 %define		_prepatch		%{nil}
 %define		_pre_rc			%{nil}
 %define		_rc			%{nil}
-%define		_rel			2
+%define		_rel			3
 %define		subname			%{?with_pax:-pax}%{?with_grsec_full:-grsecurity}%{?with_xen0:-xen0}%{?with_xenU:-xenU}
 
 %define		_enable_debug_packages			0
@@ -294,6 +294,8 @@ Patch91:	linux-2.6.22-rc5-CITI_NFS4_ALL-1.diff
 # currently based on http://people.linux-vserver.org/~dhozac/p/k/patch-2.6.22.16-vs2.3.0.29.2.diff
 Patch100:	linux-2.6-vs2.3.patch
 Patch101:	linux-2.6-vs2.1-suspend2.patch
+# http://vserver.13thfloor.at/Experimental/delta-lback-feat02.diff
+Patch103:	kernel-vserver-lback-feat02.patch
 # based on http://vserver.13thfloor.at/Experimental/patch-2.6.22.2-vs2.2.0.3.diff
 Patch102:	linux-2.6-vs2.2.patch
 # note about vserver 2.2 vs 2.3: 2.2 is "stable", 2.3 is "development", currently (2007-09-03)
@@ -818,7 +820,9 @@ install %{SOURCE5} Makefile.ppclibs
 %patch23 -p1
 
 # kernel-owner-xid.patch
+%if %{with vserver}
 %patch37 -p1
+%endif
 
 # kernel-ipt_account.patch
 %patch38 -p1
@@ -884,6 +888,7 @@ install %{SOURCE5} Makefile.ppclibs
 %patch102 -p1
 %else
 %patch100 -p1
+%patch103 -p1
 %endif
 %if %{with suspend2}
 #ifarch %{ix86} %{x8664} ia64
