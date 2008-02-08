@@ -127,7 +127,7 @@
 
 %define		_basever	2.6.16
 %define		_postver	.60
-%define		_rel		1
+%define		_rel		2
 %define		subname	%{?with_pax:-pax}%{?with_grsec_full:-grsecurity}%{?with_xen0:-xen0}%{?with_xenU:-xenU}
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de.UTF-8):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
@@ -273,6 +273,9 @@ Patch80:	kernel-ahci-sb600.patch
 
 Patch81:	linux-2.6-md.patch
 Patch82:	linux-3w-9xxx.patch
+
+# From http://www.broadcom.com/support/ethernet_nic/driver-sla.php?driver=570x-Linux
+Patch83:	linux-tg3-3.81c.patch
 
 # IPSEC KLIPS
 Patch90:        http://www.openswan.org/download/openswan-2.4.9.kernel-2.6-klips.patch.gz
@@ -899,6 +902,7 @@ rm -rf suspend2-%{suspend_version}-for-2.6.16.9
 
 %patch81 -p1
 %patch82 -p1
+%patch83 -p1
 
 %patch90 -p1
 %patch91 -p1
