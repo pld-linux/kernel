@@ -275,6 +275,9 @@ Patch59:	kernel-rndis_host-wm5.patch
 # Derived from http://www.skd.de/e_en/products/adapters/pci_64/sk-98xx_v20/software/linux/driver/install-8_41.tar.bz2
 Patch60:	linux-2.6-sk98lin_v10.0.4.3.patch
 
+# make gcc 3.3.6 compile on ppc
+Patch61:	kernel-mcpu=440.patch
+
 # http://www.tuxonice.net/downloads/all/suspend2-2.2.10-for-2.6.22.patch.bz2
 Patch69:	linux-2.6-suspend2.patch
 Patch70:	kernel-suspend2-headers.patch
@@ -874,6 +877,7 @@ install %{SOURCE5} Makefile.ppclibs
 # linux-2.6-sk98lin_v10.0.4.3.patch
 %patch60 -p1
 
+%patch61 -p1
 
 # hostap enhancements from/for aircrack-ng
 %patch85 -p1
