@@ -1,0 +1,76 @@
+commit 8811930dc74a503415b35c4a79d14fb0b408a361
+Author: Jens Axboe <jens.axboe@oracle.com>
+Date:   Fri Feb 8 08:49:14 2008 -0800
+
+    splice: missing user pointer access verification
+    
+    vmsplice_to_user() must always check the user pointer and length
+    with access_ok() before copying. Likewise, for the slow path of
+    copy_from_user_mmap_sem() we need to check that we may read from
+    the user region.
+    
+    Signed-off-by: Jens Axboe <jens.axboe@oracle.com>
+    Cc: Wojciech Purczynski <cliph@research.coseinc.com>
+    Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+    Signed-off-by: Linus Torvalds <torvalds@linux-foundation.org>
+
+diff --git a/fs/splice.c b/fs/splice.c
+index 4ee49e8..14e2262 100644
+--- a/fs/splice.c
++++ b/fs/splice.c
+@@ -1179,6 +1179,9 @@ static int copy_from_user_mmap_sem(void *dst, const void __user *src, size_t n)
+ {
+ 	int partial;
+ 
++	if (!access_ok(VERIFY_READ, src, n))
++		return -EFAULT;
++
+ 	pagefault_disable();
+ 	partial = __copy_from_user_inatomic(dst, src, n);
+ 	pagefault_enable();
+@@ -1387,6 +1390,11 @@ static long vmsplice_to_user(struct file *file, const struct iovec __user *iov,
+ 			break;
+ 		}
+ 
++		if (unlikely(!access_ok(VERIFY_WRITE, base, len))) {
++			error = -EFAULT;
++			break;
++		}
++
+ 		sd.len = 0;
+ 		sd.total_len = len;
+ 		sd.flags = flags;
+commit 712a30e63c8066ed84385b12edbfb804f49cbc44
+Author: Bastian Blank <bastian@waldi.eu.org>
+Date:   Sun Feb 10 16:47:57 2008 +0200
+
+    splice: fix user pointer access in get_iovec_page_array()
+    
+    Commit 8811930dc74a503415b35c4a79d14fb0b408a361 ("splice: missing user
+    pointer access verification") added the proper access_ok() calls to
+    copy_from_user_mmap_sem() which ensures we can copy the struct iovecs
+    from userspace to the kernel.
+    
+    But we also must check whether we can access the actual memory region
+    pointed to by the struct iovec to fix the access checks properly.
+    
+    Signed-off-by: Bastian Blank <waldi@debian.org>
+    Acked-by: Oliver Pinter <oliver.pntr@gmail.com>
+    Cc: Jens Axboe <jens.axboe@oracle.com>
+    Cc: Andrew Morton <akpm@linux-foundation.org>
+    Signed-off-by: Pekka Enberg <penberg@cs.helsinki.fi>
+    Signed-off-by: Linus Torvalds <torvalds@linux-foundation.org>
+
+diff --git a/fs/splice.c b/fs/splice.c
+index 14e2262..9b559ee 100644
+--- a/fs/splice.c
++++ b/fs/splice.c
+@@ -1234,7 +1234,7 @@ static int get_iovec_page_array(const struct iovec __user *iov,
+ 		if (unlikely(!len))
+ 			break;
+ 		error = -EFAULT;
+-		if (unlikely(!base))
++		if (!access_ok(VERIFY_READ, base, len))
+ 			break;
+ 
+ 		/*
