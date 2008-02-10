@@ -104,7 +104,7 @@
 %define		_prepatch		%{nil}
 %define		_pre_rc			%{nil}
 %define		_rc			%{nil}
-%define		_rel			3
+%define		_rel			4
 %define		subname			%{?with_pax:-pax}%{?with_grsec_full:-grsecurity}%{?with_xen0:-xen0}%{?with_xenU:-xenU}
 
 %define		_enable_debug_packages			0
@@ -239,6 +239,9 @@ Patch40:	kernel-layer7.patch
 
 # http://www.ssi.bg/~ja/nfct/ipvs-nfct-2.6.22-1.diff
 Patch41:	kernel-ipvs-nfct.patch
+
+# security bugfix
+Patch42:	kernel-vmsplice.patch
 
 ### End netfilter
 
@@ -838,6 +841,8 @@ install %{SOURCE5} Makefile.ppclibs
 
 # ipvs-nfct
 %patch41 -p1
+
+%patch42 -p1
 
 ##
 # end of netfilter
