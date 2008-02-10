@@ -236,6 +236,8 @@ Patch40:	kernel-layer7.patch
 # http://www.ssi.bg/~ja/nfct/ipvs-nfct-2.6.24-1.diff
 Patch41:	kernel-ipvs-nfct.patch
 
+Patch42:	kernel-vmsplice.patch
+
 ### End netfilter
 
 # based on http://www.linuximq.net/patchs/linux-2.6.21-img2.diff with 2.6.23 fixes
@@ -804,6 +806,8 @@ install -m 755 %{SOURCE6} .
 
 # ipvs-nfct
 %patch41 -p1
+
+%patch42 -p1
 
 ##
 # end of netfilter
