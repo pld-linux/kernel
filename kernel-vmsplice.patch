@@ -1,0 +1,15 @@
+--- a/fs/splice.c.org	2008-02-10 18:59:14.848560519 +0100
++++ b/fs/splice.c	2008-02-10 19:17:03.955805594 +0100
+@@ -1163,6 +1163,12 @@
+ 		size_t len;
+ 		int i;
+ 
++		/* CVE-2008-0009, CVE-2008-0010 fix */ 
++		if(!access_ok(VERIFY_READ, base, len)) { 
++			error = -EFAULT; 
++			break; 
++		}
++
+ 		/*
+ 		 * Get user address base and length for this iovec.
+ 		 */
