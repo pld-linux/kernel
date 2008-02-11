@@ -127,7 +127,7 @@
 
 %define		_basever	2.6.16
 %define		_postver	.60
-%define		_rel		2
+%define		_rel		3
 %define		subname	%{?with_pax:-pax}%{?with_grsec_full:-grsecurity}%{?with_xen0:-xen0}%{?with_xenU:-xenU}
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de.UTF-8):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
@@ -287,6 +287,7 @@ Patch100:	linux-2.6-vs2.1.patch
 Patch101:	linux-2.6-vs2.1-suspend2.patch
 Patch102:	linux-2.6-vs2.1-128IPs.patch
 Patch103:	linux-vcontext-selinux.patch
+Patch104:	kernel-CVE-2008-0163.patch
 
 # from http://www.cl.cam.ac.uk/Research/SRG/netos/xen/downloads/xen-3.0.2-src.tgz
 Patch120:	xen-3.0-2.6.16.patch
@@ -912,6 +913,7 @@ rm -rf suspend2-%{suspend_version}-for-2.6.16.9
 %patch101 -p1
 %patch102 -p1
 %patch103 -p1
+%patch104 -p1
 
 %if %{with xen0} || %{with xenU}
 %ifarch %{ix86} %{x8664} ia64
