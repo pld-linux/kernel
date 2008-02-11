@@ -102,7 +102,7 @@
 %define		_prepatch		%{nil}
 %define		_pre_rc			%{nil}
 %define		_rc			%{nil}
-%define		_rel			0.1
+%define		_rel			0.2
 %define		subname			%{?with_pax:-pax}%{?with_grsec_full:-grsecurity}%{?with_xen0:-xen0}%{?with_xenU:-xenU}
 
 %define		_enable_debug_packages			0
@@ -307,6 +307,7 @@ Patch141:	kernel-unionfs-vserver.patch
 Patch160:	linux-2.6-aic94xx_with_included_firmware.patch
 
 Patch200:	linux-2.6-ppc-ICE-hacks.patch
+Patch201:	kernel-ppc-export-copy_page.patch
 
 # The following patch extend the routing functionality in Linux
 # to support static routes (defined by user), new way to use the
@@ -926,6 +927,7 @@ install -m 755 %{SOURCE6} .
 
 %ifarch ppc ppc64
 %patch200 -p1
+%patch201 -p1
 %endif
 
 # routes
