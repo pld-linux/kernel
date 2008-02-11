@@ -98,7 +98,7 @@
 %endif
 
 %define		_basever		2.6.24
-%define		_postver		.1
+%define		_postver		.2
 %define		_prepatch		%{nil}
 %define		_pre_rc			%{nil}
 %define		_rc			%{nil}
@@ -139,7 +139,7 @@ Source90:	http://www.kernel.org/pub/linux/kernel/v2.6/testing/patch-%{_prepatch}
 %endif
 %if "%{_postver}" != "%{nil}"
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
-# Source1-md5:	86d55d5080217b2e79e0fff227218cd1
+# Source1-md5:	5e7fb6b61bd5af063ddd50b548355e94
 %endif
 
 Source3:	kernel-autoconf.h
@@ -235,8 +235,6 @@ Patch40:	kernel-layer7.patch
 
 # http://www.ssi.bg/~ja/nfct/ipvs-nfct-2.6.24-1.diff
 Patch41:	kernel-ipvs-nfct.patch
-
-Patch42:	kernel-vmsplice.patch
 
 ### End netfilter
 
@@ -806,8 +804,6 @@ install -m 755 %{SOURCE6} .
 
 # ipvs-nfct
 %patch41 -p1
-
-%patch42 -p1
 
 ##
 # end of netfilter
