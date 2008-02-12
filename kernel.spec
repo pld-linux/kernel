@@ -278,8 +278,8 @@ Patch82:	linux-3w-9xxx.patch
 Patch83:	linux-tg3-3.81c.patch
 
 # IPSEC KLIPS
-Patch90:        http://www.openswan.org/download/openswan-2.4.9.kernel-2.6-klips.patch.gz
-Patch91:        http://www.openswan.org/download/openswan-2.4.9.kernel-2.6-natt.patch.gz
+Patch90:	http://www.openswan.org/download/openswan-2.4.9.kernel-2.6-klips.patch.gz
+Patch91:	http://www.openswan.org/download/openswan-2.4.9.kernel-2.6-natt.patch.gz
 Patch92:	linux-asm_segment_h.patch
 
 # vserver from: http://vserver.13thfloor.at/Experimental/patch-2.6.16-vs2.1.1-rc15.diff
@@ -339,11 +339,12 @@ Autoreqprov:	no
 Requires(post):	coreutils
 Requires(post):	geninitrd >= 2.57
 Requires(post):	module-init-tools >= 0.9.9
+Requires:	/sbin/depmod
 Requires:	coreutils
 Requires:	geninitrd >= 2.57
 Requires:	module-init-tools >= 0.9.9
-Provides:	%{name}-up = %{epoch}:%{version}-%{release}
 Provides:	%{name}(netfilter) = %{netfilter_snap}
+Provides:	%{name}-up = %{epoch}:%{version}-%{release}
 %if %{with xen0}
 Provides:	kernel(xen0) = %{xen_version}
 %endif
@@ -367,7 +368,6 @@ Conflicts:	reiser4progs < %{_reiser4progs_ver}
 Conflicts:	reiserfsprogs < %{_reiserfsprogs_ver}
 Conflicts:	udev < %{_udev_ver}
 Conflicts:	util-linux < %{_util_linux_ver}
-Conflicts:	vserver-packages
 Conflicts:	xfsprogs < %{_xfsprogs_ver}
 %if %{with xen0} || %{with xenU}
 ExclusiveArch:	%{ix86} %{x8664}
@@ -561,6 +561,7 @@ Group:		Base/Kernel
 Requires(post):	coreutils
 Requires(post):	geninitrd >= 2.57
 Requires(post):	module-init-tools >= 0.9.9
+Requires:	/sbin/depmod
 Requires:	coreutils
 Requires:	geninitrd >= 2.26
 Requires:	module-init-tools >= 0.9.9
@@ -586,7 +587,6 @@ Conflicts:	reiser4progs < %{_reiser4progs_ver}
 %endif
 Conflicts:	reiserfsprogs < %{_reiserfsprogs_ver}
 Conflicts:	util-linux < %{_util_linux_ver}
-Conflicts:	vserver-packages
 Conflicts:	xfsprogs < %{_xfsprogs_ver}
 Autoreqprov:	no
 
