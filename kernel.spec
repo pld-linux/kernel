@@ -127,7 +127,7 @@
 
 %define		_basever	2.6.16
 %define		_postver	.60
-%define		_rel		3
+%define		_rel		4
 %define		subname	%{?with_pax:-pax}%{?with_grsec_full:-grsecurity}%{?with_xen0:-xen0}%{?with_xenU:-xenU}
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de.UTF-8):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
