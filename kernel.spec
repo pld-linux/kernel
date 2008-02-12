@@ -363,6 +363,7 @@ Autoreqprov:	no
 Requires(post):	coreutils
 Requires(post):	geninitrd >= 2.57
 Requires(post):	module-init-tools >= 0.9.9
+Requires:	/sbin/depmod
 Requires:	coreutils
 Requires:	geninitrd >= 2.57
 Requires:	module-init-tools >= 0.9.9
@@ -370,13 +371,12 @@ Provides:	%{name}(netfilter) = %{netfilter_snap}
 %if %{with xen0} || %{with xenU}
 Provides:	kernel(xen) = %{_xen_version}
 %endif
-Obsoletes:	kernel-smp
 Obsoletes:	kernel-misc-fuse
 Obsoletes:	kernel-modules
 Obsoletes:	kernel-net-hostap
 Obsoletes:	kernel-net-ieee80211
 Obsoletes:	kernel-net-ipp2p
-Conflicts:	vserver-packages
+Obsoletes:	kernel-smp
 Conflicts:	e2fsprogs < 1.29
 Conflicts:	isdn4k-utils < 3.1pre1
 Conflicts:	jfsutils < 1.1.3
