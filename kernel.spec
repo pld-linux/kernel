@@ -1331,6 +1331,7 @@ perl %{SOURCE7} %{_kernelsrcdir} $KERNEL_BUILD_DIR
 %if %{with up} || %{with smp}
 # ghosted initrd
 touch $RPM_BUILD_ROOT/boot/initrd-%{kernel_release}{,smp}.gz
+install -d $RPM_BUILD_ROOT/lib/modules/%{kernel_release}{,smp}
 rm -f $RPM_BUILD_ROOT/lib/modules/%{kernel_release}{,smp}/{build,source}
 touch $RPM_BUILD_ROOT/lib/modules/%{kernel_release}{,smp}/{build,source}
 %endif
