@@ -125,9 +125,19 @@
 
 %define		xen_version		3.0.2
 
+# Our Kernel ABI, increase this when you want out of source modules being rebuilt
+# Usually same as %{_rel}
+%define		KABI		5
+
+# kernel release (used in filesystem and eventually in uname -r)
+# modules will be looked from /lib/modules/%{kernel_release}%{?smp}
+# _localversion is just that without version for "> localversion"
+%define		_localversion %{KABI}%{xen}
+%define		kernel_release %{version}%{subname}-%{_localversion}
+
 %define		_basever	2.6.16
 %define		_postver	.60
-%define		_rel		4
+%define		_rel		5
 %define		subname	%{?with_pax:-pax}%{?with_grsec_full:-grsecurity}%{?with_xen0:-xen0}%{?with_xenU:-xenU}
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de.UTF-8):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
@@ -344,6 +354,7 @@ Requires:	coreutils
 Requires:	geninitrd >= 2.57
 Requires:	module-init-tools >= 0.9.9
 Provides:	%{name}(netfilter) = %{netfilter_snap}
+Provides:	%{name}(vermagic) = %{kernel_release}
 Provides:	%{name}-up = %{epoch}:%{version}-%{release}
 %if %{with xen0}
 Provides:	kernel(xen0) = %{xen_version}
@@ -388,11 +399,6 @@ BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 %define		initrd_dir	/boot
 %endif
 
-# kernel release (used in filesystem and eventually in uname -r)
-# modules will be looked from /lib/modules/%{kernel_release}%{?smp}
-# _localversion is just that without version for "> localversion"
-%define		_localversion %{release}%{xen}
-%define		kernel_release %{version}-%{_localversion}
 %define		_kernelsrcdir	/usr/src/linux%{subname}-%{version}
 
 %if "%{_target_base_arch}" != "%{_arch}"
@@ -566,6 +572,7 @@ Requires:	coreutils
 Requires:	geninitrd >= 2.26
 Requires:	module-init-tools >= 0.9.9
 Provides:	%{name}(netfilter) = %{netfilter_snap}
+Provides:	%{name}-smp(vermagic) = %{kernel_release}
 %if %{with xen0}
 Provides:	kernel(xen0) = %{xen_version}
 %endif
@@ -963,7 +970,7 @@ rm -rf suspend2-%{suspend_version}-for-2.6.16.9
 %endif
 
 # Fix EXTRAVERSION in main Makefile
-sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{_postver}#g' Makefile
+sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{_postver}%{subname}#g' Makefile
 
 # on sparc this line causes CONFIG_INPUT=m (instead of =y), thus breaking build
 sed -i -e '/select INPUT/d' net/bluetooth/hidp/Kconfig
@@ -1324,8 +1331,8 @@ perl %{SOURCE7} %{_kernelsrcdir} $KERNEL_BUILD_DIR
 %if %{with up} || %{with smp}
 # ghosted initrd
 touch $RPM_BUILD_ROOT/boot/initrd-%{kernel_release}{,smp}.gz
-rm -f /lib/modules/%{kernel_release}{,smp}/{build,source}
-touch /lib/modules/%{kernel_release}{,smp}/{build,source}
+rm -f $RPM_BUILD_ROOT/lib/modules/%{kernel_release}{,smp}/{build,source}
+touch $RPM_BUILD_ROOT/lib/modules/%{kernel_release}{,smp}/{build,source}
 %endif
 
 %clean
