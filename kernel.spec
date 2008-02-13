@@ -1324,6 +1324,8 @@ perl %{SOURCE7} %{_kernelsrcdir} $KERNEL_BUILD_DIR
 %if %{with up} || %{with smp}
 # ghosted initrd
 touch $RPM_BUILD_ROOT/boot/initrd-%{kernel_release}{,smp}.gz
+rm -f /lib/modules/%{kernel_release}{,smp}/{build,source}
+touch /lib/modules/%{kernel_release}{,smp}/{build,source}
 %endif
 
 %clean
@@ -1487,6 +1489,24 @@ if [ "$1" = "0" ]; then
 	fi
 fi
 
+%triggerin module-build -- %{name} = %{epoch}:%{version}-%{release}
+ln -sfn %{_kernelsrcdir} /lib/modules/%{kernel_release}/build
+ln -sfn %{_kernelsrcdir} /lib/modules/%{kernel_release}/source
+
+%triggerun module-build -- %{name} = %{epoch}:%{version}-%{release}
+if [ "$1" = 0 ]; then
+	rm -f /lib/modules/%{kernel_release}/{build,source}
+fi
+
+%triggerin module-build -- %{name}-smp = %{epoch}:%{version}-%{release}
+ln -sfn %{_kernelsrcdir} /lib/modules/%{kernel_release}smp/build
+ln -sfn %{_kernelsrcdir} /lib/modules/%{kernel_release}smp/source
+
+%triggerun module-build -- %{name}-smp = %{epoch}:%{version}-%{release}
+if [ "$1" = 0 ]; then
+	rm -f /lib/modules/%{kernel_release}smp/{build,source}
+fi
+
 %if %{with up}
 %files
 %defattr(644,root,root,755)
@@ -1537,6 +1557,9 @@ fi
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/usb/host/sl811_cs.ko*
 %endif
 %ghost /lib/modules/%{kernel_release}/modules.*
+# symlinks pointing to kernelsrcdir
+%ghost /lib/modules/%{kernel_release}/build
+%ghost /lib/modules/%{kernel_release}/source
 %dir %{_sysconfdir}/modprobe.d/%{kernel_release}
 
 %ifarch alpha %{ix86} %{x8664} ppc ppc64 sparc sparc64
@@ -1652,6 +1675,9 @@ fi
 %exclude /lib/modules/%{kernel_release}smp/kernel/drivers/usb/host/sl811_cs.ko*
 %endif
 %ghost /lib/modules/%{kernel_release}smp/modules.*
+# symlinks pointing to kernelsrcdir
+%ghost /lib/modules/%{kernel_release}smp/build
+%ghost /lib/modules/%{kernel_release}smp/source
 %dir %{_sysconfdir}/modprobe.d/%{kernel_release}smp
 
 %ifarch alpha %{ix86} %{x8664} ppc ppc64 sparc sparc64
@@ -1733,15 +1759,6 @@ fi
 
 %files module-build -f aux_files
 %defattr(644,root,root,755)
-# symlinks pointing to kernelsrcdir
-%if %{with up}
-%dir /lib/modules/%{kernel_release}
-/lib/modules/%{kernel_release}/build
-%endif
-%if %{with smp}
-%dir /lib/modules/%{kernel_release}smp
-/lib/modules/%{kernel_release}smp/build
-%endif
 %{_kernelsrcdir}/Kbuild
 %{_kernelsrcdir}/localversion
 %{_kernelsrcdir}/arch/*/kernel/asm-offsets.*
