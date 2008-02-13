@@ -1,6 +1,7 @@
 audits
 rename
 netlink
+fix from pax patch for 2.6.23+
 diff -urp a/grsecurity/gracl.c c/grsecurity/gracl.c
 --- a/grsecurity/gracl.c	2007-12-10 23:52:36.040492750 +0100
 +++ c/grsecurity/gracl.c	2007-12-11 00:32:38.094611750 +0100
@@ -271,3 +272,14 @@ diff -upr a/security/commoncap.c c/security/commoncap.c
  	return 0;
  }
  
+--- linux/include/asm-x86_64/processor.h	2008-01-24 23:58:37.000000000 +0100
++++ linux-pax/include/asm-x86_64/processor.h	2008-01-25 15:28:01.000000000 +0100
+@@ -142,7 +142,7 @@ static inline void clear_in_cr4 (unsigne
+ /* This decides where the kernel will search for a free chunk of vm
+  * space during mmap's.
+  */
+-#define IA32_PAGE_OFFSET ((current->personality & ADDR_LIMIT_3GB) ? 0xc0000000 : 0xFFFFe000)
++#define IA32_PAGE_OFFSET ((current->personality & ADDR_LIMIT_3GB) ? 0xc0000000 : 0xFFFFf000)
+ 
+ #define TASK_SIZE 		(test_thread_flag(TIF_IA32) ? IA32_PAGE_OFFSET : TASK_SIZE64)
+ #define TASK_SIZE_OF(child) 	((test_tsk_thread_flag(child, TIF_IA32)) ? IA32_PAGE_OFFSET : TASK_SIZE64)
