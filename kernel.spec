@@ -125,7 +125,7 @@
 
 %define		xen_version		3.0.2
 
-# Our Kernel ABI, increase this when you want out of source modules being rebuilt
+# Our Kernel ABI, increase this when you want the out of source modules being rebuilt
 # Usually same as %{_rel}
 %define		KABI		6
 
