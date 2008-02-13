@@ -127,7 +127,7 @@
 
 # Our Kernel ABI, increase this when you want out of source modules being rebuilt
 # Usually same as %{_rel}
-%define		KABI		5
+%define		KABI		6
 
 # kernel release (used in filesystem and eventually in uname -r)
 # modules will be looked from /lib/modules/%{kernel_release}%{?smp}
@@ -137,7 +137,7 @@
 
 %define		_basever	2.6.16
 %define		_postver	.60
-%define		_rel		5
+%define		_rel		6
 %define		subname	%{?with_pax:-pax}%{?with_grsec_full:-grsecurity}%{?with_xen0:-xen0}%{?with_xenU:-xenU}
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de.UTF-8):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
