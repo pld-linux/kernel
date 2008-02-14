@@ -406,6 +406,7 @@ BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 	%define	DepMod /bin/true
 
 	%if "%{_arch}" == "sparc" && "%{_target_base_arch}" == "sparc64"
+	%define CrossOpts ARCH=%{_target_base_arch} CROSS_COMPILE=%{_target_cpu}-pld-linux- LD=%{__ld} AS=%{__as} NM=%{__nm} AR=%{__ar} RANLIB=%{__ranlib} STRIP=%{__strip}
 	%define	DepMod /sbin/depmod
 	%endif
 
@@ -910,7 +911,9 @@ rm -rf suspend2-%{suspend_version}-for-2.6.16.9
 
 %patch81 -p1
 %patch82 -p1
+%ifnarch sparc64
 %patch83 -p1
+%endif
 
 %patch90 -p1
 %patch91 -p1
