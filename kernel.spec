@@ -125,7 +125,10 @@
 
 %define		xen_version		3.0.2
 
-%define		alt_kernel	%{?with_pax:pax}%{?with_grsec_full:grsecurity}%{?with_xen0:xen0}%{?with_xenU:xenU}
+%define		__alt_kernel	%{?with_pax:pax}%{?with_grsec_full:grsecurity}%{?with_xen0:xen0}%{?with_xenU:xenU}
+%if 0%{?__alt_kernel}
+%define		alt_kernel	%{__alt_kernel}
+%endif
 
 # Our Kernel ABI, increase this when you want the out of source modules being rebuilt
 # Usually same as %{_rel}
@@ -139,7 +142,7 @@
 
 %define		_basever	2.6.16
 %define		_postver	.60
-%define		_rel		7
+%define		_rel		8
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de.UTF-8):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(et.UTF-8):	Linuxi kernel (ehk operatsioonisüsteemi tuum)
