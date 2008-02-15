@@ -126,7 +126,7 @@
 %define		xen_version		3.0.2
 
 %define		__alt_kernel	%{?with_pax:pax}%{?with_grsec_full:grsecurity}%{?with_xen0:xen0}%{?with_xenU:xenU}
-%if 0%{?__alt_kernel}
+%if "%{__alt_kernel}" != ""
 %define		alt_kernel	%{__alt_kernel}
 %endif
 
