@@ -132,7 +132,7 @@
 
 # Our Kernel ABI, increase this when you want the out of source modules being rebuilt
 # Usually same as %{_rel}
-%define		KABI		6
+%define		KABI		9
 
 # kernel release (used in filesystem and eventually in uname -r)
 # modules will be looked from /lib/modules/%{kernel_release}%{?smp}
@@ -142,7 +142,7 @@
 
 %define		_basever	2.6.16
 %define		_postver	.60
-%define		_rel		8
+%define		_rel		9
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de.UTF-8):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(et.UTF-8):	Linuxi kernel (ehk operatsioonisüsteemi tuum)
@@ -977,7 +977,7 @@ rm -rf suspend2-%{suspend_version}-for-2.6.16.9
 %endif
 
 # Fix EXTRAVERSION in main Makefile
-sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{_postver}%{_alt_kernel}#g' Makefile
+sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{_postver}%{?alt_kernel:_%{alt_kernel}}#g' Makefile
 
 # on sparc this line causes CONFIG_INPUT=m (instead of =y), thus breaking build
 sed -i -e '/select INPUT/d' net/bluetooth/hidp/Kconfig
