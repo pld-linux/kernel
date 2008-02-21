@@ -102,7 +102,7 @@
 %define		_prepatch		%{nil}
 %define		_pre_rc			%{nil}
 %define		_rc			%{nil}
-%define		_rel			0.2
+%define		_rel			0.3
 %define		subname			%{?with_pax:-pax}%{?with_grsec_full:-grsecurity}%{?with_xen0:-xen0}%{?with_xenU:-xenU}
 
 %define		_enable_debug_packages			0
@@ -314,9 +314,9 @@ Patch201:	kernel-ppc-export-copy_page.patch
 # alternative routes, the reverse path protection (rp_filter),
 # the NAT processing to use correctly the routing when multiple
 # gateways are used.
-# http://www.ssi.bg/~ja/routes-2.6.22-15.diff
+# http://www.ssi.bg/~ja/routes-2.6.24-15.diff
 # We need to disable CONFIG_IP_ROUTE_MULTIPATH_CACHED
-Patch300:	kernel-routes-2.6.22-15.diff
+Patch300:	kernel-routes-2.6.24-15.diff
 
 # For compatibility with (not updated) blobs like ... ?
 # Before 2.6.20 we had CONFIG_REGPARM option disabled.
