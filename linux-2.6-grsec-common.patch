@@ -39,22 +39,8 @@
 ===
 === let vserver block signals before grsec
 ===
---- a/kernel/signal.c	2007-10-02 00:08:49.954483500 +0200
-+++ b/kernel/signal.c	2007-10-02 00:24:31.969355750 +0200
-@@ -539,11 +539,11 @@ static int check_kill_permission(int sig
- 		return error;
- 
- 	error = -EPERM;
--	if ((((sig != SIGCONT) ||
-+	if (((sig != SIGCONT) ||
- 		(process_session(current) != process_session(t)))
- 	    && (current->euid ^ t->suid) && (current->euid ^ t->uid)
- 	    && (current->uid ^ t->suid) && (current->uid ^ t->uid)
--	    && !capable(CAP_KILL)) || gr_handle_signal(t, sig))
-+	    && !capable(CAP_KILL))
- 		return error;
- 
- 	error = -ESRCH;
+--- a/kernel/signal.c  2007-10-02 00:08:49.954483500 +0200
++++ b/kernel/signal.c  2007-10-02 00:24:31.969355750 +0200
 @@ -553,6 +553,11 @@ static int check_kill_permission(int sig
  			sig, info, t, vx_task_xid(t), t->pid, current->xid);
  		return error;
