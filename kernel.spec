@@ -6,7 +6,6 @@
 #
 # TODO:
 # - benchmark NO_HZ & HZ=1000 vs HZ=300 on i686
-# - grsec_full (waiting for author)
 # - vserver 2.3 (waiting for authors)
 # - apparmor (no future?)
 #
@@ -102,7 +101,7 @@
 %define		_prepatch		%{nil}
 %define		_pre_rc			%{nil}
 %define		_rc			%{nil}
-%define		_rel			0.3
+%define		_rel			0.4
 %define		subname			%{?with_pax:-pax}%{?with_grsec_full:-grsecurity}%{?with_xen0:-xen0}%{?with_xenU:-xenU}
 
 %define		_enable_debug_packages			0
@@ -340,8 +339,7 @@ Patch9997:	pax_selinux_hooks-2.6.20.patch
 # based on http://www.grsecurity.net/~paxguy1/pax-linux-2.6.24-test8.patch
 Patch9998:	kernel-pax.patch
 
-# based on http://www.grsecurity.net/~spender/grsecurity-2.1.11-2.6.23-200710111225.patch
-# todo
+# based on http://www.grsecurity.net/~spender/grsecurity-2.1.11-2.6.24.2-200802192340.patch
 Patch9999:	linux-2.6-grsec_full.patch
 Patch10000:	linux-2.6-grsec-caps.patch
 Patch10001:	linux-2.6-grsec-common.patch
@@ -998,11 +996,8 @@ PaXconfig () {
 	set -x
 	%ifarch %{ix86}
 		sed -i 's:# CONFIG_PAX_SEGMEXEC is not set:CONFIG_PAX_SEGMEXEC=y:' $1
-		sed -i 's:# CONFIG_PAX_DEFAULT_SEGMEXEC is not set:CONFIG_PAX_DEFAULT_SEGMEXEC=y:' $1
-		%ifnarch i386 i486
-			sed -i 's:# CONFIG_PAX_NOVSYSCALL is not set:CONFIG_PAX_NOVSYSCALL=y:' $1
-		%endif
-
+		# performance impact on CPUs without NX bit
+		sed -i 's:# CONFIG_PAX_PAGEEXEC=y:# CONFIG_PAX_PAGEEXEC is not set:' $1
 		# Testing KERNEXEC
 
 		# sed -i 's:CONFIG_HOTPLUG_PCI_COMPAQ_NVRAM=y:# CONFIG_HOTPLUG_PCI_COMPAQ_NVRAM is not set:' $1
@@ -1021,10 +1016,6 @@ PaXconfig () {
 
 	%ifarch sparc sparc64 alpha
 		sed -i 's:# CONFIG_PAX_EMUPLT is not set:CONFIG_PAX_EMUPLT=y:' $1
-	%endif
-
-	%ifarch %{ix8664}
-		sed -i 's:# CONFIG_PAX_MEMORY_UDEREF is not set:CONFIG_PAX_MEMORY_UDEREF=y:' $1
 	%endif
 
 	# Now we have to check MAC system integration. Grsecurity (full) uses PAX_HAVE_ACL_FLAGS
