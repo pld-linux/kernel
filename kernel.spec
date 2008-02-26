@@ -1569,6 +1569,9 @@ fi
 %if %{have_oss} && %{have_isa} && %{without xen0} && %{without xenU}
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/media/radio/miropcm20.ko*
 %endif
+%if %{with abi}
+/lib/modules/%{kernel_release}/kernel/abi
+%endif
 /lib/modules/%{kernel_release}/kernel/fs
 /lib/modules/%{kernel_release}/kernel/kernel
 /lib/modules/%{kernel_release}/kernel/lib
@@ -1686,6 +1689,9 @@ fi
 %endif
 %if %{have_oss} && %{have_isa} && %{without xen0} && %{without xenU}
 %exclude /lib/modules/%{kernel_release}smp/kernel/drivers/media/radio/miropcm20.ko*
+%endif
+%if %{with abi}
+/lib/modules/%{kernel_release}smp/kernel/abi
 %endif
 /lib/modules/%{kernel_release}smp/kernel/fs
 /lib/modules/%{kernel_release}smp/kernel/kernel
