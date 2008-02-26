@@ -101,12 +101,12 @@
 %define		_prepatch		%{nil}
 %define		_pre_rc			%{nil}
 %define		_rc			%{nil}
-%define		_rel			0.4
+%define		_rel			0.5
 %define		subname			%{?with_pax:-pax}%{?with_grsec_full:-grsecurity}%{?with_xen0:-xen0}%{?with_xenU:-xenU}
 
 %define		_enable_debug_packages			0
 
-%define		squashfs_version	3.2
+%define		squashfs_version	3.3
 %define		tuxonice_version	3.0-rc1
 %define		netfilter_snap		20070806
 %define		xen_version		3.0.2
@@ -195,8 +195,9 @@ Patch4:		fbsplash-0.9.2-r5-2.6.20-rc6.patch
 # http://dev.gentoo.org/~spock/projects/vesafb-tng/archive/vesafb-tng-1.0-rc2-2.6.20-rc2.patch
 Patch5:		vesafb-tng-1.0-rc2-2.6.20-rc2.patch
 
-# Squashfs from squashfs: http://mesh.dl.sourceforge.net/sourceforge/squashfs/squashfs3.2-r2.tar.gz for linux-2.6.20
-Patch6:		squashfs%{squashfs_version}-patch
+# http://mesh.dl.sourceforge.net/sourceforge/squashfs/squashfs3.3.tgz
+# squashfs3.3/kernel-patches/linux-2.6.24/squashfs3.3-patch
+Patch6:		kernel-squashfs.patch
 Patch8:		linux-fbcon-margins.patch
 Patch9:		linux-static-dev.patch
 
@@ -237,9 +238,8 @@ Patch41:	kernel-ipvs-nfct.patch
 
 ### End netfilter
 
-# based on http://www.linuximq.net/patchs/linux-2.6.21-img2.diff with 2.6.23 fixes
+# based on http://www.linuximq.net/patchs/linux-2.6.24-imq.diff
 # some people report problems when using imq with wrr.
-
 Patch50:	kernel-imq.patch
 
 # previously based on ftp://ftp.namesys.com/pub/reiser4-for-2.6/2.6.22/reiser4-for-2.6.22-2.patch.gz
@@ -328,6 +328,7 @@ Patch2000:	kernel-small_fixes.patch
 Patch2001:	linux-2.6.21.1-pwc-uncompress.patch
 
 # kill some thousands of warnings
+# (only warnings, so just remove parts of this patch if conflics)
 Patch2500:	linux-2.6-warnings.patch
 
 Patch5000:	apparmor-2.6.20.3-v405-fullseries.diff
@@ -878,7 +879,6 @@ install -m 755 %{SOURCE6} .
 %patch500 -p1
 %endif
 
-# FIXME !!! 2.6.24
 %patch2500 -p1
 
 # FIXME !!! 2.6.24 (no modular security? crap)
@@ -886,7 +886,7 @@ install -m 755 %{SOURCE6} .
 # %patch5000 -p1
 # %patch5001 -p1
 
-# grsecurity & pax stuff - temporary - work in progress
+# grsecurity & pax stuff
 #
 
 %if %{with pax_full}
@@ -1081,7 +1081,7 @@ BuildConfig() {
 # vesafb-tng
 	cat %{SOURCE44} >> arch/%{target_arch_dir}/defconfig
 
-# grsecurity & pax stuff - temporary - work in progress
+# grsecurity & pax stuff
 #
 
 %if %{with pax_full}
