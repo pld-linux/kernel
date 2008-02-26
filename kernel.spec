@@ -1236,10 +1236,8 @@ BuildConfig() {
 	echo "CONFIG_ROOT_NFS=y" >> arch/%{_target_base_arch}/defconfig
 %endif
 
-%ifarch %{ix86}
 %if %{with abi}
 	cat %{SOURCE34} >> arch/%{_target_base_arch}/defconfig
-%endif
 %endif
 
 %if %{with lustre}
