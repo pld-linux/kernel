@@ -343,6 +343,7 @@ Patch9998:	kernel-pax.patch
 Patch9999:	linux-2.6-grsec_full.patch
 Patch10000:	linux-2.6-grsec-caps.patch
 Patch10001:	linux-2.6-grsec-common.patch
+Patch10002:	kernel-grsec_fixes.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 3:2.14.90.0.7
@@ -892,12 +893,14 @@ install -m 755 %{SOURCE6} .
 %patch9999 -p1
 %{?with_vserver:%patch10000 -p1}
 %{?with_vserver:%patch10001 -p1}
+%{?with_vserver:%patch10002 -p1}
 %else
 
 %if %{with grsec_full}
 %patch9999 -p1
 %{?with_vserver:%patch10000 -p1}
 %{?with_vserver:%patch10001 -p1}
+%{?with_vserver:%patch10002 -p1}
 %else
 %if %{with grsec_minimal}
 %patch1000 -p1
@@ -997,7 +1000,7 @@ PaXconfig () {
 	%ifarch %{ix86}
 		sed -i 's:# CONFIG_PAX_SEGMEXEC is not set:CONFIG_PAX_SEGMEXEC=y:' $1
 		# performance impact on CPUs without NX bit
-		sed -i 's:# CONFIG_PAX_PAGEEXEC=y:# CONFIG_PAX_PAGEEXEC is not set:' $1
+		sed -i 's:CONFIG_PAX_PAGEEXEC=y:# CONFIG_PAX_PAGEEXEC is not set:' $1
 		# Testing KERNEXEC
 
 		# sed -i 's:CONFIG_HOTPLUG_PCI_COMPAQ_NVRAM=y:# CONFIG_HOTPLUG_PCI_COMPAQ_NVRAM is not set:' $1
@@ -1024,9 +1027,14 @@ PaXconfig () {
 	# PAX_HOOK_ACL_FLAGS. SELinux should also be able to make PaX settings via hooks
 
 	%if %{with grsec_full}
+		# Hardening grsec options if with pax 
+		sed -i "s:# CONFIG_GRKERNSEC_PROC_MEMMAP is not set:CONFIG_GRKERNSEC_PROC_MEMMAP=y:" $1
+		# almost rational (see HIDESYM help) 
+		sed -i "s:# CONFIG_GRKERNSEC_HIDESYM is not set:CONFIG_GRKERNSEC_HIDESYM=y:" $1
+
 		# no change needed CONFIG=PAX_HAVE_ACL_FLAGS=y is taken from the kernel-pax.config
 	%else
-		# grsec_minimal or selinux ?
+		# selinux or other hooks?
 		sed -i 's:CONFIG_PAX_HAVE_ACL_FLAGS=y:# CONFIG_PAX_HAVE_ACL_FLAGS is not set:' $1
 		sed -i 's:# CONFIG_PAX_HOOK_ACL_FLAGS is not set:CONFIG_PAX_HOOK_ACL_FLAGS=y:' $1
 	%endif
