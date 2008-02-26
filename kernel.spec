@@ -149,10 +149,6 @@ Source4:	kernel-config.h
 Source5:	kernel-ppclibs.Makefile
 Source7:	kernel-module-build.pl
 
-# TODO - cleanup
-Source14:	http://ace-host.stuart.id.au/russell/files/debian/sarge/kernel-patch-linuxabi/kernel-patch-linuxabi_20060404.tar.gz
-# Source14-md5:	bf32f8baa98aeafa75a672097acd9cc8
-
 Source20:	kernel-i386.config
 Source21:	kernel-x86_64.config
 Source22:	kernel-sparc.config
@@ -380,6 +376,9 @@ Patch2500:	linux-2.6-warnings.patch
 
 Patch5000:	apparmor-2.6.20.3-v405-fullseries.diff
 Patch5001:	linux-2.6-apparmor-caps.patch
+
+# ABI
+Patch6000:	http://www.feise.com/~jfeise/Downloads/linux-abi/linux-abi-2.6.22.3_3.diff.bz2
 
 # not ready yet
 Patch9997:	pax_selinux_hooks-2.6.20.patch
@@ -721,7 +720,7 @@ Pakiet zawiera dokumentację do jądra Linuksa pochodzącą z katalogu
 /usr/src/linux/Documentation.
 
 %prep
-%setup -q -n linux-%{_basever}%{_rc} %{?with_abi:-a14}
+%setup -q -n linux-%{_basever}%{_rc}
 
 # hack against warning in pax/grsec
 %ifarch alpha
@@ -1008,7 +1007,7 @@ install %{SOURCE5} Makefile.ppclibs
 %patch2001 -p1
 
 %if %{with abi}
-patch -p1 -s < kernel-patch-linuxabi-20060404/linuxabi-2.6.17-0.patch
+%patch6000 -p1
 %endif
 
 # Fix EXTRAVERSION in main Makefile
