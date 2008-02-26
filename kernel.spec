@@ -1534,7 +1534,7 @@ fi
 %{_kernelsrcdir}/Kbuild
 %{_kernelsrcdir}/localversion
 %{_kernelsrcdir}/arch/*/kernel/asm-offsets*
-%{_kernelsrcdir}/arch/*/kernel/sigframe.h
+%{_kernelsrcdir}/arch/*/kernel/sigframe*.h
 %dir %{_kernelsrcdir}/scripts
 %dir %{_kernelsrcdir}/scripts/kconfig
 %{_kernelsrcdir}/scripts/Kbuild.include
@@ -1561,7 +1561,7 @@ fi
 %{_kernelsrcdir}/arch/*/[!Mk]*
 %{_kernelsrcdir}/arch/*/kernel/[!M]*
 %exclude %{_kernelsrcdir}/arch/*/kernel/asm-offsets*
-%exclude %{_kernelsrcdir}/arch/*/kernel/sigframe.h
+%exclude %{_kernelsrcdir}/arch/*/kernel/sigframe*.h
 %{_kernelsrcdir}/block
 %{_kernelsrcdir}/crypto
 %{_kernelsrcdir}/drivers
