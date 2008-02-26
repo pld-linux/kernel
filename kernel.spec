@@ -28,7 +28,8 @@
 %bcond_with	pae		# build PAE (HIGHMEM64G) support on uniprocessor
 %bcond_with	nfsroot		# build with root on NFS support
 %bcond_with	reiserfs4	# build with ReiserFS 4 support
-%bcond_with	ext2compiled		# compile ext2 into kernel to be able to boot from ext2 rootfs
+%bcond_with	ext2compiled	# compile ext2 into kernel to be able to boot from ext2 rootfs
+%bcond_with     abi             # build ABI support only ix86 !!
 
 %{?debug:%define with_verbose 1}
 
@@ -79,6 +80,10 @@
 %undefine	with_pcmcia
 %define		have_drm	0
 %define		have_oss	0
+%endif
+
+%ifnarch %{ix86}
+%undefine       abi
 %endif
 
 %if %{with xen0}
@@ -195,6 +200,7 @@ Source47:	kernel-xenU.config
 Source48:	kernel-xen-extra.config
 Source49:	kernel-grsec+pax.config
 Source50:	kernel-openswan.config
+Source51:	kernel-abi.config
 ###
 #	Patches
 ###
@@ -254,6 +260,9 @@ Patch38:	pom-ng-unclean-%{netfilter_snap}.patch
 ###
 #	End netfilter
 ###
+
+# from http://ace-host.stuart.id.au/russell/files/debian/sarge/kernel-patch-linuxabi/kernel-patch-linuxabi_20060404.tar.gz
+Patch40:	linuxabi-2.6.16-0.patch
 
 # derived from http://dl.sourceforge.net/l7-filter/netfilter-layer7-v2.2.tar.gz
 Patch49:	kernel-2.6.13-2.6.16-layer7-2.2.patch
@@ -477,6 +486,7 @@ Netfilter module dated: %{netfilter_snap}
 %{?with_xenU:Xen U - enabled}
 %{?with_vesafb_tng:VesaFB New generation - enabled}
 %{?with_nfsroot:Root on NFS - enabled}
+%{?with_abi:Linux ABI support - enabled}
 
 %package vmlinux
 Summary:	vmlinux - uncompressed kernel image
@@ -628,6 +638,7 @@ Netfilter module dated: %{netfilter_snap}
 %{?with_xenU:Xen U - enabled}
 %{?with_vesafb_tng:VesaFB New generation - enabled}
 %{?with_nfsroot:Root on NFS - enabled}
+%{?with_abi:Linux ABI support - enabled}
 
 %description smp -l fr.UTF-8
 Ce package inclu une version SMP du noyau de Linux version {version}.
@@ -641,6 +652,7 @@ Netfilter module dated: %{netfilter_snap}
 %{?with_xenU:Xen U - enabled}
 %{?with_vesafb_tng:VesaFB New generation - enabled}
 %{?with_nfsroot:Root on NFS - enabled}
+%{?with_abi:Linux ABI support - enabled}
 
 %description smp -l pl.UTF-8
 Pakiet zawiera jądro SMP Linuksa w wersji %{version}. Jest ono
@@ -654,6 +666,7 @@ Netfilter module dated: %{netfilter_snap}
 %{?with_xenU:Xen U - enabled}
 %{?with_vesafb_tng:VesaFB New generation - enabled}
 %{?with_nfsroot:Root on NFS - enabled}
+%{?with_abi:Linux ABI support - enabled}
 
 %package smp-vmlinux
 Summary:	vmlinux - uncompressed SMP kernel image
@@ -891,6 +904,10 @@ rm -rf suspend2-%{suspend_version}-for-2.6.16.9
 ##
 # end of netfilter
 
+%if %{with abi}
+%patch40 -p1
+%endif
+
 %patch49 -p1
 
 %patch50 -p1
@@ -1078,6 +1095,10 @@ BuildConfig() {
 
 	# IPSEC KLIPS
 	cat %{SOURCE50} >> arch/%{_target_base_arch}/defconfig
+
+%if %{with abi}
+	cat %{SOURCE51} >> arch/%{_target_base_arch}/defconfig
+%endif
 
 %if %{with xen0} || %{with xenU}
 	sed -i "s:CONFIG_X86_PC=y:# CONFIG_X86_PC is not set:" arch/%{_target_base_arch}/defconfig
@@ -1801,6 +1822,9 @@ fi
 %{_kernelsrcdir}/arch/*/kernel/[!M]*
 %exclude %{_kernelsrcdir}/arch/*/kernel/asm-offsets.*
 %exclude %{_kernelsrcdir}/arch/*/kernel/sigframe.h
+%if %{with abi}
+%{_kernelsrcdir}/abi
+%endif /* abi */
 %{_kernelsrcdir}/block
 %{_kernelsrcdir}/crypto
 %{_kernelsrcdir}/drivers
