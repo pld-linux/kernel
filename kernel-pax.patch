@@ -2715,35 +2715,6 @@ diff -NurpX linux-2.6.22.6-pax/Documentation/dontdiff linux-2.6.22.6/arch/i386/k
 diff -NurpX linux-2.6.22.6-pax/Documentation/dontdiff linux-2.6.22.6/arch/i386/kernel/ptrace.c linux-2.6.22.6-pax/arch/i386/kernel/ptrace.c
 --- linux-2.6.22.6/arch/i386/kernel/ptrace.c	2007-07-09 01:32:17.000000000 +0200
 +++ linux-2.6.22.6-pax/arch/i386/kernel/ptrace.c	2007-07-10 02:05:11.000000000 +0200
-@@ -161,17 +161,20 @@ static unsigned long convert_eip_to_line
- 	 * and APM bios ones we just ignore here.
- 	 */
- 	if (seg & LDT_SEGMENT) {
--		u32 *desc;
-+		struct desc_struct *desc;
- 		unsigned long base;
- 
- 		down(&child->mm->context.sem);
--		desc = child->mm->context.ldt + (seg & ~7);
--		base = (desc[0] >> 16) | ((desc[1] & 0xff) << 16) | (desc[1] & 0xff000000);
--
--		/* 16-bit code segment? */
--		if (!((desc[1] >> 22) & 1))
--			addr &= 0xffff;
--		addr += base;
-+		if ((seg >> 3) < child->mm->context.size) {
-+			desc = &child->mm->context.ldt[seg >> 3];
-+			base = (desc->a >> 16) | ((desc->b & 0xff) << 16) | (desc->b & 0xff000000);
-+
-+			/* 16-bit code segment? */
-+			if (!((desc->b >> 22) & 1))
-+				addr &= 0xffff;
-+			addr += base;
-+		} else
-+			addr = -EINVAL;
- 		up(&child->mm->context.sem);
- 	}
- 	return addr;
 @@ -183,6 +186,9 @@ static inline int is_setting_trap_flag(s
  	unsigned char opcode[15];
  	unsigned long addr = convert_eip_to_linear(child, regs);
@@ -19641,7 +19612,7 @@ diff -NurpX linux-2.6.22.6-pax/Documentation/dontdiff linux-2.6.22.6/mm/mmap.c l
 +	}
 +#endif
 +
- 	vma->vm_flags = vm_flags | mm->def_flags;
+ 	vma->vm_flags = vm_flags | mm->def_flags | VM_DONTEXPAND;
 -	vma->vm_page_prot = protection_map[vma->vm_flags & 7];
 +	vma->vm_page_prot = vm_get_page_prot(vma->vm_flags);
  
