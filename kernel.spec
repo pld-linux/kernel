@@ -1515,6 +1515,11 @@ fi
 %ghost /boot/initrd-%{kernel_release}.gz
 %dir /lib/modules/%{kernel_release}
 %dir /lib/modules/%{kernel_release}/kernel
+
+%if %{with abi}
+/lib/modules/%{kernel_release}/kernel/abi
+%endif
+
 %ifnarch sparc
 /lib/modules/%{kernel_release}/kernel/arch
 %endif
