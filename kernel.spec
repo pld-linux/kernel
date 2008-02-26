@@ -100,11 +100,11 @@
 %endif
 
 %define		_basever		2.6.22
-%define		_postver		.18
+%define		_postver		.19
 %define		_prepatch		%{nil}
 %define		_pre_rc			%{nil}
 %define		_rc			%{nil}
-%define		_rel			2
+%define		_rel			1
 %define		subname			%{?with_pax:-pax}%{?with_grsec_full:-grsecurity}%{?with_xen0:-xen0}%{?with_xenU:-xenU}
 
 %define		_enable_debug_packages			0
@@ -141,7 +141,7 @@ Source90:	http://www.kernel.org/pub/linux/kernel/v2.6/testing/patch-%{_prepatch}
 %endif
 %if "%{_postver}" != "%{nil}"
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
-# Source1-md5:	639fe3f8e676a349ba74c5405f09dd99
+# Source1-md5:	066cc3bdd2783dcd01f6ff466e449ec0
 %endif
 
 Source3:	kernel-autoconf.h
