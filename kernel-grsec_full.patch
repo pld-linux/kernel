@@ -2748,35 +2748,6 @@ diff -urNp linux-2.6.22.1/arch/i386/kernel/process.c linux-2.6.22.1/arch/i386/ke
 diff -urNp linux-2.6.22.1/arch/i386/kernel/ptrace.c linux-2.6.22.1/arch/i386/kernel/ptrace.c
 --- linux-2.6.22.1/arch/i386/kernel/ptrace.c	2007-07-10 14:56:30.000000000 -0400
 +++ linux-2.6.22.1/arch/i386/kernel/ptrace.c	2007-08-02 11:38:45.000000000 -0400
-@@ -161,17 +162,20 @@ static unsigned long convert_eip_to_line
- 	 * and APM bios ones we just ignore here.
- 	 */
- 	if (seg & LDT_SEGMENT) {
--		u32 *desc;
-+		struct desc_struct *desc;
- 		unsigned long base;
- 
- 		down(&child->mm->context.sem);
--		desc = child->mm->context.ldt + (seg & ~7);
--		base = (desc[0] >> 16) | ((desc[1] & 0xff) << 16) | (desc[1] & 0xff000000);
--
--		/* 16-bit code segment? */
--		if (!((desc[1] >> 22) & 1))
--			addr &= 0xffff;
--		addr += base;
-+		if ((seg >> 3) < child->mm->context.size) {
-+			desc = &child->mm->context.ldt[seg >> 3];
-+			base = (desc->a >> 16) | ((desc->b & 0xff) << 16) | (desc->b & 0xff000000);
-+
-+			/* 16-bit code segment? */
-+			if (!((desc->b >> 22) & 1))
-+				addr &= 0xffff;
-+			addr += base;
-+		} else
-+			addr = -EINVAL;
- 		up(&child->mm->context.sem);
- 	}
- 	return addr;
 @@ -183,6 +187,9 @@ static inline int is_setting_trap_flag(s
  	unsigned char opcode[15];
  	unsigned long addr = convert_eip_to_linear(child, regs);
