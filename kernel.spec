@@ -365,8 +365,6 @@ Patch610:	kernel-export-show_task-2.6.18-vanilla.patch
 Patch611:	kernel-sd_iostats-2.6.22.patch
 Patch612:	kernel-LDISKFS_SUPER_MAGIC-2.6.20.patch
 
-Patch700:	kernel-netlink_run_queue.patch
-
 Patch1000:	linux-2.6-grsec-minimal.patch
 
 Patch2000:	kernel-small_fixes.patch
@@ -948,8 +946,6 @@ install %{SOURCE5} Makefile.ppclibs
 %patch611 -p1
 %patch612 -p1
 %endif
-
-%patch700 -p1
 
 %patch2500 -p1
 
