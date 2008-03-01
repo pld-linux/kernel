@@ -113,8 +113,13 @@ for l in f:
     hash = {}
     for item in c[1:]:
         try:
-            (key, value) = item.split('=')
-            hash[key] = value
+            try:
+                (key, value) = item.split('=')
+                hash[key] = value
+            except ValueError:
+                print "Invalid line: %s" % l.strip()
+                err = 1
+                continue
         except IndexError:
             print "Invalid line: %s" % l.strip()
             err = 1
