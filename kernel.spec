@@ -294,6 +294,7 @@ Patch100:	linux-2.6-vs2.3.patch
 Patch101:	linux-2.6-vs2.1-suspend2.patch
 # http://vserver.13thfloor.at/Experimental/delta-lback-feat02.diff
 Patch103:	kernel-vserver-lback-feat02.patch
+Patch104:	kernel-vserver-inet_diag.patch
 # based on http://vserver.13thfloor.at/Experimental/patch-2.6.22.2-vs2.2.0.3.diff
 Patch102:	linux-2.6-vs2.2.patch
 # note about vserver 2.2 vs 2.3: 2.2 is "stable", 2.3 is "development", currently (2007-09-03)
@@ -891,6 +892,7 @@ install %{SOURCE5} Makefile.ppclibs
 %else
 %patch100 -p1
 %patch103 -p1
+%patch104 -p1
 %endif
 %if %{with suspend2}
 #ifarch %{ix86} %{x8664} ia64
