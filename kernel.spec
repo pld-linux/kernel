@@ -103,7 +103,7 @@
 %define		_prepatch		%{nil}
 %define		_pre_rc			%{nil}
 %define		_rc			%{nil}
-%define		_rel			2
+%define		_rel			3
 %define		subname			%{?with_pax:-pax}%{?with_grsec_full:-grsecurity}%{?with_xen0:-xen0}%{?with_xenU:-xenU}
 
 %define		_enable_debug_packages			0
@@ -219,6 +219,9 @@ Patch20:	kernel-pom-ng-ipp2p.patch
 Patch21:	kernel-pom-ng-time.patch
 Patch22:	kernel-pom-ng-rsh.patch
 Patch23:	kernel-pom-ng-rpc.patch
+
+# fix in kernel abi handling for gcc 4.3 produced binaries
+Patch35:	kernel-df-signal.patch
 
 # http://ftp.linux-vserver.org/pub/people/dhozac/p/k/delta-owner-xid-feat02.diff
 Patch37:	kernel-owner-xid.patch
@@ -820,6 +823,9 @@ install %{SOURCE5} Makefile.ppclibs
 
 # kernel-pom-ng-rpc.patch
 %patch23 -p1
+
+# kernel-df-signal.patch
+%patch35 -p0
 
 # kernel-owner-xid.patch
 %if %{with vserver}
