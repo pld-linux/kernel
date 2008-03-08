@@ -1,0 +1,71 @@
+--- include/asm-i386/vm86.h~	2007-07-09 01:32:17.000000000 +0200
++++ include/asm-i386/vm86.h	2008-03-08 11:39:09.492519427 +0100
+@@ -14,6 +14,7 @@
+ 
+ #define TF_MASK		0x00000100
+ #define IF_MASK		0x00000200
++#define	DF_MASK		0x00000400
+ #define IOPL_MASK	0x00003000
+ #define NT_MASK		0x00004000
+ #ifdef CONFIG_VM86
+--- include/asm-x86_64/processor.h~	2007-07-09 01:32:17.000000000 +0200
++++ include/asm-x86_64/processor.h	2008-03-08 11:40:03.981790993 +0100
+@@ -24,6 +24,7 @@
+ 
+ #define TF_MASK		0x00000100
+ #define IF_MASK		0x00000200
++#define	DF_MASK		0x00000400
+ #define IOPL_MASK	0x00003000
+ #define NT_MASK		0x00004000
+ #define VM_MASK		0x00020000
+--- arch/i386/kernel/signal.c~	2007-07-09 01:32:17.000000000 +0200
++++ arch/i386/kernel/signal.c	2008-03-08 11:41:04.931371400 +0100
+@@ -392,7 +392,7 @@
+ 	 * The tracer may want to single-step inside the
+ 	 * handler too.
+ 	 */
+-	regs->eflags &= ~TF_MASK;
++	regs->eflags &= ~(TF_MASK | DF_MASK);
+ 	if (test_thread_flag(TIF_SINGLESTEP))
+ 		ptrace_notify(SIGTRAP);
+ 
+@@ -486,7 +486,7 @@
+ 	 * The tracer may want to single-step inside the
+ 	 * handler too.
+ 	 */
+-	regs->eflags &= ~TF_MASK;
++	regs->eflags &= ~(TF_MASK | DF_MASK);
+ 	if (test_thread_flag(TIF_SINGLESTEP))
+ 		ptrace_notify(SIGTRAP);
+ 
+--- arch/x86_64/kernel/signal.c~	2007-07-09 01:32:17.000000000 +0200
++++ arch/x86_64/kernel/signal.c	2008-03-08 11:41:39.179675328 +0100
+@@ -296,7 +296,7 @@
+ 	   see include/asm-x86_64/uaccess.h for details. */
+ 	set_fs(USER_DS);
+ 
+-	regs->eflags &= ~TF_MASK;
++	regs->eflags &= ~(TF_MASK | DF_MASK);
+ 	if (test_thread_flag(TIF_SINGLESTEP))
+ 		ptrace_notify(SIGTRAP);
+ #ifdef DEBUG_SIG
+--- arch/x86_64/ia32/ia32_signal.c~	2007-07-09 01:32:17.000000000 +0200
++++ arch/x86_64/ia32/ia32_signal.c	2008-03-08 11:41:58.403927688 +0100
+@@ -494,7 +494,7 @@
+ 	regs->ss = __USER32_DS; 
+ 
+ 	set_fs(USER_DS);
+-	regs->eflags &= ~TF_MASK;
++	regs->eflags &= ~(TF_MASK | DF_MASK);
+ 	if (test_thread_flag(TIF_SINGLESTEP))
+ 		ptrace_notify(SIGTRAP);
+ 
+@@ -600,7 +600,7 @@
+ 	regs->ss = __USER32_DS; 
+ 
+ 	set_fs(USER_DS);
+-	regs->eflags &= ~TF_MASK;
++	regs->eflags &= ~(TF_MASK | DF_MASK);
+ 	if (test_thread_flag(TIF_SINGLESTEP))
+ 		ptrace_notify(SIGTRAP);
+ 
