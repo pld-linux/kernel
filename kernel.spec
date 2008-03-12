@@ -49,6 +49,8 @@
 
 %bcond_with	vs22		# use vserver 2.2 instead of 2.3 (see comment near patch 102)
 
+%bcond_with	rescuecd	# build kernel for our rescue
+
 %{?debug:%define with_verbose 1}
 
 %if %{without grsecurity}
@@ -84,6 +86,14 @@
 %define		have_oss	1
 %define		have_sound	1
 
+%if %{with rescuecd}
+%undefine	with_grsec_full
+%undefine	with_pax
+%undefine	with_pax_full
+%define		have_drm	0
+%define		have_sound	0
+%endif
+
 %ifarch %{ix86} alpha ppc
 %define		have_isa	1
 %else
@@ -102,7 +112,7 @@
 %define		_pre_rc			%{nil}
 %define		_rc			%{nil}
 %define		_rel			0.1
-%define		subname			%{?with_pax:-pax}%{?with_grsec_full:-grsecurity}%{?with_xen0:-xen0}%{?with_xenU:-xenU}
+%define		subname			%{?with_pax:-pax}%{?with_grsec_full:-grsecurity}%{?with_xen0:-xen0}%{?with_xenU:-xenU}%{?with_rescuecd:-rescuecd}
 
 %define		_enable_debug_packages			0
 
@@ -178,6 +188,7 @@ Source51:	kernel-grsec_minimal.config
 Source55:	kernel-imq.config
 Source56:	kernel-reiser4.config
 Source57:	kernel-wrr.config
+Source58:	kernel-inittmpfs.config
 
 ###
 #	Patches
@@ -336,6 +347,10 @@ Patch2500:	linux-2.6-warnings.patch
 
 Patch5000:	apparmor-2.6.20.3-v405-fullseries.diff
 Patch5001:	linux-2.6-apparmor-caps.patch
+
+# for rescuecd
+# http://ftp.leg.uct.ac.za/pub/linux/rip/inittmpfs-2.6.14.diff.gz
+Patch7000:	kernel-inittmpfs.patch
 
 # not ready yet
 Patch9997:	pax_selinux_hooks-2.6.20.patch
@@ -890,6 +905,10 @@ install -m 755 %{SOURCE6} .
 # %patch5000 -p1
 # %patch5001 -p1
 
+%if %{with rescuecd}
+%patch7000 -p1
+%endif
+
 # grsecurity & pax stuff
 #
 
@@ -1031,9 +1050,9 @@ PaXconfig () {
 	# PAX_HOOK_ACL_FLAGS. SELinux should also be able to make PaX settings via hooks
 
 	%if %{with grsec_full}
-		# Hardening grsec options if with pax 
+		# Hardening grsec options if with pax
 		sed -i "s:# CONFIG_GRKERNSEC_PROC_MEMMAP is not set:CONFIG_GRKERNSEC_PROC_MEMMAP=y:" $1
-		# almost rational (see HIDESYM help) 
+		# almost rational (see HIDESYM help)
 		sed -i "s:# CONFIG_GRKERNSEC_HIDESYM is not set:CONFIG_GRKERNSEC_HIDESYM=y:" $1
 
 		# no change needed CONFIG=PAX_HAVE_ACL_FLAGS=y is taken from the kernel-pax.config
@@ -1044,6 +1063,28 @@ PaXconfig () {
 	%endif
 
 	return 0
+}
+
+RescueConfig() {
+	set -x
+	cat %{SOURCE58} >> $1
+	sed -i "s:CONFIG_SOUND=.:# CONFIG_SOUND is not set:" $1
+	sed -i "s:CONFIG_AUDIT=.:# CONFIG_AUDIT is not set:" $1
+	sed -i "s:CONFIG_TR=.:# CONFIG_TR is not set:" $1
+	sed -i "s:CONFIG_BT=.:# CONFIG_BT is not set:" $1
+	sed -i "s:CONFIG_VIDEO_DEV=.:# CONFIG_VIDEO_DEV is not set:" $1
+	sed -i "s:CONFIG_DVB_CORE=.:# CONFIG_DVB_CORE is not set:" $1
+	sed -i "s:CONFIG_HAMRADIO=.:# CONFIG_HAMRADIO is not set:" $1
+	sed -i "s:CONFIG_ARCNET=.:# CONFIG_ARCNET is not set:" $1
+	sed -i "s:CONFIG_FB=.:# CONFIG_FB is not set:" $1
+	sed -i "s:CONFIG_WATCHDOG=.:# CONFIG_WATCHDOG is not set:" $1
+	sed -i "s:CONFIG_INPUT_JOYSTICK=.:# CONFIG_INPUT_JOYSTICK is not set:" $1
+	sed -i "s:CONFIG_DEBUG_KERNEL=.:# CONFIG_DEBUG_KERNEL is not set:" $1
+	sed -i "s:CONFIG_ISDN=.:# CONFIG_ISDN is not set:" $1
+	sed -i "s:CONFIG_AGP\(.*\)=.:# CONFIG_AGP\1 is not set:" $1
+	sed -i "s:CONFIG_GRKERNSEC=.:# CONFIG_GRKERNSEC is not set:" $1
+	sed -i "s:CONFIG_VSERVER\(.*\)=.:# CONFIG_VSERVER\1 is not set:" $1
+	sed -i "s:CONFIG_SECURITY=.:# CONFIG_SECURITY is not set:" $1
 }
 
 BuildConfig() {
@@ -1152,6 +1193,10 @@ BuildConfig() {
 %if %{with abi}
 	cat %{SOURCE34} >> arch/%{target_arch_dir}/defconfig
 %endif
+%endif
+
+%if %{with rescuecd}
+	RescueConfig arch/%{target_arch_dir}/defconfig
 %endif
 
 %{?debug:sed -i "s:# CONFIG_DEBUG_SLAB is not set:CONFIG_DEBUG_SLAB=y:" arch/%{target_arch_dir}/defconfig}
@@ -1448,9 +1493,11 @@ fi
 %if %{with pcmcia}
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/pcmcia
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/*/pcmcia
+%if %{without rescuecd}
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/bluetooth/*_cs.ko*
-%exclude /lib/modules/%{kernel_release}/kernel/drivers/ide/legacy/ide-cs.ko*
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/isdn/hardware/avm/avm_cs.ko*
+%endif
+%exclude /lib/modules/%{kernel_release}/kernel/drivers/ide/legacy/ide-cs.ko*
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/net/wireless/*_cs.ko*
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/net/wireless/hostap/hostap_cs.ko*
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/parport/parport_cs.ko*
@@ -1478,9 +1525,11 @@ fi
 %defattr(644,root,root,755)
 /lib/modules/%{kernel_release}/kernel/drivers/pcmcia
 /lib/modules/%{kernel_release}/kernel/drivers/*/pcmcia
+%if %{without rescuecd}
 /lib/modules/%{kernel_release}/kernel/drivers/bluetooth/*_cs.ko*
-/lib/modules/%{kernel_release}/kernel/drivers/ide/legacy/ide-cs.ko*
 /lib/modules/%{kernel_release}/kernel/drivers/isdn/hardware/avm/avm_cs.ko*
+%endif
+/lib/modules/%{kernel_release}/kernel/drivers/ide/legacy/ide-cs.ko*
 /lib/modules/%{kernel_release}/kernel/drivers/net/wireless/*_cs.ko*
 /lib/modules/%{kernel_release}/kernel/drivers/net/wireless/hostap/hostap_cs.ko*
 /lib/modules/%{kernel_release}/kernel/drivers/parport/parport_cs.ko*
@@ -1521,7 +1570,7 @@ fi
 %defattr(644,root,root,755)
 /lib/modules/%{kernel_release}/kernel/sound/oss
 %endif
-%endif			# %%{have_sound}
+%endif
 
 %files headers
 %defattr(644,root,root,755)
