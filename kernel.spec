@@ -87,9 +87,13 @@
 %define		have_sound	1
 
 %if %{with rescuecd}
+%undefine	with_abi
+%undefine	with_tuxonice
 %undefine	with_grsec_full
+%undefine	with_grsec_minimal
 %undefine	with_pax
 %undefine	with_pax_full
+%undefine	with_vserver
 %define		have_drm	0
 %define		have_sound	0
 %endif
@@ -1082,8 +1086,6 @@ RescueConfig() {
 	sed -i "s:CONFIG_DEBUG_KERNEL=.:# CONFIG_DEBUG_KERNEL is not set:" $1
 	sed -i "s:CONFIG_ISDN=.:# CONFIG_ISDN is not set:" $1
 	sed -i "s:CONFIG_AGP\(.*\)=.:# CONFIG_AGP\1 is not set:" $1
-	sed -i "s:CONFIG_GRKERNSEC=.:# CONFIG_GRKERNSEC is not set:" $1
-	sed -i "s:CONFIG_VSERVER\(.*\)=.:# CONFIG_VSERVER\1 is not set:" $1
 	sed -i "s:CONFIG_SECURITY=.:# CONFIG_SECURITY is not set:" $1
 }
 
@@ -1619,7 +1621,7 @@ fi
 %{_kernelsrcdir}/crypto
 %{_kernelsrcdir}/drivers
 %{_kernelsrcdir}/fs
-%if %{with grsecurity}
+%if %{with grsecurity} && %{without rescuecd}
 %{_kernelsrcdir}/grsecurity
 %endif
 %{_kernelsrcdir}/init
