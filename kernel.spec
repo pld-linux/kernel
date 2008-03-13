@@ -8,7 +8,6 @@
 # - update xen patch for 2.6.21
 # - Linux ABI - needs update.
 # - pom-ng quake3-conntrack-nat -> nf_conntrack ?
-# - pom-ng rtsp-conntrack -> nf_conntrack ?
 # - pom-ng talk-conntrack-nat -> nf_conntrack ?
 # - nf-hipac ?
 # - pax hooks for selinux (experimental)
@@ -103,7 +102,7 @@
 %define		_prepatch		%{nil}
 %define		_pre_rc			%{nil}
 %define		_rc			%{nil}
-%define		_rel			3
+%define		_rel			4
 %define		subname			%{?with_pax:-pax}%{?with_grsec_full:-grsecurity}%{?with_xen0:-xen0}%{?with_xenU:-xenU}
 
 %define		_enable_debug_packages			0
@@ -222,6 +221,9 @@ Patch23:	kernel-pom-ng-rpc.patch
 
 # fix in kernel abi handling for gcc 4.3 produced binaries
 Patch35:	kernel-df-signal.patch
+
+# based on http://mike.it-loops.com/rtsp/rtsp-2.6.22.patch
+Patch36:	kernel-nf_rtsp.patch
 
 # http://ftp.linux-vserver.org/pub/people/dhozac/p/k/delta-owner-xid-feat02.diff
 Patch37:	kernel-owner-xid.patch
@@ -826,6 +828,9 @@ install %{SOURCE5} Makefile.ppclibs
 
 # kernel-df-signal.patch
 %patch35 -p0
+
+# kernel-nf_rtsp.patch
+%patch36 -p1
 
 # kernel-owner-xid.patch
 %if %{with vserver}
