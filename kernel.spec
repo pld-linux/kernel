@@ -192,7 +192,9 @@ Source51:	kernel-grsec_minimal.config
 Source55:	kernel-imq.config
 Source56:	kernel-reiser4.config
 Source57:	kernel-wrr.config
+
 Source58:	kernel-inittmpfs.config
+Source59:	kernel-bzip2-lzma.config
 
 ###
 #	Patches
@@ -355,6 +357,8 @@ Patch5001:	linux-2.6-apparmor-caps.patch
 # for rescuecd
 # http://ftp.leg.uct.ac.za/pub/linux/rip/inittmpfs-2.6.14.diff.gz
 Patch7000:	kernel-inittmpfs.patch
+# http://www.udpcast.linux.lu/download/bzip2-lzma-kernel-2.6.23.12.patch.gz
+Patch7001:	kernel-bzip2-lzma.patch
 
 # not ready yet
 Patch9997:	pax_selinux_hooks-2.6.20.patch
@@ -375,6 +379,7 @@ BuildRequires:	elftoaout
 %endif
 BuildRequires:	/sbin/depmod
 BuildRequires:	gcc >= 5:3.2
+%{?with_rescuecd:BuildRequires:	lzma >= 1:4.42.2}
 # for hostname command
 BuildRequires:	net-tools
 BuildRequires:	perl-base
@@ -911,6 +916,7 @@ install -m 755 %{SOURCE6} .
 
 %if %{with rescuecd}
 %patch7000 -p1
+%patch7001 -p1
 %endif
 
 # grsecurity & pax stuff
@@ -1072,6 +1078,7 @@ PaXconfig () {
 RescueConfig() {
 	set -x
 	cat %{SOURCE58} >> $1
+	cat %{SOURCE59} >> $1
 	sed -i "s:CONFIG_SOUND=.:# CONFIG_SOUND is not set:" $1
 	sed -i "s:CONFIG_AUDIT=.:# CONFIG_AUDIT is not set:" $1
 	sed -i "s:CONFIG_TR=.:# CONFIG_TR is not set:" $1
