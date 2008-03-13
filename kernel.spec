@@ -13,7 +13,6 @@
 # - update xen patch for 2.6.21
 # - Linux ABI - needs update.
 # - pom-ng quake3-conntrack-nat -> nf_conntrack ?
-# - pom-ng rtsp-conntrack -> nf_conntrack ?
 # - pom-ng talk-conntrack-nat -> nf_conntrack ?
 # - nf-hipac ?
 # - pax hooks for selinux (experimental)
@@ -115,7 +114,7 @@
 %define		_prepatch		%{nil}
 %define		_pre_rc			%{nil}
 %define		_rc			%{nil}
-%define		_rel			0.1
+%define		_rel			0.2
 %define		subname			%{?with_pax:-pax}%{?with_grsec_full:-grsecurity}%{?with_xen0:-xen0}%{?with_xenU:-xenU}%{?with_rescuecd:-rescuecd}
 
 %define		_enable_debug_packages			0
@@ -241,6 +240,9 @@ Patch21:	kernel-pom-ng-time.patch
 Patch22:	kernel-pom-ng-rsh.patch
 Patch23:	kernel-pom-ng-rpc.patch
 
+# based on http://mike.it-loops.com/rtsp/rtsp-2.6.24.patch
+Patch36:	kernel-nf_rtsp.patch
+
 # http://ftp.linux-vserver.org/pub/people/dhozac/p/k/delta-owner-xid-feat02.diff
 Patch37:	kernel-owner-xid.patch
 
@@ -355,9 +357,9 @@ Patch5000:	apparmor-2.6.20.3-v405-fullseries.diff
 Patch5001:	linux-2.6-apparmor-caps.patch
 
 # for rescuecd
-# http://ftp.leg.uct.ac.za/pub/linux/rip/inittmpfs-2.6.14.diff.gz
+# based on http://ftp.leg.uct.ac.za/pub/linux/rip/inittmpfs-2.6.14.diff.gz
 Patch7000:	kernel-inittmpfs.patch
-# http://www.udpcast.linux.lu/download/bzip2-lzma-kernel-2.6.23.12.patch.gz
+# based on http://www.udpcast.linux.lu/download/bzip2-lzma-kernel-2.6.23.12.patch.gz
 Patch7001:	kernel-bzip2-lzma.patch
 
 # not ready yet
@@ -816,6 +818,9 @@ install -m 755 %{SOURCE6} .
 
 # kernel-pom-ng-rpc.patch
 %patch23 -p1
+
+# kernel-nf_rtsp.patch
+%patch36 -p1
 
 # kernel-owner-xid.patch
 %if %{with vserver}
