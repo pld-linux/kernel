@@ -1,12 +1,12 @@
-diff -urN linux-2.6.23.12/arch/i386/boot/compressed/Makefile linux-2.6.23.12udpcast/arch/i386/boot/compressed/Makefile
---- linux-2.6.23.12/arch/i386/boot/compressed/Makefile	2007-12-18 21:55:57.000000000 +0000
-+++ linux-2.6.23.12udpcast/arch/i386/boot/compressed/Makefile	2007-12-27 09:13:47.000000000 +0000
+diff -urN linux-2.6.23.12/arch/x86/boot/compressed/Makefile_32 linux-2.6.23.12udpcast/arch/x86/boot/compressed/Makefile_32
+--- linux-2.6.23.12/arch/x86/boot/compressed/Makefile_32	2007-12-18 21:55:57.000000000 +0000
++++ linux-2.6.23.12udpcast/arch/x86/boot/compressed/Makefile_32	2007-12-27 09:13:47.000000000 +0000
 @@ -4,7 +4,7 @@
  # create a compressed vmlinux image from the original vmlinux
  #
  
--targets		:= vmlinux vmlinux.bin vmlinux.bin.gz head.o misc.o piggy.o \
-+targets		:= vmlinux vmlinux.bin vmlinux.bin.gz vmlinux.bin.bz2 vmlinux.bin.lzma head.o misc.o piggy.o \
+-targets		:= vmlinux vmlinux.bin vmlinux.bin.gz head_32.o misc_32.o piggy.o \
++targets		:= vmlinux vmlinux.bin vmlinux.bin.gz vmlinux.bin.bz2 vmlinux.bin.lzma head_32.o misc_32.o piggy.o \
  			vmlinux.bin.all vmlinux.relocs
  EXTRA_AFLAGS	:= -traditional
  
@@ -32,16 +32,16 @@ diff -urN linux-2.6.23.12/arch/i386/boot/compressed/Makefile linux-2.6.23.12udpc
 +
  LDFLAGS_piggy.o := -r --format binary --oformat elf32-i386 -T
  
--$(obj)/piggy.o: $(src)/vmlinux.scr $(obj)/vmlinux.bin.gz FORCE
+-$(obj)/piggy.o: $(src)/vmlinux_32.scr $(obj)/vmlinux.bin.gz FORCE
 +suffix_$(CONFIG_KERNEL_GZIP)  = gz
 +suffix_$(CONFIG_KERNEL_BZIP2) = bz2
 +suffix_$(CONFIG_KERNEL_LZMA)  = lzma
 +
-+$(obj)/piggy.o: $(src)/vmlinux.scr $(obj)/vmlinux.bin.$(suffix_y) FORCE
++$(obj)/piggy.o: $(src)/vmlinux_32.scr $(obj)/vmlinux.bin.$(suffix_y) FORCE
  	$(call if_changed,ld)
-diff -urN linux-2.6.23.12/arch/i386/boot/compressed/misc.c linux-2.6.23.12udpcast/arch/i386/boot/compressed/misc.c
---- linux-2.6.23.12/arch/i386/boot/compressed/misc.c	2007-12-27 10:02:06.000000000 +0000
-+++ linux-2.6.23.12udpcast/arch/i386/boot/compressed/misc.c	2007-12-27 11:58:57.000000000 +0000
+diff -urN linux-2.6.23.12/arch/x86/boot/compressed/misc_32.c linux-2.6.23.12udpcast/arch/x86/boot/compressed/misc_32.c
+--- linux-2.6.23.12/arch/x86/boot/compressed/misc_32.c	2007-12-27 10:02:06.000000000 +0000
++++ linux-2.6.23.12udpcast/arch/x86/boot/compressed/misc_32.c	2007-12-27 11:58:57.000000000 +0000
 @@ -104,6 +104,7 @@
  
  #define OF(args)  args
@@ -408,6 +408,23 @@ diff -urN linux-2.6.23.12/init/Kconfig linux-2.6.23.12udpcast/init/Kconfig
 diff -urN linux-2.6.23.12/init/do_mounts_rd.c linux-2.6.23.12udpcast/init/do_mounts_rd.c
 --- linux-2.6.23.12/init/do_mounts_rd.c	2007-12-18 21:55:57.000000000 +0000
 +++ linux-2.6.23.12udpcast/init/do_mounts_rd.c	2007-12-27 10:58:08.000000000 +0000
+@@ -11,6 +11,16 @@
+ 
+ #include "do_mounts.h"
+ 
++#ifdef CONFIG_RD_BZIP2
++#include <linux/decompress_bunzip2.h>
++#undef STATIC
++#endif
++
++#ifdef CONFIG_RD_LZMA
++#include <linux/decompress_unlzma.h>
++#undef STATIC
++#endif
++
+ #define BUILD_CRAMDISK
+ 
+ int __initdata rd_prompt = 1;/* 1 = prompt for RAM disk, 0 = don't prompt */
 @@ -30,7 +30,15 @@
  }
  __setup("ramdisk_start=", ramdisk_start_setup);
@@ -552,23 +569,6 @@ diff -urN linux-2.6.23.12/init/do_mounts_rd.c linux-2.6.23.12udpcast/init/do_mou
  #define get_byte()  (inptr < insize ? inbuf[inptr++] : fill_inbuf())
  		
  /* Diagnostic functions (stubbed out) */
-@@ -321,6 +390,16 @@
- 
- #include "../lib/inflate.c"
- 
-+#ifdef CONFIG_RD_BZIP2
-+#include <linux/decompress_bunzip2.h>
-+#undef STATIC
-+#endif
-+
-+#ifdef CONFIG_RD_LZMA
-+#include <linux/decompress_unlzma.h>
-+#undef STATIC
-+#endif
-+
- static void __init *malloc(size_t size)
- {
- 	return kmalloc(size, GFP_KERNEL);
 @@ -359,7 +438,22 @@
  
  	return inbuf[0];
