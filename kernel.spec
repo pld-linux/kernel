@@ -1088,12 +1088,18 @@ RescueConfig() {
 	sed -i "s:CONFIG_HAMRADIO=.:# CONFIG_HAMRADIO is not set:" $1
 	sed -i "s:CONFIG_ARCNET=.:# CONFIG_ARCNET is not set:" $1
 	sed -i "s:CONFIG_FB=.:# CONFIG_FB is not set:" $1
+	sed -i "s:CONFIG_DRM\(.*\)=.:# CONFIG_DRM\1 is not set:" $1
 	sed -i "s:CONFIG_WATCHDOG=.:# CONFIG_WATCHDOG is not set:" $1
 	sed -i "s:CONFIG_INPUT_JOYSTICK=.:# CONFIG_INPUT_JOYSTICK is not set:" $1
 	sed -i "s:CONFIG_DEBUG_KERNEL=.:# CONFIG_DEBUG_KERNEL is not set:" $1
 	sed -i "s:CONFIG_ISDN=.:# CONFIG_ISDN is not set:" $1
 	sed -i "s:CONFIG_AGP\(.*\)=.:# CONFIG_AGP\1 is not set:" $1
 	sed -i "s:CONFIG_SECURITY=.:# CONFIG_SECURITY is not set:" $1
+	sed -i "s:CONFIG_PARIDE=.:# CONFIG_PARIDE is not set:" $1
+	sed -i "s:CONFIG_CPU_FREQ=.:# CONFIG_CPU_FREQ is not set:" $1
+	sed -i "s:CONFIG_GAMEPORT=.:# CONFIG_GAMEPORT is not set:" $1
+	sed -i "s:CONFIG_KVM=.:# CONFIG_KVM is not set:" $1
+	sed -i "s:CONFIG_PHONE=.:# CONFIG_PHONE is not set:" $1
 }
 
 BuildConfig() {
@@ -1505,13 +1511,13 @@ fi
 %if %{without rescuecd}
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/bluetooth/*_cs.ko*
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/isdn/hardware/avm/avm_cs.ko*
+%exclude /lib/modules/%{kernel_release}/kernel/drivers/telephony/ixj_pcmcia.ko*
 %endif
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/ide/legacy/ide-cs.ko*
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/net/wireless/*_cs.ko*
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/net/wireless/hostap/hostap_cs.ko*
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/parport/parport_cs.ko*
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/serial/serial_cs.ko*
-%exclude /lib/modules/%{kernel_release}/kernel/drivers/telephony/ixj_pcmcia.ko*
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/usb/host/sl811_cs.ko*
 %endif
 %ghost /lib/modules/%{kernel_release}/modules.*
@@ -1537,13 +1543,13 @@ fi
 %if %{without rescuecd}
 /lib/modules/%{kernel_release}/kernel/drivers/bluetooth/*_cs.ko*
 /lib/modules/%{kernel_release}/kernel/drivers/isdn/hardware/avm/avm_cs.ko*
+/lib/modules/%{kernel_release}/kernel/drivers/telephony/ixj_pcmcia.ko*
 %endif
 /lib/modules/%{kernel_release}/kernel/drivers/ide/legacy/ide-cs.ko*
 /lib/modules/%{kernel_release}/kernel/drivers/net/wireless/*_cs.ko*
 /lib/modules/%{kernel_release}/kernel/drivers/net/wireless/hostap/hostap_cs.ko*
 /lib/modules/%{kernel_release}/kernel/drivers/parport/parport_cs.ko*
 /lib/modules/%{kernel_release}/kernel/drivers/serial/serial_cs.ko*
-/lib/modules/%{kernel_release}/kernel/drivers/telephony/ixj_pcmcia.ko*
 /lib/modules/%{kernel_release}/kernel/drivers/usb/host/sl811_cs.ko*
 %endif
 
