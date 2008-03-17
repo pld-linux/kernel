@@ -114,7 +114,7 @@
 %define		_prepatch		%{nil}
 %define		_pre_rc			%{nil}
 %define		_rc			%{nil}
-%define		_rel			0.2
+%define		_rel			0.3
 %define		subname			%{?with_pax:-pax}%{?with_grsec_full:-grsecurity}%{?with_xen0:-xen0}%{?with_xenU:-xenU}%{?with_rescuecd:-rescuecd}
 
 %define		_enable_debug_packages			0
@@ -1200,9 +1200,16 @@ BuildConfig() {
 	cat %{SOURCE47} >> arch/%{target_arch_dir}/defconfig
 %endif
 
-	# fbsplash && bootsplash
+%if %{with fbsplash}
 	echo "CONFIG_FB_SPLASH=y" >> arch/%{target_arch_dir}/defconfig
+	sed -i "s:CONFIG_FB_TILEBLITTING=.:# CONFIG_FB_TILEBLITTING is not set:" arch/%{target_arch_dir}/defconfig	
+	sed -i "s:CONFIG_FB_S3=.:# CONFIG_FB_S3 is not set:" arch/%{target_arch_dir}/defconfig	
+	sed -i "s:CONFIG_FB_VT8623=.:# CONFIG_FB_VT8623 is not set:" arch/%{target_arch_dir}/defconfig	
+	sed -i "s:CONFIG_FB_MATROX=.:# CONFIG_FB_MATROX is not set:" arch/%{target_arch_dir}/defconfig	
+	sed -i "s:CONFIG_FB_ARK=.:# CONFIG_FB_ARK is not set:" arch/%{target_arch_dir}/defconfig	
+%else
 	echo "CONFIG_BOOTSPLASH=y" >> arch/%{target_arch_dir}/defconfig
+%endif
 
 %if %{with nfsroot}
 	sed -i "s:CONFIG_NFS_FS=m:CONFIG_NFS_FS=y:" arch/%{target_arch_dir}/defconfig
