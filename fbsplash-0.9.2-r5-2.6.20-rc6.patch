@@ -282,14 +282,8 @@ diff --git a/drivers/video/Makefile b/drivers/video/Makefile
 index 309a26d..bf98221 100644
 --- a/drivers/video/Makefile
 +++ b/drivers/video/Makefile
-@@ -13,6 +13,7 @@ fb-objs                           := $(fb-y)
- obj-$(CONFIG_VT)		  += console/
- obj-$(CONFIG_LOGO)		  += logo/
- obj-y				  += backlight/
+@@ -0,0 +0,1 @@ fb-objs                           := $(fb-y)
 +obj-$(CONFIG_FB_SPLASH)           += fbsplash.o cfbsplash.o
- 
- obj-$(CONFIG_FB_CFB_FILLRECT)  += cfbfillrect.o
- obj-$(CONFIG_FB_CFB_COPYAREA)  += cfbcopyarea.o
 diff --git a/drivers/video/cfbsplash.c b/drivers/video/cfbsplash.c
 new file mode 100644
 index 0000000..303cd6a
@@ -1177,15 +1171,6 @@ index 148108a..e7babb5 100644
  	return rc;
  }
  
-@@ -250,7 +254,7 @@ int fb_set_user_cmap(struct fb_cmap_user *cmap, struct fb_info *info)
- {
- 	int rc, size = cmap->len * sizeof(u16);
- 	struct fb_cmap umap;
--
-+	
- 	if (cmap->start < 0 || (!info->fbops->fb_setcolreg &&
- 			        !info->fbops->fb_setcmap))
- 		return -EINVAL;
 diff --git a/drivers/video/fbsplash.c b/drivers/video/fbsplash.c
 new file mode 100644
 index 0000000..75d8db8
@@ -1789,13 +1774,13 @@ index 81480e6..98cd75a 100644
 --- a/include/linux/sysctl.h
 +++ b/include/linux/sysctl.h
 @@ -160,6 +160,7 @@ enum
+ 	KERN_ACPI_VIDEO_FLAGS=71, /* int: flags for setting up video after ACPI sleep */
+ 	KERN_IA64_UNALIGNED=72, /* int: ia64 unaligned userland trap enable */
+ 	KERN_COMPAT_LOG=73,	/* int: print compat layer  messages */
++	KERN_FBSPLASH=77,	/* string: path to fbsplash helper */
  	KERN_MAX_LOCK_DEPTH=74,
  	KERN_NMI_WATCHDOG=75, /* int: enable/disable nmi watchdog */
  	KERN_PANIC_ON_NMI=76, /* int: whether we will panic on an unrecovered */
-+	KERN_FBSPLASH=77,	/* string: path to fbsplash helper */
- };
- 
- 
 diff --git a/kernel/sysctl.c b/kernel/sysctl.c
 index 600b333..7d0e588 100644
 --- a/kernel/sysctl.c
