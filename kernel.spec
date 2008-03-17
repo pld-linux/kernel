@@ -293,7 +293,7 @@ Patch90:	linux-2.6.22-NFS_ALL.dif
 # http://www.citi.umich.edu/projects/nfsv4/linux/kernel-patches/2.6.22-rc5-1/linux-2.6.22-rc5-CITI_NFS4_ALL-1.diff
 Patch91:	linux-2.6.22-rc5-CITI_NFS4_ALL-1.diff
 
-# based on http://vserver.13thfloor.at/Experimental/patch-2.6.22.19-vs2.3.0.33.diff
+# based on http://vserver.13thfloor.at/Experimental/patch-2.6.22.19-vs2.3.0.34.diff
 Patch100:	linux-2.6-vs2.3.patch
 Patch101:	linux-2.6-vs2.1-suspend2.patch
 # based on http://vserver.13thfloor.at/Experimental/patch-2.6.22.2-vs2.2.0.3.diff
@@ -1232,10 +1232,15 @@ BuildConfig() {
 	cat %{SOURCE47} >> arch/%{_target_base_arch}/defconfig
 %endif
 
-	# fbsplash
+%if %{with fbsplash}
 	echo "CONFIG_FB_SPLASH=y" >> arch/%{_target_base_arch}/defconfig
-	# bootsplash
+	sed -i "s:CONFIG_FB_TILEBLITTING=.:# CONFIG_FB_TILEBLITTING is not set:" arch/%{_target_base_arch}/defconfig
+	sed -i "s:CONFIG_FB_S3=.:# CONFIG_FB_S3 is not set:" arch/%{_target_base_arch}/defconfig
+	sed -i "s:CONFIG_FB_VT8623=.:# CONFIG_FB_VT8623 is not set:" arch/%{_target_base_arch}/defconfig
+	sed -i "s:CONFIG_FB_ARK=.:# CONFIG_FB_ARK is not set:" arch/%{_target_base_arch}/defconfig
+%else
 	echo "CONFIG_BOOTSPLASH=y" >> arch/%{_target_base_arch}/defconfig
+%endif
 
 %if %{with nfsroot}
 	sed -i "s:CONFIG_NFS_FS=m:CONFIG_NFS_FS=y:" arch/%{_target_base_arch}/defconfig
