@@ -3,14 +3,14 @@ index 92e89ae..a6cfacc 100644
 --- a/Documentation/fb/00-INDEX
 +++ b/Documentation/fb/00-INDEX
 @@ -19,6 +19,8 @@ matroxfb.txt
- 	- info on the Matrox frame buffer driver
+ 	- info on the Matrox frame buffer driver.
  pvr2fb.txt
- 	- info on the PowerVR 2 frame buffer driver
+ 	- info on the PowerVR 2 frame buffer driver.
 +splash.txt
 +	- info on the Framebuffer Splash
- tgafb.txt
- 	- info on the TGA (DECChip 21030) frame buffer driver
- vesafb.txt
+ pxafb.txt
+ 	- info on the driver for the PXA25x LCD controller.
+ s3fb.txt
 diff --git a/Documentation/fb/splash.txt b/Documentation/fb/splash.txt
 new file mode 100644
 index 0000000..6b281c9
@@ -261,11 +261,10 @@ index 4e83f01..396eaae 100644
  	select FB_MACMODES if PPC_PMAC
  	---help---
  	  Say Y here if you have a Matrox Millennium, Matrox Millennium II,
-@@ -1658,5 +1657,15 @@ if SYSFS
- 	source "drivers/video/backlight/Kconfig"
+@@ -1658,4 +1657,15 @@ if SYSFS
+ 	source "drivers/video/logo/Kconfig"
  endif
  
--endmenu
 +config FB_SPLASH
 +	bool "Support for the framebuffer splash"
 +	depends on FRAMEBUFFER_CONSOLE=y && !FB_TILEBLITTING
@@ -275,21 +274,15 @@ index 4e83f01..396eaae 100644
 +	  graphical backgrounds on consoles. Note that you will need userspace
 +	  splash utilities in order to take advantage of these features. Refer 
 +	  to Documentation/fb/splash.txt for more information.
- 
++
 +	  If unsure, say N.
-+endmenu
+ endmenu
 diff --git a/drivers/video/Makefile b/drivers/video/Makefile
 index 309a26d..bf98221 100644
 --- a/drivers/video/Makefile
 +++ b/drivers/video/Makefile
-@@ -13,6 +13,7 @@ fb-objs                           := $(fb-y)
- obj-$(CONFIG_VT)		  += console/
- obj-$(CONFIG_LOGO)		  += logo/
- obj-y				  += backlight/
+@@ -0,0 +0,1 @@ fb-objs                           := $(fb-y)
 +obj-$(CONFIG_FB_SPLASH)           += fbsplash.o cfbsplash.o
- 
- obj-$(CONFIG_FB_CFB_FILLRECT)  += cfbfillrect.o
- obj-$(CONFIG_FB_CFB_COPYAREA)  += cfbcopyarea.o
 diff --git a/drivers/video/cfbsplash.c b/drivers/video/cfbsplash.c
 new file mode 100644
 index 0000000..303cd6a
@@ -1149,13 +1142,13 @@ index 148108a..e7babb5 100644
 --- a/drivers/video/fbcmap.c
 +++ b/drivers/video/fbcmap.c
 @@ -15,6 +15,7 @@
- #include <linux/module.h>
  #include <linux/fb.h>
  #include <linux/slab.h>
+ #include <linux/uaccess.h>
 +#include "fbsplash.h"
  
- #include <asm/uaccess.h>
- 
+ static u16 red2[] __read_mostly = {
+     0x0000, 0xaaaa
 @@ -235,14 +236,17 @@ int fb_set_cmap(struct fb_cmap *cmap, struct fb_info *info)
  			if (transp)
  				htransp = *transp++;
@@ -1177,15 +1170,6 @@ index 148108a..e7babb5 100644
  	return rc;
  }
  
-@@ -250,7 +254,7 @@ int fb_set_user_cmap(struct fb_cmap_user *cmap, struct fb_info *info)
- {
- 	int rc, size = cmap->len * sizeof(u16);
- 	struct fb_cmap umap;
--
-+	
- 	if (cmap->start < 0 || (!info->fbops->fb_setcolreg &&
- 			        !info->fbops->fb_setcmap))
- 		return -EINVAL;
 diff --git a/drivers/video/fbsplash.c b/drivers/video/fbsplash.c
 new file mode 100644
 index 0000000..75d8db8
@@ -1789,13 +1773,13 @@ index 81480e6..98cd75a 100644
 --- a/include/linux/sysctl.h
 +++ b/include/linux/sysctl.h
 @@ -160,6 +160,7 @@ enum
+ 	KERN_ACPI_VIDEO_FLAGS=71, /* int: flags for setting up video after ACPI sleep */
+ 	KERN_IA64_UNALIGNED=72, /* int: ia64 unaligned userland trap enable */
+ 	KERN_COMPAT_LOG=73,	/* int: print compat layer  messages */
++	KERN_FBSPLASH=77,	/* string: path to fbsplash helper */
  	KERN_MAX_LOCK_DEPTH=74,
  	KERN_NMI_WATCHDOG=75, /* int: enable/disable nmi watchdog */
  	KERN_PANIC_ON_NMI=76, /* int: whether we will panic on an unrecovered */
-+	KERN_FBSPLASH=77,	/* string: path to fbsplash helper */
- };
- 
- 
 diff --git a/kernel/sysctl.c b/kernel/sysctl.c
 index 600b333..7d0e588 100644
 --- a/kernel/sysctl.c
