@@ -3,6 +3,7 @@
 #
 # NOTE:
 # - suspend2 renamed to tuxonice (as project name)
+# - vesafb-tng renamed to uvresafb (as project name)
 #
 # TODO:
 # - benchmark NO_HZ & HZ=1000 vs HZ=300 on i686
@@ -35,7 +36,7 @@
 %bcond_with	pax		# build pax support
 
 %bcond_with	fbsplash	# fbsplash instead of bootsplash
-%bcond_with	vesafb_tng	# vesafb-tng, vesafb replacement from gentoo
+%bcond_with	uvesafb		# uvesafb, vesafb replacement from gentoo
 %bcond_with	pae		# build PAE (HIGHMEM64G) support on uniprocessor
 %bcond_with	nfsroot		# build with root on NFS support
 
@@ -180,7 +181,6 @@ Source40:	kernel-netfilter.config
 Source41:	kernel-squashfs.config
 Source42:	kernel-tuxonice.config
 Source43:	kernel-vserver.config
-Source44:	kernel-vesafb-tng.config
 Source45:	kernel-grsec.config
 Source46:	kernel-xen0.config
 Source47:	kernel-xenU.config
@@ -208,11 +208,11 @@ Patch2:		tahoe9xx-2.6.11.5.patch
 
 # ftp://ftp.openbios.org/pub/bootsplash/kernel/bootsplash-3.1.6-2.6.21.diff.gz
 Patch3:		linux-2.6-bootsplash.patch
-# http://dev.gentoo.org/~spock/projects/gensplash/archive/fbsplash-0.9.2-r5-2.6.20-rc6.patch
+# based on http://dev.gentoo.org/~spock/projects/gensplash/archive/fbsplash-0.9.2-r5-2.6.20-rc6.patch
 Patch4:		fbsplash-0.9.2-r5-2.6.20-rc6.patch
 
-# http://dev.gentoo.org/~spock/projects/vesafb-tng/archive/vesafb-tng-1.0-rc2-2.6.20-rc2.patch
-Patch5:		vesafb-tng-1.0-rc2-2.6.20-rc2.patch
+# http://dev.gentoo.org/~spock/projects/uvesafb/archive/uvesafb-0.1-rc3-2.6.23-rc3.patch
+Patch5:		kernel-uvesafb.patch
 
 # http://mesh.dl.sourceforge.net/sourceforge/squashfs/squashfs3.3.tgz
 # squashfs3.3/kernel-patches/linux-2.6.24/squashfs3.3-patch
@@ -1143,8 +1143,9 @@ BuildConfig() {
 	sed -i "s:CONFIG_IPV6=.:# CONFIG_IPV6 is not set:" arch/%{target_arch_dir}/defconfig
 %endif
 
-# vesafb-tng
-	cat %{SOURCE44} >> arch/%{target_arch_dir}/defconfig
+%if %{with uvesa}
+	echo "CONFIG_FB_UVESA=m" >> arch/%{target_arch_dir}/defconfig
+%endif
 
 # grsecurity & pax stuff
 #
