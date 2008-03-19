@@ -440,6 +440,8 @@ BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 %define		target_arch_dir		%{_target_base_arch}
 %endif
 
+%define		defconfig	arch/%{target_arch_dir}/defconfig
+
 # No ELF objects there to strip (skips processing 27k files)
 %define		_noautostrip	.*%{_kernelsrcdir}/.*
 %define		_noautochrpath	.*%{_kernelsrcdir}/.*
@@ -1113,125 +1115,125 @@ BuildConfig() {
 	Config="%{_target_base_arch}"
 	KernelVer=%{kernel_release}
 	echo "Building config file using $Config.conf..."
-	cat $RPM_SOURCE_DIR/kernel-$Config.config > arch/%{target_arch_dir}/defconfig
+	cat $RPM_SOURCE_DIR/kernel-$Config.config > %{defconfig}
 	./kernel-config.py %{_target_base_arch} $RPM_SOURCE_DIR/kernel-multiarch.config \
-		arch/%{target_arch_dir}/defconfig arch/%{target_arch_dir}/defconfig
-	TuneUpConfigForIX86 arch/%{target_arch_dir}/defconfig
+		%{defconfig} %{defconfig}
+	TuneUpConfigForIX86 %{defconfig}
 
 # netfilter
-	cat %{SOURCE40} >> arch/%{target_arch_dir}/defconfig
+	cat %{SOURCE40} >> %{defconfig}
 
 # squashfs
-	cat %{SOURCE41} >> arch/%{target_arch_dir}/defconfig
+	cat %{SOURCE41} >> %{defconfig}
 
 # tuxonice
 %if %{with tuxonice}
-	cat %{SOURCE42} >> arch/%{target_arch_dir}/defconfig
+	cat %{SOURCE42} >> %{defconfig}
 %endif
 
 %ifarch ppc ppc64
-	sed -i "s:CONFIG_SUSPEND2=y:# CONFIG_SUSPEND2 is not set:" arch/%{target_arch_dir}/defconfig
+	sed -i "s:CONFIG_SUSPEND2=y:# CONFIG_SUSPEND2 is not set:" %{defconfig}
 %endif
 %if %{with vserver}
-	cat %{SOURCE43} >> arch/%{target_arch_dir}/defconfig
+	cat %{SOURCE43} >> %{defconfig}
 %if %{with vs22}
-	sed -i "s:CONFIG_IPV6=y:CONFIG_IPV6=m:" arch/%{target_arch_dir}/defconfig
+	sed -i "s:CONFIG_IPV6=y:CONFIG_IPV6=m:" %{defconfig}
 %endif
 %endif
 
 %if %{without ipv6}
-	sed -i "s:CONFIG_IPV6=.:# CONFIG_IPV6 is not set:" arch/%{target_arch_dir}/defconfig
+	sed -i "s:CONFIG_IPV6=.:# CONFIG_IPV6 is not set:" %{defconfig}
 %endif
 
 %if %{with uvesa}
-	echo "CONFIG_FB_UVESA=m" >> arch/%{target_arch_dir}/defconfig
+	echo "CONFIG_FB_UVESA=m" >> %{defconfig}
 %endif
 
 # grsecurity & pax stuff
 #
 
 %if %{with pax_full}
-	cat %{SOURCE45} >> arch/%{target_arch_dir}/defconfig
-	cat %{SOURCE49} >> arch/%{target_arch_dir}/defconfig
-	PaXconfig arch/%{target_arch_dir}/defconfig
+	cat %{SOURCE45} >> %{defconfig}
+	cat %{SOURCE49} >> %{defconfig}
+	PaXconfig %{defconfig}
 %else
 
 %if %{with grsec_full}
-	cat %{SOURCE45} >> arch/%{target_arch_dir}/defconfig
+	cat %{SOURCE45} >> %{defconfig}
 %else
 %if %{with grsec_minimal}
-	cat %{SOURCE51} >> arch/%{target_arch_dir}/defconfig
+	cat %{SOURCE51} >> %{defconfig}
 %endif
 %endif
 
 %if %{with pax}
-	cat %{SOURCE49} >> arch/%{target_arch_dir}/defconfig
-	PaXconfig arch/%{target_arch_dir}/defconfig
+	cat %{SOURCE49} >> %{defconfig}
+	PaXconfig %{defconfig}
 %else
-	cat %{SOURCE50} >> arch/%{target_arch_dir}/defconfig
+	cat %{SOURCE50} >> %{defconfig}
 %endif
 
 %endif
 
 # Temporary disabled RELOCATABLE. Needed only on x86??
 %if %{with pax} || %{with grsec_full}
-	sed -i "s:CONFIG_RELOCATABLE=y:# CONFIG_RELOCATABLE is not set:" arch/%{target_arch_dir}/defconfig
+	sed -i "s:CONFIG_RELOCATABLE=y:# CONFIG_RELOCATABLE is not set:" %{defconfig}
 %endif
 
 #
 # end of grsecurity & pax stuff
 
 %if %{with imq}
-	cat %{SOURCE55} >> arch/%{target_arch_dir}/defconfig
+	cat %{SOURCE55} >> %{defconfig}
 %endif
 
 %if %{with wrr}
-	cat %{SOURCE57} >> arch/%{target_arch_dir}/defconfig
+	cat %{SOURCE57} >> %{defconfig}
 %endif
 
 %if %{with reiser4}
-	cat %{SOURCE56} >> arch/%{target_arch_dir}/defconfig
+	cat %{SOURCE56} >> %{defconfig}
 %endif
 
 %if %{with xen0}
-	cat %{SOURCE46} >> arch/%{target_arch_dir}/defconfig
+	cat %{SOURCE46} >> %{defconfig}
 %endif
 
 %if %{with xenU}
-	cat %{SOURCE47} >> arch/%{target_arch_dir}/defconfig
+	cat %{SOURCE47} >> %{defconfig}
 %endif
 
 %if %{with fbsplash}
-	echo "CONFIG_FB_SPLASH=y" >> arch/%{target_arch_dir}/defconfig
-	sed -i "s:CONFIG_FB_TILEBLITTING=.:# CONFIG_FB_TILEBLITTING is not set:" arch/%{target_arch_dir}/defconfig	
-	sed -i "s:CONFIG_FB_S3=.:# CONFIG_FB_S3 is not set:" arch/%{target_arch_dir}/defconfig	
-	sed -i "s:CONFIG_FB_VT8623=.:# CONFIG_FB_VT8623 is not set:" arch/%{target_arch_dir}/defconfig	
-	sed -i "s:CONFIG_FB_MATROX=.:# CONFIG_FB_MATROX is not set:" arch/%{target_arch_dir}/defconfig	
-	sed -i "s:CONFIG_FB_ARK=.:# CONFIG_FB_ARK is not set:" arch/%{target_arch_dir}/defconfig	
+	echo "CONFIG_FB_SPLASH=y" >> %{defconfig}
+	sed -i "s:CONFIG_FB_TILEBLITTING=.:# CONFIG_FB_TILEBLITTING is not set:" %{defconfig}
+	sed -i "s:CONFIG_FB_S3=.:# CONFIG_FB_S3 is not set:" %{defconfig}
+	sed -i "s:CONFIG_FB_VT8623=.:# CONFIG_FB_VT8623 is not set:" %{defconfig}
+	sed -i "s:CONFIG_FB_MATROX=.:# CONFIG_FB_MATROX is not set:" %{defconfig}
+	sed -i "s:CONFIG_FB_ARK=.:# CONFIG_FB_ARK is not set:" %{defconfig}
 %else
-	echo "CONFIG_BOOTSPLASH=y" >> arch/%{target_arch_dir}/defconfig
+	echo "CONFIG_BOOTSPLASH=y" >> %{defconfig}
 %endif
 
 %if %{with nfsroot}
-	sed -i "s:CONFIG_NFS_FS=m:CONFIG_NFS_FS=y:" arch/%{target_arch_dir}/defconfig
-	echo "CONFIG_ROOT_NFS=y" >> arch/%{target_arch_dir}/defconfig
+	sed -i "s:CONFIG_NFS_FS=m:CONFIG_NFS_FS=y:" %{defconfig}
+	echo "CONFIG_ROOT_NFS=y" >> %{defconfig}
 %endif
 
 %ifarch %{ix86}
 %if %{with abi}
-	cat %{SOURCE34} >> arch/%{target_arch_dir}/defconfig
+	cat %{SOURCE34} >> %{defconfig}
 %endif
 %endif
 
 %if %{with rescuecd}
-	RescueConfig arch/%{target_arch_dir}/defconfig
+	RescueConfig %{defconfig}
 %endif
 
-%{?debug:sed -i "s:# CONFIG_DEBUG_SLAB is not set:CONFIG_DEBUG_SLAB=y:" arch/%{target_arch_dir}/defconfig}
-%{?debug:sed -i "s:# CONFIG_DEBUG_PREEMPT is not set:CONFIG_DEBUG_PREEMPT=y:" arch/%{target_arch_dir}/defconfig}
-%{?debug:sed -i "s:# CONFIG_RT_DEADLOCK_DETECT is not set:CONFIG_RT_DEADLOCK_DETECT=y:" arch/%{target_arch_dir}/defconfig}
+%{?debug:sed -i "s:# CONFIG_DEBUG_SLAB is not set:CONFIG_DEBUG_SLAB=y:" %{defconfig}}
+%{?debug:sed -i "s:# CONFIG_DEBUG_PREEMPT is not set:CONFIG_DEBUG_PREEMPT=y:" %{defconfig}}
+%{?debug:sed -i "s:# CONFIG_RT_DEADLOCK_DETECT is not set:CONFIG_RT_DEADLOCK_DETECT=y:" %{defconfig}}
 
-	ln -sf arch/%{target_arch_dir}/defconfig .config
+	ln -sf %{defconfig} .config
 	install -d $KERNEL_INSTALL_DIR%{_kernelsrcdir}/include/linux
 	rm -f include/linux/autoconf.h
 	%{__make} %CrossOpts include/linux/autoconf.h
@@ -1246,7 +1248,7 @@ BuildKernel() {
 	echo "Building kernel $1 ..."
 	%{__make} %CrossOpts mrproper \
 		RCS_FIND_IGNORE='-name build-done -prune -o'
-	ln -sf arch/%{target_arch_dir}/defconfig .config
+	ln -sf %{defconfig} .config
 
 	%{__make} %CrossOpts clean \
 		RCS_FIND_IGNORE='-name build-done -prune -o'
