@@ -3,7 +3,6 @@
 #
 # NOTE:
 # - suspend2 renamed to tuxonice (as project name)
-# - vesafb-tng renamed to uvresafb (as project name)
 #
 # TODO:
 # - benchmark NO_HZ & HZ=1000 vs HZ=300 on i686
