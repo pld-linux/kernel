@@ -36,7 +36,6 @@
 %bcond_with	pax		# build pax support
 
 %bcond_with	fbsplash	# fbsplash instead of bootsplash
-%bcond_with	uvesafb		# uvesafb, vesafb replacement from gentoo
 %bcond_with	pae		# build PAE (HIGHMEM64G) support on uniprocessor
 %bcond_with	nfsroot		# build with root on NFS support
 
@@ -210,9 +209,6 @@ Patch2:		tahoe9xx-2.6.11.5.patch
 Patch3:		linux-2.6-bootsplash.patch
 # based on http://dev.gentoo.org/~spock/projects/gensplash/archive/fbsplash-0.9.2-r5-2.6.20-rc6.patch
 Patch4:		fbsplash-0.9.2-r5-2.6.20-rc6.patch
-
-# http://dev.gentoo.org/~spock/projects/uvesafb/archive/uvesafb-0.1-rc3-2.6.23-rc3.patch
-Patch5:		kernel-uvesafb.patch
 
 # http://mesh.dl.sourceforge.net/sourceforge/squashfs/squashfs3.3.tgz
 # squashfs3.3/kernel-patches/linux-2.6.24/squashfs3.3-patch
@@ -499,7 +495,6 @@ Netfilter module dated: %{netfilter_snap}
 %{?with_xen0:Xen 0 - enabled}
 %{?with_xenU:Xen U - enabled}
 %{?with_fbsplash:Fbsplash - enabled }
-%{?with_vesafb_tng:VesaFB New generation - enabled}
 %{?with_nfsroot:Root on NFS - enabled}
 
 %description -l de.UTF-8
@@ -515,7 +510,6 @@ Netfilter module dated: %{netfilter_snap}
 %{?with_xen0:Xen 0 - enabled}
 %{?with_xenU:Xen U - enabled}
 %{?with_fbsplash:Fbsplash - enabled }
-%{?with_vesafb_tng:VesaFB New generation - enabled}
 %{?with_nfsroot:Root on NFS - enabled}
 
 %description -l fr.UTF-8
@@ -531,7 +525,6 @@ Netfilter module dated: %{netfilter_snap}
 %{?with_xen0:Xen 0 - enabled}
 %{?with_xenU:Xen U - enabled}
 %{?with_fbsplash:Fbsplash - enabled }
-%{?with_vesafb_tng:VesaFB New generation - enabled}
 %{?with_nfsroot:Root on NFS - enabled}
 
 %description -l pl.UTF-8
@@ -546,7 +539,6 @@ Netfilter module dated: %{netfilter_snap}
 %{?with_xen0:Xen 0 - enabled}
 %{?with_xenU:Xen U - enabled}
 %{?with_fbsplash:Fbsplash - enabled }
-%{?with_vesafb_tng:VesaFB New generation - enabled}
 %{?with_nfsroot:Root on NFS - enabled}
 
 %package vmlinux
@@ -762,10 +754,6 @@ install -m 755 %{SOURCE6} .
 %patch3 -p1
 %else
 %patch4 -p1
-%endif
-
-%ifarch %{ix86}
-%{?with_vesafb_tng:%patch5 -p1}
 %endif
 
 # squashfs
@@ -1143,10 +1131,6 @@ BuildConfig() {
 
 %if %{without ipv6}
 	sed -i "s:CONFIG_IPV6=.:# CONFIG_IPV6 is not set:" %{defconfig}
-%endif
-
-%if %{with uvesa}
-	echo "CONFIG_FB_UVESA=m" >> %{defconfig}
 %endif
 
 # grsecurity & pax stuff
