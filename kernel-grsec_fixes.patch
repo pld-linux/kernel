@@ -2,22 +2,28 @@ netlink
 diff -upr a/grsecurity/gracl_cap.c c/grsecurity/gracl_cap.c
 --- a/grsecurity/gracl_cap.c	2007-12-01 00:54:57.312774500 +0000
 +++ c/grsecurity/gracl_cap.c	2007-12-01 01:09:34.923621750 +0000
-@@ -111,3 +111,10 @@ gr_is_capable_nolog(const int cap)
+@@ -110,3 +110,17 @@ gr_is_capable_nolog(const int cap)
  	return 0;
  }
- 
+
 +void
-+gr_log_cap_x(const int cap)
++gr_log_cap_pid(const int cap, const pid_t pid)
 +{
-+	if (gr_acl_is_enabled())
-+		gr_log_cap(GR_DONT_AUDIT, GR_CAP_ACL_MSG, current, captab_log[cap]);
++	struct task_struct *p;
++
++	if (gr_acl_is_enabled()) {
++		rcu_read_lock();
++		p = find_task_by_pid(pid);
++		if (p)
++			gr_log_cap(GR_DONT_AUDIT, GR_CAP_ACL_MSG, p, captab_log[cap]);
++		rcu_read_unlock();
++	}
 +	return;
 +}
-diff -upr a/grsecurity/grsec_sock.c c/grsecurity/grsec_sock.c
---- a/grsecurity/grsec_sock.c	2007-12-01 00:54:57.316774750 +0000
-+++ c/grsecurity/grsec_sock.c	2007-12-01 01:09:34.923621750 +0000
+--- a/grsecurity/grsec_sock.c	2008-03-24 00:24:22.482633101 +0100
++++ c/grsecurity/grsec_sock.c	2008-03-24 00:27:01.971671763 +0100
 @@ -251,23 +251,24 @@ __u32
- gr_cap_rtnetlink(void)
+ gr_cap_rtnetlink(struct sock *sock)
  {
  #ifdef CONFIG_GRKERNSEC
 +	struct acl_subject_label *curracl;
@@ -59,25 +65,25 @@ diff -upr a/grsecurity/grsec_sock.c c/grsecurity/grsec_sock.c
 diff -upr a/include/linux/grsecurity.h c/include/linux/grsecurity.h
 --- a/include/linux/grsecurity.h	2007-12-01 00:54:57.224769000 +0000
 +++ c/include/linux/grsecurity.h	2007-12-01 01:09:34.923621750 +0000
-@@ -62,6 +62,7 @@ void gr_log_semrm(const uid_t uid, const
+@@ -76,6 +76,7 @@ void gr_log_semrm(const uid_t uid, const
  void gr_log_shmget(const int err, const int shmflg, const size_t size);
  void gr_log_shmrm(const uid_t uid, const uid_t cuid);
  void gr_log_textrel(struct vm_area_struct *vma);
-+void gr_log_cap_x(const int cap);
++void gr_log_cap_pid(const int cap, pid_t pid);
  
  int gr_handle_follow_link(const struct inode *parent,
  				 const struct inode *inode,
 diff -upr a/security/commoncap.c c/security/commoncap.c
 --- a/security/commoncap.c	2007-12-01 00:54:57.300773750 +0000
 +++ c/security/commoncap.c	2007-12-01 01:09:34.923621750 +0000
-@@ -35,8 +35,12 @@
+@@ -55,8 +55,12 @@
  
  int cap_netlink_recv(struct sk_buff *skb, int cap)
  {
 -	if (!cap_raised(NETLINK_CB(skb).eff_cap, cap))
 +	if (!cap_raised(NETLINK_CB(skb).eff_cap, cap)) {
 +#ifdef CONFIG_GRKERNSEC
-+		gr_log_cap_x(cap);
++		gr_log_cap_pid(cap, NETLINK_CREDS(skb)->pid);
 +#endif
  		return -EPERM;
 +	}
