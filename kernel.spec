@@ -109,11 +109,11 @@
 %endif
 
 %define		_basever		2.6.24
-%define		_postver		.3
+%define		_postver		.4
 %define		_prepatch		%{nil}
 %define		_pre_rc			%{nil}
 %define		_rc			%{nil}
-%define		_rel			0.3
+%define		_rel			0.1
 %define		subname			%{?with_pax:-pax}%{?with_grsec_full:-grsecurity}%{?with_xen0:-xen0}%{?with_xenU:-xenU}%{?with_rescuecd:-rescuecd}
 
 %define		_enable_debug_packages			0
@@ -150,7 +150,7 @@ Source90:	http://www.kernel.org/pub/linux/kernel/v2.6/testing/patch-%{_prepatch}
 %endif
 %if "%{_postver}" != "%{nil}"
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
-# Source1-md5:	4c42be33a7d98f280588c9d28478cdfd
+# Source1-md5:	508f5aaa99dead9836ff490496a61581
 %endif
 
 Source3:	kernel-autoconf.h
@@ -196,9 +196,6 @@ Source59:	kernel-bzip2-lzma.config
 ###
 #	Patches
 ###
-# Remove if_addrlabel.h from sanitized headers (bug in 2.6.24.3 patch)
-Patch7:		kernel-if_addrlabel.h.patch
-
 Patch1:		kernel-modpost_warn.patch
 
 # tahoe9XX http://tahoe.pl/drivers/tahoe9xx-2.6.11.5.patch
@@ -731,7 +728,6 @@ install %{SOURCE5} Makefile.ppclibs
 
 install -m 755 %{SOURCE6} .
 
-%patch7 -p1
 # tuxonice:
 %if %{with tuxonice}
 ##ifarch %{ix86} %{x8664} ia64 ppc alpha
