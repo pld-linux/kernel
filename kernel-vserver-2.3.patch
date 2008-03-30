@@ -2608,10 +2608,11 @@ diff -NurpP --minimal linux-2.6.24.4/fs/block_dev.c linux-2.6.24.4-vs2.3.0.34/fs
 diff -NurpP --minimal linux-2.6.24.4/fs/char_dev.c linux-2.6.24.4-vs2.3.0.34/fs/char_dev.c
 --- linux-2.6.24.4/fs/char_dev.c	2008-03-27 17:46:40 +0100
 +++ linux-2.6.24.4-vs2.3.0.34/fs/char_dev.c	2008-03-27 19:38:02 +0100
-@@ -21,6 +21,7 @@
+@@ -21,6 +21,8 @@
  #include <linux/cdev.h>
  #include <linux/mutex.h>
  #include <linux/backing-dev.h>
++#include <linux/vs_context.h>
 +#include <linux/vs_device.h>
  
  #ifdef CONFIG_KMOD
@@ -8045,7 +8046,7 @@ diff -NurpP --minimal linux-2.6.24.4/fs/ocfs2/super.c linux-2.6.24.4-vs2.3.0.34/
  		goto out;
  	}
  
-+	if ((parsed_options & OCFS2_MOUNT_TAGGED) &&
++	if ((parsed_options.mount_opt & OCFS2_MOUNT_TAGGED) &&
 +		!(sb->s_flags & MS_TAGGED)) {
 +		ret = -EINVAL;
 +		mlog(ML_ERROR, "Cannot change tagging on remount\n");
@@ -8071,16 +8072,16 @@ diff -NurpP --minimal linux-2.6.24.4/fs/ocfs2/super.c linux-2.6.24.4-vs2.3.0.34/
  			break;
 +#ifndef CONFIG_TAGGING_NONE
 +		case Opt_tag:
-+			*mount_opt |= OCFS2_MOUNT_TAGGED;
++			mopt->mount_opt |= OCFS2_MOUNT_TAGGED;
 +			break;
 +		case Opt_notag:
-+			*mount_opt &= ~OCFS2_MOUNT_TAGGED;
++			mopt->mount_opt &= ~OCFS2_MOUNT_TAGGED;
 +			break;
 +#endif
 +#ifdef CONFIG_PROPAGATE
 +		case Opt_tagid:
 +			/* use args[0] */
-+			*mount_opt |= OCFS2_MOUNT_TAGGED;
++			mopt->mount_opt |= OCFS2_MOUNT_TAGGED;
 +			break;
 +#endif
  		default:
