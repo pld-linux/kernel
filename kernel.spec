@@ -6,7 +6,6 @@
 #
 # TODO:
 # - benchmark NO_HZ & HZ=1000 vs HZ=300 on i686
-# - vserver 2.3 (waiting for authors)
 # - apparmor (no future?)
 #
 # FUTURE:
@@ -113,7 +112,7 @@
 %define		_prepatch		%{nil}
 %define		_pre_rc			%{nil}
 %define		_rc			%{nil}
-%define		_rel			0.1
+%define		_rel			0.2
 %define		subname			%{?with_pax:-pax}%{?with_grsec_full:-grsecurity}%{?with_xen0:-xen0}%{?with_xenU:-xenU}%{?with_rescuecd:-rescuecd}
 
 %define		_enable_debug_packages			0
@@ -295,9 +294,9 @@ Patch72:	kernel-2.6-ueagle-atm-freezer.patch
 # http://patches.aircrack-ng.org/hostap-kernel-2.6.18.patch
 Patch85:	hostap-kernel-2.6.18.patch
 
-# there is no 2.3 for 2.6.24 yet
+# based on http://vserver.13thfloor.at/Experimental/patch-2.6.24.4-vs2.3.0.34.diff
 Patch100:	linux-2.6-vs2.3.patch
-Patch101:	linux-2.6-vs2.1-suspend2.patch
+Patch101:	kernel-vserver-fixes.patch
 # based on http://vserver.13thfloor.at/Experimental/patch-2.6.24-rc7-vs2.2.0.5.0.7-pre.diff
 Patch102:	linux-2.6-vs2.2.patch
 # note about vserver 2.2 vs 2.3: 2.2 is "stable", 2.3 is "development", currently (2007-09-03)
@@ -360,7 +359,7 @@ Patch9997:	pax_selinux_hooks-2.6.20.patch
 # based on http://www.grsecurity.net/~paxguy1/pax-linux-2.6.24-test8.patch
 Patch9998:	kernel-pax.patch
 
-# based on http://www.grsecurity.net/~spender/grsecurity-2.1.11-2.6.24.2-200802192340.patch
+# based on http://www.grsecurity.net/~spender/grsecurity-2.1.11-2.6.24.4-200803242230.patch
 Patch9999:	linux-2.6-grsec_full.patch
 Patch10000:	linux-2.6-grsec-caps.patch
 Patch10001:	linux-2.6-grsec-common.patch
@@ -867,12 +866,7 @@ install -m 755 %{SOURCE6} .
 %patch102 -p1
 %else
 %patch100 -p1
-%endif
-%if %{with tuxonice}
-#ifarch %{ix86} %{x8664} ia64
-# 2.6.24 temporaily disabled to test if still needed
-#%patch101 -p1
-#endif
+%patch101 -p1
 %endif
 %endif
 
