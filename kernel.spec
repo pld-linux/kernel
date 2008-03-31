@@ -102,8 +102,8 @@
 %define		_prepatch		%{nil}
 %define		_pre_rc			%{nil}
 %define		_rc			%{nil}
-%define		_rel			5
-%define		subname			%{?with_pax:-pax}%{?with_grsec_full:-grsecurity}%{?with_xen0:-xen0}%{?with_xenU:-xenU}
+# NB! pay attention to KABI macro
+%define		_rel			5.1
 
 %define		_enable_debug_packages			0
 
@@ -112,12 +112,27 @@
 %define		netfilter_snap		20070806
 %define		xen_version		3.0.2
 
+%define		__alt_kernel	%{?with_pax:pax}%{?with_grsec_full:grsecurity}%{?with_xen0:xen0}%{?with_xenU:xenU}
+%if "%{__alt_kernel}" != ""
+%define		alt_kernel	%{__alt_kernel}
+%endif
+
+# kernel release (used in filesystem and eventually in uname -r)
+# modules will be looked from /lib/modules/%{kernel_release}
+# _localversion is just that without version for "> localversion"
+%define		_localversion %{KABI}
+%define		kernel_release %{version}%{?alt_kernel:_%{alt_kernel}}-%{_localversion}
+
+# Our Kernel ABI, increase this when you want the out of source modules being rebuilt
+# Usually same as %{_rel}
+%define		KABI		5
+
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de.UTF-8):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(et.UTF-8):	Linuxi kernel (ehk operatsioonisüsteemi tuum)
 Summary(fr.UTF-8):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl.UTF-8):	Jądro Linuksa
-Name:		kernel%{subname}
+Name:		kernel%{_alt_kernel}
 
 %if "%{_prepatch}" == "%{nil}"
 Version:	%{_basever}%{_postver}
@@ -413,6 +428,7 @@ Requires:	coreutils
 Requires:	geninitrd >= 2.57
 Requires:	module-init-tools >= 0.9.9
 Provides:	%{name}(netfilter) = %{netfilter_snap}
+Provides:	%{name}(vermagic) = %{kernel_release}
 %if %{with xen0} || %{with xenU}
 Provides:	kernel(xen) = %{_xen_version}
 %endif
@@ -456,12 +472,7 @@ BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 %define		initrd_dir	/boot
 %endif
 
-# kernel release (used in filesystem and eventually in uname -r)
-# modules will be looked from /lib/modules/%{kernel_release}
-# _localversion is just that without version for "> localversion"
-%define		_localversion %{release}
-%define		kernel_release %{version}%{subname}-%{_localversion}
-%define		_kernelsrcdir	/usr/src/linux%{subname}-%{version}
+%define		_kernelsrcdir	/usr/src/linux%{_alt_kernel}-%{version}
 
 %if "%{_target_base_arch}" != "%{_arch}"
 	%define	CrossOpts ARCH=%{_target_base_arch} CROSS_COMPILE=%{_target_cpu}-pld-linux-
@@ -1017,7 +1028,7 @@ install %{SOURCE5} Makefile.ppclibs
 %endif
 
 # Fix EXTRAVERSION in main Makefile
-sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{_postver}%{subname}#g' Makefile
+sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{_postver}%{?alt_kernel:_%{alt_kernel}}#g' Makefile
 
 # on sparc this line causes CONFIG_INPUT=m (instead of =y), thus breaking build
 sed -i -e '/select INPUT/d' net/bluetooth/hidp/Kconfig
@@ -1426,6 +1437,9 @@ perl %{SOURCE7} %{_kernelsrcdir} $KERNEL_BUILD_DIR
 
 # ghosted initrd
 touch $RPM_BUILD_ROOT/boot/initrd-%{kernel_release}.gz
+install -d $RPM_BUILD_ROOT/lib/modules/%{kernel_release}
+rm -f $RPM_BUILD_ROOT/lib/modules/%{kernel_release}/{build,source}
+touch $RPM_BUILD_ROOT/lib/modules/%{kernel_release}/{build,source}
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -1449,7 +1463,7 @@ ln -sf System.map-%{kernel_release} /boot/System.map
 
 %depmod %{kernel_release}
 
-/sbin/geninitrd -f --initrdfs=rom %{initrd_dir}/initrd-%{kernel_release}.gz %{kernel_release}
+/sbin/geninitrd -f --initrdfs=initramfs %{initrd_dir}/initrd-%{kernel_release}.gz %{kernel_release}
 mv -f %{initrd_dir}/initrd %{initrd_dir}/initrd.old 2> /dev/null > /dev/null
 ln -sf initrd-%{kernel_release}.gz %{initrd_dir}/initrd
 
@@ -1460,7 +1474,7 @@ if [ -x /sbin/new-kernel-pkg ]; then
 		title='PLD Linux'
 	fi
 
-	ext='%{?with_pax:pax}%{?with_grsec_full:grsecurity}%{?with_xen0:Xen0}%{?with_xenU:XenU}'
+	ext='%{__alt_kernel}'
 	if [ "$ext" ]; then
 		title="$title $ext"
 	fi
@@ -1502,15 +1516,24 @@ ln -sf vmlinux-%{kernel_release} /boot/vmlinux
 %depmod %{kernel_release}
 
 %post headers
-ln -snf %{basename:%{_kernelsrcdir}} %{_prefix}/src/linux%{subname}
+ln -snf %{basename:%{_kernelsrcdir}} %{_prefix}/src/linux%{_alt_kernel}
 
 %postun headers
 if [ "$1" = "0" ]; then
-	if [ -L %{_prefix}/src/linux%{subname} ]; then
-		if [ "$(readlink %{_prefix}/src/linux%{subname})" = "linux%{subname}-%{version}" ]; then
-			rm -f %{_prefix}/src/linux%{subname}
+	if [ -L %{_prefix}/src/linux%{_alt_kernel} ]; then
+		if [ "$(readlink %{_prefix}/src/linux%{_alt_kernel})" = "linux%{_alt_kernel}-%{version}" ]; then
+			rm -f %{_prefix}/src/linux%{_alt_kernel}
 		fi
 	fi
+fi
+
+%triggerin module-build -- %{name} = %{epoch}:%{version}-%{release}
+ln -sfn %{_kernelsrcdir} /lib/modules/%{kernel_release}/build
+ln -sfn %{_kernelsrcdir} /lib/modules/%{kernel_release}/source
+
+%triggerun module-build -- %{name} = %{epoch}:%{version}-%{release}
+if [ "$1" = 0 ]; then
+	rm -f /lib/modules/%{kernel_release}/{build,source}
 fi
 
 %files
@@ -1568,6 +1591,9 @@ fi
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/usb/host/sl811_cs.ko*
 %endif
 %ghost /lib/modules/%{kernel_release}/modules.*
+# symlinks pointing to kernelsrcdir
+%ghost /lib/modules/%{kernel_release}/build
+%ghost /lib/modules/%{kernel_release}/source
 %dir %{_sysconfdir}/modprobe.d/%{kernel_release}
 
 %ifarch alpha %{ix86} %{x8664} ppc ppc64 sparc sparc64
