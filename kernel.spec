@@ -103,7 +103,7 @@
 %define		_pre_rc			%{nil}
 %define		_rc			%{nil}
 # NB! pay attention to KABI macro
-%define		_rel			5.1
+%define		_rel			6
 
 %define		_enable_debug_packages			0
 
@@ -125,7 +125,7 @@
 
 # Our Kernel ABI, increase this when you want the out of source modules being rebuilt
 # Usually same as %{_rel}
-%define		KABI		5
+%define		KABI		6
 
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de.UTF-8):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
