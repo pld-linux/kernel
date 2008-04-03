@@ -97,13 +97,13 @@
 %define		have_oss	0
 %endif
 
+# NB! pay attention to KABI macro when updating version
 %define		_basever		2.6.22
 %define		_postver		.19
 %define		_prepatch		%{nil}
 %define		_pre_rc			%{nil}
 %define		_rc			%{nil}
-# NB! pay attention to KABI macro
-%define		_rel			6
+%define		_rel			7
 
 %define		_enable_debug_packages			0
 
@@ -432,6 +432,8 @@ Provides:	%{name}(vermagic) = %{kernel_release}
 %if %{with xen0} || %{with xenU}
 Provides:	kernel(xen) = %{_xen_version}
 %endif
+Obsoletes:	kernel%{_alt_kernel}-scsi-mv
+Obsoletes:	kernel%{_alt_kernel}-smp-scsi-mv
 Obsoletes:	kernel-misc-fuse
 Obsoletes:	kernel-modules
 Obsoletes:	kernel-net-hostap
@@ -1385,6 +1387,10 @@ export DEPMOD=%DepMod
 
 install -d $RPM_BUILD_ROOT%{_kernelsrcdir}
 install -d $RPM_BUILD_ROOT%{_sysconfdir}/modprobe.d/%{kernel_release}
+cat <<'EOF' > $RPM_BUILD_ROOT%{_sysconfdir}/modprobe.d/%{kernel_release}/mvsata.conf
+# mvsata.spec
+alias mv_sata sata_mv
+EOF
 
 # test if we can hardlink -- %{_builddir} and $RPM_BUILD_ROOT on same partition
 if cp -al COPYING $RPM_BUILD_ROOT/COPYING 2>/dev/null; then
@@ -1595,6 +1601,7 @@ fi
 %ghost /lib/modules/%{kernel_release}/build
 %ghost /lib/modules/%{kernel_release}/source
 %dir %{_sysconfdir}/modprobe.d/%{kernel_release}
+%{_sysconfdir}/modprobe.d/%{kernel_release}/mvsata.conf
 
 %ifarch alpha %{ix86} %{x8664} ppc ppc64 sparc sparc64
 %files vmlinux
