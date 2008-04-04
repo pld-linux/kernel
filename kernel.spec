@@ -414,7 +414,7 @@ BuildRequires:	binutils >= 3:2.14.90.0.7
 BuildRequires:	elftoaout
 %endif
 BuildRequires:	/sbin/depmod
-BuildRequires:	gcc >= 5:3.2
+BuildRequires:	%{kgcc_package} >= 5:3.2
 # for hostname command
 BuildRequires:	net-tools
 BuildRequires:	perl-base
@@ -481,25 +481,25 @@ BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 	%define	DepMod /bin/true
 
 	%if "%{_arch}" == "sparc" && "%{_target_base_arch}" == "sparc64"
-	%define	CrossOpts ARCH=%{_target_base_arch} CC="%{__cc}"
+	%define	CrossOpts ARCH=%{_target_base_arch} CC="%{kgcc}"
 	%define	DepMod /sbin/depmod
 	%endif
 
 	%if "%{_arch}" == "sparc64" && "%{_target_base_arch}" == "sparc"
-	%define	CrossOpts ARCH=%{_target_base_arch} CC="%{__cc}"
+	%define	CrossOpts ARCH=%{_target_base_arch} CC="%{kgcc}"
 	%define	DepMod /sbin/depmod
 	%endif
 
 	%if "%{_arch}" == "x86_64" && "%{_target_base_arch}" == "i386"
-	%define	CrossOpts ARCH=%{_target_base_arch} CC="%{__cc}"
+	%define	CrossOpts ARCH=%{_target_base_arch} CC="%{kgcc}"
 	%define	DepMod /sbin/depmod
 	%endif
 
 %else
 	%ifarch ppc ppc64
-	%define CrossOpts ARCH=powerpc CC="%{__cc}"
+	%define CrossOpts ARCH=powerpc CC="%{kgcc}"
 	%else
-	%define CrossOpts ARCH=%{_target_base_arch} CC="%{__cc}"
+	%define CrossOpts ARCH=%{_target_base_arch} CC="%{kgcc}"
 	%endif
 	%define	DepMod /sbin/depmod
 %endif
