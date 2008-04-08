@@ -478,19 +478,23 @@ BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 	%define	DepMod /sbin/depmod
 %endif
 
+%define __features Netfilter module dated: %{netfilter_snap}\
+%{?with_abi:Linux ABI support - enabled}\
+%{?with_grsec_full:Grsecurity full support - enabled}\
+%{?with_pax:PaX support - enabled}\
+%{?with_xen0:Xen 0 - enabled}\
+%{?with_xenU:Xen U - enabled}\
+%{?with_fbsplash:Fbsplash - enabled }\
+%{?with_nfsroot:Root on NFS - enabled}
+
+%define Features %(echo "%{__features}" | sed '/^$/d')
+
 %description
 This package contains the Linux kernel that is used to boot and run
 your system. It contains few device drivers for specific hardware.
 Most hardware is instead supported by modules loaded after booting.
 
-Netfilter module dated: %{netfilter_snap}
-%{?with_abi:Linux ABI support - enabled}
-%{?with_grsec_full:Grsecurity full support - enabled}
-%{?with_pax:PaX support - enabled}
-%{?with_xen0:Xen 0 - enabled}
-%{?with_xenU:Xen U - enabled}
-%{?with_fbsplash:Fbsplash - enabled }
-%{?with_nfsroot:Root on NFS - enabled}
+%{Features}
 
 %description -l de.UTF-8
 Das Kernel-Paket enthält den Linux-Kernel (vmlinuz), den Kern des
@@ -498,14 +502,7 @@ Linux-Betriebssystems. Der Kernel ist für grundliegende
 Systemfunktionen verantwortlich: Speicherreservierung,
 Prozeß-Management, Geräte Ein- und Ausgaben, usw.
 
-Netfilter module dated: %{netfilter_snap}
-%{?with_abi:Linux ABI support - enabled}
-%{?with_grsec_full:Grsecurity full support - enabled}
-%{?with_pax:PaX support - enabled}
-%{?with_xen0:Xen 0 - enabled}
-%{?with_xenU:Xen U - enabled}
-%{?with_fbsplash:Fbsplash - enabled }
-%{?with_nfsroot:Root on NFS - enabled}
+%{Features}
 
 %description -l fr.UTF-8
 Le package kernel contient le kernel linux (vmlinuz), la partie
@@ -513,31 +510,18 @@ centrale d'un système d'exploitation Linux. Le noyau traite les
 fonctions basiques d'un système d'exploitation: allocation mémoire,
 allocation de process, entrée/sortie de peripheriques, etc.
 
-Netfilter module dated: %{netfilter_snap}
-%{?with_abi:Linux ABI support - enabled}
-%{?with_grsec_full:Grsecurity full support - enabled}
-%{?with_pax:PaX support - enabled}
-%{?with_xen0:Xen 0 - enabled}
-%{?with_xenU:Xen U - enabled}
-%{?with_fbsplash:Fbsplash - enabled }
-%{?with_nfsroot:Root on NFS - enabled}
+%{Features}
 
 %description -l pl.UTF-8
 Pakiet zawiera jądro Linuksa niezbędne do prawidłowego działania
 Twojego komputera. Zawiera w sobie sterowniki do sprzętu znajdującego
 się w komputerze, takiego jak sterowniki dysków itp.
 
-Netfilter module dated: %{netfilter_snap}
-%{?with_abi:Linux ABI support - enabled}
-%{?with_grsec_full:Grsecurity full support - enabled}
-%{?with_pax:PaX support - enabled}
-%{?with_xen0:Xen 0 - enabled}
-%{?with_xenU:Xen U - enabled}
-%{?with_fbsplash:Fbsplash - enabled }
-%{?with_nfsroot:Root on NFS - enabled}
+%{Features}
 
 %package vmlinux
 Summary:	vmlinux - uncompressed kernel image
+Summary(de.UTF-8):	vmlinux - dekompressiertes Kernel Bild
 Summary(pl.UTF-8):	vmlinux - rozpakowany obraz jądra
 Group:		Base/Kernel
 Obsoletes:	kernel-smp-vmlinux
@@ -545,11 +529,15 @@ Obsoletes:	kernel-smp-vmlinux
 %description vmlinux
 vmlinux - uncompressed kernel image.
 
+%description vmlinux -l de.UTF-8
+vmlinux - dekompressiertes Kernel Bild.
+
 %description vmlinux -l pl.UTF-8
 vmlinux - rozpakowany obraz jądra.
 
 %package drm
 Summary:	DRM kernel modules
+Summary(de.UTF-8):	DRM Kernel Treiber
 Summary(pl.UTF-8):	Sterowniki DRM
 Group:		Base/Kernel
 Requires(postun):	%{name} = %{epoch}:%{version}-%{release}
@@ -560,11 +548,15 @@ Autoreqprov:	no
 %description drm
 DRM kernel modules.
 
+%description drm -l de.UTF-8
+DRM Kernel Treiber.
+
 %description drm -l pl.UTF-8
 Sterowniki DRM.
 
 %package pcmcia
 Summary:	PCMCIA modules
+Summary(de.UTF-8):	PCMCIA Module
 Summary(pl.UTF-8):	Moduły PCMCIA
 Group:		Base/Kernel
 Requires(postun):	%{name} = %{epoch}:%{version}-%{release}
@@ -576,6 +568,9 @@ Autoreqprov:	no
 
 %description pcmcia
 PCMCIA modules.
+
+%description pcmcia -l de.UTF-8
+PCMCIA Module.
 
 %description pcmcia -l pl.UTF-8
 Moduły PCMCIA.
@@ -599,6 +594,7 @@ mkvmlinuz może być do tego przydatny.
 
 %package sound-alsa
 Summary:	ALSA kernel modules
+Summary(de.UTF-8):	ALSA Kernel Module
 Summary(pl.UTF-8):	Sterowniki dźwięku ALSA
 Group:		Base/Kernel
 Requires(postun):	%{name} = %{epoch}:%{version}-%{release}
@@ -609,11 +605,15 @@ Autoreqprov:	no
 %description sound-alsa
 ALSA (Advanced Linux Sound Architecture) sound drivers.
 
+%description sound-alsa -l de.UTF-8
+ALSA (Advanced Linux Sound Architecture) Sound-Treiber.
+
 %description sound-alsa -l pl.UTF-8
 Sterowniki dźwięku ALSA (Advanced Linux Sound Architecture).
 
 %package sound-oss
 Summary:	OSS kernel modules
+Summary(de.UTF-8):	OSS Kernel Module
 Summary(pl.UTF-8):	Sterowniki dźwięku OSS
 Group:		Base/Kernel
 Requires(postun):	%{name} = %{epoch}:%{version}-%{release}
@@ -624,11 +624,15 @@ Autoreqprov:	no
 %description sound-oss
 OSS (Open Sound System) drivers.
 
+%description sound-oss -l de.UTF-8
+OSS (Open Sound System) Treiber.
+
 %description sound-oss -l pl.UTF-8
 Sterowniki dźwięku OSS (Open Sound System).
 
 %package headers
 Summary:	Header files for the Linux kernel
+Summary(de.UTF-8):	Header Dateien für den Linux-Kernel
 Summary(pl.UTF-8):	Pliki nagłówkowe jądra Linuksa
 Group:		Development/Building
 Provides:	%{name}-headers(netfilter) = %{netfilter_snap}
@@ -639,12 +643,18 @@ These are the C header files for the Linux kernel, which define
 structures and constants that are needed when rebuilding the kernel or
 building kernel modules.
 
+%description headers -l de.UTF-8
+Dies sind die C Header Dateien für den Linux-Kernel, die definierte
+Strukturen und Konstante beinhalten die beim rekompilieren des Kernels
+oder bei Kernel Modul kompilationen gebraucht werden.
+
 %description headers -l pl.UTF-8
 Pakiet zawiera pliki nagłówkowe jądra, niezbędne do rekompilacji jądra
 oraz budowania modułów jądra.
 
 %package module-build
 Summary:	Development files for building kernel modules
+Summary(de.UTF-8):	Development Dateien die beim Kernel Modul kompilationen gebraucht werden
 Summary(pl.UTF-8):	Pliki służące do budowania modułów jądra
 Group:		Development/Building
 Requires:	%{name}-headers = %{epoch}:%{version}-%{release}
@@ -655,12 +665,17 @@ Autoreqprov:	no
 Development files from kernel source tree needed to build Linux kernel
 modules from external packages.
 
+%description module-build -l de.UTF-8
+Development Dateien des Linux-Kernels die beim kompilieren externer
+Kernel Module gebraucht werden.
+
 %description module-build -l pl.UTF-8
 Pliki ze drzewa źródeł jądra potrzebne do budowania modułów jądra
 Linuksa z zewnętrznych pakietów.
 
 %package source
 Summary:	Kernel source tree
+Summary(de.UTF-8):	Der Kernel Quelltext
 Summary(pl.UTF-8):	Kod źródłowy jądra Linuksa
 Group:		Development/Building
 Requires:	%{name}-module-build = %{epoch}:%{version}-%{release}
@@ -691,6 +706,7 @@ Pakiet zawiera kod źródłowy jądra systemu.
 
 %package doc
 Summary:	Kernel documentation
+Summary(de.UTF-8):	Kernel Dokumentation
 Summary(pl.UTF-8):	Dokumentacja do jądra Linuksa
 Group:		Documentation
 Autoreqprov:	no
@@ -698,6 +714,10 @@ Autoreqprov:	no
 %description doc
 This is the documentation for the Linux kernel, as found in
 /usr/src/linux/Documentation directory.
+
+%description doc -l de.UTF-8
+Dies ist die Kernel Dokumentation wie sie im 'Documentation'
+Verzeichniss vorgefunden werden kann.
 
 %description doc -l pl.UTF-8
 Pakiet zawiera dokumentację do jądra Linuksa pochodzącą z katalogu
