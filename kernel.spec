@@ -1423,15 +1423,15 @@ fi
 
 %post
 %ifarch ia64
-ln -sf vmlinuz-%{kernel_release} /boot/efi/vmlinuz%{subname}
+ln -sf vmlinuz-%{kernel_release} /boot/efi/vmlinuz%{__alt_kernel}
 %endif
-ln -sf vmlinuz-%{kernel_release} /boot/vmlinuz%{subname}
-ln -sf System.map-%{kernel_release} /boot/System.map%{subname}
+ln -sf vmlinuz-%{kernel_release} /boot/vmlinuz%{__alt_kernel}
+ln -sf System.map-%{kernel_release} /boot/System.map%{__alt_kernel}
 
 %depmod %{kernel_release}
 
 /sbin/geninitrd -f --initrdfs=rom %{initrd_dir}/initrd-%{kernel_release}.gz %{kernel_release}
-ln -sf initrd-%{kernel_release}.gz %{initrd_dir}/initrd%{subname}
+ln -sf initrd-%{kernel_release}.gz %{initrd_dir}/initrd%{__alt_kernel}
 
 if [ -x /sbin/new-kernel-pkg ]; then
 	if [ -f /etc/pld-release ]; then
@@ -1451,7 +1451,7 @@ elif [ -x /sbin/rc-boot ]; then
 fi
 
 %post vmlinux
-ln -sf vmlinux-%{kernel_release} /boot/vmlinux%{subname}
+ln -sf vmlinux-%{kernel_release} /boot/vmlinux%{__alt_kernel}
 
 %post libs
 %{_sbindir}/mkvmlinuz /boot/zImage-%{kernel_release} %{kernel_release}
