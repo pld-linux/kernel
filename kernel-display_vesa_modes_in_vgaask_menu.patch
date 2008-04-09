@@ -1,0 +1,195 @@
+commit 1cac5004e953506166e980da5776d5cc1c176d79
+Author: H. Peter Anvin <hpa@zytor.com>
+Date:   Wed Jan 30 13:33:02 2008 +0100
+
+    x86 setup: display VESA graphics modes in vga=ask menu
+    
+    Display VESA graphics modes, with their mode IDs, in the vga=ask
+    menu.  Most VESA mode numbers are platform-dependent, so it helps to
+    have an easy way to display them.
+    
+    Based in part on a patch by Petr Vandrovec <petr@vandrovec.name>.
+    
+    Cc: Petr Vandrovec <petr@vandrovec.name>
+    Signed-off-by: H. Peter Anvin <hpa@zytor.com>
+    Signed-off-by: Ingo Molnar <mingo@elte.hu>
+    Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+
+diff --git a/arch/x86/boot/video-bios.c b/arch/x86/boot/video-bios.c
+index ed0672a..ff664a1 100644
+--- a/arch/x86/boot/video-bios.c
++++ b/arch/x86/boot/video-bios.c
+@@ -104,6 +104,7 @@ static int bios_probe(void)
+ 
+ 		mi = GET_HEAP(struct mode_info, 1);
+ 		mi->mode = VIDEO_FIRST_BIOS+mode;
++		mi->depth = 0;	/* text */
+ 		mi->x = rdfs16(0x44a);
+ 		mi->y = rdfs8(0x484)+1;
+ 		nmodes++;
+@@ -116,7 +117,7 @@ static int bios_probe(void)
+ 
+ __videocard video_bios =
+ {
+-	.card_name	= "BIOS (scanned)",
++	.card_name	= "BIOS",
+ 	.probe		= bios_probe,
+ 	.set_mode	= bios_set_mode,
+ 	.unsafe		= 1,
+diff --git a/arch/x86/boot/video-vesa.c b/arch/x86/boot/video-vesa.c
+index 4716b9a..662dd2f 100644
+--- a/arch/x86/boot/video-vesa.c
++++ b/arch/x86/boot/video-vesa.c
+@@ -79,20 +79,28 @@ static int vesa_probe(void)
+ 			/* Text Mode, TTY BIOS supported,
+ 			   supported by hardware */
+ 			mi = GET_HEAP(struct mode_info, 1);
+-			mi->mode = mode + VIDEO_FIRST_VESA;
+-			mi->x    = vminfo.h_res;
+-			mi->y    = vminfo.v_res;
++			mi->mode  = mode + VIDEO_FIRST_VESA;
++			mi->depth = 0; /* text */
++			mi->x     = vminfo.h_res;
++			mi->y     = vminfo.v_res;
+ 			nmodes++;
+-		} else if ((vminfo.mode_attr & 0x99) == 0x99) {
++		} else if ((vminfo.mode_attr & 0x99) == 0x99 &&
++			   (vminfo.memory_layout == 4 ||
++			    vminfo.memory_layout == 6) &&
++			   vminfo.memory_planes == 1) {
+ #ifdef CONFIG_FB
+ 			/* Graphics mode, color, linear frame buffer
+-			   supported -- register the mode but hide from
+-			   the menu.  Only do this if framebuffer is
+-			   configured, however, otherwise the user will
+-			   be left without a screen. */
++			   supported.  Only register the mode if
++			   if framebuffer is configured, however,
++			   otherwise the user will be left without a screen.
++			   We don't require CONFIG_FB_VESA, however, since
++			   some of the other framebuffer drivers can use
++			   this mode-setting, too. */
+ 			mi = GET_HEAP(struct mode_info, 1);
+ 			mi->mode = mode + VIDEO_FIRST_VESA;
+-			mi->x = mi->y = 0;
++			mi->depth = vminfo.bpp;
++			mi->x = vminfo.h_res;
++			mi->y = vminfo.v_res;
+ 			nmodes++;
+ #endif
+ 		}
+diff --git a/arch/x86/boot/video-vga.c b/arch/x86/boot/video-vga.c
+index aef02f9..7259387 100644
+--- a/arch/x86/boot/video-vga.c
++++ b/arch/x86/boot/video-vga.c
+@@ -18,22 +18,22 @@
+ #include "video.h"
+ 
+ static struct mode_info vga_modes[] = {
+-	{ VIDEO_80x25,  80, 25 },
+-	{ VIDEO_8POINT, 80, 50 },
+-	{ VIDEO_80x43,  80, 43 },
+-	{ VIDEO_80x28,  80, 28 },
+-	{ VIDEO_80x30,  80, 30 },
+-	{ VIDEO_80x34,  80, 34 },
+-	{ VIDEO_80x60,  80, 60 },
++	{ VIDEO_80x25,  80, 25, 0 },
++	{ VIDEO_8POINT, 80, 50, 0 },
++	{ VIDEO_80x43,  80, 43, 0 },
++	{ VIDEO_80x28,  80, 28, 0 },
++	{ VIDEO_80x30,  80, 30, 0 },
++	{ VIDEO_80x34,  80, 34, 0 },
++	{ VIDEO_80x60,  80, 60, 0 },
+ };
+ 
+ static struct mode_info ega_modes[] = {
+-	{ VIDEO_80x25,  80, 25 },
+-	{ VIDEO_8POINT, 80, 43 },
++	{ VIDEO_80x25,  80, 25, 0 },
++	{ VIDEO_8POINT, 80, 43, 0 },
+ };
+ 
+ static struct mode_info cga_modes[] = {
+-	{ VIDEO_80x25,  80, 25 },
++	{ VIDEO_80x25,  80, 25, 0 },
+ };
+ 
+ __videocard video_vga;
+diff --git a/arch/x86/boot/video.c b/arch/x86/boot/video.c
+index ad9712f..696d08f 100644
+--- a/arch/x86/boot/video.c
++++ b/arch/x86/boot/video.c
+@@ -293,13 +293,28 @@ static void display_menu(void)
+ 	struct mode_info *mi;
+ 	char ch;
+ 	int i;
++	int nmodes;
++	int modes_per_line;
++	int col;
+ 
+-	puts("Mode:    COLSxROWS:\n");
++	nmodes = 0;
++	for (card = video_cards; card < video_cards_end; card++)
++		nmodes += card->nmodes;
+ 
++	modes_per_line = 1;
++	if (nmodes >= 20)
++		modes_per_line = 3;
++
++	for (col = 0; col < modes_per_line; col++)
++		puts("Mode: Resolution:  Type: ");
++	putchar('\n');
++
++	col = 0;
+ 	ch = '0';
+ 	for (card = video_cards; card < video_cards_end; card++) {
+ 		mi = card->modes;
+ 		for (i = 0; i < card->nmodes; i++, mi++) {
++			char resbuf[32];
+ 			int visible = mi->x && mi->y;
+ 			u16 mode_id = mi->mode ? mi->mode :
+ 				(mi->y << 8)+mi->x;
+@@ -307,8 +322,18 @@ static void display_menu(void)
+ 			if (!visible)
+ 				continue; /* Hidden mode */
+ 
+-			printf("%c  %04X  %3dx%-3d  %s\n",
+-			       ch, mode_id, mi->x, mi->y, card->card_name);
++			if (mi->depth)
++				sprintf(resbuf, "%dx%d", mi->y, mi->depth);
++			else
++				sprintf(resbuf, "%d", mi->y);
++
++			printf("%c %03X %4dx%-7s %-6s",
++			       ch, mode_id, mi->x, resbuf, card->card_name);
++			col++;
++			if (col >= modes_per_line) {
++				putchar('\n');
++				col = 0;
++			}
+ 
+ 			if (ch == '9')
+ 				ch = 'a';
+@@ -318,6 +343,8 @@ static void display_menu(void)
+ 				ch++;
+ 		}
+ 	}
++	if (col)
++		putchar('\n');
+ }
+ 
+ #define H(x)	((x)-'a'+10)
+diff --git a/arch/x86/boot/video.h b/arch/x86/boot/video.h
+index b92447d..d69347f 100644
+--- a/arch/x86/boot/video.h
++++ b/arch/x86/boot/video.h
+@@ -83,7 +83,8 @@ void store_screen(void);
+ 
+ struct mode_info {
+ 	u16 mode;		/* Mode number (vga= style) */
+-	u8  x, y;		/* Width, height */
++	u16 x, y;		/* Width, height */
++	u16 depth;		/* Bits per pixel, 0 for text mode */
+ };
+ 
+ struct card_info {
