@@ -702,9 +702,9 @@ kernel that is better tuned to your particular hardware.
 %description source -l de.UTF-8
 Das Kernel-Source-Paket enthält den source code (C/Assembler-Code) des
 Linux-Kernels. Die Source-Dateien werden gebraucht, um viele
-C-Programme zu compilieren, da sie auf Konstanten zurückgreifen, die
+C-Programme zu kompilieren, da sie auf Konstanten zurückgreifen, die
 im Kernel-Source definiert sind. Die Source-Dateien können auch
-benutzt werden, um einen Kernel zu compilieren, der besser auf Ihre
+benutzt werden, um einen Kernel zu kompilieren, der besser auf Ihre
 Hardware ausgerichtet ist.
 
 %description source -l fr.UTF-8
