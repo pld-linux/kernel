@@ -659,7 +659,7 @@ building kernel modules.
 
 %description headers -l de.UTF-8
 Dies sind die C Header Dateien für den Linux-Kernel, die definierte
-Strukturen und Konstante beinhalten die beim rekompilieren des Kernels
+Strukturen und Konstante beinhalten, die beim rekompilieren des Kernels
 oder bei Kernel Modul kompilationen gebraucht werden.
 
 %description headers -l pl.UTF-8
