@@ -304,6 +304,11 @@ Patch70:	kernel-suspend2-headers.patch
 Patch71:	linux-2.6-suspend2-page.patch
 Patch72:	kernel-2.6-ueagle-atm-freezer.patch
 
+# VESA related fixes (from 2.6.25-rcX).
+Patch75:	kernel-display_vesa_modes_in_vgaask_menu.patch
+Patch76:	kernel-dont_request_vbe2_info.patch
+Patch77:	kernel-uvesafb-upstream.patch
+
 # adds some ids for hostap suported cards and monitor_enable from/for aircrack-ng
 # http://patches.aircrack-ng.org/hostap-kernel-2.6.18.patch
 Patch85:	hostap-kernel-2.6.18.patch
@@ -886,6 +891,11 @@ install -m 755 %{SOURCE6} .
 # linux-2.6-sk98lin_v10.0.4.3.patch
 #patch60 -p1
 
+# 2.6.25-rcX vesa fixes.
+%patch75 -p1
+%patch76 -p1
+%patch77 -p1
+
 # hostap enhancements from/for aircrack-ng
 %patch85 -p1
 
@@ -1413,21 +1423,15 @@ fi
 
 %post
 %ifarch ia64
-mv -f /boot/efi/vmlinuz /boot/efi/vmlinuz.old 2> /dev/null > /dev/null
+ln -sf vmlinuz-%{kernel_release} /boot/efi/vmlinuz%{subname}
 %endif
-mv -f /boot/vmlinuz /boot/vmlinuz.old 2> /dev/null > /dev/null
-mv -f /boot/System.map /boot/System.map.old 2> /dev/null > /dev/null
-%ifarch ia64
-ln -sf vmlinuz-%{kernel_release} /boot/efi/vmlinuz
-%endif
-ln -sf vmlinuz-%{kernel_release} /boot/vmlinuz
-ln -sf System.map-%{kernel_release} /boot/System.map
+ln -sf vmlinuz-%{kernel_release} /boot/vmlinuz%{subname}
+ln -sf System.map-%{kernel_release} /boot/System.map%{subname}
 
 %depmod %{kernel_release}
 
 /sbin/geninitrd -f --initrdfs=rom %{initrd_dir}/initrd-%{kernel_release}.gz %{kernel_release}
-mv -f %{initrd_dir}/initrd %{initrd_dir}/initrd.old 2> /dev/null > /dev/null
-ln -sf initrd-%{kernel_release}.gz %{initrd_dir}/initrd
+ln -sf initrd-%{kernel_release}.gz %{initrd_dir}/initrd%{subname}
 
 if [ -x /sbin/new-kernel-pkg ]; then
 	if [ -f /etc/pld-release ]; then
@@ -1447,8 +1451,7 @@ elif [ -x /sbin/rc-boot ]; then
 fi
 
 %post vmlinux
-mv -f /boot/vmlinux /boot/vmlinux.old 2> /dev/null > /dev/null
-ln -sf vmlinux-%{kernel_release} /boot/vmlinux
+ln -sf vmlinux-%{kernel_release} /boot/vmlinux%{subname}
 
 %post libs
 %{_sbindir}/mkvmlinuz /boot/zImage-%{kernel_release} %{kernel_release}
