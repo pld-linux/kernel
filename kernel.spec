@@ -121,16 +121,16 @@
 %define		netfilter_snap		20070806
 %define		xen_version		3.0.2
 
-%define		__alt_kernel	%{?with_pax:pax}%{?with_grsec_full:grsecurity}%{?with_xen0:xen0}%{?with_xenU:xenU}%{?with_rescuecd:-rescuecd}
-%if "%{__alt_kernel}" != ""
-%define		alt_kernel	%{__alt_kernel}
+%define		__alt_kernel	%{?with_pax:-pax}%{?with_grsec_full:-grsecurity}%{?with_xen0:-xen0}%{?with_xenU:-xenU}%{?with_rescuecd:-rescuecd}
+%if "%{__alt_kernel}" != "-"
+%define		_alt_kernel	%{__alt_kernel}
 %endif
 
 # kernel release (used in filesystem and eventually in uname -r)
 # modules will be looked from /lib/modules/%{kernel_release}
 # _localversion is just that without version for "> localversion"
 %define		_localversion %{KABI}
-%define		kernel_release %{version}%{?alt_kernel:_%{alt_kernel}}-%{_localversion}
+%define		kernel_release %{version}%{?_alt_kernel:%{_alt_kernel}}-%{_localversion}
 
 # Our Kernel ABI, increase this when you want the out of source modules being rebuilt
 # Usually same as %{_rel}
@@ -999,7 +999,7 @@ patch -p1 -s < kernel-patch-linuxabi-20060404/linuxabi-2.6.17-0.patch
 %endif
 
 # Fix EXTRAVERSION in main Makefile
-sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{_postver}%{?alt_kernel:_%{alt_kernel}}#g' Makefile
+sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{_postver}%{?_alt_kernel:%{_alt_kernel}}#g' Makefile
 
 # on sparc this line causes CONFIG_INPUT=m (instead of =y), thus breaking build
 sed -i -e '/select INPUT/d' net/bluetooth/hidp/Kconfig
@@ -1423,15 +1423,15 @@ fi
 
 %post
 %ifarch ia64
-ln -sf vmlinuz-%{kernel_release} /boot/efi/vmlinuz%{__alt_kernel}
+ln -sf vmlinuz-%{kernel_release} /boot/efi/vmlinuz%{_alt_kernel}
 %endif
-ln -sf vmlinuz-%{kernel_release} /boot/vmlinuz%{__alt_kernel}
-ln -sf System.map-%{kernel_release} /boot/System.map%{__alt_kernel}
+ln -sf vmlinuz-%{kernel_release} /boot/vmlinuz%{_alt_kernel}
+ln -sf System.map-%{kernel_release} /boot/System.map%{_alt_kernel}
 
 %depmod %{kernel_release}
 
 /sbin/geninitrd -f --initrdfs=rom %{initrd_dir}/initrd-%{kernel_release}.gz %{kernel_release}
-ln -sf initrd-%{kernel_release}.gz %{initrd_dir}/initrd%{__alt_kernel}
+ln -sf initrd-%{kernel_release}.gz %{initrd_dir}/initrd%{_alt_kernel}
 
 if [ -x /sbin/new-kernel-pkg ]; then
 	if [ -f /etc/pld-release ]; then
@@ -1440,7 +1440,7 @@ if [ -x /sbin/new-kernel-pkg ]; then
 		title='PLD Linux'
 	fi
 
-	ext='%{__alt_kernel}'
+	ext='%{_alt_kernel}'
 	if [ "$ext" ]; then
 		title="$title $ext"
 	fi
@@ -1451,7 +1451,7 @@ elif [ -x /sbin/rc-boot ]; then
 fi
 
 %post vmlinux
-ln -sf vmlinux-%{kernel_release} /boot/vmlinux%{__alt_kernel}
+ln -sf vmlinux-%{kernel_release} /boot/vmlinux%{_alt_kernel}
 
 %post libs
 %{_sbindir}/mkvmlinuz /boot/zImage-%{kernel_release} %{kernel_release}
