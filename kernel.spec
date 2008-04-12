@@ -233,15 +233,12 @@ Patch9:		linux-static-dev.patch
 Patch10:	kernel-pom-ng-IPV4OPTSSTRIP.patch
 Patch11:	kernel-pom-ng-ipv4options.patch
 Patch12:	kernel-pom-ng-set.patch
-Patch13:	kernel-pom-ng-u32.patch
 Patch14:	kernel-pom-ng-ROUTE.patch
 Patch15:	kernel-pom-ng-TARPIT.patch
 Patch16:	kernel-pom-ng-mms-conntrack-nat.patch
 Patch17:	kernel-pom-ng-IPMARK.patch
-Patch18:	kernel-pom-ng-connlimit.patch
 Patch19:	kernel-pom-ng-geoip.patch
 Patch20:	kernel-pom-ng-ipp2p.patch
-Patch21:	kernel-pom-ng-time.patch
 Patch22:	kernel-pom-ng-rsh.patch
 Patch23:	kernel-pom-ng-rpc.patch
 
@@ -801,9 +798,6 @@ install -m 755 %{SOURCE6} .
 # kernel-pom-ng-set.patch
 %patch12 -p1
 
-# kernel-pom-ng-u32.patch
-%patch13 -p1
-
 # kernel-pom-ng-ROUTE.patch
 %patch14 -p1
 
@@ -816,20 +810,11 @@ install -m 755 %{SOURCE6} .
 # kernel-pom-ng-IPMARK.patch
 %patch17 -p1
 
-# kernel-pom-ng-set.patch
-#patch12 -p1
-
-# kernel-pom-ng-connlimit.patch
-%patch18 -p1
-
 # kernel-pom-ng-geoip.patch
 %patch19 -p1
 
 # kernel-pom-ng-ipp2p.patch
 %patch20 -p1
-
-# kernel-pom-ng-time.patch
-%patch21 -p1
 
 # kernel-pom-ng-rsh.patch
 %patch22 -p1
@@ -944,7 +929,6 @@ install -m 755 %{SOURCE6} .
 
 # grsecurity & pax stuff
 #
-
 %if %{with pax_full}
 %patch9999 -p1
 %{?with_vserver:%patch10000 -p1}
