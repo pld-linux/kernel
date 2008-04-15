@@ -931,14 +931,16 @@ install -m 755 %{SOURCE6} .
 #
 %if %{with pax_full}
 %patch9999 -p1
-%{?with_vserver:%patch10000 -p1}
+# temporary disabled, 64bit caps support missing in vserver
+#{?with_vserver:%patch10000 -p1}
 %{?with_vserver:%patch10001 -p1}
 %{?with_vserver:%patch10002 -p1}
 %else
 
 %if %{with grsec_full}
 %patch9999 -p1
-%{?with_vserver:%patch10000 -p1}
+# temporary disabled, 64bit caps support missing in vserver
+#{?with_vserver:%patch10000 -p1}
 %{?with_vserver:%patch10001 -p1}
 %{?with_vserver:%patch10002 -p1}
 %else
