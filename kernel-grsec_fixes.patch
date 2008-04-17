@@ -1,4 +1,5 @@
 netlink
+no-stack-protector
 diff -upr a/grsecurity/gracl_cap.c c/grsecurity/gracl_cap.c
 --- a/grsecurity/gracl_cap.c	2007-12-01 00:54:57.312774500 +0000
 +++ c/grsecurity/gracl_cap.c	2007-12-01 01:09:34.923621750 +0000
@@ -90,3 +91,19 @@ diff -upr a/security/commoncap.c c/security/commoncap.c
  	return 0;
  }
  
+===
+=== check if -fno-stack-protector is accessible
+===
+--- linux-2.6.24/arch/x86/kernel/Makefile_64~	2008-04-16 21:15:48.278373002 +0000
++++ linux-2.6.24/arch/x86/kernel/Makefile_64	2008-04-16 21:18:33.833661431 +0000
+@@ -42,6 +42,7 @@
+ obj-y				+= topology.o
+ obj-y				+= pcspeaker.o
+ 
+-CFLAGS_vsyscall_64.o		:= $(PROFILING) -g0 -fno-stack-protector
+-CFLAGS_hpet.o			:= -fno-stack-protector
+-CFLAGS_tsc_64.o			:= -fno-stack-protector
++nostackp := $(call cc-option, -fno-stack-protector)
++CFLAGS_vsyscall_64.o		:= $(PROFILING) -g0 $(nostackp)
++CFLAGS_hpet.o			:= $(nostackp)
++CFLAGS_tsc_64.o			:= $(nostackp)
