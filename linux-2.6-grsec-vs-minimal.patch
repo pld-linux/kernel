@@ -1,6 +1,6 @@
-diff -urNp linux-2.6.20.3/arch/sparc/Makefile linux-2.6.20.3/arch/sparc/Makefile
---- linux-2.6.20.3/arch/sparc/Makefile	2007-03-13 14:27:08.000000000 -0400
-+++ linux-2.6.20.3/arch/sparc/Makefile	2007-03-23 08:11:18.000000000 -0400
+diff -urNp linux-2.6.24.orig/arch/sparc/Makefile linux-2.6.24/arch/sparc/Makefile
+--- linux-2.6.24.orig/arch/sparc/Makefile	2008-04-19 16:19:57.000000000 +0200
++++ linux-2.6.24/arch/sparc/Makefile	2008-04-19 16:59:08.000000000 +0200
 @@ -36,7 +36,7 @@ drivers-$(CONFIG_OPROFILE)	+= arch/sparc
  # Renaming is done to avoid confusing pattern matching rules in 2.5.45 (multy-)
  INIT_Y		:= $(patsubst %/, %/built-in.o, $(init-y))
@@ -10,22 +10,10 @@ diff -urNp linux-2.6.20.3/arch/sparc/Makefile linux-2.6.20.3/arch/sparc/Makefile
  CORE_Y		:= $(patsubst %/, %/built-in.o, $(CORE_Y))
  DRIVERS_Y	:= $(patsubst %/, %/built-in.o, $(drivers-y))
  NET_Y		:= $(patsubst %/, %/built-in.o, $(net-y))
-diff -urNp linux-2.6.20.3/Makefile linux-2.6.20.3/Makefile
---- linux-2.6.20.3/Makefile	2007-03-13 14:27:08.000000000 -0400
-+++ linux-2.6.20.3/Makefile	2007-03-23 08:11:31.000000000 -0400
-@@ -553,7 +553,7 @@ export mod_strip_cmd
- 
- 
- ifeq ($(KBUILD_EXTMOD),)
--core-y		+= kernel/ mm/ fs/ ipc/ security/ crypto/ block/
-+core-y		+= kernel/ mm/ fs/ ipc/ security/ crypto/ block/ grsecurity/
- 
- vmlinux-dirs	:= $(patsubst %/,%,$(filter %/, $(init-y) $(init-m) \
- 		     $(core-y) $(core-m) $(drivers-y) $(drivers-m) \
-diff -urNp linux-2.6.20.3/drivers/char/keyboard.c linux-2.6.20.3/drivers/char/keyboard.c
---- linux-2.6.20.3/drivers/char/keyboard.c	2007-03-13 14:27:08.000000000 -0400
-+++ linux-2.6.20.3/drivers/char/keyboard.c	2007-03-23 08:11:31.000000000 -0400
-@@ -628,6 +628,16 @@ static void k_spec(struct vc_data *vc, u
+diff -urNp linux-2.6.24.orig/drivers/char/keyboard.c linux-2.6.24/drivers/char/keyboard.c
+--- linux-2.6.24.orig/drivers/char/keyboard.c	2008-04-19 16:19:58.000000000 +0200
++++ linux-2.6.24/drivers/char/keyboard.c	2008-04-19 16:59:08.000000000 +0200
+@@ -631,6 +631,16 @@ static void k_spec(struct vc_data *vc, u
  	     kbd->kbdmode == VC_MEDIUMRAW) &&
  	     value != KVAL(K_SAK))
  		return;		/* SAK is allowed even in raw mode */
@@ -42,9 +30,9 @@ diff -urNp linux-2.6.20.3/drivers/char/keyboard.c linux-2.6.20.3/drivers/char/ke
  	fn_handler[value](vc);
  }
  
-diff -urNp linux-2.6.20.3/drivers/pci/proc.c linux-2.6.20.3/drivers/pci/proc.c
---- linux-2.6.20.3/drivers/pci/proc.c	2007-03-13 14:27:08.000000000 -0400
-+++ linux-2.6.20.3/drivers/pci/proc.c	2007-03-23 08:11:31.000000000 -0400
+diff -urNp linux-2.6.24.orig/drivers/pci/proc.c linux-2.6.24/drivers/pci/proc.c
+--- linux-2.6.24.orig/drivers/pci/proc.c	2008-04-19 16:20:03.000000000 +0200
++++ linux-2.6.24/drivers/pci/proc.c	2008-04-19 16:59:08.000000000 +0200
 @@ -467,7 +467,15 @@ static int __init pci_proc_init(void)
  {
  	struct proc_dir_entry *entry;
@@ -52,7 +40,7 @@ diff -urNp linux-2.6.20.3/drivers/pci/proc.c linux-2.6.20.3/drivers/pci/proc.c
 +#ifdef CONFIG_GRKERNSEC_PROC_ADD
 +#ifdef CONFIG_GRKERNSEC_PROC_USER
 +	proc_bus_pci_dir = proc_mkdir_mode("pci", S_IRUSR | S_IXUSR, proc_bus);
-+#elif CONFIG_GRKERNSEC_PROC_USERGROUP
++#elif defined(CONFIG_GRKERNSEC_PROC_USERGROUP)
 +	proc_bus_pci_dir = proc_mkdir_mode("pci", S_IRUSR | S_IXUSR | S_IRGRP | S_IXGRP, proc_bus);
 +#endif
 +#else
@@ -61,10 +49,10 @@ diff -urNp linux-2.6.20.3/drivers/pci/proc.c linux-2.6.20.3/drivers/pci/proc.c
  	entry = create_proc_entry("devices", 0, proc_bus_pci_dir);
  	if (entry)
  		entry->proc_fops = &proc_bus_pci_dev_operations;
-diff -urNp linux-2.6.20.3/fs/Kconfig linux-2.6.20.3/fs/Kconfig
---- linux-2.6.20.3/fs/Kconfig	2007-03-13 14:27:08.000000000 -0400
-+++ linux-2.6.20.3/fs/Kconfig	2007-03-23 08:11:31.000000000 -0400
-@@ -923,7 +923,7 @@ config PROC_FS
+diff -urNp linux-2.6.24.orig/fs/Kconfig linux-2.6.24/fs/Kconfig
+--- linux-2.6.24.orig/fs/Kconfig	2008-04-19 16:20:07.000000000 +0200
++++ linux-2.6.24/fs/Kconfig	2008-04-19 16:59:08.000000000 +0200
+@@ -937,7 +937,7 @@ config PROC_FS
  
  config PROC_KCORE
  	bool "/proc/kcore support" if !ARM
@@ -73,10 +61,10 @@ diff -urNp linux-2.6.20.3/fs/Kconfig linux-2.6.20.3/fs/Kconfig
  
  config PROC_VMCORE
          bool "/proc/vmcore support (EXPERIMENTAL)"
-diff -urNp linux-2.6.20.3/fs/namei.c linux-2.6.20.3/fs/namei.c
---- linux-2.6.20.3/fs/namei.c	2007-03-13 14:27:08.000000000 -0400
-+++ linux-2.6.20.3/fs/namei.c	2007-03-23 08:11:31.000000000 -0400
-@@ -32,6 +32,7 @@
+diff -urNp linux-2.6.24.orig/fs/namei.c linux-2.6.24/fs/namei.c
+--- linux-2.6.24.orig/fs/namei.c	2008-04-19 16:20:07.000000000 +0200
++++ linux-2.6.24/fs/namei.c	2008-04-19 16:59:08.000000000 +0200
+@@ -37,6 +37,7 @@
  #include <linux/vs_cowbl.h>
  #include <linux/vs_device.h>
  #include <linux/vs_context.h>
@@ -84,7 +72,7 @@ diff -urNp linux-2.6.20.3/fs/namei.c linux-2.6.20.3/fs/namei.c
  #include <asm/namei.h>
  #include <asm/uaccess.h>
  
-@@ -637,6 +638,13 @@ static inline int do_follow_link(struct 
+@@ -689,6 +690,13 @@ static inline int do_follow_link(struct 
  	err = security_inode_follow_link(path->dentry, nd);
  	if (err)
  		goto loop;
@@ -98,7 +86,7 @@ diff -urNp linux-2.6.20.3/fs/namei.c linux-2.6.20.3/fs/namei.c
  	current->link_count++;
  	current->total_link_count++;
  	nd->depth++;
-@@ -1700,6 +1734,13 @@ do_last:
+@@ -1856,6 +1864,13 @@ do_last:
  	/*
  	 * It already exists.
  	 */
@@ -110,9 +98,9 @@ diff -urNp linux-2.6.20.3/fs/namei.c linux-2.6.20.3/fs/namei.c
 +	}
 +
  	mutex_unlock(&dir->d_inode->i_mutex);
- 	audit_inode_update(path.dentry->d_inode);
+ 	audit_inode(pathname, path.dentry);
  
-@@ -1755,6 +1806,13 @@ do_link:
+@@ -1927,6 +1942,13 @@ do_link:
  	error = security_inode_follow_link(path.dentry, nd);
  	if (error)
  		goto exit_dput;
@@ -126,7 +114,7 @@ diff -urNp linux-2.6.20.3/fs/namei.c linux-2.6.20.3/fs/namei.c
  	error = __do_follow_link(&path, nd);
  	if (error) {
  		/* Does someone understand code flow here? Or it is only
-@@ -2322,7 +2450,16 @@ asmlinkage long sys_linkat(int olddfd, c
+@@ -2509,7 +2531,16 @@ asmlinkage long sys_linkat(int olddfd, c
  	error = PTR_ERR(new_dentry);
  	if (IS_ERR(new_dentry))
  		goto out_unlock;
@@ -143,11 +131,11 @@ diff -urNp linux-2.6.20.3/fs/namei.c linux-2.6.20.3/fs/namei.c
  	dput(new_dentry);
  out_unlock:
  	mutex_unlock(&nd.dentry->d_inode->i_mutex);
-diff -urNp linux-2.6.20.3/fs/proc/array.c linux-2.6.20.3/fs/proc/array.c
---- linux-2.6.20.3/fs/proc/array.c	2007-03-13 14:27:08.000000000 -0400
-+++ linux-2.6.20.3/fs/proc/array.c	2007-03-23 08:11:31.000000000 -0400
-@@ -486,3 +531,14 @@ int proc_pid_statm(struct task_struct *t
- 	return sprintf(buffer,"%d %d %d %d %d %d %d\n",
+diff -urNp linux-2.6.24.orig/fs/proc/array.c linux-2.6.24/fs/proc/array.c
+--- linux-2.6.24.orig/fs/proc/array.c	2008-04-19 16:20:10.000000000 +0200
++++ linux-2.6.24/fs/proc/array.c	2008-04-19 16:59:08.000000000 +0200
+@@ -629,3 +629,14 @@ int proc_pid_statm(struct task_struct *t
+ 	return sprintf(buffer, "%d %d %d %d %d %d %d\n",
  		       size, resident, shared, text, lib, data, 0);
  }
 +
@@ -161,10 +149,135 @@ diff -urNp linux-2.6.20.3/fs/proc/array.c linux-2.6.20.3/fs/proc/array.c
 +}
 +#endif
 +
-diff -urNp linux-2.6.20.3/fs/proc/inode.c linux-2.6.20.3/fs/proc/inode.c
---- linux-2.6.20.3/fs/proc/inode.c	2007-03-13 14:27:08.000000000 -0400
-+++ linux-2.6.20.3/fs/proc/inode.c	2007-03-23 08:11:31.000000000 -0400
-@@ -166,7 +166,11 @@ struct inode *proc_get_inode(struct supe
+diff -urNp linux-2.6.24.orig/fs/proc/base.c linux-2.6.24/fs/proc/base.c
+--- linux-2.6.24.orig/fs/proc/base.c	2008-04-19 16:20:10.000000000 +0200
++++ linux-2.6.24/fs/proc/base.c	2008-04-19 16:59:08.000000000 +0200
+@@ -1205,7 +1205,11 @@ static struct inode *proc_pid_make_inode
+ 	if (task_dumpable(task)) {
+ 		inode->i_uid = task->euid;
+ 		inode->i_gid = task->egid;
++#ifdef CONFIG_GRKERNSEC_PROC_USERGROUP
++		inode->i_gid = CONFIG_GRKERNSEC_PROC_GID;
++#endif
+ 	}
++
+ 	/* procfs is xid tagged */
+ 	inode->i_tag = (tag_t)vx_task_xid(task);
+ 	security_task_to_inode(task, inode);
+@@ -1222,17 +1226,38 @@ static int pid_getattr(struct vfsmount *
+ {
+ 	struct inode *inode = dentry->d_inode;
+ 	struct task_struct *task;
++#if defined(CONFIG_GRKERNSEC_PROC_USER) || defined(CONFIG_GRKERNSEC_PROC_USERGROUP)
++	struct task_struct *tmp = current;
++#endif
++
+ 	generic_fillattr(inode, stat);
+ 
+ 	rcu_read_lock();
+ 	stat->uid = 0;
+ 	stat->gid = 0;
+ 	task = pid_task(proc_pid(inode), PIDTYPE_PID);
+-	if (task) {
++	if (task
++#if defined(CONFIG_GRKERNSEC_PROC_USER) || defined(CONFIG_GRKERNSEC_PROC_USERGROUP)
++	    && (!tmp->uid || (tmp->uid == task->uid)
++#ifdef CONFIG_GRKERNSEC_PROC_USERGROUP
++	    || in_group_p(CONFIG_GRKERNSEC_PROC_GID)
++#endif
++	    )
++#endif
++	    ) {
+ 		if ((inode->i_mode == (S_IFDIR|S_IRUGO|S_IXUGO)) ||
++#ifdef CONFIG_GRKERNSEC_PROC_USER
++		    (inode->i_mode == (S_IFDIR|S_IRUSR|S_IXUSR)) ||
++#elif defined(CONFIG_GRKERNSEC_PROC_USERGROUP)
++		    (inode->i_mode == (S_IFDIR|S_IRUSR|S_IRGRP|S_IXUSR|S_IXGRP)) ||
++#endif
+ 		    task_dumpable(task)) {
+ 			stat->uid = task->euid;
++#ifdef CONFIG_GRKERNSEC_PROC_USERGROUP
++			stat->gid = CONFIG_GRKERNSEC_PROC_GID;
++#else
+ 			stat->gid = task->egid;
++#endif
+ 		}
+ 	}
+ 	rcu_read_unlock();
+@@ -1262,9 +1287,18 @@ static int pid_revalidate(struct dentry 
+ 	struct task_struct *task = get_proc_task(inode);
+ 	if (task) {
+ 		if ((inode->i_mode == (S_IFDIR|S_IRUGO|S_IXUGO)) ||
++#ifdef CONFIG_GRKERNSEC_PROC_USER
++		    (inode->i_mode == (S_IFDIR|S_IRUSR|S_IXUSR)) ||
++#elif defined(CONFIG_GRKERNSEC_PROC_USERGROUP)
++		    (inode->i_mode == (S_IFDIR|S_IRUSR|S_IRGRP|S_IXUSR|S_IXGRP)) ||
++#endif
+ 		    task_dumpable(task)) {
+ 			inode->i_uid = task->euid;
++#ifdef CONFIG_GRKERNSEC_PROC_USERGROUP
++			inode->i_gid = CONFIG_GRKERNSEC_PROC_GID;
++#else
+ 			inode->i_gid = task->egid;
++#endif
+ 		} else {
+ 			inode->i_uid = 0;
+ 			inode->i_gid = 0;
+@@ -2503,6 +2537,9 @@ int proc_pid_readdir(struct file * filp,
+ {
+ 	unsigned int nr = filp->f_pos - FIRST_PROCESS_ENTRY;
+ 	struct task_struct *reaper = get_proc_task_real(filp->f_path.dentry->d_inode);
++#if defined(CONFIG_GRKERNSEC_PROC_USER) || defined(CONFIG_GRKERNSEC_PROC_USERGROUP)
++	struct task_struct *tmp = current;
++#endif
+ 	struct tgid_iter iter;
+ 	struct pid_namespace *ns;
+ 
+@@ -2524,6 +2561,15 @@ int proc_pid_readdir(struct file * filp,
+ 		filp->f_pos = iter.tgid + TGID_OFFSET;
+ 		if (!vx_proc_task_visible(iter.task))
+ 			continue;
++#if defined(CONFIG_GRKERNSEC_PROC_USER) || defined(CONFIG_GRKERNSEC_PROC_USERGROUP)
++		if (tmp->uid && (iter.task->uid != tmp->uid)
++#ifdef CONFIG_GRKERNSEC_PROC_USERGROUP
++				&& !in_group_p(CONFIG_GRKERNSEC_PROC_GID)
++#endif
++		   )
++			continue;
++#endif
++
+ 		if (proc_pid_fill_cache(filp, dirent, filldir, iter) < 0) {
+ 			put_task_struct(iter.task);
+ 			goto out;
+@@ -2588,6 +2634,9 @@ static const struct pid_entry tid_base_s
+ #ifdef CONFIG_FAULT_INJECTION
+ 	REG("make-it-fail", S_IRUGO|S_IWUSR, fault_inject),
+ #endif
++#ifdef CONFIG_GRKERNSEC_PROC_IPADDR
++	INF("ipaddr",	  S_IRUSR, pid_ipaddr),
++#endif
+ };
+ 
+ static int proc_tid_base_readdir(struct file * filp,
+@@ -2622,7 +2671,14 @@ static struct dentry *proc_task_instanti
+ 
+ 	if (!inode)
+ 		goto out;
++#ifdef CONFIG_GRKERNSEC_PROC_USER
++	inode->i_mode = S_IFDIR|S_IRUSR|S_IXUSR;
++#elif defined(CONFIG_GRKERNSEC_PROC_USERGROUP)
++	inode->i_gid = CONFIG_GRKERNSEC_PROC_GID;
++	inode->i_mode = S_IFDIR|S_IRUSR|S_IRGRP|S_IXUSR|S_IXGRP;
++#else
+ 	inode->i_mode = S_IFDIR|S_IRUGO|S_IXUGO;
++#endif
+ 	inode->i_op = &proc_tid_base_inode_operations;
+ 	inode->i_fop = &proc_tid_base_operations;
+ 	inode->i_flags|=S_IMMUTABLE;
+diff -urNp linux-2.6.24.orig/fs/proc/inode.c linux-2.6.24/fs/proc/inode.c
+--- linux-2.6.24.orig/fs/proc/inode.c	2008-04-19 16:20:10.000000000 +0200
++++ linux-2.6.24/fs/proc/inode.c	2008-04-19 16:59:08.000000000 +0200
+@@ -411,7 +411,11 @@ struct inode *proc_get_inode(struct supe
  		if (de->mode) {
  			inode->i_mode = de->mode;
  			inode->i_uid = de->uid;
@@ -176,23 +289,23 @@ diff -urNp linux-2.6.20.3/fs/proc/inode.c linux-2.6.20.3/fs/proc/inode.c
  		}
  		if (de->vx_flags)
  			PROC_I(inode)->vx_flags = de->vx_flags;
-diff -urNp linux-2.6.20.3/fs/proc/internal.h linux-2.6.20.3/fs/proc/internal.h
---- linux-2.6.20.3/fs/proc/internal.h	2007-03-13 14:27:08.000000000 -0400
-+++ linux-2.6.20.3/fs/proc/internal.h	2007-03-23 08:11:31.000000000 -0400
-@@ -37,6 +37,9 @@ extern int proc_tid_stat(struct task_str
- extern int proc_tgid_stat(struct task_struct *, char *);
+diff -urNp linux-2.6.24.orig/fs/proc/internal.h linux-2.6.24/fs/proc/internal.h
+--- linux-2.6.24.orig/fs/proc/internal.h	2008-04-19 16:20:10.000000000 +0200
++++ linux-2.6.24/fs/proc/internal.h	2008-04-19 16:59:08.000000000 +0200
+@@ -54,6 +54,9 @@ extern int proc_tgid_stat(struct task_st
  extern int proc_pid_status(struct task_struct *, char *);
  extern int proc_pid_statm(struct task_struct *, char *);
+ extern int proc_pid_nsproxy(struct task_struct *, char *);
 +#ifdef CONFIG_GRKERNSEC_PROC_IPADDR
 +extern int proc_pid_ipaddr(struct task_struct*,char*);
 +#endif
  
- extern struct file_operations proc_maps_operations;
- extern struct file_operations proc_numa_maps_operations;
-diff -urNp linux-2.6.20.3/fs/proc/proc_misc.c linux-2.6.20.3/fs/proc/proc_misc.c
---- linux-2.6.20.3/fs/proc/proc_misc.c	2007-03-13 14:27:08.000000000 -0400
-+++ linux-2.6.20.3/fs/proc/proc_misc.c	2007-03-23 08:11:31.000000000 -0400
-@@ -667,6 +667,8 @@ void create_seq_entry(char *name, mode_t
+ extern const struct file_operations proc_maps_operations;
+ extern const struct file_operations proc_numa_maps_operations;
+diff -urNp linux-2.6.24.orig/fs/proc/proc_misc.c linux-2.6.24/fs/proc/proc_misc.c
+--- linux-2.6.24.orig/fs/proc/proc_misc.c	2008-04-19 16:20:10.000000000 +0200
++++ linux-2.6.24/fs/proc/proc_misc.c	2008-04-19 16:59:08.000000000 +0200
+@@ -707,6 +707,8 @@ void create_seq_entry(char *name, mode_t
  
  void __init proc_misc_init(void)
  {
@@ -201,17 +314,16 @@ diff -urNp linux-2.6.20.3/fs/proc/proc_misc.c linux-2.6.20.3/fs/proc/proc_misc.c
  	static struct {
  		char *name;
  		int (*read_proc)(char*,char**,off_t,int,int*,void*);
-@@ -688,7 +690,9 @@ void __init proc_misc_init(void)
+@@ -722,13 +724,24 @@ void __init proc_misc_init(void)
  		{"stram",	stram_read_proc},
  #endif
  		{"filesystems",	filesystems_read_proc},
 +#ifndef CONFIG_GRKERNSEC_PROC_ADD
  		{"cmdline",	cmdline_read_proc},
 +#endif
- 		{"locks",	locks_read_proc},
  		{"execdomains",	execdomains_read_proc},
  		{NULL,}
-@@ -696,6 +700,15 @@ void __init proc_misc_init(void)
+ 	};
  	for (p = simple_ones; p->name; p++)
  		create_proc_read_entry(p->name, 0, NULL, p->read_proc, NULL);
  
@@ -227,10 +339,10 @@ diff -urNp linux-2.6.20.3/fs/proc/proc_misc.c linux-2.6.20.3/fs/proc/proc_misc.c
  	proc_symlink("mounts", NULL, "self/mounts");
  
  	/* And now for trickier ones */
-@@ -704,7 +717,11 @@ void __init proc_misc_init(void)
- 	if (entry)
- 		entry->proc_fops = &proc_kmsg_operations;
+@@ -741,7 +754,11 @@ void __init proc_misc_init(void)
+ 	}
  #endif
+ 	create_seq_entry("locks", 0, &proc_locks_operations);
 +#ifdef CONFIG_GRKERNSEC_PROC_ADD
 +	create_seq_entry("devices", gr_mode, &proc_devinfo_operations);
 +#else
@@ -239,10 +351,10 @@ diff -urNp linux-2.6.20.3/fs/proc/proc_misc.c linux-2.6.20.3/fs/proc/proc_misc.c
  	create_seq_entry("cpuinfo", 0, &proc_cpuinfo_operations);
  #ifdef CONFIG_BLOCK
  	create_seq_entry("partitions", 0, &proc_partitions_operations);
-@@ -712,7 +729,11 @@ void __init proc_misc_init(void)
+@@ -749,7 +766,11 @@ void __init proc_misc_init(void)
  	create_seq_entry("stat", 0, &proc_stat_operations);
  	create_seq_entry("interrupts", 0, &proc_interrupts_operations);
- #ifdef CONFIG_SLAB
+ #ifdef CONFIG_SLABINFO
 +#ifdef CONFIG_GRKERNSEC_PROC_ADD
 +	create_seq_entry("slabinfo",S_IWUSR|gr_mode,&proc_slabinfo_operations);
 +#else
@@ -251,7 +363,7 @@ diff -urNp linux-2.6.20.3/fs/proc/proc_misc.c linux-2.6.20.3/fs/proc/proc_misc.c
  #ifdef CONFIG_DEBUG_SLAB_LEAK
  	create_seq_entry("slab_allocators", 0 ,&proc_slabstats_operations);
  #endif
-@@ -729,7 +750,7 @@ void __init proc_misc_init(void)
+@@ -767,7 +788,7 @@ void __init proc_misc_init(void)
  #ifdef CONFIG_SCHEDSTATS
  	create_seq_entry("schedstat", 0, &proc_schedstat_operations);
  #endif
@@ -260,24 +372,27 @@ diff -urNp linux-2.6.20.3/fs/proc/proc_misc.c linux-2.6.20.3/fs/proc/proc_misc.c
  	proc_root_kcore = create_proc_entry("kcore", S_IRUSR, NULL);
  	if (proc_root_kcore) {
  		proc_root_kcore->proc_fops = &proc_kcore_operations;
-diff -urNp linux-2.6.20.3/fs/proc/root.c linux-2.6.20.3/fs/proc/root.c
---- linux-2.6.20.3/fs/proc/root.c	2007-03-13 14:27:08.000000000 -0400
-+++ linux-2.6.20.3/fs/proc/root.c	2007-03-23 08:11:31.000000000 -0400
-@@ -65,7 +65,13 @@ void __init proc_root_init(void)
- 		return;
- 	}
- 	proc_misc_init();
-+#ifdef CONFIG_GRKERNSEC_PROC_USER
-+	proc_net = proc_mkdir_mode("net", S_IRUSR | S_IXUSR, NULL);
-+#elif defined(CONFIG_GRKERNSEC_PROC_USERGROUP)
-+	proc_net = proc_mkdir_mode("net", S_IRUSR | S_IXUSR | S_IRGRP | S_IXGRP, NULL);
-+#else
- 	proc_net = proc_mkdir("net", NULL);
-+#endif
- 	proc_net_stat = proc_mkdir("net/stat", NULL);
+diff -urNp linux-2.6.24.orig/fs/proc/proc_net.c linux-2.6.24/fs/proc/proc_net.c
+--- linux-2.6.24.orig/fs/proc/proc_net.c	2008-04-19 16:20:10.000000000 +0200
++++ linux-2.6.24/fs/proc/proc_net.c	2008-04-19 16:59:08.000000000 +0200
+@@ -110,7 +110,13 @@ static struct pernet_operations __net_in
  
- #ifdef CONFIG_SYSVIPC
-@@ -78,7 +84,15 @@ void __init proc_root_init(void)
+ int __init proc_net_init(void)
+ {
++#ifdef CONFIG_GRKERNSEC_PROC_USER
++	shadow_pde = proc_mkdir_mode("net", S_IRUSR | S_IXUSR, NULL);
++#elif defined(CONFIG_GRKERNSEC_PROC_USERGROUP)
++	shadow_pde = proc_mkdir_mode("net", S_IRUSR | S_IXUSR | S_IRGRP | S_IXGRP, NULL);
++#else  
+ 	shadow_pde = proc_mkdir("net", NULL);
++#endif
+ 	shadow_pde->shadow_proc = proc_net_shadow;
+ 
+ 	return register_pernet_subsys(&proc_net_ns_ops);
+diff -urNp linux-2.6.24.orig/fs/proc/root.c linux-2.6.24/fs/proc/root.c
+--- linux-2.6.24.orig/fs/proc/root.c	2008-04-19 16:20:10.000000000 +0200
++++ linux-2.6.24/fs/proc/root.c	2008-04-19 16:59:08.000000000 +0200
+@@ -140,7 +140,15 @@ void __init proc_root_init(void)
  #ifdef CONFIG_PROC_DEVICETREE
  	proc_device_tree_init();
  #endif
@@ -291,171 +406,20 @@ diff -urNp linux-2.6.20.3/fs/proc/root.c linux-2.6.20.3/fs/proc/root.c
  	proc_bus = proc_mkdir("bus", NULL);
 +#endif
  	proc_vx_init();
+ 	proc_sys_init();
  }
- 
-diff -urNp linux-2.6.20.3/grsecurity/Kconfig linux-2.6.20.3/grsecurity/Kconfig
---- linux-2.6.20.3/grsecurity/Kconfig	1969-12-31 19:00:00.000000000 -0500
-+++ linux-2.6.20.3/grsecurity/Kconfig	2007-03-23 08:11:31.000000000 -0400
-@@ -0,0 +1,132 @@
-+#
-+# grecurity configuration
-+#
-+
-+menu "Grsecurity"
-+
-+config GRKERNSEC
-+	bool "Grsecurity"
-+	select CRYPTO
-+	select CRYPTO_SHA256
-+	help
-+	  If you say Y here, you will be able to configure many features
-+	  that will enhance the security of your system.  It is highly
-+	  recommended that you say Y here and read through the help
-+	  for each option so that you fully understand the features and
-+	  can evaluate their usefulness for your machine.
-+
-+menu "Filesystem Protections"
-+depends on GRKERNSEC
-+
-+config GRKERNSEC_PROC
-+	bool "Proc restrictions"
-+	help
-+	  If you say Y here, the permissions of the /proc filesystem
-+	  will be altered to enhance system security and privacy.  You MUST
-+  	  choose either a user only restriction or a user and group restriction.
-+	  Depending upon the option you choose, you can either restrict users to
-+	  see only the processes they themselves run, or choose a group that can
-+	  view all processes and files normally restricted to root if you choose
-+	  the "restrict to user only" option.  NOTE: If you're running identd as
-+	  a non-root user, you will have to run it as the group you specify here.
-+
-+config GRKERNSEC_PROC_USER
-+	bool "Restrict /proc to user only"
-+	depends on GRKERNSEC_PROC
-+	help
-+	  If you say Y here, non-root users will only be able to view their own
-+	  processes, and restricts them from viewing network-related information,
-+	  and viewing kernel symbol and module information.
-+
-+config GRKERNSEC_PROC_USERGROUP
-+	bool "Allow special group"
-+	depends on GRKERNSEC_PROC && !GRKERNSEC_PROC_USER
-+	help
-+	  If you say Y here, you will be able to select a group that will be
-+	  able to view all processes, network-related information, and
-+	  kernel and symbol information.  This option is useful if you want
-+	  to run identd as a non-root user.
-+
-+config GRKERNSEC_PROC_GID
-+	int "GID for special group"
-+	depends on GRKERNSEC_PROC_USERGROUP
-+	default 1001
-+
-+config GRKERNSEC_PROC_ADD
-+	bool "Additional restrictions"
-+	depends on GRKERNSEC_PROC_USER || GRKERNSEC_PROC_USERGROUP
-+	help
-+	  If you say Y here, additional restrictions will be placed on
-+	  /proc that keep normal users from viewing device information and 
-+	  slabinfo information that could be useful for exploits.
-+
-+config GRKERNSEC_LINK
-+	bool "Linking restrictions"
-+	help
-+	  If you say Y here, /tmp race exploits will be prevented, since users
-+	  will no longer be able to follow symlinks owned by other users in
-+	  world-writable +t directories (i.e. /tmp), unless the owner of the
-+	  symlink is the owner of the directory. users will also not be
-+	  able to hardlink to files they do not own.  If the sysctl option is
-+	  enabled, a sysctl option with name "linking_restrictions" is created.
-+
-+config GRKERNSEC_FIFO
-+	bool "FIFO restrictions"
-+	help
-+	  If you say Y here, users will not be able to write to FIFOs they don't
-+	  own in world-writable +t directories (i.e. /tmp), unless the owner of
-+	  the FIFO is the same owner of the directory it's held in.  If the sysctl
-+	  option is enabled, a sysctl option with name "fifo_restrictions" is
-+	  created.
-+
-+endmenu
-+
-+config GRKERNSEC_PROC_IPADDR
-+	bool "/proc/<pid>/ipaddr support"
-+	help
-+	  If you say Y here, a new entry will be added to each /proc/<pid>
-+	  directory that contains the IP address of the person using the task.
-+	  The IP is carried across local TCP and AF_UNIX stream sockets.
-+	  This information can be useful for IDS/IPSes to perform remote response
-+	  to a local attack.  The entry is readable by only the owner of the
-+	  process (and root if he has CAP_DAC_OVERRIDE, which can be removed via
-+	  the RBAC system), and thus does not create privacy concerns.
-+
-+config GRKERNSEC_SHM
-+	bool "Destroy unused shared memory"
-+	depends on SYSVIPC
-+	help
-+	  If you say Y here, shared memory will be destroyed when no one is
-+	  attached to it.  Otherwise, resources involved with the shared
-+	  memory can be used up and not be associated with any process (as the
-+	  shared memory still exists, and the creating process has exited).  If
-+	  the sysctl option is enabled, a sysctl option with name
-+	  "destroy_unused_shm" is created.
-+
-+config GRKERNSEC_SYSCTL
-+	bool "Sysctl support"
-+	help
-+	  If you say Y here, you will be able to change the options that
-+	  grsecurity runs with at bootup, without having to recompile your
-+	  kernel.  You can echo values to files in /proc/sys/kernel/grsecurity
-+	  to enable (1) or disable (0) various features.  All the sysctl entries
-+	  are mutable until the "grsec_lock" entry is set to a non-zero value.
-+	  All features enabled in the kernel configuration are disabled at boot
-+	  if you do not say Y to the "Turn on features by default" option.
-+	  All options should be set at startup, and the grsec_lock entry should
-+	  be set to a non-zero value after all the options are set.
-+	  *THIS IS EXTREMELY IMPORTANT*
-+
-+config GRKERNSEC_SYSCTL_ON
-+	bool "Turn on features by default"
-+	depends on GRKERNSEC_SYSCTL
-+	help
-+	  If you say Y here, instead of having all features enabled in the
-+	  kernel configuration disabled at boot time, the features will be
-+	  enabled at boot time.  It is recommended you say Y here unless
-+	  there is some reason you would want all sysctl-tunable features to
-+	  be disabled by default.  As mentioned elsewhere, it is important
-+	  to enable the grsec_lock entry once you have finished modifying
-+	  the sysctl entries.
-+
-+endmenu
-diff -urNp linux-2.6.20.3/grsecurity/Makefile linux-2.6.20.3/grsecurity/Makefile
---- linux-2.6.20.3/grsecurity/Makefile	1969-12-31 19:00:00.000000000 -0500
-+++ linux-2.6.20.3/grsecurity/Makefile	2007-03-23 08:11:31.000000000 -0400
-@@ -0,0 +1,11 @@
-+# All code in this directory and various hooks inserted throughout the kernel
-+# are copyright Brad Spengler, and released under the GPL v2 or higher
-+
-+obj-y = grsec_fifo.o grsec_sock.o grsec_sysctl.o grsec_link.o
-+
-+obj-$(CONFIG_GRKERNSEC) += grsec_init.o
-+
-+ifndef CONFIG_GRKERNSEC
-+obj-y += grsec_disabled.o
-+endif
-+
-diff -urNp linux-2.6.20.3/grsecurity/grsec_disabled.c linux-2.6.20.3/grsecurity/grsec_disabled.c
---- linux-2.6.20.3/grsecurity/grsec_disabled.c	1969-12-31 19:00:00.000000000 -0500
-+++ linux-2.6.20.3/grsecurity/grsec_disabled.c	2007-03-23 08:11:31.000000000 -0400
+diff -urNp linux-2.6.24.orig/grsecurity/grsec_disabled.c linux-2.6.24/grsecurity/grsec_disabled.c
+--- linux-2.6.24.orig/grsecurity/grsec_disabled.c	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.24/grsecurity/grsec_disabled.c	2008-04-19 16:59:08.000000000 +0200
 @@ -0,0 +1,5 @@
 +void
 +grsecurity_init(void)
 +{
 +	return;
 +}
-diff -urNp linux-2.6.20.3/grsecurity/grsec_fifo.c linux-2.6.20.3/grsecurity/grsec_fifo.c
---- linux-2.6.20.3/grsecurity/grsec_fifo.c	1969-12-31 19:00:00.000000000 -0500
-+++ linux-2.6.20.3/grsecurity/grsec_fifo.c	2007-03-23 08:11:31.000000000 -0400
+diff -urNp linux-2.6.24.orig/grsecurity/grsec_fifo.c linux-2.6.24/grsecurity/grsec_fifo.c
+--- linux-2.6.24.orig/grsecurity/grsec_fifo.c	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.24/grsecurity/grsec_fifo.c	2008-04-19 16:59:08.000000000 +0200
 @@ -0,0 +1,20 @@
 +#include <linux/kernel.h>
 +#include <linux/sched.h>
@@ -477,9 +441,9 @@ diff -urNp linux-2.6.20.3/grsecurity/grsec_fifo.c linux-2.6.20.3/grsecurity/grse
 +#endif
 +	return 0;
 +}
-diff -urNp linux-2.6.20.3/grsecurity/grsec_init.c linux-2.6.20.3/grsecurity/grsec_init.c
---- linux-2.6.20.3/grsecurity/grsec_init.c	1969-12-31 19:00:00.000000000 -0500
-+++ linux-2.6.20.3/grsecurity/grsec_init.c	2007-03-23 08:11:31.000000000 -0400
+diff -urNp linux-2.6.24.orig/grsecurity/grsec_init.c linux-2.6.24/grsecurity/grsec_init.c
+--- linux-2.6.24.orig/grsecurity/grsec_init.c	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.24/grsecurity/grsec_init.c	2008-04-19 16:59:08.000000000 +0200
 @@ -0,0 +1,33 @@
 +#include <linux/kernel.h>
 +#include <linux/sched.h>
@@ -514,9 +478,9 @@ diff -urNp linux-2.6.20.3/grsecurity/grsec_init.c linux-2.6.20.3/grsecurity/grse
 +
 +	return;
 +}
-diff -urNp linux-2.6.20.3/grsecurity/grsec_link.c linux-2.6.20.3/grsecurity/grsec_link.c
---- linux-2.6.20.3/grsecurity/grsec_link.c	1969-12-31 19:00:00.000000000 -0500
-+++ linux-2.6.20.3/grsecurity/grsec_link.c	2007-03-23 08:11:31.000000000 -0400
+diff -urNp linux-2.6.24.orig/grsecurity/grsec_link.c linux-2.6.24/grsecurity/grsec_link.c
+--- linux-2.6.24.orig/grsecurity/grsec_link.c	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.24/grsecurity/grsec_link.c	2008-04-19 16:59:08.000000000 +0200
 @@ -0,0 +1,37 @@
 +#include <linux/kernel.h>
 +#include <linux/sched.h>
@@ -555,9 +519,9 @@ diff -urNp linux-2.6.20.3/grsecurity/grsec_link.c linux-2.6.20.3/grsecurity/grse
 +#endif
 +	return 0;
 +}
-diff -urNp linux-2.6.20.3/grsecurity/grsec_sock.c linux-2.6.20.3/grsecurity/grsec_sock.c
---- linux-2.6.20.3/grsecurity/grsec_sock.c	1969-12-31 19:00:00.000000000 -0500
-+++ linux-2.6.20.3/grsecurity/grsec_sock.c	2007-03-23 08:11:31.000000000 -0400
+diff -urNp linux-2.6.24.orig/grsecurity/grsec_sock.c linux-2.6.24/grsecurity/grsec_sock.c
+--- linux-2.6.24.orig/grsecurity/grsec_sock.c	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.24/grsecurity/grsec_sock.c	2008-04-19 16:59:08.000000000 +0200
 @@ -0,0 +1,164 @@
 +#include <linux/kernel.h>
 +#include <linux/module.h>
@@ -673,7 +637,7 @@ diff -urNp linux-2.6.20.3/grsecurity/grsec_sock.c linux-2.6.20.3/grsecurity/grse
 +	newent = kmalloc(sizeof(struct conn_table_entry), GFP_ATOMIC);
 +	if (newent == NULL)
 +		return;
-+	/* no bh lock needed since we are called with bh disabled */
++	
 +	spin_lock(&gr_conn_table_lock);
 +	gr_del_task_from_ip_table_nolock(sig);
 +	sig->gr_saddr = inet->rcv_saddr;
@@ -708,24 +672,24 @@ diff -urNp linux-2.6.20.3/grsecurity/grsec_sock.c linux-2.6.20.3/grsecurity/grse
 +
 +	set = current->signal;
 +
-+	spin_lock_bh(&gr_conn_table_lock);
++	spin_lock(&gr_conn_table_lock);
 +	p = gr_lookup_task_ip_table(inet->daddr, inet->rcv_saddr,
 +				    inet->dport, inet->sport);
 +	if (unlikely(p != NULL)) {
 +		set->curr_ip = p->curr_ip;
 +		gr_del_task_from_ip_table_nolock(p);
-+		spin_unlock_bh(&gr_conn_table_lock);
++		spin_unlock(&gr_conn_table_lock);
 +		return;
 +	}
-+	spin_unlock_bh(&gr_conn_table_lock);
++	spin_unlock(&gr_conn_table_lock);
 +
 +	set->curr_ip = inet->daddr;
 +#endif
 +	return;
 +}
-diff -urNp linux-2.6.20.3/grsecurity/grsec_sysctl.c linux-2.6.20.3/grsecurity/grsec_sysctl.c
---- linux-2.6.20.3/grsecurity/grsec_sysctl.c	1969-12-31 19:00:00.000000000 -0500
-+++ linux-2.6.20.3/grsecurity/grsec_sysctl.c	2007-03-23 08:11:31.000000000 -0400
+diff -urNp linux-2.6.24.orig/grsecurity/grsec_sysctl.c linux-2.6.24/grsecurity/grsec_sysctl.c
+--- linux-2.6.24.orig/grsecurity/grsec_sysctl.c	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.24/grsecurity/grsec_sysctl.c	2008-04-19 16:59:08.000000000 +0200
 @@ -0,0 +1,65 @@
 +#include <linux/kernel.h>
 +#include <linux/sched.h>
@@ -792,9 +756,163 @@ diff -urNp linux-2.6.20.3/grsecurity/grsec_sysctl.c linux-2.6.20.3/grsecurity/gr
 +	{ .ctl_name = 0 }
 +};
 +#endif
-diff -urNp linux-2.6.20.3/include/linux/grinternal.h linux-2.6.20.3/include/linux/grinternal.h
---- linux-2.6.20.3/include/linux/grinternal.h	1969-12-31 19:00:00.000000000 -0500
-+++ linux-2.6.20.3/include/linux/grinternal.h	2007-03-23 08:11:31.000000000 -0400
+diff -urNp linux-2.6.24.orig/grsecurity/Kconfig linux-2.6.24/grsecurity/Kconfig
+--- linux-2.6.24.orig/grsecurity/Kconfig	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.24/grsecurity/Kconfig	2008-04-19 16:59:08.000000000 +0200
+@@ -0,0 +1,135 @@
++#
++# grecurity configuration
++#
++
++menu "Grsecurity"
++
++config GRKERNSEC
++	bool "Grsecurity"
++	select CRYPTO
++	select CRYPTO_SHA256
++	help
++	  If you say Y here, you will be able to configure many features
++	  that will enhance the security of your system.  It is highly
++	  recommended that you say Y here and read through the help
++	  for each option so that you fully understand the features and
++	  can evaluate their usefulness for your machine.
++
++menu "Filesystem Protections"
++depends on GRKERNSEC
++
++config GRKERNSEC_PROC
++	bool "Proc restrictions"
++	help
++	  If you say Y here, the permissions of the /proc filesystem
++	  will be altered to enhance system security and privacy.  You MUST
++  	  choose either a user only restriction or a user and group restriction.
++	  Depending upon the option you choose, you can either restrict users to
++	  see only the processes they themselves run, or choose a group that can
++	  view all processes and files normally restricted to root if you choose
++	  the "restrict to user only" option.  NOTE: If you're running identd as
++	  a non-root user, you will have to run it as the group you specify here.
++
++config GRKERNSEC_PROC_USER
++	bool "Restrict /proc to user only"
++	depends on GRKERNSEC_PROC
++	help
++	  If you say Y here, non-root users will only be able to view their own
++	  processes, and restricts them from viewing network-related information,
++	  and viewing kernel symbol and module information.
++
++config GRKERNSEC_PROC_USERGROUP
++	bool "Allow special group"
++	depends on GRKERNSEC_PROC && !GRKERNSEC_PROC_USER
++	help
++	  If you say Y here, you will be able to select a group that will be
++	  able to view all processes, network-related information, and
++	  kernel and symbol information.  This option is useful if you want
++	  to run identd as a non-root user.
++
++config GRKERNSEC_PROC_GID
++	int "GID for special group"
++	depends on GRKERNSEC_PROC_USERGROUP
++	default 1001
++
++config GRKERNSEC_PROC_ADD
++	bool "Additional restrictions"
++	depends on GRKERNSEC_PROC_USER || GRKERNSEC_PROC_USERGROUP
++	help
++	  If you say Y here, additional restrictions will be placed on
++	  /proc that keep normal users from viewing device information and 
++	  slabinfo information that could be useful for exploits.
++
++config GRKERNSEC_LINK
++	bool "Linking restrictions"
++	help
++	  If you say Y here, /tmp race exploits will be prevented, since users
++	  will no longer be able to follow symlinks owned by other users in
++	  world-writable +t directories (i.e. /tmp), unless the owner of the
++	  symlink is the owner of the directory. users will also not be
++	  able to hardlink to files they do not own.  If the sysctl option is
++	  enabled, a sysctl option with name "linking_restrictions" is created.
++
++config GRKERNSEC_FIFO
++	bool "FIFO restrictions"
++	help
++	  If you say Y here, users will not be able to write to FIFOs they don't
++	  own in world-writable +t directories (i.e. /tmp), unless the owner of
++	  the FIFO is the same owner of the directory it's held in.  If the sysctl
++	  option is enabled, a sysctl option with name "fifo_restrictions" is
++	  created.
++
++endmenu
++
++config GRKERNSEC_PROC_IPADDR
++	depends on GRKERNSEC
++	bool "/proc/<pid>/ipaddr support"
++	help
++	  If you say Y here, a new entry will be added to each /proc/<pid>
++	  directory that contains the IP address of the person using the task.
++	  The IP is carried across local TCP and AF_UNIX stream sockets.
++	  This information can be useful for IDS/IPSes to perform remote response
++	  to a local attack.  The entry is readable by only the owner of the
++	  process (and root if he has CAP_DAC_OVERRIDE, which can be removed via
++	  the RBAC system), and thus does not create privacy concerns.
++
++config GRKERNSEC_SHM
++	depends on GRKERNSEC
++	bool "Destroy unused shared memory"
++	depends on SYSVIPC
++	help
++	  If you say Y here, shared memory will be destroyed when no one is
++	  attached to it.  Otherwise, resources involved with the shared
++	  memory can be used up and not be associated with any process (as the
++	  shared memory still exists, and the creating process has exited).  If
++	  the sysctl option is enabled, a sysctl option with name
++	  "destroy_unused_shm" is created.
++
++config GRKERNSEC_SYSCTL
++	depends on GRKERNSEC && SYSCTL
++	bool "Sysctl support"
++	help
++	  If you say Y here, you will be able to change the options that
++	  grsecurity runs with at bootup, without having to recompile your
++	  kernel.  You can echo values to files in /proc/sys/kernel/grsecurity
++	  to enable (1) or disable (0) various features.  All the sysctl entries
++	  are mutable until the "grsec_lock" entry is set to a non-zero value.
++	  All features enabled in the kernel configuration are disabled at boot
++	  if you do not say Y to the "Turn on features by default" option.
++	  All options should be set at startup, and the grsec_lock entry should
++	  be set to a non-zero value after all the options are set.
++	  *THIS IS EXTREMELY IMPORTANT*
++
++config GRKERNSEC_SYSCTL_ON
++	bool "Turn on features by default"
++	depends on GRKERNSEC_SYSCTL
++	help
++	  If you say Y here, instead of having all features enabled in the
++	  kernel configuration disabled at boot time, the features will be
++	  enabled at boot time.  It is recommended you say Y here unless
++	  there is some reason you would want all sysctl-tunable features to
++	  be disabled by default.  As mentioned elsewhere, it is important
++	  to enable the grsec_lock entry once you have finished modifying
++	  the sysctl entries.
++
++endmenu
+diff -urNp linux-2.6.24.orig/grsecurity/Makefile linux-2.6.24/grsecurity/Makefile
+--- linux-2.6.24.orig/grsecurity/Makefile	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.24/grsecurity/Makefile	2008-04-19 16:59:08.000000000 +0200
+@@ -0,0 +1,11 @@
++# All code in this directory and various hooks inserted throughout the kernel
++# are copyright Brad Spengler, and released under the GPL v2 or higher
++
++obj-y = grsec_fifo.o grsec_sock.o grsec_sysctl.o grsec_link.o
++
++obj-$(CONFIG_GRKERNSEC) += grsec_init.o
++
++ifndef CONFIG_GRKERNSEC
++obj-y += grsec_disabled.o
++endif
++
+diff -urNp linux-2.6.24.orig/include/linux/grinternal.h linux-2.6.24/include/linux/grinternal.h
+--- linux-2.6.24.orig/include/linux/grinternal.h	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.24/include/linux/grinternal.h	2008-04-19 16:59:08.000000000 +0200
 @@ -0,0 +1,15 @@
 +#ifndef __GRINTERNAL_H
 +#define __GRINTERNAL_H
@@ -811,32 +929,32 @@ diff -urNp linux-2.6.20.3/include/linux/grinternal.h linux-2.6.20.3/include/linu
 +#endif
 +
 +#endif
-diff -urNp linux-2.6.20.3/include/linux/grsecurity.h linux-2.6.20.3/include/linux/grsecurity.h
---- linux-2.6.20.3/include/linux/grsecurity.h	1969-12-31 19:00:00.000000000 -0500
-+++ linux-2.6.20.3/include/linux/grsecurity.h	2007-03-23 08:11:31.000000000 -0400
+diff -urNp linux-2.6.24.orig/include/linux/grsecurity.h linux-2.6.24/include/linux/grsecurity.h
+--- linux-2.6.24.orig/include/linux/grsecurity.h	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.24/include/linux/grsecurity.h	2008-04-19 16:59:08.000000000 +0200
 @@ -0,0 +1,34 @@
 +#ifndef GR_SECURITY_H
 +#define GR_SECURITY_H
 +#include <linux/fs.h>
 +#include <linux/binfmts.h>
 +
-+void gr_del_task_from_ip_table(struct task_struct *p);
++extern void gr_del_task_from_ip_table(struct task_struct *p);
 +
-+int gr_handle_follow_link(const struct inode *parent,
++extern int gr_handle_follow_link(const struct inode *parent,
 +				 const struct inode *inode,
 +				 const struct dentry *dentry,
 +				 const struct vfsmount *mnt);
-+int gr_handle_fifo(const struct dentry *dentry,
++extern int gr_handle_fifo(const struct dentry *dentry,
 +			  const struct vfsmount *mnt,
 +			  const struct dentry *dir, const int flag,
 +			  const int acc_mode);
-+int gr_handle_hardlink(const struct dentry *dentry,
++extern int gr_handle_hardlink(const struct dentry *dentry,
 +			      const struct vfsmount *mnt,
 +			      struct inode *inode,
 +			      const int mode, const char *to);
 +
 +#ifdef CONFIG_SYSVIPC
-+void gr_shm_exit(struct task_struct *task);
++extern void gr_shm_exit(struct task_struct *task);
 +#else
 +static inline void gr_shm_exit(struct task_struct *task)
 +{
@@ -849,14 +967,13 @@ diff -urNp linux-2.6.20.3/include/linux/grsecurity.h linux-2.6.20.3/include/linu
 +#endif
 +
 +#endif
-diff -urNp linux-2.6.20.3/include/linux/sched.h linux-2.6.20.3/include/linux/sched.h
---- linux-2.6.20.3/include/linux/sched.h	2007-03-13 14:27:08.000000000 -0400
-+++ linux-2.6.20.3/include/linux/sched.h	2007-03-23 08:11:31.000000000 -0400
-@@ -491,6 +518,14 @@ struct signal_struct {
- #ifdef CONFIG_TASKSTATS
- 	struct taskstats *stats;
+diff -urNp linux-2.6.24.orig/include/linux/sched.h linux-2.6.24/include/linux/sched.h
+--- linux-2.6.24.orig/include/linux/sched.h	2008-04-19 16:20:13.000000000 +0200
++++ linux-2.6.24/include/linux/sched.h	2008-04-19 16:59:08.000000000 +0200
+@@ -510,6 +510,13 @@ struct signal_struct {
+ 	unsigned audit_tty;
+ 	struct tty_audit_buf *tty_audit_buf;
  #endif
-+
 +#ifdef CONFIG_GRKERNSEC
 +	u32 curr_ip;
 +	u32 gr_saddr;
@@ -867,10 +984,10 @@ diff -urNp linux-2.6.20.3/include/linux/sched.h linux-2.6.20.3/include/linux/sch
  };
  
  /* Context switch must be unlocked if interrupts are to be enabled */
-diff -urNp linux-2.6.20.3/include/linux/shm.h linux-2.6.20.3/include/linux/shm.h
---- linux-2.6.20.3/include/linux/shm.h	2007-03-13 14:27:08.000000000 -0400
-+++ linux-2.6.20.3/include/linux/shm.h	2007-03-23 08:11:31.000000000 -0400
-@@ -86,6 +86,10 @@ struct shmid_kernel /* private to the ke
+diff -urNp linux-2.6.24.orig/include/linux/shm.h linux-2.6.24/include/linux/shm.h
+--- linux-2.6.24.orig/include/linux/shm.h	2008-04-19 16:20:13.000000000 +0200
++++ linux-2.6.24/include/linux/shm.h	2008-04-19 16:59:08.000000000 +0200
+@@ -87,6 +87,10 @@ struct shmid_kernel /* private to the ke
  	pid_t			shm_cprid;
  	pid_t			shm_lprid;
  	struct user_struct	*mlock_user;
@@ -881,10 +998,10 @@ diff -urNp linux-2.6.20.3/include/linux/shm.h linux-2.6.20.3/include/linux/shm.h
  };
  
  /* shm_mode upper byte flags */
-diff -urNp linux-2.6.20.3/include/linux/sysctl.h linux-2.6.20.3/include/linux/sysctl.h
---- linux-2.6.20.3/include/linux/sysctl.h	2007-03-13 14:27:08.000000000 -0400
-+++ linux-2.6.20.3/include/linux/sysctl.h	2007-03-23 08:29:10.000000000 -0400
-@@ -167,6 +167,9 @@ enum
+diff -urNp linux-2.6.24.orig/include/linux/sysctl.h linux-2.6.24/include/linux/sysctl.h
+--- linux-2.6.24.orig/include/linux/sysctl.h	2008-04-19 16:20:13.000000000 +0200
++++ linux-2.6.24/include/linux/sysctl.h	2008-04-19 16:59:08.000000000 +0200
+@@ -173,6 +173,9 @@ enum
  /* CTL_VM names: */
  enum
  {
@@ -894,19 +1011,19 @@ diff -urNp linux-2.6.20.3/include/linux/sysctl.h linux-2.6.20.3/include/linux/sy
  	VM_UNUSED1=1,		/* was: struct: Set vm swapping control */
  	VM_UNUSED2=2,		/* was; int: Linear or sqrt() swapout for hogs */
  	VM_UNUSED3=3,		/* was: struct: Set free page thresholds */
-diff -urNp linux-2.6.20.3/ipc/shm.c linux-2.6.20.3/ipc/shm.c
---- linux-2.6.20.3/ipc/shm.c	2007-03-13 14:27:08.000000000 -0400
-+++ linux-2.6.20.3/ipc/shm.c	2007-03-23 08:11:31.000000000 -0400
-@@ -37,6 +37,7 @@
- #include <linux/nsproxy.h>
+diff -urNp linux-2.6.24.orig/ipc/shm.c linux-2.6.24/ipc/shm.c
+--- linux-2.6.24.orig/ipc/shm.c	2008-04-19 16:20:14.000000000 +0200
++++ linux-2.6.24/ipc/shm.c	2008-04-19 16:59:08.000000000 +0200
+@@ -40,6 +40,7 @@
+ #include <linux/mount.h>
  #include <linux/vs_context.h>
  #include <linux/vs_limit.h>
 +#include <linux/grsecurity.h>
  
  #include <asm/uaccess.h>
  
-@@ -216,6 +227,17 @@ static void shm_close (struct vm_area_st
- 	shp->shm_lprid = current->tgid;
+@@ -259,6 +260,17 @@ static void shm_close(struct vm_area_str
+ 	shp->shm_lprid = task_tgid_vnr(current);
  	shp->shm_dtim = get_seconds();
  	shp->shm_nattch--;
 +#ifdef CONFIG_GRKERNSEC_SHM
@@ -916,14 +1033,14 @@ diff -urNp linux-2.6.20.3/ipc/shm.c linux-2.6.20.3/ipc/shm.c
 +			shm_destroy(ns, shp);
 +		} else
 +			shm_unlock(shp);
-+		mutex_unlock(&shm_ids(ns).mutex);
++		up_write(&shm_ids(ns).rw_mutex);
 +		return;
 +	}
 +#endif
  	if(shp->shm_nattch == 0 &&
  	   shp->shm_perm.mode & SHM_DEST)
  		shm_destroy(ns, shp);
-@@ -326,6 +348,9 @@ static int newseg (struct ipc_namespace 
+@@ -455,6 +467,9 @@ static int newseg(struct ipc_namespace *
  	shp->shm_lprid = 0;
  	shp->shm_atim = shp->shm_dtim = 0;
  	shp->shm_ctim = get_seconds();
@@ -932,20 +1049,18 @@ diff -urNp linux-2.6.20.3/ipc/shm.c linux-2.6.20.3/ipc/shm.c
 +#endif
  	shp->shm_segsz = size;
  	shp->shm_nattch = 0;
- 	shp->id = shm_buildid(ns, id, shp->shm_perm.seq);
-@@ -901,6 +916,11 @@ long do_shmat(int shmid, char __user *sh
+ 	shp->shm_perm.id = shm_buildid(id, shp->shm_perm.seq);
+@@ -990,6 +1005,9 @@ long do_shmat(int shmid, char __user *sh
  	path.dentry = dget(shp->shm_file->f_path.dentry);
- 	path.mnt    = mntget(shp->shm_file->f_path.mnt);
+ 	path.mnt    = shp->shm_file->f_path.mnt;
  	shp->shm_nattch++;
-+
 +#ifdef CONFIG_GRKERNSEC
 +	shp->shm_lapid = current->pid;
 +#endif
-+
  	size = i_size_read(path.dentry->d_inode);
  	shm_unlock(shp);
  
-@@ -1014,3 +1055,27 @@ static int sysvipc_shm_proc_show(struct 
+@@ -1190,3 +1208,28 @@ static int sysvipc_shm_proc_show(struct 
  			  shp->shm_ctim);
  }
  #endif
@@ -953,7 +1068,7 @@ diff -urNp linux-2.6.20.3/ipc/shm.c linux-2.6.20.3/ipc/shm.c
 +void gr_shm_exit(struct task_struct *task)
 +{
 +#ifdef CONFIG_GRKERNSEC_SHM
-+	int i;
++	int in_use, next_id;
 +	struct shmid_kernel *shp;
 +	struct ipc_namespace *ns;
 +
@@ -962,8 +1077,9 @@ diff -urNp linux-2.6.20.3/ipc/shm.c linux-2.6.20.3/ipc/shm.c
 +	if (!grsec_enable_shm)
 +		return;
 +
-+	for (i = 0; i <= shm_ids(ns).max_id; i++) {
-+		shp = shm_get(ns, i);
++	in_use = shm_ids(ns).in_use;
++	for (next_id = 0; next_id < in_use; next_id++) {
++		shp = idr_find(&shm_ids(ns).ipcs_idr, next_id);
 +		if (shp && (shp->shm_cprid == task->pid) &&
 +		    (shp->shm_nattch <= 0)) {
 +			shp->shm_perm.mode |= SHM_DEST;
@@ -973,18 +1089,17 @@ diff -urNp linux-2.6.20.3/ipc/shm.c linux-2.6.20.3/ipc/shm.c
 +#endif
 +	return;
 +}
-diff -urNp linux-2.6.20.3/kernel/acct.c linux-2.6.20.3/kernel/acct.c
-diff -urNp linux-2.6.20.3/kernel/configs.c linux-2.6.20.3/kernel/configs.c
---- linux-2.6.20.3/kernel/configs.c	2007-03-13 14:27:08.000000000 -0400
-+++ linux-2.6.20.3/kernel/configs.c	2007-03-23 08:11:31.000000000 -0400
-@@ -88,8 +88,16 @@ static int __init ikconfig_init(void)
+diff -urNp linux-2.6.24.orig/kernel/configs.c linux-2.6.24/kernel/configs.c
+--- linux-2.6.24.orig/kernel/configs.c	2008-04-19 16:20:14.000000000 +0200
++++ linux-2.6.24/kernel/configs.c	2008-04-19 16:59:08.000000000 +0200
+@@ -79,8 +79,16 @@ static int __init ikconfig_init(void)
  	struct proc_dir_entry *entry;
  
  	/* create the current config file */
 +#ifdef CONFIG_GRKERNSEC_PROC_ADD
 +#ifdef CONFIG_GRKERNSEC_PROC_USER
 +	entry = create_proc_entry("config.gz", S_IFREG | S_IRUSR, &proc_root);
-+#elif CONFIG_GRKERNSEC_PROC_USERGROUP
++#elif defined(CONFIG_GRKERNSEC_PROC_USERGROUP)
 +	entry = create_proc_entry("config.gz", S_IFREG | S_IRUSR | S_IRGRP, &proc_root);
 +#endif
 +#else
@@ -994,18 +1109,18 @@ diff -urNp linux-2.6.20.3/kernel/configs.c linux-2.6.20.3/kernel/configs.c
  	if (!entry)
  		return -ENOMEM;
  
-diff -urNp linux-2.6.20.3/kernel/exit.c linux-2.6.20.3/kernel/exit.c
---- linux-2.6.20.3/kernel/exit.c	2007-03-13 14:27:08.000000000 -0400
-+++ linux-2.6.20.3/kernel/exit.c	2007-03-23 08:11:31.000000000 -0400
-@@ -42,6 +42,7 @@
- #include <linux/vs_network.h>
- #include <linux/vs_pid.h>
- #include <linux/vserver/global.h>
+diff -urNp linux-2.6.24.orig/kernel/exit.c linux-2.6.24/kernel/exit.c
+--- linux-2.6.24.orig/kernel/exit.c	2008-04-19 16:20:14.000000000 +0200
++++ linux-2.6.24/kernel/exit.c	2008-04-19 16:59:08.000000000 +0200
+@@ -44,6 +44,7 @@
+ #include <linux/resource.h>
+ #include <linux/blkdev.h>
+ #include <linux/task_io_accounting_ops.h>
 +#include <linux/grsecurity.h>
- 
- #include <asm/uaccess.h>
- #include <asm/unistd.h>
-@@ -118,6 +123,7 @@ static void __exit_signal(struct task_st
+ #include <linux/vs_limit.h>
+ #include <linux/vs_context.h>
+ #include <linux/vs_network.h>
+@@ -127,6 +128,7 @@ static void __exit_signal(struct task_st
  
  	__unhash_process(tsk);
  
@@ -1013,25 +1128,25 @@ diff -urNp linux-2.6.20.3/kernel/exit.c linux-2.6.20.3/kernel/exit.c
  	tsk->signal = NULL;
  	tsk->sighand = NULL;
  	spin_unlock(&sighand->siglock);
-@@ -918,6 +946,7 @@ fastcall NORET_TYPE void do_exit(long co
+@@ -1003,6 +1005,7 @@ fastcall NORET_TYPE void do_exit(long co
  	if (group_dead)
  		acct_process();
  	exit_sem(tsk);
 +	gr_shm_exit(tsk);
  	__exit_files(tsk);
  	__exit_fs(tsk);
- 	exit_thread();
-diff -urNp linux-2.6.20.3/kernel/kallsyms.c linux-2.6.20.3/kernel/kallsyms.c
---- linux-2.6.20.3/kernel/kallsyms.c	2007-03-13 14:27:08.000000000 -0400
-+++ linux-2.6.20.3/kernel/kallsyms.c	2007-03-23 08:11:31.000000000 -0400
-@@ -444,7 +443,15 @@ static int __init kallsyms_init(void)
+ 	check_stack_usage();
+diff -urNp linux-2.6.24.orig/kernel/kallsyms.c linux-2.6.24/kernel/kallsyms.c
+--- linux-2.6.24.orig/kernel/kallsyms.c	2008-04-19 16:20:14.000000000 +0200
++++ linux-2.6.24/kernel/kallsyms.c	2008-04-19 16:59:08.000000000 +0200
+@@ -486,7 +486,15 @@ static int __init kallsyms_init(void)
  {
  	struct proc_dir_entry *entry;
  
 +#ifdef CONFIG_GRKERNSEC_PROC_ADD
 +#ifdef CONFIG_GRKERNSEC_PROC_USER
 +	entry = create_proc_entry("kallsyms", S_IFREG | S_IRUSR, NULL);
-+#elif CONFIG_GRKERNSEC_PROC_USERGROUP
++#elif defined(CONFIG_GRKERNSEC_PROC_USERGROUP)
 +	entry = create_proc_entry("kallsyms", S_IFREG | S_IRUSR | S_IRGRP, NULL);
 +#endif
 +#else
@@ -1040,9 +1155,9 @@ diff -urNp linux-2.6.20.3/kernel/kallsyms.c linux-2.6.20.3/kernel/kallsyms.c
  	if (entry)
  		entry->proc_fops = &kallsyms_operations;
  	return 0;
-diff -urNp linux-2.6.20.3/kernel/resource.c linux-2.6.20.3/kernel/resource.c
---- linux-2.6.20.3/kernel/resource.c	2007-03-13 14:27:08.000000000 -0400
-+++ linux-2.6.20.3/kernel/resource.c	2007-03-23 08:11:31.000000000 -0400
+diff -urNp linux-2.6.24.orig/kernel/resource.c linux-2.6.24/kernel/resource.c
+--- linux-2.6.24.orig/kernel/resource.c	2008-04-19 16:20:14.000000000 +0200
++++ linux-2.6.24/kernel/resource.c	2008-04-19 16:59:08.000000000 +0200
 @@ -133,10 +133,27 @@ static int __init ioresources_init(void)
  {
  	struct proc_dir_entry *entry;
@@ -1050,7 +1165,7 @@ diff -urNp linux-2.6.20.3/kernel/resource.c linux-2.6.20.3/kernel/resource.c
 +#ifdef CONFIG_GRKERNSEC_PROC_ADD
 +#ifdef CONFIG_GRKERNSEC_PROC_USER
 +	entry = create_proc_entry("ioports", S_IRUSR, NULL);
-+#elif CONFIG_GRKERNSEC_PROC_USERGROUP
++#elif defined(CONFIG_GRKERNSEC_PROC_USERGROUP)
 +	entry = create_proc_entry("ioports", S_IRUSR | S_IRGRP, NULL);
 +#endif
 +#else
@@ -1062,7 +1177,7 @@ diff -urNp linux-2.6.20.3/kernel/resource.c linux-2.6.20.3/kernel/resource.c
 +#ifdef CONFIG_GRKERNSEC_PROC_ADD
 +#ifdef CONFIG_GRKERNSEC_PROC_USER
 +	entry = create_proc_entry("iomem", S_IRUSR, NULL);
-+#elif CONFIG_GRKERNSEC_PROC_USERGROUP
++#elif defined(CONFIG_GRKERNSEC_PROC_USERGROUP)
 +	entry = create_proc_entry("iomem", S_IRUSR | S_IRGRP, NULL);
 +#endif
 +#else
@@ -1071,11 +1186,11 @@ diff -urNp linux-2.6.20.3/kernel/resource.c linux-2.6.20.3/kernel/resource.c
  	if (entry)
  		entry->proc_fops = &proc_iomem_operations;
  	return 0;
-diff -urNp linux-2.6.20.3/kernel/sysctl.c linux-2.6.20.3/kernel/sysctl.c
---- linux-2.6.20.3/kernel/sysctl.c	2007-03-13 14:27:08.000000000 -0400
-+++ linux-2.6.20.3/kernel/sysctl.c	2007-03-23 08:11:31.000000000 -0400
-@@ -58,6 +58,11 @@ extern int proc_nr_files(ctl_table *tabl
- #endif
+diff -urNp linux-2.6.24.orig/kernel/sysctl.c linux-2.6.24/kernel/sysctl.c
+--- linux-2.6.24.orig/kernel/sysctl.c	2008-04-19 16:20:14.000000000 +0200
++++ linux-2.6.24/kernel/sysctl.c	2008-04-19 16:59:08.000000000 +0200
+@@ -58,6 +58,11 @@
+ static int deprecated_sysctl_warning(struct __sysctl_args *args);
  
  #if defined(CONFIG_SYSCTL)
 +#include <linux/grsecurity.h>
@@ -1086,18 +1201,19 @@ diff -urNp linux-2.6.20.3/kernel/sysctl.c linux-2.6.20.3/kernel/sysctl.c
  
  /* External variables not in a header file. */
  extern int C_A_D;
-@@ -169,6 +177,7 @@ extern ctl_table pty_table[];
+@@ -169,6 +174,7 @@ extern struct ctl_table random_table[];
  #ifdef CONFIG_INOTIFY_USER
- extern ctl_table inotify_table[];
+ extern struct ctl_table inotify_table[];
  #endif
 +extern ctl_table grsecurity_table[];
  
  #ifdef HAVE_ARCH_PICK_MMAP_LAYOUT
  int sysctl_legacy_va_layout;
-@@ -781,6 +804,14 @@ static ctl_table kern_table[] = {
+@@ -1253,6 +1259,16 @@ static struct ctl_table debug_table[] = 
+ 		.proc_handler	= proc_dointvec
  	},
  #endif
- 
++
 +#if defined(CONFIG_GRKERNSEC_SYSCTL)
 +	{
 +		.ctl_name	= KERN_GRSECURITY,
@@ -1106,11 +1222,12 @@ diff -urNp linux-2.6.20.3/kernel/sysctl.c linux-2.6.20.3/kernel/sysctl.c
 +		.child		= grsecurity_table,
 +	},
 +#endif
++
  	{ .ctl_name = 0 }
  };
  
-@@ -1233,6 +1249,10 @@ static int test_perm(int mode, int op)
- static inline int ctl_perm(ctl_table *table, int op)
+@@ -1404,6 +1420,10 @@ static int test_perm(int mode, int op)
+ int sysctl_perm(struct ctl_table *table, int op)
  {
  	int error;
 +	if (table->parent != NULL && table->parent->procname != NULL &&
@@ -1120,10 +1237,22 @@ diff -urNp linux-2.6.20.3/kernel/sysctl.c linux-2.6.20.3/kernel/sysctl.c
  	error = security_sysctl(table, op);
  	if (error)
  		return error;
-diff -urNp linux-2.6.20.3/net/ipv4/inet_hashtables.c linux-2.6.20.3/net/ipv4/inet_hashtables.c
---- linux-2.6.20.3/net/ipv4/inet_hashtables.c	2007-03-13 14:27:08.000000000 -0400
-+++ linux-2.6.20.3/net/ipv4/inet_hashtables.c	2007-03-23 08:11:31.000000000 -0400
-@@ -18,11 +18,14 @@
+diff -urNp linux-2.6.24.orig/Makefile linux-2.6.24/Makefile
+--- linux-2.6.24.orig/Makefile	2008-04-19 16:19:57.000000000 +0200
++++ linux-2.6.24/Makefile	2008-04-19 16:59:08.000000000 +0200
+@@ -597,7 +597,7 @@ export mod_strip_cmd
+ 
+ 
+ ifeq ($(KBUILD_EXTMOD),)
+-core-y		+= kernel/ mm/ fs/ ipc/ security/ crypto/ block/
++core-y		+= kernel/ mm/ fs/ ipc/ security/ crypto/ block/ grsecurity/
+ 
+ vmlinux-dirs	:= $(patsubst %/,%,$(filter %/, $(init-y) $(init-m) \
+ 		     $(core-y) $(core-m) $(drivers-y) $(drivers-m) \
+diff -urNp linux-2.6.24.orig/net/ipv4/inet_hashtables.c linux-2.6.24/net/ipv4/inet_hashtables.c
+--- linux-2.6.24.orig/net/ipv4/inet_hashtables.c	2008-04-19 16:20:15.000000000 +0200
++++ linux-2.6.24/net/ipv4/inet_hashtables.c	2008-04-19 16:59:08.000000000 +0200
+@@ -18,12 +18,15 @@
  #include <linux/sched.h>
  #include <linux/slab.h>
  #include <linux/wait.h>
@@ -1131,6 +1260,7 @@ diff -urNp linux-2.6.20.3/net/ipv4/inet_hashtables.c linux-2.6.20.3/net/ipv4/ine
  
  #include <net/inet_connection_sock.h>
  #include <net/inet_hashtables.h>
+ #include <net/route.h>
  #include <net/ip.h>
  
 +extern void gr_update_task_in_ip_table(struct task_struct *task, const struct inet_sock *inet);
@@ -1147,27 +1277,26 @@ diff -urNp linux-2.6.20.3/net/ipv4/inet_hashtables.c linux-2.6.20.3/net/ipv4/ine
  		if (tw) {
  			inet_twsk_deschedule(tw, death_row);
  			inet_twsk_put(tw);
-diff -urNp linux-2.6.20.3/net/socket.c linux-2.6.20.3/net/socket.c
---- linux-2.6.20.3/net/socket.c	2007-03-13 14:27:08.000000000 -0400
-+++ linux-2.6.20.3/net/socket.c	2007-03-23 08:11:31.000000000 -0400
-@@ -84,6 +84,7 @@
+diff -urNp linux-2.6.24.orig/net/socket.c linux-2.6.24/net/socket.c
+--- linux-2.6.24.orig/net/socket.c	2008-04-19 16:20:15.000000000 +0200
++++ linux-2.6.24/net/socket.c	2008-04-19 16:59:08.000000000 +0200
+@@ -83,6 +83,7 @@
+ #include <linux/compat.h>
  #include <linux/kmod.h>
  #include <linux/audit.h>
- #include <linux/wireless.h>
 +#include <linux/in.h>
+ #include <linux/wireless.h>
+ #include <linux/nsproxy.h>
  
- #include <asm/uaccess.h>
- #include <asm/unistd.h>
-@@ -93,6 +94,8 @@
- #include <net/sock.h>
- #include <linux/netfilter.h>
+@@ -98,6 +99,7 @@
+ #include <linux/vs_inet.h>
+ #include <linux/vs_inet6.h>
  
 +extern void gr_attach_curr_ip(const struct sock *sk);
-+
  static int sock_no_open(struct inode *irrelevant, struct file *dontcare);
  static ssize_t sock_aio_read(struct kiocb *iocb, const struct iovec *iov,
  			 unsigned long nr_segs, loff_t pos);
-@@ -1396,6 +1445,7 @@ asmlinkage long sys_accept(int fd, struc
+@@ -1488,6 +1490,7 @@ asmlinkage long sys_accept(int fd, struc
  	err = newfd;
  
  	security_socket_post_accept(sock, newsock);
@@ -1175,142 +1304,15 @@ diff -urNp linux-2.6.20.3/net/socket.c linux-2.6.20.3/net/socket.c
  
  out_put:
  	fput_light(sock->file, fput_needed);
-diff -urNp linux-2.6.20.3/security/Kconfig linux-2.6.20.3/security/Kconfig
---- linux-2.6.20.3/security/Kconfig	2007-03-13 14:27:08.000000000 -0400
-+++ linux-2.6.20.3/security/Kconfig	2007-03-23 09:03:54.000000000 -0400
-@@ -4,6 +4,9 @@
+diff -urNp linux-2.6.24.orig/security/Kconfig linux-2.6.24/security/Kconfig
+--- linux-2.6.24.orig/security/Kconfig	2008-04-19 16:20:15.000000000 +0200
++++ linux-2.6.24/security/Kconfig	2008-04-19 16:59:08.000000000 +0200
+@@ -4,6 +4,8 @@
  
  menu "Security options"
  
-+
 +source grsecurity/Kconfig
 +
  config KEYS
  	bool "Enable access key retention support"
  	help
-diff -urNp linux-2.6.20.3/fs/proc/base.c linux-2.6.20.3/fs/proc/base.c
---- linux-2.6.20.3/fs/proc/base.c	2007-03-13 14:27:08.000000000 -0400
-+++ linux-2.6.20.3/fs/proc/base.c	2007-03-23 08:11:31.000000000 -0400
-@@ -1032,7 +1035,11 @@ static struct inode *proc_pid_make_inode
- 	inode->i_gid = 0;
- 	if (task_dumpable(task)) {
- 		inode->i_uid = task->euid;
-+#ifdef CONFIG_GRKERNSEC_PROC_USERGROUP
-+		inode->i_gid = CONFIG_GRKERNSEC_PROC_GID;
-+#else
- 		inode->i_gid = task->egid;
-+#endif
- 	}
- 	/* procfs is xid tagged */
- 	inode->i_tag = (tag_t)vx_task_xid(task);
-@@ -1048,17 +1055,38 @@ static int pid_getattr(struct vfsmount *
- {
- 	struct inode *inode = dentry->d_inode;
- 	struct task_struct *task;
-+#if defined(CONFIG_GRKERNSEC_PROC_USER) || defined(CONFIG_GRKERNSEC_PROC_USERGROUP)
-+	struct task_struct *tmp = current;
-+#endif
-+
- 	generic_fillattr(inode, stat);
- 
- 	rcu_read_lock();
- 	stat->uid = 0;
- 	stat->gid = 0;
- 	task = pid_task(proc_pid(inode), PIDTYPE_PID);
--	if (task) {
-+	if (task
-+#if defined(CONFIG_GRKERNSEC_PROC_USER) || defined(CONFIG_GRKERNSEC_PROC_USERGROUP)
-+	    && (!tmp->uid || (tmp->uid == task->uid)
-+#ifdef CONFIG_GRKERNSEC_PROC_USERGROUP
-+	    || in_group_p(CONFIG_GRKERNSEC_PROC_GID)
-+#endif
-+	    )
-+#endif
-+	) {
- 		if ((inode->i_mode == (S_IFDIR|S_IRUGO|S_IXUGO)) ||
-+#ifdef CONFIG_GRKERNSEC_PROC_USER
-+		    (inode->i_mode == (S_IFDIR|S_IRUSR|S_IXUSR)) ||
-+#elif CONFIG_GRKERNSEC_PROC_USERGROUP
-+		    (inode->i_mode == (S_IFDIR|S_IRUSR|S_IRGRP|S_IXUSR|S_IXGRP)) ||
-+#endif
- 		    task_dumpable(task)) {
- 			stat->uid = task->euid;
-+#ifdef CONFIG_GRKERNSEC_PROC_USERGROUP
-+			stat->gid = CONFIG_GRKERNSEC_PROC_GID;
-+#else
- 			stat->gid = task->egid;
-+#endif
- 		}
- 	}
- 	rcu_read_unlock();
-@@ -1086,9 +1121,18 @@ static int pid_revalidate(struct dentry 
- 	struct task_struct *task = get_proc_task(inode);
- 	if (task) {
- 		if ((inode->i_mode == (S_IFDIR|S_IRUGO|S_IXUGO)) ||
-+#ifdef CONFIG_GRKERNSEC_PROC_USER
-+		    (inode->i_mode == (S_IFDIR|S_IRUSR|S_IXUSR)) ||
-+#elif CONFIG_GRKERNSEC_PROC_USERGROUP
-+		    (inode->i_mode == (S_IFDIR|S_IRUSR|S_IRGRP|S_IXUSR|S_IXGRP)) ||
-+#endif
- 		    task_dumpable(task)) {
- 			inode->i_uid = task->euid;
-+#ifdef CONFIG_GRKERNSEC_PROC_USERGROUP
-+			inode->i_gid = CONFIG_GRKERNSEC_PROC_GID;
-+#else
- 			inode->i_gid = task->egid;
-+#endif
- 		} else {
- 			inode->i_uid = 0;
- 			inode->i_gid = 0;
-@@ -1881,6 +1946,9 @@ static struct pid_entry tgid_base_stuff[
- #ifdef CONFIG_TASK_IO_ACCOUNTING
- 	INF("io",	S_IRUGO, pid_io_accounting),
- #endif
-+#ifdef CONFIG_GRKERNSEC_PROC_IPADDR
-+	INF("ipaddr",	  S_IRUSR, pid_ipaddr),
-+#endif
- };
- 
- static int proc_tgid_base_readdir(struct file * filp,
-@@ -1984,7 +2052,14 @@ static struct dentry *proc_pid_instantia
- 	if (!inode)
- 		goto out;
- 
-+#ifdef CONFIG_GRKERNSEC_PROC_USER
-+	inode->i_mode = S_IFDIR|S_IRUSR|S_IXUSR;
-+#elif CONFIG_GRKERNSEC_PROC_USERGROUP
-+	inode->i_gid = CONFIG_GRKERNSEC_PROC_GID;
-+	inode->i_mode = S_IFDIR|S_IRUSR|S_IRGRP|S_IXUSR|S_IXGRP;
-+#else
- 	inode->i_mode = S_IFDIR|S_IRUGO|S_IXUGO;
-+#endif
- 	inode->i_op = &proc_tgid_base_inode_operations;
- 	inode->i_fop = &proc_tgid_base_operations;
- 	inode->i_flags|=S_IMMUTABLE;
-@@ -2083,6 +2162,9 @@ int proc_pid_readdir(struct file * filp,
- {
- 	unsigned int nr = filp->f_pos - FIRST_PROCESS_ENTRY;
- 	struct task_struct *reaper = get_proc_task_real(filp->f_path.dentry->d_inode);
-+#if defined(CONFIG_GRKERNSEC_PROC_USER) || defined(CONFIG_GRKERNSEC_PROC_USERGROUP)
-+	struct task_struct *tmp = current;
-+#endif
- 	struct task_struct *task;
- 	int tgid;
- 
-@@ -2100,6 +2182,16 @@ int proc_pid_readdir(struct file * filp,
- 	     task;
- 	     put_task_struct(task), task = next_tgid(tgid + 1)) {
- 		tgid = task->pid;
-+
-+#if defined(CONFIG_GRKERNSEC_PROC_USER) || defined(CONFIG_GRKERNSEC_PROC_USERGROUP)
-+		if (tmp->uid && (task->uid != tmp->uid)
-+#ifdef CONFIG_GRKERNSEC_PROC_USERGROUP
-+		        && !in_group_p(CONFIG_GRKERNSEC_PROC_GID)
-+#endif
-+		)
-+#endif
-+			continue;
-+
- 		filp->f_pos = tgid + TGID_OFFSET;
- 		if (proc_pid_fill_cache(filp, dirent, filldir, task, tgid) < 0) {
- 			put_task_struct(task);
