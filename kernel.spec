@@ -573,8 +573,8 @@ Group:		Base/Kernel
 Requires(postun):	%{name} = %{epoch}:%{version}-%{release}
 Requires:	%{name} = %{epoch}:%{version}-%{release}
 Obsoletes:	kernel-smp-pcmcia
-Conflicts:	pcmcia-cs < %{_pcmcia_cs_ver}
-Conflicts:	pcmciautils < %{_pcmciautils_ver}
+Conflicts:	pcmcia-cs < 3.1.21
+Conflicts:	pcmciautils < 004
 Autoreqprov:	no
 
 %description pcmcia
