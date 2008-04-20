@@ -1109,6 +1109,9 @@ RescueConfig() {
 	sed -i "s:CONFIG_GAMEPORT=.:# CONFIG_GAMEPORT is not set:" $1
 	sed -i "s:CONFIG_KVM=.:# CONFIG_KVM is not set:" $1
 	sed -i "s:CONFIG_PHONE=.:# CONFIG_PHONE is not set:" $1
+	sed -i "s:CONFIG_BLK_DEV_LOOP=m:CONFIG_BLK_DEV_LOOP=y:" $1
+	sed -i "s:CONFIG_ISO9660_FS=m:CONFIG_ISO9660_FS=y:" $1
+	sed -i "s:CONFIG_NLS_UTF8=m:CONFIG_NLS_UTF8=y:" $1
 }
 
 BuildConfig() {
