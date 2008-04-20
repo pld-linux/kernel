@@ -1533,6 +1533,7 @@ fi
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/bluetooth/*_cs.ko*
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/isdn/hardware/avm/avm_cs.ko*
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/telephony/ixj_pcmcia.ko*
+%exclude /lib/modules/%{kernel_release}/kernel/drivers/usb/gadget/g_midi.ko*
 %endif
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/ide/legacy/ide-cs.ko*
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/net/wireless/*_cs.ko*
@@ -1541,7 +1542,6 @@ fi
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/net/wireless/libertas/*_cs.ko*
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/parport/parport_cs.ko*
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/serial/serial_cs.ko*
-%exclude /lib/modules/%{kernel_release}/kernel/drivers/usb/gadget/g_midi.ko*
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/usb/host/sl811_cs.ko*
 %endif
 %ghost /lib/modules/%{kernel_release}/modules.*
