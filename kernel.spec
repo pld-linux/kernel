@@ -108,7 +108,7 @@
 %endif
 
 %define		_basever		2.6.24
-%define		_postver		.4
+%define		_postver		.5
 %define		_prepatch		%{nil}
 %define		_pre_rc			%{nil}
 %define		_rc			%{nil}
@@ -163,7 +163,7 @@ Source90:	http://www.kernel.org/pub/linux/kernel/v2.6/testing/patch-%{_prepatch}
 %endif
 %if "%{_postver}" != "%{nil}"
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
-# Source1-md5:	508f5aaa99dead9836ff490496a61581
+# Source1-md5:	e937c732891561f0a34a2e0853df825e
 %endif
 
 Source3:	kernel-autoconf.h
@@ -375,7 +375,7 @@ Patch9997:	pax_selinux_hooks-2.6.20.patch
 # based on http://www.grsecurity.net/~paxguy1/pax-linux-2.6.24-test8.patch
 Patch9998:	kernel-pax.patch
 
-# based on http://www.grsecurity.net/~spender/grsecurity-2.1.11-2.6.24.4-200803242230.patch
+# based on http://www.grsecurity.net/~spender/grsecurity-2.1.11-2.6.24.4-200804142048.patch.gz
 Patch9999:	linux-2.6-grsec_full.patch
 Patch10000:	linux-2.6-grsec-caps.patch
 Patch10001:	linux-2.6-grsec-common.patch
