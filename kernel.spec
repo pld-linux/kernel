@@ -993,11 +993,6 @@ sed -i -e '/select INPUT/d' net/bluetooth/hidp/Kconfig
 # on sparc64 avoid building break due to NULL pointer type warrning
 sed -i -e 's/^EXTRA_CFLAGS := -Werror/EXTRA_CFLAGS := /' arch/sparc64/kernel/Makefile
 
-# Kill creating obsolete arch/{i386,x86_64}/boot directories
-# and bzImage symlinks, breaks rpm directory deps
-sed -i -e '/\/arch\/i386\/boot/d' arch/x86/Makefile_32
-sed -i -e '/\/arch\/x86_64\/boot/d' arch/x86/Makefile_64
-
 # cleanup backups after patching
 find '(' -name '*~' -o -name '*.orig' -o -name '.gitignore' ')' -print0 | xargs -0 -r -l512 rm -f
 
@@ -1284,7 +1279,7 @@ PreInstallKernel() {
 	mkdir -p $KERNEL_INSTALL_DIR/boot
 	install System.map $KERNEL_INSTALL_DIR/boot/System.map-$KernelVer
 %ifarch %{ix86} %{x8664}
-	install arch/%{_target_base_arch}/boot/bzImage $KERNEL_INSTALL_DIR/boot/vmlinuz-$KernelVer
+	install arch/x86/boot/bzImage $KERNEL_INSTALL_DIR/boot/vmlinuz-$KernelVer
 	install vmlinux $KERNEL_INSTALL_DIR/boot/vmlinux-$KernelVer
 %endif
 %ifarch alpha sparc sparc64
@@ -1375,7 +1370,7 @@ find . -maxdepth 1 ! -name "build-done" ! -name "." -exec cp -a$l "{}" "$RPM_BUI
 
 cd $RPM_BUILD_ROOT%{_kernelsrcdir}
 
-%{__make} %CrossOpts mrproper \
+%{__make} %CrossOpts mrproper archclean \
 	RCS_FIND_IGNORE='-name build-done -prune -o'
 
 if [ -e $KERNEL_BUILD_DIR/build-done/kernel%{_kernelsrcdir}/include/linux/autoconf-dist.h ]; then
@@ -1402,9 +1397,6 @@ perl %{SOURCE7} %{_kernelsrcdir} $KERNEL_BUILD_DIR
 
 # ghosted initrd
 touch $RPM_BUILD_ROOT/boot/initrd-%{kernel_release}.gz
-
-# remove unnecessary dir with dead symlink
-rm -rf $RPM_BUILD_ROOT%{_kernelsrcdir}/arch/i386
 
 %clean
 rm -rf $RPM_BUILD_ROOT
