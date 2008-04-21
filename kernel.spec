@@ -993,6 +993,11 @@ sed -i -e '/select INPUT/d' net/bluetooth/hidp/Kconfig
 # on sparc64 avoid building break due to NULL pointer type warrning
 sed -i -e 's/^EXTRA_CFLAGS := -Werror/EXTRA_CFLAGS := /' arch/sparc64/kernel/Makefile
 
+# Kill creating obsolete arch/{i386,x86_64}/boot directories
+# and bzImage symlinks, breaks rpm directory deps
+sed -i -e '/\/arch\/i386\/boot/d' arch/x86/Makefile_32
+sed -i -e '/\/arch\/x86_64\/boot/d' arch/x86/Makefile_64
+
 # cleanup backups after patching
 find '(' -name '*~' -o -name '*.orig' -o -name '.gitignore' ')' -print0 | xargs -0 -r -l512 rm -f
 
@@ -1544,9 +1549,6 @@ fi
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/usb/host/sl811_cs.ko*
 %endif
 %ghost /lib/modules/%{kernel_release}/modules.*
-# symlinks pointing to kernelsrcdir
-%ghost /lib/modules/%{kernel_release}/build
-%ghost /lib/modules/%{kernel_release}/source
 %dir %{_sysconfdir}/modprobe.d/%{kernel_release}
 
 %ifarch alpha %{ix86} %{x8664} ppc ppc64 sparc sparc64
