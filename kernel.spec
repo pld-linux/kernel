@@ -1344,10 +1344,6 @@ cp include/linux/utsrelease.h{,.save}
 cp include/linux/version.h{,.save}
 cp scripts/mkcompile_h{,.save}
 
-# rpm obeys filelinkto checks for ghosted symlinks, convert to files
-rm -f $RPM_BUILD_ROOT/lib/modules/%{kernel_release}/{build,source}
-touch $RPM_BUILD_ROOT/lib/modules/%{kernel_release}/{build,source}
-
 %install
 rm -rf $RPM_BUILD_ROOT
 umask 022
@@ -1404,6 +1400,10 @@ perl %{SOURCE7} %{_kernelsrcdir} $KERNEL_BUILD_DIR
 
 # ghosted initrd
 touch $RPM_BUILD_ROOT/boot/initrd-%{kernel_release}.gz
+
+# rpm obeys filelinkto checks for ghosted symlinks, convert to files
+rm -f $RPM_BUILD_ROOT/lib/modules/%{kernel_release}/{build,source}
+touch $RPM_BUILD_ROOT/lib/modules/%{kernel_release}/{build,source}
 
 %clean
 rm -rf $RPM_BUILD_ROOT
