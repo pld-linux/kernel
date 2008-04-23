@@ -67,6 +67,10 @@
 %if %{with grsec_full}
 %undefine	with_grsec_minimal
 %define		with_grsecurity		1
+%if %{with pax}
+%define		with_pax_full		1
+%undefine	with_pax
+%endif
 %endif
 
 %if %{with grsec_minimal}
@@ -1133,12 +1137,14 @@ BuildConfig() {
 
 # tuxonice
 %if %{with tuxonice}
+%ifarch {ix86} %{x8664} ia64 ppc ppc64
 	cat %{SOURCE42} >> %{defconfig}
 %endif
-
 %ifarch ppc ppc64
-	sed -i "s:CONFIG_SUSPEND2=y:# CONFIG_SUSPEND2 is not set:" %{defconfig}
+	sed -i "s:CONFIG_TOI=y:# CONFIG_TOI is not set:" %{defconfig}
 %endif
+%endif
+
 %if %{with vserver}
 	cat %{SOURCE43} >> %{defconfig}
 %if %{with vs22}
@@ -1161,6 +1167,7 @@ BuildConfig() {
 
 %if %{with grsec_full}
 	cat %{SOURCE45} >> %{defconfig}
+	cat %{SOURCE50} >> %{defconfig}
 %else
 %if %{with grsec_minimal}
 	cat %{SOURCE51} >> %{defconfig}
@@ -1170,8 +1177,6 @@ BuildConfig() {
 %if %{with pax}
 	cat %{SOURCE49} >> %{defconfig}
 	PaXconfig %{defconfig}
-%else
-	cat %{SOURCE50} >> %{defconfig}
 %endif
 
 %endif
@@ -1220,10 +1225,8 @@ BuildConfig() {
 	echo "CONFIG_ROOT_NFS=y" >> %{defconfig}
 %endif
 
-%ifarch %{ix86}
 %if %{with abi}
 	cat %{SOURCE34} >> %{defconfig}
-%endif
 %endif
 
 %if %{with rescuecd}
