@@ -42,7 +42,7 @@
 %bcond_without	ipv6		# ipv6 support
 
 %bcond_without	vserver		# support for VServer (enabled by default)
-%bcond_without	tuxonice	# support for tuxonice (ex-Suspend2) (enabled by default)
+%bcond_without	tuxonice	# support for tuxonice (ex-suspend2) (enabled by default)
 
 %bcond_with	vs22		# use vserver 2.2 instead of 2.3 (see comment near patch 102)
 
@@ -436,7 +436,7 @@ Conflicts:	xfsprogs < 2.6.0
 %if %{with xen0} || %{with xenU}
 ExclusiveArch:	%{ix86}
 %else
-ExclusiveArch:	%{ix86} alpha %{x8664} ia64 ppc ppc64 sparc sparc64 arm
+ExclusiveArch:	%{ix86} %{x8664} alpha arm ia64 ppc ppc64 sparc sparc64
 %endif
 ExclusiveOS:	Linux
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
