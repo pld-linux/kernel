@@ -1137,7 +1137,7 @@ BuildConfig() {
 
 # tuxonice
 %if %{with tuxonice}
-%ifarch {ix86} %{x8664} ia64 ppc ppc64
+%ifarch %{ix86} %{x8664} ia64 ppc ppc64
 	cat %{SOURCE42} >> %{defconfig}
 %endif
 %ifarch ppc ppc64
