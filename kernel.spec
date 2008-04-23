@@ -1341,7 +1341,7 @@ cp include/linux/utsrelease.h{,.save}
 cp include/linux/version.h{,.save}
 cp scripts/mkcompile_h{,.save}
 
-# rpm obeys filelinkto checks for ghosted files. make as files
+# rpm obeys filelinkto checks for ghosted symlinks, convert to files
 rm -f $RPM_BUILD_ROOT/lib/modules/%{kernel_release}/{build,source}
 touch $RPM_BUILD_ROOT/lib/modules/%{kernel_release}/{build,source}
 
