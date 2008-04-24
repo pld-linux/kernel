@@ -8462,3 +8462,144 @@ Index: b/security/apparmor/shared.h
 +					 AA_EXEC_PROFILE)
 +
 +#endif /* _SHARED_H */
+#! /bin/sh /usr/share/dpatch/dpatch-run
+## 11-getprocattr-api.dpatch by Kees Cook <kees@ubuntu.com>
+##
+## All lines beginning with `## DP:' are a description of the patch.
+## DP: No description.
+
+@DPATCH@
+diff -urNad linux/security/apparmor/apparmor.h linux/security/apparmor/apparmor.h
+--- linux/security/apparmor/apparmor.h	2007-03-23 11:48:43.000000000 -0700
++++ linux/security/apparmor/apparmor.h	2007-07-03 08:40:06.858160781 -0700
+@@ -336,7 +336,7 @@
+ extern void free_aaprofile_kref(struct kref *kref);
+ 
+ /* procattr.c */
+-extern size_t aa_getprocattr(struct aaprofile *active, char *str, size_t size);
++extern size_t aa_getprocattr(struct aaprofile *active, char **string, size_t *len);
+ extern int aa_setprocattr_changehat(char *hatinfo, size_t infosize);
+ extern int aa_setprocattr_setprofile(struct task_struct *p, char *profilename,
+ 				     size_t profilesize);
+diff -urNad linux/security/apparmor/lsm.c linux/security/apparmor/lsm.c
+--- linux/security/apparmor/lsm.c	2007-03-30 09:52:38.000000000 -0700
++++ linux/security/apparmor/lsm.c	2007-07-03 08:40:06.862160710 -0700
+@@ -650,12 +650,11 @@
+ 	return 0;
+ }
+ 
+-static int apparmor_getprocattr(struct task_struct *p, char *name, void *value,
+-				size_t size)
++static int apparmor_getprocattr(struct task_struct *p, char *name, char **value)
+ {
++	size_t len;
+ 	int error;
+ 	struct aaprofile *active;
+-	char *str = value;
+ 
+ 	/* AppArmor only supports the "current" process attribute */
+ 	if (strcmp(name, "current") != 0) {
+@@ -670,8 +669,10 @@
+ 	}
+ 
+ 	active = get_task_active_aaprofile(p);
+-	error = aa_getprocattr(active, str, size);
++	error = aa_getprocattr(active, value, &len);
+ 	put_aaprofile(active);
++	if (!error)
++		error = len;
+ 
+ out:
+ 	return error;
+diff -urNad linux/security/apparmor/procattr.c linux/security/apparmor/procattr.c
+--- linux/security/apparmor/procattr.c	2007-03-18 08:53:53.000000000 -0700
++++ linux/security/apparmor/procattr.c	2007-07-03 08:43:30.562564651 -0700
+@@ -15,10 +15,10 @@
+ #include "apparmor.h"
+ #include "inline.h"
+ 
+-size_t aa_getprocattr(struct aaprofile *active, char *str, size_t size)
++size_t aa_getprocattr(struct aaprofile *active, char **string, size_t *len)
+ {
+-	int error = -EACCES;	/* default to a perm denied */
+-	size_t len;
++	size_t size;
++	char *str, *alloc;
+ 
+ 	if (active) {
+ 		size_t lena, lenm, lenp = 0;
+@@ -31,49 +31,44 @@
+ 
+ 		lena = strlen(active->name);
+ 
+-		len = lena;
++		size = lena;
+ 		if (IN_SUBPROFILE(active)) {
+ 			lenp = strlen(BASE_PROFILE(active)->name);
+-			len += (lenp + 1);	/* +1 for ^ */
++			size += (lenp + 1);	/* +1 for ^ */
+ 		}
+ 		/* DONT null terminate strings we output via proc */
+-		len += (lenm + 1);	/* for \n */
++		size += (lenm + 1);	/* for \n */
+ 
+-		if (len <= size) {
+-			if (lenp) {
+-				memcpy(str, BASE_PROFILE(active)->name,
+-				       lenp);
+-				str += lenp;
+-				*str++ = '^';
+-			}
++		alloc = str = kmalloc(size, GFP_ATOMIC);
++		if (!str)
++			return -ENOMEM;
+ 
+-			memcpy(str, active->name, lena);
+-			str += lena;
+-			memcpy(str, mode_str, lenm);
+-			str += lenm;
+-			*str++ = '\n';
+-			error = len;
+-		} else if (size == 0) {
+-			error = len;
+-		} else {
+-			error = -ERANGE;
++		if (lenp) {
++			memcpy(str, BASE_PROFILE(active)->name,
++			       lenp);
++			str += lenp;
++			*str++ = '^';
+ 		}
++
++		memcpy(str, active->name, lena);
++		str += lena;
++		memcpy(str, mode_str, lenm);
++		str += lenm;
++		*str++ = '\n';
+ 	} else {
+ 		const char *unconstrained_str = "unconstrained\n";
+-		len = strlen(unconstrained_str);
++		size = strlen(unconstrained_str);
+ 
+ 		/* DONT null terminate strings we output via proc */
+-		if (len <= size) {
+-			memcpy(str, unconstrained_str, len);
+-			error = len;
+-		} else if (size == 0) {
+-			error = len;
+-		} else {
+-			error = -ERANGE;
+-		}
++		alloc = str = kmalloc(size, GFP_ATOMIC);
++		if (!str)
++			return -ENOMEM;
++		memcpy(str, unconstrained_str, size);
+ 	}
++	*len = size;
++	*string = alloc;
+ 
+-	return error;
++	return 0;
+ 
+ }
+ 
