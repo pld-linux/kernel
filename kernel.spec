@@ -33,7 +33,7 @@
 %bcond_with	pax_full	# build pax and full grsecurity (ie. grsec_full && pax)
 %bcond_with	pax		# build pax support
 
-%bcond_with	fbsplash	# fbsplash instead of bootsplash
+%bcond_with	fbcondecor	# fbsplash/fbcondecor instead of bootsplash
 %bcond_with	pae		# build PAE (HIGHMEM64G) support on uniprocessor
 %bcond_with	nfsroot		# build with root on NFS support
 
@@ -69,7 +69,6 @@
 %define		with_grsecurity		1
 %if %{with pax}
 %define		with_pax_full		1
-%undefine	with_pax
 %endif
 %endif
 
@@ -220,8 +219,8 @@ Patch2:		tahoe9xx-2.6.11.5.patch
 
 # ftp://ftp.openbios.org/pub/bootsplash/kernel/bootsplash-3.1.6-2.6.21.diff.gz
 Patch3:		linux-2.6-bootsplash.patch
-# based on http://dev.gentoo.org/~spock/projects/gensplash/archive/fbsplash-0.9.2-r5-2.6.20-rc6.patch
-Patch4:		fbsplash-0.9.2-r5-2.6.20-rc6.patch
+# http://dev.gentoo.org/~spock/projects/fbcondecor/archive/fbcondecor-0.9.4-2.6.24-rc7.patch
+Patch4:		kernel-fbcondecor.patch
 
 # http://mesh.dl.sourceforge.net/sourceforge/squashfs/squashfs3.3.tgz
 # squashfs3.3/kernel-patches/linux-2.6.24/squashfs3.3-patch
@@ -499,7 +498,7 @@ BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 %{?with_pax:PaX support - enabled}\
 %{?with_xen0:Xen 0 - enabled}\
 %{?with_xenU:Xen U - enabled}\
-%{?with_fbsplash:Fbsplash - enabled }\
+%{?with_fbcondecor:Fbsplash/fbcondecor - enabled }\
 %{?with_nfsroot:Root on NFS - enabled}
 
 %define Features %(echo "%{__features}" | sed '/^$/d')
@@ -779,7 +778,7 @@ install -m 755 %{SOURCE6} .
 
 %patch8 -p1
 
-%if !%{with fbsplash}
+%if !%{with fbcondecor}
 %patch3 -p1
 %else
 %patch4 -p1
@@ -1209,13 +1208,8 @@ BuildConfig() {
 	cat %{SOURCE47} >> %{defconfig}
 %endif
 
-%if %{with fbsplash}
-	echo "CONFIG_FB_SPLASH=y" >> %{defconfig}
-	sed -i "s:CONFIG_FB_TILEBLITTING=.:# CONFIG_FB_TILEBLITTING is not set:" %{defconfig}
-	sed -i "s:CONFIG_FB_S3=.:# CONFIG_FB_S3 is not set:" %{defconfig}
-	sed -i "s:CONFIG_FB_VT8623=.:# CONFIG_FB_VT8623 is not set:" %{defconfig}
-	sed -i "s:CONFIG_FB_MATROX=.:# CONFIG_FB_MATROX is not set:" %{defconfig}
-	sed -i "s:CONFIG_FB_ARK=.:# CONFIG_FB_ARK is not set:" %{defconfig}
+%if %{with fbcondecor}
+	echo "CONFIG_FB_CON_DECOR=y" >> %{defconfig}
 %else
 	echo "CONFIG_BOOTSPLASH=y" >> %{defconfig}
 %endif
