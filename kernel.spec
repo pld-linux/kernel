@@ -1469,7 +1469,7 @@ ln -sf System.map-%{kernel_release} /boot/System.map
 
 %depmod %{kernel_release}
 
-/sbin/geninitrd -f --initrdfs=initramfs %{initrd_dir}/initrd-%{kernel_release}.gz %{kernel_release}
+/sbin/geninitrd -f --initrdfs=romfs %{initrd_dir}/initrd-%{kernel_release}.gz %{kernel_release}
 mv -f %{initrd_dir}/initrd %{initrd_dir}/initrd.old 2> /dev/null > /dev/null
 ln -sf initrd-%{kernel_release}.gz %{initrd_dir}/initrd
 
