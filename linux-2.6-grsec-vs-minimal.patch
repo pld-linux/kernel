@@ -76,15 +76,15 @@ diff -urNp linux-2.6.24.5/fs/Kconfig linux-2.6.24.5/fs/Kconfig
 diff -urNp linux-2.6.24.5/fs/namei.c linux-2.6.24.5/fs/namei.c
 --- linux-2.6.24.5/fs/namei.c	2008-03-24 14:49:18.000000000 -0400
 +++ linux-2.6.24.5/fs/namei.c	2008-03-26 20:21:08.000000000 -0400
-@@ -30,6 +30,7 @@
- #include <linux/capability.h>
- #include <linux/file.h>
- #include <linux/fcntl.h>
+@@ -37,6 +37,7 @@
+ #include <linux/vs_cowbl.h>
+ #include <linux/vs_device.h>
+ #include <linux/vs_context.h>
 +#include <linux/grsecurity.h>
  #include <asm/namei.h>
  #include <asm/uaccess.h>
  
-@@ -653,6 +654,13 @@ static inline int do_follow_link(struct 
+@@ -689,6 +690,13 @@ static inline int do_follow_link(struct 
  	err = security_inode_follow_link(path->dentry, nd);
  	if (err)
  		goto loop;
@@ -98,7 +98,7 @@ diff -urNp linux-2.6.24.5/fs/namei.c linux-2.6.24.5/fs/namei.c
  	current->link_count++;
  	current->total_link_count++;
  	nd->depth++;
-@@ -1782,6 +1816,13 @@ do_last:
+@@ -1856,6 +1864,13 @@ do_last:
  	/*
  	 * It already exists.
  	 */
@@ -112,7 +112,7 @@ diff -urNp linux-2.6.24.5/fs/namei.c linux-2.6.24.5/fs/namei.c
  	mutex_unlock(&dir->d_inode->i_mutex);
  	audit_inode(pathname, path.dentry);
  
-@@ -1837,6 +1888,13 @@ do_link:
+@@ -1927,6 +1942,13 @@ do_link:
  	error = security_inode_follow_link(path.dentry, nd);
  	if (error)
  		goto exit_dput;
@@ -126,7 +126,7 @@ diff -urNp linux-2.6.24.5/fs/namei.c linux-2.6.24.5/fs/namei.c
  	error = __do_follow_link(&path, nd);
  	if (error) {
  		/* Does someone understand code flow here? Or it is only
-@@ -2404,7 +2532,16 @@ asmlinkage long sys_linkat(int olddfd, c
+@@ -2509,7 +2531,16 @@ asmlinkage long sys_linkat(int olddfd, c
  	error = PTR_ERR(new_dentry);
  	if (IS_ERR(new_dentry))
  		goto out_unlock;
@@ -138,12 +138,12 @@ diff -urNp linux-2.6.24.5/fs/namei.c linux-2.6.24.5/fs/namei.c
 +		goto out_unlock_dput;
 +	}
 +
- 	error = vfs_link(old_nd.dentry, nd.dentry->d_inode, new_dentry);
+ 	error = vfs_link(old_nd.dentry, nd.dentry->d_inode, new_dentry, &nd);
 +out_unlock_dput:
  	dput(new_dentry);
  out_unlock:
  	mutex_unlock(&nd.dentry->d_inode->i_mutex);
-@@ -2630,8 +2776,16 @@ static int do_rename(int olddfd, const c
+@@ -2738,8 +2769,16 @@ static int do_rename(int olddfd, const c
  	if (new_dentry == trap)
  		goto exit5;
  
@@ -164,7 +164,7 @@ diff -urNp linux-2.6.24.5/fs/namei.c linux-2.6.24.5/fs/namei.c
 diff -urNp linux-2.6.24.5/fs/proc/array.c linux-2.6.24.5/fs/proc/array.c
 --- linux-2.6.24.5/fs/proc/array.c	2008-03-24 14:49:18.000000000 -0400
 +++ linux-2.6.24.5/fs/proc/array.c	2008-03-26 20:21:08.000000000 -0400
-@@ -572,3 +617,14 @@ int proc_pid_statm(struct task_struct *t
+@@ -629,3 +629,14 @@ int proc_pid_statm(struct task_struct *t
  	return sprintf(buffer, "%d %d %d %d %d %d %d\n",
  		       size, resident, shared, text, lib, data, 0);
  }
@@ -192,15 +192,15 @@ diff -urNp linux-2.6.24.5/fs/proc/inode.c linux-2.6.24.5/fs/proc/inode.c
  			inode->i_gid = de->gid;
 +#endif
  		}
- 		if (de->size)
- 			inode->i_size = de->size;
+ 		if (de->vx_flags)
+ 			PROC_I(inode)->vx_flags = de->vx_flags;
 diff -urNp linux-2.6.24.5/fs/proc/internal.h linux-2.6.24.5/fs/proc/internal.h
 --- linux-2.6.24.5/fs/proc/internal.h	2008-03-24 14:49:18.000000000 -0400
 +++ linux-2.6.24.5/fs/proc/internal.h	2008-03-26 20:21:08.000000000 -0400
-@@ -52,6 +52,9 @@ extern int proc_tid_stat(struct task_str
- extern int proc_tgid_stat(struct task_struct *, char *);
+@@ -54,6 +54,9 @@ extern int proc_tgid_stat(struct task_st
  extern int proc_pid_status(struct task_struct *, char *);
  extern int proc_pid_statm(struct task_struct *, char *);
+ extern int proc_pid_nsproxy(struct task_struct *, char *);
 +#ifdef CONFIG_GRKERNSEC_PROC_IPADDR
 +extern int proc_pid_ipaddr(struct task_struct*,char*);
 +#endif
@@ -210,7 +210,7 @@ diff -urNp linux-2.6.24.5/fs/proc/internal.h linux-2.6.24.5/fs/proc/internal.h
 diff -urNp linux-2.6.24.5/fs/proc/proc_misc.c linux-2.6.24.5/fs/proc/proc_misc.c
 --- linux-2.6.24.5/fs/proc/proc_misc.c	2008-03-24 14:49:18.000000000 -0400
 +++ linux-2.6.24.5/fs/proc/proc_misc.c	2008-03-26 20:21:08.000000000 -0400
-@@ -687,6 +687,8 @@ void create_seq_entry(char *name, mode_t
+@@ -707,6 +707,8 @@ void create_seq_entry(char *name, mode_t
  
  void __init proc_misc_init(void)
  {
@@ -219,7 +219,7 @@ diff -urNp linux-2.6.24.5/fs/proc/proc_misc.c linux-2.6.24.5/fs/proc/proc_misc.c
  	static struct {
  		char *name;
  		int (*read_proc)(char*,char**,off_t,int,int*,void*);
-@@ -702,13 +704,24 @@ void __init proc_misc_init(void)
+@@ -722,13 +724,24 @@ void __init proc_misc_init(void)
  		{"stram",	stram_read_proc},
  #endif
  		{"filesystems",	filesystems_read_proc},
@@ -244,7 +244,7 @@ diff -urNp linux-2.6.24.5/fs/proc/proc_misc.c linux-2.6.24.5/fs/proc/proc_misc.c
  	proc_symlink("mounts", NULL, "self/mounts");
  
  	/* And now for trickier ones */
-@@ -721,7 +734,11 @@ void __init proc_misc_init(void)
+@@ -741,7 +754,11 @@ void __init proc_misc_init(void)
  	}
  #endif
  	create_seq_entry("locks", 0, &proc_locks_operations);
@@ -256,7 +256,7 @@ diff -urNp linux-2.6.24.5/fs/proc/proc_misc.c linux-2.6.24.5/fs/proc/proc_misc.c
  	create_seq_entry("cpuinfo", 0, &proc_cpuinfo_operations);
  #ifdef CONFIG_BLOCK
  	create_seq_entry("partitions", 0, &proc_partitions_operations);
-@@ -729,7 +746,11 @@ void __init proc_misc_init(void)
+@@ -749,7 +766,11 @@ void __init proc_misc_init(void)
  	create_seq_entry("stat", 0, &proc_stat_operations);
  	create_seq_entry("interrupts", 0, &proc_interrupts_operations);
  #ifdef CONFIG_SLABINFO
@@ -268,7 +268,7 @@ diff -urNp linux-2.6.24.5/fs/proc/proc_misc.c linux-2.6.24.5/fs/proc/proc_misc.c
  #ifdef CONFIG_DEBUG_SLAB_LEAK
  	create_seq_entry("slab_allocators", 0 ,&proc_slabstats_operations);
  #endif
-@@ -747,7 +768,7 @@ void __init proc_misc_init(void)
+@@ -767,7 +788,7 @@ void __init proc_misc_init(void)
  #ifdef CONFIG_SCHEDSTATS
  	create_seq_entry("schedstat", 0, &proc_schedstat_operations);
  #endif
@@ -280,7 +280,7 @@ diff -urNp linux-2.6.24.5/fs/proc/proc_misc.c linux-2.6.24.5/fs/proc/proc_misc.c
 diff -urNp linux-2.6.24.5/fs/proc/root.c linux-2.6.24.5/fs/proc/root.c
 --- linux-2.6.24.5/fs/proc/root.c	2008-03-24 14:49:18.000000000 -0400
 +++ linux-2.6.24.5/fs/proc/root.c	2008-03-26 20:21:08.000000000 -0400
-@@ -137,7 +137,15 @@ void __init proc_root_init(void)
+@@ -140,7 +140,15 @@ void __init proc_root_init(void)
  #ifdef CONFIG_PROC_DEVICETREE
  	proc_device_tree_init();
  #endif
@@ -293,9 +293,9 @@ diff -urNp linux-2.6.24.5/fs/proc/root.c linux-2.6.24.5/fs/proc/root.c
 +#else
  	proc_bus = proc_mkdir("bus", NULL);
 +#endif
+ 	proc_vx_init();
  	proc_sys_init();
  }
- 
 diff -urNp linux-2.6.24.5/grsecurity/Kconfig linux-2.6.24.5/grsecurity/Kconfig
 --- linux-2.6.24.5/grsecurity/Kconfig	1969-12-31 19:00:00.000000000 -0500
 +++ linux-2.6.24.5/grsecurity/Kconfig	2008-03-26 20:21:09.000000000 -0400
@@ -821,7 +821,7 @@ diff -urNp linux-2.6.24.5/include/linux/grsecurity.h linux-2.6.24.5/include/linu
 diff -urNp linux-2.6.24.5/include/linux/sched.h linux-2.6.24.5/include/linux/sched.h
 --- linux-2.6.24.5/include/linux/sched.h	2008-04-17 20:05:17.000000000 -0400
 +++ linux-2.6.24.5/include/linux/sched.h	2008-04-17 20:05:01.000000000 -0400
-@@ -507,6 +508,15 @@ struct signal_struct {
+@@ -510,6 +510,15 @@ struct signal_struct {
  	unsigned audit_tty;
  	struct tty_audit_buf *tty_audit_buf;
  #endif
@@ -840,7 +840,7 @@ diff -urNp linux-2.6.24.5/include/linux/sched.h linux-2.6.24.5/include/linux/sch
 diff -urNp linux-2.6.24.5/include/linux/sysctl.h linux-2.6.24.5/include/linux/sysctl.h
 --- linux-2.6.24.5/include/linux/sysctl.h	2008-03-24 14:49:18.000000000 -0400
 +++ linux-2.6.24.5/include/linux/sysctl.h	2008-03-26 20:21:09.000000000 -0400
-@@ -164,8 +164,11 @@ enum
+@@ -166,8 +166,11 @@ enum
  	KERN_MAX_LOCK_DEPTH=74,
  	KERN_NMI_WATCHDOG=75, /* int: enable/disable nmi watchdog */
  	KERN_PANIC_ON_NMI=76, /* int: whether we will panic on an unrecovered */
@@ -876,15 +876,15 @@ diff -urNp linux-2.6.24.5/kernel/configs.c linux-2.6.24.5/kernel/configs.c
 diff -urNp linux-2.6.24.5/kernel/exit.c linux-2.6.24.5/kernel/exit.c
 --- linux-2.6.24.5/kernel/exit.c	2008-03-24 14:49:18.000000000 -0400
 +++ linux-2.6.24.5/kernel/exit.c	2008-03-26 20:21:09.000000000 -0400
-@@ -44,6 +44,7 @@
- #include <linux/resource.h>
- #include <linux/blkdev.h>
- #include <linux/task_io_accounting_ops.h>
+@@ -49,6 +49,7 @@
+ #include <linux/vs_network.h>
+ #include <linux/vs_pid.h>
+ #include <linux/vserver/global.h>
 +#include <linux/grsecurity.h>
  
  #include <asm/uaccess.h>
  #include <asm/unistd.h>
-@@ -122,6 +127,7 @@ static void __exit_signal(struct task_st
+@@ -127,6 +128,7 @@ static void __exit_signal(struct task_st
  
  	__unhash_process(tsk);
  
@@ -895,7 +895,7 @@ diff -urNp linux-2.6.24.5/kernel/exit.c linux-2.6.24.5/kernel/exit.c
 diff -urNp linux-2.6.24.5/kernel/kallsyms.c linux-2.6.24.5/kernel/kallsyms.c
 --- linux-2.6.24.5/kernel/kallsyms.c	2008-03-24 14:49:18.000000000 -0400
 +++ linux-2.6.24.5/kernel/kallsyms.c	2008-03-26 20:21:09.000000000 -0400
-@@ -486,7 +498,15 @@ static int __init kallsyms_init(void)
+@@ -486,7 +486,15 @@ static int __init kallsyms_init(void)
  {
  	struct proc_dir_entry *entry;
  
@@ -957,7 +957,7 @@ diff -urNp linux-2.6.24.5/kernel/sysctl.c linux-2.6.24.5/kernel/sysctl.c
  
  /* External variables not in a header file. */
  extern int C_A_D;
-@@ -154,10 +161,11 @@ static int proc_do_cad_pid(struct ctl_ta
+@@ -155,10 +160,11 @@ static int proc_do_cad_pid(struct ctl_ta
  static int proc_dointvec_taint(struct ctl_table *table, int write, struct file *filp,
  			       void __user *buffer, size_t *lenp, loff_t *ppos);
  #endif
@@ -970,7 +970,7 @@ diff -urNp linux-2.6.24.5/kernel/sysctl.c linux-2.6.24.5/kernel/sysctl.c
  
  static struct ctl_table kern_table[];
  static struct ctl_table vm_table[];
-@@ -775,6 +808,14 @@ static struct ctl_table kern_table[] = {
+@@ -785,6 +791,14 @@ static struct ctl_table kern_table[] = {
  		.proc_handler	= &proc_dostring,
  		.strategy	= &sysctl_string,
  	},
@@ -985,7 +985,7 @@ diff -urNp linux-2.6.24.5/kernel/sysctl.c linux-2.6.24.5/kernel/sysctl.c
  /*
   * NOTE: do not add new entries to this table unless you have read
   * Documentation/sysctl/ctl_unnumbered.txt
-@@ -1394,6 +1435,10 @@ static int test_perm(int mode, int op)
+@@ -1404,6 +1418,10 @@ static int test_perm(int mode, int op)
  int sysctl_perm(struct ctl_table *table, int op)
  {
  	int error;
@@ -999,7 +999,7 @@ diff -urNp linux-2.6.24.5/kernel/sysctl.c linux-2.6.24.5/kernel/sysctl.c
 diff -urNp linux-2.6.24.5/net/ipv4/inet_hashtables.c linux-2.6.24.5/net/ipv4/inet_hashtables.c
 --- linux-2.6.24.5/net/ipv4/inet_hashtables.c	2008-03-24 14:49:18.000000000 -0400
 +++ linux-2.6.24.5/net/ipv4/inet_hashtables.c	2008-03-26 20:21:09.000000000 -0400
-@@ -18,11 +18,14 @@
+@@ -18,12 +18,15 @@
  #include <linux/sched.h>
  #include <linux/slab.h>
  #include <linux/wait.h>
@@ -1007,6 +1007,7 @@ diff -urNp linux-2.6.24.5/net/ipv4/inet_hashtables.c linux-2.6.24.5/net/ipv4/ine
  
  #include <net/inet_connection_sock.h>
  #include <net/inet_hashtables.h>
+ #include <net/route.h>
  #include <net/ip.h>
  
 +extern void gr_update_task_in_ip_table(struct task_struct *task, const struct inet_sock *inet);
@@ -1034,16 +1035,16 @@ diff -urNp linux-2.6.24.5/net/socket.c linux-2.6.24.5/net/socket.c
  
  #include <asm/uaccess.h>
  #include <asm/unistd.h>
-@@ -94,6 +95,8 @@
- #include <net/sock.h>
- #include <linux/netfilter.h>
+@@ -98,6 +99,8 @@
+ #include <linux/vs_inet.h>
+ #include <linux/vs_inet6.h>
  
 +extern void gr_attach_curr_ip(const struct sock *sk);
 +
  static int sock_no_open(struct inode *irrelevant, struct file *dontcare);
  static ssize_t sock_aio_read(struct kiocb *iocb, const struct iovec *iov,
  			 unsigned long nr_segs, loff_t pos);
-@@ -1448,6 +1495,7 @@ asmlinkage long sys_accept(int fd, struc
+@@ -1488,6 +1491,7 @@ asmlinkage long sys_accept(int fd, struc
  	err = newfd;
  
  	security_socket_post_accept(sock, newsock);
@@ -1066,7 +1067,7 @@ diff -urNp linux-2.6.24.5/security/Kconfig linux-2.6.24.5/security/Kconfig
 diff -urNp linux-2.6.24.5/fs/proc/base.c linux-2.6.24.5/fs/proc/base.c
 --- linux-2.6.24.5/fs/proc/base.c	2008-03-24 14:49:18.000000000 -0400
 +++ linux-2.6.24.5/fs/proc/base.c	2008-03-26 20:21:08.000000000 -0400
-@@ -1202,7 +1204,11 @@ static struct inode *proc_pid_make_inode
+@@ -1204,7 +1204,11 @@ static struct inode *proc_pid_make_inode
  	inode->i_gid = 0;
  	if (task_dumpable(task)) {
  		inode->i_uid = task->euid;
@@ -1076,9 +1077,9 @@ diff -urNp linux-2.6.24.5/fs/proc/base.c linux-2.6.24.5/fs/proc/base.c
  		inode->i_gid = task->egid;
 +#endif
  	}
- 	security_task_to_inode(task, inode);
- 
-@@ -1218,17 +1224,38 @@ static int pid_getattr(struct vfsmount *
+ 	/* procfs is xid tagged */
+ 	inode->i_tag = (tag_t)vx_task_xid(task);
+@@ -1222,17 +1226,38 @@ static int pid_getattr(struct vfsmount *
  {
  	struct inode *inode = dentry->d_inode;
  	struct task_struct *task;
@@ -1118,7 +1119,7 @@ diff -urNp linux-2.6.24.5/fs/proc/base.c linux-2.6.24.5/fs/proc/base.c
  		}
  	}
  	rcu_read_unlock();
-@@ -1258,9 +1283,18 @@ static int pid_revalidate(struct dentry 
+@@ -1262,9 +1287,18 @@ static int pid_revalidate(struct dentry 
  	struct task_struct *task = get_proc_task(inode);
  	if (task) {
  		if ((inode->i_mode == (S_IFDIR|S_IRUGO|S_IXUGO)) ||
@@ -1137,17 +1138,17 @@ diff -urNp linux-2.6.24.5/fs/proc/base.c linux-2.6.24.5/fs/proc/base.c
  		} else {
  			inode->i_uid = 0;
  			inode->i_gid = 0;
-@@ -2250,6 +2313,9 @@ static const struct pid_entry tgid_base_
- #ifdef CONFIG_TASK_IO_ACCOUNTING
+@@ -2267,6 +2301,9 @@ static const struct pid_entry tgid_base_
  	INF("io",	S_IRUGO, pid_io_accounting),
  #endif
+ 	INF("nsproxy",	S_IRUGO, pid_nsproxy),
 +#ifdef CONFIG_GRKERNSEC_PROC_IPADDR
 +	INF("ipaddr",	  S_IRUSR, pid_ipaddr),
 +#endif
  };
  
  static int proc_tgid_base_readdir(struct file * filp,
-@@ -2378,7 +2444,14 @@ static struct dentry *proc_pid_instantia
+@@ -2395,7 +2432,14 @@ static struct dentry *proc_pid_instantia
  	if (!inode)
  		goto out;
  
@@ -1162,21 +1163,20 @@ diff -urNp linux-2.6.24.5/fs/proc/base.c linux-2.6.24.5/fs/proc/base.c
  	inode->i_op = &proc_tgid_base_inode_operations;
  	inode->i_fop = &proc_tgid_base_operations;
  	inode->i_flags|=S_IMMUTABLE;
-@@ -2486,6 +2563,9 @@ int proc_pid_readdir(struct file * filp,
+@@ -2503,6 +2547,9 @@ int proc_pid_readdir(struct file * filp,
  {
  	unsigned int nr = filp->f_pos - FIRST_PROCESS_ENTRY;
- 	struct task_struct *reaper = get_proc_task(filp->f_path.dentry->d_inode);
+ 	struct task_struct *reaper = get_proc_task_real(filp->f_path.dentry->d_inode);
 +#if defined(CONFIG_GRKERNSEC_PROC_USER) || defined(CONFIG_GRKERNSEC_PROC_USERGROUP)
 +	struct task_struct *tmp = current;
 +#endif
  	struct tgid_iter iter;
  	struct pid_namespace *ns;
  
-@@ -2504,6 +2584,16 @@ int proc_pid_readdir(struct file * filp,
+@@ -2521,6 +2568,15 @@ int proc_pid_readdir(struct file * filp,
  	for (iter = next_tgid(ns, iter);
  	     iter.task;
  	     iter.tgid += 1, iter = next_tgid(ns, iter)) {
-+
 +#if defined(CONFIG_GRKERNSEC_PROC_USER) || defined(CONFIG_GRKERNSEC_PROC_USERGROUP)
 +		if (tmp->uid && (iter.task->uid != tmp->uid)
 +#ifdef CONFIG_GRKERNSEC_PROC_USERGROUP
@@ -1187,5 +1187,5 @@ diff -urNp linux-2.6.24.5/fs/proc/base.c linux-2.6.24.5/fs/proc/base.c
 +			continue;
 +
  		filp->f_pos = iter.tgid + TGID_OFFSET;
- 		if (proc_pid_fill_cache(filp, dirent, filldir, iter) < 0) {
- 			put_task_struct(iter.task);
+ 		if (!vx_proc_task_visible(iter.task))
+ 			continue;
