@@ -90,7 +90,7 @@ diff -urNp linux-2.6.25.orig/fs/namei.c linux-2.6.25/fs/namei.c
  		goto loop;
 +
 +	if (gr_handle_follow_link(path->dentry->d_parent->d_inode,
-+				  path->dentry->d_inode, path->dentry, nd->mnt)) {
++				  path->dentry->d_inode, path->dentry)) {
 +		err = -EACCES;
 +		goto loop;
 +	}
@@ -103,7 +103,7 @@ diff -urNp linux-2.6.25.orig/fs/namei.c linux-2.6.25/fs/namei.c
  	 * It already exists.
  	 */
 +
-+	if (gr_handle_fifo(path.dentry, nd->mnt, dir, flag, acc_mode)) {
++	if (gr_handle_fifo(path.dentry, dir, flag, acc_mode)) {
 +		mutex_unlock(&dir->d_inode->i_mutex);
 +		error = -EACCES;
 +		goto exit_dput;
@@ -118,7 +118,7 @@ diff -urNp linux-2.6.25.orig/fs/namei.c linux-2.6.25/fs/namei.c
  		goto exit_dput;
 +
 +	if (gr_handle_follow_link(path.dentry->d_parent->d_inode, path.dentry->d_inode,
-+				  path.dentry, nd->mnt)) {
++				  path.dentry)) {
 +		error = -EACCES;
 +		goto exit_dput;
 +	}
@@ -126,14 +126,13 @@ diff -urNp linux-2.6.25.orig/fs/namei.c linux-2.6.25/fs/namei.c
  	error = __do_follow_link(&path, nd);
  	if (error) {
  		/* Does someone understand code flow here? Or it is only
-@@ -2514,8 +2536,17 @@ asmlinkage long sys_linkat(int olddfd, c
+@@ -2514,8 +2536,16 @@ asmlinkage long sys_linkat(int olddfd, c
  	error = PTR_ERR(new_dentry);
  	if (IS_ERR(new_dentry))
  		goto out_unlock;
 +
-+	if (gr_handle_hardlink(old_nd.dentry, old_nd.mnt,
-+			       old_nd.dentry->d_inode,
-+			       old_nd.dentry->d_inode->i_mode, to)) {
++	if (gr_handle_hardlink(old_nd.path.dentry, old_nd.path.dentry->d_inode,
++			       old_nd.path.dentry->d_inode->i_mode, to)) {
 +		error = -EACCES;
 +		goto out_unlock_dput;
 +	}
@@ -443,8 +442,8 @@ diff -urNp linux-2.6.25.orig/grsecurity/grsec_fifo.c linux-2.6.25/grsecurity/grs
 +#include <linux/grinternal.h>
 +
 +int
-+gr_handle_fifo(const struct dentry *dentry, const struct vfsmount *mnt,
-+	       const struct dentry *dir, const int flag, const int acc_mode)
++gr_handle_fifo(const struct dentry *dentry, const struct dentry *dir,
++	       const int flag, const int acc_mode)
 +{
 +#ifdef CONFIG_GRKERNSEC_FIFO
 +	if (grsec_enable_fifo && S_ISFIFO(dentry->d_inode->i_mode) &&
@@ -494,7 +493,7 @@ diff -urNp linux-2.6.25.orig/grsecurity/grsec_init.c linux-2.6.25/grsecurity/grs
 diff -urNp linux-2.6.25.orig/grsecurity/grsec_link.c linux-2.6.25/grsecurity/grsec_link.c
 --- linux-2.6.25.orig/grsecurity/grsec_link.c	1970-01-01 01:00:00.000000000 +0100
 +++ linux-2.6.25/grsecurity/grsec_link.c	2008-04-25 15:10:25.000000000 +0200
-@@ -0,0 +1,37 @@
+@@ -0,0 +1,36 @@
 +#include <linux/kernel.h>
 +#include <linux/sched.h>
 +#include <linux/fs.h>
@@ -504,7 +503,7 @@ diff -urNp linux-2.6.25.orig/grsecurity/grsec_link.c linux-2.6.25/grsecurity/grs
 +int
 +gr_handle_follow_link(const struct inode *parent,
 +		      const struct inode *inode,
-+		      const struct dentry *dentry, const struct vfsmount *mnt)
++		      const struct dentry *dentry)
 +{
 +#ifdef CONFIG_GRKERNSEC_LINK
 +	if (grsec_enable_link && S_ISLNK(inode->i_mode) &&
@@ -517,9 +516,8 @@ diff -urNp linux-2.6.25.orig/grsecurity/grsec_link.c linux-2.6.25/grsecurity/grs
 +}
 +
 +int
-+gr_handle_hardlink(const struct dentry *dentry,
-+		   const struct vfsmount *mnt,
-+		   struct inode *inode, const int mode, const char *to)
++gr_handle_hardlink(const struct dentry *dentry, struct inode *inode,
++		   const int mode, const char *to)
 +{
 +#ifdef CONFIG_GRKERNSEC_LINK
 +	if (grsec_enable_link && current->fsuid != inode->i_uid &&
@@ -780,7 +778,7 @@ diff -urNp linux-2.6.25.orig/include/linux/grinternal.h linux-2.6.25/include/lin
 diff -urNp linux-2.6.25.orig/include/linux/grsecurity.h linux-2.6.25/include/linux/grsecurity.h
 --- linux-2.6.25.orig/include/linux/grsecurity.h	1970-01-01 01:00:00.000000000 +0100
 +++ linux-2.6.25/include/linux/grsecurity.h	2008-04-25 15:10:25.000000000 +0200
-@@ -0,0 +1,21 @@
+@@ -0,0 +1,18 @@
 +#ifndef GR_SECURITY_H
 +#define GR_SECURITY_H
 +#include <linux/fs.h>
@@ -790,14 +788,11 @@ diff -urNp linux-2.6.25.orig/include/linux/grsecurity.h linux-2.6.25/include/lin
 +
 +int gr_handle_follow_link(const struct inode *parent,
 +				 const struct inode *inode,
-+				 const struct dentry *dentry,
-+				 const struct vfsmount *mnt);
++				 const struct dentry *dentry);
 +int gr_handle_fifo(const struct dentry *dentry,
-+			  const struct vfsmount *mnt,
 +			  const struct dentry *dir, const int flag,
 +			  const int acc_mode);
 +int gr_handle_hardlink(const struct dentry *dentry,
-+			      const struct vfsmount *mnt,
 +			      struct inode *inode,
 +			      const int mode, const char *to);
 +
