@@ -144,24 +144,6 @@ diff -urNp linux-2.6.25.orig/fs/namei.c linux-2.6.25/fs/namei.c
  	dput(new_dentry);
  out_unlock:
  	mutex_unlock(&nd.path.dentry->d_inode->i_mutex);
-@@ -2744,8 +2775,16 @@ static int do_rename(int olddfd, const c
- 	if (new_dentry == trap)
- 		goto exit5;
- 
--	error = vfs_rename(old_dir->d_inode, old_dentry,
-+	error = gr_acl_handle_rename(new_dentry, newnd.dentry, newnd.mnt,
-+				     old_dentry, old_dir->d_inode, oldnd.mnt,
-+				     newname);
-+
-+	if (!error)
-+		error = vfs_rename(old_dir->d_inode, old_dentry,
- 				   new_dir->d_inode, new_dentry);
-+	if (!error)
-+		gr_handle_rename(old_dir->d_inode, newnd.dentry->d_inode, old_dentry, 
-+				 new_dentry, oldnd.mnt, new_dentry->d_inode ? 1 : 0);
- exit5:
- 	dput(new_dentry);
- exit4:
 diff -urNp linux-2.6.25.orig/fs/proc/array.c linux-2.6.25/fs/proc/array.c
 --- linux-2.6.25.orig/fs/proc/array.c	2008-04-25 15:09:12.000000000 +0200
 +++ linux-2.6.25/fs/proc/array.c	2008-04-25 15:10:25.000000000 +0200
