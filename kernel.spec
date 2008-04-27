@@ -86,19 +86,8 @@
 %undefine       abi
 %endif
 
-%if %{with xen0}
-%define		xen	xen0
-%define		dashxen	\-xen0
+%if %{with xen0} || %{with xenU}
 %define		pae	1
-%else
-%if %{with xenU}
-%define		xen	xenU
-%define		dashxen	\-xenU
-%define		pae	1
-%else
-%define		xen	%{nil}
-%define		dashxen	%{nil}
-%endif
 %endif
 
 ## Programs required by kernel to work.
@@ -142,7 +131,7 @@
 # kernel release (used in filesystem and eventually in uname -r)
 # modules will be looked from /lib/modules/%{kernel_release}%{?smp}
 # _localversion is just that without version for "> localversion"
-%define		_localversion %{KABI}%{xen}
+%define		_localversion %{KABI}
 %define		kernel_release %{version}%{?alt_kernel:_%{alt_kernel}}-%{_localversion}
 
 %define		_basever	2.6.16
@@ -320,6 +309,7 @@ Patch104:	kernel-CVE-2008-0163.patch
 # from http://www.cl.cam.ac.uk/Research/SRG/netos/xen/downloads/xen-3.0.2-src.tgz
 Patch120:	xen-3.0-2.6.16.patch
 Patch121:	linux-xen-page_alloc.patch
+Patch122:	kernel-xen-sparse-nv.patch
 
 # from  http://www.hpl.hp.com/personal/Jean_Tourrilhes/Linux/iw266_we20-6.diff
 Patch140:	linux-2.6.16-we20-6.patch
@@ -359,9 +349,9 @@ BuildRequires:	elftoaout
 %endif
 BuildRequires:	/sbin/depmod
 BuildRequires:	gcc >= 5:3.2
-# for hostname command
 BuildRequires:	net-tools
 BuildRequires:	perl-base
+BuildRequires:	rpm-build >= 4.4.9-56
 BuildRequires:	rpmbuild(macros) >= 1.217
 Autoreqprov:	no
 Requires(post):	coreutils
@@ -375,8 +365,8 @@ Provides:	%{name}(netfilter) = %{netfilter_snap}
 Provides:	%{name}(vermagic) = %{kernel_release}
 Provides:	%{name}-up = %{epoch}:%{version}-%{release}
 %if %{with xen0}
-Provides:	kernel(xen0) = %{xen_version}
 Requires:	xen >= %{xen_version}
+Provides:	kernel(xen0) = %{xen_version}
 %endif
 Obsoletes:	kernel-misc-fuse
 Obsoletes:	kernel-modules
@@ -960,6 +950,7 @@ rm -rf suspend2-%{suspend_version}-for-2.6.16.9
 %ifarch %{ix86} %{x8664} ia64
 %patch120 -p1
 %patch121 -p1
+%patch122 -p1
 %endif
 %endif
 
@@ -1383,43 +1374,46 @@ if [ -x /sbin/new-kernel-pkg ]; then
 fi
 
 %post
+# - update /boot/vmlinuz
+# - update /boot/vmlinuz-%{alt_kernel}
 %ifarch ia64
-mv -f /boot/efi/vmlinuz%{dashxen} /boot/efi/vmlinuz%{dashxen}.old 2> /dev/null > /dev/null
+mv -f /boot/efi/vmlinuz{,.old} 2> /dev/null
+%{?alt_kernel:mv -f /boot/efi/vmlinuz-%{alt_kernel}{,.old} 2> /dev/null}
 %endif
-mv -f /boot/vmlinuz%{dashxen} /boot/vmlinuz%{dashxen}.old 2> /dev/null > /dev/null
-mv -f /boot/System.map%{dashxen} /boot/System.map%{dashxen}.old 2> /dev/null > /dev/null
+mv -f /boot/vmlinuz{,.old} 2> /dev/null
+%{?alt_kernel:mv -f /boot/vmlinuz-%{alt_kernel}{,.old} 2> /dev/null}
+mv -f /boot/System.map{,.old}  2> /dev/null
+%{?alt_kernel:mv -f /boot/System-%{alt_kernel}.map{,.old} 2> /dev/null}
+
 %ifarch ia64
-ln -sf vmlinuz-%{kernel_release} /boot/efi/vmlinuz%{dashxen}
+ln -sf vmlinuz-%{kernel_release} /boot/efi/vmlinuz
+%{?alt_kernel:ln -sf vmlinuz-%{kernel_release} /boot/efi/vmlinuz-%{alt_kernel}}
 %endif
-ln -sf vmlinuz-%{kernel_release} /boot/vmlinuz%{dashxen}
-ln -sf System.map-%{kernel_release} /boot/System.map%{dashxen}
+ln -sf vmlinuz-%{kernel_release} /boot/vmlinuz
+%{?alt_kernel:ln -sf vmlinuz-%{kernel_release} /boot/vmlinuz-%{alt_kernel}}
+ln -sf System.map-%{kernel_release} /boot/System.map
+%{?alt_kernel:ln -sf System.map-%{kernel_release} /boot/System.map}
 
 %depmod %{kernel_release}
 
 %if %{without xenU}
 /sbin/geninitrd -f --initrdfs=rom %{initrd_dir}/initrd-%{kernel_release}.gz %{kernel_release}
-mv -f %{initrd_dir}/initrd%{dashxen} %{initrd_dir}/initrd%{dashxen}.old 2> /dev/null > /dev/null
-ln -sf initrd-%{kernel_release}.gz %{initrd_dir}/initrd%{dashxen}
+
+mv -f %{initrd_dir}/initrd{,.old} 2> /dev/null}
+%{?alt_kernel:mv -f %{initrd_dir}/initrd-%{alt_kernel}{,.old} 2> /dev/null}
+ln -sf initrd-%{kernel_release}.gz %{initrd_dir}/initrd
+%{?alt_kernel:ln -sf initrd-%{kernel_release}.gz %{initrd_dir}/initrd-%{alt_kernel}}
 
 if [ -x /sbin/new-kernel-pkg ]; then
-	if [ -f /etc/pld-release ]; then
-		title=$(sed 's/^[0-9.]\+ //' < /etc/pld-release)
-	else
-		title='PLD Linux'
-	fi
-
 %if %{with xen0}
 	xen=$(readlink -f /boot/xen.gz)
 	xenver=${xen#/boot/xen-}
 	xenver=${xenver%.gz}
 
-	title="Xen $xenver / $title"
+	title="Xen $xenver / PLD Linux (%{pld_release})"
 	args=--multiboot=$xen
 %else
-	ext='%{?with_pax:pax}%{?with_grsec_full:grsecurity}%{?with_xen0:Xen0}%{?with_xenU:XenU}'
-	if [ "$ext" ]; then
-		title="$title $ext"
-	fi
+	title="PLD Linux (%{pld_release})%{?alt_kernel: / %{alt_kernel}}"
 %endif
 
 	/sbin/new-kernel-pkg $args --initrdfile=%{initrd_dir}/initrd-%{kernel_release}.gz --install %{kernel_release} --banner "$title"
@@ -1430,8 +1424,10 @@ fi
 %endif
 
 %post vmlinux
-mv -f /boot/vmlinux%{dashxen} /boot/vmlinux%{dashxen}.old 2> /dev/null > /dev/null
-ln -sf vmlinux-%{kernel_release} /boot/vmlinux%{dashxen}
+mv -f /boot/vmlinux{,.old} 2> /dev/null
+%{?alt_kernel:mv -f /boot/vmlinux-%{alt_kernel}{,.old} 2> /dev/null}
+ln -sf vmlinux-%{kernel_release} /boot/vmlinux
+%{?alt_kernel:ln -sf vmlinux-%{kernel_release} /boot/vmlinux-%{alt_kernel}}
 
 %post libs
 %{_sbindir}/mkvmlinuz /boot/zImage-%{version}-%{release} %{version}-%{release}
@@ -1466,45 +1462,60 @@ if [ -x /sbin/new-kernel-pkg ]; then
 fi
 
 %post smp
+# - update /boot/vmlinuz
+# - update /boot/vmlinuz-%{alt_kernel}
 %ifarch ia64
-mv -f /boot/efi/vmlinuz /boot/efi/vmlinuz.old 2> /dev/null > /dev/null
+mv -f /boot/efi/vmlinuz{,.old} 2> /dev/null
+%{?alt_kernel:mv -f /boot/efi/vmlinuz-%{alt_kernel}{,.old} 2> /dev/null}
 %endif
-mv -f /boot/vmlinuz%{dashxen} /boot/vmlinuz%{dashxen}.old 2> /dev/null > /dev/null
-mv -f /boot/System.map%{dashxen} /boot/System.map%{dashxen}.old 2> /dev/null > /dev/null
+mv -f /boot/vmlinuz{,.old} 2> /dev/null
+%{?alt_kernel:mv -f /boot/vmlinuz-%{alt_kernel}{,.old} 2> /dev/null}
+mv -f /boot/System.map{,.old}  2> /dev/null
+%{?alt_kernel:mv -f /boot/System-%{alt_kernel}.map{,.old} 2> /dev/null}
+
 %ifarch ia64
-ln -sf vmlinuz-%{version}-%{release}smp /boot/efi/vmlinuz
+ln -sf vmlinuz-%{kernel_release}smp /boot/efi/vmlinuz
+%{?alt_kernel:ln -sf vmlinuz-%{kernel_release}smp /boot/efi/vmlinuz-%{alt_kernel}}
 %endif
-ln -sf vmlinuz-%{kernel_release}smp /boot/vmlinuz%{dashxen}
-ln -sf System.map-%{kernel_release}smp /boot/System.map%{dashxen}
+ln -sf vmlinuz-%{kernel_release}smp /boot/vmlinuz
+%{?alt_kernel:ln -sf vmlinuz-%{kernel_release}smp /boot/vmlinuz-%{alt_kernel}}
+ln -sf System.map-%{kernel_release}smp /boot/System.map
+%{?alt_kernel:ln -sf System.map-%{kernel_release}smp /boot/System.map}
 
 %depmod %{kernel_release}smp
 
 %if %{without xenU}
 /sbin/geninitrd -f --initrdfs=rom %{initrd_dir}/initrd-%{kernel_release}smp.gz %{kernel_release}smp
-mv -f %{initrd_dir}/initrd%{dashxen} %{initrd_dir}/initrd%{dashxen}.old 2> /dev/null > /dev/null
-ln -sf initrd-%{kernel_release}smp.gz %{initrd_dir}/initrd%{dashxen}
+
+mv -f %{initrd_dir}/initrd{,.old} 2> /dev/null}
+%{?alt_kernel:mv -f %{initrd_dir}/initrd-%{alt_kernel}{,.old} 2> /dev/null}
+ln -sf initrd-%{kernel_release}smp.gz %{initrd_dir}/initrd
+%{?alt_kernel:ln -sf initrd-%{kernel_release}smp.gz %{initrd_dir}/initrd-%{alt_kernel}}
 
 if [ -x /sbin/new-kernel-pkg ]; then
-	if [ -f /etc/pld-release ]; then
-		title=$(sed 's/^[0-9.]\+ //' < /etc/pld-release)
-	else
-		title='PLD Linux'
-	fi
+%if %{with xen0}
+	xen=$(readlink -f /boot/xen.gz)
+	xenver=${xen#/boot/xen-}
+	xenver=${xenver%.gz}
 
-	ext='%{?with_pax:pax}%{?with_grsec_full:grsecurity}%{?with_xen0:Xen0}%{?with_xenU:XenU}'
-	if [ "$ext" ]; then
-		title="$title $ext"
-	fi
+	title="Xen $xenver / PLD Linux (%{pld_release})"
+	args=--multiboot=$xen
+%else
+	title="PLD Linux (%{pld_release})%{?alt_kernel: / %{alt_kernel}}"
+%endif
 
-	/sbin/new-kernel-pkg --initrdfile=%{initrd_dir}/initrd-%{kernel_release}smp.gz --install %{kernel_release}smp --banner "$title"
+	/sbin/new-kernel-pkg $args --initrdfile=%{initrd_dir}/initrd-%{kernel_release}smp.gz --install %{kernel_release}smp --banner "$title"
+
 elif [ -x /sbin/rc-boot ]; then
 	/sbin/rc-boot 1>&2 || :
 fi
 %endif
 
 %post smp-vmlinux
-mv -f /boot/vmlinux%{dashxen} /boot/vmlinux%{dashxen}.old 2> /dev/null > /dev/null
-ln -sf vmlinux-%{kernel_release}smp /boot/vmlinux%{dashxen}
+mv -f /boot/vmlinux{,.old} 2> /dev/null
+%{?alt_kernel:mv -f /boot/vmlinux-%{alt_kernel}{,.old} 2> /dev/null}
+ln -sf vmlinux-%{kernel_release}smp /boot/vmlinux
+%{?alt_kernel:ln -sf vmlinux-%{kernel_release}smp /boot/vmlinux-%{alt_kernel}}
 
 %post smp-libs
 %{_sbindir}/mkvmlinuz /boot/zImage-%{version}-%{release}smp %{version}-%{release}smp
