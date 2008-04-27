@@ -147,7 +147,7 @@
 
 %define		_basever	2.6.16
 %define		_postver	.60
-%define		_rel		11
+%define		_rel		12
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de.UTF-8):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(et.UTF-8):	Linuxi kernel (ehk operatsioonisüsteemi tuum)
@@ -376,6 +376,7 @@ Provides:	%{name}(vermagic) = %{kernel_release}
 Provides:	%{name}-up = %{epoch}:%{version}-%{release}
 %if %{with xen0}
 Provides:	kernel(xen0) = %{xen_version}
+Requires:	xen >= %{xen_version}
 %endif
 Obsoletes:	kernel-misc-fuse
 Obsoletes:	kernel-modules
@@ -1407,12 +1408,22 @@ if [ -x /sbin/new-kernel-pkg ]; then
 		title='PLD Linux'
 	fi
 
+%if %{with xen0}
+	xen=$(readlink -f /boot/xen.gz)
+	xenver=${xen#/boot/xen-}
+	xenver=${xenver%.gz}
+
+	title="Xen $xenver / $title"
+	args=--multiboot=$xen
+%else
 	ext='%{?with_pax:pax}%{?with_grsec_full:grsecurity}%{?with_xen0:Xen0}%{?with_xenU:XenU}'
 	if [ "$ext" ]; then
 		title="$title $ext"
 	fi
+%endif
 
-	/sbin/new-kernel-pkg --initrdfile=%{initrd_dir}/initrd-%{kernel_release}.gz --install %{kernel_release} --banner "$title"
+	/sbin/new-kernel-pkg $args --initrdfile=%{initrd_dir}/initrd-%{kernel_release}.gz --install %{kernel_release} --banner "$title"
+
 elif [ -x /sbin/rc-boot ]; then
 	/sbin/rc-boot 1>&2 || :
 fi
