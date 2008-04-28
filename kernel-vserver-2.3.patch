@@ -8956,6 +8956,16 @@ diff -NurpP --minimal linux-2.6.25/fs/xfs/linux-2.6/xfs_super.c linux-2.6.25-vs2
  	if (!error)
  		error = xfs_mntupdate(mp, flags, args);
  	kmem_free(args, sizeof(*args));
+@@ -1369,6 +1369,9 @@ xfs_fs_fill_super(
+ 	if (error)
+ 		goto fail_vfsop;
+ 
++	if (mp->m_flags & XFS_MOUNT_TAGGED)
++		sb->s_flags |= MS_TAGGED;
++
+ 	sb->s_dirt = 1;
+ 	sb->s_magic = XFS_SB_MAGIC;
+ 	sb->s_blocksize = mp->m_sb.sb_blocksize;
 diff -NurpP --minimal linux-2.6.25/fs/xfs/linux-2.6/xfs_vnode.c linux-2.6.25-vs2.3.0.34.5/fs/xfs/linux-2.6/xfs_vnode.c
 --- linux-2.6.25/fs/xfs/linux-2.6/xfs_vnode.c	2008-04-17 12:05:41.000000000 -0400
 +++ linux-2.6.25-vs2.3.0.34.5/fs/xfs/linux-2.6/xfs_vnode.c	2008-04-19 17:04:58.000000000 -0400
@@ -9130,6 +9140,43 @@ diff -NurpP --minimal linux-2.6.25/fs/xfs/xfs_inode.c linux-2.6.25-vs2.3.0.34.5/
  
  /*
   * This routine is called to map an inode to the buffer containing
+@@ -717,13 +717,21 @@ xfs_dinode_from_disk(
+ 	xfs_icdinode_t		*to,
+ 	xfs_dinode_core_t	*from)
+ {
++	uint32_t uid, gid;
++
+ 	to->di_magic = be16_to_cpu(from->di_magic);
+ 	to->di_mode = be16_to_cpu(from->di_mode);
+ 	to->di_version = from ->di_version;
+ 	to->di_format = from->di_format;
+ 	to->di_onlink = be16_to_cpu(from->di_onlink);
+-	to->di_uid = be32_to_cpu(from->di_uid);
+-	to->di_gid = be32_to_cpu(from->di_gid);
++
++	uid = be32_to_cpu(from->di_uid);
++	gid = be32_to_cpu(from->di_gid);
++
++	to->di_uid = INOTAG_UID(1, uid, gid);
++	to->di_gid = INOTAG_GID(1, uid, gid);
++	to->di_tag = INOTAG_TAG(1, uid, gid, 0);
++
+ 	to->di_nlink = be32_to_cpu(from->di_nlink);
+ 	to->di_projid = be16_to_cpu(from->di_projid);
+ 	memcpy(to->di_pad, from->di_pad, sizeof(to->di_pad));
+@@ -757,8 +765,10 @@ xfs_dinode_to_disk(
+ 	to->di_version = from ->di_version;
+ 	to->di_format = from->di_format;
+ 	to->di_onlink = cpu_to_be16(from->di_onlink);
+-	to->di_uid = cpu_to_be32(from->di_uid);
+-	to->di_gid = cpu_to_be32(from->di_gid);
++
++	to->di_uid = cpu_to_be32(TAGINO_UID(1, from->di_uid, from->di_tag));
++	to->di_gid = cpu_to_be32(TAGINO_GID(1, from->di_gid, from->di_tag));
++
+ 	to->di_nlink = cpu_to_be32(from->di_nlink);
+ 	to->di_projid = cpu_to_be16(from->di_projid);
+ 	memcpy(to->di_pad, from->di_pad, sizeof(to->di_pad));
 @@ -783,7 +784,8 @@ xfs_dinode_to_disk(
  
  STATIC uint
@@ -9226,16 +9273,6 @@ diff -NurpP --minimal linux-2.6.25/fs/xfs/xfs_vfsops.c linux-2.6.25-vs2.3.0.34.5
  
  	/*
  	 * no recovery flag requires a read-only mount
-@@ -403,6 +405,9 @@ xfs_finish_flags(
- 			mp->m_qflags |= XFS_OQUOTA_ENFD;
- 	}
- 
-+	if (ap->flags2 & XFSMNT2_TAGGED)
-+		mp->m_flags |= MS_TAGGED;
-+		/* vfs->vfs_super->s_flags |= */
- 	return 0;
- }
- 
 diff -NurpP --minimal linux-2.6.25/fs/xfs/xfs_vnodeops.c linux-2.6.25-vs2.3.0.34.5/fs/xfs/xfs_vnodeops.c
 --- linux-2.6.25/fs/xfs/xfs_vnodeops.c	2008-04-17 12:05:43.000000000 -0400
 +++ linux-2.6.25-vs2.3.0.34.5/fs/xfs/xfs_vnodeops.c	2008-04-19 15:14:52.000000000 -0400
