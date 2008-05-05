@@ -1519,6 +1519,7 @@ fi
 %dir /lib/modules/%{kernel_release}/kernel/sound
 /lib/modules/%{kernel_release}/kernel/sound/soundcore.*
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/media/video/saa7134/saa7134-alsa.ko*
+%exclude /lib/modules/%{kernel_release}/kernel/drivers/media/video/saa7134/saa7134-oss.ko*
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/media/video/cx88/cx88-alsa.ko*
 %endif
 %dir /lib/modules/%{kernel_release}/misc
@@ -1613,6 +1614,7 @@ fi
 %if %{have_oss}
 %files sound-oss
 %defattr(644,root,root,755)
+/lib/modules/%{kernel_release}/kernel/drivers/media/video/saa7134/saa7134-oss.ko*
 /lib/modules/%{kernel_release}/kernel/sound/oss
 %endif
 %endif
