@@ -111,11 +111,11 @@
 %endif
 
 %define		_basever		2.6.24
-%define		_postver		.5
+%define		_postver		.6
 %define		_prepatch		%{nil}
 %define		_pre_rc			%{nil}
 %define		_rc			%{nil}
-%define		_rel			0.3
+%define		_rel			0.1
 
 %define		_enable_debug_packages			0
 
@@ -166,7 +166,7 @@ Source90:	http://www.kernel.org/pub/linux/kernel/v2.6/testing/patch-%{_prepatch}
 %endif
 %if "%{_postver}" != "%{nil}"
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
-# Source1-md5:	e937c732891561f0a34a2e0853df825e
+# Source1-md5:	6c93ad526ccb10632ced0d37fa8e0ee5
 %endif
 
 Source3:	kernel-autoconf.h
@@ -219,7 +219,7 @@ Patch2:		tahoe9xx-2.6.11.5.patch
 
 # ftp://ftp.openbios.org/pub/bootsplash/kernel/bootsplash-3.1.6-2.6.21.diff.gz
 Patch3:		linux-2.6-bootsplash.patch
-# http://dev.gentoo.org/~spock/projects/fbcondecor/archive/fbcondecor-0.9.4-2.6.24-rc7.patch
+# based on http://dev.gentoo.org/~spock/projects/fbcondecor/archive/fbcondecor-0.9.4-2.6.24-rc7.patch
 Patch4:		kernel-fbcondecor.patch
 
 # http://mesh.dl.sourceforge.net/sourceforge/squashfs/squashfs3.3.tgz
@@ -1409,15 +1409,19 @@ fi
 
 %post
 %ifarch ia64
-ln -sf vmlinuz-%{kernel_release} /boot/efi/vmlinuz%{_alt_kernel}
+mv -f /boot/efi/vmlinuz /boot/efi/vmlinuz.old 2> /dev/null > /dev/null
+ln -sf vmlinuz-%{kernel_release} /boot/efi/vmlinuz
 %endif
-ln -sf vmlinuz-%{kernel_release} /boot/vmlinuz%{_alt_kernel}
-ln -sf System.map-%{kernel_release} /boot/System.map%{_alt_kernel}
+mv -f /boot/vmlinuz /boot/vmlinuz.old 2> /dev/null > /dev/null
+mv -f /boot/System.map /boot/System.map.old 2> /dev/null > /dev/null
+ln -sf vmlinuz-%{kernel_release} /boot/vmlinuz
+ln -sf System.map-%{kernel_release} /boot/System.map
 
 %depmod %{kernel_release}
 
 /sbin/geninitrd -f --initrdfs=rom %{initrd_dir}/initrd-%{kernel_release}.gz %{kernel_release}
-ln -sf initrd-%{kernel_release}.gz %{initrd_dir}/initrd%{_alt_kernel}
+mv -f %{initrd_dir}/initrd %{initrd_dir}/initrd.old 2> /dev/null > /dev/null
+ln -sf initrd-%{kernel_release}.gz %{initrd_dir}/initrd
 
 if [ -x /sbin/new-kernel-pkg ]; then
 	if [ -f /etc/pld-release ]; then
@@ -1437,7 +1441,8 @@ elif [ -x /sbin/rc-boot ]; then
 fi
 
 %post vmlinux
-ln -sf vmlinux-%{kernel_release} /boot/vmlinux%{_alt_kernel}
+mv -f /boot/vmlinux /boot/vmlinux.old 2> /dev/null > /dev/null
+ln -sf vmlinux-%{kernel_release} /boot/vmlinux
 
 %post libs
 %{_sbindir}/mkvmlinuz /boot/zImage-%{kernel_release} %{kernel_release}
