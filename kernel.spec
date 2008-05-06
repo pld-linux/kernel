@@ -136,7 +136,7 @@
 
 %define		_basever	2.6.16
 %define		_postver	.60
-%define		_rel		12
+%define		_rel		13
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de.UTF-8):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(et.UTF-8):	Linuxi kernel (ehk operatsioonisüsteemi tuum)
@@ -585,6 +585,7 @@ Requires:	module-init-tools >= 0.9.9
 Provides:	%{name}(netfilter) = %{netfilter_snap}
 Provides:	%{name}-smp(vermagic) = %{kernel_release}
 %if %{with xen0}
+Requires:	xen >= %{xen_version}
 Provides:	kernel(xen0) = %{xen_version}
 %endif
 Obsoletes:	kernel-smp-misc-fuse
