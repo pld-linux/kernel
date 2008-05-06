@@ -124,10 +124,7 @@
 %define		netfilter_snap		20070806
 %define		xen_version		3.0.2
 
-%define		__alt_kernel	%{?with_pax:-pax}%{?with_grsec_full:-grsecurity}%{?with_xen0:-xen0}%{?with_xenU:-xenU}%{?with_rescuecd:-rescuecd}
-%if "%{__alt_kernel}" != "-"
-%define		_alt_kernel	%{__alt_kernel}
-%endif
+%define		_alt_kernel	%{?with_pax:-pax}%{?with_grsec_full:-grsecurity}%{?with_xen0:-xen0}%{?with_xenU:-xenU}%{?with_rescuecd:-rescuecd}%{?with_pae:-pae}
 
 # kernel release (used in filesystem and eventually in uname -r)
 # modules will be looked from /lib/modules/%{kernel_release}
@@ -1393,7 +1390,7 @@ install %{SOURCE4} $RPM_BUILD_ROOT%{_kernelsrcdir}/include/linux/config.h
 perl %{SOURCE7} %{_kernelsrcdir} $KERNEL_BUILD_DIR
 
 # ghosted initrd
-touch $RPM_BUILD_ROOT/boot/initrd-%{kernel_release}.gz
+touch $RPM_BUILD_ROOT%{initrd_dir}/initrd-%{kernel_release}.gz
 
 # rpm obeys filelinkto checks for ghosted symlinks, convert to files
 rm -f $RPM_BUILD_ROOT/lib/modules/%{kernel_release}/{build,source}
@@ -1409,19 +1406,27 @@ fi
 
 %post
 %ifarch ia64
-mv -f /boot/efi/vmlinuz /boot/efi/vmlinuz.old 2> /dev/null > /dev/null
+mv -f /boot/efi/vmlinuz{,.old} 2> /dev/null
+%{?alt_kernel:mv -f /boot/efi/vmlinuz-%{alt_kernel}{,.old} 2> /dev/null}
 ln -sf vmlinuz-%{kernel_release} /boot/efi/vmlinuz
+%{?alt_kernel:ln -sf vmlinuz-%{kernel_release} /boot/efi/vmlinuz-%{alt_kernel}}
 %endif
-mv -f /boot/vmlinuz /boot/vmlinuz.old 2> /dev/null > /dev/null
-mv -f /boot/System.map /boot/System.map.old 2> /dev/null > /dev/null
+mv -f /boot/vmlinuz{,.old} 2> /dev/null
+%{?alt_kernel:mv -f /boot/vmlinuz-%{alt_kernel}{,.old} 2> /dev/null}
+mv -f /boot/System.map{,.old} 2> /dev/null
+%{?alt_kernel:mv -f /boot/System-%{alt_kernel}.map{,.old} 2> /dev/null}
 ln -sf vmlinuz-%{kernel_release} /boot/vmlinuz
+%{?alt_kernel:ln -sf vmlinuz-%{kernel_release} /boot/vmlinuz-%{alt_kernel}}
 ln -sf System.map-%{kernel_release} /boot/System.map
+%{?alt_kernel:ln -sf System.map-%{kernel_release} /boot/System.map}
 
 %depmod %{kernel_release}
 
-/sbin/geninitrd -f --initrdfs=rom %{initrd_dir}/initrd-%{kernel_release}.gz %{kernel_release}
-mv -f %{initrd_dir}/initrd %{initrd_dir}/initrd.old 2> /dev/null > /dev/null
+/sbin/geninitrd -f --initrdfs=rom %{initrd_dir}/initrd-%{kernel_release}.gz %{kernel_release}mv -f %{initrd_dir}/initrd{,.old} 2> /dev/null
+mv -f %{initrd_dir}/initrd{,.old} 2> /dev/null}
+%{?alt_kernel:mv -f %{initrd_dir}/initrd-%{alt_kernel}{,.old} 2> /dev/null}
 ln -sf initrd-%{kernel_release}.gz %{initrd_dir}/initrd
+%{?alt_kernel:ln -sf initrd-%{kernel_release}.gz %{initrd_dir}/initrd-%{alt_kernel}}
 
 if [ -x /sbin/new-kernel-pkg ]; then
 	if [ -f /etc/pld-release ]; then
@@ -1441,8 +1446,10 @@ elif [ -x /sbin/rc-boot ]; then
 fi
 
 %post vmlinux
-mv -f /boot/vmlinux /boot/vmlinux.old 2> /dev/null > /dev/null
+mv -f /boot/vmlinux{,.old} 2> /dev/null
+%{?alt_kernel:mv -f /boot/vmlinux-%{alt_kernel}{,.old} 2> /dev/null}
 ln -sf vmlinux-%{kernel_release} /boot/vmlinux
+%{?alt_kernel:ln -sf vmlinux-%{kernel_release} /boot/vmlinux-%{alt_kernel}}
 
 %post libs
 %{_sbindir}/mkvmlinuz /boot/zImage-%{kernel_release} %{kernel_release}
@@ -1502,7 +1509,7 @@ fi
 %endif
 /boot/vmlinuz-%{kernel_release}
 /boot/System.map-%{kernel_release}
-%ghost /boot/initrd-%{kernel_release}.gz
+%ghost %{initrd_dir}/initrd-%{kernel_release}.gz
 %dir /lib/modules/%{kernel_release}
 %dir /lib/modules/%{kernel_release}/kernel
 %ifnarch sparc
