@@ -1,5 +1,5 @@
 #
-# STATUS: 2.6.24 work in progresss
+# STATUS: 2.6.25 first steps
 #
 # NOTE:
 # - suspend2 renamed to tuxonice (as project name)
@@ -110,12 +110,12 @@
 %define		have_oss	0
 %endif
 
-%define		_basever		2.6.24
-%define		_postver		.7
+%define		_basever		2.6.25
+%define		_postver		.2
 %define		_prepatch		%{nil}
 %define		_pre_rc			%{nil}
 %define		_rc			%{nil}
-%define		_rel			1
+%define		_rel			0.2
 
 %define		_enable_debug_packages			0
 
@@ -155,15 +155,15 @@ Epoch:		3
 License:	GPL v2
 Group:		Base/Kernel
 #Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_rc}.tar.bz2
-Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{_basever}%{_rc}.tar.bz2
-# Source0-md5:	3f23ad4b69d0a552042d1ed0f4399857
+Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{_basever}%{_rc}.tar
+# Source0-md5:	db95a49a656a3247d4995a797d333153
 %if "%{_prepatch}" != "%{nil}"
 Source90:	http://www.kernel.org/pub/linux/kernel/v2.6/testing/patch-%{_prepatch}-%{_pre_rc}.bz2
 # Source90-md5:	b78873f8a3aff5bdc719fc7fb4c66a9b
 %endif
 %if "%{_postver}" != "%{nil}"
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
-# Source1-md5:	0c1c5d6d8cd82e18d62406d2f34d1d38
+# Source1-md5:	c1d1c1542d676ce3143e5713bab2cca4
 %endif
 
 Source3:	kernel-autoconf.h
@@ -209,7 +209,7 @@ Source59:	kernel-bzip2-lzma.config
 ###
 #	Patches
 ###
-Patch1:		kernel-modpost_warn.patch
+#Patch1:		kernel-modpost_warn.patch in sources
 
 # tahoe9XX http://tahoe.pl/drivers/tahoe9xx-2.6.11.5.patch
 Patch2:		tahoe9xx-2.6.11.5.patch
@@ -257,7 +257,7 @@ Patch39:	kernel-ipt_ACCOUNT.patch
 # netfilter-layer7-v2.13.tar.gz from http://l7-filter.sf.net/
 Patch40:	kernel-layer7.patch
 
-# http://www.ssi.bg/~ja/nfct/ipvs-nfct-2.6.24-1.diff
+# http://www.ssi.bg/~ja/nfct/ipvs-nfct-2.6.25-1.diff
 Patch41:	kernel-ipvs-nfct.patch
 
 ### End netfilter
@@ -267,8 +267,8 @@ Patch41:	kernel-ipvs-nfct.patch
 Patch50:	kernel-imq.patch
 
 # previously based on ftp://ftp.namesys.com/pub/reiser4-for-2.6/2.6.22/reiser4-for-2.6.22-2.patch.gz
-# now based on ftp.kernel.org:/pub/linux/kernel/people/akpm/patches/2.6/2.6.24-rc8/2.6.24-rc8-mm1/broken-out/reiser4*
-Patch51:	reiser4-for-2.6.24.patch
+# now based on http://www.kernel.org/pub/linux/kernel/people/edward/reiser4/reiser4-for-2.6/reiser4-for-2.6.25.patch.bz2
+Patch51:	kernel-reiser4.patch
 
 # wrr http://www.zz9.dk/patches/wrr-linux-070717-2.6.22.patch.gz
 Patch52:	wrr-linux-070717-2.6.22.patch
@@ -295,13 +295,14 @@ Patch60:	linux-2.6-sk98lin_v10.0.4.3.patch
 # potrzebuje modyfikacji, ale jest zbyt rano
 
 # Project suspend2 renamed to tuxonice
-# http://www.tuxonice.net/downloads/all/tuxonice-3.0-rc4-for-2.6.24-rc8.patch.bz2
+# http://tuxonice.org/downloads/all/tuxonice-3.0-rc7-for-2.6.25.patch.bz2
 Patch69:	linux-2.6-suspend2.patch
 Patch70:	kernel-suspend2-headers.patch
 Patch71:	linux-2.6-suspend2-page.patch
 Patch72:	kernel-2.6-ueagle-atm-freezer.patch
 
 # VESA related fixes (from 2.6.25-rcX).
+# in sources
 Patch75:	kernel-display_vesa_modes_in_vgaask_menu.patch
 Patch76:	kernel-dont_request_vbe2_info.patch
 Patch77:	kernel-uvesafb-upstream.patch
@@ -310,7 +311,7 @@ Patch77:	kernel-uvesafb-upstream.patch
 # http://patches.aircrack-ng.org/hostap-kernel-2.6.18.patch
 Patch85:	hostap-kernel-2.6.18.patch
 
-# based on http://vserver.13thfloor.at/Experimental/patch-2.6.24.4-vs2.3.0.34.diff
+# based on http://vserver.13thfloor.at/Experimental/patch-2.6.25-vs2.3.0.34.9.diff
 Patch100:	linux-2.6-vs2.3.patch
 Patch101:	kernel-vserver-fixes.patch
 # based on http://vserver.13thfloor.at/Experimental/patch-2.6.24-rc7-vs2.2.0.5.0.7-pre.diff
@@ -327,8 +328,8 @@ Patch102:	linux-2.6-vs2.2.patch
 # Fix verified for that kernel version.
 Patch130:	linux-2.6-forcedeth-WON.patch
 
-# http://download.filesystems.org/unionfs/unionfs-2.x/unionfs-2.2.2_for_2.6.24-rc7.diff.gz
-Patch140:	linux-2.6-unionfs-2.2.2.patch
+# http://download.filesystems.org/unionfs/unionfs-2.x/unionfs-2.2.4_for_2.6.25-rc2.diff.gz
+Patch140:	kernel-unionfs.patch
 Patch141:	kernel-unionfs-vserver.patch
 
 # aic94xx patch based on http://georgi.unixsol.org/programs/aic94xx_with_included_firmware_2.6.21.diff
@@ -342,9 +343,9 @@ Patch201:	kernel-ppc-export-copy_page.patch
 # alternative routes, the reverse path protection (rp_filter),
 # the NAT processing to use correctly the routing when multiple
 # gateways are used.
-# http://www.ssi.bg/~ja/routes-2.6.24-15.diff
+# http://www.ssi.bg/~ja/routes-2.6.25-15.diff
 # We need to disable CONFIG_IP_ROUTE_MULTIPATH_CACHED
-Patch300:	kernel-routes-2.6.24-15.diff
+Patch300:	kernel-routes.patch
 
 # For compatibility with (not updated) blobs like ... ?
 # Before 2.6.20 we had CONFIG_REGPARM option disabled.
@@ -769,8 +770,6 @@ install -m 755 %{SOURCE6} .
 ##endif
 %endif
 
-%patch1 -p1
-
 %patch2 -p1
 
 %patch8 -p1
@@ -827,7 +826,8 @@ install -m 755 %{SOURCE6} .
 
 # kernel-owner-xid.patch
 %if %{with vserver}
-%patch37 -p1
+# needs update
+#patch37 -p1
 %endif
 
 # kernel-ipt_account.patch
@@ -875,11 +875,6 @@ install -m 755 %{SOURCE6} .
 
 # linux-2.6-sk98lin_v10.0.4.3.patch
 #patch60 -p1
-
-# 2.6.25-rcX vesa fixes.
-%patch75 -p1
-%patch76 -p1
-%patch77 -p1
 
 # hostap enhancements from/for aircrack-ng
 %patch85 -p1
