@@ -136,7 +136,7 @@
 
 %define		_basever	2.6.16
 %define		_postver	.60
-%define		_rel		13
+%define		_rel		14
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de.UTF-8):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(et.UTF-8):	Linuxi kernel (ehk operatsioonisüsteemi tuum)
@@ -1377,23 +1377,15 @@ fi
 %post
 # - update /boot/vmlinuz
 # - update /boot/vmlinuz-%{alt_kernel}
-%ifarch ia64
-mv -f /boot/efi/vmlinuz{,.old} 2> /dev/null
-%{?alt_kernel:mv -f /boot/efi/vmlinuz-%{alt_kernel}{,.old} 2> /dev/null}
-%endif
-mv -f /boot/vmlinuz{,.old} 2> /dev/null
-%{?alt_kernel:mv -f /boot/vmlinuz-%{alt_kernel}{,.old} 2> /dev/null}
-mv -f /boot/System.map{,.old}  2> /dev/null
-%{?alt_kernel:mv -f /boot/System-%{alt_kernel}.map{,.old} 2> /dev/null}
+mv -f %{initrd_dir}/vmlinuz{,.old} 2> /dev/null
+%{?alt_kernel:mv -f %{initrd_dir}/vmlinuz-%{alt_kernel}{,.old} 2> /dev/null}
+mv -f %{initrd_dir}/System.map{,.old}  2> /dev/null
+%{?alt_kernel:mv -f %{initrd_dir}/System-%{alt_kernel}.map{,.old} 2> /dev/null}
 
-%ifarch ia64
-ln -sf vmlinuz-%{kernel_release} /boot/efi/vmlinuz
-%{?alt_kernel:ln -sf vmlinuz-%{kernel_release} /boot/efi/vmlinuz-%{alt_kernel}}
-%endif
-ln -sf vmlinuz-%{kernel_release} /boot/vmlinuz
-%{?alt_kernel:ln -sf vmlinuz-%{kernel_release} /boot/vmlinuz-%{alt_kernel}}
-ln -sf System.map-%{kernel_release} /boot/System.map
-%{?alt_kernel:ln -sf System.map-%{kernel_release} /boot/System.map}
+ln -sf vmlinuz-%{kernel_release} %{initrd_dir}/vmlinuz
+%{?alt_kernel:ln -sf vmlinuz-%{kernel_release} %{initrd_dir}/vmlinuz-%{alt_kernel}}
+ln -sf System.map-%{kernel_release} %{initrd_dir}/System.map
+%{?alt_kernel:ln -sf System.map-%{kernel_release} %{initrd_dir}/System.map-%{alt_kernel}}
 
 %depmod %{kernel_release}
 
@@ -1425,13 +1417,13 @@ fi
 %endif
 
 %post vmlinux
-mv -f /boot/vmlinux{,.old} 2> /dev/null
-%{?alt_kernel:mv -f /boot/vmlinux-%{alt_kernel}{,.old} 2> /dev/null}
-ln -sf vmlinux-%{kernel_release} /boot/vmlinux
-%{?alt_kernel:ln -sf vmlinux-%{kernel_release} /boot/vmlinux-%{alt_kernel}}
+mv -f %{initrd_dir}/vmlinux{,.old} 2> /dev/null
+%{?alt_kernel:mv -f %{initrd_dir}/vmlinux-%{alt_kernel}{,.old} 2> /dev/null}
+ln -sf vmlinux-%{kernel_release} %{initrd_dir}/vmlinux
+%{?alt_kernel:ln -sf vmlinux-%{kernel_release} %{initrd_dir}/vmlinux-%{alt_kernel}}
 
 %post libs
-%{_sbindir}/mkvmlinuz /boot/zImage-%{version}-%{release} %{version}-%{release}
+%{_sbindir}/mkvmlinuz %{initrd_dir}/zImage-%{version}-%{release} %{version}-%{release}
 
 %post drm
 %depmod %{kernel_release}
@@ -1465,23 +1457,15 @@ fi
 %post smp
 # - update /boot/vmlinuz
 # - update /boot/vmlinuz-%{alt_kernel}
-%ifarch ia64
-mv -f /boot/efi/vmlinuz{,.old} 2> /dev/null
-%{?alt_kernel:mv -f /boot/efi/vmlinuz-%{alt_kernel}{,.old} 2> /dev/null}
-%endif
-mv -f /boot/vmlinuz{,.old} 2> /dev/null
-%{?alt_kernel:mv -f /boot/vmlinuz-%{alt_kernel}{,.old} 2> /dev/null}
-mv -f /boot/System.map{,.old}  2> /dev/null
-%{?alt_kernel:mv -f /boot/System-%{alt_kernel}.map{,.old} 2> /dev/null}
+mv -f %{initrd_dir}/vmlinuz{,.old} 2> /dev/null
+%{?alt_kernel:mv -f %{initrd_dir}/vmlinuz-%{alt_kernel}{,.old} 2> /dev/null}
+mv -f %{initrd_dir}/System.map{,.old}  2> /dev/null
+%{?alt_kernel:mv -f %{initrd_dir}/System-%{alt_kernel}.map{,.old} 2> /dev/null}
 
-%ifarch ia64
-ln -sf vmlinuz-%{kernel_release}smp /boot/efi/vmlinuz
-%{?alt_kernel:ln -sf vmlinuz-%{kernel_release}smp /boot/efi/vmlinuz-%{alt_kernel}}
-%endif
-ln -sf vmlinuz-%{kernel_release}smp /boot/vmlinuz
-%{?alt_kernel:ln -sf vmlinuz-%{kernel_release}smp /boot/vmlinuz-%{alt_kernel}}
-ln -sf System.map-%{kernel_release}smp /boot/System.map
-%{?alt_kernel:ln -sf System.map-%{kernel_release}smp /boot/System.map}
+ln -sf vmlinuz-%{kernel_release}smp %{initrd_dir}/vmlinuz
+%{?alt_kernel:ln -sf vmlinuz-%{kernel_release}smp %{initrd_dir}/vmlinuz-%{alt_kernel}}
+ln -sf System.map-%{kernel_release}smp %{initrd_dir}/System.map
+%{?alt_kernel:ln -sf System.map-%{kernel_release}smp %{initrd_dir}/System.map-%{alt_kernel}}
 
 %depmod %{kernel_release}smp
 
@@ -1582,12 +1566,9 @@ fi
 %ifarch sparc sparc64
 /boot/vmlinux.aout-%{kernel_release}
 %endif
-%ifarch ia64
-/boot/efi/vmlinuz-%{kernel_release}
-%endif
-/boot/vmlinuz-%{kernel_release}
-/boot/System.map-%{kernel_release}
-%ghost /boot/initrd-%{kernel_release}.gz
+%{initrd_dir}/vmlinuz-%{kernel_release}
+%{initrd_dir}/System.map-%{kernel_release}
+%ghost %{initrd_dir}/initrd-%{kernel_release}.gz
 %dir /lib/modules/%{kernel_release}
 %dir /lib/modules/%{kernel_release}/kernel
 %ifnarch sparc
@@ -1636,7 +1617,7 @@ fi
 %ifarch alpha %{ix86} %{x8664} ppc ppc64 sparc sparc64
 %files vmlinux
 %defattr(644,root,root,755)
-/boot/vmlinux-%{kernel_release}
+%{initrd_dir}/vmlinux-%{kernel_release}
 %endif
 
 %if %{have_drm}
@@ -1665,16 +1646,16 @@ fi
 %if "%{_arch}" == "ppc"
 %files libs
 %defattr(644,root,root,755)
-%dir /boot/libs-%{kernel_release}
-/boot/libs-%{kernel_release}/common
-/boot/libs-%{kernel_release}/kernel
-/boot/libs-%{kernel_release}/lib
-/boot/libs-%{kernel_release}/of1275
-/boot/libs-%{kernel_release}/openfirmware
-/boot/libs-%{kernel_release}/simple
-%dir /boot/libs-%{kernel_release}/utils
-%attr(755,root,root) /boot/libs-%{kernel_release}/utils/*
-/boot/libs-%{kernel_release}/ld.script
+%dir %{initrd_dir}/libs-%{kernel_release}
+%{initrd_dir}/libs-%{kernel_release}/common
+%{initrd_dir}/libs-%{kernel_release}/kernel
+%{initrd_dir}/libs-%{kernel_release}/lib
+%{initrd_dir}/libs-%{kernel_release}/of1275
+%{initrd_dir}/libs-%{kernel_release}/openfirmware
+%{initrd_dir}/libs-%{kernel_release}/simple
+%dir %{initrd_dir}/libs-%{kernel_release}/utils
+%attr(755,root,root) %{initrd_dir}/libs-%{kernel_release}/utils/*
+%{initrd_dir}/libs-%{kernel_release}/ld.script
 %endif
 %endif
 
@@ -1703,12 +1684,9 @@ fi
 %files smp
 %defattr(644,root,root,755)
 #doc FAQ-pl
-%ifarch ia64
-/boot/efi/vmlinuz-%{kernel_release}smp
-%endif
-/boot/vmlinuz-%{kernel_release}smp
-/boot/System.map-%{kernel_release}smp
-%ghost /boot/initrd-%{kernel_release}smp.gz
+%{initrd_dir}/vmlinuz-%{kernel_release}smp
+%{initrd_dir}/System.map-%{kernel_release}smp
+%ghost %{initrd_dir}/initrd-%{kernel_release}smp.gz
 %dir /lib/modules/%{kernel_release}smp
 %dir /lib/modules/%{kernel_release}smp/kernel
 %ifnarch sparc
@@ -1757,7 +1735,7 @@ fi
 %ifarch alpha %{ix86} %{x8664} ppc ppc64 sparc sparc64
 %files smp-vmlinux
 %defattr(644,root,root,755)
-/boot/vmlinux-%{kernel_release}smp
+%{initrd_dir}/vmlinux-%{kernel_release}smp
 %endif
 
 %if %{have_drm}
@@ -1786,16 +1764,16 @@ fi
 %if "%{_arch}" == "ppc"
 %files smp-libs
 %defattr(644,root,root,755)
-%dir /boot/libs-%{kernel_release}smp
-/boot/libs-%{kernel_release}smp/common
-/boot/libs-%{kernel_release}smp/kernel
-/boot/libs-%{kernel_release}smp/lib
-/boot/libs-%{kernel_release}smp/of1275
-/boot/libs-%{kernel_release}smp/openfirmware
-/boot/libs-%{kernel_release}smp/simple
-%dir /boot/libs-%{kernel_release}smp/utils
-%attr(755,root,root) /boot/libs-%{kernel_release}smp/utils/*
-/boot/libs-%{kernel_release}smp/ld.script
+%dir %{initrd_dir}/libs-%{kernel_release}smp
+%{initrd_dir}/libs-%{kernel_release}smp/common
+%{initrd_dir}/libs-%{kernel_release}smp/kernel
+%{initrd_dir}/libs-%{kernel_release}smp/lib
+%{initrd_dir}/libs-%{kernel_release}smp/of1275
+%{initrd_dir}/libs-%{kernel_release}smp/openfirmware
+%{initrd_dir}/libs-%{kernel_release}smp/simple
+%dir %{initrd_dir}/libs-%{kernel_release}smp/utils
+%attr(755,root,root) %{initrd_dir}/libs-%{kernel_release}smp/utils/*
+%{initrd_dir}/libs-%{kernel_release}smp/ld.script
 %endif
 %endif
 
