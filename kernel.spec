@@ -115,7 +115,7 @@
 %define		_prepatch		%{nil}
 %define		_pre_rc			%{nil}
 %define		_rc			%{nil}
-%define		_rel			0.1
+%define		_rel			0.2
 
 %define		_enable_debug_packages			0
 
@@ -372,7 +372,7 @@ Patch7001:	kernel-bzip2-lzma.patch
 # not ready yet
 Patch9997:	pax_selinux_hooks-2.6.20.patch
 
-# based on http://www.grsecurity.net/~paxguy1/pax-linux-2.6.24-test8.patch
+# based on http://www.grsecurity.net/~paxguy1/pax-linux-2.6.24.6-test45.patch
 Patch9998:	kernel-pax.patch
 
 # based on http://www.grsecurity.net/~spender/grsecurity-2.1.11-2.6.24.4-200804142048.patch.gz
@@ -1395,6 +1395,9 @@ touch $RPM_BUILD_ROOT%{initrd_dir}/initrd-%{kernel_release}.gz
 # rpm obeys filelinkto checks for ghosted symlinks, convert to files
 rm -f $RPM_BUILD_ROOT/lib/modules/%{kernel_release}/{build,source}
 touch $RPM_BUILD_ROOT/lib/modules/%{kernel_release}/{build,source}
+
+# remove unnecessary dir with dead symlink
+rm -rf $RPM_BUILD_ROOT/arch/i386
 
 %clean
 rm -rf $RPM_BUILD_ROOT
