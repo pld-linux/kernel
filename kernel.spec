@@ -155,7 +155,7 @@ Epoch:		3
 License:	GPL v2
 Group:		Base/Kernel
 #Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_rc}.tar.bz2
-Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{_basever}%{_rc}.tar
+Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{_basever}%{_rc}.tar.bz2
 # Source0-md5:	db95a49a656a3247d4995a797d333153
 %if "%{_prepatch}" != "%{nil}"
 Source90:	http://www.kernel.org/pub/linux/kernel/v2.6/testing/patch-%{_prepatch}-%{_pre_rc}.bz2
@@ -209,8 +209,6 @@ Source59:	kernel-bzip2-lzma.config
 ###
 #	Patches
 ###
-#Patch1:		kernel-modpost_warn.patch in sources
-
 # tahoe9XX http://tahoe.pl/drivers/tahoe9xx-2.6.11.5.patch
 Patch2:		tahoe9xx-2.6.11.5.patch
 
@@ -219,7 +217,7 @@ Patch3:		linux-2.6-bootsplash.patch
 # based on http://dev.gentoo.org/~spock/projects/fbcondecor/archive/fbcondecor-0.9.4-2.6.24-rc7.patch
 Patch4:		kernel-fbcondecor.patch
 
-# http://mesh.dl.sourceforge.net/sourceforge/squashfs/squashfs3.3.tgz
+# based on http://mesh.dl.sourceforge.net/sourceforge/squashfs/squashfs3.3.tgz
 # squashfs3.3/kernel-patches/linux-2.6.24/squashfs3.3-patch
 Patch6:		kernel-squashfs.patch
 Patch8:		linux-fbcon-margins.patch
@@ -300,12 +298,6 @@ Patch69:	linux-2.6-suspend2.patch
 Patch70:	kernel-suspend2-headers.patch
 Patch71:	linux-2.6-suspend2-page.patch
 Patch72:	kernel-2.6-ueagle-atm-freezer.patch
-
-# VESA related fixes (from 2.6.25-rcX).
-# in sources
-Patch75:	kernel-display_vesa_modes_in_vgaask_menu.patch
-Patch76:	kernel-dont_request_vbe2_info.patch
-Patch77:	kernel-uvesafb-upstream.patch
 
 # adds some ids for hostap suported cards and monitor_enable from/for aircrack-ng
 # http://patches.aircrack-ng.org/hostap-kernel-2.6.18.patch
