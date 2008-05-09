@@ -1,19 +1,19 @@
-diff -urN linux-2.6.23.12/arch/x86/boot/compressed/Makefile_32 linux-2.6.23.12udpcast/arch/x86/boot/compressed/Makefile_32
---- linux-2.6.23.12/arch/x86/boot/compressed/Makefile_32	2007-12-18 21:55:57.000000000 +0000
-+++ linux-2.6.23.12udpcast/arch/x86/boot/compressed/Makefile_32	2007-12-27 09:13:47.000000000 +0000
+--- e/arch/x86/boot/compressed/Makefile	2007-12-18 21:55:57.000000000 +0000
++++ e/arch/x86/boot/compressed/Makefile	2007-12-27 09:13:47.000000000 +0000
 @@ -4,7 +4,7 @@
  # create a compressed vmlinux image from the original vmlinux
  #
  
--targets		:= vmlinux vmlinux.bin vmlinux.bin.gz head_32.o misc_32.o piggy.o \
-+targets		:= vmlinux vmlinux.bin vmlinux.bin.gz vmlinux.bin.bz2 vmlinux.bin.lzma head_32.o misc_32.o piggy.o \
- 			vmlinux.bin.all vmlinux.relocs
- EXTRA_AFLAGS	:= -traditional
+-targets := vmlinux vmlinux.bin vmlinux.bin.gz head_$(BITS).o misc.o piggy.o
++targets := vmlinux vmlinux.bin vmlinux.bin.gz vmlinux.bin.bz2 vmlinux.bin.lzma head_$(BITS).o misc.o piggy.o
  
-@@ -44,7 +44,27 @@
+ KBUILD_CFLAGS := -m$(BITS) -D__KERNEL__ $(LINUX_INCLUDE) -O2
+ KBUILD_CFLAGS += -fno-strict-aliasing -fPIC
+@@ -50,6 +50,23 @@
+ $(obj)/vmlinux.bin.gz: $(obj)/vmlinux.bin FORCE
  	$(call if_changed,gzip)
  endif
- 
++
 +ifdef CONFIG_RELOCATABLE
 +$(obj)/vmlinux.bin.bz2: $(obj)/vmlinux.bin.all FORCE
 +	$(call if_changed,bzip2)
@@ -32,16 +32,20 @@ diff -urN linux-2.6.23.12/arch/x86/boot/compressed/Makefile_32 linux-2.6.23.12ud
 +
  LDFLAGS_piggy.o := -r --format binary --oformat elf32-i386 -T
  
--$(obj)/piggy.o: $(src)/vmlinux_32.scr $(obj)/vmlinux.bin.gz FORCE
+ else
+@@ -59,6 +76,9 @@
+ LDFLAGS_piggy.o := -r --format binary --oformat elf64-x86-64 -T
+ endif
+ 
 +suffix_$(CONFIG_KERNEL_GZIP)  = gz
 +suffix_$(CONFIG_KERNEL_BZIP2) = bz2
 +suffix_$(CONFIG_KERNEL_LZMA)  = lzma
-+
-+$(obj)/piggy.o: $(src)/vmlinux_32.scr $(obj)/vmlinux.bin.$(suffix_y) FORCE
+ 
+-$(obj)/piggy.o: $(obj)/vmlinux.scr $(obj)/vmlinux.bin.gz FORCE
++$(obj)/piggy.o: $(obj)/vmlinux.scr $(obj)/vmlinux.bin.$(suffix_y) FORCE
  	$(call if_changed,ld)
-diff -urN linux-2.6.23.12/arch/x86/boot/compressed/misc_32.c linux-2.6.23.12udpcast/arch/x86/boot/compressed/misc_32.c
---- linux-2.6.23.12/arch/x86/boot/compressed/misc_32.c	2007-12-27 10:02:06.000000000 +0000
-+++ linux-2.6.23.12udpcast/arch/x86/boot/compressed/misc_32.c	2007-12-27 11:58:57.000000000 +0000
+--- e/arch/x86/boot/compressed/misc.c	2007-12-27 10:02:06.000000000 +0000
++++ e/arch/x86/boot/compressed/misc.c	2007-12-27 11:58:57.000000000 +0000
 @@ -104,6 +104,7 @@
  
  #define OF(args)  args
@@ -88,14 +92,15 @@ diff -urN linux-2.6.23.12/arch/x86/boot/compressed/misc_32.c linux-2.6.23.12udpc
  static void *memcpy(void *dest, const void *src, unsigned n);
  
  static void putstr(const char *);
-@@ -189,7 +200,11 @@
- static unsigned long free_mem_ptr;
- static unsigned long free_mem_end_ptr;
- 
+@@ -189,8 +200,12 @@
+ #ifdef CONFIG_X86_64
+ #define HEAP_SIZE             0x7000
+ #else
 +#if (defined CONFIG_KERNEL_BZIP2 || defined CONFIG_KERNEL_LZMA)
 +#define HEAP_SIZE             0x400000
 +#else
  #define HEAP_SIZE             0x4000
+ #endif
 +#endif
  
  static char *vidmem = (char *)0xb8000;
@@ -199,37 +204,37 @@ diff -urN linux-2.6.23.12/arch/x86/boot/compressed/misc_32.c linux-2.6.23.12udpc
  static void error(char *x)
  {
 @@ -358,9 +421,11 @@
- 	window = output;  	/* Output buffer (Normally at 1M) */
- 	free_mem_ptr     = end;	/* Heap  */
- 	free_mem_end_ptr = end + HEAP_SIZE;
+ 	window = output;		/* Output buffer (Normally at 1M) */
+ 	free_mem_ptr     = heap;	/* Heap */
+ 	free_mem_end_ptr = heap + HEAP_SIZE;
 +#ifdef CONFIG_KERNEL_GZIP
- 	inbuf  = input_data;	/* Input buffer */
+ 	inbuf  = input_data;		/* Input buffer */
  	insize = input_len;
  	inptr  = 0;
 +#endif
  
- 	if ((u32)output & (CONFIG_PHYSICAL_ALIGN -1))
- 		error("Destination address not CONFIG_PHYSICAL_ALIGN aligned");
+ #ifdef CONFIG_X86_64
+
 @@ -371,9 +436,21 @@
- 		error("Wrong destination address");
+ #endif
  #endif
  
 +#ifdef CONFIG_KERNEL_BZIP2
-+	putstr("Bunzipping Linux... ");
++	putstr("\nBunzipping Linux... ");
 +	bunzip2(input_data, input_len-4, NULL, compr_flush, NULL);
 +#endif
 +
 +#ifdef CONFIG_KERNEL_LZMA
-+	putstr("Unlzmaing Linux... ");
++	putstr("\nUnlzmaing Linux... ");
 +	unlzma(input_data, input_len-4, NULL, compr_flush, NULL);
 +#endif
 +
 +#ifdef CONFIG_KERNEL_GZIP
  	makecrc();
- 	putstr("Uncompressing Linux... ");
+ 	putstr("\nDecompressing Linux... ");
  	gunzip();
 +#endif
- 	putstr("Ok, booting the kernel.\n");
+ 	putstr("done.\nBooting the kernel.\n");
  	return;
  }
 diff -urN linux-2.6.23.12/drivers/block/Kconfig linux-2.6.23.12udpcast/drivers/block/Kconfig
