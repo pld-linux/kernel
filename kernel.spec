@@ -460,7 +460,7 @@ BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 %define		_kernelsrcdir	/usr/src/linux%{_alt_kernel}-%{version}
 
 %if "%{_target_base_arch}" != "%{_arch}"
-	%define	CrossOpts ARCH=%{_target_base_arch} CROSS_COMPILE=%{_target_cpu}-pld-linux-
+	%define CrossOpts ARCH=%{_target_base_arch} CROSS_COMPILE=%{_target_cpu}-pld-linux-
 	%define	DepMod /bin/true
 
 	%if "%{_arch}" == "sparc" && "%{_target_base_arch}" == "sparc64"
@@ -477,14 +477,18 @@ BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 	%define	CrossOpts ARCH=%{_target_base_arch} CC="%{__cc}"
 	%define	DepMod /sbin/depmod
 	%endif
+	
+	%ifarch ppc ppc64
+	%define CrossOpts ARCH=powerpc CROSS_COMPILE=%{_target_cpu}-pld-linux-
+	%endif
 %else
-	%define	DepMod /sbin/depmod
-%endif
 	%ifarch ppc ppc64
 	%define CrossOpts ARCH=powerpc CC="%{__cc}"
 	%else
 	%define CrossOpts ARCH=%{_target_base_arch} CC="%{__cc}"
 	%endif
+	%define	DepMod /sbin/depmod
+%endif
 
 %define __features Netfilter module dated: %{netfilter_snap}\
 %{?with_abi:Linux ABI support - enabled}\
