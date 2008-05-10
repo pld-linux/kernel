@@ -1,16 +1,22 @@
 #
-# STATUS: 2.6.25 first steps
+# STATUS: 2.6.25 work in progress
 #
 # NOTE:
 # - suspend2 renamed to tuxonice (as project name)
 #
 # TODO:
+# - update imq, owner-xid patch
+# - grsec_full awaits for new snap
+# - update configs for !x86
+# - test bconds builds
+# - tproxy patch
+# - remove abi and sk98lin if external built modules works
+# - another nf modules disappeared?
 # - benchmark NO_HZ & HZ=1000 vs HZ=300 on i686
 # - apparmor (no future?)
 #
 # FUTURE:
-# - update xen patch for 2.6.21
-# - Linux ABI - needs update.
+# - update xen patch
 # - pom-ng quake3-conntrack-nat -> nf_conntrack ?
 # - pom-ng talk-conntrack-nat -> nf_conntrack ?
 # - nf-hipac ?
@@ -111,7 +117,7 @@
 %endif
 
 %define		_basever		2.6.25
-%define		_postver		.2
+%define		_postver		.3
 %define		_prepatch		%{nil}
 %define		_pre_rc			%{nil}
 %define		_rc			%{nil}
@@ -163,7 +169,7 @@ Source90:	http://www.kernel.org/pub/linux/kernel/v2.6/testing/patch-%{_prepatch}
 %endif
 %if "%{_postver}" != "%{nil}"
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
-# Source1-md5:	c1d1c1542d676ce3143e5713bab2cca4
+# Source1-md5:	49c56cf1394b2286033bb10c7cef7260
 %endif
 
 Source3:	kernel-autoconf.h
@@ -328,7 +334,6 @@ Patch141:	kernel-unionfs-vserver.patch
 Patch160:	linux-2.6-aic94xx_with_included_firmware.patch
 
 Patch200:	linux-2.6-ppc-ICE-hacks.patch
-Patch201:	kernel-ppc-export-copy_page.patch
 
 # The following patch extend the routing functionality in Linux
 # to support static routes (defined by user), new way to use the
@@ -472,15 +477,14 @@ BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 	%define	CrossOpts ARCH=%{_target_base_arch} CC="%{__cc}"
 	%define	DepMod /sbin/depmod
 	%endif
-
 %else
+	%define	DepMod /sbin/depmod
+%endif
 	%ifarch ppc ppc64
 	%define CrossOpts ARCH=powerpc CC="%{__cc}"
 	%else
 	%define CrossOpts ARCH=%{_target_base_arch} CC="%{__cc}"
 	%endif
-	%define	DepMod /sbin/depmod
-%endif
 
 %define __features Netfilter module dated: %{netfilter_snap}\
 %{?with_abi:Linux ABI support - enabled}\
@@ -956,8 +960,7 @@ install -m 755 %{SOURCE6} .
 # end of grsecurity & pax stuff
 
 %ifarch ppc ppc64
-%patch200 -p1
-%patch201 -p1
+#patch200 -p1
 %endif
 
 # routes
