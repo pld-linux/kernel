@@ -113,12 +113,12 @@
 %define		_prepatch		%{nil}
 %define		_pre_rc			%{nil}
 %define		_rc			%{nil}
-%define		_rel			0.2
+%define		_rel			0.3
 
 %define		_enable_debug_packages			0
 
 %define		squashfs_version	3.3
-%define		tuxonice_version	3.0-rc1
+%define		tuxonice_version	3.0-rc7
 %define		netfilter_snap		20070806
 %define		xen_version		3.0.2
 
@@ -779,7 +779,7 @@ install -m 755 %{SOURCE6} .
 %patch12 -p1
 
 # kernel-pom-ng-ROUTE.patch
-#patch14 -p1 # FIXME
+%patch14 -p1
 
 # kernel-pom-ng-TARPIT.patch
 %patch15 -p1
@@ -1612,6 +1612,7 @@ fi
 %{_kernelsrcdir}/localversion
 %{_kernelsrcdir}/arch/*/kernel/asm-offsets*
 %{_kernelsrcdir}/arch/*/kernel/sigframe*.h
+%{_kernelsrcdir}/drivers/lguest/lg.h
 %dir %{_kernelsrcdir}/scripts
 %dir %{_kernelsrcdir}/scripts/kconfig
 %{_kernelsrcdir}/scripts/Kbuild.include
@@ -1635,8 +1636,10 @@ fi
 %defattr(644,root,root,755)
 %{_kernelsrcdir}/arch/*/[!Mk]*
 %{_kernelsrcdir}/arch/*/kernel/[!M]*
+%{_kernelsrcdir}/arch/x86/kvm
 %exclude %{_kernelsrcdir}/arch/*/kernel/asm-offsets*
 %exclude %{_kernelsrcdir}/arch/*/kernel/sigframe*.h
+%exclude %{_kernelsrcdir}/drivers/lguest/lg.h
 %{_kernelsrcdir}/block
 %{_kernelsrcdir}/crypto
 %{_kernelsrcdir}/drivers
@@ -1650,6 +1653,7 @@ fi
 %{_kernelsrcdir}/lib
 %{_kernelsrcdir}/mm
 %{_kernelsrcdir}/net
+%{_kernelsrcdir}/virt
 %{_kernelsrcdir}/scripts/*
 %exclude %{_kernelsrcdir}/scripts/Kbuild.include
 %exclude %{_kernelsrcdir}/scripts/Makefile*
