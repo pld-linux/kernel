@@ -7,10 +7,8 @@
 # TODO:
 # - update imq, owner-xid patch
 # - grsec_full awaits for new snap
-# - update configs for !x86
 # - test bconds builds
 # - tproxy patch
-# - remove abi and sk98lin if external built modules works
 # - another nf modules disappeared?
 # - benchmark NO_HZ & HZ=1000 vs HZ=300 on i686
 # - apparmor (no future?)
@@ -27,7 +25,6 @@
 %bcond_without	pcmcia		# don't build pcmcia
 %bcond_without	regparm		# if your blob doesn't work try disable this
 
-%bcond_with	abi		# build ABI support only ix86 !!
 %bcond_with	verbose		# verbose build (V=1)
 %bcond_with	xen0		# added Xen0 support
 %bcond_with	xenU		# added XenU support
@@ -84,16 +81,11 @@
 %define		with_grsecurity		1
 %endif
 
-%ifnarch %{ix86}
-%undefine	abi
-%endif
-
 %define		have_drm	1
 %define		have_oss	1
 %define		have_sound	1
 
 %if %{with rescuecd}
-%undefine	with_abi
 %undefine	with_tuxonice
 %undefine	with_grsec_full
 %undefine	with_grsec_minimal
@@ -178,10 +170,6 @@ Source5:	kernel-ppclibs.Makefile
 Source6:	kernel-config.py
 Source7:	kernel-module-build.pl
 
-# TODO - cleanup
-#Source14:	http://ace-host.stuart.id.au/russell/files/debian/sarge/kernel-patch-linuxabi/kernel-patch-linuxabi_20060404.tar.gz
-# Source14-md5:	bf32f8baa98aeafa75a672097acd9cc8
-
 Source19:	kernel-multiarch.config
 Source20:	kernel-i386.config
 Source21:	kernel-x86_64.config
@@ -191,8 +179,6 @@ Source24:	kernel-alpha.config
 Source25:	kernel-ppc.config
 Source26:	kernel-ia64.config
 Source27:	kernel-ppc64.config
-
-Source34:	kernel-abi.config
 
 Source40:	kernel-netfilter.config
 Source41:	kernel-squashfs.config
@@ -293,10 +279,6 @@ Patch58:	linux-PF_RING.patch
 
 # http://synce.svn.sourceforge.net/svnroot/synce/trunk/patches/linux-2.6.22-rndis_host-wm5.patch
 Patch59:	kernel-rndis_host-wm5.patch
-
-# Derived from http://www.skd.de/e_en/products/adapters/pci_64/sk-98xx_v20/software/linux/driver/install-8_41.tar.bz2
-Patch60:	linux-2.6-sk98lin_v10.0.4.3.patch
-# potrzebuje modyfikacji, ale jest zbyt rano
 
 # Project suspend2 renamed to tuxonice
 # http://tuxonice.org/downloads/all/tuxonice-3.0-rc7-for-2.6.25.patch.bz2
@@ -491,7 +473,6 @@ BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 %endif
 
 %define __features Netfilter module dated: %{netfilter_snap}\
-%{?with_abi:Linux ABI support - enabled}\
 %{?with_grsec_full:Grsecurity full support - enabled}\
 %{?with_pax:PaX support - enabled}\
 %{?with_xen0:Xen 0 - enabled}\
@@ -736,7 +717,7 @@ Pakiet zawiera dokumentację do jądra Linuksa pochodzącą z katalogu
 /usr/src/linux/Documentation.
 
 %prep
-%setup -q -n linux-%{_basever}%{_rc} %{?with_abi:-a14}
+%setup -q -n linux-%{_basever}%{_rc}
 
 # hack against warning in pax/grsec
 %ifarch alpha
@@ -873,9 +854,6 @@ install -m 755 %{SOURCE6} .
 # kernel-rndis_host-wm5.patch
 %patch59 -p1
 
-# linux-2.6-sk98lin_v10.0.4.3.patch
-#patch60 -p1
-
 # hostap enhancements from/for aircrack-ng
 %patch85 -p1
 
@@ -973,10 +951,6 @@ install -m 755 %{SOURCE6} .
 # Small fixes:
 %patch2000 -p1
 %patch2001 -p1
-
-%if %{with abi}
-patch -p1 -s < kernel-patch-linuxabi-20060404/linuxabi-2.6.17-0.patch
-%endif
 
 # Fix EXTRAVERSION in main Makefile
 sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{_postver}%{?_alt_kernel:%{_alt_kernel}}#g' Makefile
@@ -1208,10 +1182,6 @@ BuildConfig() {
 %if %{with nfsroot}
 	sed -i "s:CONFIG_NFS_FS=m:CONFIG_NFS_FS=y:" %{defconfig}
 	echo "CONFIG_ROOT_NFS=y" >> %{defconfig}
-%endif
-
-%if %{with abi}
-	cat %{SOURCE34} >> %{defconfig}
 %endif
 
 %if %{with rescuecd}
@@ -1663,9 +1633,6 @@ fi
 %if %{with source}
 %files source -f aux_files_exc
 %defattr(644,root,root,755)
-%if %{with abi}
-%{_kernelsrcdir}/abi
-%endif /* abi */
 %{_kernelsrcdir}/arch/*/[!Mk]*
 %{_kernelsrcdir}/arch/*/kernel/[!M]*
 %exclude %{_kernelsrcdir}/arch/*/kernel/asm-offsets*
