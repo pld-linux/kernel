@@ -1389,7 +1389,7 @@ ln -sf System.map-%{kernel_release} /boot/System.map
 
 %depmod %{kernel_release}
 
-/sbin/geninitrd -f --initrdfs=rom %{initrd_dir}/initrd-%{kernel_release}.gz %{kernel_release}mv -f %{initrd_dir}/initrd{,.old} 2> /dev/null
+/sbin/geninitrd -f --initrdfs=rom %{initrd_dir}/initrd-%{kernel_release}.gz %{kernel_release}
 mv -f %{initrd_dir}/initrd{,.old} 2> /dev/null}
 %{?alt_kernel:mv -f %{initrd_dir}/initrd-%{alt_kernel}{,.old} 2> /dev/null}
 ln -sf initrd-%{kernel_release}.gz %{initrd_dir}/initrd
