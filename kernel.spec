@@ -8,7 +8,6 @@
 # - update imq, owner-xid patch
 # - grsec_full awaits for new snap
 # - test bconds builds
-# - tproxy patch
 # - another nf modules disappeared?
 # - benchmark NO_HZ & HZ=1000 vs HZ=300 on i686
 # - apparmor (no future?)
@@ -249,6 +248,9 @@ Patch40:	kernel-layer7.patch
 
 # http://www.ssi.bg/~ja/nfct/ipvs-nfct-2.6.25-1.diff
 Patch41:	kernel-ipvs-nfct.patch
+
+# based on http://www.balabit.com/downloads/files/tproxy/tproxy-kernel-2.6.25-20080509-164605-1210344365.tar.bz2
+Patch42:	kernel-tproxy.patch
 
 ### End netfilter
 
@@ -873,6 +875,9 @@ install -m 755 %{SOURCE6} .
 #%endif
 #%endif
 
+# tproxy
+%patch42 -p1
+
 # forcedeth:
 %patch130 -p1
 
@@ -1390,7 +1395,7 @@ ln -sf System.map-%{kernel_release} /boot/System.map
 %depmod %{kernel_release}
 
 /sbin/geninitrd -f --initrdfs=rom %{initrd_dir}/initrd-%{kernel_release}.gz %{kernel_release}
-mv -f %{initrd_dir}/initrd{,.old} 2> /dev/null}
+mv -f %{initrd_dir}/initrd{,.old} 2> /dev/null
 %{?alt_kernel:mv -f %{initrd_dir}/initrd-%{alt_kernel}{,.old} 2> /dev/null}
 ln -sf initrd-%{kernel_release}.gz %{initrd_dir}/initrd
 %{?alt_kernel:ln -sf initrd-%{kernel_release}.gz %{initrd_dir}/initrd-%{alt_kernel}}
