@@ -112,7 +112,7 @@
 %define		_prepatch		%{nil}
 %define		_pre_rc			%{nil}
 %define		_rc			%{nil}
-%define		_rel			0.3
+%define		_rel			0.4
 
 %define		_enable_debug_packages			0
 
@@ -253,6 +253,9 @@ Patch41:	kernel-ipvs-nfct.patch
 Patch42:	kernel-tproxy.patch
 
 ### End netfilter
+
+# http://zph.bratcheda.org/linux-2.6.25-zph.patch
+Patch49:	kernel-zph.patch
 
 # based on http://www.linuximq.net/patchs/linux-2.6.24-imq.diff
 # some people report problems when using imq with wrr.
@@ -827,6 +830,9 @@ install -m 755 %{SOURCE6} .
 
 ##
 # end of netfilter
+
+# zph
+%patch49 -p1
 
 %if %{with imq}
 %patch50 -p1
