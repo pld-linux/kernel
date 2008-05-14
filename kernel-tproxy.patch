@@ -212,7 +212,7 @@ index f2b5270..d2d1001 100644
  	if (!sysctl_ip_nonlocal_bind &&
 -	    !inet->freebind &&
 +	    !(inet->freebind || inet->transparent) &&
- 	    addr->sin_addr.s_addr != htonl(INADDR_ANY) &&
+ 	    nsa.saddr != htonl(INADDR_ANY) &&
  	    chk_addr_ret != RTN_LOCAL &&
  	    chk_addr_ret != RTN_MULTICAST &&
 -- 
@@ -229,88 +229,14 @@ inet_iif() to route.h.
 
 Signed-off-by: KOVACS Krisztian <hidden@sch.bme.hu>
 ---
- include/net/inet_sock.h            |    7 -------
+ include/net/inet_sock.h            |    7 ------- VSERVER patch removed this!
  include/net/route.h                |    5 +++++
  net/ipv4/netfilter/nf_nat_helper.c |    1 +
  net/ipv4/syncookies.c              |    1 +
  net/ipv6/af_inet6.c                |    1 +
  5 files changed, 8 insertions(+), 7 deletions(-)
 
-diff --git a/include/net/inet_sock.h b/include/net/inet_sock.h
-index 2fafaab..5ca683e 100644
---- a/include/net/inet_sock.h
-+++ b/include/net/inet_sock.h
-@@ -24,7 +24,6 @@
- #include <net/flow.h>
- #include <net/sock.h>
- #include <net/request_sock.h>
--#include <net/route.h>
- 
- /** struct ip_options - IP Options
-  *
-@@ -192,10 +191,4 @@ static inline int inet_sk_ehashfn(const struct sock *sk)
- 	return inet_ehashfn(laddr, lport, faddr, fport);
- }
- 
--
--static inline int inet_iif(const struct sk_buff *skb)
--{
--	return skb->rtable->rt_iif;
--}
--
- #endif	/* _INET_SOCK_H */
-diff --git a/include/net/route.h b/include/net/route.h
-index c633880..13e464f 100644
---- a/include/net/route.h
-+++ b/include/net/route.h
-@@ -204,6 +204,11 @@ static inline struct inet_peer *rt_get_peer(struct rtable *rt)
- 	return rt->peer;
- }
- 
-+static inline int inet_iif(const struct sk_buff *skb)
-+{
-+	return skb->rtable->rt_iif;
-+}
-+
- extern ctl_table ipv4_route_table[];
- 
- #endif	/* _ROUTE_H */
-diff --git a/net/ipv4/netfilter/nf_nat_helper.c b/net/ipv4/netfilter/nf_nat_helper.c
-index 11976ea..112dcfa 100644
---- a/net/ipv4/netfilter/nf_nat_helper.c
-+++ b/net/ipv4/netfilter/nf_nat_helper.c
-@@ -16,6 +16,7 @@
- #include <linux/udp.h>
- #include <net/checksum.h>
- #include <net/tcp.h>
-+#include <net/route.h>
- 
- #include <linux/netfilter_ipv4.h>
- #include <net/netfilter/nf_conntrack.h>
-diff --git a/net/ipv4/syncookies.c b/net/ipv4/syncookies.c
-index 73ba989..19a1037 100644
---- a/net/ipv4/syncookies.c
-+++ b/net/ipv4/syncookies.c
-@@ -18,6 +18,7 @@
- #include <linux/cryptohash.h>
- #include <linux/kernel.h>
- #include <net/tcp.h>
-+#include <net/route.h>
- 
- /* Timestamps: lowest 9 bits store TCP options */
- #define TSBITS 9
-diff --git a/net/ipv6/af_inet6.c b/net/ipv6/af_inet6.c
-index 3c6aafb..f6645d2 100644
---- a/net/ipv6/af_inet6.c
-+++ b/net/ipv6/af_inet6.c
-@@ -52,6 +52,7 @@
- #include <net/ipip.h>
- #include <net/protocol.h>
- #include <net/inet_common.h>
-+#include <net/route.h>
- #include <net/transp_v6.h>
- #include <net/ip6_route.h>
- #include <net/addrconf.h>
+VSERVER patch has own (almost identical) implementation of this.
 -- 
 1.5.2.5
 
@@ -341,17 +267,16 @@ index 13e464f..2928618 100644
  #include <linux/in_route.h>
  #include <linux/rtnetlink.h>
  #include <linux/route.h>
-@@ -161,6 +161,10 @@ static inline int ip_route_connect(struct rtable **rp, __be32 dst,
- 
+@@ -161,6 +161,9 @@ static inline int ip_route_connect(struct rtable **rp, __be32 dst,
  	int err;
  	struct net *net = sock_net(sk);
+ 	struct nx_info *nx_info = current->nx_info;
 +
 +	if (inet_sk(sk)->transparent)
 +		fl.flags |= FLOWI_FLAG_ANYSRC;
-+
- 	if (!dst || !src) {
- 		err = __ip_route_output_key(net, rp, &fl);
- 		if (err)
+ 
+ 	if (sk)
+ 		nx_info = sk->sk_nx_info;
 -- 
 1.5.2.5
 
@@ -492,7 +417,7 @@ index 0e9bc12..58873ad 100644
  	arg.csumoffset = offsetof(struct tcphdr, check) / 2;
 +	arg.flags = (sk && inet_sk(sk)->transparent) ? IP_REPLY_ARG_NOSRCCHECK : 0;
  
- 	ip_send_reply(dev_net(skb->dst->dev)->ipv4.tcp_sock, skb,
+ 	ip_send_reply(skb->dst->dev->nd_net->ipv4.tcp_sock, skb,
  		      &arg, arg.iov[0].iov_len);
 @@ -608,7 +609,7 @@ static void tcp_v4_send_reset(struct sock *sk, struct sk_buff *skb)
  
@@ -796,9 +721,9 @@ index cacb9cb..9da59f3 100644
   * (C) 2002-2004 Netfilter Core Team <coreteam@netfilter.org>
   *
 @@ -24,6 +25,7 @@
+ #include <net/netfilter/nf_conntrack_l3proto.h>
  #include <net/netfilter/nf_conntrack_core.h>
  #include <net/netfilter/ipv4/nf_conntrack_ipv4.h>
- #include <net/netfilter/nf_nat_helper.h>
 +#include <net/netfilter/ipv4/nf_defrag_ipv4.h>
  
  int (*nf_nat_seq_adjust_hook)(struct sk_buff *skb,
@@ -1325,7 +1250,7 @@ index 0000000..fa33358
 +	}
 +#endif
 +
-+	sk = nf_tproxy_get_sock_v4(dev_net(skb->dev), iph->protocol,
++	sk = nf_tproxy_get_sock_v4(skb->dev->nd_net, iph->protocol,
 +				   iph->saddr, daddr,
 +				   hp->source, dport, in, false);
 +	if (sk != NULL) {
@@ -1518,7 +1443,7 @@ index 0000000..183f251
 +	if (hp == NULL)
 +		return NF_DROP;
 +
-+	sk = nf_tproxy_get_sock_v4(dev_net(skb->dev), iph->protocol,
++	sk = nf_tproxy_get_sock_v4(skb->dev->nd_net, iph->protocol,
 +				   iph->saddr, tgi->laddr ? tgi->laddr : iph->daddr,
 +				   hp->source, tgi->lport ? tgi->lport : hp->dest,
 +				   in, true);
@@ -1618,7 +1543,7 @@ index 58873ad..8937675 100644
 +		skb->sk = NULL;
 +	} else
 +#endif
- 	sk = __inet_lookup(dev_net(skb->dev), &tcp_hashinfo, iph->saddr,
+ 	sk = __inet_lookup(skb->dev->nd_net, &tcp_hashinfo, iph->saddr,
  			th->source, iph->daddr, th->dest, inet_iif(skb));
 +
  	if (!sk)
@@ -1655,7 +1580,7 @@ index 672d0d4..c29597c 100644
 +		skb->sk = NULL;
 +	} else
 +#endif
- 	sk = __udp4_lib_lookup(dev_net(skb->dev), iph->daddr, uh->dest,
+ 	sk = __udp4_lib_lookup(skb->dev->nd_net, iph->daddr, uh->dest,
  			iph->saddr, uh->source, skb->dev->ifindex, udptable);
  	if (sk == NULL) {
 @@ -1188,6 +1196,14 @@ int __udp4_lib_rcv(struct sk_buff *skb, struct hlist_head udptable[],
@@ -1670,7 +1595,7 @@ index 672d0d4..c29597c 100644
 +		skb->sk = NULL;
 +	} else
 +#endif
- 	sk = __udp4_lib_lookup(dev_net(skb->dev), saddr, uh->source, daddr,
+ 	sk = __udp4_lib_lookup(skb->dev->nd_net, saddr, uh->source, daddr,
  			uh->dest, inet_iif(skb), udptable);
  
 -- 
