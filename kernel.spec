@@ -108,11 +108,11 @@
 %endif
 
 %define		_basever		2.6.25
-%define		_postver		.3
+%define		_postver		.4
 %define		_prepatch		%{nil}
 %define		_pre_rc			%{nil}
 %define		_rc			%{nil}
-%define		_rel			0.4
+%define		_rel			0.1
 
 %define		_enable_debug_packages			0
 
@@ -160,7 +160,7 @@ Source90:	http://www.kernel.org/pub/linux/kernel/v2.6/testing/patch-%{_prepatch}
 %endif
 %if "%{_postver}" != "%{nil}"
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
-# Source1-md5:	49c56cf1394b2286033bb10c7cef7260
+# Source1-md5:	f12f43dd78b765f3d1402aa9d2170cf5
 %endif
 
 Source3:	kernel-autoconf.h
@@ -205,7 +205,7 @@ Patch2:		tahoe9xx-2.6.11.5.patch
 
 # ftp://ftp.openbios.org/pub/bootsplash/kernel/bootsplash-3.1.6-2.6.21.diff.gz
 Patch3:		linux-2.6-bootsplash.patch
-# based on http://dev.gentoo.org/~spock/projects/fbcondecor/archive/fbcondecor-0.9.4-2.6.24-rc7.patch
+# http://dev.gentoo.org/~spock/projects/fbcondecor/archive/fbcondecor-0.9.4-2.6.25-rc6.patch
 Patch4:		kernel-fbcondecor.patch
 
 # based on http://mesh.dl.sourceforge.net/sourceforge/squashfs/squashfs3.3.tgz
@@ -882,7 +882,9 @@ install -m 755 %{SOURCE6} .
 #%endif
 
 # tproxy
+%if %{without rescue}
 %patch42 -p1
+%endif
 
 # forcedeth:
 %patch130 -p1
