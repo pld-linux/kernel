@@ -882,7 +882,7 @@ install -m 755 %{SOURCE6} .
 #%endif
 
 # tproxy
-%if %{without rescue}
+%if %{without rescuecd}
 %patch42 -p1
 %endif
 
