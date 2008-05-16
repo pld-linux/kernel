@@ -16892,7 +16892,7 @@ diff -NurpP --minimal linux-2.6.25/kernel/sched_fair.c linux-2.6.25-vs2.3.0.34.9
 diff -NurpP --minimal linux-2.6.25/kernel/sched_hard.h linux-2.6.25-vs2.3.0.34.9/kernel/sched_hard.h
 --- linux-2.6.25/kernel/sched_hard.h	1969-12-31 19:00:00.000000000 -0500
 +++ linux-2.6.25-vs2.3.0.34.9/kernel/sched_hard.h	2008-04-19 15:14:52.000000000 -0400
-@@ -0,0 +1,324 @@
+@@ -0,0 +1,326 @@
 +
 +#ifdef CONFIG_VSERVER_IDLELIMIT
 +
@@ -16935,10 +16935,12 @@ diff -NurpP --minimal linux-2.6.25/kernel/sched_hard.h linux-2.6.25-vs2.3.0.34.9
 +static inline
 +int vx_try_skip(struct rq *rq, int cpu)
 +{
++	/* nothing on hold, no point in skipping */
++	if (list_empty(&rq->hold_queue))
++		return 0;
++
 +	/* artificially advance time */
 +	if (rq->idle_skip > 0) {
-+		vxdprintk(list_empty(&rq->hold_queue),
-+			"hold queue empty on cpu %d", cpu);
 +		rq->idle_time += rq->idle_skip;
 +		vxm_idle_skip(rq, cpu);
 +		return 1;
@@ -24496,7 +24498,7 @@ diff -NurpP --minimal linux-2.6.25/kernel/vserver/proc.c linux-2.6.25-vs2.3.0.34
 diff -NurpP --minimal linux-2.6.25/kernel/vserver/sched.c linux-2.6.25-vs2.3.0.34.9/kernel/vserver/sched.c
 --- linux-2.6.25/kernel/vserver/sched.c	1969-12-31 19:00:00.000000000 -0500
 +++ linux-2.6.25-vs2.3.0.34.9/kernel/vserver/sched.c	2008-04-29 18:40:09.000000000 -0400
-@@ -0,0 +1,413 @@
+@@ -0,0 +1,415 @@
 +/*
 + *  linux/kernel/vserver/sched.c
 + *
@@ -24590,7 +24592,7 @@ diff -NurpP --minimal linux-2.6.25/kernel/vserver/sched.c linux-2.6.25-vs2.3.0.3
 +		vxd_check_range(delta_min[0], 0, sched_pc->interval[0]);
 +#endif
 +		/* advance time */
-+		sched_pc->norm_time += delta;
++		sched_pc->norm_time += integral;
 +
 +		/* add tokens */
 +		sched_pc->tokens += tokens;
@@ -24660,11 +24662,12 @@ diff -NurpP --minimal linux-2.6.25/kernel/vserver/sched.c linux-2.6.25-vs2.3.0.3
 +	/* next interval? */
 +	if (!sched_pc->fill_rate[0])
 +		delta_min[0] = HZ;
-+	else if (tokens > sched_pc->fill_rate[0])
-+		delta_min[0] += sched_pc->interval[0] *
-+			tokens / sched_pc->fill_rate[0];
-+	else
++	else {
 +		delta_min[0] = sched_pc->interval[0] - delta_min[0];
++		if (tokens > sched_pc->fill_rate[0])
++			delta_min[0] += sched_pc->interval[0] *
++				tokens / sched_pc->fill_rate[0];
++	}
 +	vxd_check_range(delta_min[0], 0, INT_MAX);
 +
 +#ifdef	CONFIG_VSERVER_IDLETIME
@@ -24674,11 +24677,12 @@ diff -NurpP --minimal linux-2.6.25/kernel/vserver/sched.c linux-2.6.25-vs2.3.0.3
 +	/* next interval? */
 +	if (!sched_pc->fill_rate[1])
 +		delta_min[1] = HZ;
-+	else if (tokens > sched_pc->fill_rate[1])
-+		delta_min[1] += sched_pc->interval[1] *
-+			tokens / sched_pc->fill_rate[1];
-+	else
++	else {
 +		delta_min[1] = sched_pc->interval[1] - delta_min[1];
++		if (tokens > sched_pc->fill_rate[1])
++			delta_min[1] += sched_pc->interval[1] *
++				tokens / sched_pc->fill_rate[1];
++	}
 +	vxd_check_range(delta_min[1], 0, INT_MAX);
 +
 +	return -2;
