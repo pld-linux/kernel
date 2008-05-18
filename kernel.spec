@@ -243,8 +243,8 @@ Patch38:	kernel-ipt_account.patch
 # based on http://www.intra2net.com/de/produkte/opensource/ipt_account/pom-ng-ipt_ACCOUNT-1.12.tgz
 Patch39:	kernel-ipt_ACCOUNT.patch
 
-# kernel-2.6.25-layer7-2.18.patch from 
-# http://switch.dl.sourceforge.net/sourceforge/l7-filter/netfilter-layer7-v2.18.tar.gz 
+# kernel-2.6.25-layer7-2.18.patch from
+# http://switch.dl.sourceforge.net/sourceforge/l7-filter/netfilter-layer7-v2.18.tar.gz
 Patch40:	kernel-layer7.patch
 
 # http://www.ssi.bg/~ja/nfct/ipvs-nfct-2.6.25-1.diff
@@ -417,6 +417,9 @@ Conflicts:	util-linux < 2.10o
 Conflicts:	xfsprogs < 2.6.0
 %if %{with xen0} || %{with xenU} || %{with pae}
 ExclusiveArch:	%{ix86}
+%if %{with pae}
+ExcludeArch:	i386 i486 i586
+%endif
 %else
 ExclusiveArch:	%{ix86} %{x8664} alpha arm ia64 ppc ppc64 sparc sparc64
 %endif
@@ -465,7 +468,7 @@ BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 	%define	CrossOpts ARCH=%{_target_base_arch} CC="%{__cc}"
 	%define	DepMod /sbin/depmod
 	%endif
-	
+
 	%ifarch ppc ppc64
 	%define CrossOpts ARCH=powerpc CROSS_COMPILE=%{_target_cpu}-pld-linux-
 	%endif
@@ -644,8 +647,8 @@ building kernel modules.
 
 %description headers -l de.UTF-8
 Dies sind die C Header Dateien für den Linux-Kernel, die definierte
-Strukturen und Konstante beinhalten, die beim rekompilieren des Kernels
-oder bei Kernel Modul kompilationen gebraucht werden.
+Strukturen und Konstante beinhalten, die beim rekompilieren des
+Kernels oder bei Kernel Modul kompilationen gebraucht werden.
 
 %description headers -l pl.UTF-8
 Pakiet zawiera pliki nagłówkowe jądra, niezbędne do rekompilacji jądra
