@@ -240,10 +240,11 @@ Patch37:	kernel-owner-xid.patch
 # based on http://www.svn.barbara.eu.org/ipt_account/attachment/wiki/Software/ipt_account-0.1.21-20070804164729.tar.gz?format=raw
 Patch38:	kernel-ipt_account.patch
 
-# based on http://www.intra2net.com/de/produkte/opensource/ipt_account/pom-ng-ipt_ACCOUNT-1.10.tgz
+# based on http://www.intra2net.com/de/produkte/opensource/ipt_account/pom-ng-ipt_ACCOUNT-1.12.tgz
 Patch39:	kernel-ipt_ACCOUNT.patch
 
-# netfilter-layer7-v2.13.tar.gz from http://l7-filter.sf.net/
+# kernel-2.6.25-layer7-2.18.patch from 
+# http://switch.dl.sourceforge.net/sourceforge/l7-filter/netfilter-layer7-v2.18.tar.gz 
 Patch40:	kernel-layer7.patch
 
 # http://www.ssi.bg/~ja/nfct/ipvs-nfct-2.6.25-1.diff
@@ -265,8 +266,8 @@ Patch50:	kernel-imq.patch
 # now based on http://www.kernel.org/pub/linux/kernel/people/edward/reiser4/reiser4-for-2.6/reiser4-for-2.6.25.patch.bz2
 Patch51:	kernel-reiser4.patch
 
-# wrr http://www.zz9.dk/patches/wrr-linux-070717-2.6.22.patch.gz
-Patch52:	wrr-linux-070717-2.6.22.patch
+# http://www.zz9.dk/patches/wrr-linux-071203-2.6.25.patch.gz
+Patch52:	kernel-wrr.patch
 
 # esfq from http://fatooh.org/esfq-2.6/current/esfq-kernel.patch
 Patch53:	esfq-kernel.patch
