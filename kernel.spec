@@ -103,7 +103,7 @@
 %define		_prepatch		%{nil}
 %define		_pre_rc			%{nil}
 %define		_rc			%{nil}
-%define		_rel			7
+%define		_rel			8
 
 %define		_enable_debug_packages			0
 
@@ -328,8 +328,8 @@ Patch130:	linux-2.6-forcedeth-WON.patch
 # add tty ioctl to figure physical device of the console. used by showconsole.spec (blogd)
 Patch131:	kernel-TIOCGDEV.patch
 
-# http://download.filesystems.org/unionfs/unionfs-2.1/unionfs-2.1.4_for_2.6.22.6.diff.gz
-Patch140:	linux-2.6-unionfs-2.1.1.patch
+# http://download.filesystems.org/unionfs/unionfs-2.x/unionfs-2.3.3_for_2.6.22.19.diff.gz
+Patch140:	kernel-unionfs.patch
 Patch141:	kernel-unionfs-vserver.patch
 
 
@@ -504,20 +504,24 @@ BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 	%define	DepMod /sbin/depmod
 %endif
 
+%define __features Netfilter module dated: %{netfilter_snap}\
+%{?with_abi:Linux ABI support - enabled}\
+%{?with_grsec_full:Grsecurity full support - enabled}\
+%{?with_pax:PaX support - enabled}\
+%{?with_xen0:Xen 0 - enabled}\
+%{?with_xenU:Xen U - enabled}\
+%{?with_fbsplash:Fbsplash - enabled}\
+%{?with_vesafb_tng:VesaFB New generation - enabled}\
+%{?with_nfsroot:Root on NFS - enabled}
+
+%define Features %(echo "%{__features}" | sed '/^$/d')
+
 %description
 This package contains the Linux kernel that is used to boot and run
 your system. It contains few device drivers for specific hardware.
 Most hardware is instead supported by modules loaded after booting.
 
-Netfilter module dated: %{netfilter_snap}
-%{?with_abi:Linux ABI support - enabled}
-%{?with_grsec_full:Grsecurity full support - enabled}
-%{?with_pax:PaX support - enabled}
-%{?with_xen0:Xen 0 - enabled}
-%{?with_xenU:Xen U - enabled}
-%{?with_fbsplash:Fbsplash - enabled }
-%{?with_vesafb_tng:VesaFB New generation - enabled}
-%{?with_nfsroot:Root on NFS - enabled}
+%{Features}
 
 %description -l de.UTF-8
 Das Kernel-Paket enthält den Linux-Kernel (vmlinuz), den Kern des
@@ -525,15 +529,7 @@ Linux-Betriebssystems. Der Kernel ist für grundliegende
 Systemfunktionen verantwortlich: Speicherreservierung,
 Prozeß-Management, Geräte Ein- und Ausgaben, usw.
 
-Netfilter module dated: %{netfilter_snap}
-%{?with_abi:Linux ABI support - enabled}
-%{?with_grsec_full:Grsecurity full support - enabled}
-%{?with_pax:PaX support - enabled}
-%{?with_xen0:Xen 0 - enabled}
-%{?with_xenU:Xen U - enabled}
-%{?with_fbsplash:Fbsplash - enabled }
-%{?with_vesafb_tng:VesaFB New generation - enabled}
-%{?with_nfsroot:Root on NFS - enabled}
+%{Features}
 
 %description -l fr.UTF-8
 Le package kernel contient le kernel linux (vmlinuz), la partie
@@ -541,30 +537,14 @@ centrale d'un système d'exploitation Linux. Le noyau traite les
 fonctions basiques d'un système d'exploitation: allocation mémoire,
 allocation de process, entrée/sortie de peripheriques, etc.
 
-Netfilter module dated: %{netfilter_snap}
-%{?with_abi:Linux ABI support - enabled}
-%{?with_grsec_full:Grsecurity full support - enabled}
-%{?with_pax:PaX support - enabled}
-%{?with_xen0:Xen 0 - enabled}
-%{?with_xenU:Xen U - enabled}
-%{?with_fbsplash:Fbsplash - enabled }
-%{?with_vesafb_tng:VesaFB New generation - enabled}
-%{?with_nfsroot:Root on NFS - enabled}
+%{Features}
 
 %description -l pl.UTF-8
 Pakiet zawiera jądro Linuksa niezbędne do prawidłowego działania
 Twojego komputera. Zawiera w sobie sterowniki do sprzętu znajdującego
 się w komputerze, takiego jak sterowniki dysków itp.
 
-Netfilter module dated: %{netfilter_snap}
-%{?with_abi:Linux ABI support - enabled}
-%{?with_grsec_full:Grsecurity full support - enabled}
-%{?with_pax:PaX support - enabled}
-%{?with_xen0:Xen 0 - enabled}
-%{?with_xenU:Xen U - enabled}
-%{?with_fbsplash:Fbsplash - enabled }
-%{?with_vesafb_tng:VesaFB New generation - enabled}
-%{?with_nfsroot:Root on NFS - enabled}
+%{Features}
 
 %package vmlinux
 Summary:	vmlinux - uncompressed kernel image
