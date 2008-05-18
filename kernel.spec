@@ -415,7 +415,7 @@ Conflicts:	reiserfsprogs < 3.6.3
 Conflicts:	udev < 1:071
 Conflicts:	util-linux < 2.10o
 Conflicts:	xfsprogs < 2.6.0
-%if %{with xen0} || %{with xenU}
+%if %{with xen0} || %{with xenU} || %{with pae}
 ExclusiveArch:	%{ix86}
 %else
 ExclusiveArch:	%{ix86} %{x8664} alpha arm ia64 ppc ppc64 sparc sparc64
