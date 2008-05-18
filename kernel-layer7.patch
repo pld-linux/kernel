@@ -1,6 +1,6 @@
---- linux-2.6.22-rc7/net/netfilter/Kconfig	2007-07-01 14:54:24.000000000 -0500
-+++ linux-2.6.22-rc7-layer7/net/netfilter/Kconfig	2007-07-03 03:21:32.000000000 -0500
-@@ -603,6 +603,26 @@ config NETFILTER_XT_MATCH_STATE
+--- linux-2.6.25/net/netfilter/Kconfig	2008-04-16 21:49:44.000000000 -0500
++++ linux-2.6.25-layer7/net/netfilter/Kconfig	2008-04-29 00:40:01.000000000 -0500
+@@ -735,6 +735,27 @@ config NETFILTER_XT_MATCH_STATE
  
  	  To compile it as a module, choose M here.  If unsure, say N.
  
@@ -8,6 +8,7 @@
 +	tristate '"layer7" match support'
 +	depends on NETFILTER_XTABLES
 +	depends on EXPERIMENTAL && (IP_NF_CONNTRACK || NF_CONNTRACK)
++       depends on NF_CT_ACCT
 +	help
 +	  Say Y if you want to be able to classify connections (and their
 +	  packets) based on regular expression matching of their application
@@ -27,13 +28,19 @@
  config NETFILTER_XT_MATCH_STATISTIC
  	tristate '"statistic" match support'
  	depends on NETFILTER_XTABLES
---- linux-2.6.22-rc7/net/netfilter/Makefile	2007-07-01 14:54:24.000000000 -0500
-+++ linux-2.6.22-rc7-layer7/net/netfilter/Makefile	2007-07-03 01:32:35.000000000 -0500
-@@ -0,0 +0,1 @@
+--- linux-2.6.25/net/netfilter/Makefile	2008-04-16 21:49:44.000000000 -0500
++++ linux-2.6.25-layer7/net/netfilter/Makefile	2008-04-29 00:40:01.000000000 -0500
+@@ -77,6 +77,7 @@ obj-$(CONFIG_NETFILTER_XT_MATCH_RATEEST)
+ obj-$(CONFIG_NETFILTER_XT_MATCH_REALM) += xt_realm.o
+ obj-$(CONFIG_NETFILTER_XT_MATCH_SCTP) += xt_sctp.o
+ obj-$(CONFIG_NETFILTER_XT_MATCH_STATE) += xt_state.o
 +obj-$(CONFIG_NETFILTER_XT_MATCH_LAYER7) += xt_layer7.o
---- linux-2.6.22-rc7/net/netfilter/xt_layer7.c	1969-12-31 18:00:00.000000000 -0600
-+++ linux-2.6.22-rc7-layer7/net/netfilter/xt_layer7.c	2007-07-03 07:57:38.000000000 -0500
-@@ -0,0 +1,626 @@
+ obj-$(CONFIG_NETFILTER_XT_MATCH_STATISTIC) += xt_statistic.o
+ obj-$(CONFIG_NETFILTER_XT_MATCH_STRING) += xt_string.o
+ obj-$(CONFIG_NETFILTER_XT_MATCH_TCPMSS) += xt_tcpmss.o
+--- linux-2.6.25/net/netfilter/xt_layer7.c	1969-12-31 18:00:00.000000000 -0600
++++ linux-2.6.25-layer7/net/netfilter/xt_layer7.c	2008-04-29 00:40:01.000000000 -0500
+@@ -0,0 +1,634 @@
 +/*
 +  Kernel module to match application layer (OSI layer 7) data in connections.
 +
@@ -53,6 +60,7 @@
 +*/
 +
 +#include <linux/spinlock.h>
++#include <linux/version.h>
 +#include <net/ip.h>
 +#include <net/tcp.h>
 +#include <linux/module.h>
@@ -71,7 +79,7 @@
 +MODULE_AUTHOR("Matthew Strait <quadong@users.sf.net>, Ethan Sommer <sommere@users.sf.net>");
 +MODULE_DESCRIPTION("iptables application layer match module");
 +MODULE_ALIAS("ipt_layer7");
-+MODULE_VERSION("2.0");
++MODULE_VERSION("2.17");
 +
 +static int maxdatalen = 2048; // this is the default
 +module_param(maxdatalen, int, 0444);
@@ -618,14 +626,22 @@
 +
 +static void layer7_cleanup_proc(void)
 +{
++#if LINUX_VERSION_CODE <= KERNEL_VERSION(2,6,23)
++	remove_proc_entry("layer7_numpackets", proc_net);
++#else
 +	remove_proc_entry("layer7_numpackets", init_net.proc_net);
++#endif
 +}
 +
 +/* register the proc file */
 +static void layer7_init_proc(void)
 +{
 +	struct proc_dir_entry* entry;
++#if LINUX_VERSION_CODE <= KERNEL_VERSION(2,6,23)
++	entry = create_proc_entry("layer7_numpackets", 0644, proc_net);
++#else
 +	entry = create_proc_entry("layer7_numpackets", 0644, init_net.proc_net);
++#endif
 +	entry->read_proc = layer7_read_proc;
 +	entry->write_proc = layer7_write_proc;
 +}
@@ -659,9 +675,8 @@
 +
 +module_init(xt_layer7_init);
 +module_exit(xt_layer7_fini);
-+
---- linux-2.6.22-rc7/net/netfilter/regexp/regexp.c	1969-12-31 18:00:00.000000000 -0600
-+++ linux-2.6.22-rc7-layer7/net/netfilter/regexp/regexp.c	2007-07-03 01:32:35.000000000 -0500
+--- linux-2.6.25/net/netfilter/regexp/regexp.c	1969-12-31 18:00:00.000000000 -0600
++++ linux-2.6.25-layer7/net/netfilter/regexp/regexp.c	2008-04-29 00:40:01.000000000 -0500
 @@ -0,0 +1,1197 @@
 +/*
 + * regcomp and regexec -- regsub and regerror are elsewhere
@@ -1860,8 +1875,8 @@
 +#endif
 +
 +
---- linux-2.6.22-rc7/net/netfilter/regexp/regexp.h	1969-12-31 18:00:00.000000000 -0600
-+++ linux-2.6.22-rc7-layer7/net/netfilter/regexp/regexp.h	2007-07-03 01:32:35.000000000 -0500
+--- linux-2.6.25/net/netfilter/regexp/regexp.h	1969-12-31 18:00:00.000000000 -0600
++++ linux-2.6.25-layer7/net/netfilter/regexp/regexp.h	2008-04-29 00:40:01.000000000 -0500
 @@ -0,0 +1,41 @@
 +/*
 + * Definitions etc. for regexp(3) routines.
@@ -1904,16 +1919,16 @@
 +void regerror(char *s);
 +
 +#endif
---- linux-2.6.22-rc7/net/netfilter/regexp/regmagic.h	1969-12-31 18:00:00.000000000 -0600
-+++ linux-2.6.22-rc7-layer7/net/netfilter/regexp/regmagic.h	2007-07-03 01:32:35.000000000 -0500
+--- linux-2.6.25/net/netfilter/regexp/regmagic.h	1969-12-31 18:00:00.000000000 -0600
++++ linux-2.6.25-layer7/net/netfilter/regexp/regmagic.h	2008-04-29 00:40:01.000000000 -0500
 @@ -0,0 +1,5 @@
 +/*
 + * The first byte of the regexp internal "program" is actually this magic
 + * number; the start node begins in the second byte.
 + */
 +#define	MAGIC	0234
---- linux-2.6.22-rc7/net/netfilter/regexp/regsub.c	1969-12-31 18:00:00.000000000 -0600
-+++ linux-2.6.22-rc7-layer7/net/netfilter/regexp/regsub.c	2007-07-03 01:32:35.000000000 -0500
+--- linux-2.6.25/net/netfilter/regexp/regsub.c	1969-12-31 18:00:00.000000000 -0600
++++ linux-2.6.25-layer7/net/netfilter/regexp/regsub.c	2008-04-29 00:40:01.000000000 -0500
 @@ -0,0 +1,95 @@
 +/*
 + * regsub
@@ -2010,9 +2025,9 @@
 +	}
 +	*dst++ = '\0';
 +}
---- linux-2.6.22-rc7/net/netfilter/nf_conntrack_core.c	2007-07-01 14:54:24.000000000 -0500
-+++ linux-2.6.22-rc7-layer7/net/netfilter/nf_conntrack_core.c	2007-07-03 01:32:35.000000000 -0500
-@@ -330,6 +330,14 @@ destroy_conntrack(struct nf_conntrack *n
+--- linux-2.6.25/net/netfilter/nf_conntrack_core.c	2008-04-16 21:49:44.000000000 -0500
++++ linux-2.6.25-layer7/net/netfilter/nf_conntrack_core.c	2008-04-29 00:40:01.000000000 -0500
+@@ -210,6 +210,14 @@ destroy_conntrack(struct nf_conntrack *n
  	 * too. */
  	nf_ct_remove_expectations(ct);
  
@@ -2026,24 +2041,25 @@
 +
  	/* We overload first tuple to link into unconfirmed list. */
  	if (!nf_ct_is_confirmed(ct)) {
- 		BUG_ON(list_empty(&ct->tuplehash[IP_CT_DIR_ORIGINAL].list));
---- linux-2.6.22-rc7/net/netfilter/nf_conntrack_standalone.c	2007-07-01 14:54:24.000000000 -0500
-+++ linux-2.6.22-rc7-layer7/net/netfilter/nf_conntrack_standalone.c	2007-07-03 01:32:35.000000000 -0500
-@@ -184,6 +184,11 @@ static int ct_seq_show(struct seq_file *
+ 		BUG_ON(hlist_unhashed(&ct->tuplehash[IP_CT_DIR_ORIGINAL].hnode));
+--- linux-2.6.25/net/netfilter/nf_conntrack_standalone.c	2008-04-16 21:49:44.000000000 -0500
++++ linux-2.6.25-layer7/net/netfilter/nf_conntrack_standalone.c	2008-04-29 00:43:17.000000000 -0500
+@@ -181,6 +181,12 @@ static int ct_seq_show(struct seq_file *
  		return -ENOSPC;
  #endif
  
 +#if defined(CONFIG_NETFILTER_XT_MATCH_LAYER7) || defined(CONFIG_NETFILTER_XT_MATCH_LAYER7_MODULE)
-+	if(ct->layer7.app_proto)
-+		if(seq_printf(s, "l7proto=%s ",ct->layer7.app_proto))
-+			return -ENOSPC;
++	if(ct->layer7.app_proto &&
++           seq_printf(s, "l7proto=%s ", ct->layer7.app_proto))
++		return -ENOSPC;
 +#endif
++
  	if (seq_printf(s, "use=%u\n", atomic_read(&ct->ct_general.use)))
  		return -ENOSPC;
- 	
---- linux-2.6.22-rc7/include/net/netfilter/nf_conntrack.h	2007-07-01 14:54:24.000000000 -0500
-+++ linux-2.6.22-rc7-layer7/include/net/netfilter/nf_conntrack.h	2007-07-03 01:32:35.000000000 -0500
-@@ -128,6 +128,22 @@ struct nf_conn
+ 
+--- linux-2.6.25/include/net/netfilter/nf_conntrack.h	2008-04-16 21:49:44.000000000 -0500
++++ linux-2.6.25-layer7/include/net/netfilter/nf_conntrack.h	2008-04-29 00:40:01.000000000 -0500
+@@ -124,6 +124,22 @@ struct nf_conn
  	u_int32_t secmark;
  #endif
  
@@ -2066,8 +2082,8 @@
  	/* Storage reserved for other modules: */
  	union nf_conntrack_proto proto;
  
---- linux-2.6.22-rc7/include/linux/netfilter/xt_layer7.h	1969-12-31 18:00:00.000000000 -0600
-+++ linux-2.6.22-rc7-layer7/include/linux/netfilter/xt_layer7.h	2007-07-03 07:48:19.000000000 -0500
+--- linux-2.6.25/include/linux/netfilter/xt_layer7.h	1969-12-31 18:00:00.000000000 -0600
++++ linux-2.6.25-layer7/include/linux/netfilter/xt_layer7.h	2008-04-29 00:40:01.000000000 -0500
 @@ -0,0 +1,13 @@
 +#ifndef _XT_LAYER7_H
 +#define _XT_LAYER7_H
