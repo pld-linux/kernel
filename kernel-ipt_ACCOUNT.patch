@@ -1,9 +1,9 @@
-diff -uNrp linux/include/linux/netfilter_ipv4/ipt_ACCOUNT.h linux-2.6/include/linux/netfilter_ipv4/ipt_ACCOUNT.h
---- linux/include/linux/netfilter_ipv4/ipt_ACCOUNT.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux/include/linux/netfilter_ipv4/ipt_ACCOUNT.h	2006-10-26 12:24:51.000000000 +0200
+diff -uprN linux1/include/linux/netfilter_ipv4/ipt_ACCOUNT.h linux-2.6/include/linux/netfilter_ipv4/ipt_ACCOUNT.h
+--- linux1/include/linux/netfilter_ipv4/ipt_ACCOUNT.h	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6/include/linux/netfilter_ipv4/ipt_ACCOUNT.h	2007-12-14 10:42:16.000000000 +0100
 @@ -0,0 +1,100 @@
 +/***************************************************************************
-+ *   Copyright (C) 2004-2005 by Intra2net AG                               *
++ *   Copyright (C) 2004-2006 by Intra2net AG                               *
 + *   opensource@intra2net.com                                              *
 + *                                                                         *
 + *   This program is free software; you can redistribute it and/or modify  *
@@ -102,16 +102,16 @@ diff -uNrp linux/include/linux/netfilter_ipv4/ipt_ACCOUNT.h linux-2.6/include/li
 +};
 +
 +#endif /*_IPT_ACCOUNT_H*/
-diff -uNrp linux/net/ipv4/netfilter/ipt_ACCOUNT.c linux-2.6/net/ipv4/netfilter/ipt_ACCOUNT.c
---- linux/net/ipv4/netfilter/ipt_ACCOUNT.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/net/ipv4/netfilter/ipt_ACCOUNT.c	2007-07-25 15:07:46.000000000 +0200
-@@ -0,0 +1,1159 @@
+diff -uprN linux1/net/ipv4/netfilter/ipt_ACCOUNT.c linux-2.6/net/ipv4/netfilter/ipt_ACCOUNT.c
+--- linux1/net/ipv4/netfilter/ipt_ACCOUNT.c	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6/net/ipv4/netfilter/ipt_ACCOUNT.c	2008-03-10 11:39:42.000000000 +0100
+@@ -0,0 +1,1193 @@
 +/***************************************************************************
 + *   This is a module which is used for counting packets.                  *
 + *   See http://www.intra2net.com/opensource/ipt_account                   *
 + *   for further information                                               *
 + *                                                                         * 
-+ *   Copyright (C) 2004-2006 by Intra2net AG                               *
++ *   Copyright (C) 2004-2007 by Intra2net AG                               *
 + *   opensource@intra2net.com                                              *
 + *                                                                         *
 + *   This program is free software; you can redistribute it and/or modify  *
@@ -157,6 +157,18 @@ diff -uNrp linux/net/ipv4/netfilter/ipt_ACCOUNT.c linux-2.6/net/ipv4/netfilter/i
 +/* Mutex (semaphore) used for manipulating userspace handles/snapshot data */
 +static struct semaphore ipt_acc_userspace_mutex;
 +
++/* Allocates a page and clears it */
++static void *ipt_acc_zalloc_page(void)
++{
++    // Don't use get_zeroed_page until it's fixed in the kernel.
++    // get_zeroed_page(GFP_ATOMIC)
++    void *mem = (void *)__get_free_page(GFP_ATOMIC);
++    if (mem) {
++        memset (mem, 0, PAGE_SIZE);
++    }
++
++    return mem;
++}
 +
 +/* Recursive free of all data structures */
 +static void ipt_acc_data_free(void *data, unsigned char depth)
@@ -279,7 +291,7 @@ diff -uNrp linux/net/ipv4/netfilter/ipt_ACCOUNT.c linux-2.6/net/ipv4/netfilter/i
 +
 +            ipt_acc_tables[i].refcount++;
 +            if ((ipt_acc_tables[i].data
-+                = (void *)get_zeroed_page(GFP_ATOMIC)) == NULL) {
++                = ipt_acc_zalloc_page()) == NULL) {
 +                printk("ACCOUNT: out of memory for data of table: %s\n", name);
 +                memset(&ipt_acc_tables[i], 0, 
 +                       sizeof(struct ipt_acc_table));
@@ -296,7 +308,11 @@ diff -uNrp linux/net/ipv4/netfilter/ipt_ACCOUNT.c linux-2.6/net/ipv4/netfilter/i
 +    return -1;
 +}
 +
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,23)
++static bool ipt_acc_checkentry(const char *tablename,
++#else
 +static int ipt_acc_checkentry(const char *tablename,
++#endif
 +#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,16)
 +                              const void *e,
 +#else
@@ -329,13 +345,21 @@ diff -uNrp linux/net/ipv4/netfilter/ipt_ACCOUNT.c linux-2.6/net/ipv4/netfilter/i
 +
 +    if (table_nr == -1) {
 +        printk("ACCOUNT: Table insert problem. Aborting\n");
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,23)
++        return false;
++#else
 +        return 0;
++#endif
 +    }
 +    /* Table nr caching so we don't have to do an extra string compare 
 +       for every packet */
 +    info->table_nr = table_nr;
 +
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,23)
++    return true;
++#else
 +    return 1;
++#endif
 +}
 +
 +static void ipt_acc_destroy(
@@ -481,7 +505,7 @@ diff -uNrp linux/net/ipv4/netfilter/ipt_ACCOUNT.c linux-2.6/net/ipv4/netfilter/i
 +
 +        /* Do we need to create a new mask_24 bucket? */
 +        if (!mask_16->mask_24[slot] && (mask_16->mask_24[slot] = 
-+             (void *)get_zeroed_page(GFP_ATOMIC)) == NULL) {
++             ipt_acc_zalloc_page()) == NULL) {
 +            printk("ACCOUNT: Can't process packet because out of memory!\n");
 +            return;
 +        }
@@ -497,7 +521,7 @@ diff -uNrp linux/net/ipv4/netfilter/ipt_ACCOUNT.c linux-2.6/net/ipv4/netfilter/i
 +
 +        /* Do we need to create a new mask_24 bucket? */
 +        if (!mask_16->mask_24[slot] && (mask_16->mask_24[slot] 
-+            = (void *)get_zeroed_page(GFP_ATOMIC)) == NULL) {
++            = ipt_acc_zalloc_page()) == NULL) {
 +            printk("ACCOUT: Can't process packet because out of memory!\n");
 +            return;
 +        }
@@ -519,7 +543,7 @@ diff -uNrp linux/net/ipv4/netfilter/ipt_ACCOUNT.c linux-2.6/net/ipv4/netfilter/i
 +
 +        /* Do we need to create a new mask_24 bucket? */
 +        if (!mask_8->mask_16[slot] && (mask_8->mask_16[slot] 
-+            = (void *)get_zeroed_page(GFP_ATOMIC)) == NULL) {
++            = ipt_acc_zalloc_page()) == NULL) {
 +            printk("ACCOUNT: Can't process packet because out of memory!\n");
 +            return;
 +        }
@@ -535,7 +559,7 @@ diff -uNrp linux/net/ipv4/netfilter/ipt_ACCOUNT.c linux-2.6/net/ipv4/netfilter/i
 +
 +        /* Do we need to create a new mask_24 bucket? */
 +        if (!mask_8->mask_16[slot] && (mask_8->mask_16[slot] 
-+            = (void *)get_zeroed_page(GFP_ATOMIC)) == NULL) {
++            = ipt_acc_zalloc_page()) == NULL) {
 +            printk("ACCOUNT: Can't process packet because out of memory!\n");
 +            return;
 +        }
@@ -545,7 +569,11 @@ diff -uNrp linux/net/ipv4/netfilter/ipt_ACCOUNT.c linux-2.6/net/ipv4/netfilter/i
 +    }
 +}
 +
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,24)
++static unsigned int ipt_acc_target(struct sk_buff *skb,
++#else
 +static unsigned int ipt_acc_target(struct sk_buff **pskb,
++#endif
 +                                   const struct net_device *in,
 +                                   const struct net_device *out,
 +                                   unsigned int hooknum,
@@ -561,6 +589,11 @@ diff -uNrp linux/net/ipv4/netfilter/ipt_ACCOUNT.c linux-2.6/net/ipv4/netfilter/i
 +{
 +    const struct ipt_acc_info *info = 
 +        (const struct ipt_acc_info *)targinfo;
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,24)
++    u_int32_t src_ip = ip_hdr(skb)->saddr;
++    u_int32_t dst_ip = ip_hdr(skb)->daddr;
++    u_int32_t size = ntohs(ip_hdr(skb)->tot_len);
++#else
 +#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,22)
 +    u_int32_t src_ip = ip_hdr(*pskb)->saddr;
 +    u_int32_t dst_ip = ip_hdr(*pskb)->daddr;
@@ -569,6 +602,7 @@ diff -uNrp linux/net/ipv4/netfilter/ipt_ACCOUNT.c linux-2.6/net/ipv4/netfilter/i
 +    u_int32_t src_ip = (*pskb)->nh.iph->saddr;
 +    u_int32_t dst_ip = (*pskb)->nh.iph->daddr;
 +    u_int32_t size = ntohs((*pskb)->nh.iph->tot_len);
++#endif
 +#endif
 +
 +    spin_lock_bh(&ipt_acc_lock);
@@ -699,7 +733,7 @@ diff -uNrp linux/net/ipv4/netfilter/ipt_ACCOUNT.c linux-2.6/net/ipv4/netfilter/i
 +    dest->itemcount = ipt_acc_tables[table_nr].itemcount;
 +
 +    /* allocate "root" table */
-+    if ((dest->data = (void*)get_zeroed_page(GFP_ATOMIC)) == NULL) {
++    if ((dest->data = ipt_acc_zalloc_page()) == NULL) {
 +        printk("ACCOUNT: out of memory for root table "
 +               "in ipt_acc_handle_prepare_read()\n");
 +        return -1;
@@ -721,7 +755,7 @@ diff -uNrp linux/net/ipv4/netfilter/ipt_ACCOUNT.c linux-2.6/net/ipv4/netfilter/i
 +        for (b = 0; b <= 255; b++) {
 +            if (src_16->mask_24[b]) {
 +                if ((network_16->mask_24[b] = 
-+                     (void*)get_zeroed_page(GFP_ATOMIC)) == NULL) {
++                     ipt_acc_zalloc_page()) == NULL) {
 +                    printk("ACCOUNT: out of memory during copy of 16 bit "
 +                           "network in ipt_acc_handle_prepare_read()\n");
 +                    ipt_acc_data_free(dest->data, depth);
@@ -743,7 +777,7 @@ diff -uNrp linux/net/ipv4/netfilter/ipt_ACCOUNT.c linux-2.6/net/ipv4/netfilter/i
 +        for (a = 0; a <= 255; a++) {
 +            if (src_8->mask_16[a]) {
 +                if ((network_8->mask_16[a] = 
-+                     (void*)get_zeroed_page(GFP_ATOMIC)) == NULL) {
++                     ipt_acc_zalloc_page()) == NULL) {
 +                    printk("ACCOUNT: out of memory during copy of 24 bit network"
 +                           " in ipt_acc_handle_prepare_read()\n");
 +                    ipt_acc_data_free(dest->data, depth);
@@ -759,7 +793,7 @@ diff -uNrp linux/net/ipv4/netfilter/ipt_ACCOUNT.c linux-2.6/net/ipv4/netfilter/i
 +                for (b = 0; b <= 255; b++) {
 +                    if (src_16->mask_24[b]) {
 +                        if ((network_16->mask_24[b] = 
-+                             (void*)get_zeroed_page(GFP_ATOMIC)) == NULL) {
++                             ipt_acc_zalloc_page()) == NULL) {
 +                            printk("ACCOUNT: out of memory during copy of 16 bit"
 +                                   " network in ipt_acc_handle_prepare_read()\n");
 +                            ipt_acc_data_free(dest->data, depth);
@@ -798,7 +832,7 @@ diff -uNrp linux/net/ipv4/netfilter/ipt_ACCOUNT.c linux-2.6/net/ipv4/netfilter/i
 +    }
 +
 +    /* Try to allocate memory */
-+    if (!(new_data_page = (void*)get_zeroed_page(GFP_ATOMIC))) {
++    if (!(new_data_page = ipt_acc_zalloc_page())) {
 +        printk("ACCOUNT: ipt_acc_handle_prepare_read_flush(): "
 +               "Out of memory!\n");
 +        return -1;
@@ -963,7 +997,7 @@ diff -uNrp linux/net/ipv4/netfilter/ipt_ACCOUNT.c linux-2.6/net/ipv4/netfilter/i
 +    switch (cmd) {
 +    case IPT_SO_SET_ACCOUNT_HANDLE_FREE:
 +        if (len != sizeof(struct ipt_acc_handle_sockopt)) {
-+            printk("ACCOUNT: ipt_acc_set_ctl: wrong data size (%u != %u) "
++            printk("ACCOUNT: ipt_acc_set_ctl: wrong data size (%u != %zu) "
 +                   "for IPT_SO_SET_HANDLE_FREE\n", 
 +                   len, sizeof(struct ipt_acc_handle_sockopt));
 +            break;
@@ -1009,7 +1043,7 @@ diff -uNrp linux/net/ipv4/netfilter/ipt_ACCOUNT.c linux-2.6/net/ipv4/netfilter/i
 +            struct ipt_acc_handle dest;
 +
 +            if (*len < sizeof(struct ipt_acc_handle_sockopt)) {
-+                printk("ACCOUNT: ipt_acc_get_ctl: wrong data size (%u != %u) "
++                printk("ACCOUNT: ipt_acc_get_ctl: wrong data size (%u != %zu) "
 +                    "for IPT_SO_GET_ACCOUNT_PREPARE_READ/READ_FLUSH\n",
 +                    *len, sizeof(struct ipt_acc_handle_sockopt));
 +                break;
@@ -1054,7 +1088,7 @@ diff -uNrp linux/net/ipv4/netfilter/ipt_ACCOUNT.c linux-2.6/net/ipv4/netfilter/i
 +        }
 +    case IPT_SO_GET_ACCOUNT_GET_DATA:
 +        if (*len < sizeof(struct ipt_acc_handle_sockopt)) {
-+            printk("ACCOUNT: ipt_acc_get_ctl: wrong data size (%u != %u)"
++            printk("ACCOUNT: ipt_acc_get_ctl: wrong data size (%u != %zu)"
 +                   " for IPT_SO_GET_ACCOUNT_PREPARE_READ/READ_FLUSH\n",
 +                   *len, sizeof(struct ipt_acc_handle_sockopt));
 +            break;
@@ -1073,7 +1107,7 @@ diff -uNrp linux/net/ipv4/netfilter/ipt_ACCOUNT.c linux-2.6/net/ipv4/netfilter/i
 +
 +        if (*len < ipt_acc_handles[handle.handle_nr].itemcount
 +                   * sizeof(struct ipt_acc_handle_ip)) {
-+            printk("ACCOUNT: ipt_acc_get_ctl: not enough space (%u < %u)"
++            printk("ACCOUNT: ipt_acc_get_ctl: not enough space (%u < %zu)"
 +                   " to store data from IPT_SO_GET_ACCOUNT_GET_DATA\n",
 +                   *len, ipt_acc_handles[handle.handle_nr].itemcount
 +                   * sizeof(struct ipt_acc_handle_ip));
@@ -1095,7 +1129,7 @@ diff -uNrp linux/net/ipv4/netfilter/ipt_ACCOUNT.c linux-2.6/net/ipv4/netfilter/i
 +    case IPT_SO_GET_ACCOUNT_GET_HANDLE_USAGE: {
 +            unsigned int i;
 +            if (*len < sizeof(struct ipt_acc_handle_sockopt)) {
-+                printk("ACCOUNT: ipt_acc_get_ctl: wrong data size (%u != %u)"
++                printk("ACCOUNT: ipt_acc_get_ctl: wrong data size (%u != %zu)"
 +                       " for IPT_SO_GET_ACCOUNT_GET_HANDLE_USAGE\n",
 +                       *len, sizeof(struct ipt_acc_handle_sockopt));
 +                break;
@@ -1265,9 +1299,9 @@ diff -uNrp linux/net/ipv4/netfilter/ipt_ACCOUNT.c linux-2.6/net/ipv4/netfilter/i
 +module_init(init);
 +module_exit(fini);
 +MODULE_LICENSE("GPL");
-diff -uNrp linux/net/ipv4/netfilter/Kconfig.ladd linux-2.6/net/ipv4/netfilter/Kconfig.ladd
---- linux/net/ipv4/netfilter/Kconfig	1970-01-01 01:00:00.000000000 +0100
-+++ linux/net/ipv4/netfilter/Kconfig	2007-08-15 12:17:22.000000000 +0200
+diff -uprN linux1/net/ipv4/netfilter/Kconfig.ladd linux-2.6/net/ipv4/netfilter/Kconfig.ladd
+--- linux1/net/ipv4/netfilter/Kconfig	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6/net/ipv4/netfilter/Kconfig	2007-12-14 10:42:16.000000000 +0100
 @@ -647,5 +647,26 @@
  	  If you want to compile it as a module, say M here and read
  	  <file:Documentation/modules.txt>.  If unsure, say `N'.
@@ -1295,20 +1329,14 @@ diff -uNrp linux/net/ipv4/netfilter/Kconfig.ladd linux-2.6/net/ipv4/netfilter/Kc
 +	  To compile it as a module, choose M here.  If unsure, say N.
  endmenu
  
-diff -uNrp linux/net/ipv4/netfilter/Makefile.ladd linux-2.6/net/ipv4/netfilter/Makefile.ladd
---- linux/net/ipv4/netfilter/Makefile	1970-01-01 01:00:00.000000000 +0100
-+++ linux/net/ipv4/netfilter/Makefile	2006-10-26 12:24:51.000000000 +0200
-@@ -77,6 +77,7 @@
- obj-$(CONFIG_IP_NF_TARGET_CLUSTERIP) += ipt_CLUSTERIP.o
- obj-$(CONFIG_IP_NF_TARGET_TTL) += ipt_TTL.o
- obj-$(CONFIG_IP_NF_TARGET_IPMARK) += ipt_IPMARK.o
+diff -uprN linux1/net/ipv4/netfilter/Makefile.ladd linux-2.6/net/ipv4/netfilter/Makefile.ladd
+--- linux1/net/ipv4/netfilter/Makefile	1971-01-01 01:00:00.000000000 +0100
++++ linux-2.6/net/ipv4/netfilter/Makefile	2007-12-14 10:42:16.000000000 +0100
+@@ -0,0 +0,1 @@
 +obj-$(CONFIG_IP_NF_TARGET_ACCOUNT) += ipt_ACCOUNT.o
- 
- # generic ARP tables
- obj-$(CONFIG_IP_NF_ARPTABLES) += arp_tables.o
 diff -ur linux-2.6.19.1/include/linux/netfilter_ipv4/ip_tables.h linux-2.6.19.1.ipt_ACCOUNT/include/linux/netfilter_ipv4/ip_tables.h
 --- linux-2.6.19.1/include/linux/netfilter_ipv4/ip_tables.h	Mon Dec 11 20:32:53 2006
-+++ linux.19.1.ipt_ACCOUNT/include/linux/netfilter_ipv4/ip_tables.h	Wed Dec 20 15:56:35 2006
++++ linux-2.6.19.1.ipt_ACCOUNT/include/linux/netfilter_ipv4/ip_tables.h	Wed Dec 20 15:56:35 2006
 @@ -111,11 +111,22 @@
  #define IPT_SO_SET_ADD_COUNTERS	(IPT_BASE_CTL + 1)
  #define IPT_SO_SET_MAX		IPT_SO_SET_ADD_COUNTERS
