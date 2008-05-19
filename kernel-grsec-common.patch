@@ -62,8 +62,8 @@
  
  int cap_netlink_send(struct sock *sk, struct sk_buff *skb)
  {
--	cap_t(NETLINK_CB(skb).eff_cap) = gr_cap_rtnetlink(sk);
-+	cap_t(NETLINK_CB(skb).eff_cap) = gr_cap_rtnetlink(sk) & vx_mbcap(cap_effective);
+-	NETLINK_CB(skb).eff_cap = gr_cap_rtnetlink(sk);
++	NETLINK_CB(skb).eff_cap = cap_intersect(gr_cap_rtnetlink(sk), vx_mbcaps(current->cap_effective));
  	return 0;
  }
  
