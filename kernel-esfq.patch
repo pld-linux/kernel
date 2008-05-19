@@ -1,12 +1,8 @@
-diff -Naur linux-2.6.21.5.orig/include/linux/pkt_sched.h linux-2.6.21.5/include/linux/pkt_sched.h
---- linux-2.6.21.5.orig/include/linux/pkt_sched.h	2007-06-11 11:37:06.000000000 -0700
-+++ linux-2.6.21.5/include/linux/pkt_sched.h	2007-06-22 22:53:46.000000000 -0700
-@@ -146,8 +146,37 @@
-  *
-  *	The only reason for this is efficiency, it is possible
+diff -Naur linux-2.6.24.orig/include/linux/pkt_sched.h linux-2.6.24/include/linux/pkt_sched.h
+--- linux-2.6.24.orig/include/linux/pkt_sched.h	2008-01-24 14:58:37.000000000 -0800
++++ linux-2.6.24/include/linux/pkt_sched.h	2008-01-28 00:27:12.000000000 -0800
+@@ -157,6 +157,33 @@
   *	to change these parameters in compile time.
-+ *	
-+ *	If you need to play with these values, use esfq instead.
   */
  
 +/* ESFQ section */
@@ -14,16 +10,16 @@ diff -Naur linux-2.6.21.5.orig/include/linux/pkt_sched.h linux-2.6.21.5/include/
 +enum
 +{
 +        /* traditional */
-+	TCA_SFQ_HASH_CLASSIC,
-+	TCA_SFQ_HASH_DST,
-+	TCA_SFQ_HASH_SRC,
-+	TCA_SFQ_HASH_FWMARK,
++	TCA_ESFQ_HASH_CLASSIC,
++	TCA_ESFQ_HASH_DST,
++	TCA_ESFQ_HASH_SRC,
++	TCA_ESFQ_HASH_FWMARK,
 +	/* conntrack */
-+	TCA_SFQ_HASH_CTORIGDST,
-+	TCA_SFQ_HASH_CTORIGSRC,
-+	TCA_SFQ_HASH_CTREPLDST,
-+	TCA_SFQ_HASH_CTREPLSRC,
-+	TCA_SFQ_HASH_CTNATCHG,
++	TCA_ESFQ_HASH_CTORIGDST,
++	TCA_ESFQ_HASH_CTORIGSRC,
++	TCA_ESFQ_HASH_CTREPLDST,
++	TCA_ESFQ_HASH_CTREPLSRC,
++	TCA_ESFQ_HASH_CTNATCHG,
 +};
 +
 +struct tc_esfq_qopt
@@ -39,10 +35,10 @@ diff -Naur linux-2.6.21.5.orig/include/linux/pkt_sched.h linux-2.6.21.5/include/
  /* RED section */
  
  enum
-diff -Naur linux-2.6.21.5.orig/net/sched/Kconfig linux-2.6.21.5/net/sched/Kconfig
---- linux-2.6.21.5.orig/net/sched/Kconfig	2007-06-11 11:37:06.000000000 -0700
-+++ linux-2.6.21.5/net/sched/Kconfig	2007-06-23 14:11:02.000000000 -0700
-@@ -189,6 +189,37 @@
+diff -Naur linux-2.6.24.orig/net/sched/Kconfig linux-2.6.24/net/sched/Kconfig
+--- linux-2.6.24.orig/net/sched/Kconfig	2008-01-24 14:58:37.000000000 -0800
++++ linux-2.6.24/net/sched/Kconfig	2008-01-28 00:27:12.000000000 -0800
+@@ -139,6 +139,37 @@
  	  To compile this code as a module, choose M here: the
  	  module will be called sch_sfq.
  
@@ -68,7 +64,7 @@ diff -Naur linux-2.6.21.5.orig/net/sched/Kconfig linux-2.6.21.5/net/sched/Kconfi
 +
 +config NET_SCH_ESFQ_NFCT
 +	bool "Connection Tracking Hash Types"
-+	depends on NET_SCH_ESFQ && NF_CONNTRACK
++	depends on NET_SCH_ESFQ && NF_CONNTRACK_ENABLED
 +	---help---
 +	  Say Y here to enable support for hashing based on netfilter connection
 +	  tracking information. This is useful for a router that is also using
@@ -80,9 +76,9 @@ diff -Naur linux-2.6.21.5.orig/net/sched/Kconfig linux-2.6.21.5/net/sched/Kconfi
  config NET_SCH_TEQL
  	tristate "True Link Equalizer (TEQL)"
  	---help---
-diff -Naur linux-2.6.21.5.orig/net/sched/Makefile linux-2.6.21.5/net/sched/Makefile
---- linux-2.6.21.5.orig/net/sched/Makefile	2007-06-11 11:37:06.000000000 -0700
-+++ linux-2.6.21.5/net/sched/Makefile	2007-06-22 22:53:46.000000000 -0700
+diff -Naur linux-2.6.24.orig/net/sched/Makefile linux-2.6.24/net/sched/Makefile
+--- linux-2.6.24.orig/net/sched/Makefile	2008-01-24 14:58:37.000000000 -0800
++++ linux-2.6.24/net/sched/Makefile	2008-01-28 00:27:12.000000000 -0800
 @@ -23,6 +23,7 @@
  obj-$(CONFIG_NET_SCH_INGRESS)	+= sch_ingress.o 
  obj-$(CONFIG_NET_SCH_DSMARK)	+= sch_dsmark.o
@@ -91,10 +87,10 @@ diff -Naur linux-2.6.21.5.orig/net/sched/Makefile linux-2.6.21.5/net/sched/Makef
  obj-$(CONFIG_NET_SCH_TBF)	+= sch_tbf.o
  obj-$(CONFIG_NET_SCH_TEQL)	+= sch_teql.o
  obj-$(CONFIG_NET_SCH_PRIO)	+= sch_prio.o
-diff -Naur linux-2.6.21.5.orig/net/sched/sch_esfq.c linux-2.6.21.5/net/sched/sch_esfq.c
---- linux-2.6.21.5.orig/net/sched/sch_esfq.c	1969-12-31 16:00:00.000000000 -0800
-+++ linux-2.6.21.5/net/sched/sch_esfq.c	2007-06-23 19:18:00.000000000 -0700
-@@ -0,0 +1,702 @@
+diff -Naur linux-2.6.24.orig/net/sched/sch_esfq.c linux-2.6.24/net/sched/sch_esfq.c
+--- linux-2.6.24.orig/net/sched/sch_esfq.c	1969-12-31 16:00:00.000000000 -0800
++++ linux-2.6.24/net/sched/sch_esfq.c	2008-01-28 00:27:22.000000000 -0800
+@@ -0,0 +1,703 @@
 +/*
 + * net/sched/sch_esfq.c	Extended Stochastic Fairness Queueing discipline.
 + *
@@ -141,6 +137,7 @@ diff -Naur linux-2.6.21.5.orig/net/sched/sch_esfq.c linux-2.6.21.5/net/sched/sch
 +#include <linux/notifier.h>
 +#include <linux/init.h>
 +#include <net/ip.h>
++#include <net/netlink.h>
 +#include <linux/ipv6.h>
 +#include <net/route.h>
 +#include <linux/skbuff.h>
@@ -239,7 +236,7 @@ diff -Naur linux-2.6.21.5.orig/net/sched/sch_esfq.c linux-2.6.21.5/net/sched/sch
 +	switch (skb->protocol) {
 +	case __constant_htons(ETH_P_IP):
 +	{
-+		struct iphdr *iph = skb->nh.iph;
++		struct iphdr *iph = ip_hdr(skb);
 +		info.dst = iph->daddr;
 +		info.src = iph->saddr;
 +		if (!(iph->frag_off&htons(IP_MF|IP_OFFSET)) &&
@@ -255,7 +252,7 @@ diff -Naur linux-2.6.21.5.orig/net/sched/sch_esfq.c linux-2.6.21.5/net/sched/sch
 +	}
 +	case __constant_htons(ETH_P_IPV6):
 +	{
-+		struct ipv6hdr *iph = skb->nh.ipv6h;
++		struct ipv6hdr *iph = ipv6_hdr(skb);
 +		/* Hash ipv6 addresses into a u32. This isn't ideal,
 +		 * but the code is simple. */
 +		info.dst = jhash2(iph->daddr.s6_addr32, 4, q->perturbation);
@@ -304,24 +301,24 @@ diff -Naur linux-2.6.21.5.orig/net/sched/sch_esfq.c linux-2.6.21.5/net/sched/sch
 +#endif
 +
 +	switch(q->hash_kind) {
-+	case TCA_SFQ_HASH_CLASSIC:
++	case TCA_ESFQ_HASH_CLASSIC:
 +		return esfq_jhash_3words(q, info.dst, info.src, info.proto);
-+	case TCA_SFQ_HASH_DST:
++	case TCA_ESFQ_HASH_DST:
 +		return esfq_jhash_1word(q, info.dst);
-+	case TCA_SFQ_HASH_SRC:
++	case TCA_ESFQ_HASH_SRC:
 +		return esfq_jhash_1word(q, info.src);
-+	case TCA_SFQ_HASH_FWMARK:
++	case TCA_ESFQ_HASH_FWMARK:
 +		return esfq_jhash_1word(q, info.mark);
 +#ifdef CONFIG_NET_SCH_ESFQ_NFCT
-+	case TCA_SFQ_HASH_CTORIGDST:
++	case TCA_ESFQ_HASH_CTORIGDST:
 +		return esfq_jhash_1word(q, info.ctorigdst);
-+	case TCA_SFQ_HASH_CTORIGSRC:
++	case TCA_ESFQ_HASH_CTORIGSRC:
 +		return esfq_jhash_1word(q, info.ctorigsrc);
-+	case TCA_SFQ_HASH_CTREPLDST:
++	case TCA_ESFQ_HASH_CTREPLDST:
 +		return esfq_jhash_1word(q, info.ctrepldst);
-+	case TCA_SFQ_HASH_CTREPLSRC:
++	case TCA_ESFQ_HASH_CTREPLSRC:
 +		return esfq_jhash_1word(q, info.ctreplsrc);
-+	case TCA_SFQ_HASH_CTNATCHG:
++	case TCA_ESFQ_HASH_CTNATCHG:
 +	{
 +		if (info.ctorigdst == info.ctreplsrc)
 +			return esfq_jhash_1word(q, info.ctorigsrc);
@@ -580,28 +577,28 @@ diff -Naur linux-2.6.21.5.orig/net/sched/sch_esfq.c linux-2.6.21.5/net/sched/sch
 +static unsigned int esfq_check_hash(unsigned int kind)
 +{
 +	switch (kind) {
-+	case TCA_SFQ_HASH_CTORIGDST:
-+	case TCA_SFQ_HASH_CTORIGSRC:
-+	case TCA_SFQ_HASH_CTREPLDST:
-+	case TCA_SFQ_HASH_CTREPLSRC:
-+	case TCA_SFQ_HASH_CTNATCHG:
++	case TCA_ESFQ_HASH_CTORIGDST:
++	case TCA_ESFQ_HASH_CTORIGSRC:
++	case TCA_ESFQ_HASH_CTREPLDST:
++	case TCA_ESFQ_HASH_CTREPLSRC:
++	case TCA_ESFQ_HASH_CTNATCHG:
 +#ifndef CONFIG_NET_SCH_ESFQ_NFCT
 +	{
 +		if (net_ratelimit())
 +			printk(KERN_WARNING "ESFQ: Conntrack hash types disabled in kernel config. Falling back to classic.\n");
-+		return TCA_SFQ_HASH_CLASSIC;
++		return TCA_ESFQ_HASH_CLASSIC;
 +	}
 +#endif
-+	case TCA_SFQ_HASH_CLASSIC:
-+	case TCA_SFQ_HASH_DST:
-+	case TCA_SFQ_HASH_SRC:
-+	case TCA_SFQ_HASH_FWMARK:
++	case TCA_ESFQ_HASH_CLASSIC:
++	case TCA_ESFQ_HASH_DST:
++	case TCA_ESFQ_HASH_SRC:
++	case TCA_ESFQ_HASH_FWMARK:
 +		return kind;
 +	default:
 +	{
 +		if (net_ratelimit())
 +			printk(KERN_WARNING "ESFQ: Unknown hash type. Falling back to classic.\n");
-+		return TCA_SFQ_HASH_CLASSIC;
++		return TCA_ESFQ_HASH_CLASSIC;
 +	}
 +	}
 +}
@@ -616,7 +613,7 @@ diff -Naur linux-2.6.21.5.orig/net/sched/sch_esfq.c linux-2.6.21.5/net/sched/sch
 +		return -EINVAL;
 +
 +	q->perturbation = 0;
-+	q->hash_kind = TCA_SFQ_HASH_CLASSIC;
++	q->hash_kind = TCA_ESFQ_HASH_CLASSIC;
 +	q->max_depth = 0;
 +	if (opt == NULL) {
 +		q->perturb_period = 0;
@@ -748,7 +745,7 @@ diff -Naur linux-2.6.21.5.orig/net/sched/sch_esfq.c linux-2.6.21.5/net/sched/sch
 +static int esfq_dump(struct Qdisc *sch, struct sk_buff *skb)
 +{
 +	struct esfq_sched_data *q = qdisc_priv(sch);
-+	unsigned char *b = skb->tail;
++	unsigned char *b = skb_tail_pointer(skb);
 +	struct tc_esfq_qopt opt;
 +
 +	opt.quantum = q->quantum;
@@ -764,7 +761,7 @@ diff -Naur linux-2.6.21.5.orig/net/sched/sch_esfq.c linux-2.6.21.5/net/sched/sch
 +	return skb->len;
 +
 +rtattr_failure:
-+	skb_trim(skb, b - skb->data);
++	nlmsg_trim(skb, b);
 +	return -1;
 +}
 +
