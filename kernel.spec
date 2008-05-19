@@ -269,9 +269,8 @@ Patch51:	kernel-reiser4.patch
 # http://www.zz9.dk/patches/wrr-linux-071203-2.6.25.patch.gz
 Patch52:	kernel-wrr.patch
 
-# esfq from http://fatooh.org/esfq-2.6/current/esfq-kernel.patch
+# http://fatooh.org/esfq-2.6/sfq-2.6.24.1.tar.bz2
 Patch53:	esfq-kernel.patch
-Patch531:	esfq-kernel-2.6.22-rc5.diff
 
 # http://memebeam.org/free-software/toshiba_acpi/toshiba_acpi-dev_toshiba_test5-linux_2.6.21.patch
 Patch54:	linux-2.6-toshiba_acpi.patch
@@ -361,7 +360,7 @@ Patch9997:	pax_selinux_hooks-2.6.20.patch
 # based on http://www.grsecurity.net/~paxguy1/pax-linux-2.6.24.6-test45.patch
 Patch9998:	kernel-pax.patch
 
-# based on http://www.grsecurity.net/~spender/grsecurity-2.1.11-2.6.24.4-200804142048.patch.gz
+# based on http://www.grsecurity.net/~spender/grsecurity-2.1.12-2.6.25.4-200805181334.patch
 Patch9999:	linux-2.6-grsec_full.patch
 Patch10000:	linux-2.6-grsec-caps.patch
 Patch10001:	linux-2.6-grsec-common.patch
@@ -849,7 +848,6 @@ install -m 755 %{SOURCE6} .
 
 # esfq
 %patch53 -p1
-%patch531 -p1
 
 %if %{with wrr}
 %patch52 -p1
@@ -890,7 +888,7 @@ install -m 755 %{SOURCE6} .
 %patch42 -p1
 %endif
 
-# forcedeth:
+# forcedeth
 %patch130 -p1
 
 # unionfs
@@ -921,18 +919,16 @@ install -m 755 %{SOURCE6} .
 #
 %if %{with pax_full}
 %patch9999 -p1
-# temporary disabled, 64bit caps support missing in vserver
-#{?with_vserver:%patch10000 -p1}
+%{?with_vserver:%patch10000 -p1}
 %{?with_vserver:%patch10001 -p1}
-%{?with_vserver:%patch10002 -p1}
+#{?with_vserver:%patch10002 -p1}
 %else
 
 %if %{with grsec_full}
 %patch9999 -p1
-# temporary disabled, 64bit caps support missing in vserver
-#{?with_vserver:%patch10000 -p1}
+%{?with_vserver:%patch10000 -p1}
 %{?with_vserver:%patch10001 -p1}
-%{?with_vserver:%patch10002 -p1}
+#{?with_vserver:%patch10002 -p1}
 %else
 %if %{with grsec_minimal}
 %patch1000 -p1
