@@ -112,7 +112,7 @@
 %define		_prepatch		%{nil}
 %define		_pre_rc			%{nil}
 %define		_rc			%{nil}
-%define		_rel			0.1
+%define		_rel			0.2
 
 %define		_enable_debug_packages			0
 
@@ -1387,26 +1387,26 @@ fi
 %post
 %ifarch ia64
 mv -f /boot/efi/vmlinuz{,.old} 2> /dev/null
-%{?alt_kernel:mv -f /boot/efi/vmlinuz-%{alt_kernel}{,.old} 2> /dev/null}
+%{?_alt_kernel:mv -f /boot/efi/vmlinuz%{_alt_kernel}{,.old} 2> /dev/null}
 ln -sf vmlinuz-%{kernel_release} /boot/efi/vmlinuz
-%{?alt_kernel:ln -sf vmlinuz-%{kernel_release} /boot/efi/vmlinuz-%{alt_kernel}}
+%{?_alt_kernel:ln -sf vmlinuz-%{kernel_release} /boot/efi/vmlinuz%{_alt_kernel}}
 %endif
 mv -f /boot/vmlinuz{,.old} 2> /dev/null
-%{?alt_kernel:mv -f /boot/vmlinuz-%{alt_kernel}{,.old} 2> /dev/null}
+%{?_alt_kernel:mv -f /boot/vmlinuz%{_alt_kernel}{,.old} 2> /dev/null}
 mv -f /boot/System.map{,.old} 2> /dev/null
-%{?alt_kernel:mv -f /boot/System-%{alt_kernel}.map{,.old} 2> /dev/null}
+%{?_alt_kernel:mv -f /boot/System%{_alt_kernel}.map{,.old} 2> /dev/null}
 ln -sf vmlinuz-%{kernel_release} /boot/vmlinuz
-%{?alt_kernel:ln -sf vmlinuz-%{kernel_release} /boot/vmlinuz-%{alt_kernel}}
+%{?_alt_kernel:ln -sf vmlinuz-%{kernel_release} /boot/vmlinuz%{_alt_kernel}}
 ln -sf System.map-%{kernel_release} /boot/System.map
-%{?alt_kernel:ln -sf System.map-%{kernel_release} /boot/System.map}
+%{?_alt_kernel:ln -sf System.map-%{kernel_release} /boot/System.map%{_alt_kernel}}
 
 %depmod %{kernel_release}
 
 /sbin/geninitrd -f --initrdfs=rom %{initrd_dir}/initrd-%{kernel_release}.gz %{kernel_release}
 mv -f %{initrd_dir}/initrd{,.old} 2> /dev/null
-%{?alt_kernel:mv -f %{initrd_dir}/initrd-%{alt_kernel}{,.old} 2> /dev/null}
+%{?_alt_kernel:mv -f %{initrd_dir}/initrd%{_alt_kernel}{,.old} 2> /dev/null}
 ln -sf initrd-%{kernel_release}.gz %{initrd_dir}/initrd
-%{?alt_kernel:ln -sf initrd-%{kernel_release}.gz %{initrd_dir}/initrd-%{alt_kernel}}
+%{?_alt_kernel:ln -sf initrd-%{kernel_release}.gz %{initrd_dir}/initrd%{_alt_kernel}}
 
 if [ -x /sbin/new-kernel-pkg ]; then
 	if [ -f /etc/pld-release ]; then
