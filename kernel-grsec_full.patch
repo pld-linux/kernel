@@ -6042,7 +6042,7 @@ diff -urNp linux-2.6.25.4/arch/x86/kernel/setup64.c linux-2.6.25.4/arch/x86/kern
  struct x8664_pda boot_cpu_pda[NR_CPUS] __cacheline_aligned;
  
 -struct desc_ptr idt_descr = { 256 * 16 - 1, (unsigned long) idt_table };
-+const struct desc_ptr idt_descr = { 256 * 16 - 1, (unsigned long) idt_table };
++struct desc_ptr idt_descr __read_only = { 256 * 16 - 1, (unsigned long) idt_table };
  
  char boot_cpu_stack[IRQSTACKSIZE] __attribute__((section(".bss.page_aligned")));
  
@@ -6233,15 +6233,18 @@ diff -urNp linux-2.6.25.4/arch/x86/kernel/smpboot_64.c linux-2.6.25.4/arch/x86/k
 diff -urNp linux-2.6.25.4/arch/x86/kernel/smpcommon_32.c linux-2.6.25.4/arch/x86/kernel/smpcommon_32.c
 --- linux-2.6.25.4/arch/x86/kernel/smpcommon_32.c	2008-05-15 11:00:12.000000000 -0400
 +++ linux-2.6.25.4/arch/x86/kernel/smpcommon_32.c	2008-05-18 13:33:14.000000000 -0400
-@@ -3,6 +3,7 @@
+@@ -3,8 +3,9 @@
   */
  #include <linux/module.h>
  #include <asm/smp.h>
 +#include <asm/sections.h>
  
- DEFINE_PER_CPU(unsigned long, this_cpu_off);
+-DEFINE_PER_CPU(unsigned long, this_cpu_off);
++DEFINE_PER_CPU(unsigned long, this_cpu_off) = (unsigned long)__per_cpu_start;
  EXPORT_PER_CPU_SYMBOL(this_cpu_off);
-@@ -12,13 +13,20 @@ EXPORT_PER_CPU_SYMBOL(this_cpu_off);
+ 
+ /* Initialize the CPU's GDT.  This is either the boot CPU doing itself
+@@ -12,15 +13,22 @@ EXPORT_PER_CPU_SYMBOL(this_cpu_off);
     secondary which will soon come up. */
  __cpuinit void init_gdt(int cpu)
  {
@@ -6262,11 +6265,14 @@ diff -urNp linux-2.6.25.4/arch/x86/kernel/smpcommon_32.c linux-2.6.25.4/arch/x86
 +		pack_descriptor(&d, base, limit, 0x80 | DESCTYPE_S | 0x3, 0x4);
 +	else
 +		pack_descriptor(&d, base, limit >> PAGE_SHIFT, 0x80 | DESCTYPE_S | 0x3, 0xC);
-+
-+	write_gdt_entry(gdt, GDT_ENTRY_PERCPU, &d, DESCTYPE_S);
  
- 	per_cpu(this_cpu_off, cpu) = __per_cpu_offset[cpu];
+-	per_cpu(this_cpu_off, cpu) = __per_cpu_offset[cpu];
++	write_gdt_entry(gdt, GDT_ENTRY_PERCPU, &d, DESCTYPE_S);
++
++	per_cpu(this_cpu_off, cpu) = base;
  	per_cpu(cpu_number, cpu) = cpu;
+ }
+ 
 diff -urNp linux-2.6.25.4/arch/x86/kernel/step.c linux-2.6.25.4/arch/x86/kernel/step.c
 --- linux-2.6.25.4/arch/x86/kernel/step.c	2008-05-15 11:00:12.000000000 -0400
 +++ linux-2.6.25.4/arch/x86/kernel/step.c	2008-05-18 13:33:14.000000000 -0400
@@ -26717,13 +26723,11 @@ diff -urNp linux-2.6.25.4/include/asm-x86/desc.h linux-2.6.25.4/include/asm-x86/
  	desc->s = 1;
  	desc->dpl = 0x3;
  	desc->p = info->seg_not_present ^ 1;
-@@ -26,15 +27,16 @@ static inline void fill_ldt(struct desc_
- 	desc->base2 = (info->base_addr & 0xff000000) >> 24;
+@@ -26,14 +27,15 @@ static inline void fill_ldt(struct desc_
  }
  
--extern struct desc_ptr idt_descr;
+ extern struct desc_ptr idt_descr;
 -extern gate_desc idt_table[];
-+extern const struct desc_ptr idt_descr;
 +extern gate_desc idt_table[256];
  
 -#ifdef CONFIG_X86_64
@@ -27350,29 +27354,19 @@ diff -urNp linux-2.6.25.4/include/asm-x86/pda.h linux-2.6.25.4/include/asm-x86/p
 diff -urNp linux-2.6.25.4/include/asm-x86/percpu.h linux-2.6.25.4/include/asm-x86/percpu.h
 --- linux-2.6.25.4/include/asm-x86/percpu.h	2008-05-15 11:00:12.000000000 -0400
 +++ linux-2.6.25.4/include/asm-x86/percpu.h	2008-05-18 13:33:17.000000000 -0400
-@@ -41,6 +41,7 @@ DECLARE_PER_CPU(struct x8664_pda, pda);
- #ifdef CONFIG_SMP
- #define PER_CPU(var, reg)				\
- 	movl %fs:per_cpu__##this_cpu_off, reg;		\
-+	lea __per_cpu_start(reg), reg;			\
- 	lea per_cpu__##var(reg), reg
- #define PER_CPU_VAR(var)	%fs:per_cpu__##var
- #else /* ! SMP */
-@@ -65,7 +66,13 @@ DECLARE_PER_CPU(struct x8664_pda, pda);
-  */
- #ifdef CONFIG_SMP
+@@ -67,6 +67,12 @@ DECLARE_PER_CPU(struct x8664_pda, pda);
  
--#define __my_cpu_offset x86_read_percpu(this_cpu_off)
-+#define __my_cpu_offset (x86_read_percpu(this_cpu_off) + (unsigned long)__per_cpu_start)
-+
-+#include <linux/threads.h>
+ #define __my_cpu_offset x86_read_percpu(this_cpu_off)
+ 
 +#include <asm-generic/sections.h>
++#include <linux/threads.h>
 +#define __per_cpu_offset __per_cpu_offset
 +extern unsigned long __per_cpu_offset[NR_CPUS];
 +#define per_cpu_offset(x) (__per_cpu_offset[x] + (unsigned long)__per_cpu_start)
- 
++
  /* fs segment starts at (positive) offset == __per_cpu_offset[cpu] */
  #define __percpu_seg "%%fs:"
+ 
 diff -urNp linux-2.6.25.4/include/asm-x86/pgalloc_32.h linux-2.6.25.4/include/asm-x86/pgalloc_32.h
 --- linux-2.6.25.4/include/asm-x86/pgalloc_32.h	2008-05-15 11:00:12.000000000 -0400
 +++ linux-2.6.25.4/include/asm-x86/pgalloc_32.h	2008-05-18 13:33:17.000000000 -0400
@@ -30019,6 +30013,15 @@ diff -urNp linux-2.6.25.4/init/main.c linux-2.6.25.4/init/main.c
  static char * argv_init[MAX_INIT_ARGS+2] = { "init", NULL, };
  char * envp_init[MAX_INIT_ENVS+2] = { "HOME=/", "TERM=linux", NULL, };
  static const char *panic_later, *panic_param;
+@@ -364,7 +375,7 @@ static inline void smp_prepare_cpus(unsi
+ #else
+
+ #ifndef CONFIG_HAVE_SETUP_PER_CPU_AREA
+-unsigned long __per_cpu_offset[NR_CPUS] __read_mostly;
++unsigned long __per_cpu_offset[NR_CPUS] __read_only;
+
+ EXPORT_SYMBOL(__per_cpu_offset);
+
 @@ -668,7 +680,7 @@ static void __init do_initcalls(void)
  
  	for (call = __initcall_start; call < __initcall_end; call++) {
@@ -30738,6 +30741,21 @@ diff -urNp linux-2.6.25.4/kernel/lockdep.c linux-2.6.25.4/kernel/lockdep.c
  	/*
  	 * static variable?
  	 */
+@@ -609,9 +613,12 @@ static int static_obj(void *obj)
+ 	 * percpu var?
+ 	 */
+ 	for_each_possible_cpu(i) {
++#ifdef CONFIG_X86_32
++		start = per_cpu_offset(i);
++#else
+ 		start = (unsigned long) &__per_cpu_start + per_cpu_offset(i);
+-		end   = (unsigned long) &__per_cpu_start + PERCPU_ENOUGH_ROOM
+-					+ per_cpu_offset(i);
++#endif
++		end   = start + PERCPU_ENOUGH_ROOM;
+ 
+ 		if ((addr >= start) && (addr < end))
+ 			return 1;
 diff -urNp linux-2.6.25.4/kernel/module.c linux-2.6.25.4/kernel/module.c
 --- linux-2.6.25.4/kernel/module.c	2008-05-15 11:00:12.000000000 -0400
 +++ linux-2.6.25.4/kernel/module.c	2008-05-18 13:33:17.000000000 -0400
@@ -30780,6 +30798,18 @@ diff -urNp linux-2.6.25.4/kernel/module.c linux-2.6.25.4/kernel/module.c
  		printk(KERN_WARNING "%s: per-cpu alignment %li > %li\n",
  		       name, align, PAGE_SIZE);
  		align = PAGE_SIZE;
+@@ -433,7 +442,11 @@ static void percpu_modcopy(void *pcpudes
+ 	int cpu;
+ 
+ 	for_each_possible_cpu(cpu)
++#ifdef CONFIG_X86_32
++		memcpy(pcpudest + __per_cpu_offset[cpu], from, size);
++#else
+ 		memcpy(pcpudest + per_cpu_offset(cpu), from, size);
++#endif
+ }
+ 
+ static int percpu_modinit(void)
 @@ -684,6 +693,9 @@ sys_delete_module(const char __user *nam
  	char name[MODULE_NAME_LEN];
  	int ret, forced = 0;
@@ -30985,12 +31015,17 @@ diff -urNp linux-2.6.25.4/kernel/module.c linux-2.6.25.4/kernel/module.c
 +	}
 +	memset(ptr, 0, mod->init_size_rw);
 +	mod->module_init_rw = ptr;
-+
+ 
+-	ptr = module_alloc(mod->init_size);
+-	if (!ptr && mod->init_size) {
 +	ptr = module_alloc_exec(mod->core_size_rx);
 +	if (!ptr) {
-+		err = -ENOMEM;
+ 		err = -ENOMEM;
+-		goto free_core;
 +		goto free_init_rw;
-+	}
+ 	}
+-	memset(ptr, 0, mod->init_size);
+-	mod->module_init = ptr;
 +
 +#ifdef CONFIG_PAX_KERNEXEC
 +	pax_open_kernel(cr0);
@@ -31003,17 +31038,12 @@ diff -urNp linux-2.6.25.4/kernel/module.c linux-2.6.25.4/kernel/module.c
 +#endif
 +
 +	mod->module_core_rx = ptr;
- 
--	ptr = module_alloc(mod->init_size);
--	if (!ptr && mod->init_size) {
++ 
 +	ptr = module_alloc_exec(mod->init_size_rx);
 +	if (!ptr && mod->init_size_rx) {
- 		err = -ENOMEM;
--		goto free_core;
++		err = -ENOMEM;
 +		goto free_core_rx;
- 	}
--	memset(ptr, 0, mod->init_size);
--	mod->module_init = ptr;
++	}
 +
 +#ifdef CONFIG_PAX_KERNEXEC
 +	pax_open_kernel(cr0);
