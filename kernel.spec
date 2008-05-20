@@ -5,9 +5,6 @@
 # - suspend2 renamed to tuxonice (as project name)
 #
 # TODO:
-# - update imq, owner-xid patch
-# - grsec_full awaits for new snap
-# - test bconds builds
 # - another nf modules disappeared?
 # - benchmark NO_HZ & HZ=1000 vs HZ=300 on i686
 # - apparmor (no future?)
@@ -260,6 +257,7 @@ Patch49:	kernel-zph.patch
 
 # based on http://www.linuximq.net/patchs/linux-2.6.24-imq.diff
 # some people report problems when using imq with wrr.
+# try unoficial version: http://kapturkiewicz.name/linux-2.6.25-imq1.diff
 Patch50:	kernel-imq.patch
 
 # previously based on ftp://ftp.namesys.com/pub/reiser4-for-2.6/2.6.22/reiser4-for-2.6.22-2.patch.gz
@@ -815,8 +813,7 @@ install -m 755 %{SOURCE6} .
 
 # kernel-owner-xid.patch
 %if %{with vserver}
-# needs update
-#patch37 -p1
+%patch37 -p1
 %endif
 
 # kernel-ipt_account.patch
