@@ -5094,13 +5094,14 @@ diff -urNp linux-2.6.25.4/arch/x86/kernel/i386_ksyms_32.c linux-2.6.25.4/arch/x8
 diff -urNp linux-2.6.25.4/arch/x86/kernel/init_task.c linux-2.6.25.4/arch/x86/kernel/init_task.c
 --- linux-2.6.25.4/arch/x86/kernel/init_task.c	2008-05-15 11:00:12.000000000 -0400
 +++ linux-2.6.25.4/arch/x86/kernel/init_task.c	2008-05-18 13:33:14.000000000 -0400
-@@ -43,5 +43,4 @@ EXPORT_SYMBOL(init_task);
+@@ -43,5 +43,5 @@ EXPORT_SYMBOL(init_task);
   * section. Since TSS's are completely CPU-local, we want them
   * on exact cacheline boundaries, to eliminate cacheline ping-pong.
   */
 -DEFINE_PER_CPU_SHARED_ALIGNED(struct tss_struct, init_tss) = INIT_TSS;
 -
 +struct tss_struct init_tss[NR_CPUS] ____cacheline_internodealigned_in_smp = { [0 ... NR_CPUS-1] = INIT_TSS };
++EXPORT_SYMBOL(init_tss);
 diff -urNp linux-2.6.25.4/arch/x86/kernel/ioport.c linux-2.6.25.4/arch/x86/kernel/ioport.c
 --- linux-2.6.25.4/arch/x86/kernel/ioport.c	2008-05-15 11:00:12.000000000 -0400
 +++ linux-2.6.25.4/arch/x86/kernel/ioport.c	2008-05-18 13:33:14.000000000 -0400
