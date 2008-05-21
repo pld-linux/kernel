@@ -19,7 +19,6 @@
 # Conditional build:
 %bcond_without	source		# don't build kernel-source package
 %bcond_without	pcmcia		# don't build pcmcia
-%bcond_without	regparm		# if your blob doesn't work try disable this
 
 %bcond_with	verbose		# verbose build (V=1)
 %bcond_with	xen0		# added Xen0 support
@@ -328,11 +327,6 @@ Patch200:	linux-2.6-ppc-ICE-hacks.patch
 # http://www.ssi.bg/~ja/routes-2.6.25-15.diff
 # We need to disable CONFIG_IP_ROUTE_MULTIPATH_CACHED
 Patch300:	kernel-routes.patch
-
-# For compatibility with (not updated) blobs like ... ?
-# Before 2.6.20 we had CONFIG_REGPARM option disabled.
-# Probably not needed anymore - it is bconded and disabled now
-Patch500:	linux-2.6.20_i386_regparm_off.patch
 
 Patch1000:	linux-2.6-grsec-minimal.patch
 
@@ -894,11 +888,6 @@ install -m 755 %{SOURCE6} .
 
 # aic94xx linux-2.6-aic94xx_with_included_firmware.patch
 %patch160 -p1
-
-# desables regparms
-%if %{without regparm}
-%patch500 -p1
-%endif
 
 %patch2500 -p1
 
