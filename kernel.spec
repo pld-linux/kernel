@@ -110,7 +110,7 @@
 %define		squashfs_version	3.2
 %define		suspend_version		2.2.10
 %define		netfilter_snap		20070806
-%define		xen_version		3.0.2
+%define		xen_version		3.2
 
 %define		__alt_kernel	%{?with_pax:pax}%{?with_grsec_full:grsecurity}%{?with_xen0:xen0}%{?with_xenU:xenU}
 %if "%{__alt_kernel}" != ""
@@ -318,8 +318,8 @@ Patch102:	linux-2.6-vs2.2.patch
 # it was proposed to use 2.2 as a temp replacement. One could use vs 2.2 instead of 2.3
 # by using vs22 bcond - this bcond also changes IPV6 option from "y" to "m".
 
-# from http://www.cl.cam.ac.uk/Research/SRG/netos/xen/downloads/xen-3.0.2-src.tgz
-#Patch120: xen-3.0-2.6.16.patch
+# http://xenbits.xensource.com/linux-2.6.18-xen.hg
+Patch120:		kernel-xen-xen.patch
 
 # Wake-On-Lan fix for nForce drivers; using http://atlas.et.tudelft.nl/verwei90/nforce2/wol.html
 # Fix verified for that kernel version.
@@ -430,7 +430,8 @@ Requires:	module-init-tools >= 0.9.9
 Provides:	%{name}(netfilter) = %{netfilter_snap}
 Provides:	%{name}(vermagic) = %{kernel_release}
 %if %{with xen0} || %{with xenU}
-Provides:	kernel(xen) = %{_xen_version}
+Requires:	xen >= %{xen_version}
+Provides:	kernel(xen) = %{xen_version}
 %endif
 Obsoletes:	kernel%{_alt_kernel}-scsi-mv
 Obsoletes:	kernel%{_alt_kernel}-smp-scsi-mv
@@ -457,7 +458,7 @@ Conflicts:	udev < 071
 Conflicts:	util-linux < 2.10o
 Conflicts:	xfsprogs < 2.6.0
 %if %{with xen0} || %{with xenU}
-ExclusiveArch:	%{ix86}
+ExclusiveArch:	%{ix86} %{x8664} ia64
 %else
 ExclusiveArch:	%{ix86} alpha %{x8664} ia64 ppc ppc64 sparc sparc64 arm
 %endif
@@ -891,19 +892,17 @@ install %{SOURCE5} Makefile.ppclibs
 %patch102 -p1
 %else
 %patch100 -p1
-%endif
-%if %{with suspend2}
-#ifarch %{ix86} %{x8664} ia64
-%patch101 -p1
+#%endif
+#%if %{with suspend2}
+ifarch %{ix86} %{x8664} ia64
+#%patch101 -p1
 #endif
 %endif
 %endif
 
-#%if %{with xen0} || %{with xenU}
-#%ifarch %{ix86} %{x8664} ia64
-#%patch120 -p1
-#%endif
-#%endif
+%if %{with xen0} || %{with xenU}
+%patch120 -p1
+%endif
 
 # forcedeth:
 %patch130 -p1
