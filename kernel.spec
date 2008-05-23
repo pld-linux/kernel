@@ -891,9 +891,7 @@ install %{SOURCE5} Makefile.ppclibs
 %patch100 -p1
 %endif
 %if %{with suspend2}
-#ifarch %{ix86} %{x8664} ia64
 %patch101 -p1
-#endif
 %endif
 %endif
 
