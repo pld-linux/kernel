@@ -5,7 +5,6 @@
 # - suspend2 renamed to tuxonice (as project name)
 #
 # TODO:
-# - another nf modules disappeared?
 # - benchmark NO_HZ & HZ=1000 vs HZ=300 on i686
 # - apparmor (no future?)
 #
@@ -108,7 +107,7 @@
 %define		_prepatch		%{nil}
 %define		_pre_rc			%{nil}
 %define		_rc			%{nil}
-%define		_rel			0.2
+%define		_rel			1
 
 %define		_enable_debug_packages			0
 
@@ -127,7 +126,7 @@
 
 # Our Kernel ABI, increase this when you want the out of source modules being rebuilt
 # Usually same as %{_rel}
-%define		KABI		0
+%define		KABI		1
 
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de.UTF-8):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
@@ -219,11 +218,7 @@ Patch10:	kernel-pom-ng-IPV4OPTSSTRIP.patch
 Patch11:	kernel-pom-ng-ipv4options.patch
 Patch12:	kernel-pom-ng-set.patch
 Patch14:	kernel-pom-ng-ROUTE.patch
-Patch15:	kernel-pom-ng-TARPIT.patch
 Patch16:	kernel-pom-ng-mms-conntrack-nat.patch
-Patch17:	kernel-pom-ng-IPMARK.patch
-Patch19:	kernel-pom-ng-geoip.patch
-Patch20:	kernel-pom-ng-ipp2p.patch
 Patch22:	kernel-pom-ng-rsh.patch
 Patch23:	kernel-pom-ng-rpc.patch
 
@@ -781,20 +776,8 @@ install -m 755 %{SOURCE6} .
 # kernel-pom-ng-ROUTE.patch
 %patch14 -p1
 
-# kernel-pom-ng-TARPIT.patch
-%patch15 -p1
-
 # kernel-pom-ng-mms-conntrack-nat.patch
 %patch16 -p1
-
-# kernel-pom-ng-IPMARK.patch
-%patch17 -p1
-
-# kernel-pom-ng-geoip.patch
-%patch19 -p1
-
-# kernel-pom-ng-ipp2p.patch
-%patch20 -p1
 
 # kernel-pom-ng-rsh.patch
 %patch22 -p1
