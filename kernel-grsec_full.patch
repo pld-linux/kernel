@@ -13939,6 +13939,18 @@ diff -urNp linux-2.6.25.4/fs/binfmt_elf.c linux-2.6.25.4/fs/binfmt_elf.c
  /*
   * These are the functions used to load ELF style executables and shared
   * libraries.  There is no binary dependent code anywhere else.
+@@ -515,6 +697,11 @@ static unsigned long rando
+ {
+ 	unsigned int random_variable = 0;
+ 
++#ifdef CONFIG_PAX_RANDUSTACK
++       if (randomize_va_space)
++               return stack_top - current->mm->delta_stack;
++#endif
++
+ 	if ((current->flags & PF_RANDOMIZE) &&
+ 		!(current->personality & ADDR_NO_RANDOMIZE)) {
+ 		random_variable = get_random_int() & STACK_RND_MASK;
 @@ -533,7 +717,7 @@ static int load_elf_binary(struct linux_
   	unsigned long load_addr = 0, load_bias = 0;
  	int load_addr_set = 0;
@@ -25840,18 +25852,6 @@ diff -urNp linux-2.6.25.4/include/asm-alpha/pgtable.h linux-2.6.25.4/include/asm
  #define PAGE_KERNEL	__pgprot(_PAGE_VALID | _PAGE_ASM | _PAGE_KRE | _PAGE_KWE)
  
  #define _PAGE_NORMAL(x) __pgprot(_PAGE_VALID | __ACCESS_BITS | (x))
-diff -urNp linux-2.6.25.4/include/asm-alpha/processor.h linux-2.6.25.4/include/asm-alpha/processor.h
---- linux-2.6.25.4/include/asm-alpha/processor.h	2008-05-15 11:00:12.000000000 -0400
-+++ linux-2.6.25.4/include/asm-alpha/processor.h	2008-05-18 13:33:17.000000000 -0400
-@@ -20,7 +20,7 @@
-  */
- #define TASK_SIZE (0x40000000000UL)
- 
--#define STACK_TOP \
-+#define __STACK_TOP \
-   (current->personality & ADDR_LIMIT_32BIT ? 0x80000000 : 0x00120000000UL)
- 
- #define STACK_TOP_MAX	0x00120000000UL
 diff -urNp linux-2.6.25.4/include/asm-arm/elf.h linux-2.6.25.4/include/asm-arm/elf.h
 --- linux-2.6.25.4/include/asm-arm/elf.h	2008-05-15 11:00:12.000000000 -0400
 +++ linux-2.6.25.4/include/asm-arm/elf.h	2008-05-18 13:33:17.000000000 -0400
@@ -25882,18 +25882,6 @@ diff -urNp linux-2.6.25.4/include/asm-arm/kmap_types.h linux-2.6.25.4/include/as
  	KM_TYPE_NR
  };
  
-diff -urNp linux-2.6.25.4/include/asm-arm/processor.h linux-2.6.25.4/include/asm-arm/processor.h
---- linux-2.6.25.4/include/asm-arm/processor.h	2008-05-15 11:00:12.000000000 -0400
-+++ linux-2.6.25.4/include/asm-arm/processor.h	2008-05-18 13:33:17.000000000 -0400
-@@ -23,7 +23,7 @@
- #include <asm/types.h>
- 
- #ifdef __KERNEL__
--#define STACK_TOP	((current->personality == PER_LINUX_32BIT) ? \
-+#define __STACK_TOP	((current->personality == PER_LINUX_32BIT) ? \
- 			 TASK_SIZE : TASK_SIZE_26)
- #define STACK_TOP_MAX	TASK_SIZE
- #endif
 diff -urNp linux-2.6.25.4/include/asm-avr32/elf.h linux-2.6.25.4/include/asm-avr32/elf.h
 --- linux-2.6.25.4/include/asm-avr32/elf.h	2008-05-15 11:00:12.000000000 -0400
 +++ linux-2.6.25.4/include/asm-avr32/elf.h	2008-05-18 13:33:17.000000000 -0400
@@ -25926,20 +25914,6 @@ diff -urNp linux-2.6.25.4/include/asm-avr32/kmap_types.h linux-2.6.25.4/include/
  };
  
  #undef D
-diff -urNp linux-2.6.25.4/include/asm-avr32/processor.h linux-2.6.25.4/include/asm-avr32/processor.h
---- linux-2.6.25.4/include/asm-avr32/processor.h	2008-05-15 11:00:12.000000000 -0400
-+++ linux-2.6.25.4/include/asm-avr32/processor.h	2008-05-18 13:33:17.000000000 -0400
-@@ -14,8 +14,8 @@
- #define TASK_SIZE	0x80000000
- 
- #ifdef __KERNEL__
--#define STACK_TOP	TASK_SIZE
--#define STACK_TOP_MAX	STACK_TOP
-+#define __STACK_TOP	TASK_SIZE
-+#define STACK_TOP_MAX	__STACK_TOP
- #endif
- 
- #ifndef __ASSEMBLY__
 diff -urNp linux-2.6.25.4/include/asm-blackfin/kmap_types.h linux-2.6.25.4/include/asm-blackfin/kmap_types.h
 --- linux-2.6.25.4/include/asm-blackfin/kmap_types.h	2008-05-15 11:00:12.000000000 -0400
 +++ linux-2.6.25.4/include/asm-blackfin/kmap_types.h	2008-05-18 13:33:17.000000000 -0400
@@ -26066,32 +26040,6 @@ diff -urNp linux-2.6.25.4/include/asm-ia64/pgtable.h linux-2.6.25.4/include/asm-
  #define PAGE_GATE	__pgprot(__ACCESS_BITS | _PAGE_PL_0 | _PAGE_AR_X_RX)
  #define PAGE_KERNEL	__pgprot(__DIRTY_BITS  | _PAGE_PL_0 | _PAGE_AR_RWX)
  #define PAGE_KERNELRX	__pgprot(__ACCESS_BITS | _PAGE_PL_0 | _PAGE_AR_RX)
-diff -urNp linux-2.6.25.4/include/asm-ia64/processor.h linux-2.6.25.4/include/asm-ia64/processor.h
---- linux-2.6.25.4/include/asm-ia64/processor.h	2008-05-15 11:00:12.000000000 -0400
-+++ linux-2.6.25.4/include/asm-ia64/processor.h	2008-05-18 13:33:17.000000000 -0400
-@@ -276,7 +276,7 @@ struct thread_struct {
- 	.on_ustack =	0,					\
- 	.ksp =		0,					\
- 	.map_base =	DEFAULT_MAP_BASE,			\
--	.rbs_bot =	STACK_TOP - DEFAULT_USER_STACK_SIZE,	\
-+	.rbs_bot =	__STACK_TOP - DEFAULT_USER_STACK_SIZE,	\
- 	.task_size =	DEFAULT_TASK_SIZE,			\
- 	.last_fph_cpu =  -1,					\
- 	INIT_THREAD_IA32					\
-diff -urNp linux-2.6.25.4/include/asm-ia64/ustack.h linux-2.6.25.4/include/asm-ia64/ustack.h
---- linux-2.6.25.4/include/asm-ia64/ustack.h	2008-05-15 11:00:12.000000000 -0400
-+++ linux-2.6.25.4/include/asm-ia64/ustack.h	2008-05-18 13:33:17.000000000 -0400
-@@ -10,8 +10,8 @@
- 
- /* The absolute hard limit for stack size is 1/2 of the mappable space in the region */
- #define MAX_USER_STACK_SIZE	(RGN_MAP_LIMIT/2)
--#define STACK_TOP		(0x6000000000000000UL + RGN_MAP_LIMIT)
--#define STACK_TOP_MAX		STACK_TOP
-+#define __STACK_TOP		(0x6000000000000000UL + RGN_MAP_LIMIT)
-+#define STACK_TOP_MAX		__STACK_TOP
- #endif
- 
- /* Make a default stack size of 2GiB */
 diff -urNp linux-2.6.25.4/include/asm-m32r/kmap_types.h linux-2.6.25.4/include/asm-m32r/kmap_types.h
 --- linux-2.6.25.4/include/asm-m32r/kmap_types.h	2008-05-15 11:00:12.000000000 -0400
 +++ linux-2.6.25.4/include/asm-m32r/kmap_types.h	2008-05-18 13:33:17.000000000 -0400
@@ -26167,27 +26115,6 @@ diff -urNp linux-2.6.25.4/include/asm-mips/page.h linux-2.6.25.4/include/asm-mip
    #else
       typedef struct { unsigned long long pte; } pte_t;
       #define pte_val(x)	((x).pte)
-diff -urNp linux-2.6.25.4/include/asm-mips/processor.h linux-2.6.25.4/include/asm-mips/processor.h
---- linux-2.6.25.4/include/asm-mips/processor.h	2008-05-15 11:00:12.000000000 -0400
-+++ linux-2.6.25.4/include/asm-mips/processor.h	2008-05-18 13:33:17.000000000 -0400
-@@ -39,7 +39,7 @@ extern unsigned int vced_count, vcei_cou
-  * so don't change it unless you know what you are doing.
-  */
- #define TASK_SIZE	0x7fff8000UL
--#define STACK_TOP	TASK_SIZE
-+#define __STACK_TOP	TASK_SIZE
- 
- /*
-  * This decides where the kernel will search for a free chunk of vm
-@@ -58,7 +58,7 @@ extern unsigned int vced_count, vcei_cou
-  */
- #define TASK_SIZE32	0x7fff8000UL
- #define TASK_SIZE	0x10000000000UL
--#define STACK_TOP	\
-+#define __STACK_TOP	\
-       (test_thread_flag(TIF_32BIT_ADDR) ? TASK_SIZE32 : TASK_SIZE)
- 
- /*
 diff -urNp linux-2.6.25.4/include/asm-mips/system.h linux-2.6.25.4/include/asm-mips/system.h
 --- linux-2.6.25.4/include/asm-mips/system.h	2008-05-15 11:00:12.000000000 -0400
 +++ linux-2.6.25.4/include/asm-mips/system.h	2008-05-18 13:33:17.000000000 -0400
@@ -26250,18 +26177,6 @@ diff -urNp linux-2.6.25.4/include/asm-parisc/pgtable.h linux-2.6.25.4/include/as
  #define PAGE_KERNEL	__pgprot(_PAGE_KERNEL)
  #define PAGE_KERNEL_RO	__pgprot(_PAGE_KERNEL & ~_PAGE_WRITE)
  #define PAGE_KERNEL_UNC	__pgprot(_PAGE_KERNEL | _PAGE_NO_CACHE)
-diff -urNp linux-2.6.25.4/include/asm-parisc/processor.h linux-2.6.25.4/include/asm-parisc/processor.h
---- linux-2.6.25.4/include/asm-parisc/processor.h	2008-05-15 11:00:12.000000000 -0400
-+++ linux-2.6.25.4/include/asm-parisc/processor.h	2008-05-18 13:33:17.000000000 -0400
-@@ -52,7 +52,7 @@
- /* XXX: STACK_TOP actually should be STACK_BOTTOM for parisc.
-  * prumpf */
- 
--#define STACK_TOP	TASK_SIZE
-+#define __STACK_TOP	TASK_SIZE
- #define STACK_TOP_MAX	DEFAULT_TASK_SIZE
- 
- #endif
 diff -urNp linux-2.6.25.4/include/asm-powerpc/elf.h linux-2.6.25.4/include/asm-powerpc/elf.h
 --- linux-2.6.25.4/include/asm-powerpc/elf.h	2008-05-15 11:00:12.000000000 -0400
 +++ linux-2.6.25.4/include/asm-powerpc/elf.h	2008-05-18 13:33:17.000000000 -0400
@@ -26334,28 +26249,6 @@ diff -urNp linux-2.6.25.4/include/asm-powerpc/page.h linux-2.6.25.4/include/asm-
  
  #define VM_DATA_DEFAULT_FLAGS64	(VM_READ | VM_WRITE | \
  				 VM_MAYREAD | VM_MAYWRITE | VM_MAYEXEC)
-diff -urNp linux-2.6.25.4/include/asm-powerpc/processor.h linux-2.6.25.4/include/asm-powerpc/processor.h
---- linux-2.6.25.4/include/asm-powerpc/processor.h	2008-05-15 11:00:12.000000000 -0400
-+++ linux-2.6.25.4/include/asm-powerpc/processor.h	2008-05-18 13:33:17.000000000 -0400
-@@ -119,15 +119,15 @@ extern struct task_struct *last_task_use
- #define STACK_TOP_USER64 TASK_SIZE_USER64
- #define STACK_TOP_USER32 TASK_SIZE_USER32
- 
--#define STACK_TOP (test_thread_flag(TIF_32BIT) ? \
-+#define __STACK_TOP (test_thread_flag(TIF_32BIT) ? \
- 		   STACK_TOP_USER32 : STACK_TOP_USER64)
- 
- #define STACK_TOP_MAX STACK_TOP_USER64
- 
- #else /* __powerpc64__ */
- 
--#define STACK_TOP TASK_SIZE
--#define STACK_TOP_MAX	STACK_TOP
-+#define __STACK_TOP TASK_SIZE
-+#define STACK_TOP_MAX	__STACK_TOP
- 
- #endif /* __powerpc64__ */
- #endif /* __KERNEL__ */
 diff -urNp linux-2.6.25.4/include/asm-ppc/mmu_context.h linux-2.6.25.4/include/asm-ppc/mmu_context.h
 --- linux-2.6.25.4/include/asm-ppc/mmu_context.h	2008-05-15 11:00:12.000000000 -0400
 +++ linux-2.6.25.4/include/asm-ppc/mmu_context.h	2008-05-18 13:33:17.000000000 -0400
@@ -26521,32 +26414,6 @@ diff -urNp linux-2.6.25.4/include/asm-sparc/pgtsrmmu.h linux-2.6.25.4/include/as
  #define SRMMU_PAGE_KERNEL  __pgprot(SRMMU_VALID | SRMMU_CACHE | SRMMU_PRIV | \
  				    SRMMU_DIRTY | SRMMU_REF)
  
-diff -urNp linux-2.6.25.4/include/asm-sparc/processor.h linux-2.6.25.4/include/asm-sparc/processor.h
---- linux-2.6.25.4/include/asm-sparc/processor.h	2008-05-15 11:00:12.000000000 -0400
-+++ linux-2.6.25.4/include/asm-sparc/processor.h	2008-05-18 13:33:17.000000000 -0400
-@@ -34,8 +34,8 @@
-  */
- #define TASK_SIZE	PAGE_OFFSET
- #ifdef __KERNEL__
--#define STACK_TOP	(PAGE_OFFSET - PAGE_SIZE)
--#define STACK_TOP_MAX	STACK_TOP
-+#define __STACK_TOP	(PAGE_OFFSET - PAGE_SIZE)
-+#define STACK_TOP_MAX	__STACK_TOP
- #endif /* __KERNEL__ */
- 
- struct task_struct;
-diff -urNp linux-2.6.25.4/include/asm-sparc/uaccess.h linux-2.6.25.4/include/asm-sparc/uaccess.h
---- linux-2.6.25.4/include/asm-sparc/uaccess.h	2008-05-15 11:00:12.000000000 -0400
-+++ linux-2.6.25.4/include/asm-sparc/uaccess.h	2008-05-18 13:33:17.000000000 -0400
-@@ -40,7 +40,7 @@
-  * No one can read/write anything from userland in the kernel space by setting
-  * large size and address near to PAGE_OFFSET - a fault will break his intentions.
-  */
--#define __user_ok(addr, size) ({ (void)(size); (addr) < STACK_TOP; })
-+#define __user_ok(addr, size) ({ (void)(size); (addr) < __STACK_TOP; })
- #define __kernel_ok (segment_eq(get_fs(), KERNEL_DS))
- #define __access_ok(addr,size) (__user_ok((addr) & get_fs().seg,(size)))
- #define access_ok(type, addr, size)					\
 diff -urNp linux-2.6.25.4/include/asm-sparc64/elf.h linux-2.6.25.4/include/asm-sparc64/elf.h
 --- linux-2.6.25.4/include/asm-sparc64/elf.h	2008-05-15 11:00:12.000000000 -0400
 +++ linux-2.6.25.4/include/asm-sparc64/elf.h	2008-05-18 13:33:17.000000000 -0400
@@ -26574,18 +26441,6 @@ diff -urNp linux-2.6.25.4/include/asm-sparc64/kmap_types.h linux-2.6.25.4/includ
  	KM_TYPE_NR
  };
  
-diff -urNp linux-2.6.25.4/include/asm-sparc64/processor.h linux-2.6.25.4/include/asm-sparc64/processor.h
---- linux-2.6.25.4/include/asm-sparc64/processor.h	2008-05-15 11:00:12.000000000 -0400
-+++ linux-2.6.25.4/include/asm-sparc64/processor.h	2008-05-18 13:33:17.000000000 -0400
-@@ -45,7 +45,7 @@
- #define STACK_TOP32	((1UL << 32UL) - PAGE_SIZE)
- #define STACK_TOP64	(0x0000080000000000UL - (1UL << 32UL))
- 
--#define STACK_TOP	(test_thread_flag(TIF_32BIT) ? \
-+#define __STACK_TOP	(test_thread_flag(TIF_32BIT) ? \
- 			 STACK_TOP32 : STACK_TOP64)
- 
- #define STACK_TOP_MAX	STACK_TOP64
 diff -urNp linux-2.6.25.4/include/asm-um/kmap_types.h linux-2.6.25.4/include/asm-um/kmap_types.h
 --- linux-2.6.25.4/include/asm-um/kmap_types.h	2008-05-15 11:00:12.000000000 -0400
 +++ linux-2.6.25.4/include/asm-um/kmap_types.h	2008-05-18 13:33:17.000000000 -0400
@@ -27659,19 +27514,18 @@ diff -urNp linux-2.6.25.4/include/asm-x86/processor.h linux-2.6.25.4/include/asm
   * User space process size: 3GB (default).
   */
  #define TASK_SIZE	(PAGE_OFFSET)
--#define STACK_TOP	TASK_SIZE
--#define STACK_TOP_MAX	STACK_TOP
 +
 +#ifdef CONFIG_PAX_SEGMEXEC
 +#define SEGMEXEC_TASK_SIZE	(TASK_SIZE / 2)
 +#endif
 +
 +#ifdef CONFIG_PAX_SEGMEXEC
-+#define __STACK_TOP	((current->mm->pax_flags & MF_PAX_SEGMEXEC)?SEGMEXEC_TASK_SIZE:TASK_SIZE)
++#define STACK_TOP	((current->mm->pax_flags & MF_PAX_SEGMEXEC)?SEGMEXEC_TASK_SIZE:TASK_SIZE)
 +#else
-+#define __STACK_TOP	TASK_SIZE
+ #define STACK_TOP	TASK_SIZE
+-#define STACK_TOP_MAX	STACK_TOP
 +#endif
-+#define STACK_TOP_MAX	TASK_SIZE
++#define STACK_TOP_MAX  TASK_SIZE
  
  #define INIT_THREAD  {							\
 -	.sp0 = sizeof(init_stack) + (long)&init_stack,			\
@@ -28041,23 +27895,6 @@ diff -urNp linux-2.6.25.4/include/asm-xtensa/kmap_types.h linux-2.6.25.4/include
 diff -urNp linux-2.6.25.4/include/linux/a.out.h linux-2.6.25.4/include/linux/a.out.h
 --- linux-2.6.25.4/include/linux/a.out.h	2008-05-15 11:00:12.000000000 -0400
 +++ linux-2.6.25.4/include/linux/a.out.h	2008-05-18 13:33:17.000000000 -0400
-@@ -9,6 +9,16 @@
- 
- #include <asm/a.out.h>
- 
-+#ifdef CONFIG_PAX_RANDUSTACK
-+#define __DELTA_STACK (current->mm->delta_stack)
-+#else
-+#define __DELTA_STACK 0UL
-+#endif
-+
-+#ifndef STACK_TOP
-+#define STACK_TOP	(__STACK_TOP - __DELTA_STACK)
-+#endif
-+
- #endif /* __STRUCT_EXEC_OVERRIDE__ */
- 
- #ifndef __ASSEMBLY__
 @@ -41,6 +51,14 @@ enum machine_type {
    M_MIPS2 = 152		/* MIPS R6000/R4000 binary */
  };
@@ -29996,10 +29833,33 @@ diff -urNp linux-2.6.25.4/init/main.c linux-2.6.25.4/init/main.c
  
  enum system_states system_state;
  EXPORT_SYMBOL(system_state);
-@@ -187,6 +188,17 @@ static int __init set_reset_devices(char
+@@ -187,6 +188,40 @@ static int __init set_reset_devices(char
  
  __setup("reset_devices", set_reset_devices);
  
++#if defined(CONFIG_PAX_MEMORY_UDEREF) && defined(CONFIG_X86_32)
++static int __init setup_pax_nouderef(char *str)
++{
++       unsigned int cpu;
++
++#ifdef CONFIG_PAX_KERNEXEC
++       unsigned long cr0;
++
++       pax_open_kernel(cr0);
++#endif
++
++       for (cpu = 0; cpu < NR_CPUS; cpu++)
++               get_cpu_gdt_table(cpu)[GDT_ENTRY_KERNEL_DS].b = 0x00cf9300;
++
++#ifdef CONFIG_PAX_KERNEXEC
++       pax_close_kernel(cr0);
++#endif
++
++       return 1;
++}
++__setup("pax_nouderef", setup_pax_nouderef);
++#endif
++
 +#ifdef CONFIG_PAX_SOFTMODE
 +unsigned int pax_softmode;
 +
