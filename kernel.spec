@@ -87,7 +87,8 @@
 %endif
 
 %if %{with xen0} || %{with xenU}
-%define		pae	1
+%define		with_pae	1
+%define		with_xen	1
 %endif
 
 ## Programs required by kernel to work.
@@ -119,7 +120,7 @@
 
 %define		xen_version		3.0.2
 
-%define		__alt_kernel	%{?with_pax:pax}%{?with_grsec_full:grsecurity}%{?with_xen0:xen0}%{?with_xenU:xenU}
+%define		__alt_kernel	%{?with_pax:pax}%{?with_grsec_full:grsecurity}%{?with_xen0:xen0}%{?with_xenU:xenU}%{?with_pae:pae}
 %if "%{__alt_kernel}" != ""
 %define		alt_kernel	%{__alt_kernel}
 %endif
@@ -389,8 +390,8 @@ Conflicts:	reiserfsprogs < %{_reiserfsprogs_ver}
 Conflicts:	udev < %{_udev_ver}
 Conflicts:	util-linux < %{_util_linux_ver}
 Conflicts:	xfsprogs < %{_xfsprogs_ver}
-%if %{with xen0} || %{with xenU}
-ExclusiveArch:	%{ix86} %{x8664}
+%if %{with xen} || %{with pae}
+ExclusiveArch:	%{ix86} %{?with_xen:%{x8664}}
 ExcludeArch:	i386 i486 i586
 %else
 ExclusiveArch:	%{ix86} alpha %{x8664} ia64 ppc ppc64 sparc sparc64
@@ -947,7 +948,7 @@ rm -rf suspend2-%{suspend_version}-for-2.6.16.9
 %patch103 -p1
 %patch104 -p1
 
-%if %{with xen0} || %{with xenU}
+%if %{with xen}
 %ifarch %{ix86} %{x8664} ia64
 %patch120 -p1
 %patch121 -p1
@@ -1102,7 +1103,7 @@ BuildConfig() {
 	cat %{SOURCE51} >> arch/%{_target_base_arch}/defconfig
 %endif
 
-%if %{with xen0} || %{with xenU}
+%if %{with xen}
 	sed -i "s:CONFIG_X86_PC=y:# CONFIG_X86_PC is not set:" arch/%{_target_base_arch}/defconfig
 	sed -i "s:CONFIG_RIO=[ym]:# CONFIG_RIO is not set:" arch/%{_target_base_arch}/defconfig
 
@@ -1192,7 +1193,7 @@ BuildKernel() {
 %endif
 %else
 	%{__make} %CrossOpts \
-%if %{with xen0} || %{with xenU}
+%if %{with xen}
 		SHELL=/bin/bash \
 %endif
 		%{?with_verbose:V=1}
@@ -1212,7 +1213,7 @@ PreInstallKernel() {
 	mkdir -p $KERNEL_INSTALL_DIR/boot
 	install System.map $KERNEL_INSTALL_DIR/boot/System.map-$KernelVer
 %ifarch %{ix86} %{x8664}
-%if %{with xen0} || %{with xenU}
+%if %{with xen}
 	install vmlinuz $KERNEL_INSTALL_DIR/boot/vmlinuz-$KernelVer
 %else
 	install arch/%{_target_base_arch}/boot/bzImage $KERNEL_INSTALL_DIR/boot/vmlinuz-$KernelVer
@@ -1579,7 +1580,7 @@ fi
 %if %{have_drm}
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/char/drm
 %endif
-%if %{have_oss} && %{have_isa} && %{without xen0} && %{without xenU}
+%if %{have_oss} && %{have_isa} && %{without xen}
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/media/radio/miropcm20.ko*
 %endif
 %if %{with abi}
@@ -1673,7 +1674,7 @@ fi
 %files sound-oss
 %defattr(644,root,root,755)
 /lib/modules/%{kernel_release}/kernel/sound/oss
-%if %{have_isa} && %{without xen0} && %{without xenU}
+%if %{have_isa} && %{without xen}
 /lib/modules/%{kernel_release}/kernel/drivers/media/radio/miropcm20.ko*
 %endif
 %endif
@@ -1697,7 +1698,7 @@ fi
 %if %{have_drm}
 %exclude /lib/modules/%{kernel_release}smp/kernel/drivers/char/drm
 %endif
-%if %{have_oss} && %{have_isa} && %{without xen0} && %{without xenU}
+%if %{have_oss} && %{have_isa} && %{without xen}
 %exclude /lib/modules/%{kernel_release}smp/kernel/drivers/media/radio/miropcm20.ko*
 %endif
 %if %{with abi}
@@ -1791,7 +1792,7 @@ fi
 %files smp-sound-oss
 %defattr(644,root,root,755)
 /lib/modules/%{kernel_release}smp/kernel/sound/oss
-%if %{have_isa} && %{without xen0} && %{without xenU}
+%if %{have_isa} && %{without xen}
 /lib/modules/%{kernel_release}smp/kernel/drivers/media/radio/miropcm20.ko*
 %endif
 %endif
