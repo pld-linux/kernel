@@ -107,7 +107,7 @@
 %define		_prepatch		%{nil}
 %define		_pre_rc			%{nil}
 %define		_rc			%{nil}
-%define		_rel			1
+%define		_rel			2
 
 %define		_enable_debug_packages			0
 
@@ -126,7 +126,7 @@
 
 # Our Kernel ABI, increase this when you want the out of source modules being rebuilt
 # Usually same as %{_rel}
-%define		KABI		1
+%define		KABI		2
 
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de.UTF-8):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
@@ -288,7 +288,7 @@ Patch72:	kernel-2.6-ueagle-atm-freezer.patch
 # http://patches.aircrack-ng.org/hostap-kernel-2.6.18.patch
 Patch85:	hostap-kernel-2.6.18.patch
 
-# based on http://vserver.13thfloor.at/Experimental/patch-2.6.25-vs2.3.0.34.9.diff
+# http://vserver.13thfloor.at/Experimental/patch-2.6.25.4-vs2.3.0.34.10.diff
 Patch100:	linux-2.6-vs2.3.patch
 Patch101:	kernel-vserver-fixes.patch
 # based on http://vserver.13thfloor.at/Experimental/patch-2.6.24-rc7-vs2.2.0.5.0.7-pre.diff
