@@ -118,9 +118,9 @@
 %define		squashfs_version	3.1
 %define		suspend_version		2.2.5
 
-%define		xen_version		3.0.2
+%define		xen_hv_abi			3.0
 
-%define		__alt_kernel	%{?with_pax:pax}%{?with_grsec_full:grsecurity}%{?with_xen0:xen0}%{?with_xenU:xenU}%{?with_pae:pae}
+%define		__alt_kernel	%{?with_pax:pax}%{?with_grsec_full:grsecurity}%{?with_xen0:xen0}%{?with_xenU:xenU}%{!?with_xen:%{?with_pae:pae}}
 %if "%{__alt_kernel}" != ""
 %define		alt_kernel	%{__alt_kernel}
 %endif
@@ -137,7 +137,7 @@
 
 %define		_basever	2.6.16
 %define		_postver	.60
-%define		_rel		14
+%define		_rel		15
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de.UTF-8):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(et.UTF-8):	Linuxi kernel (ehk operatsioonisüsteemi tuum)
@@ -366,8 +366,7 @@ Provides:	%{name}(netfilter) = %{netfilter_snap}
 Provides:	%{name}(vermagic) = %{kernel_release}
 Provides:	%{name}-up = %{epoch}:%{version}-%{release}
 %if %{with xen0}
-Requires:	xen >= %{xen_version}
-Provides:	kernel(xen0) = %{xen_version}
+Requires:	xen-hypervisor-abi = %{xen_hv_abi}
 %endif
 Obsoletes:	kernel-misc-fuse
 Obsoletes:	kernel-modules
@@ -586,8 +585,7 @@ Requires:	module-init-tools >= 0.9.9
 Provides:	%{name}(netfilter) = %{netfilter_snap}
 Provides:	%{name}-smp(vermagic) = %{kernel_release}
 %if %{with xen0}
-Requires:	xen >= %{xen_version}
-Provides:	kernel(xen0) = %{xen_version}
+Requires:	xen-hypervisor-abi = %{xen_hv_abi}
 %endif
 Obsoletes:	kernel-smp-misc-fuse
 Obsoletes:	kernel-smp-net-hostap
@@ -1400,11 +1398,15 @@ ln -sf initrd-%{kernel_release}.gz %{initrd_dir}/initrd
 
 if [ -x /sbin/new-kernel-pkg ]; then
 %if %{with xen0}
-	xen=$(readlink -f /boot/xen.gz)
-	xenver=${xen#/boot/xen-}
-	xenver=${xenver%.gz}
+	xenimg=%{initrd_dir}/xen.gz
+	xenver=
+	xen=$(readlink -f $xenimg)
+	if [ "$xen" != "$xenimg" ]; then
+		xenver=${xen#%{initrd_dir}/xen-}
+		xenver=${xenver%.gz}
+	fi
 
-	title="Xen $xenver / PLD Linux (%{pld_release})"
+	title="Xen${xenver:+ $xenver} / PLD Linux (%{pld_release})"
 	args=--multiboot=$xen
 %else
 	title="PLD Linux (%{pld_release})%{?alt_kernel: / %{alt_kernel}}"
@@ -1480,11 +1482,15 @@ ln -sf initrd-%{kernel_release}smp.gz %{initrd_dir}/initrd
 
 if [ -x /sbin/new-kernel-pkg ]; then
 %if %{with xen0}
-	xen=$(readlink -f /boot/xen.gz)
-	xenver=${xen#/boot/xen-}
-	xenver=${xenver%.gz}
+	xenimg=%{initrd_dir}/xen.gz
+	xenver=
+	xen=$(readlink -f $xenimg)
+	if [ "$xen" != "$xenimg" ]; then
+		xenver=${xen#%{initrd_dir}/xen-}
+		xenver=${xenver%.gz}
+	fi
 
-	title="Xen $xenver / PLD Linux (%{pld_release})"
+	title="Xen${xenver:+ $xenver} / PLD Linux (%{pld_release})"
 	args=--multiboot=$xen
 %else
 	title="PLD Linux (%{pld_release})%{?alt_kernel: / %{alt_kernel}}"
