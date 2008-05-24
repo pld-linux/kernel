@@ -1478,13 +1478,18 @@ fi
 /lib/modules/%{kernel_release}/kernel/net
 %if %{have_sound}
 %dir /lib/modules/%{kernel_release}/kernel/sound
-/lib/modules/%{kernel_release}/kernel/sound/soundcore.*
-%exclude /lib/modules/%{kernel_release}/kernel/drivers/media/video/saa7134/saa7134-alsa.ko*
+/lib/modules/%{kernel_release}/kernel/sound/ac97_bus.ko*
+/lib/modules/%{kernel_release}/kernel/sound/sound*.ko*
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/media/video/cx88/cx88-alsa.ko*
+%exclude /lib/modules/%{kernel_release}/kernel/drivers/media/video/em28xx/em28xx-alsa.ko*
+%exclude /lib/modules/%{kernel_release}/kernel/drivers/media/video/saa7134/saa7134-alsa.ko*
 %endif
 %dir /lib/modules/%{kernel_release}/misc
 %if %{with pcmcia}
-%exclude /lib/modules/%{kernel_release}/kernel/drivers/pcmcia
+%dir /lib/modules/%{kernel_release}/kernel/drivers/pcmcia
+/lib/modules/%{kernel_release}/kernel/drivers/pcmcia/pcmcia*ko*
+%exclude /lib/modules/%{kernel_release}/kernel/drivers/pcmcia/[!p]*
+%exclude /lib/modules/%{kernel_release}/kernel/drivers/pcmcia/pd6729.ko*
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/*/pcmcia
 %if %{without rescuecd}
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/ata/pata_pcmcia.ko*
@@ -1523,8 +1528,9 @@ fi
 %if %{with pcmcia}
 %files pcmcia
 %defattr(644,root,root,755)
-/lib/modules/%{kernel_release}/kernel/drivers/pcmcia
+/lib/modules/%{kernel_release}/kernel/drivers/pcmcia/*ko*
 /lib/modules/%{kernel_release}/kernel/drivers/*/pcmcia
+%exclude /lib/modules/%{kernel_release}/kernel/drivers/pcmcia/pcmcia*ko*
 %if %{without rescuecd}
 /lib/modules/%{kernel_release}/kernel/drivers/bluetooth/*_cs.ko*
 /lib/modules/%{kernel_release}/kernel/drivers/isdn/hardware/avm/avm_cs.ko*
@@ -1563,13 +1569,15 @@ fi
 %defattr(644,root,root,755)
 /lib/modules/%{kernel_release}/kernel/sound
 %exclude %dir /lib/modules/%{kernel_release}/kernel/sound
-%exclude /lib/modules/%{kernel_release}/kernel/sound/soundcore.*
+%exclude /lib/modules/%{kernel_release}/kernel/sound/ac97_bus.ko*
+%exclude /lib/modules/%{kernel_release}/kernel/sound/sound*.ko*
 %if %{have_oss}
 %exclude /lib/modules/%{kernel_release}/kernel/sound/oss
 %endif
 /lib/modules/%{kernel_release}/kernel/drivers/usb/gadget/g_midi.ko*
-/lib/modules/%{kernel_release}/kernel/drivers/media/video/saa7134/saa7134-alsa.ko*
 /lib/modules/%{kernel_release}/kernel/drivers/media/video/cx88/cx88-alsa.ko*
+/lib/modules/%{kernel_release}/kernel/drivers/media/video/em28xx/em28xx-alsa.ko*
+/lib/modules/%{kernel_release}/kernel/drivers/media/video/saa7134/saa7134-alsa.ko*
 
 %if %{have_oss}
 %files sound-oss
