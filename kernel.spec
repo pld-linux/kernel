@@ -1,5 +1,5 @@
 #
-# STATUS: 2.6.25 work in progress
+# STATUS: 2.6.25 works, needs testing
 #
 # NOTE:
 # - suspend2 renamed to tuxonice (as project name)
@@ -44,6 +44,8 @@
 %bcond_with	vs22		# use vserver 2.2 instead of 2.3 (see comment near patch 102)
 
 %bcond_with	rescuecd	# build kernel for our rescue
+
+%bcond_with	myown		# build with your own config (kernel-myown.config)
 
 %{?debug:%define with_verbose 1}
 
@@ -116,7 +118,7 @@
 %define		netfilter_snap		20070806
 %define		xen_version		3.0.2
 
-%define		_alt_kernel	%{?with_pax:-pax}%{?with_grsec_full:-grsecurity}%{?with_xen0:-xen0}%{?with_xenU:-xenU}%{?with_rescuecd:-rescuecd}%{?with_pae:-pae}
+%define		_alt_kernel	%{?with_pax:-pax}%{?with_grsec_full:-grsecurity}%{?with_xen0:-xen0}%{?with_xenU:-xenU}%{?with_rescuecd:-rescuecd}%{?with_pae:-pae}%{?with_myown:-myown}
 
 # kernel release (used in filesystem and eventually in uname -r)
 # modules will be looked from /lib/modules/%{kernel_release}
@@ -1174,14 +1176,6 @@ BuildConfig() {
 %{?debug:sed -i "s:# CONFIG_DEBUG_PREEMPT is not set:CONFIG_DEBUG_PREEMPT=y:" %{defconfig}}
 %{?debug:sed -i "s:# CONFIG_RT_DEADLOCK_DETECT is not set:CONFIG_RT_DEADLOCK_DETECT=y:" %{defconfig}}
 
-	ln -sf %{defconfig} .config
-	install -d $KERNEL_INSTALL_DIR%{_kernelsrcdir}/include/linux
-	rm -f include/linux/autoconf.h
-	%{__make} %CrossOpts include/linux/autoconf.h
-	install include/linux/autoconf.h \
-		$KERNEL_INSTALL_DIR%{_kernelsrcdir}/include/linux/autoconf-dist.h
-	install .config \
-		$KERNEL_INSTALL_DIR%{_kernelsrcdir}/config-dist
 }
 
 BuildKernel() {
@@ -1249,6 +1243,10 @@ PreInstallKernel() {
 	install vmlinuz $KERNEL_INSTALL_DIR/boot/efi/vmlinuz-$KernelVer
 	ln -sf efi/vmlinuz-$KernelVer $KERNEL_INSTALL_DIR/boot/vmlinuz-$KernelVer
 %endif
+%ifarch arm
+	install arch/arm/boot/zImage $KERNEL_INSTALL_DIR/boot/vmlinuz-$KernelVer
+%endif
+
 	%{__make} %CrossOpts modules_install \
 		%{?with_verbose:V=1} \
 		DEPMOD=%DepMod \
@@ -1272,7 +1270,19 @@ echo "-%{_localversion}" > localversion
 
 KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR/build-done/kernel"
 rm -rf $KERNEL_INSTALL_DIR
+%if %{without myown}
 BuildConfig
+%else
+cat $RPM_SOURCE_DIR/kernel-myown.config > %{defconfig}
+%endif
+ln -sf %{defconfig} .config
+install -d $KERNEL_INSTALL_DIR%{_kernelsrcdir}/include/linux
+rm -f include/linux/autoconf.h
+%{__make} %CrossOpts include/linux/autoconf.h
+install include/linux/autoconf.h \
+	$KERNEL_INSTALL_DIR%{_kernelsrcdir}/include/linux/autoconf-dist.h
+install .config \
+	$KERNEL_INSTALL_DIR%{_kernelsrcdir}/config-dist
 BuildKernel
 PreInstallKernel
 
@@ -1466,7 +1476,7 @@ fi
 %endif
 /lib/modules/%{kernel_release}/kernel/crypto
 /lib/modules/%{kernel_release}/kernel/drivers
-%if %{have_drm}
+%if %{have_drm} && %{without myown}
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/char/drm
 %endif
 /lib/modules/%{kernel_release}/kernel/fs
@@ -1476,16 +1486,18 @@ fi
 
 /lib/modules/%{kernel_release}/kernel/lib
 /lib/modules/%{kernel_release}/kernel/net
-%if %{have_sound}
+%if %{have_sound} && %{without myown}
 %dir /lib/modules/%{kernel_release}/kernel/sound
 /lib/modules/%{kernel_release}/kernel/sound/ac97_bus.ko*
 /lib/modules/%{kernel_release}/kernel/sound/sound*.ko*
+%ifnarch sparc
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/media/video/cx88/cx88-alsa.ko*
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/media/video/em28xx/em28xx-alsa.ko*
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/media/video/saa7134/saa7134-alsa.ko*
 %endif
+%endif
 %dir /lib/modules/%{kernel_release}/misc
-%if %{with pcmcia}
+%if %{with pcmcia} && %{without myown}
 %dir /lib/modules/%{kernel_release}/kernel/drivers/pcmcia
 /lib/modules/%{kernel_release}/kernel/drivers/pcmcia/pcmcia*ko*
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/pcmcia/[!p]*
@@ -1519,13 +1531,13 @@ fi
 /boot/vmlinux-%{kernel_release}
 %endif
 
-%if %{have_drm}
+%if %{have_drm} && %{without myown}
 %files drm
 %defattr(644,root,root,755)
 /lib/modules/%{kernel_release}/kernel/drivers/char/drm
 %endif
 
-%if %{with pcmcia}
+%if %{with pcmcia} && %{without myown}
 %files pcmcia
 %defattr(644,root,root,755)
 /lib/modules/%{kernel_release}/kernel/drivers/pcmcia/*ko*
@@ -1564,7 +1576,7 @@ fi
 %endif
 %endif
 
-%if %{have_sound}
+%if %{have_sound} && %{without myown}
 %files sound-alsa
 %defattr(644,root,root,755)
 /lib/modules/%{kernel_release}/kernel/sound
@@ -1574,12 +1586,14 @@ fi
 %if %{have_oss}
 %exclude /lib/modules/%{kernel_release}/kernel/sound/oss
 %endif
+%ifnarch sparc
 /lib/modules/%{kernel_release}/kernel/drivers/usb/gadget/g_midi.ko*
 /lib/modules/%{kernel_release}/kernel/drivers/media/video/cx88/cx88-alsa.ko*
 /lib/modules/%{kernel_release}/kernel/drivers/media/video/em28xx/em28xx-alsa.ko*
 /lib/modules/%{kernel_release}/kernel/drivers/media/video/saa7134/saa7134-alsa.ko*
+%endif
 
-%if %{have_oss}
+%if %{have_oss} && %{without myown}
 %files sound-oss
 %defattr(644,root,root,755)
 /lib/modules/%{kernel_release}/kernel/sound/oss
