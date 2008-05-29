@@ -6,7 +6,7 @@
 #
 # TODO:
 # - benchmark NO_HZ & HZ=1000 vs HZ=300 on i686
-# - apparmor (no future?)
+# - apparmor (needs testing)
 #
 # FUTURE:
 # - update xen patch
@@ -40,8 +40,8 @@
 
 %bcond_without	vserver		# support for VServer (enabled by default)
 %bcond_without	tuxonice	# support for tuxonice (ex-suspend2) (enabled by default)
-
 %bcond_with	vs22		# use vserver 2.2 instead of 2.3 (see comment near patch 102)
+%bcond_with	apparmor	# build kernel with apparmor (very exerimental mix)
 
 %bcond_with	rescuecd	# build kernel for our rescue
 
@@ -334,8 +334,10 @@ Patch2001:	linux-2.6.21.1-pwc-uncompress.patch
 # (only warnings, so just remove parts of this patch if conflics)
 Patch2500:	linux-2.6-warnings.patch
 
-Patch5000:	apparmor-2.6.20.3-v405-fullseries.diff
-Patch5001:	linux-2.6-apparmor-caps.patch
+# based on https://forgesvn1.novell.com/svn/apparmor/trunk/kernel-patches/2.6.25 rev 1266
+# repatched and adapted for vserver/grsec changes in vfs API, very experimental
+Patch5000:	kernel-apparmor.patch
+#Patch5001:	linux-2.6-apparmor-caps.patch
 
 # for rescuecd
 # based on http://ftp.leg.uct.ac.za/pub/linux/rip/inittmpfs-2.6.14.diff.gz
@@ -876,11 +878,6 @@ install -m 755 %{SOURCE6} .
 
 %patch2500 -p1
 
-# FIXME !!! 2.6.24 (no modular security? crap)
-# Apparmor
-# %patch5000 -p1
-# %patch5001 -p1
-
 %if %{with rescuecd}
 %patch7000 -p1
 %patch7001 -p1
@@ -924,6 +921,12 @@ install -m 755 %{SOURCE6} .
 
 #
 # end of grsecurity & pax stuff
+
+# apparmor
+%if %{with apparmor}
+%patch5000 -p1
+# %patch5001 -p1
+%endif
 
 %ifarch ppc ppc64
 #patch200 -p1
@@ -1170,6 +1173,17 @@ BuildConfig() {
 
 %if %{with rescuecd}
 	RescueConfig %{defconfig}
+%endif
+
+# apparmor, will be moved to external file if works
+%if %{with apparmor}
+echo CONFIG_SECURITY_APPARMOR=y >> %{defconfig}
+echo CONFIG_SECURITY_APPARMOR_BOOTPARAM_VALUE=1 >> %{defconfig}
+echo "# CONFIG_SECURITY_APPARMOR_DISABLE is not set" >> %{defconfig}
+# patch for unionfs not ready yet
+sed -i "s:CONFIG_UNION_FS=m:# CONFIG_UNION_FS is not set:" %{defconfig}
+# some conflict with smack, todo
+sed -i "s:CONFIG_SECURITY_SMACK=y:# CONFIG_SECURITY_SMACK is not set:" %{defconfig}
 %endif
 
 %{?debug:sed -i "s:# CONFIG_DEBUG_SLAB is not set:CONFIG_DEBUG_SLAB=y:" %{defconfig}}
