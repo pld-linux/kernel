@@ -105,11 +105,11 @@
 %endif
 
 %define		_basever		2.6.25
-%define		_postver		.4
+%define		_postver		.5
 %define		_prepatch		%{nil}
 %define		_pre_rc			%{nil}
 %define		_rc			%{nil}
-%define		_rel			2
+%define		_rel			1
 
 %define		_enable_debug_packages			0
 
@@ -157,7 +157,7 @@ Source90:	http://www.kernel.org/pub/linux/kernel/v2.6/testing/patch-%{_prepatch}
 %endif
 %if "%{_postver}" != "%{nil}"
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
-# Source1-md5:	f12f43dd78b765f3d1402aa9d2170cf5
+# Source1-md5:	7aa6fbadb357f92f26c9063ea6a490a4
 %endif
 
 Source3:	kernel-autoconf.h
