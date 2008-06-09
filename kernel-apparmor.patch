@@ -2850,7 +2850,7 @@ diff -uprN e/security/apparmor/Makefile f/security/apparmor/Makefile
 diff -uprN e/security/apparmor/apparmor.h f/security/apparmor/apparmor.h
 --- e/security/apparmor/apparmor.h	1970-01-01 00:00:00.000000000 +0000
 +++ f/security/apparmor/apparmor.h	2008-05-28 20:29:29.410207000 +0000
-@@ -0,0 +1,399 @@
+@@ -0,0 +1,403 @@
 +/*
 + *	Copyright (C) 1998-2007 Novell/SUSE
 + *
@@ -2977,6 +2977,9 @@ diff -uprN e/security/apparmor/apparmor.h f/security/apparmor/apparmor.h
 +	(apparmor_audit == 1 || \
 +	 ((_cxt) && (_cxt)->profile && (_cxt)->profile->flags.audit))
 +
++#define PROFILE_IS_HAT(_profile) \
++      ((_profile) && (_profile)->flags.hat)
++
 +/*
 + * DEBUG remains global (no per profile flag) since it is mostly used in sysctl
 + * which is not related to profile accesses.
@@ -3064,6 +3067,7 @@ diff -uprN e/security/apparmor/apparmor.h f/security/apparmor/apparmor.h
 +	char **exec_table;
 +	struct aa_dfa *file_rules;
 +	struct {
++		int hat;
 +		int complain;
 +		int audit;
 +	} flags;
@@ -3253,14 +3257,13 @@ diff -uprN e/security/apparmor/apparmor.h f/security/apparmor/apparmor.h
 diff -uprN e/security/apparmor/apparmorfs.c f/security/apparmor/apparmorfs.c
 --- e/security/apparmor/apparmorfs.c	1970-01-01 00:00:00.000000000 +0000
 +++ f/security/apparmor/apparmorfs.c	2008-05-28 20:29:29.410207000 +0000
-@@ -0,0 +1,280 @@
+@@ -0,0 +1,279 @@
 +/*
 + *	Copyright (C) 1998-2007 Novell/SUSE
 + *
 + *	This program is free software; you can redistribute it and/or
 + *	modify it under the terms of the GNU General Public License as
 + *	published by the Free Software Foundation, version 2 of the
-+ *	License.
 + *
 + *	AppArmor filesystem (part of securityfs)
 + */
@@ -3791,7 +3794,7 @@ diff -uprN e/security/apparmor/inline.h f/security/apparmor/inline.h
 diff -uprN e/security/apparmor/list.c f/security/apparmor/list.c
 --- e/security/apparmor/list.c	1970-01-01 00:00:00.000000000 +0000
 +++ f/security/apparmor/list.c	2008-05-28 20:29:29.410207000 +0000
-@@ -0,0 +1,156 @@
+@@ -0,0 +1,172 @@
 +/*
 + *	Copyright (C) 1998-2007 Novell/SUSE
 + *
@@ -3885,19 +3888,43 @@ diff -uprN e/security/apparmor/list.c f/security/apparmor/list.c
 +	write_unlock(&profile_ns_list_lock);
 +}
 +
-+static void *p_start(struct seq_file *f, loff_t *pos)
++static struct aa_profile *next_profile(struct aa_profile *profile)
 +{
++	struct aa_profile *next = profile;
 +	struct aa_namespace *ns;
-+	struct aa_profile *profile;
-+	loff_t l = *pos;
-+	read_lock(&profile_ns_list_lock);
-+	if (l--)
-+		return NULL;
-+	list_for_each_entry(ns, &profile_ns_list, list) {
++
++	list_for_each_entry_continue(next, &profile->ns->profiles, list)
++		return next;
++
++	ns = profile->ns;
++	read_unlock(&ns->lock);
++	list_for_each_entry_continue(ns, &profile_ns_list, list) {
 +		read_lock(&ns->lock);
 +		list_for_each_entry(profile, &ns->profiles, list)
 +			return profile;
 +		read_unlock(&ns->lock);
++	}
++	return NULL;
++}
++
++static void *p_start(struct seq_file *f, loff_t *pos)
++{
++	struct aa_namespace *ns;
++	loff_t l = *pos;
++
++	read_lock(&profile_ns_list_lock);
++	if (!list_empty(&profile_ns_list)) {
++		struct aa_profile *profile = NULL;
++		ns = list_first_entry(&profile_ns_list, typeof(*ns), list);
++		read_lock(&ns->lock);
++		if (!list_empty(&ns->profiles))
++			profile = list_first_entry(&ns->profiles,
++						   typeof(*profile), list);
++		else
++			read_unlock(&ns->lock);
++		for ( ; profile && l > 0; l--)
++			profile = next_profile(profile);
++		return profile;
 +	}
 +	return NULL;
 +}
@@ -3905,33 +3932,25 @@ diff -uprN e/security/apparmor/list.c f/security/apparmor/list.c
 +static void *p_next(struct seq_file *f, void *p, loff_t *pos)
 +{
 +	struct aa_profile *profile = (struct aa_profile *) p;
-+	struct list_head *lh = profile->list.next;
-+	struct aa_namespace *ns;
-+	(*pos)++;
-+	if (lh != &profile->ns->profiles)
-+		return list_entry(lh, struct aa_profile, list);
 +
-+	lh = profile->ns->list.next;
-+	read_unlock(&profile->ns->lock);
-+	while (lh != &profile_ns_list) {
-+		ns = list_entry(lh, struct aa_namespace, list);
-+		read_lock(&ns->lock);
-+		list_for_each_entry(profile, &ns->profiles, list)
-+			return profile;
-+		read_unlock(&ns->lock);
-+		lh = ns->list.next;
-+	}
-+	return NULL;
++	(*pos)++;
++	profile = next_profile(profile);
++
++	return profile;
 +}
 +
-+static void p_stop(struct seq_file *f, void *v)
++static void p_stop(struct seq_file *f, void *p)
 +{
++	struct aa_profile *profile = (struct aa_profile *) p;
++
++	if (profile)
++		read_unlock(&profile->ns->lock);
 +	read_unlock(&profile_ns_list_lock);
 +}
 +
-+static int seq_show_profile(struct seq_file *f, void *v)
++static int seq_show_profile(struct seq_file *f, void *p)
 +{
-+	struct aa_profile *profile = (struct aa_profile *)v;
++	struct aa_profile *profile = (struct aa_profile *)p;
 +	if (profile->ns == default_namespace)
 +	    seq_printf(f, "%s (%s)\n", profile->name,
 +		       PROFILE_COMPLAIN(profile) ? "complain" : "enforce");
@@ -5135,7 +5154,7 @@ diff -uprN e/security/apparmor/lsm.c f/security/apparmor/lsm.c
 diff -uprN e/security/apparmor/main.c f/security/apparmor/main.c
 --- e/security/apparmor/main.c	1970-01-01 00:00:00.000000000 +0000
 +++ f/security/apparmor/main.c	2008-05-28 20:29:29.410207000 +0000
-@@ -0,0 +1,1690 @@
+@@ -0,0 +1,1689 @@
 +/*
 + *	Copyright (C) 2002-2007 Novell/SUSE
 + *
@@ -6472,7 +6491,8 @@ diff -uprN e/security/apparmor/main.c f/security/apparmor/main.c
 +
 +static int do_change_profile(struct aa_profile *expected,
 +			     struct aa_namespace *ns, const char *name,
-+			     u64 cookie, int restore, struct aa_audit *sa)
++			     u64 cookie, int restore, int hat,
++			     struct aa_audit *sa)
 +{
 +	struct aa_profile *new_profile = NULL, *old_profile = NULL,
 +		*previous_profile = NULL;
@@ -6487,9 +6507,15 @@ diff -uprN e/security/apparmor/main.c f/security/apparmor/main.c
 +
 +	new_profile = aa_find_profile(ns, name);
 +	if (!new_profile && !restore) {
-+		if (!PROFILE_COMPLAIN(expected))
++		if (!PROFILE_COMPLAIN(expected)) {
++			aa_free_task_context(new_cxt);
 +			return -ENOENT;
++		}
 +		new_profile = aa_dup_profile(ns->null_complain_profile);
++	} else if (new_profile && hat && !PROFILE_IS_HAT(new_profile)) {
++		aa_free_task_context(new_cxt);
++		aa_put_profile(new_profile);
++		return error;
 +	}
 +
 +	cxt = lock_task_and_profiles(current, new_profile);
@@ -6599,7 +6625,7 @@ diff -uprN e/security/apparmor/main.c f/security/apparmor/main.c
 +	if (!profile || PROFILE_COMPLAIN(profile) ||
 +	    (ns == profile->ns &&
 +	     (aa_match(profile->file_rules, name, NULL) & AA_CHANGE_PROFILE)))
-+		error = do_change_profile(profile, ns, name, 0, 0, &sa);
++		error = do_change_profile(profile, ns, name, 0, 0, 0, &sa);
 +	else {
 +		/* check for a rule with a namespace prepended */
 +		aa_match_state(profile->file_rules, DFA_START, ns->name,
@@ -6607,7 +6633,7 @@ diff -uprN e/security/apparmor/main.c f/security/apparmor/main.c
 +		state = aa_dfa_null_transition(profile->file_rules, state);
 +		if ((aa_match_state(profile->file_rules, state, name, NULL) &
 +		      AA_CHANGE_PROFILE))
-+			error = do_change_profile(profile, ns, name, 0, 0,
++			error = do_change_profile(profile, ns, name, 0, 0, 0,
 +						  &sa);
 +		else
 +			/* no permission to transition to profile @name */
@@ -6657,14 +6683,6 @@ diff -uprN e/security/apparmor/main.c f/security/apparmor/main.c
 +
 +	if (hat_name) {
 +		char *name, *profile_name;
-+		if (!PROFILE_COMPLAIN(profile) &&
-+		    !(aa_match(profile->file_rules, hat_name, NULL)
-+		      & AA_CHANGE_HAT)) {
-+			/* missing permission to change_hat is treated the
-+			 * same as a failed hat search */
-+			error = -ENOENT;
-+			goto out;
-+		}
 +
 +		if (previous_profile)
 +			profile_name = previous_profile->name;
@@ -6677,11 +6695,11 @@ diff -uprN e/security/apparmor/main.c f/security/apparmor/main.c
 +			goto out;
 +		}
 +		error = do_change_profile(profile, profile->ns, name, cookie,
-+					  0, &sa);
++					  0, 1, &sa);
 +		aa_put_name_buffer(name);
 +	} else if (previous_profile)
 +		error = do_change_profile(profile, profile->ns,
-+					  previous_profile->name, cookie, 1,
++					  previous_profile->name, cookie, 1, 0,
 +					  &sa);
 +	/* else ignore restores when there is no saved profile */
 +
@@ -7631,7 +7649,7 @@ diff -uprN e/security/apparmor/module_interface.c f/security/apparmor/module_int
 +		profile->rlimits.mask = tmp;
 +
 +		size = aa_is_array(e, NULL);
-+		if (size != RLIM_NLIMITS)
++		if (size > RLIM_NLIMITS)
 +			goto fail;
 +		for (i = 0; i < size; i++) {
 +			u64 tmp = 0;
@@ -7676,7 +7694,7 @@ diff -uprN e/security/apparmor/module_interface.c f/security/apparmor/module_int
 +	/* per profile debug flags (complain, audit) */
 +	if (!aa_is_nameX(e, AA_STRUCT, "flags"))
 +		goto fail;
-+	if (!aa_is_u32(e, NULL, NULL))
++	if (!aa_is_u32(e, &(profile->flags.hat), NULL))
 +		goto fail;
 +	if (!aa_is_u32(e, &(profile->flags.complain), NULL))
 +		goto fail;
