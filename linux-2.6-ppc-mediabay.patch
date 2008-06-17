@@ -1,0 +1,90 @@
+From bunk@kernel.org Wed Jun 11 03:47:45 2008
+From: Adrian Bunk <bunk@kernel.org>
+Subject: [2.6 patch] drivers/macintosh/mediabay.c build fix
+Date: Wed, 11 Jun 2008 03:47:45 +1000
+X-Patchwork-ID: 18885
+
+This patch fixes the following build error with CONFIG_BLK_DEV_IDE_PMAC=n:
+
+<--  snip  -->
+
+...
+  CC      drivers/macintosh/mediabay.o
+/home/bunk/linux/kernel-2.6/git/linux-2.6/drivers/macintosh/mediabay.c: In function 'check_media_bay':
+/home/bunk/linux/kernel-2.6/git/linux-2.6/drivers/macintosh/mediabay.c:428: error: 'struct media_bay_info' has no member named 'cd_index'
+make[3]: *** [drivers/macintosh/mediabay.o] Error 1
+
+<--  snip  -->
+
+Reported-by: Adrian Bunk <bunk@kernel.org>
+Signed-off-by: Adrian Bunk <bunk@kernel.org>
+
+---
+
+ drivers/macintosh/mediabay.c   |    4 ++--
+ include/asm-powerpc/mediabay.h |   12 ++++++++++--
+ 2 files changed, 12 insertions(+), 4 deletions(-)
+
+e644eb541d73b1fe13550506398d725a536c6aef diff --git a/drivers/macintosh/mediabay.c b/drivers/macintosh/mediabay.c
+index 82add26..7d406ef 100644
+
+
+---
+--- a/drivers/macintosh/mediabay.c
++++ b/drivers/macintosh/mediabay.c
+@@ -84,7 +84,7 @@ struct media_bay_info {
+ 	int				cd_irq;
+ 	int				cd_retry;
+ #endif
+-#if defined(CONFIG_BLK_DEV_IDE_PMAC) || defined(CONFIG_MAC_FLOPPY)
++#if defined(CONFIG_BLK_DEV_IDE_PMAC)
+ 	int 				cd_index;
+ #endif
+ };
+@@ -417,6 +417,7 @@ static void poll_media_bay(struct media_bay_info* bay)
+ 	}
+ }
+ 
++#ifdef CONFIG_BLK_DEV_IDE_PMAC
+ int check_media_bay(struct device_node *which_bay, int what)
+ {
+ 	int	i;
+@@ -432,7 +433,6 @@ int check_media_bay(struct device_node *which_bay, int what)
+ }
+ EXPORT_SYMBOL(check_media_bay);
+ 
+-#ifdef CONFIG_BLK_DEV_IDE_PMAC
+ int check_media_bay_by_base(unsigned long base, int what)
+ {
+ 	int	i;
+diff --git a/include/asm-powerpc/mediabay.h b/include/asm-powerpc/mediabay.h
+index df111c3..b2efb33 100644
+--- a/include/asm-powerpc/mediabay.h
++++ b/include/asm-powerpc/mediabay.h
+@@ -17,8 +17,6 @@
+ #define MB_POWER	6	/* media bay contains a Power device (???) */
+ #define MB_NO		7	/* media bay contains nothing */
+ 
+-int check_media_bay(struct device_node *which_bay, int what);
+-
+ /* Number of bays in the machine or 0 */
+ extern int media_bay_count;
+ 
+@@ -29,6 +27,16 @@ int check_media_bay_by_base(unsigned long base, int what);
+ /* called by IDE PMAC host driver to register IDE controller for media bay */
+ int media_bay_set_ide_infos(struct device_node *which_bay, unsigned long base,
+ 			    int irq, ide_hwif_t *hwif);
++
++int check_media_bay(struct device_node *which_bay, int what);
++
++#else
++
++static inline int check_media_bay(struct device_node *which_bay, int what)
++{
++	return -ENODEV;
++}
++
+ #endif
+ 
+ #endif /* __KERNEL__ */
+
