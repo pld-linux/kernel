@@ -316,6 +316,8 @@ Patch160:	linux-2.6-aic94xx_with_included_firmware.patch
 
 Patch200:	linux-2.6-ppc-ICE-hacks.patch
 
+Patch205:	linux-2.6-ppc-mediabay.patch
+
 # The following patch extend the routing functionality in Linux
 # to support static routes (defined by user), new way to use the
 # alternative routes, the reverse path protection (rp_filter),
@@ -931,6 +933,8 @@ install -m 755 %{SOURCE6} .
 %ifarch ppc ppc64
 #patch200 -p1
 %endif
+
+%patch205 -p1
 
 # routes
 %patch300 -p1
