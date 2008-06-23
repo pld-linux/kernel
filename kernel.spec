@@ -109,7 +109,7 @@
 %define		_prepatch		%{nil}
 %define		_pre_rc			%{nil}
 %define		_rc			%{nil}
-%define		_rel			1
+%define		_rel			2
 
 %define		_enable_debug_packages			0
 
@@ -1519,8 +1519,6 @@ fi
 %endif
 %dir /lib/modules/%{kernel_release}/misc
 %if %{with pcmcia} && %{without myown}
-%dir /lib/modules/%{kernel_release}/kernel/drivers/pcmcia
-/lib/modules/%{kernel_release}/kernel/drivers/pcmcia/pcmcia*ko*
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/pcmcia/[!p]*
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/pcmcia/pd6729.ko*
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/*/pcmcia
@@ -1528,6 +1526,7 @@ fi
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/ata/pata_pcmcia.ko*
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/bluetooth/*_cs.ko*
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/isdn/hardware/avm/avm_cs.ko*
+%exclude /lib/modules/%{kernel_release}/kernel/drivers/isdn/hardware/avm/b1pcmcia.ko*
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/telephony/ixj_pcmcia.ko*
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/usb/gadget/g_midi.ko*
 %endif
@@ -1567,6 +1566,7 @@ fi
 %if %{without rescuecd}
 /lib/modules/%{kernel_release}/kernel/drivers/bluetooth/*_cs.ko*
 /lib/modules/%{kernel_release}/kernel/drivers/isdn/hardware/avm/avm_cs.ko*
+/lib/modules/%{kernel_release}/kernel/drivers/isdn/hardware/avm/b1pcmcia.ko*
 /lib/modules/%{kernel_release}/kernel/drivers/telephony/ixj_pcmcia.ko*
 %endif
 /lib/modules/%{kernel_release}/kernel/drivers/ata/pata_pcmcia.ko*
