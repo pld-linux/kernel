@@ -1,25 +1,3 @@
-commit 305c73687157d677bee6f2a5dbee438d844a028c
-Author: Adrian Bunk <bunk@kernel.org>
-Date:   Wed Jun 11 03:47:45 2008 +1000
-
-    [POWERPC] Build fix for drivers/macintosh/mediabay.c
-    
-    This fixes the following build error with CONFIG_BLK_DEV_IDE_PMAC=n:
-    
-    <--  snip  -->
-    
-    ...
-      CC      drivers/macintosh/mediabay.o
-    /home/bunk/linux/kernel-2.6/git/linux-2.6/drivers/macintosh/mediabay.c: In function 'check_media_bay':
-    /home/bunk/linux/kernel-2.6/git/linux-2.6/drivers/macintosh/mediabay.c:428: error: 'struct media_bay_info' has no member named 'cd_index'
-    make[3]: *** [drivers/macintosh/mediabay.o] Error 1
-    
-    <--  snip  -->
-    
-    Reported-by: Adrian Bunk <bunk@kernel.org>
-    Signed-off-by: Adrian Bunk <bunk@kernel.org>
-    Signed-off-by: Paul Mackerras <paulus@samba.org>
-
 diff --git a/drivers/macintosh/mediabay.c b/drivers/macintosh/mediabay.c
 index c34bdf8..818aba3 100644
 --- a/drivers/macintosh/mediabay.c
@@ -53,22 +31,17 @@ diff --git a/include/asm-powerpc/mediabay.h b/include/asm-powerpc/mediabay.h
 index df111c3..b2efb33 100644
 --- a/include/asm-powerpc/mediabay.h
 +++ b/include/asm-powerpc/mediabay.h
-@@ -17,8 +17,6 @@
- #define MB_POWER	6	/* media bay contains a Power device (???) */
- #define MB_NO		7	/* media bay contains nothing */
- 
--int check_media_bay(struct device_node *which_bay, int what);
--
+@@ -20,10 +20,21 @@
  /* Number of bays in the machine or 0 */
  extern int media_bay_count;
  
-@@ -29,6 +27,16 @@ int check_media_bay_by_base(unsigned long base, int what);
++#ifdef CONFIG_BLK_DEV_IDE_PMAC
++
+ int check_media_bay_by_base(unsigned long base, int what);
  /* called by IDE PMAC host driver to register IDE controller for media bay */
  int media_bay_set_ide_infos(struct device_node *which_bay, unsigned long base,
- 			    int irq, ide_hwif_t *hwif);
-+
-+int check_media_bay(struct device_node *which_bay, int what);
-+
+ 			    int irq, int index);
+ 
 +#else
 +
 +static inline int check_media_bay(struct device_node *which_bay, int what)
@@ -76,6 +49,7 @@ index df111c3..b2efb33 100644
 +	return -ENODEV;
 +}
 +
- #endif
- 
++#endif
++
  #endif /* __KERNEL__ */
+ #endif /* _PPC_MEDIABAY_H */
