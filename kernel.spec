@@ -364,6 +364,9 @@ BuildRequires:	binutils >= 3:2.14.90.0.7
 %ifarch sparc sparc64
 BuildRequires:	elftoaout
 %endif
+%ifarch ppc
+BuildRequires:	uboot-mkimage
+%endif
 BuildRequires:	/sbin/depmod
 BuildRequires:	gcc >= 5:3.2
 %{?with_rescuecd:BuildRequires:	lzma >= 1:4.42.2}
