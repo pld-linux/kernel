@@ -122,7 +122,7 @@
 
 # Our Kernel ABI, increase this when you want the out of source modules being rebuilt
 # Usually same as %{_rel}
-%define		KABI		6
+%define		KABI		8
 
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de.UTF-8):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
@@ -382,6 +382,7 @@ Patch1000:	linux-2.6-grsec-minimal.patch
 
 Patch2000:	kernel-small_fixes.patch
 Patch2001:	linux-2.6.21.1-pwc-uncompress.patch
+Patch2002:	linux-2.6.22-inotify-fix.patch
 
 # kill some thousands of warnings
 Patch2500:	linux-2.6-warnings.patch
@@ -996,6 +997,7 @@ install %{SOURCE5} Makefile.ppclibs
 # Small fixes:
 %patch2000 -p1
 %patch2001 -p1
+%patch2002 -p1
 
 %if %{with abi}
 %patch6000 -p1
@@ -1177,6 +1179,8 @@ BuildConfig() {
 %else
 %if %{with grsec_minimal}
 	cat %{SOURCE51} >> arch/%{_target_base_arch}/defconfig
+%else
+	echo "CONFIG_PROC_KCORE=y" >> arch/%{_target_base_arch}/defconfig
 %endif
 %endif
 
@@ -1445,8 +1449,8 @@ ln -sf System.map-%{kernel_release} /boot/System.map
 
 %depmod %{kernel_release}
 
-/sbin/geninitrd -f --initrdfs=rom %{initrd_dir}/initrd-%{kernel_release}.gz %{kernel_release}mv -f %{initrd_dir}/initrd{,.old} 2> /dev/null
-mv -f %{initrd_dir}/initrd{,.old} 2> /dev/null}
+/sbin/geninitrd -f --initrdfs=rom %{initrd_dir}/initrd-%{kernel_release}.gz %{kernel_release}
+mv -f %{initrd_dir}/initrd{,.old} 2> /dev/null
 %{?alt_kernel:mv -f %{initrd_dir}/initrd-%{alt_kernel}{,.old} 2> /dev/null}
 ln -sf initrd-%{kernel_release}.gz %{initrd_dir}/initrd
 %{?alt_kernel:ln -sf initrd-%{kernel_release}.gz %{initrd_dir}/initrd-%{alt_kernel}}
