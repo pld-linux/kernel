@@ -869,7 +869,7 @@ install -m 755 %{SOURCE6} .
 #%endif
 
 # tproxy
-%if %{without rescuecd}
+%if %{without rescuecd} && %{with vserver}
 %patch42 -p1
 %endif
 
