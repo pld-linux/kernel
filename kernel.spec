@@ -105,11 +105,11 @@
 %endif
 
 %define		_basever		2.6.25
-%define		_postver		.8
+%define		_postver		.9
 %define		_prepatch		%{nil}
 %define		_pre_rc			%{nil}
 %define		_rc			%{nil}
-%define		_rel			2
+%define		_rel			1
 
 %define		_enable_debug_packages			0
 
@@ -157,7 +157,7 @@ Source90:	http://www.kernel.org/pub/linux/kernel/v2.6/testing/patch-%{_prepatch}
 %endif
 %if "%{_postver}" != "%{nil}"
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
-# Source1-md5:	007e6aca33604bc09687790361026d3c
+# Source1-md5:	493a0b7dd145d4f378ce3970e3690320
 %endif
 
 Source3:	kernel-autoconf.h
@@ -346,6 +346,8 @@ Patch5000:	kernel-apparmor.patch
 Patch7000:	kernel-inittmpfs.patch
 # based on http://www.udpcast.linux.lu/download/bzip2-lzma-kernel-2.6.23.12.patch.gz
 Patch7001:	kernel-bzip2-lzma.patch
+
+Patch9996:	linux-2.6-security-opt.patch
 
 # not ready yet
 Patch9997:	pax_selinux_hooks-2.6.20.patch
@@ -909,6 +911,8 @@ install -m 755 %{SOURCE6} .
 # grsec_full, but the patches are different.
 %endif
 %endif
+
+%patch9996 -p1
 
 %if %{with pax}
 # now we have an separate testing pax-only patch - in the future we
