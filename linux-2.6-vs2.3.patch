@@ -28704,3 +28704,15 @@ diff -NurpP --minimal linux-2.6.25.4/security/selinux/hooks.c linux-2.6.25.4-vs2
  #include <linux/parser.h>
  #include <linux/nfs_mount.h>
  #include <net/ipv6.h>
+diff -Nurp linux-2.6.25-vs2.3.0.34.5.2/kernel/signal.c linux-2.6.25-vs2.3.0.34.5.3/kernel/signal.c
+--- linux-2.6.25-vs2.3.0.34.5.2/kernel/signal.c	2008-04-30 07:09:17.000000000 -0400
++++ linux-2.6.25-vs2.3.0.34.5.3/kernel/signal.c	2008-06-25 17:56:22.000000000 -0400
+@@ -1070,7 +1070,7 @@ int kill_pid_info(int sig, struct siginf
+ 
+ retry:
+ 	p = pid_task(pid, PIDTYPE_PID);
+-	if (p) {
++	if (p && vx_check(vx_task_xid(p), VS_WATCH | VS_IDENT)) {
+ 		error = group_send_sig_info(sig, info, p);
+ 		if (unlikely(error == -ESRCH))
+ 			/*
