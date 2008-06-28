@@ -109,7 +109,7 @@
 %define		_prepatch		%{nil}
 %define		_pre_rc			%{nil}
 %define		_rc			%{nil}
-%define		_rel			3
+%define		_rel			4
 
 %define		_enable_debug_packages			0
 
