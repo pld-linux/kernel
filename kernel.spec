@@ -316,7 +316,7 @@ Patch102:	linux-2.6-vs2.2.patch
 # by using vs22 bcond - this bcond also changes IPV6 option from "y" to "m".
 
 # http://xenbits.xensource.com/linux-2.6.18-xen.hg
-Patch120:		kernel-xen-xen.patch
+Patch120:	kernel-xen-xen.patch
 
 # Wake-On-Lan fix for nForce drivers; using http://atlas.et.tudelft.nl/verwei90/nforce2/wol.html
 # Fix verified for that kernel version.
@@ -411,8 +411,8 @@ BuildRequires:	binutils >= 3:2.14.90.0.7
 %ifarch sparc sparc64
 BuildRequires:	elftoaout
 %endif
-BuildRequires:	/sbin/depmod
 BuildRequires:	%{kgcc_package} >= 5:3.2
+BuildRequires:	/sbin/depmod
 # for hostname command
 BuildRequires:	net-tools
 BuildRequires:	perl-base
@@ -431,7 +431,9 @@ Provides:	%{name}(vermagic) = %{kernel_release}
 Requires:	xen >= %{xen_version}
 Provides:	kernel(xen) = %{xen_version}
 %endif
+Obsoletes:	kernel%{_alt_kernel}-fs-unionfs
 Obsoletes:	kernel%{_alt_kernel}-scsi-mv
+Obsoletes:	kernel%{_alt_kernel}-smp-fs-unionfs
 Obsoletes:	kernel%{_alt_kernel}-smp-scsi-mv
 Obsoletes:	kernel-misc-fuse
 Obsoletes:	kernel-modules
