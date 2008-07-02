@@ -366,7 +366,6 @@ Provides:	%{name}(netfilter) = %{netfilter_snap}
 Provides:	%{name}(vermagic) = %{kernel_release}
 Provides:	%{name}-up = %{epoch}:%{version}-%{release}
 %if %{with xen0}
-Provides:	kernel(xen0) = %{xen_hv_abi}
 Requires:	xen-hypervisor-abi = %{xen_hv_abi}
 %endif
 Obsoletes:	kernel-misc-fuse
@@ -586,7 +585,6 @@ Requires:	module-init-tools >= 0.9.9
 Provides:	%{name}(netfilter) = %{netfilter_snap}
 Provides:	%{name}-smp(vermagic) = %{kernel_release}
 %if %{with xen0}
-Provides:	kernel(xen0) = %{xen_hv_abi}
 Requires:	xen-hypervisor-abi = %{xen_hv_abi}
 %endif
 Obsoletes:	kernel-smp-misc-fuse
