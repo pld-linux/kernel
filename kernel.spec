@@ -432,10 +432,11 @@ Requires:	xen >= %{xen_version}
 Provides:	kernel(xen) = %{xen_version}
 %endif
 Obsoletes:	kernel%{_alt_kernel}-fs-unionfs
+Obsoletes:	kernel%{_alt_kernel}-misc-fuse
 Obsoletes:	kernel%{_alt_kernel}-scsi-mv
 Obsoletes:	kernel%{_alt_kernel}-smp-fs-unionfs
+Obsoletes:	kernel%{_alt_kernel}-smp-misc-fuse
 Obsoletes:	kernel%{_alt_kernel}-smp-scsi-mv
-Obsoletes:	kernel-misc-fuse
 Obsoletes:	kernel-modules
 Obsoletes:	kernel-net-hostap
 Obsoletes:	kernel-net-ieee80211
