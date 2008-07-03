@@ -122,9 +122,7 @@
 
 # kernel release (used in filesystem and eventually in uname -r)
 # modules will be looked from /lib/modules/%{kernel_release}
-# _localversion is just that without version for "> localversion"
-%define		_localversion %{KABI}
-%define		kernel_release %{version}%{?_alt_kernel:%{_alt_kernel}}-%{_localversion}
+%define		kernel_release %{version}%{?_alt_kernel:%{_alt_kernel}}_%{KABI}
 
 # Our Kernel ABI, increase this when you want the out of source modules being rebuilt
 # Usually same as %{_rel}. Never decrement this (policy).
@@ -1292,7 +1290,7 @@ PreInstallKernel() {
 }
 
 KERNEL_BUILD_DIR=`pwd`
-echo "-%{_localversion}" > localversion
+echo "_%{KABI}" > localversion
 
 KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR/build-done/kernel"
 rm -rf $KERNEL_INSTALL_DIR
