@@ -105,11 +105,11 @@
 %endif
 
 %define		_basever		2.6.25
-%define		_postver		.9
+%define		_postver		.10
 %define		_prepatch		%{nil}
 %define		_pre_rc			%{nil}
 %define		_rc			%{nil}
-%define		_rel			4
+%define		_rel			1
 
 %define		_enable_debug_packages			0
 
@@ -127,7 +127,7 @@
 %define		kernel_release %{version}%{?_alt_kernel:%{_alt_kernel}}-%{_localversion}
 
 # Our Kernel ABI, increase this when you want the out of source modules being rebuilt
-# Usually same as %{_rel}
+# Usually same as %{_rel}. Never decrement this (policy).
 %define		KABI		2
 
 Summary:	The Linux kernel (the core of the Linux operating system)
@@ -157,7 +157,7 @@ Source90:	http://www.kernel.org/pub/linux/kernel/v2.6/testing/patch-%{_prepatch}
 %endif
 %if "%{_postver}" != "%{nil}"
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
-# Source1-md5:	493a0b7dd145d4f378ce3970e3690320
+# Source1-md5:	ad3c4b32bf293722500160a2bb6100b6
 %endif
 
 Source3:	kernel-autoconf.h
