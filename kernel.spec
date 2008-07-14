@@ -767,7 +767,7 @@ install -m 755 %{SOURCE6} .
 #
 
 # kernel-pom-ng-IPV4OPTSSTRIP.patch
-%patch10 -p1
+#FIXME%patch10 -p1
 
 # kernel-pom-ng-ipv4options.patch
 %patch11 -p1
@@ -776,19 +776,19 @@ install -m 755 %{SOURCE6} .
 %patch12 -p1
 
 # kernel-pom-ng-ROUTE.patch
-%patch14 -p1
+#FIXME%patch14 -p1
 
 # kernel-pom-ng-mms-conntrack-nat.patch
-%patch16 -p1
+#FIXME%patch16 -p1
 
 # kernel-pom-ng-rsh.patch
-%patch22 -p1
+#FIXME%patch22 -p1
 
 # kernel-pom-ng-rpc.patch
-%patch23 -p1
+#FIXME%patch23 -p1
 
 # kernel-nf_rtsp.patch
-%patch36 -p1
+#FIXME%patch36 -p1
 
 # kernel-owner-xid.patch
 %if %{with vserver}
@@ -830,7 +830,7 @@ install -m 755 %{SOURCE6} .
 %endif
 
 # toshiba_acpi
-%patch54 -p1
+#FIXME%patch54 -p1
 
 %patch55 -p1
 %patch56 -p1
@@ -868,7 +868,7 @@ install -m 755 %{SOURCE6} .
 %patch130 -p1
 
 # unionfs
-%patch140 -p1
+#FIXME%patch140 -p1
 %{?with_vserver:%patch141 -p1}
 
 %patch2500 -p1
