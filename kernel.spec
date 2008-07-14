@@ -104,12 +104,12 @@
 %define		have_oss	0
 %endif
 
-%define		_basever		2.6.25
-%define		_postver		.11
+%define		_basever		2.6.26
+%define		_postver		%{nil}
 %define		_prepatch		%{nil}
 %define		_pre_rc			%{nil}
 %define		_rc			%{nil}
-%define		_rel			1
+%define		_rel			0.1
 
 %define		_enable_debug_packages			0
 
@@ -148,7 +148,7 @@ License:	GPL v2
 Group:		Base/Kernel
 #Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_rc}.tar.bz2
 Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{_basever}%{_rc}.tar.bz2
-# Source0-md5:	db95a49a656a3247d4995a797d333153
+# Source0-md5:	5169d01c405bc3f866c59338e217968c
 %if "%{_prepatch}" != "%{nil}"
 Source90:	http://www.kernel.org/pub/linux/kernel/v2.6/testing/patch-%{_prepatch}-%{_pre_rc}.bz2
 # Source90-md5:	b78873f8a3aff5bdc719fc7fb4c66a9b
@@ -309,12 +309,7 @@ Patch130:	linux-2.6-forcedeth-WON.patch
 Patch140:	kernel-unionfs.patch
 Patch141:	kernel-unionfs-vserver.patch
 
-# aic94xx patch based on http://georgi.unixsol.org/programs/aic94xx_with_included_firmware_2.6.21.diff
-Patch160:	linux-2.6-aic94xx_with_included_firmware.patch
-
 Patch200:	linux-2.6-ppc-ICE-hacks.patch
-
-Patch205:	linux-2.6-ppc-mediabay.patch
 
 # The following patch extend the routing functionality in Linux
 # to support static routes (defined by user), new way to use the
@@ -322,7 +317,6 @@ Patch205:	linux-2.6-ppc-mediabay.patch
 # the NAT processing to use correctly the routing when multiple
 # gateways are used.
 # http://www.ssi.bg/~ja/routes-2.6.25-15.diff
-# We need to disable CONFIG_IP_ROUTE_MULTIPATH_CACHED
 Patch300:	kernel-routes.patch
 
 Patch1000:	linux-2.6-grsec-minimal.patch
@@ -344,8 +338,6 @@ Patch5000:	kernel-apparmor.patch
 Patch7000:	kernel-inittmpfs.patch
 # based on http://www.udpcast.linux.lu/download/bzip2-lzma-kernel-2.6.23.12.patch.gz
 Patch7001:	kernel-bzip2-lzma.patch
-
-Patch9996:	linux-2.6-security-opt.patch
 
 # not ready yet
 Patch9997:	pax_selinux_hooks-2.6.20.patch
@@ -879,9 +871,6 @@ install -m 755 %{SOURCE6} .
 %patch140 -p1
 %{?with_vserver:%patch141 -p1}
 
-# aic94xx linux-2.6-aic94xx_with_included_firmware.patch
-%patch160 -p1
-
 %patch2500 -p1
 
 %if %{with rescuecd}
@@ -911,8 +900,6 @@ install -m 755 %{SOURCE6} .
 %endif
 %endif
 
-%patch9996 -p1
-
 %if %{with pax}
 # now we have an separate testing pax-only patch - in the future we
 # could have single grsecurity patch and will have to prepare separate
@@ -940,10 +927,9 @@ install -m 755 %{SOURCE6} .
 #patch200 -p1
 %endif
 
-%patch205 -p1
-
 # routes
-%patch300 -p1
+# FIXME
+#%patch300 -p1
 
 # Small fixes:
 %patch2000 -p1
