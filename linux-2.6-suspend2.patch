@@ -2489,22 +2489,22 @@ index 99ce949..f4f8330 100644
  #include <linux/sched.h>
  #include <linux/signal.h>
  
-@@ -572,6 +573,7 @@ asmlinkage void __init start_kernel(void)
+@@ -603,6 +603,7 @@
  	softirq_init();
  	timekeeping_init();
  	time_init();
 +	dyn_pageflags_init();
+ 	sched_clock_init();
  	profile_init();
  	if (!irqs_disabled())
- 		printk("start_kernel(): bug: interrupts were enabled early\n");
 @@ -610,6 +612,7 @@ asmlinkage void __init start_kernel(void)
  	enable_debug_pagealloc();
  	cpu_hotplug_init();
  	kmem_cache_init();
 +	dyn_pageflags_use_kzalloc();
+ 	debug_objects_mem_init();
+	idr_init_cache();
  	setup_per_cpu_pageset();
- 	numa_policy_init();
- 	if (late_time_init)
 diff --git a/kernel/power/Kconfig b/kernel/power/Kconfig
 index 6233f3b..8bd74dc 100644
 --- a/kernel/power/Kconfig
@@ -2791,10 +2791,12 @@ diff --git a/kernel/power/Makefile b/kernel/power/Makefile
 index f7dfff2..8ea53fa 100644
 --- a/kernel/power/Makefile
 +++ b/kernel/power/Makefile
-@@ -5,6 +5,37 @@ endif
+@@ -8,3 +8,36 @@
+ obj-$(CONFIG_HIBERNATION)	+= swsusp.o disk.o snapshot.o swap.o user.o
  
- obj-y				:= main.o
- obj-$(CONFIG_PM_LEGACY)		+= pm.o
+ obj-$(CONFIG_MAGIC_SYSRQ)	+= poweroff.o
++
++
 +
 +tuxonice_core-objs := tuxonice_modules.o tuxonice_sysfs.o tuxonice_highlevel.o \
 +		tuxonice_io.o tuxonice_pagedir.o tuxonice_prepare_image.o \
@@ -2826,9 +2828,6 @@ index f7dfff2..8ea53fa 100644
 +
 +obj-$(CONFIG_TOI_PAGEFLAGS_TEST)	+= toi_pageflags_test.o
 +
- obj-$(CONFIG_PM_SLEEP)		+= process.o console.o
- obj-$(CONFIG_HIBERNATION)	+= swsusp.o disk.o snapshot.o swap.o user.o
- 
 diff --git a/kernel/power/disk.c b/kernel/power/disk.c
 index 14a656c..141606e 100644
 --- a/kernel/power/disk.c
