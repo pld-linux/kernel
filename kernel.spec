@@ -109,7 +109,7 @@
 %define		_prepatch		%{nil}
 %define		_pre_rc			%{nil}
 %define		_rc			%{nil}
-%define		_rel			1
+%define		_rel			2
 
 %define		_enable_debug_packages			0
 
@@ -122,7 +122,9 @@
 
 # kernel release (used in filesystem and eventually in uname -r)
 # modules will be looked from /lib/modules/%{kernel_release}
-%define		kernel_release %{version}%{?_alt_kernel:%{_alt_kernel}}_%{KABI}
+# _localversion is just that without version for "> localversion"
+%define		_localversion %{KABI}
+%define		kernel_release %{version}%{?_alt_kernel:%{_alt_kernel}}-%{_localversion}
 
 # Our Kernel ABI, increase this when you want the out of source modules being rebuilt
 # Usually same as %{_rel}. Never decrement this (policy).
@@ -1290,7 +1292,7 @@ PreInstallKernel() {
 }
 
 KERNEL_BUILD_DIR=`pwd`
-echo "_%{KABI}" > localversion
+echo "-%{_localversion}" > localversion
 
 KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR/build-done/kernel"
 rm -rf $KERNEL_INSTALL_DIR
