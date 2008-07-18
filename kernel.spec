@@ -127,7 +127,7 @@
 
 # Our Kernel ABI, increase this when you want the out of source modules being rebuilt
 # Usually same as %{_rel}
-%define		KABI		6
+%define		KABI		1
 
 # kernel release (used in filesystem and eventually in uname -r)
 # modules will be looked from /lib/modules/%{kernel_release}%{?smp}
@@ -136,8 +136,8 @@
 %define		kernel_release %{version}%{?alt_kernel:_%{alt_kernel}}-%{_localversion}
 
 %define		_basever	2.6.16
-%define		_postver	.60
-%define		_rel		15
+%define		_postver	.61
+%define		_rel		1
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de.UTF-8):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(et.UTF-8):	Linuxi kernel (ehk operatsioonisüsteemi tuum)
@@ -154,7 +154,7 @@ Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{_basever}.tar.bz2
 Source1:	kernel-autoconf.h
 Source2:	kernel-config.h
 Source3:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
-# Source3-md5:	be03a1889d7c89f208a18b55870e3a6f
+# Source3-md5:	d8d60f7e6ec5556f2e196c444499a39c
 
 Source5:	kernel-ppclibs.Makefile
 Source7:	kernel-module-build.pl
@@ -308,6 +308,7 @@ Patch103:	linux-vcontext-selinux.patch
 Patch104:	kernel-CVE-2008-0163.patch
 
 # from http://www.cl.cam.ac.uk/Research/SRG/netos/xen/downloads/xen-3.0.2-src.tgz
+#Patch120:	kernel-xen.patch
 Patch120:	xen-3.0-2.6.16.patch
 Patch121:	linux-xen-page_alloc.patch
 Patch122:	kernel-xen-sparse-nv.patch
