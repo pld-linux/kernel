@@ -1,11 +1,14 @@
 # TODO:
-#	- test pax stuff (btw. tested ok in softmode)
-#	- prepare config for non SEGMEXEC capable archs (ie not x86/32bit)
-#	- patch scripts/Makefile.xen not to require bash
-#       - make PAE usage configurable when Xen is on
+#   - test pax stuff (btw. tested ok in softmode)
+#   - prepare config for non SEGMEXEC capable archs (ie not x86/32bit)
+#   - patch scripts/Makefile.xen not to require bash
+#   - make PAE usage configurable when Xen is on
 #		ALL
 #   - #vserver: try to get a 2.2.x kernel patch or if you like development
 #     features a 2.3.x one instead of the long discontinued 2.1.x you are using
+#   - with xen0/xenU does not compile due to cyrix-specific changes in 2.6.16.61:
+#     http://git.kernel.org/?p=linux/kernel/git/stable/linux-2.6.16.y.git;a=commitdiff;h=69731ebbb3d2283c2c33a2bf262d785e2362b876
+#
 #
 # WARNING: Kernels from 2.6.16.X series not work under OldWorldMac
 #
