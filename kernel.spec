@@ -139,7 +139,7 @@
 %define		kernel_release %{version}%{?alt_kernel:_%{alt_kernel}}-%{_localversion}
 
 %define		_basever	2.6.16
-%define		_postver	.61
+%define		_postver	.62
 %define		_rel		1
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de.UTF-8):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
@@ -157,7 +157,7 @@ Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{_basever}.tar.bz2
 Source1:	kernel-autoconf.h
 Source2:	kernel-config.h
 Source3:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
-# Source3-md5:	d8d60f7e6ec5556f2e196c444499a39c
+# Source3-md5:	65e7b7a48bbef41ea1e3702e139b3411
 
 Source5:	kernel-ppclibs.Makefile
 Source7:	kernel-module-build.pl
