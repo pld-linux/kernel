@@ -337,6 +337,7 @@ Patch150:	ocfs2_2.6.22.14_fixes-20071127-1.patch
 # aic94xx patch based on http://georgi.unixsol.org/programs/aic94xx_with_included_firmware_2.6.21.diff
 Patch160:	linux-2.6-aic94xx_with_included_firmware.patch
 
+Patch170:	linux-gcc.patch
 
 Patch200:	linux-2.6-ppc-ICE-hacks.patch
 
@@ -916,6 +917,8 @@ install %{SOURCE5} Makefile.ppclibs
 
 # aic94xx linux-2.6-aic94xx_with_included_firmware.patch
 %patch160 -p1
+
+%patch170 -p1
 
 # prefetch, DISABLED BECAUSE IT OOPSES ON XFS! (at least)
 #%patch400 -p1
