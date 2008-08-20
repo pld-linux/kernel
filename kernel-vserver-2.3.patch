@@ -17117,19 +17117,20 @@ diff -NurpP --minimal linux-2.6.25.11/kernel/posix-timers.c linux-2.6.25.11-vs2.
  
  /*
   * Management arrays for POSIX timers.	 Timers are kept in slab memory
-@@ -299,6 +300,12 @@ void do_schedule_next_timer(struct sigin
+@@ -300,6 +300,13 @@
  
- int posix_timer_event(struct k_itimer *timr,int si_private)
+ int posix_timer_event(struct k_itimer *timr, int si_private)
  {
 +	struct vx_info_save vxis;
 +	struct vx_info *vxi;
 +	int ret;
-+
++	
 +	vxi = task_get_vx_info(timr->it_process);
 +	enter_vx_info(vxi, &vxis);
- 	memset(&timr->sigq->info, 0, sizeof(siginfo_t));
- 	timr->sigq->info.si_sys_private = si_private;
- 	/* Send signal to the process that owns this timer.*/
++
+ 	/*
+ 	 * FIXME: if ->sigq is queued we can race with
+ 	 * dequeue_signal()->do_schedule_next_timer().
 @@ -311,11 +318,11 @@ int posix_timer_event(struct k_itimer *t
  
  	if (timr->it_sigev_notify & SIGEV_THREAD_ID) {
