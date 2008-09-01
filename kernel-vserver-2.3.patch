@@ -5368,7 +5368,7 @@ diff -NurpP --minimal linux-2.6.26.3/fs/namei.c linux-2.6.26.3-vs2.3.0.35/fs/nam
  	acc_mode = ACC_MODE(flag);
  
  	/* O_TRUNC implies we need access checks for write permissions */
-@@ -1893,6 +1966,22 @@ ok:
+@@ -1893,6 +1966,25 @@ ok:
  			goto exit;
  	}
  	error = may_open(&nd, acc_mode, flag);
@@ -5378,15 +5378,18 @@ diff -NurpP --minimal linux-2.6.26.3/fs/namei.c linux-2.6.26.3-vs2.3.0.35/fs/nam
 +		dentry = cow_break_link(pathname);
 +		if (IS_ERR(dentry)) {
 +			error = PTR_ERR(dentry);
-+			goto exit;
++			goto exit_cow;
 +		}
 +		dput(dentry);
++		if (will_write)
++			mnt_drop_write(nd.path.mnt);
 +		release_open_intent(&nd);
 +		path_put(&nd.path);
 +		flag = rflag;
 +		mode = rmode;
 +		goto restart;
 +	}
++exit_cow:
 +#endif
  	if (error) {
  		if (will_write)
@@ -28152,15 +28155,22 @@ diff -NurpP --minimal linux-2.6.26.3/net/sunrpc/auth.c linux-2.6.26.3-vs2.3.0.35
  
  #ifdef RPC_DEBUG
  # define RPCDBG_FACILITY	RPCDBG_AUTH
-@@ -353,6 +354,8 @@ rpcauth_lookupcred(struct rpc_auth *auth
+@@ -353,6 +354,7 @@ rpcauth_lookupcred(struct rpc_auth *auth
  	struct auth_cred acred = {
  		.uid = current->fsuid,
  		.gid = current->fsgid,
 +		.tag = dx_current_tag(),
-+		.tag = dx_current_tag(),
  		.group_info = current->group_info,
  	};
  	struct rpc_cred *ret;
+@@ -401,6 +400,7 @@ rpcauth_bind_root_cred(struct rpc_task *
+ 	struct auth_cred acred = {
+ 		.uid = 0,
+ 		.gid = 0,
++		.tag = dx_current_tag(),
+ 	};
+ 	struct rpc_cred *ret;
+ 
 diff -NurpP --minimal linux-2.6.26.3/net/sunrpc/auth_unix.c linux-2.6.26.3-vs2.3.0.35/net/sunrpc/auth_unix.c
 --- linux-2.6.26.3/net/sunrpc/auth_unix.c	2008-07-14 17:23:05.000000000 -0400
 +++ linux-2.6.26.3-vs2.3.0.35/net/sunrpc/auth_unix.c	2008-07-17 16:38:01.000000000 -0400
