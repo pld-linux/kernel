@@ -309,6 +309,8 @@ Patch141:	kernel-unionfs-vserver.patch
 
 # aic94xx patch based on http://georgi.unixsol.org/programs/aic94xx_with_included_firmware_2.6.21.diff
 Patch160:	linux-2.6-aic94xx_with_included_firmware.patch
+# patch based on http://www.spinics.net/lists/linux-ide/msg25854.html
+Patch161:	kernel-ahci_pata_marvell.patch
 
 Patch200:	linux-2.6-ppc-ICE-hacks.patch
 
@@ -881,6 +883,7 @@ install -m 755 %{SOURCE6} .
 
 # aic94xx linux-2.6-aic94xx_with_included_firmware.patch
 %patch160 -p1
+%patch161 -p1
 
 %patch2500 -p1
 
