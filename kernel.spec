@@ -277,6 +277,9 @@ Patch58:	linux-PF_RING.patch
 # http://synce.svn.sourceforge.net/svnroot/synce/trunk/patches/linux-2.6.22-rndis_host-wm5.patch
 Patch59:	kernel-rndis_host-wm5.patch
 
+# patch based on http://www.spinics.net/lists/linux-ide/msg25854.html
+Patch60:	kernel-ahci_pata_marvell.patch
+
 # Project suspend2 renamed to tuxonice
 # http://tuxonice.org/downloads/all/tuxonice-3.0-rc7-for-2.6.25.patch.bz2
 Patch69:	linux-2.6-suspend2.patch
@@ -839,6 +842,7 @@ install -m 755 %{SOURCE6} .
 
 # kernel-rndis_host-wm5.patch
 %patch59 -p1
+%patch60 -p1
 
 # hostap enhancements from/for aircrack-ng
 %patch85 -p1
