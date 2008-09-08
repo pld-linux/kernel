@@ -1,9 +1,9 @@
 diff --git a/Documentation/power/tuxonice-internals.txt b/Documentation/power/tuxonice-internals.txt
 new file mode 100644
-index 0000000..afba75a
+index 0000000..68c0454
 --- /dev/null
 +++ b/Documentation/power/tuxonice-internals.txt
-@@ -0,0 +1,469 @@
+@@ -0,0 +1,474 @@
 +		   TuxOnIce 3.0 Internal Documentation.
 +			Updated to 11 March 2008
 +
@@ -137,7 +137,7 @@ index 0000000..afba75a
 +    that changes in number or fragmentation of the pages to be saved don't
 +    feedback via changes in the amount of memory needed for metadata). The
 +    recursiveness is thus limited to any extra slab pages allocated to store the
-+    extents that record storage used, and he effects of seeking to free memory.
++    extents that record storage used, and the effects of seeking to free memory.
 +
 +    d. Write the image.
 +
@@ -404,6 +404,11 @@ index 0000000..afba75a
 +    feeding output in a similar manner to the next module. A module may buffer
 +    its output.
 +
++    All routines are SMP safe, and the final result of the transformations is
++    written with an index (provided by the core) and size of the output by the
++    writer. As a result, we can have multithreaded I/O without needing to
++    worry about the sequence in which pages are written (or read).
++
 +    During reading, the pipeline works in the reverse direction. The core code
 +    calls the first module with the address of a buffer which should be filled.
 +    (Note that the buffer size is always PAGE_SIZE at this time). This module
@@ -475,10 +480,10 @@ index 0000000..afba75a
 +
 diff --git a/Documentation/power/tuxonice.txt b/Documentation/power/tuxonice.txt
 new file mode 100644
-index 0000000..c6d0778
+index 0000000..d13ce85
 --- /dev/null
 +++ b/Documentation/power/tuxonice.txt
-@@ -0,0 +1,758 @@
+@@ -0,0 +1,750 @@
 +	--- TuxOnIce, version 3.0 ---
 +
 +1.  What is it?
@@ -527,7 +532,11 @@ index 0000000..c6d0778
 +   
 +   Being able to save the state of your system and quickly restore it improves
 +   your productivity - you get a useful system in far less time than through
-+   the normal boot process.
++   the normal boot process. You also get to be completely 'green', using zero
++   power, or as close to that as possible (the computer may still provide
++   minimal power to some devices, so they can initiate a power on, but that
++   will be the same amount of power as would be used if you told the computer
++   to shutdown.
 +   
 +3. What do you need to use it?
 +
@@ -729,24 +738,26 @@ index 0000000..c6d0778
 +
 +   The version in the vanilla kernel has a number of drawbacks. The most
 +   serious of these are:
-+	- it has a maximum image size of 1/2 total memory.
++	- it has a maximum image size of 1/2 total memory;
 +	- it doesn't allocate storage until after it has snapshotted memory.
 +	  This means that you can't be sure hibernating will work until you
-+	  see it start to write the image.
-+	- it performs all of it's I/O synchronously.
-+	- it does not allow you to press escape to cancel a cycle
++	  see it start to write the image;
++	- it does not allow you to press escape to cancel a cycle;
++	- it does not allow you to press escape to cancel resuming;
 +	- it does not allow you to automatically swapon a file when
-+	  starting a cycle.
-+	- it does not allow you to use multiple swap partitions.
-+	- it does not allow you to use swapfiles.
-+	- it does not allow you to use ordinary files.
++	  starting a cycle;
++	- it does not allow you to use multiple swap partitions or files;
++	- it does not allow you to use ordinary files;
 +	- it just invalidates an image and continues to boot if you
-+	  accidentally boot the wrong kernel after hibernating.
-+	- it doesn't support any sort of nice display while hibernating
++	  accidentally boot the wrong kernel after hibernating;
++	- it doesn't support any sort of nice display while hibernating;
 +	- it is moving toward requiring that you have an initrd/initramfs
 +	  to ever have a hope of resuming (uswsusp). While uswsusp will
 +	  address some of the concerns above, it won't address all of them,
-+          and will be more complicated to get set up.
++          and will be more complicated to get set up;
++        - it doesn't have support for suspend-to-both (write a hibernation
++	  image, then suspend to ram; I think this is known as ReadySafe
++	  under M$).
 +
 +5. How do you use it?
 +
@@ -888,13 +899,6 @@ index 0000000..c6d0778
 +   The maximum size of hibernation image written to disk, measured in megabytes
 +   (1024*1024).
 +
-+   - interface_version:
-+
-+   The value returned by this file can be used by scripts and configuration
-+   tools to determine what entries should be looked for. The value is
-+   incremented whenever an entry in /sys/power/tuxonice is obsoleted or 
-+   added.
-+
 +   - last_result:
 +
 +   The result of the last hibernation cycle, as defined in
@@ -992,13 +996,6 @@ index 0000000..c6d0778
 +   This option tells you the resume= options to use for swap devices you
 +   currently have activated. It is particularly useful when you only want to
 +   use a swap file to store your image. See above for further details.
-+
-+   - toggle_process_nofreeze
-+
-+   This entry can be used to toggle the NOFREEZE flag on a process, to allow it
-+   to run during hibernating. It should be used with extreme caution. There are
-+   strict limitations on what a process running during hibernation can do. This
-+   is really only intended for use by TuxOnice's helpers (userui in particular).
 +
 +   - userui_program
 +
@@ -1238,10 +1235,10 @@ index 0000000..c6d0778
 +   testing. His efforts have contributed as much to TuxOnIce as any of the
 +   names above.
 diff --git a/MAINTAINERS b/MAINTAINERS
-index e467758..1921b3a 100644
+index 56a2f67..ec6fa04 100644
 --- a/MAINTAINERS
 +++ b/MAINTAINERS
-@@ -3935,6 +3935,13 @@ P:	Maciej W. Rozycki
+@@ -4045,6 +4045,13 @@ P:	Maciej W. Rozycki
  M:	macro@linux-mips.org
  S:	Maintained
  
@@ -1256,7 +1253,7 @@ index e467758..1921b3a 100644
  P:	Dario Ballabio
  M:	ballabio_dario@emc.com
 diff --git a/arch/x86/mm/fault.c b/arch/x86/mm/fault.c
-index ec08d83..c417de4 100644
+index 8bcb6f4..529200c 100644
 --- a/arch/x86/mm/fault.c
 +++ b/arch/x86/mm/fault.c
 @@ -25,6 +25,7 @@
@@ -1279,7 +1276,7 @@ index ec08d83..c417de4 100644
  static inline int notify_page_fault(struct pt_regs *regs)
  {
  #ifdef CONFIG_KPROBES
-@@ -599,6 +605,22 @@ void __kprobes do_page_fault(struct pt_regs *regs, unsigned long error_code)
+@@ -604,6 +610,22 @@ void __kprobes do_page_fault(struct pt_regs *regs, unsigned long error_code)
  
  	si_code = SEGV_MAPERR;
  
@@ -1303,12 +1300,12 @@ index ec08d83..c417de4 100644
  		return;
  
 diff --git a/crypto/Kconfig b/crypto/Kconfig
-index 69f1be6..21c95e0 100644
+index 864456c..ecbebab 100644
 --- a/crypto/Kconfig
 +++ b/crypto/Kconfig
-@@ -529,6 +529,14 @@ config CRYPTO_DEFLATE
- 	  
- 	  You will most probably want this if using IPSec.
+@@ -614,6 +614,14 @@ config CRYPTO_LZO
+ 	help
+ 	  This is the LZO algorithm.
  
 +config CRYPTO_LZF
 +	tristate "LZF compression algorithm"
@@ -1318,14 +1315,14 @@ index 69f1be6..21c95e0 100644
 +	  This is the LZF algorithm. It is especially useful for TuxOnIce,
 +	  because it achieves good compression quickly.
 +
- config CRYPTO_MICHAEL_MIC
- 	tristate "Michael MIC keyed digest algorithm"
- 	select CRYPTO_ALGAPI
+ source "drivers/crypto/Kconfig"
+ 
+ endif	# if CRYPTO
 diff --git a/crypto/Makefile b/crypto/Makefile
-index 7cf3625..af17245 100644
+index ca02441..819b2cc 100644
 --- a/crypto/Makefile
 +++ b/crypto/Makefile
-@@ -60,6 +60,7 @@ obj-$(CONFIG_CRYPTO_SALSA20) += salsa20_generic.o
+@@ -62,6 +62,7 @@ obj-$(CONFIG_CRYPTO_SALSA20) += salsa20_generic.o
  obj-$(CONFIG_CRYPTO_DEFLATE) += deflate.o
  obj-$(CONFIG_CRYPTO_MICHAEL_MIC) += michael_mic.o
  obj-$(CONFIG_CRYPTO_CRC32C) += crc32c.o
@@ -1678,10 +1675,10 @@ index d6365a9..03e1eff 100644
  #include <linux/suspend.h>
  #include <linux/cpu.h>
 diff --git a/drivers/md/md.c b/drivers/md/md.c
-index 61ccbd2..5083aae 100644
+index 2580ac1..4c20dab 100644
 --- a/drivers/md/md.c
 +++ b/drivers/md/md.c
-@@ -5623,6 +5623,8 @@ void md_do_sync(mddev_t *mddev)
+@@ -5730,6 +5730,8 @@ void md_do_sync(mddev_t *mddev)
  			last_mark = next;
  		}
  
@@ -1691,13 +1688,19 @@ index 61ccbd2..5083aae 100644
  		if (kthread_should_stop())
  			goto interrupted;
 diff --git a/fs/buffer.c b/fs/buffer.c
-index 39ff144..915fc52 100644
+index 0f51c0f..cebc137 100644
 --- a/fs/buffer.c
 +++ b/fs/buffer.c
-@@ -247,6 +247,93 @@ void thaw_bdev(struct block_device *bdev, struct super_block *sb)
+@@ -247,6 +247,91 @@ void thaw_bdev(struct block_device *bdev, struct super_block *sb)
  }
  EXPORT_SYMBOL(thaw_bdev);
  
++#if 0
++#define FS_PRINTK(fmt, args...) printk(fmt, ## args)
++#else
++#define FS_PRINTK(fmt, args...)
++#endif
++
 +/* #define DEBUG_FS_FREEZING */
 +
 +/**
@@ -1715,12 +1718,10 @@ index 39ff144..915fc52 100644
 +	 * frozen in the right order (eg. loopback on ext3).
 +	 */
 +	list_for_each_entry_reverse(sb, &super_blocks, s_list) {
-+#ifdef DEBUG_FS_FREEZING
-+		printk(KERN_INFO "Considering %s.%s: (root %p, bdev %x)",
++		FS_PRINTK(KERN_INFO "Considering %s.%s: (root %p, bdev %x)",
 +			sb->s_type->name ? sb->s_type->name : "?",
 +			sb->s_subtype ? sb->s_subtype : "", sb->s_root,
 +			sb->s_bdev ? sb->s_bdev->bd_dev : 0);
-+#endif
 +
 +		if (sb->s_type->fs_flags & FS_IS_FUSE &&
 +		    sb->s_frozen == SB_UNFROZEN &&
@@ -1736,20 +1737,14 @@ index 39ff144..915fc52 100644
 +		    (sb->s_flags & MS_RDONLY) ||
 +		    (sb->s_flags & MS_FROZEN) ||
 +		    !(which & FS_FREEZER_NORMAL)) {
-+#ifdef DEBUG_FS_FREEZING
-+			printk(KERN_INFO "Nope.\n");
-+#endif
++			FS_PRINTK(KERN_INFO "Nope.\n");
 +			continue;
 +		}
 +
-+#ifdef DEBUG_FS_FREEZING
-+		printk(KERN_INFO "Freezing %x... ", sb->s_bdev->bd_dev);
-+#endif
++		FS_PRINTK(KERN_INFO "Freezing %x... ", sb->s_bdev->bd_dev);
 +		freeze_bdev(sb->s_bdev);
 +		sb->s_flags |= MS_FROZEN;
-+#ifdef DEBUG_FS_FREEZING
-+		printk(KERN_INFO "Done.\n");
-+#endif
++		FS_PRINTK(KERN_INFO "Done.\n");
 +	}
 +
 +	lockdep_on();
@@ -1788,8 +1783,21 @@ index 39ff144..915fc52 100644
  /*
   * Various filesystems appear to want __find_get_block to be non-blocking.
   * But it's the page lock which protects the buffers.  To get around this,
+diff --git a/fs/drop_caches.c b/fs/drop_caches.c
+index 3e5637f..0d4c88e 100644
+--- a/fs/drop_caches.c
++++ b/fs/drop_caches.c
+@@ -33,7 +33,7 @@ static void drop_pagecache_sb(struct super_block *sb)
+ 	iput(toput_inode);
+ }
+ 
+-static void drop_pagecache(void)
++void drop_pagecache(void)
+ {
+ 	struct super_block *sb;
+ 
 diff --git a/fs/fuse/control.c b/fs/fuse/control.c
-index 105d4a2..57eeca4 100644
+index 4f3cab3..f15b0c5 100644
 --- a/fs/fuse/control.c
 +++ b/fs/fuse/control.c
 @@ -207,6 +207,7 @@ static void fuse_ctl_kill_sb(struct super_block *sb)
@@ -1801,7 +1809,7 @@ index 105d4a2..57eeca4 100644
  	.kill_sb	= fuse_ctl_kill_sb,
  };
 diff --git a/fs/fuse/dev.c b/fs/fuse/dev.c
-index af63980..d417551 100644
+index 87250b6..7246e3d 100644
 --- a/fs/fuse/dev.c
 +++ b/fs/fuse/dev.c
 @@ -7,6 +7,7 @@
@@ -1820,7 +1828,7 @@ index af63980..d417551 100644
  
  MODULE_ALIAS_MISCDEV(FUSE_MINOR);
  
-@@ -723,6 +725,8 @@ static ssize_t fuse_dev_read(struct kiocb *iocb, const struct iovec *iov,
+@@ -743,6 +745,8 @@ static ssize_t fuse_dev_read(struct kiocb *iocb, const struct iovec *iov,
  	if (!fc)
  		return -EPERM;
  
@@ -1829,7 +1837,7 @@ index af63980..d417551 100644
   restart:
  	spin_lock(&fc->lock);
  	err = -EAGAIN;
-@@ -849,6 +853,9 @@ static ssize_t fuse_dev_write(struct kiocb *iocb, const struct iovec *iov,
+@@ -869,6 +873,9 @@ static ssize_t fuse_dev_write(struct kiocb *iocb, const struct iovec *iov,
  	if (!fc)
  		return -EPERM;
  
@@ -1840,7 +1848,7 @@ index af63980..d417551 100644
  	if (nbytes < sizeof(struct fuse_out_header))
  		return -EINVAL;
 diff --git a/fs/fuse/dir.c b/fs/fuse/dir.c
-index c4807b3..d8b4526 100644
+index 2060bf0..9e23548 100644
 --- a/fs/fuse/dir.c
 +++ b/fs/fuse/dir.c
 @@ -7,12 +7,14 @@
@@ -1948,7 +1956,7 @@ index c4807b3..d8b4526 100644
  		return PTR_ERR(req);
  
 diff --git a/fs/fuse/file.c b/fs/fuse/file.c
-index 676b0bc..56bb4eb 100644
+index 8092f0d..813c656 100644
 --- a/fs/fuse/file.c
 +++ b/fs/fuse/file.c
 @@ -7,11 +7,13 @@
@@ -1974,16 +1982,16 @@ index 676b0bc..56bb4eb 100644
  	req = fuse_get_req(fc);
  	if (IS_ERR(req))
  		return PTR_ERR(req);
-@@ -546,6 +550,8 @@ static int fuse_buffered_write(struct file *file, struct inode *inode,
+@@ -674,6 +678,8 @@ static int fuse_buffered_write(struct file *file, struct inode *inode,
  	if (is_bad_inode(inode))
  		return -EIO;
  
 +	FUSE_MIGHT_FREEZE(inode->i_sb, "fuse_commit_write");
 +
- 	req = fuse_get_req(fc);
- 	if (IS_ERR(req))
- 		return PTR_ERR(req);
-@@ -639,6 +645,8 @@ static ssize_t fuse_direct_io(struct file *file, const char __user *buf,
+ 	/*
+ 	 * Make sure writepages on the same page are not mixed up with
+ 	 * plain writes.
+@@ -962,6 +968,8 @@ static ssize_t fuse_direct_io(struct file *file, const char __user *buf,
  	if (is_bad_inode(inode))
  		return -EIO;
  
@@ -1992,7 +2000,7 @@ index 676b0bc..56bb4eb 100644
  	req = fuse_get_req(fc);
  	if (IS_ERR(req))
  		return PTR_ERR(req);
-@@ -791,6 +799,8 @@ static int fuse_getlk(struct file *file, struct file_lock *fl)
+@@ -1315,6 +1323,8 @@ static int fuse_getlk(struct file *file, struct file_lock *fl)
  	struct fuse_lk_out outarg;
  	int err;
  
@@ -2001,7 +2009,7 @@ index 676b0bc..56bb4eb 100644
  	req = fuse_get_req(fc);
  	if (IS_ERR(req))
  		return PTR_ERR(req);
-@@ -821,6 +831,8 @@ static int fuse_setlk(struct file *file, struct file_lock *fl, int flock)
+@@ -1345,6 +1355,8 @@ static int fuse_setlk(struct file *file, struct file_lock *fl, int flock)
  	if (fl->fl_flags & FL_CLOSE)
  		return 0;
  
@@ -2010,7 +2018,7 @@ index 676b0bc..56bb4eb 100644
  	req = fuse_get_req(fc);
  	if (IS_ERR(req))
  		return PTR_ERR(req);
-@@ -885,6 +897,8 @@ static sector_t fuse_bmap(struct address_space *mapping, sector_t block)
+@@ -1409,6 +1421,8 @@ static sector_t fuse_bmap(struct address_space *mapping, sector_t block)
  	if (!inode->i_sb->s_bdev || fc->no_bmap)
  		return 0;
  
@@ -2039,10 +2047,10 @@ index 0000000..170e49a
 +	} \
 +} while (0)
 diff --git a/fs/fuse/inode.c b/fs/fuse/inode.c
-index 033f7bd..ac6805a 100644
+index 3141690..c826200 100644
 --- a/fs/fuse/inode.c
 +++ b/fs/fuse/inode.c
-@@ -702,7 +702,7 @@ static int fuse_get_sb(struct file_system_type *fs_type,
+@@ -739,7 +739,7 @@ static int fuse_get_sb(struct file_system_type *fs_type,
  static struct file_system_type fuse_fs_type = {
  	.owner		= THIS_MODULE,
  	.name		= "fuse",
@@ -2051,7 +2059,7 @@ index 033f7bd..ac6805a 100644
  	.get_sb		= fuse_get_sb,
  	.kill_sb	= kill_anon_super,
  };
-@@ -721,7 +721,7 @@ static struct file_system_type fuseblk_fs_type = {
+@@ -758,7 +758,7 @@ static struct file_system_type fuseblk_fs_type = {
  	.name		= "fuseblk",
  	.get_sb		= fuse_get_sb_blk,
  	.kill_sb	= kill_block_super,
@@ -2061,7 +2069,7 @@ index 033f7bd..ac6805a 100644
  
  static inline int register_fuseblk(void)
 diff --git a/fs/ioctl.c b/fs/ioctl.c
-index f32fbde..9014fe4 100644
+index 7db32b3..be49ee9 100644
 --- a/fs/ioctl.c
 +++ b/fs/ioctl.c
 @@ -211,3 +211,4 @@ asmlinkage long sys_ioctl(unsigned int fd, unsigned int cmd, unsigned long arg)
@@ -2070,10 +2078,10 @@ index f32fbde..9014fe4 100644
  }
 +EXPORT_SYMBOL(sys_ioctl);
 diff --git a/fs/namei.c b/fs/namei.c
-index 8cf9bb9..c1abd13 100644
+index 01e67dd..aedaedf 100644
 --- a/fs/namei.c
 +++ b/fs/namei.c
-@@ -2177,6 +2177,8 @@ int vfs_unlink(struct inode *dir, struct dentry *dentry)
+@@ -2314,6 +2314,8 @@ int vfs_unlink(struct inode *dir, struct dentry *dentry)
  	if (!dir->i_op || !dir->i_op->unlink)
  		return -EPERM;
  
@@ -2106,7 +2114,7 @@ index 3df9f32..1e2e73d 100644
 +#define toi_faulted (0)
 +#define clear_toi_fault() do { } while (0)
 diff --git a/include/asm-x86/suspend_32.h b/include/asm-x86/suspend_32.h
-index 1bbda3a..e58d1b5 100644
+index 24e1c08..441efd6 100644
 --- a/include/asm-x86/suspend_32.h
 +++ b/include/asm-x86/suspend_32.h
 @@ -8,6 +8,9 @@
@@ -2118,12 +2126,12 @@ index 1bbda3a..e58d1b5 100644
 +
  /* image of the saved processor state */
  struct saved_context {
-   	u16 es, fs, gs, ss;
+ 	u16 es, fs, gs, ss;
 diff --git a/include/asm-x86/suspend_64.h b/include/asm-x86/suspend_64.h
-index 2eb92cb..2d429e7 100644
+index dc3262b..5ff82a1 100644
 --- a/include/asm-x86/suspend_64.h
 +++ b/include/asm-x86/suspend_64.h
-@@ -15,6 +15,9 @@ arch_prepare_suspend(void)
+@@ -14,6 +14,9 @@ static inline int arch_prepare_suspend(void)
  	return 0;
  }
  
@@ -2134,19 +2142,19 @@ index 2eb92cb..2d429e7 100644
   * Image of the saved processor state, used by the low level ACPI suspend to
   * RAM code and by the low level hibernation code.
 diff --git a/include/linux/Kbuild b/include/linux/Kbuild
-index cedbbd8..7a731ba 100644
+index 71d70d1..b5de633 100644
 --- a/include/linux/Kbuild
 +++ b/include/linux/Kbuild
-@@ -202,6 +202,7 @@ unifdef-y += filter.h
+@@ -207,6 +207,7 @@ unifdef-y += filter.h
  unifdef-y += flat.h
  unifdef-y += futex.h
  unifdef-y += fs.h
 +unifdef-y += freezer.h
  unifdef-y += gameport.h
  unifdef-y += generic_serial.h
- unifdef-y += gfs2_ondisk.h
+ unifdef-y += hayesesp.h
 diff --git a/include/linux/buffer_head.h b/include/linux/buffer_head.h
-index 932eb02..1436765 100644
+index 82aa36c..ee09d61 100644
 --- a/include/linux/buffer_head.h
 +++ b/include/linux/buffer_head.h
 @@ -172,6 +172,11 @@ wait_queue_head_t *bh_waitq_head(struct buffer_head *bh);
@@ -2267,7 +2275,7 @@ index 0893499..01e9dc6 100644
  static inline void freezer_do_not_count(void) {}
  static inline void freezer_count(void) {}
 diff --git a/include/linux/fs.h b/include/linux/fs.h
-index b84b848..7c14b03 100644
+index d8e2762..7db243f 100644
 --- a/include/linux/fs.h
 +++ b/include/linux/fs.h
 @@ -8,6 +8,7 @@
@@ -2278,7 +2286,7 @@ index b84b848..7c14b03 100644
  
  /*
   * It's silly to have NR_OPEN bigger than NR_FILE, but you can change
-@@ -93,6 +94,7 @@ extern int dir_notify_enable;
+@@ -94,6 +95,7 @@ extern int dir_notify_enable;
  #define FS_REQUIRES_DEV 1 
  #define FS_BINARY_MOUNTDATA 2
  #define FS_HAS_SUBTYPE 4
@@ -2286,7 +2294,7 @@ index b84b848..7c14b03 100644
  #define FS_REVAL_DOT	16384	/* Check the paths ".", ".." for staleness */
  #define FS_RENAME_DOES_D_MOVE	32768	/* FS will handle d_move()
  					 * during rename() internally.
-@@ -125,6 +127,7 @@ extern int dir_notify_enable;
+@@ -126,6 +128,7 @@ extern int dir_notify_enable;
  #define MS_RELATIME	(1<<21)	/* Update atime relative to mtime/ctime. */
  #define MS_KERNMOUNT	(1<<22) /* this is a kern_mount call */
  #define MS_I_VERSION	(1<<23) /* Update inode I_version field */
@@ -2294,7 +2302,7 @@ index b84b848..7c14b03 100644
  #define MS_ACTIVE	(1<<30)
  #define MS_NOUSER	(1<<31)
  
-@@ -1057,8 +1060,11 @@ enum {
+@@ -1105,8 +1108,11 @@ enum {
  	SB_FREEZE_TRANS = 2,
  };
  
@@ -2309,10 +2317,10 @@ index b84b848..7c14b03 100644
  #define get_fs_excl() atomic_inc(&current->fs_excl)
  #define put_fs_excl() atomic_dec(&current->fs_excl)
 diff --git a/include/linux/kernel.h b/include/linux/kernel.h
-index 2df44e7..4d22ae4 100644
+index 2e70006..a43b516 100644
 --- a/include/linux/kernel.h
 +++ b/include/linux/kernel.h
-@@ -151,6 +151,8 @@ extern int vsprintf(char *buf, const char *, va_list)
+@@ -157,6 +157,8 @@ extern int vsprintf(char *buf, const char *, va_list)
  	__attribute__ ((format (printf, 2, 0)));
  extern int snprintf(char * buf, size_t size, const char * fmt, ...)
  	__attribute__ ((format (printf, 3, 4)));
@@ -2321,8 +2329,20 @@ index 2df44e7..4d22ae4 100644
  extern int vsnprintf(char *buf, size_t size, const char *fmt, va_list args)
  	__attribute__ ((format (printf, 3, 0)));
  extern int scnprintf(char * buf, size_t size, const char * fmt, ...)
+diff --git a/include/linux/mm.h b/include/linux/mm.h
+index 586a943..bd34f82 100644
+--- a/include/linux/mm.h
++++ b/include/linux/mm.h
+@@ -1244,6 +1244,7 @@ int drop_caches_sysctl_handler(struct ctl_table *, int, struct file *,
+ 					void __user *, size_t *, loff_t *);
+ unsigned long shrink_slab(unsigned long scanned, gfp_t gfp_mask,
+ 			unsigned long lru_pages);
++void drop_pagecache(void);
+ 
+ #ifndef CONFIG_MMU
+ #define randomize_va_space 0
 diff --git a/include/linux/netlink.h b/include/linux/netlink.h
-index fb0713b..2e14fde 100644
+index bec1062..e7f772f 100644
 --- a/include/linux/netlink.h
 +++ b/include/linux/netlink.h
 @@ -24,6 +24,8 @@
@@ -2335,10 +2355,10 @@ index fb0713b..2e14fde 100644
  #define MAX_LINKS 32		
  
 diff --git a/include/linux/suspend.h b/include/linux/suspend.h
-index 1d7d4c5..bbbb987 100644
+index a697742..505cfa2 100644
 --- a/include/linux/suspend.h
 +++ b/include/linux/suspend.h
-@@ -255,4 +255,69 @@ static inline void register_nosave_region_late(unsigned long b, unsigned long e)
+@@ -266,4 +266,69 @@ static inline void register_nosave_region_late(unsigned long b, unsigned long e)
  }
  #endif
  
@@ -2409,7 +2429,7 @@ index 1d7d4c5..bbbb987 100644
 +
  #endif /* _LINUX_SUSPEND_H */
 diff --git a/include/linux/swap.h b/include/linux/swap.h
-index 878459a..55315f9 100644
+index 0b33776..5d6433b 100644
 --- a/include/linux/swap.h
 +++ b/include/linux/swap.h
 @@ -164,6 +164,7 @@ extern unsigned long totalram_pages;
@@ -2441,10 +2461,10 @@ index 878459a..55315f9 100644
  #endif /* __KERNEL__*/
  #endif /* _LINUX_SWAP_H */
 diff --git a/init/do_mounts.c b/init/do_mounts.c
-index 3885e70..131427c 100644
+index 660c1e5..8ea449f 100644
 --- a/init/do_mounts.c
 +++ b/init/do_mounts.c
-@@ -373,6 +373,8 @@ void __init prepare_namespace(void)
+@@ -398,6 +398,8 @@ void __init prepare_namespace(void)
  	if (is_floppy && rd_doload && rd_load_disk(0))
  		ROOT_DEV = Root_RAM0;
  
@@ -2478,18 +2498,18 @@ index 614241b..f3ea292 100644
  	sys_fchdir(old_fd);
  	sys_mount("/", ".", NULL, MS_MOVE, NULL);
 diff --git a/init/main.c b/init/main.c
-index 99ce949..f4f8330 100644
+index f7fb200..6746e95 100644
 --- a/init/main.c
 +++ b/init/main.c
-@@ -56,6 +56,7 @@
+@@ -57,6 +57,7 @@
  #include <linux/pid_namespace.h>
  #include <linux/device.h>
  #include <linux/kthread.h>
 +#include <linux/dyn_pageflags.h>
  #include <linux/sched.h>
  #include <linux/signal.h>
- 
-@@ -603,6 +603,7 @@
+ #include <linux/idr.h>
+@@ -602,6 +603,7 @@ asmlinkage void __init start_kernel(void)
  	softirq_init();
  	timekeeping_init();
  	time_init();
@@ -2497,19 +2517,19 @@ index 99ce949..f4f8330 100644
  	sched_clock_init();
  	profile_init();
  	if (!irqs_disabled())
-@@ -610,6 +612,7 @@ asmlinkage void __init start_kernel(void)
+@@ -641,6 +643,7 @@ asmlinkage void __init start_kernel(void)
  	enable_debug_pagealloc();
  	cpu_hotplug_init();
  	kmem_cache_init();
 +	dyn_pageflags_use_kzalloc();
  	debug_objects_mem_init();
-	idr_init_cache();
+ 	idr_init_cache();
  	setup_per_cpu_pageset();
 diff --git a/kernel/power/Kconfig b/kernel/power/Kconfig
-index 6233f3b..8bd74dc 100644
+index b45da40..a74041c 100644
 --- a/kernel/power/Kconfig
 +++ b/kernel/power/Kconfig
-@@ -44,6 +44,18 @@ config PM_VERBOSE
+@@ -34,6 +34,18 @@ config PM_VERBOSE
  	---help---
  	This option enables verbose messages from the Power Management code.
  
@@ -2528,7 +2548,7 @@ index 6233f3b..8bd74dc 100644
  config CAN_PM_TRACE
  	def_bool y
  	depends on PM_DEBUG && PM_SLEEP && EXPERIMENTAL
-@@ -178,6 +190,258 @@ config PM_STD_PARTITION
+@@ -168,6 +180,272 @@ config PM_STD_PARTITION
  	  suspended image to. It will simply pick the first available swap 
  	  device.
  
@@ -2735,6 +2755,20 @@ index 6233f3b..8bd74dc 100644
 +		  more indicate a number of seconds (up to 255) to wait before doing the
 +		  default.
 +
++	config  TOI_DEFAULT_EXTRA_PAGES_ALLOWANCE
++		int "Default extra pages allowance"
++		default "500"
++		range 500 32768
++		depends on TOI_CORE
++		help
++		  This value controls the default for the allowance TuxOnIce makes for
++		  drivers to allocate extra memory during the atomic copy. The default
++		  value of 500 will be okay if you're not using DRI. If you are using
++		  DRI, the easiest way to find what value to use is to try to hibernate
++		  and look at how many pages were actually needed in the sysfs entry
++		  /sys/power/tuxonice/debug_info (first number on the last line), adding
++		  a little extra because the value is not always the same.
++
 +	config	TOI_PAGEFLAGS_TEST
 +		tristate "Test pageflags"
 +		default N
@@ -2788,15 +2822,13 @@ index 6233f3b..8bd74dc 100644
  	tristate "Advanced Power Management Emulation"
  	depends on PM && SYS_SUPPORTS_APM_EMULATION
 diff --git a/kernel/power/Makefile b/kernel/power/Makefile
-index f7dfff2..8ea53fa 100644
+index 597823b..6d44035 100644
 --- a/kernel/power/Makefile
 +++ b/kernel/power/Makefile
-@@ -8,3 +8,36 @@
- obj-$(CONFIG_HIBERNATION)	+= swsusp.o disk.o snapshot.o swap.o user.o
+@@ -4,6 +4,37 @@ EXTRA_CFLAGS	+=	-DDEBUG
+ endif
  
- obj-$(CONFIG_MAGIC_SYSRQ)	+= poweroff.o
-+
-+
+ obj-y				:= main.o
 +
 +tuxonice_core-objs := tuxonice_modules.o tuxonice_sysfs.o tuxonice_highlevel.o \
 +		tuxonice_io.o tuxonice_pagedir.o tuxonice_prepare_image.o \
@@ -2828,6 +2860,9 @@ index f7dfff2..8ea53fa 100644
 +
 +obj-$(CONFIG_TOI_PAGEFLAGS_TEST)	+= toi_pageflags_test.o
 +
+ obj-$(CONFIG_PM_SLEEP)		+= process.o console.o
+ obj-$(CONFIG_HIBERNATION)	+= swsusp.o disk.o snapshot.o swap.o user.o
+ 
 diff --git a/kernel/power/disk.c b/kernel/power/disk.c
 index 14a656c..141606e 100644
 --- a/kernel/power/disk.c
@@ -3151,7 +3186,7 @@ index f1d0b34..b835412 100644
 +	thaw_tasks(FREEZER_KERNEL_THREADS);
 +}
 diff --git a/kernel/power/snapshot.c b/kernel/power/snapshot.c
-index 5f91a07..816b60c 100644
+index 5f91a07..5a08d0b 100644
 --- a/kernel/power/snapshot.c
 +++ b/kernel/power/snapshot.c
 @@ -33,6 +33,7 @@
@@ -3162,7 +3197,7 @@ index 5f91a07..816b60c 100644
  
  static int swsusp_page_is_free(struct page *);
  static void swsusp_set_page_forbidden(struct page *);
-@@ -44,6 +45,13 @@ static void swsusp_unset_page_forbidden(struct page *);
+@@ -44,6 +45,12 @@ static void swsusp_unset_page_forbidden(struct page *);
   * directly to their "original" page frames.
   */
  struct pbe *restore_pblist;
@@ -3171,12 +3206,11 @@ index 5f91a07..816b60c 100644
 +
 +#ifdef CONFIG_TOI
 +#include "tuxonice_pagedir.h"
-+int toi_post_context_save(void);
 +#endif
  
  /* Pointer to an auxiliary buffer (1 page) */
  static void *buffer;
-@@ -86,6 +94,11 @@ static void *get_image_page(gfp_t gfp_mask, int safe_needed)
+@@ -86,6 +93,11 @@ static void *get_image_page(gfp_t gfp_mask, int safe_needed)
  
  unsigned long get_safe_page(gfp_t gfp_mask)
  {
@@ -3188,7 +3222,7 @@ index 5f91a07..816b60c 100644
  	return (unsigned long)get_image_page(gfp_mask, PG_SAFE);
  }
  
-@@ -607,18 +620,8 @@ static unsigned long memory_bm_next_pfn(struct memory_bitmap *bm)
+@@ -607,18 +619,8 @@ static unsigned long memory_bm_next_pfn(struct memory_bitmap *bm)
  	return bb->start_pfn + chunk * BM_BITS_PER_CHUNK + bit;
  }
  
@@ -3209,7 +3243,7 @@ index 5f91a07..816b60c 100644
  
  /**
   *	register_nosave_region - register a range of page frames the contents
-@@ -855,7 +858,7 @@ static unsigned int count_free_highmem_pages(void)
+@@ -855,7 +857,7 @@ static unsigned int count_free_highmem_pages(void)
   *	and it isn't a part of a free chunk of pages.
   */
  
@@ -3218,7 +3252,7 @@ index 5f91a07..816b60c 100644
  {
  	struct page *page;
  
-@@ -897,8 +900,6 @@ unsigned int count_highmem_pages(void)
+@@ -897,8 +899,6 @@ unsigned int count_highmem_pages(void)
  	}
  	return n;
  }
@@ -3227,7 +3261,7 @@ index 5f91a07..816b60c 100644
  #endif /* CONFIG_HIGHMEM */
  
  /**
-@@ -910,7 +911,7 @@ static inline void *saveable_highmem_page(unsigned long pfn) { return NULL; }
+@@ -910,7 +910,7 @@ static inline void *saveable_highmem_page(unsigned long pfn) { return NULL; }
   *	a free chunk of pages.
   */
  
@@ -3236,7 +3270,7 @@ index 5f91a07..816b60c 100644
  {
  	struct page *page;
  
-@@ -1244,6 +1245,11 @@ asmlinkage int swsusp_save(void)
+@@ -1244,6 +1244,11 @@ asmlinkage int swsusp_save(void)
  {
  	unsigned int nr_pages, nr_highmem;
  
@@ -3248,7 +3282,7 @@ index 5f91a07..816b60c 100644
  	printk(KERN_INFO "PM: Creating hibernation image: \n");
  
  	drain_local_pages(NULL);
-@@ -1284,14 +1290,14 @@ asmlinkage int swsusp_save(void)
+@@ -1284,14 +1289,14 @@ asmlinkage int swsusp_save(void)
  }
  
  #ifndef CONFIG_ARCH_HIBERNATION_HEADER
@@ -3265,7 +3299,7 @@ index 5f91a07..816b60c 100644
  {
  	if (info->version_code != LINUX_VERSION_CODE)
  		return "kernel version";
-@@ -1305,6 +1311,7 @@ static char *check_image_kernel(struct swsusp_info *info)
+@@ -1305,6 +1310,7 @@ static char *check_image_kernel(struct swsusp_info *info)
  		return "machine";
  	return NULL;
  }
@@ -3273,7 +3307,7 @@ index 5f91a07..816b60c 100644
  #endif /* CONFIG_ARCH_HIBERNATION_HEADER */
  
  unsigned long snapshot_get_image_size(void)
-@@ -1312,7 +1319,7 @@ unsigned long snapshot_get_image_size(void)
+@@ -1312,7 +1318,7 @@ unsigned long snapshot_get_image_size(void)
  	return nr_copy_pages + nr_meta_pages + 1;
  }
  
@@ -3282,7 +3316,7 @@ index 5f91a07..816b60c 100644
  {
  	memset(info, 0, sizeof(struct swsusp_info));
  	info->num_physpages = num_physpages;
-@@ -1320,7 +1327,7 @@ static int init_header(struct swsusp_info *info)
+@@ -1320,7 +1326,7 @@ static int init_header(struct swsusp_info *info)
  	info->pages = snapshot_get_image_size();
  	info->size = info->pages;
  	info->size <<= PAGE_SHIFT;
@@ -3291,7 +3325,7 @@ index 5f91a07..816b60c 100644
  }
  
  /**
-@@ -1376,7 +1383,7 @@ int snapshot_read_next(struct snapshot_handle *handle, size_t count)
+@@ -1376,7 +1382,7 @@ int snapshot_read_next(struct snapshot_handle *handle, size_t count)
  	if (!handle->offset) {
  		int error;
  
@@ -3300,7 +3334,7 @@ index 5f91a07..816b60c 100644
  		if (error)
  			return error;
  		handle->buffer = buffer;
-@@ -1473,7 +1480,7 @@ static int check_header(struct swsusp_info *info)
+@@ -1473,7 +1479,7 @@ static int check_header(struct swsusp_info *info)
  {
  	char *reason;
  
@@ -3397,7 +3431,7 @@ index 0000000..381f05b
 +#endif
 diff --git a/kernel/power/tuxonice.h b/kernel/power/tuxonice.h
 new file mode 100644
-index 0000000..6943b24
+index 0000000..912e89a
 --- /dev/null
 +++ b/kernel/power/tuxonice.h
 @@ -0,0 +1,210 @@
@@ -3609,7 +3643,7 @@ index 0000000..6943b24
 +extern int toi_launch_userspace_program(char *command, int channel_no,
 +		enum umh_wait wait);
 +
-+extern char * tuxonice_signature;
++extern char *tuxonice_signature;
 +#endif
 diff --git a/kernel/power/tuxonice_alloc.c b/kernel/power/tuxonice_alloc.c
 new file mode 100644
@@ -3969,10 +4003,10 @@ index 0000000..146c2bd
 +#endif
 diff --git a/kernel/power/tuxonice_atomic_copy.c b/kernel/power/tuxonice_atomic_copy.c
 new file mode 100644
-index 0000000..597c0d9
+index 0000000..6a15805
 --- /dev/null
 +++ b/kernel/power/tuxonice_atomic_copy.c
-@@ -0,0 +1,378 @@
+@@ -0,0 +1,379 @@
 +/*
 + * kernel/power/tuxonice_atomic_copy.c
 + *
@@ -4285,7 +4319,7 @@ index 0000000..597c0d9
 +
 +	if (suspend_time && toi_platform_pre_snapshot()) {
 +		set_abort_result(TOI_PRE_SNAPSHOT_FAILED);
-+		toi_end_atomic(ATOMIC_STEP_DEVICE_RESUME, suspend_time);
++		toi_end_atomic(ATOMIC_STEP_PLATFORM_FINISH, suspend_time);
 +		return 1;
 +	}
 +
@@ -4340,6 +4374,7 @@ index 0000000..597c0d9
 +	case ATOMIC_STEP_CPU_HOTPLUG:
 +		if (test_action_state(TOI_LATE_CPU_HOTPLUG))
 +			enable_nonboot_cpus();
++	case ATOMIC_STEP_PLATFORM_FINISH:
 +		toi_platform_finish();
 +	case ATOMIC_STEP_DEVICE_RESUME:
 +		device_resume();
@@ -4353,10 +4388,10 @@ index 0000000..597c0d9
 +}
 diff --git a/kernel/power/tuxonice_atomic_copy.h b/kernel/power/tuxonice_atomic_copy.h
 new file mode 100644
-index 0000000..5cb9dfe
+index 0000000..a57e254
 --- /dev/null
 +++ b/kernel/power/tuxonice_atomic_copy.h
-@@ -0,0 +1,21 @@
+@@ -0,0 +1,22 @@
 +/*
 + * kernel/power/tuxonice_atomic_copy.h
 + *
@@ -4371,6 +4406,7 @@ index 0000000..5cb9dfe
 +	ATOMIC_ALL_STEPS,
 +	ATOMIC_STEP_IRQS,
 +	ATOMIC_STEP_CPU_HOTPLUG,
++	ATOMIC_STEP_PLATFORM_FINISH,
 +	ATOMIC_STEP_DEVICE_RESUME,
 +	ATOMIC_STEP_RESUME_CONSOLE,
 +	ATOMIC_STEP_PLATFORM_END,
@@ -4380,10 +4416,10 @@ index 0000000..5cb9dfe
 +void toi_end_atomic(int stage, int toi_time);
 diff --git a/kernel/power/tuxonice_block_io.c b/kernel/power/tuxonice_block_io.c
 new file mode 100644
-index 0000000..913e813
+index 0000000..b018914
 --- /dev/null
 +++ b/kernel/power/tuxonice_block_io.c
-@@ -0,0 +1,1186 @@
+@@ -0,0 +1,1193 @@
 +/*
 + * kernel/power/tuxonice_block_io.c
 + *
@@ -4476,10 +4512,10 @@ index 0000000..913e813
 +
 +static int current_stream;
 +/* 0 = Header, 1 = Pageset1, 2 = Pageset2, 3 = End of PS1 */
-+struct extent_iterate_saved_state toi_writer_posn_save[4];
++struct hibernate_extent_iterate_saved_state toi_writer_posn_save[4];
 +
 +/* Pointer to current entry being loaded/saved. */
-+struct extent_iterate_state toi_writer_posn;
++struct hibernate_extent_iterate_state toi_writer_posn;
 +
 +/* Not static, so that the allocators can setup and complete
 + * writing the header */
@@ -4559,9 +4595,6 @@ index 0000000..913e813
 +		do_bio_wait(8);
 +		free_pages = nr_unallocated_buffer_pages();
 +	}
-+
-+	wait_event(num_in_progress_wait,
-+		atomic_read(&toi_io_in_progress) < target_outstanding_io);
 +}
 +
 +/**
@@ -4744,8 +4777,8 @@ index 0000000..913e813
 + */
 +static int toi_bio_memory_needed(void)
 +{
-+	return (target_outstanding_io * (PAGE_SIZE + sizeof(struct request) +
-+				sizeof(struct bio)));
++	return target_outstanding_io * (PAGE_SIZE + sizeof(struct request) +
++				sizeof(struct bio));
 +}
 +
 +/*
@@ -4772,7 +4805,7 @@ index 0000000..913e813
 +	len += snprintf_used(buffer + len, size - len,
 +		"  Mutex contention while reading:\n  Contended      Free\n");
 +
-+	for (i = 0; i < NR_CPUS; i++)
++	for_each_online_cpu(i)
 +		len += snprintf_used(buffer + len, size - len,
 +		"  %9lu %9lu\n",
 +		mutex_times[0][0][i], mutex_times[0][1][i]);
@@ -4780,7 +4813,7 @@ index 0000000..913e813
 +	len += snprintf_used(buffer + len, size - len,
 +		"  Mutex contention while writing:\n  Contended      Free\n");
 +
-+	for (i = 0; i < NR_CPUS; i++)
++	for_each_online_cpu(i)
 +		len += snprintf_used(buffer + len, size - len,
 +		"  %9lu %9lu\n",
 +		mutex_times[1][0][i], mutex_times[1][1][i]);
@@ -4814,7 +4847,7 @@ index 0000000..913e813
 +	int i;
 +
 +	for (i = 0; i < toi_writer_posn.num_chains; i++) {
-+		struct extent *this;
++		struct hibernate_extent *this;
 +
 +		this = (toi_writer_posn.chains + i)->first;
 +
@@ -4824,8 +4857,8 @@ index 0000000..913e813
 +		printk(KERN_INFO "Chain %d:", i);
 +
 +		while (this) {
-+			printk(" [%lu-%lu]%s", this->minimum,
-+					this->maximum, this->next ? "," : "");
++			printk(" [%lu-%lu]%s", this->start,
++					this->end, this->next ? "," : "");
 +			this = this->next;
 +		}
 +
@@ -5019,10 +5052,15 @@ index 0000000..913e813
 +	int i;
 +
 +	if (writing) {
++		int result;
++
 +		if (toi_writer_buffer_posn)
 +			toi_bio_queue_write(&toi_writer_buffer);
 +
-+		toi_bio_queue_flush_pages(0);
++		result = toi_bio_queue_flush_pages(0);
++
++		if (result)
++			return result;
 +
 +		if (current_stream == 2)
 +			toi_extent_state_save(&toi_writer_posn,
@@ -5151,7 +5189,8 @@ index 0000000..913e813
 +	 * extents out of the first page.
 +	 */
 +	if (unlikely(no_readahead && toi_start_one_readahead(0))) {
-+		printk("No readahead and toi_start_one_readahead returned non-zero.\n");
++		printk(KERN_INFO "No readahead and toi_start_one_readahead "
++				"returned non-zero.\n");
 +		return -EIO;
 +	}
 +
@@ -5237,7 +5276,8 @@ index 0000000..913e813
 + * @buffer: The start of the buffer to write or fill.
 + * @buffer_size: The size of the buffer to write or fill.
 + */
-+static int toi_rw_buffer(int writing, char *buffer, int buffer_size, int no_readahead)
++static int toi_rw_buffer(int writing, char *buffer, int buffer_size,
++		int no_readahead)
 +{
 +	int bytes_left = buffer_size;
 +
@@ -5294,7 +5334,8 @@ index 0000000..913e813
 +
 +	/* Only call start_new_readahead if we don't have a dedicated thread */
 +	if (current == toi_queue_flusher && toi_start_new_readahead(0)) {
-+		printk("Queue flusher and toi_start_one_readahead returned non-zero.\n");
++		printk(KERN_INFO "Queue flusher and toi_start_one_readahead "
++				"returned non-zero.\n");
 +		return -EIO;
 +	}
 +
@@ -5340,7 +5381,8 @@ index 0000000..913e813
 +	if (toi_rw_buffer(WRITE, (char *) &pfn, sizeof(unsigned long), 0) ||
 +	    toi_rw_buffer(WRITE, (char *) &buf_size, sizeof(int), 0) ||
 +	    toi_rw_buffer(WRITE, buffer_virt, buf_size, 0)) {
-+		printk("toi_rw_buffer returned non-zero to toi_bio_write_page.\n");
++		printk(KERN_INFO "toi_rw_buffer returned non-zero to "
++				"toi_bio_write_page.\n");
 +		result = -EIO;
 +	}
 +
@@ -5393,7 +5435,8 @@ index 0000000..913e813
 +		result = toi_start_new_readahead(0);
 +
 +	if (!result)
-+		result = toi_rw_buffer(writing, buffer, buffer_size, no_readahead);
++		result = toi_rw_buffer(writing, buffer, buffer_size,
++				no_readahead);
 +
 +	return result;
 +}
@@ -5476,7 +5519,7 @@ index 0000000..913e813
 +
 +		for (i = 0; i < 2; i++)
 +			for (j = 0; j < 2; j++)
-+				for (k = 0; k < NR_CPUS; k++)
++				for_each_online_cpu(k)
 +					mutex_times[i][j][k] = 0;
 +		}
 +#endif
@@ -5572,7 +5615,7 @@ index 0000000..913e813
 +#endif
 diff --git a/kernel/power/tuxonice_block_io.h b/kernel/power/tuxonice_block_io.h
 new file mode 100644
-index 0000000..833a685
+index 0000000..54b72ca
 --- /dev/null
 +++ b/kernel/power/tuxonice_block_io.h
 @@ -0,0 +1,57 @@
@@ -5631,11 +5674,11 @@ index 0000000..833a685
 +
 +extern char *toi_writer_buffer;
 +extern int toi_writer_buffer_posn;
-+extern struct extent_iterate_saved_state toi_writer_posn_save[4];
-+extern struct extent_iterate_state toi_writer_posn;
++extern struct hibernate_extent_iterate_saved_state toi_writer_posn_save[4];
++extern struct hibernate_extent_iterate_state toi_writer_posn;
 diff --git a/kernel/power/tuxonice_builtin.c b/kernel/power/tuxonice_builtin.c
 new file mode 100644
-index 0000000..11cf575
+index 0000000..e5525d2
 --- /dev/null
 +++ b/kernel/power/tuxonice_builtin.c
 @@ -0,0 +1,400 @@
@@ -5646,7 +5689,6 @@ index 0000000..11cf575
 + */
 +#include <linux/module.h>
 +#include <linux/resume-trace.h>
-+#include <linux/syscalls.h>
 +#include <linux/kernel.h>
 +#include <linux/swap.h>
 +#include <linux/syscalls.h>
@@ -5814,6 +5856,7 @@ index 0000000..11cf575
 +#ifdef CONFIG_TOI_REPLACE_SWSUSP
 +	(1 << TOI_REPLACE_SWSUSP) |
 +#endif
++	(1 << TOI_NO_FLUSHER_THREAD) |
 +	(1 << TOI_PAGESET2_FULL) | (1 << TOI_LATE_CPU_HOTPLUG),
 +};
 +EXPORT_SYMBOL_GPL(toi_bkd);
@@ -6078,7 +6121,7 @@ index 0000000..f4966c4
 +extern int toi_wait;
 diff --git a/kernel/power/tuxonice_checksum.c b/kernel/power/tuxonice_checksum.c
 new file mode 100644
-index 0000000..eea3029
+index 0000000..6e26130
 --- /dev/null
 +++ b/kernel/power/tuxonice_checksum.c
 @@ -0,0 +1,389 @@
@@ -6208,7 +6251,7 @@ index 0000000..eea3029
 +		if (!page)
 +			return 1;
 +		this->buf = page_address(page);
-+		sg_set_buf(&this->sg[0], this->buf, PAGE_SIZE);
++		sg_init_one(&this->sg[0], this->buf, PAGE_SIZE);
 +	}
 +	return 0;
 +}
@@ -7630,10 +7673,10 @@ index 0000000..cd9ee3a
 +
 diff --git a/kernel/power/tuxonice_compress.c b/kernel/power/tuxonice_compress.c
 new file mode 100644
-index 0000000..9925485
+index 0000000..d2bbae9
 --- /dev/null
 +++ b/kernel/power/tuxonice_compress.c
-@@ -0,0 +1,436 @@
+@@ -0,0 +1,441 @@
 +/*
 + * kernel/power/compression.c
 + *
@@ -7980,8 +8023,13 @@ index 0000000..9925485
 +	toi_expected_compression = *((unsigned long *) (buffer + 2 *
 +				sizeof(unsigned long)));
 +	namelen = *((unsigned long *) (buffer + 3 * sizeof(unsigned long)));
-+	strncpy(toi_compressor_name, buffer + 4 * sizeof(unsigned long),
++	if (strncmp(toi_compressor_name, buffer + 4 * sizeof(unsigned long),
++				namelen)) {
++		toi_compress_cleanup(1);
++		strncpy(toi_compressor_name, buffer + 4 * sizeof(unsigned long),
 +			namelen);
++		toi_compress_crypto_prepare();
++	}
 +	return;
 +}
 +
@@ -8072,10 +8120,10 @@ index 0000000..9925485
 +#endif
 diff --git a/kernel/power/tuxonice_extent.c b/kernel/power/tuxonice_extent.c
 new file mode 100644
-index 0000000..be7b721
+index 0000000..afeb11d
 --- /dev/null
 +++ b/kernel/power/tuxonice_extent.c
-@@ -0,0 +1,312 @@
+@@ -0,0 +1,303 @@
 +/*
 + * kernel/power/tuxonice_extent.c
 + *
@@ -8099,38 +8147,31 @@ index 0000000..be7b721
 + *
 + * Returns a free extent. May fail, returning NULL instead.
 + */
-+static struct extent *toi_get_extent(void)
++static struct hibernate_extent *toi_get_extent(void)
 +{
-+	struct extent *result;
-+
-+	result = toi_kzalloc(2, sizeof(struct extent), TOI_ATOMIC_GFP);
-+	if (!result)
-+		return NULL;
-+
-+	result->minimum = result->maximum = 0;
-+	result->next = NULL;
-+
-+	return result;
++	return (struct hibernate_extent *) toi_kzalloc(2,
++			sizeof(struct hibernate_extent), TOI_ATOMIC_GFP);
 +}
 +
 +/* toi_put_extent_chain.
 + *
 + * Frees a whole chain of extents.
 + */
-+void toi_put_extent_chain(struct extent_chain *chain)
++void toi_put_extent_chain(struct hibernate_extent_chain *chain)
 +{
-+	struct extent *this;
++	struct hibernate_extent *this;
 +
 +	this = chain->first;
 +
 +	while (this) {
-+		struct extent *next = this->next;
++		struct hibernate_extent *next = this->next;
 +		toi_kfree(2, this);
 +		chain->num_extents--;
 +		this = next;
 +	}
 +
-+	chain->first = chain->last_touched = NULL;
++	chain->first = NULL;
++	chain->last_touched = NULL;
 +	chain->size = 0;
 +}
 +
@@ -8139,64 +8180,61 @@ index 0000000..be7b721
 + *
 + * Add an extent to an existing chain.
 + */
-+int toi_add_to_extent_chain(struct extent_chain *chain,
-+		unsigned long minimum, unsigned long maximum)
++int toi_add_to_extent_chain(struct hibernate_extent_chain *chain,
++		unsigned long start, unsigned long end)
 +{
-+	struct extent *new_extent = NULL, *start_at;
++	struct hibernate_extent *new_ext = NULL, *cur_ext = NULL;
 +
 +	/* Find the right place in the chain */
-+	start_at = (chain->last_touched &&
-+		    (chain->last_touched->minimum < minimum)) ?
-+		chain->last_touched : NULL;
++	if (chain->last_touched && chain->last_touched->start < start)
++		cur_ext = chain->last_touched;
++	else if (chain->first && chain->first->start < start)
++		cur_ext = chain->first;
 +
-+	if (!start_at && chain->first && chain->first->minimum < minimum)
-+		start_at = chain->first;
++	if (cur_ext) {
++		while (cur_ext->next && cur_ext->next->start < start)
++			cur_ext = cur_ext->next;
 +
-+	while (start_at && start_at->next && start_at->next->minimum < minimum)
-+		start_at = start_at->next;
++		if (cur_ext->end == (start - 1)) {
++			struct hibernate_extent *next_ext = cur_ext->next;
++			cur_ext->end = end;
 +
-+	if (start_at && start_at->maximum == (minimum - 1)) {
-+		start_at->maximum = maximum;
++			/* Merge with the following one? */
++			if (next_ext && cur_ext->end + 1 == next_ext->start) {
++				cur_ext->end = next_ext->end;
++				cur_ext->next = next_ext->next;
++				toi_kfree(2, next_ext);
++				chain->num_extents--;
++			}
 +
-+		/* Merge with the following one? */
-+		if (start_at->next &&
-+		    start_at->maximum + 1 == start_at->next->minimum) {
-+			struct extent *to_free = start_at->next;
-+			start_at->maximum = start_at->next->maximum;
-+			start_at->next = start_at->next->next;
-+			chain->num_extents--;
-+			toi_kfree(2, to_free);
++			chain->last_touched = cur_ext;
++			chain->size += (end - start + 1);
++
++			return 0;
 +		}
-+
-+		chain->last_touched = start_at;
-+		chain->size += (maximum - minimum + 1);
-+
-+		return 0;
 +	}
 +
-+	new_extent = toi_get_extent();
-+	if (!new_extent) {
++	new_ext = toi_get_extent();
++	if (!new_ext) {
 +		printk(KERN_INFO "Error unable to append a new extent to the "
 +				"chain.\n");
 +		return -ENOMEM;
 +	}
 +
 +	chain->num_extents++;
-+	chain->size += (maximum - minimum + 1);
-+	new_extent->minimum = minimum;
-+	new_extent->maximum = maximum;
-+	new_extent->next = NULL;
++	chain->size += (end - start + 1);
++	new_ext->start = start;
++	new_ext->end = end;
 +
-+	chain->last_touched = new_extent;
++	chain->last_touched = new_ext;
 +
-+	if (start_at) {
-+		struct extent *next = start_at->next;
-+		start_at->next = new_extent;
-+		new_extent->next = next;
++	if (cur_ext) {
++		new_ext->next = cur_ext->next;
++		cur_ext->next = new_ext;
 +	} else {
 +		if (chain->first)
-+			new_extent->next = chain->first;
-+		chain->first = new_extent;
++			new_ext->next = chain->first;
++		chain->first = new_ext;
 +	}
 +
 +	return 0;
@@ -8207,9 +8245,9 @@ index 0000000..be7b721
 + * Write a chain in the image.
 + */
 +int toi_serialise_extent_chain(struct toi_module_ops *owner,
-+		struct extent_chain *chain)
++		struct hibernate_extent_chain *chain)
 +{
-+	struct extent *this;
++	struct hibernate_extent *this;
 +	int ret, i = 0;
 +
 +	ret = toiActiveAllocator->rw_header_chunk(WRITE, owner, (char *) chain,
@@ -8240,9 +8278,9 @@ index 0000000..be7b721
 + *
 + * Read back a chain saved in the image.
 + */
-+int toi_load_extent_chain(struct extent_chain *chain)
++int toi_load_extent_chain(struct hibernate_extent_chain *chain)
 +{
-+	struct extent *this, *last = NULL;
++	struct hibernate_extent *this, *last = NULL;
 +	int i, ret;
 +
 +	ret = toiActiveAllocator->rw_header_chunk_noreadahead(READ, NULL,
@@ -8253,7 +8291,8 @@ index 0000000..be7b721
 +	}
 +
 +	for (i = 0; i < chain->num_extents; i++) {
-+		this = toi_kzalloc(3, sizeof(struct extent), TOI_ATOMIC_GFP);
++		this = toi_kzalloc(3, sizeof(struct hibernate_extent),
++				TOI_ATOMIC_GFP);
 +		if (!this) {
 +			printk(KERN_INFO "Failed to allocate a new extent.\n");
 +			return -ENOMEM;
@@ -8282,18 +8321,18 @@ index 0000000..be7b721
 + * When using compression and expected_compression > 0, we let the image size
 + * be larger than storage, so we can validly run out of data to return.
 + */
-+unsigned long toi_extent_state_next(struct extent_iterate_state *state)
++unsigned long toi_extent_state_next(struct hibernate_extent_iterate_state *state)
 +{
 +	if (state->current_chain == state->num_chains)
 +		return 0;
 +
 +	if (state->current_extent) {
-+		if (state->current_offset == state->current_extent->maximum) {
++		if (state->current_offset == state->current_extent->end) {
 +			if (state->current_extent->next) {
 +				state->current_extent =
 +					state->current_extent->next;
 +				state->current_offset =
-+					state->current_extent->minimum;
++					state->current_extent->start;
 +			} else {
 +				state->current_extent = NULL;
 +				state->current_offset = 0;
@@ -8313,7 +8352,7 @@ index 0000000..be7b721
 +		if (!state->current_extent)
 +			continue;
 +
-+		state->current_offset = state->current_extent->minimum;
++		state->current_offset = state->current_extent->start;
 +	}
 +
 +	return state->current_offset;
@@ -8323,7 +8362,7 @@ index 0000000..be7b721
 + *
 + * Find the first valid value in a group of chains.
 + */
-+void toi_extent_state_goto_start(struct extent_iterate_state *state)
++void toi_extent_state_goto_start(struct hibernate_extent_iterate_state *state)
 +{
 +	state->current_chain = -1;
 +	state->current_extent = NULL;
@@ -8332,14 +8371,14 @@ index 0000000..be7b721
 +
 +/* toi_extent_start_save
 + *
-+ * Given a state and a struct extent_state_store, save the current
++ * Given a state and a struct hibernate_extent_state_store, save the current
 + * position in a format that can be used with relocated chains (at
 + * resume time).
 + */
-+void toi_extent_state_save(struct extent_iterate_state *state,
-+		struct extent_iterate_saved_state *saved_state)
++void toi_extent_state_save(struct hibernate_extent_iterate_state *state,
++		struct hibernate_extent_iterate_saved_state *saved_state)
 +{
-+	struct extent *extent;
++	struct hibernate_extent *extent;
 +
 +	saved_state->chain_num = state->current_chain;
 +	saved_state->extent_num = 0;
@@ -8360,8 +8399,8 @@ index 0000000..be7b721
 + *
 + * Restore the position saved by extent_state_save.
 + */
-+void toi_extent_state_restore(struct extent_iterate_state *state,
-+		struct extent_iterate_saved_state *saved_state)
++void toi_extent_state_restore(struct hibernate_extent_iterate_state *state,
++		struct hibernate_extent_iterate_saved_state *saved_state)
 +{
 +	int posn = saved_state->extent_num;
 +
@@ -8390,10 +8429,10 @@ index 0000000..be7b721
 +#endif
 diff --git a/kernel/power/tuxonice_extent.h b/kernel/power/tuxonice_extent.h
 new file mode 100644
-index 0000000..d7dd07e
+index 0000000..dc0e05e
 --- /dev/null
 +++ b/kernel/power/tuxonice_extent.h
-@@ -0,0 +1,78 @@
+@@ -0,0 +1,72 @@
 +/*
 + * kernel/power/tuxonice_extent.h
 + *
@@ -8412,26 +8451,26 @@ index 0000000..d7dd07e
 +#ifndef EXTENT_H
 +#define EXTENT_H
 +
-+struct extent {
-+	unsigned long minimum, maximum;
-+	struct extent *next;
++struct hibernate_extent {
++	unsigned long start, end;
++	struct hibernate_extent *next;
 +};
 +
-+struct extent_chain {
++struct hibernate_extent_chain {
 +	int size; /* size of the chain ie sum (max-min+1) */
 +	int num_extents;
-+	struct extent *first, *last_touched;
++	struct hibernate_extent *first, *last_touched;
 +};
 +
-+struct extent_iterate_state {
-+	struct extent_chain *chains;
++struct hibernate_extent_iterate_state {
++	struct hibernate_extent_chain *chains;
 +	int num_chains;
 +	int current_chain;
-+	struct extent *current_extent;
++	struct hibernate_extent *current_extent;
 +	unsigned long current_offset;
 +};
 +
-+struct extent_iterate_saved_state {
++struct hibernate_extent_iterate_saved_state {
 +	int chain_num;
 +	int extent_num;
 +	unsigned long offset;
@@ -8444,40 +8483,34 @@ index 0000000..d7dd07e
 +#define toi_extent_for_each(extent_chain, extentpointer, value) \
 +if ((extent_chain)->first) \
 +	for ((extentpointer) = (extent_chain)->first, (value) = \
-+			(extentpointer)->minimum; \
++			(extentpointer)->start; \
 +	     ((extentpointer) && ((extentpointer)->next || (value) <= \
-+				 (extentpointer)->maximum)); \
-+	     (((value) == (extentpointer)->maximum) ? \
++				 (extentpointer)->end)); \
++	     (((value) == (extentpointer)->end) ? \
 +		((extentpointer) = (extentpointer)->next, (value) = \
-+		 ((extentpointer) ? (extentpointer)->minimum : 0)) : \
++		 ((extentpointer) ? (extentpointer)->start : 0)) : \
 +			(value)++))
 +
-+void toi_put_extent_chain(struct extent_chain *chain);
-+int toi_add_to_extent_chain(struct extent_chain *chain,
-+		unsigned long minimum, unsigned long maximum);
++void toi_put_extent_chain(struct hibernate_extent_chain *chain);
++int toi_add_to_extent_chain(struct hibernate_extent_chain *chain,
++		unsigned long start, unsigned long end);
 +int toi_serialise_extent_chain(struct toi_module_ops *owner,
-+		struct extent_chain *chain);
-+int toi_load_extent_chain(struct extent_chain *chain);
++		struct hibernate_extent_chain *chain);
++int toi_load_extent_chain(struct hibernate_extent_chain *chain);
 +
-+/* swap_entry_to_extent_val & extent_val_to_swap_entry:
-+ * We are putting offset in the low bits so consecutive swap entries
-+ * make consecutive extent values */
-+#define swap_entry_to_extent_val(swp_entry) (swp_entry.val)
-+#define extent_val_to_swap_entry(val) (swp_entry_t) { (val) }
-+
-+void toi_extent_state_save(struct extent_iterate_state *state,
-+		struct extent_iterate_saved_state *saved_state);
-+void toi_extent_state_restore(struct extent_iterate_state *state,
-+		struct extent_iterate_saved_state *saved_state);
-+void toi_extent_state_goto_start(struct extent_iterate_state *state);
-+unsigned long toi_extent_state_next(struct extent_iterate_state *state);
++void toi_extent_state_save(struct hibernate_extent_iterate_state *state,
++		struct hibernate_extent_iterate_saved_state *saved_state);
++void toi_extent_state_restore(struct hibernate_extent_iterate_state *state,
++		struct hibernate_extent_iterate_saved_state *saved_state);
++void toi_extent_state_goto_start(struct hibernate_extent_iterate_state *state);
++unsigned long toi_extent_state_next(struct hibernate_extent_iterate_state *state);
 +#endif
 diff --git a/kernel/power/tuxonice_file.c b/kernel/power/tuxonice_file.c
 new file mode 100644
-index 0000000..d702479
+index 0000000..15a57e2
 --- /dev/null
 +++ b/kernel/power/tuxonice_file.c
-@@ -0,0 +1,1124 @@
+@@ -0,0 +1,1125 @@
 +/*
 + * kernel/power/tuxonice_file.c
 + *
@@ -8569,7 +8602,7 @@ index 0000000..d702479
 +static struct toi_bdev_info devinfo;
 +
 +/* Extent chain for blocks */
-+static struct extent_chain block_chain;
++static struct hibernate_extent_chain block_chain;
 +
 +/* Signature operations */
 +enum {
@@ -8647,7 +8680,7 @@ index 0000000..d702479
 +		last = this;
 +	}
 +
-+	return (j == devinfo.blocks_per_page);
++	return j == devinfo.blocks_per_page;
 +}
 +
 +static int size_ignoring_ignored_pages(void)
@@ -9159,7 +9192,8 @@ index 0000000..d702479
 +		if (result == -1)
 +			goto out;
 +
-+		strcpy(header->sig, tuxonice_signature);
++		memcpy(header->sig, tuxonice_signature,
++				sizeof(tuxonice_signature));
 +		header->resumed_before = 0;
 +		header->have_image = 0;
 +		result = changed = 1;
@@ -9231,7 +9265,7 @@ index 0000000..d702479
 +	return sig_size + strlen(toi_file_target) + 1 +
 +		sizeof(toi_writer_posn_save) +
 +		sizeof(devinfo) +
-+		sizeof(struct extent_chain) - 2 * sizeof(void *) +
++		sizeof(struct hibernate_extent_chain) - 2 * sizeof(void *) +
 +		(2 * sizeof(unsigned long) * block_chain.num_extents);
 +}
 +
@@ -9604,10 +9638,10 @@ index 0000000..d702479
 +#endif
 diff --git a/kernel/power/tuxonice_highlevel.c b/kernel/power/tuxonice_highlevel.c
 new file mode 100644
-index 0000000..f362017
+index 0000000..bbaeac2
 --- /dev/null
 +++ b/kernel/power/tuxonice_highlevel.c
-@@ -0,0 +1,1329 @@
+@@ -0,0 +1,1327 @@
 +/*
 + * kernel/power/tuxonice_highlevel.c
 + */
@@ -9684,7 +9718,6 @@ index 0000000..f362017
 +#include <linux/cpu.h>
 +#include <linux/console.h>
 +#include <linux/writeback.h>
-+#include <asm/uaccess.h>
 +
 +#include "tuxonice_modules.h"
 +#include "tuxonice_sysfs.h"
@@ -9704,7 +9737,7 @@ index 0000000..f362017
 +
 +static int get_pmsem = 0, got_pmsem;
 +static mm_segment_t oldfs;
-+static atomic_t actions_running;
++static DEFINE_MUTEX(tuxonice_in_use);
 +static int block_dump_save;
 +static char pre_hibernate_command[256];
 +static char post_hibernate_command[256];
@@ -9728,12 +9761,8 @@ index 0000000..f362017
 + */
 +void toi_finish_anything(int hibernate_or_resume)
 +{
-+	if (!atomic_dec_and_test(&actions_running))
-+		return;
-+
 +	toi_cleanup_modules(hibernate_or_resume);
 +	toi_put_modules();
-+	set_fs(oldfs);
 +	if (hibernate_or_resume) {
 +		block_dump = block_dump_save;
 +		set_cpus_allowed(current, CPU_MASK_ALL);
@@ -9744,6 +9773,9 @@ index 0000000..f362017
 +			toi_launch_userspace_program(post_hibernate_command,
 +					0, UMH_WAIT_PROC);
 +	}
++
++	set_fs(oldfs);
++	mutex_unlock(&tuxonice_in_use);
 +}
 +
 +/**
@@ -9757,15 +9789,7 @@ index 0000000..f362017
 + */
 +int toi_start_anything(int hibernate_or_resume)
 +{
-+	if (atomic_add_return(1, &actions_running) != 1) {
-+		if (hibernate_or_resume) {
-+			printk(KERN_INFO "Can't start a cycle when actions are "
-+					"already running.\n");
-+			atomic_dec(&actions_running);
-+			return -EBUSY;
-+		} else
-+			return 0;
-+	}
++	mutex_lock(&tuxonice_in_use);
 +
 +	oldfs = get_fs();
 +	set_fs(KERNEL_DS);
@@ -9775,10 +9799,10 @@ index 0000000..f362017
 +		int result = toi_launch_userspace_program(pre_hibernate_command,
 +				0, UMH_WAIT_PROC);
 +		if (result) {
-+			printk("Pre-hibernate command '%s' returned %d. "
-+					"Aborting.\n", pre_hibernate_command,
-+					result);
-+			goto out_err;
++			printk(KERN_INFO "Pre-hibernate command '%s' returned "
++					"%d. Aborting.\n",
++					pre_hibernate_command, result);
++			goto prehibernate_err;
 +		}
 +	}
 +
@@ -9787,7 +9811,7 @@ index 0000000..f362017
 +
 +	if (toi_get_modules()) {
 +		printk("TuxOnIce: Get modules failed!\n");
-+		goto out_err;
++		goto getmodules_err;
 +	}
 +
 +	if (hibernate_or_resume) {
@@ -9798,20 +9822,27 @@ index 0000000..f362017
 +	}
 +
 +	if (toi_initialise_modules_early(hibernate_or_resume))
-+		goto out_err;
++		goto early_init_err;
 +
 +	if (!toiActiveAllocator)
 +		toi_attempt_to_parse_resume_device(!hibernate_or_resume);
 +
 +	if (toi_initialise_modules_late(hibernate_or_resume))
-+		goto out_err;
++		goto late_init_err;
 +
 +	return 0;
 +
-+out_err:
-+	if (hibernate_or_resume)
++late_init_err:
++	toi_cleanup_modules(hibernate_or_resume);
++early_init_err:
++	if (hibernate_or_resume) {
 +		block_dump_save = block_dump;
-+	toi_finish_anything(hibernate_or_resume);
++		set_cpus_allowed(current, CPU_MASK_ALL);
++	}
++getmodules_err:
++prehibernate_err:
++	set_fs(oldfs);
++	mutex_unlock(&tuxonice_in_use);
 +	return -EBUSY;
 +}
 +
@@ -9900,8 +9931,9 @@ index 0000000..f362017
 + * Fill a (usually PAGE_SIZEd) buffer with the debugging info that we will
 + * either printk or return via sysfs.
 + */
-+#define SNPRINTF(a...) 	len += snprintf_used(((char *)buffer) + len, \
-+		count - len - 1, ## a)
++#define SNPRINTF(a...) 	do { len += snprintf_used(((char *) buffer) + len, \
++		count - len - 1, ## a); } while (0)
++
 +static int get_toi_debug_info(const char *buffer, int count)
 +{
 +	int len = 0;
@@ -10068,7 +10100,7 @@ index 0000000..f362017
 + */
 +static int toi_init(void)
 +{
-+	int result;
++	int result, i, j;
 +
 +	toi_result = 0;
 +
@@ -10076,8 +10108,9 @@ index 0000000..f362017
 +
 +	nr_hibernates++;
 +
-+	toi_bkd.toi_io_time[0][0] = toi_bkd.toi_io_time[0][1] =
-+		toi_bkd.toi_io_time[1][0] =	toi_bkd.toi_io_time[1][1] = 0;
++	for (i = 0; i < 2; i++)
++		for (j = 0; j < 2; j++)
++			toi_bkd.toi_io_time[i][j] = 0;
 +
 +	if (!test_toi_state(TOI_CAN_HIBERNATE) ||
 +	    allocate_bitmaps())
@@ -10163,7 +10196,6 @@ index 0000000..f362017
 +	if (alt_resume_param[0])
 +		do_toi_step(STEP_RESUME_ALT_IMAGE);
 +
-+	toi_cond_pause(1, "About to power down or reboot.");
 +	toi_power_down();
 +
 +	/* If we return, it's because we hibernated to ram */
@@ -10243,8 +10275,7 @@ index 0000000..f362017
 +			return 1;
 +	}
 +
-+	toi_update_status(pagedir2.size,
-+			pagedir1.size + pagedir2.size,
++	toi_update_status(pagedir2.size, pagedir1.size + pagedir2.size,
 +			NULL);
 +
 +	if (test_result_state(TOI_ABORTED))
@@ -10252,8 +10283,7 @@ index 0000000..f362017
 +
 +	toi_cond_pause(1, "About to write pageset1.");
 +
-+	toi_message(TOI_ANY_SECTION, TOI_LOW, 1,
-+			"-- Writing pageset1\n");
++	toi_message(TOI_ANY_SECTION, TOI_LOW, 1, "-- Writing pageset1\n");
 +
 +	temp_result = write_pageset(&pagedir1);
 +
@@ -10625,7 +10655,7 @@ index 0000000..f362017
 +{
 +	int result = 0, sys_power_disk = 0;
 +
-+	if (!atomic_read(&actions_running)) {
++	if (!mutex_is_locked(&tuxonice_in_use)) {
 +		/* Came in via /sys/power/disk */
 +		if (toi_start_anything(SYSFS_HIBERNATING))
 +			return -EBUSY;
@@ -10874,6 +10904,8 @@ index 0000000..f362017
 +	int i,
 +	    numfiles = sizeof(sysfs_params) / sizeof(struct toi_sysfs_data);
 +
++	printk(KERN_INFO "TuxOnIce " TOI_CORE_VERSION
++			" (http://tuxonice.net)\n");
 +	strncpy(pre_hibernate_command, CONFIG_TOI_DEFAULT_PRE_HIBERNATE, 255);
 +	strncpy(post_hibernate_command, CONFIG_TOI_DEFAULT_POST_HIBERNATE, 255);
 +
@@ -10939,7 +10971,7 @@ index 0000000..f362017
 +#endif
 diff --git a/kernel/power/tuxonice_io.c b/kernel/power/tuxonice_io.c
 new file mode 100644
-index 0000000..2efd973
+index 0000000..556ec22
 --- /dev/null
 +++ b/kernel/power/tuxonice_io.c
 @@ -0,0 +1,1427 @@
@@ -12067,8 +12099,8 @@ index 0000000..2efd973
 +
 +	result = toiActiveAllocator->read_header_init();
 +	if (result) {
-+		printk("TuxOnIce: Failed to initialise, reading the image "
-+				"header.\n");
++		printk(KERN_INFO "TuxOnIce: Failed to initialise, reading the "
++				"image header.\n");
 +		goto out_remove_image;
 +	}
 +
@@ -12449,10 +12481,10 @@ index 0000000..d4b470b
 +extern int toi_bio_queue_flusher_should_finish;
 diff --git a/kernel/power/tuxonice_modules.c b/kernel/power/tuxonice_modules.c
 new file mode 100644
-index 0000000..95ce455
+index 0000000..dcc7045
 --- /dev/null
 +++ b/kernel/power/tuxonice_modules.c
-@@ -0,0 +1,461 @@
+@@ -0,0 +1,465 @@
 +/*
 + * kernel/power/tuxonice_modules.c
 + *
@@ -12797,8 +12829,11 @@ index 0000000..95ce455
 +				"Initialising module %s.\n",
 +				this_module->name);
 +			result = this_module->initialise(starting_cycle);
-+			if (result)
++			if (result) {
++				toi_cleanup_modules(starting_cycle);
 +				return result;
++			}
++			this_module->initialised = 1;
 +		}
 +	}
 +
@@ -12815,7 +12850,7 @@ index 0000000..95ce455
 +	struct toi_module_ops *this_module;
 +
 +	list_for_each_entry(this_module, &toi_modules, module_list) {
-+		if (!this_module->enabled)
++		if (!this_module->enabled || !this_module->initialised)
 +			continue;
 +		if (this_module->cleanup) {
 +			toi_message(TOI_MEMORY, TOI_MEDIUM, 1,
@@ -12823,6 +12858,7 @@ index 0000000..95ce455
 +				this_module->name);
 +			this_module->cleanup(finishing_cycle);
 +		}
++		this_module->initialised = 0;
 +	}
 +}
 +
@@ -12916,7 +12952,7 @@ index 0000000..95ce455
 +#endif
 diff --git a/kernel/power/tuxonice_modules.h b/kernel/power/tuxonice_modules.h
 new file mode 100644
-index 0000000..8397ddf
+index 0000000..6d9ea6b
 --- /dev/null
 +++ b/kernel/power/tuxonice_modules.h
 @@ -0,0 +1,176 @@
@@ -12969,7 +13005,7 @@ index 0000000..8397ddf
 +	char *shared_directory;
 +	struct kobject *dir_kobj;
 +	struct module *module;
-+	int enabled, early;
++	int enabled, early, initialised;
 +	struct list_head module_list;
 +
 +	/* List of filters or allocators */
@@ -13098,10 +13134,10 @@ index 0000000..8397ddf
 +#endif
 diff --git a/kernel/power/tuxonice_netlink.c b/kernel/power/tuxonice_netlink.c
 new file mode 100644
-index 0000000..f459a7f
+index 0000000..cc328e5
 --- /dev/null
 +++ b/kernel/power/tuxonice_netlink.c
-@@ -0,0 +1,323 @@
+@@ -0,0 +1,327 @@
 +/*
 + * kernel/power/tuxonice_netlink.c
 + *
@@ -13289,6 +13325,7 @@ index 0000000..f459a7f
 +
 +	uhd->pid = -1;
 +}
++EXPORT_SYMBOL_GPL(toi_netlink_close_complete);
 +
 +static int toi_nl_gen_rcv_msg(struct user_helper_data *uhd,
 +		struct sk_buff *skb, struct nlmsghdr *nlh)
@@ -13400,6 +13437,9 @@ index 0000000..f459a7f
 +
 +int toi_netlink_setup(struct user_helper_data *uhd)
 +{
++	/* In case userui didn't cleanup properly on us */
++	toi_netlink_close_complete(uhd);
++
 +	if (netlink_prepare(uhd) < 0) {
 +		printk(KERN_INFO "Netlink prepare failed.\n");
 +		return 1;
@@ -13427,10 +13467,10 @@ index 0000000..f459a7f
 +EXPORT_SYMBOL_GPL(toi_netlink_setup);
 diff --git a/kernel/power/tuxonice_netlink.h b/kernel/power/tuxonice_netlink.h
 new file mode 100644
-index 0000000..721c222
+index 0000000..1436ac3
 --- /dev/null
 +++ b/kernel/power/tuxonice_netlink.h
-@@ -0,0 +1,58 @@
+@@ -0,0 +1,61 @@
 +/*
 + * kernel/power/tuxonice_netlink.h
 + *
@@ -13479,6 +13519,7 @@ index 0000000..721c222
 +void toi_netlink_close(struct user_helper_data *uhd);
 +void toi_send_netlink_message(struct user_helper_data *uhd,
 +		int type, void *params, size_t len);
++void toi_netlink_close_complete(struct user_helper_data *uhd);
 +#else
 +static inline int toi_netlink_setup(struct user_helper_data *uhd)
 +{
@@ -13488,6 +13529,8 @@ index 0000000..721c222
 +static inline void toi_netlink_close(struct user_helper_data *uhd) { };
 +static inline void toi_send_netlink_message(struct user_helper_data *uhd,
 +		int type, void *params, size_t len) { };
++static inline void toi_netlink_close_complete(struct user_helper_data *uhd)
++	{ };
 +#endif
 diff --git a/kernel/power/tuxonice_pagedir.c b/kernel/power/tuxonice_pagedir.c
 new file mode 100644
@@ -14137,10 +14180,10 @@ index 0000000..f976b5c
 +extern int toi_pageflags_space_needed(void);
 diff --git a/kernel/power/tuxonice_power_off.c b/kernel/power/tuxonice_power_off.c
 new file mode 100644
-index 0000000..70168e6
+index 0000000..827d59d
 --- /dev/null
 +++ b/kernel/power/tuxonice_power_off.c
-@@ -0,0 +1,276 @@
+@@ -0,0 +1,279 @@
 +/*
 + * kernel/power/tuxonice_power_off.c
 + *
@@ -14209,8 +14252,11 @@ index 0000000..70168e6
 +		}
 +		break;
 +	case 4:
-+		if (!hibernation_platform_enter())
-+			return;
++		/*
++		 * If succeeds, doesn't return. If fails, do a simple
++		 * powerdown.
++		 */
++		hibernation_platform_enter();
 +		break;
 +	case 5:
 +		/* Historic entry only now */
@@ -14419,10 +14465,10 @@ index 0000000..70168e6
 +}
 diff --git a/kernel/power/tuxonice_power_off.h b/kernel/power/tuxonice_power_off.h
 new file mode 100644
-index 0000000..540b081
+index 0000000..bd2a46f
 --- /dev/null
 +++ b/kernel/power/tuxonice_power_off.h
-@@ -0,0 +1,35 @@
+@@ -0,0 +1,34 @@
 +/*
 + * kernel/power/tuxonice_power_off.h
 + *
@@ -14437,7 +14483,6 @@ index 0000000..540b081
 +void toi_power_down(void);
 +extern unsigned long toi_poweroff_method;
 +extern int toi_platform_prepare(void);
-+extern void toi_platform_end(void);
 +int toi_poweroff_init(void);
 +void toi_poweroff_exit(void);
 +void toi_check_resleep(void);
@@ -14460,10 +14505,10 @@ index 0000000..540b081
 +#define toi_platform_restore_cleanup() platform_restore_cleanup(platform_test())
 diff --git a/kernel/power/tuxonice_prepare_image.c b/kernel/power/tuxonice_prepare_image.c
 new file mode 100644
-index 0000000..ec507e8
+index 0000000..df7d739
 --- /dev/null
 +++ b/kernel/power/tuxonice_prepare_image.c
-@@ -0,0 +1,1052 @@
+@@ -0,0 +1,1054 @@
 +/*
 + * kernel/power/tuxonice_prepare_image.c
 + *
@@ -14507,7 +14552,7 @@ index 0000000..ec507e8
 +
 +static long num_nosave, header_space_allocated, main_storage_allocated,
 +	   storage_available;
-+long extra_pd1_pages_allowance = DEFAULT_EXTRA_PAGES_ALLOWANCE;
++long extra_pd1_pages_allowance = CONFIG_TOI_DEFAULT_EXTRA_PAGES_ALLOWANCE;
 +int image_size_limit;
 +
 +struct attention_list {
@@ -14845,8 +14890,8 @@ index 0000000..ec507e8
 +	resume_console();
 +
 +	extra_pd1_pages_allowance = max(
-+		orig_num_free - final + DEFAULT_EXTRA_PAGES_ALLOWANCE,
-+		(long) DEFAULT_EXTRA_PAGES_ALLOWANCE);
++		orig_num_free - final + MIN_EXTRA_PAGES_ALLOWANCE,
++		(long) MIN_EXTRA_PAGES_ALLOWANCE);
 +}
 +
 +/*
@@ -14857,9 +14902,9 @@ index 0000000..ec507e8
 +static long main_storage_needed(int use_ecr,
 +		int ignore_extra_pd1_allow)
 +{
-+	return ((pagedir1.size + pagedir2.size +
++	return (pagedir1.size + pagedir2.size +
 +	  (ignore_extra_pd1_allow ? 0 : extra_pd1_pages_allowance)) *
-+	 (use_ecr ? toi_expected_compression_ratio() : 100) / 100);
++	 (use_ecr ? toi_expected_compression_ratio() : 100) / 100;
 +}
 +
 +/*
@@ -14961,9 +15006,9 @@ index 0000000..ec507e8
 +
 +	toi_cond_pause(0, NULL);
 +
-+	return ((amount_needed(use_image_size_limit) > 0) ||
++	return (amount_needed(use_image_size_limit) > 0) ||
 +		header_space_allocated < header_storage_needed() ||
-+		 main_storage_allocated < main_storage_needed(1, 1));
++		 main_storage_allocated < main_storage_needed(1, 1);
 +}
 +
 +static void display_failure_reason(int tries_exceeded)
@@ -14988,7 +15033,8 @@ index 0000000..ec507e8
 +
 +	if (header_space_allocated < header_storage_needed()) {
 +		printk(KERN_INFO "- Insufficient header storage allocated. "
-+				"Need %ld, have %ld.\n", header_storage_needed(),
++				"Need %ld, have %ld.\n",
++				header_storage_needed(),
 +				header_space_allocated);
 +		set_abort_result(TOI_INSUFFICIENT_STORAGE);
 +	}
@@ -15012,7 +15058,8 @@ index 0000000..ec507e8
 +		printk(KERN_INFO "   + 2 * extra allow  : %8ld\n",
 +				2 * extra_pd1_pages_allowance);
 +		printk(KERN_INFO "                      : ========\n");
-+		printk(KERN_INFO "     Still needed     : %8ld\n", ram_required);
++		printk(KERN_INFO "     Still needed     : %8ld\n",
++				ram_required);
 +
 +		/* Print breakdown of memory needed for modules */
 +		toi_memory_for_modules(1);
@@ -15137,7 +15184,7 @@ index 0000000..ec507e8
 +	while (this_pfn <= end_pfn && PageNosaveFree(pfn_to_page(this_pfn)))
 +		this_pfn++;
 +
-+	return (this_pfn - orig_pfn);
++	return this_pfn - orig_pfn;
 +}
 +
 +/* flag_image_pages
@@ -15518,7 +15565,7 @@ index 0000000..ec507e8
 +#endif
 diff --git a/kernel/power/tuxonice_prepare_image.h b/kernel/power/tuxonice_prepare_image.h
 new file mode 100644
-index 0000000..9604c79
+index 0000000..428ab11
 --- /dev/null
 +++ b/kernel/power/tuxonice_prepare_image.h
 @@ -0,0 +1,35 @@
@@ -15542,7 +15589,7 @@ index 0000000..9604c79
 +extern void free_attention_list(void);
 +
 +#define MIN_FREE_RAM 100
-+#define DEFAULT_EXTRA_PAGES_ALLOWANCE 500
++#define MIN_EXTRA_PAGES_ALLOWANCE 500
 +
 +#define all_zones_mask ((unsigned long) ((1 << MAX_NR_ZONES) - 1))
 +#ifdef CONFIG_HIGHMEM
@@ -15559,10 +15606,10 @@ index 0000000..9604c79
 +
 diff --git a/kernel/power/tuxonice_storage.c b/kernel/power/tuxonice_storage.c
 new file mode 100644
-index 0000000..777ff3c
+index 0000000..c3352f6
 --- /dev/null
 +++ b/kernel/power/tuxonice_storage.c
-@@ -0,0 +1,292 @@
+@@ -0,0 +1,293 @@
 +/*
 + * kernel/power/tuxonice_storage.c
 + *
@@ -15741,7 +15788,7 @@ index 0000000..777ff3c
 +static int usm_memory_needed(void)
 +{
 +	/* ball park figure of 32 pages */
-+	return (32 * PAGE_SIZE);
++	return 32 * PAGE_SIZE;
 +}
 +
 +/* toi_prepare_usm
@@ -15766,7 +15813,7 @@ index 0000000..777ff3c
 +
 +	toi_activate_storage(0);
 +
-+	return (usm_helper_data.pid != -1);
++	return usm_helper_data.pid != -1;
 +}
 +
 +void toi_cleanup_usm(void)
@@ -15853,6 +15900,7 @@ index 0000000..777ff3c
 +
 +void toi_usm_exit(void)
 +{
++	toi_netlink_close_complete(&usm_helper_data);
 +	toi_unregister_module(&usm_ops);
 +}
 diff --git a/kernel/power/tuxonice_storage.h b/kernel/power/tuxonice_storage.h
@@ -15916,10 +15964,10 @@ index 0000000..2f895bf
 +#endif
 diff --git a/kernel/power/tuxonice_swap.c b/kernel/power/tuxonice_swap.c
 new file mode 100644
-index 0000000..3cecaa0
+index 0000000..aaeff27
 --- /dev/null
 +++ b/kernel/power/tuxonice_swap.c
-@@ -0,0 +1,1280 @@
+@@ -0,0 +1,1284 @@
 +/*
 + * kernel/power/tuxonice_swap.c
 + *
@@ -15951,7 +15999,7 @@ index 0000000..3cecaa0
 +
 +/* --- Struct of pages stored on disk */
 +
-+struct tuxonice_sig_data {
++struct sig_data {
 +	dev_t device;
 +	unsigned long sector;
 +	int resume_attempted;
@@ -15960,7 +16008,7 @@ index 0000000..3cecaa0
 +
 +union diskpage {
 +	union swap_header swh;	/* swh.magic is the only member used */
-+	struct tuxonice_sig_data tuxonice_sig_data;
++	struct sig_data sig_data;
 +};
 +
 +union p_diskpage {
@@ -15983,14 +16031,14 @@ index 0000000..3cecaa0
 + * swap header page looked like at the start of hibernating.
 + */
 +static char *current_signature_page;
-+static char no_image_signature_contents[sizeof(struct tuxonice_sig_data)];
++static char no_image_signature_contents[sizeof(struct sig_data)];
 +
 +/* Devices used for swap */
 +static struct toi_bdev_info devinfo[MAX_SWAPFILES];
 +
 +/* Extent chains for swap & blocks */
-+struct extent_chain swapextents;
-+struct extent_chain block_chain[MAX_SWAPFILES];
++struct hibernate_extent_chain swapextents;
++struct hibernate_extent_chain block_chain[MAX_SWAPFILES];
 +
 +static dev_t header_dev_t;
 +static struct block_device *header_block_device;
@@ -16229,7 +16277,8 @@ index 0000000..3cecaa0
 +	if (current_signature_page)
 +		return 0;
 +
-+	current_signature_page = (char *) toi_get_zeroed_page(38, TOI_ATOMIC_GFP);
++	current_signature_page = (char *) toi_get_zeroed_page(38,
++			TOI_ATOMIC_GFP);
 +	if (!current_signature_page)
 +		return -ENOMEM;
 +
@@ -16242,7 +16291,7 @@ index 0000000..3cecaa0
 +static int parse_signature(void)
 +{
 +	union p_diskpage swap_header_page;
-+	struct tuxonice_sig_data *sig;
++	struct sig_data *sig;
 +	int type;
 +	char *swap_header;
 +	const char *sigs[] = {
@@ -16257,14 +16306,14 @@ index 0000000..3cecaa0
 +	}
 +
 +	swap_header_page = (union p_diskpage) current_signature_page;
-+	sig = (struct tuxonice_sig_data *) current_signature_page;
++	sig = (struct sig_data *) current_signature_page;
 +	swap_header = swap_header_page.pointer->swh.magic.magic;
 +
 +	for (type = 0; type < 5; type++)
 +		if (!memcmp(sigs[type], swap_header, strlen(sigs[type])))
 +			return type;
 +
-+	if (memcmp(tuxonice_signature, swap_header, 1))
++	if (memcmp(tuxonice_signature, swap_header, sizeof(tuxonice_signature)))
 +		return -1;
 +
 +	header_dev_t = sig->device;
@@ -16323,12 +16372,11 @@ index 0000000..3cecaa0
 +		si = get_swap_info_struct(toi_writer_posn.current_chain);
 +
 +		/* Prepare the signature */
-+		swap_header_page.pointer->tuxonice_sig_data.device =
-+			si->bdev->bd_dev;
-+		swap_header_page.pointer->tuxonice_sig_data.sector =
++		swap_header_page.pointer->sig_data.device = si->bdev->bd_dev;
++		swap_header_page.pointer->sig_data.sector =
 +			toi_writer_posn.current_offset;
-+		swap_header_page.pointer->tuxonice_sig_data.resume_attempted =0;
-+		swap_header_page.pointer->tuxonice_sig_data.orig_sig_type =
++		swap_header_page.pointer->sig_data.resume_attempted = 0;
++		swap_header_page.pointer->sig_data.orig_sig_type =
 +			parse_signature();
 +
 +		memcpy(swap_header_page.pointer->swh.magic.magic,
@@ -16336,7 +16384,7 @@ index 0000000..3cecaa0
 +
 +		break;
 +	case NO_IMAGE_SIGNATURE:
-+		if (!swap_header_page.pointer->tuxonice_sig_data.orig_sig_type)
++		if (!swap_header_page.pointer->sig_data.orig_sig_type)
 +			orig_sig = "SWAP-SPACE";
 +		else
 +			orig_sig = "SWAPSPACE2";
@@ -16346,35 +16394,39 @@ index 0000000..3cecaa0
 +				sizeof(no_image_signature_contents));
 +		break;
 +	case TRIED_RESUME:
-+		swap_header_page.pointer->tuxonice_sig_data.resume_attempted =1;
++		swap_header_page.pointer->sig_data.resume_attempted = 1;
 +		break;
 +	case NO_TRIED_RESUME:
-+		swap_header_page.pointer->tuxonice_sig_data.resume_attempted =0;
++		swap_header_page.pointer->sig_data.resume_attempted = 0;
 +		break;
 +	}
 +
 +	result = toi_bio_ops.bdev_page_io(WRITE, resume_block_device,
 +		resume_firstblock, virt_to_page(swap_header_page.address));
 +
++	memcpy(current_signature_page, swap_header_page.ptr, PAGE_SIZE);
++
 +	toi_free_page(38, swap_header_page.address);
 +
 +	return result;
 +}
 +
++/*
++ * apply_header_reservation
++ *
++ * Use 0 (READ) to forward_one_page so it doesn't complain if we haven't
++ * allocated storage yet.
++ */
 +static int apply_header_reservation(void)
 +{
 +	int i;
 +
 +	toi_extent_state_goto_start(&toi_writer_posn);
-+	toi_bio_ops.forward_one_page(1); /* To first page */
++	toi_bio_ops.forward_one_page(0); /* To first page */
 +
-+	for (i = 0; i < header_pages_reserved; i++) {
-+		if (toi_bio_ops.forward_one_page(1)) {
-+			printk(KERN_INFO "Out of space while seeking to "
-+					"allocate header pages,\n");
++	for (i = 0; i < header_pages_reserved; i++)
++		if (toi_bio_ops.forward_one_page(0))
 +			return -ENOSPC;
-+		}
-+	}
 +
 +	/* The end of header pages will be the start of pageset 2;
 +	 * we are now sitting on the first pageset2 page. */
@@ -16399,14 +16451,14 @@ index 0000000..3cecaa0
 +			toi_put_extent_chain(&block_chain[i]);
 +}
 +
-+static int add_blocks_to_extent_chain(int chain, int minimum, int maximum)
++static int add_blocks_to_extent_chain(int chain, int start, int end)
 +{
 +	if (test_action_state(TOI_TEST_BIO))
 +		printk(KERN_INFO "Adding extent chain %d %d-%d.\n", chain,
-+				minimum << devinfo[chain].bmap_shift,
-+				maximum << devinfo[chain].bmap_shift);
++				start << devinfo[chain].bmap_shift,
++				end << devinfo[chain].bmap_shift);
 +
-+	if (toi_add_to_extent_chain(&block_chain[chain], minimum, maximum)) {
++	if (toi_add_to_extent_chain(&block_chain[chain], start, end)) {
 +		free_block_chains();
 +		return -ENOMEM;
 +	}
@@ -16417,14 +16469,14 @@ index 0000000..3cecaa0
 +
 +static int get_main_pool_phys_params(void)
 +{
-+	struct extent *extentpointer = NULL;
++	struct hibernate_extent *extentpointer = NULL;
 +	unsigned long address;
 +	int extent_min = -1, extent_max = -1, last_chain = -1;
 +
 +	free_block_chains();
 +
 +	toi_extent_for_each(&swapextents, extentpointer, address) {
-+		swp_entry_t swap_address = extent_val_to_swap_entry(address);
++		swp_entry_t swap_address = (swp_entry_t) { address };
 +		pgoff_t offset = swp_offset(swap_address);
 +		unsigned swapfilenum = swp_type(swap_address);
 +		struct swap_info_struct *sis =
@@ -16515,11 +16567,11 @@ index 0000000..3cecaa0
 +
 +	if (swapextents.first) {
 +		/* Free swap entries */
-+		struct extent *extentpointer;
++		struct hibernate_extent *extentpointer;
 +		unsigned long extentvalue;
 +		toi_extent_for_each(&swapextents, extentpointer,
 +				extentvalue)
-+			swap_free(extent_val_to_swap_entry(extentvalue));
++			swap_free((swp_entry_t) { extentvalue });
 +
 +		toi_put_extent_chain(&swapextents);
 +
@@ -16534,7 +16586,7 @@ index 0000000..3cecaa0
 +	int j;
 +
 +	for (j = min; j <= max; j++)
-+		swap_free(extent_val_to_swap_entry(j));
++		swap_free((swp_entry_t) { j });
 +}
 +
 +/*
@@ -16579,7 +16631,7 @@ index 0000000..3cecaa0
 +			break;
 +
 +		swapfilenum = swp_type(entry);
-+		new_value = swap_entry_to_extent_val(entry);
++		new_value = entry.val;
 +
 +		if (!to_add[swapfilenum]) {
 +			to_add[swapfilenum] = 1;
@@ -16653,7 +16705,7 @@ index 0000000..3cecaa0
 +
 +	result = toi_bio_ops.rw_header_chunk(WRITE, &toi_swapops,
 +			(char *) &no_image_signature_contents,
-+			sizeof(struct tuxonice_sig_data));
++			sizeof(struct sig_data));
 +
 +	if (result)
 +		return result;
@@ -16758,8 +16810,8 @@ index 0000000..3cecaa0
 +
 +	toi_writer_buffer_posn = sizeof(no_image_signature_contents);
 +
-+	memcpy(&toi_writer_posn_save, toi_writer_buffer + toi_writer_buffer_posn,
-+			sizeof(toi_writer_posn_save));
++	memcpy(&toi_writer_posn_save, toi_writer_buffer +
++			toi_writer_buffer_posn, sizeof(toi_writer_posn_save));
 +
 +	toi_writer_buffer_posn += sizeof(toi_writer_posn_save);
 +
@@ -17202,10 +17254,10 @@ index 0000000..3cecaa0
 +#endif
 diff --git a/kernel/power/tuxonice_sysfs.c b/kernel/power/tuxonice_sysfs.c
 new file mode 100644
-index 0000000..f5ab465
+index 0000000..01e98d0
 --- /dev/null
 +++ b/kernel/power/tuxonice_sysfs.c
-@@ -0,0 +1,337 @@
+@@ -0,0 +1,335 @@
 +/*
 + * kernel/power/tuxonice_sysfs.c
 + *
@@ -17221,7 +17273,6 @@ index 0000000..f5ab465
 +
 +#include <linux/suspend.h>
 +#include <linux/module.h>
-+#include <asm/uaccess.h>
 +
 +#include "tuxonice_sysfs.h"
 +#include "tuxonice.h"
@@ -17318,8 +17369,8 @@ index 0000000..f5ab465
 +	switch (sysfs_data->type) {
 +	case TOI_SYSFS_DATA_CUSTOM:
 +		if (sysfs_data->data.special.write_sysfs)
-+			result = (sysfs_data->data.special.write_sysfs)
-+				(my_buf, count);
++			result = (sysfs_data->data.special.write_sysfs)(my_buf,
++					count);
 +		break;
 +	case TOI_SYSFS_DATA_BIT:
 +		{
@@ -17374,8 +17425,7 @@ index 0000000..f5ab465
 +				assigned_temp_buffer = 1;
 +			}
 +			strncpy(variable, my_buf, copy_len);
-+			if ((copy_len) &&
-+				 (my_buf[copy_len - 1] == '\n'))
++			if (copy_len && my_buf[copy_len - 1] == '\n')
 +				variable[count - 1] = 0;
 +			variable[count] = 0;
 +		}
@@ -18055,10 +18105,10 @@ index 0000000..7825ddf
 +extern void toi_remove_ui_ops(struct ui_ops *this_ui);
 diff --git a/kernel/power/tuxonice_userui.c b/kernel/power/tuxonice_userui.c
 new file mode 100644
-index 0000000..634a801
+index 0000000..3454709
 --- /dev/null
 +++ b/kernel/power/tuxonice_userui.c
-@@ -0,0 +1,674 @@
+@@ -0,0 +1,675 @@
 +/*
 + * kernel/power/user_ui.c
 + *
@@ -18721,6 +18771,7 @@ index 0000000..634a801
 + */
 +static __exit void toi_user_ui_exit(void)
 +{
++	toi_netlink_close_complete(&ui_helper_data);
 +	toi_remove_ui_ops(&my_ui_ops);
 +	toi_unregister_module(&userui_ops);
 +}
@@ -18734,13 +18785,14 @@ index 0000000..634a801
 +late_initcall(toi_user_ui_init);
 +#endif
 diff --git a/kernel/printk.c b/kernel/printk.c
-index bdd4ea8..cb95b05 100644
+index e2129e8..fc9d16d 100644
 --- a/kernel/printk.c
 +++ b/kernel/printk.c
-@@ -32,6 +32,7 @@
+@@ -32,6 +32,8 @@
  #include <linux/security.h>
  #include <linux/bootmem.h>
  #include <linux/syscalls.h>
++#include <linux/jiffies.h>
 +#include <linux/suspend.h>
  
  #include <asm/uaccess.h>
@@ -18761,7 +18813,7 @@ index bdd4ea8..cb95b05 100644
  
  /*
   *	Array of consoles built from command line options (console=)
-@@ -124,10 +129,11 @@ static int console_may_schedule;
+@@ -127,10 +132,11 @@ static int console_may_schedule;
  
  #ifdef CONFIG_PRINTK
  
@@ -18777,7 +18829,7 @@ index bdd4ea8..cb95b05 100644
  
  static int __init log_buf_len_setup(char *str)
  {
-@@ -927,6 +933,7 @@ void suspend_console(void)
+@@ -954,6 +960,7 @@ void suspend_console(void)
  	acquire_console_sem();
  	console_suspended = 1;
  }
@@ -18785,7 +18837,7 @@ index bdd4ea8..cb95b05 100644
  
  void resume_console(void)
  {
-@@ -935,6 +942,7 @@ void resume_console(void)
+@@ -962,6 +969,7 @@ void resume_console(void)
  	console_suspended = 0;
  	release_console_sem();
  }
@@ -18794,7 +18846,7 @@ index bdd4ea8..cb95b05 100644
  /**
   * acquire_console_sem - lock the console system for exclusive use.
 diff --git a/kernel/timer.c b/kernel/timer.c
-index b024106..0ff93c9 100644
+index ceacc66..77f9269 100644
 --- a/kernel/timer.c
 +++ b/kernel/timer.c
 @@ -37,6 +37,8 @@
@@ -18806,7 +18858,7 @@ index b024106..0ff93c9 100644
  
  #include <asm/uaccess.h>
  #include <asm/unistd.h>
-@@ -876,6 +878,59 @@ unsigned long avenrun[3];
+@@ -1010,6 +1012,59 @@ unsigned long avenrun[3];
  
  EXPORT_SYMBOL(avenrun);
  
@@ -18866,7 +18918,7 @@ index b024106..0ff93c9 100644
  /*
   * calc_load - given tick count, update the avenrun load estimates.
   * This is called while holding a write_lock on xtime_lock.
-@@ -1374,6 +1429,7 @@ void __init init_timers(void)
+@@ -1503,6 +1558,7 @@ void __init init_timers(void)
  	BUG_ON(err == NOTIFY_BAD);
  	register_cpu_notifier(&timers_nb);
  	open_softirq(TIMER_SOFTIRQ, run_timer_softirq, NULL);
@@ -18875,11 +18927,11 @@ index b024106..0ff93c9 100644
  
  /**
 diff --git a/lib/vsprintf.c b/lib/vsprintf.c
-index 6021757..457c957 100644
+index 1dc2d1d..be5fc0b 100644
 --- a/lib/vsprintf.c
 +++ b/lib/vsprintf.c
-@@ -482,6 +482,29 @@ static char *number(char *buf, char *end, unsigned long long num, int base, int
- 	return buf;
+@@ -567,6 +567,29 @@ static char *pointer(const char *fmt, char *buf, char *end, void *ptr, int field
+ 	return number(buf, end, (unsigned long) ptr, 16, field_width, precision, flags);
  }
  
 +/*
@@ -18909,11 +18961,11 @@ index 6021757..457c957 100644
   * vsnprintf - Format a string and place it in a buffer
   * @buf: The buffer to place the result into
 diff --git a/mm/Makefile b/mm/Makefile
-index a5b0dd9..ba0df45 100644
+index 18c143b..bbd52ae 100644
 --- a/mm/Makefile
 +++ b/mm/Makefile
 @@ -11,7 +11,7 @@ obj-y			:= bootmem.o filemap.o mempool.o oom_kill.o fadvise.o \
- 			   page_alloc.o page-writeback.o pdflush.o \
+ 			   maccess.o page_alloc.o page-writeback.o pdflush.o \
  			   readahead.o swap.o truncate.o vmscan.o \
  			   prio_tree.o util.o mmzone.o vmstat.o backing-dev.o \
 -			   page_isolation.o $(mmu-y)
@@ -19729,11 +19781,11 @@ index 0000000..30d95f0
 +
 +__setup("dyn_pageflags_debug", dyn_pageflags_debug_setup);
 diff --git a/mm/memory_hotplug.c b/mm/memory_hotplug.c
-index 7469c50..280a8b8 100644
+index 833f854..5bd8e4c 100644
 --- a/mm/memory_hotplug.c
 +++ b/mm/memory_hotplug.c
-@@ -77,6 +77,8 @@ static int __add_zone(struct zone *zone, unsigned long phys_start_pfn)
- 	}
+@@ -213,6 +213,8 @@ static int __add_zone(struct zone *zone, unsigned long phys_start_pfn)
+ 	pgdat_resize_unlock(zone->zone_pgdat, &flags);
  	memmap_init_zone(nr_pages, nid, zone_type,
  			 phys_start_pfn, MEMMAP_HOTPLUG);
 +
@@ -19742,24 +19794,24 @@ index 7469c50..280a8b8 100644
  }
  
 diff --git a/mm/page_alloc.c b/mm/page_alloc.c
-index 402a504..7dd7430 100644
+index f32fae3..2dd58f1 100644
 --- a/mm/page_alloc.c
 +++ b/mm/page_alloc.c
-@@ -1730,6 +1730,26 @@ static unsigned int nr_free_zone_pages(int offset)
+@@ -1731,6 +1731,26 @@ static unsigned int nr_free_zone_pages(int offset)
  	return sum;
  }
  
 +static unsigned int nr_unallocated_zone_pages(int offset)
 +{
-+	/* Just pick one node, since fallback list is circular */
-+	pg_data_t *pgdat = NODE_DATA(numa_node_id());
-+	unsigned int sum = 0;
-+
-+	struct zonelist *zonelist = pgdat->node_zonelists + offset;
-+	struct zone **zonep = zonelist->zones;
++	struct zoneref *z;
 +	struct zone *zone;
 +
-+	for (zone = *zonep++; zone; zone = *zonep++) {
++	/* Just pick one node, since fallback list is circular */
++	unsigned int sum = 0;
++
++	struct zonelist *zonelist = node_zonelist(numa_node_id(), GFP_KERNEL);
++
++	for_each_zone_zonelist(zone, z, zonelist, offset) {
 +		unsigned long high = zone->pages_high;
 +		unsigned long left = zone_page_state(zone, NR_FREE_PAGES);
 +		if (left > high)
@@ -19772,7 +19824,7 @@ index 402a504..7dd7430 100644
  /*
   * Amount of free RAM allocatable within ZONE_DMA and ZONE_NORMAL
   */
-@@ -1740,6 +1760,15 @@ unsigned int nr_free_buffer_pages(void)
+@@ -1741,6 +1761,15 @@ unsigned int nr_free_buffer_pages(void)
  EXPORT_SYMBOL_GPL(nr_free_buffer_pages);
  
  /*
@@ -19789,7 +19841,7 @@ index 402a504..7dd7430 100644
   */
  unsigned int nr_free_pagecache_pages(void)
 diff --git a/mm/vmscan.c b/mm/vmscan.c
-index 4046434..718226e 100644
+index 967d30c..2ace4cb 100644
 --- a/mm/vmscan.c
 +++ b/mm/vmscan.c
 @@ -776,6 +776,28 @@ static unsigned long isolate_lru_pages(unsigned long nr_to_scan,
@@ -19852,7 +19904,7 @@ index 4046434..718226e 100644
    	} while (nr_scanned < max_scan);
  	spin_unlock(&zone->lru_lock);
  done:
-@@ -1625,6 +1632,72 @@ out:
+@@ -1626,6 +1633,72 @@ out:
  	return nr_reclaimed;
  }
  
