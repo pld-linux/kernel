@@ -105,7 +105,7 @@
 %endif
 
 %define		_basever		2.6.25
-%define		_postver		.16
+%define		_postver		.17
 %define		_prepatch		%{nil}
 %define		_pre_rc			%{nil}
 %define		_rc			%{nil}
@@ -153,7 +153,7 @@ Source90:	http://www.kernel.org/pub/linux/kernel/v2.6/testing/patch-%{_prepatch}
 %endif
 %if "%{_postver}" != "%{nil}"
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
-# Source1-md5:	78f283cea5b612fa276c9d60696d5602
+# Source1-md5:	40d53c09ff1291a59cb9718b24c1a63f
 %endif
 
 Source3:	kernel-autoconf.h
@@ -286,7 +286,7 @@ Patch72:	kernel-2.6-ueagle-atm-freezer.patch
 # http://patches.aircrack-ng.org/hostap-kernel-2.6.18.patch
 Patch85:	hostap-kernel-2.6.18.patch
 
-# http://vserver.13thfloor.at/Experimental/patch-2.6.25.11-vs2.3.0.34.14.diff
+# http://vserver.13thfloor.at/Experimental/patch-2.6.25.11-vs2.3.0.35.diff
 Patch100:	linux-2.6-vs2.3.patch
 Patch101:	kernel-vserver-fixes.patch
 # based on http://vserver.13thfloor.at/Experimental/patch-2.6.24-rc7-vs2.2.0.5.0.7-pre.diff
