@@ -289,7 +289,7 @@ Patch72:	kernel-2.6-ueagle-atm-freezer.patch
 # http://patches.aircrack-ng.org/hostap-kernel-2.6.18.patch
 Patch85:	hostap-kernel-2.6.18.patch
 
-# http://vserver.13thfloor.at/Experimental/patch-2.6.25.4-vs2.3.0.34.11.diff
+# http://vserver.13thfloor.at/Experimental/patch-2.6.26.3-vs2.3.0.35.5.diff
 Patch100:	linux-2.6-vs2.3.patch
 Patch101:	kernel-vserver-fixes.patch
 # based on http://vserver.13thfloor.at/Experimental/patch-2.6.24-rc7-vs2.2.0.5.0.7-pre.diff
@@ -306,9 +306,10 @@ Patch102:	linux-2.6-vs2.2.patch
 # Fix verified for that kernel version.
 Patch130:	linux-2.6-forcedeth-WON.patch
 
-# http://download.filesystems.org/unionfs/unionfs-2.x/unionfs-2.2.4_for_2.6.25-rc2.diff.gz
-Patch140:	kernel-unionfs.patch
-Patch141:	kernel-unionfs-vserver.patch
+# FIXME: web site refuses connections!
+# http://download.filesystems.org/unionfs/unionfs-2.x/unionfs-2.4_for_2.6.26.diff.gz
+#Patch140:	kernel-unionfs.patch
+#Patch141:	kernel-unionfs-vserver.patch
 
 Patch200:	linux-2.6-ppc-ICE-hacks.patch
 
@@ -871,7 +872,7 @@ install -m 755 %{SOURCE6} .
 
 # unionfs
 #FIXME%patch140 -p1
-%{?with_vserver:%patch141 -p1}
+#{?with_vserver:%patch141 -p1}
 
 %patch2500 -p1
 
