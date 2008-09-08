@@ -240,7 +240,10 @@ Patch40:	kernel-layer7.patch
 Patch41:	kernel-ipvs-nfct.patch
 
 # based on http://www.balabit.com/downloads/files/tproxy/tproxy-kernel-2.6.25-20080509-164605-1210344365.tar.bz2
-Patch42:	kernel-tproxy.patch
+#FIXME: this patch needs net_device->nd_dev feature (see net/Kconfig:NET_NS).
+#       NET_NS depends on EXPERIMENTAL && !SYSFS && NAMESPACES while we have SYSFS enabled.
+#       the https://lists.linux-foundation.org/pipermail/containers/2007-December/008849.html is waiting for merge.
+#Patch42:	kernel-tproxy.patch
 
 ### End netfilter
 
@@ -864,7 +867,7 @@ install -m 755 %{SOURCE6} .
 
 # tproxy
 %if %{without rescuecd} && %{with vserver}
-%patch42 -p1
+#patch42 -p1
 %endif
 
 # forcedeth
