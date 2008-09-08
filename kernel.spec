@@ -317,7 +317,7 @@ Patch200:	linux-2.6-ppc-ICE-hacks.patch
 # alternative routes, the reverse path protection (rp_filter),
 # the NAT processing to use correctly the routing when multiple
 # gateways are used.
-# http://www.ssi.bg/~ja/routes-2.6.25-15.diff
+# http://www.ssi.bg/~ja/routes-2.6.26-15.diff
 Patch300:	kernel-routes.patch
 
 Patch1000:	linux-2.6-grsec-minimal.patch
@@ -930,8 +930,7 @@ install -m 755 %{SOURCE6} .
 %endif
 
 # routes
-# FIXME
-#%patch300 -p1
+%patch300 -p1
 
 # Small fixes:
 %patch2000 -p1
