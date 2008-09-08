@@ -39,9 +39,9 @@ diff -urNp linux-2.6.26.3/arch/alpha/kernel/ptrace.c linux-2.6.26.3/arch/alpha/k
 --- linux-2.6.26.3/arch/alpha/kernel/ptrace.c	2008-08-06 12:19:01.000000000 -0400
 +++ linux-2.6.26.3/arch/alpha/kernel/ptrace.c	2008-08-09 12:03:28.000000000 -0400
 @@ -15,6 +15,7 @@
- #include <linux/slab.h>
  #include <linux/security.h>
  #include <linux/signal.h>
+ #include <linux/vs_base.h>
 +#include <linux/grsecurity.h>
  
  #include <asm/uaccess.h>
@@ -9565,9 +9565,9 @@ diff -urNp linux-2.6.26.3/arch/x86/mm/fault.c linux-2.6.26.3/arch/x86/mm/fault.c
 --- linux-2.6.26.3/arch/x86/mm/fault.c	2008-08-06 12:19:01.000000000 -0400
 +++ linux-2.6.26.3/arch/x86/mm/fault.c	2008-08-09 13:07:51.000000000 -0400
 @@ -25,6 +25,8 @@
- #include <linux/kprobes.h>
  #include <linux/uaccess.h>
  #include <linux/kdebug.h>
+ #include <linux/suspend.h>
 +#include <linux/unistd.h>
 +#include <linux/compiler.h>
  
@@ -13795,9 +13795,9 @@ diff -urNp linux-2.6.26.3/fs/binfmt_aout.c linux-2.6.26.3/fs/binfmt_aout.c
 --- linux-2.6.26.3/fs/binfmt_aout.c	2008-08-06 12:19:01.000000000 -0400
 +++ linux-2.6.26.3/fs/binfmt_aout.c	2008-08-09 12:03:29.000000000 -0400
 @@ -24,6 +24,7 @@
- #include <linux/binfmts.h>
  #include <linux/personality.h>
  #include <linux/init.h>
+ #include <linux/vs_memory.h>
 +#include <linux/grsecurity.h>
  
  #include <asm/system.h>
@@ -13876,9 +13876,9 @@ diff -urNp linux-2.6.26.3/fs/binfmt_elf.c linux-2.6.26.3/fs/binfmt_elf.c
 --- linux-2.6.26.3/fs/binfmt_elf.c	2008-08-06 12:19:01.000000000 -0400
 +++ linux-2.6.26.3/fs/binfmt_elf.c	2008-08-09 12:03:29.000000000 -0400
 @@ -38,10 +38,16 @@
- #include <linux/random.h>
  #include <linux/elf.h>
  #include <linux/utsname.h>
+ #include <linux/vs_memory.h>
 +#include <linux/grsecurity.h>
 +
  #include <asm/uaccess.h>
@@ -15009,15 +15009,23 @@ diff -urNp linux-2.6.26.3/fs/ext2/balloc.c linux-2.6.26.3/fs/ext2/balloc.c
 diff -urNp linux-2.6.26.3/fs/ext3/balloc.c linux-2.6.26.3/fs/ext3/balloc.c
 --- linux-2.6.26.3/fs/ext3/balloc.c	2008-08-06 12:19:01.000000000 -0400
 +++ linux-2.6.26.3/fs/ext3/balloc.c	2008-08-09 12:03:29.000000000 -0400
-@@ -1421,7 +1421,7 @@ static int ext3_has_free_blocks(struct e
+@@ -1435,14 +1435,14 @@ static int ext3_has_free_blocks(struct s
+ 	DLIMIT_ADJUST_BLOCK(sb, dx_current_tag(), &free_blocks, &root_blocks);
  
- 	free_blocks = percpu_counter_read_positive(&sbi->s_freeblocks_counter);
- 	root_blocks = le32_to_cpu(sbi->s_es->s_r_blocks_count);
--	if (free_blocks < root_blocks + 1 && !capable(CAP_SYS_RESOURCE) &&
-+	if (free_blocks < root_blocks + 1 && !capable_nolog(CAP_SYS_RESOURCE) &&
+ 	cond = (free_blocks < root_blocks + 1 &&
+-		!capable(CAP_SYS_RESOURCE) &&
++		!capable_nolog(CAP_SYS_RESOURCE) &&
  		sbi->s_resuid != current->fsuid &&
- 		(sbi->s_resgid == 0 || !in_group_p (sbi->s_resgid))) {
- 		return 0;
+ 		(sbi->s_resgid == 0 || !in_group_p (sbi->s_resgid)));
+ 
+ 	vxdprintk(VXD_CBIT(dlim, 3),
+ 		"ext3_has_free_blocks(%p): %llu<%llu+1, %c, %u!=%u r=%d",
+ 		sb, free_blocks, root_blocks,
+-		!capable(CAP_SYS_RESOURCE)?'1':'0',
++		!capable_nolog(CAP_SYS_RESOURCE)?'1':'0',
+ 		sbi->s_resuid, current->fsuid, cond?0:1);
+ 
+ 	return (cond ? 0 : 1);
 diff -urNp linux-2.6.26.3/fs/ext3/namei.c linux-2.6.26.3/fs/ext3/namei.c
 --- linux-2.6.26.3/fs/ext3/namei.c	2008-08-06 12:19:01.000000000 -0400
 +++ linux-2.6.26.3/fs/ext3/namei.c	2008-08-09 12:03:29.000000000 -0400
@@ -15050,15 +15058,23 @@ diff -urNp linux-2.6.26.3/fs/ext3/xattr.c linux-2.6.26.3/fs/ext3/xattr.c
 diff -urNp linux-2.6.26.3/fs/ext4/balloc.c linux-2.6.26.3/fs/ext4/balloc.c
 --- linux-2.6.26.3/fs/ext4/balloc.c	2008-08-06 12:19:01.000000000 -0400
 +++ linux-2.6.26.3/fs/ext4/balloc.c	2008-08-09 12:03:29.000000000 -0400
-@@ -1608,7 +1608,7 @@ static int ext4_has_free_blocks(struct e
+@@ -1622,14 +1622,14 @@
+ 	DLIMIT_ADJUST_BLOCK(sb, dx_current_tag(), &free_blocks, &root_blocks);
  
- 	free_blocks = percpu_counter_read_positive(&sbi->s_freeblocks_counter);
- 	root_blocks = ext4_r_blocks_count(sbi->s_es);
--	if (free_blocks < root_blocks + 1 && !capable(CAP_SYS_RESOURCE) &&
-+	if (free_blocks < root_blocks + 1 && !capable_nolog(CAP_SYS_RESOURCE) &&
+ 	cond = (free_blocks < root_blocks + 1 &&
+-		!capable(CAP_SYS_RESOURCE) &&
++		!capable_nolog(CAP_SYS_RESOURCE) &&
  		sbi->s_resuid != current->fsuid &&
- 		(sbi->s_resgid == 0 || !in_group_p (sbi->s_resgid))) {
- 		return 0;
+ 		(sbi->s_resgid == 0 || !in_group_p (sbi->s_resgid)));
+ 
+ 	vxdprintk(VXD_CBIT(dlim, 3),
+ 		"ext4_has_free_blocks(%p): %llu<%llu+1, %c, %u!=%u r=%d",
+ 		sb, free_blocks, root_blocks,
+-		!capable(CAP_SYS_RESOURCE)?'1':'0',
++		!capable_nolog(CAP_SYS_RESOURCE)?'1':'0',
+ 		sbi->s_resuid, current->fsuid, cond?0:1);
+ 
+ 	return (cond ? 0 : 1);
 diff -urNp linux-2.6.26.3/fs/ext4/namei.c linux-2.6.26.3/fs/ext4/namei.c
 --- linux-2.6.26.3/fs/ext4/namei.c	2008-08-06 12:19:01.000000000 -0400
 +++ linux-2.6.26.3/fs/ext4/namei.c	2008-08-09 12:03:29.000000000 -0400
@@ -15078,9 +15094,9 @@ diff -urNp linux-2.6.26.3/fs/fcntl.c linux-2.6.26.3/fs/fcntl.c
 --- linux-2.6.26.3/fs/fcntl.c	2008-08-06 12:19:01.000000000 -0400
 +++ linux-2.6.26.3/fs/fcntl.c	2008-08-09 12:03:29.000000000 -0400
 @@ -20,6 +20,7 @@
- #include <linux/signal.h>
  #include <linux/rcupdate.h>
  #include <linux/pid_namespace.h>
+ #include <linux/vs_limit.h>
 +#include <linux/grsecurity.h>
  
  #include <asm/poll.h>
@@ -15388,9 +15404,9 @@ diff -urNp linux-2.6.26.3/fs/namei.c linux-2.6.26.3/fs/namei.c
 --- linux-2.6.26.3/fs/namei.c	2008-08-06 12:19:01.000000000 -0400
 +++ linux-2.6.26.3/fs/namei.c	2008-08-09 12:03:30.000000000 -0400
 @@ -31,6 +31,7 @@
- #include <linux/file.h>
- #include <linux/fcntl.h>
- #include <linux/device_cgroup.h>
+ #include <linux/vs_cowbl.h>
+ #include <linux/vs_device.h>
+ #include <linux/vs_context.h>
 +#include <linux/grsecurity.h>
  #include <asm/namei.h>
  #include <asm/uaccess.h>
@@ -15718,9 +15734,9 @@ diff -urNp linux-2.6.26.3/fs/namespace.c linux-2.6.26.3/fs/namespace.c
 --- linux-2.6.26.3/fs/namespace.c	2008-08-06 12:19:01.000000000 -0400
 +++ linux-2.6.26.3/fs/namespace.c	2008-08-09 12:03:30.000000000 -0400
 @@ -27,6 +27,7 @@
- #include <linux/ramfs.h>
- #include <linux/log2.h>
- #include <linux/idr.h>
+ #include <linux/vs_tag.h>
+ #include <linux/vserver/space.h>
+ #include <linux/vserver/global.h>
 +#include <linux/grsecurity.h>
  #include <asm/uaccess.h>
  #include <asm/unistd.h>
@@ -16089,9 +16105,9 @@ diff -urNp linux-2.6.26.3/fs/open.c linux-2.6.26.3/fs/open.c
 --- linux-2.6.26.3/fs/open.c	2008-08-06 12:19:01.000000000 -0400
 +++ linux-2.6.26.3/fs/open.c	2008-08-09 12:03:30.000000000 -0400
 @@ -29,6 +29,7 @@
- #include <linux/rcupdate.h>
- #include <linux/audit.h>
- #include <linux/falloc.h>
+ #include <linux/vs_dlimit.h>
+ #include <linux/vs_tag.h>
+ #include <linux/vs_cowbl.h>
 +#include <linux/grsecurity.h>
  
  int vfs_statfs(struct dentry *dentry, struct kstatfs *buf)
@@ -16224,29 +16240,29 @@ diff -urNp linux-2.6.26.3/fs/open.c linux-2.6.26.3/fs/open.c
  	if (user != (uid_t) -1) {
  		newattrs.ia_valid |= ATTR_UID;
 @@ -694,7 +749,7 @@ asmlinkage long sys_chown(const char __u
- 	error = mnt_want_write(nd.path.mnt);
- 	if (error)
- 		goto out_release;
--	error = chown_common(nd.path.dentry, user, group);
-+	error = chown_common(nd.path.dentry, user, group, nd.path.mnt);
+ 	error = cow_check_and_break(&nd);
+ 	if (!error)
+ #endif
+-		error = chown_common(nd.path.dentry, user, group);
++		error = chown_common(nd.path.dentry, user, group, nd.path.mnt);
  	mnt_drop_write(nd.path.mnt);
  out_release:
  	path_put(&nd.path);
 @@ -719,7 +774,7 @@ asmlinkage long sys_fchownat(int dfd, co
- 	error = mnt_want_write(nd.path.mnt);
- 	if (error)
- 		goto out_release;
--	error = chown_common(nd.path.dentry, user, group);
-+	error = chown_common(nd.path.dentry, user, group, nd.path.mnt);
+ 	error = cow_check_and_break(&nd);
+ 	if (!error)
+ #endif
+-		error = chown_common(nd.path.dentry, user, group);
++		error = chown_common(nd.path.dentry, user, group, nd.path.mnt);
  	mnt_drop_write(nd.path.mnt);
  out_release:
  	path_put(&nd.path);
 @@ -738,7 +793,7 @@ asmlinkage long sys_lchown(const char __
- 	error = mnt_want_write(nd.path.mnt);
- 	if (error)
- 		goto out_release;
--	error = chown_common(nd.path.dentry, user, group);
-+	error = chown_common(nd.path.dentry, user, group, nd.path.mnt);
+ 	error = cow_check_and_break(&nd);
+ 	if (!error)
+ #endif
+-		error = chown_common(nd.path.dentry, user, group);
++		error = chown_common(nd.path.dentry, user, group, nd.path.mnt);
  	mnt_drop_write(nd.path.mnt);
  out_release:
  	path_put(&nd.path);
@@ -16313,7 +16329,7 @@ diff -urNp linux-2.6.26.3/fs/proc/array.c linux-2.6.26.3/fs/proc/array.c
 +}
 +#endif
 +
- int proc_pid_status(struct seq_file *m, struct pid_namespace *ns,
+ int proc_pid_nsproxy(struct seq_file *m, struct pid_namespace *ns,
  			struct pid *pid, struct task_struct *task)
  {
 @@ -329,6 +344,11 @@ int proc_pid_status(struct seq_file *m, 
@@ -16392,9 +16408,9 @@ diff -urNp linux-2.6.26.3/fs/proc/base.c linux-2.6.26.3/fs/proc/base.c
 --- linux-2.6.26.3/fs/proc/base.c	2008-08-06 12:19:01.000000000 -0400
 +++ linux-2.6.26.3/fs/proc/base.c	2008-08-09 12:03:30.000000000 -0400
 @@ -77,6 +77,8 @@
- #include <linux/oom.h>
- #include <linux/elf.h>
  #include <linux/pid_namespace.h>
+ #include <linux/vs_context.h>
+ #include <linux/vs_network.h>
 +#include <linux/grsecurity.h>
 +
  #include "internal.h"
@@ -16441,8 +16457,8 @@ diff -urNp linux-2.6.26.3/fs/proc/base.c linux-2.6.26.3/fs/proc/base.c
  		inode->i_gid = task->egid;
 +#endif
  	}
- 	security_task_to_inode(task, inode);
- 
+ 	/* procfs is xid tagged */
+ 	inode->i_tag = (tag_t)vx_task_xid(task);
 @@ -1426,17 +1435,45 @@ static int pid_getattr(struct vfsmount *
  {
  	struct inode *inode = dentry->d_inode;
@@ -16544,9 +16560,9 @@ diff -urNp linux-2.6.26.3/fs/proc/base.c linux-2.6.26.3/fs/proc/base.c
 +	if (gr_pid_is_chrooted(task) || gr_check_hidden_task(task))
 +		goto out;
 +
- 	/*
- 	 * Yes, it does not scale. And it should not. Don't add
- 	 * new entries into /proc/<tgid>/ without very good reasons.
+ 	/* TODO: maybe we can come up with a generic approach? */
+ 	if (task_vx_flags(task, VXF_HIDE_VINFO, 0) &&
+ 		(dentry->d_name.len == 5) &&
 @@ -1997,6 +2057,9 @@ static int proc_pident_readdir(struct fi
  	if (!task)
  		goto out_no_task;
@@ -16574,9 +16590,9 @@ diff -urNp linux-2.6.26.3/fs/proc/base.c linux-2.6.26.3/fs/proc/base.c
 +#ifdef CONFIG_GRKERNSEC_PROC_IPADDR
 +	INF("ipaddr",	  S_IRUSR, pid_ipaddr),
 +#endif
+ 	ONE("nsproxy",	S_IRUGO, pid_nsproxy),
  };
  
- static int proc_tgid_base_readdir(struct file * filp,
 @@ -2600,7 +2669,14 @@ static struct dentry *proc_pid_instantia
  	if (!inode)
  		goto out;
@@ -16607,7 +16623,7 @@ diff -urNp linux-2.6.26.3/fs/proc/base.c linux-2.6.26.3/fs/proc/base.c
 @@ -2707,6 +2787,9 @@ int proc_pid_readdir(struct file * filp,
  {
  	unsigned int nr = filp->f_pos - FIRST_PROCESS_ENTRY;
- 	struct task_struct *reaper = get_proc_task(filp->f_path.dentry->d_inode);
+ 	struct task_struct *reaper = get_proc_task_real(filp->f_path.dentry->d_inode);
 +#if defined(CONFIG_GRKERNSEC_PROC_USER) || defined(CONFIG_GRKERNSEC_PROC_USERGROUP)
 +	struct task_struct *tmp = current;
 +#endif
@@ -16630,8 +16646,8 @@ diff -urNp linux-2.6.26.3/fs/proc/base.c linux-2.6.26.3/fs/proc/base.c
 +			continue;
 +
  		filp->f_pos = iter.tgid + TGID_OFFSET;
- 		if (proc_pid_fill_cache(filp, dirent, filldir, iter) < 0) {
- 			put_task_struct(iter.task);
+ 		if (!vx_proc_task_visible(iter.task))
+ 			continue;
 diff -urNp linux-2.6.26.3/fs/proc/inode.c linux-2.6.26.3/fs/proc/inode.c
 --- linux-2.6.26.3/fs/proc/inode.c	2008-08-06 12:19:01.000000000 -0400
 +++ linux-2.6.26.3/fs/proc/inode.c	2008-08-09 12:03:30.000000000 -0400
@@ -16645,8 +16661,8 @@ diff -urNp linux-2.6.26.3/fs/proc/inode.c linux-2.6.26.3/fs/proc/inode.c
  			inode->i_gid = de->gid;
 +#endif
  		}
- 		if (de->size)
- 			inode->i_size = de->size;
+ 		if (de->vx_flags)
+ 			PROC_I(inode)->vx_flags = de->vx_flags;
 diff -urNp linux-2.6.26.3/fs/proc/internal.h linux-2.6.26.3/fs/proc/internal.h
 --- linux-2.6.26.3/fs/proc/internal.h	2008-08-06 12:19:01.000000000 -0400
 +++ linux-2.6.26.3/fs/proc/internal.h	2008-08-09 12:03:30.000000000 -0400
@@ -16657,9 +16673,9 @@ diff -urNp linux-2.6.26.3/fs/proc/internal.h linux-2.6.26.3/fs/proc/internal.h
 +#ifdef CONFIG_GRKERNSEC_PROC_IPADDR
 +extern int proc_pid_ipaddr(struct task_struct *task, char *buffer);
 +#endif
- extern loff_t mem_lseek(struct file *file, loff_t offset, int orig);
+ extern int proc_pid_nsproxy(struct seq_file *m, struct pid_namespace *ns,
+ 				struct pid *pid, struct task_struct *task);
  
- extern const struct file_operations proc_maps_operations;
 diff -urNp linux-2.6.26.3/fs/proc/proc_misc.c linux-2.6.26.3/fs/proc/proc_misc.c
 --- linux-2.6.26.3/fs/proc/proc_misc.c	2008-08-06 12:19:01.000000000 -0400
 +++ linux-2.6.26.3/fs/proc/proc_misc.c	2008-08-09 12:03:30.000000000 -0400
@@ -16832,8 +16848,8 @@ diff -urNp linux-2.6.26.3/fs/proc/root.c linux-2.6.26.3/fs/proc/root.c
  	proc_mkdir("bus", NULL);
 +#endif
  	proc_sys_init();
+ 	proc_vx_init();
  }
- 
 diff -urNp linux-2.6.26.3/fs/proc/task_mmu.c linux-2.6.26.3/fs/proc/task_mmu.c
 --- linux-2.6.26.3/fs/proc/task_mmu.c	2008-08-06 12:19:01.000000000 -0400
 +++ linux-2.6.26.3/fs/proc/task_mmu.c	2008-08-09 12:03:30.000000000 -0400
@@ -17180,9 +17196,9 @@ diff -urNp linux-2.6.26.3/fs/utimes.c linux-2.6.26.3/fs/utimes.c
 --- linux-2.6.26.3/fs/utimes.c	2008-08-06 12:19:01.000000000 -0400
 +++ linux-2.6.26.3/fs/utimes.c	2008-08-09 12:03:30.000000000 -0400
 @@ -8,6 +8,7 @@
- #include <linux/stat.h>
- #include <linux/utime.h>
  #include <linux/syscalls.h>
+ #include <linux/mount.h>
+ #include <linux/vs_cowbl.h>
 +#include <linux/grsecurity.h>
  #include <asm/uaccess.h>
  #include <asm/unistd.h>
@@ -31271,9 +31287,9 @@ diff -urNp linux-2.6.26.3/ipc/msg.c linux-2.6.26.3/ipc/msg.c
 --- linux-2.6.26.3/ipc/msg.c	2008-08-06 12:19:01.000000000 -0400
 +++ linux-2.6.26.3/ipc/msg.c	2008-08-09 12:03:30.000000000 -0400
 @@ -38,6 +38,7 @@
- #include <linux/rwsem.h>
  #include <linux/nsproxy.h>
  #include <linux/ipc_namespace.h>
+ #include <linux/vs_base.h>
 +#include <linux/grsecurity.h>
  
  #include <asm/current.h>
@@ -31311,9 +31327,9 @@ diff -urNp linux-2.6.26.3/ipc/sem.c linux-2.6.26.3/ipc/sem.c
 --- linux-2.6.26.3/ipc/sem.c	2008-08-06 12:19:01.000000000 -0400
 +++ linux-2.6.26.3/ipc/sem.c	2008-08-09 12:03:30.000000000 -0400
 @@ -83,6 +83,7 @@
- #include <linux/rwsem.h>
- #include <linux/nsproxy.h>
  #include <linux/ipc_namespace.h>
+ #include <linux/vs_base.h>
+ #include <linux/vs_limit.h>
 +#include <linux/grsecurity.h>
  
  #include <asm/uaccess.h>
@@ -31351,9 +31367,9 @@ diff -urNp linux-2.6.26.3/ipc/shm.c linux-2.6.26.3/ipc/shm.c
 --- linux-2.6.26.3/ipc/shm.c	2008-08-06 12:19:01.000000000 -0400
 +++ linux-2.6.26.3/ipc/shm.c	2008-08-09 12:03:30.000000000 -0400
 @@ -39,6 +39,7 @@
- #include <linux/nsproxy.h>
- #include <linux/mount.h>
  #include <linux/ipc_namespace.h>
+ #include <linux/vs_context.h>
+ #include <linux/vs_limit.h>
 +#include <linux/grsecurity.h>
  
  #include <asm/uaccess.h>
@@ -31456,14 +31472,14 @@ diff -urNp linux-2.6.26.3/kernel/capability.c linux-2.6.26.3/kernel/capability.c
 --- linux-2.6.26.3/kernel/capability.c	2008-08-06 12:19:01.000000000 -0400
 +++ linux-2.6.26.3/kernel/capability.c	2008-08-09 12:03:30.000000000 -0400
 @@ -13,6 +13,7 @@
- #include <linux/security.h>
  #include <linux/syscalls.h>
  #include <linux/pid_namespace.h>
+ #include <linux/vs_context.h>
 +#include <linux/grsecurity.h>
  #include <asm/uaccess.h>
  
  /*
-@@ -384,15 +385,25 @@ out:
+@@ -384,13 +385,22 @@ out:
  
  int __capable(struct task_struct *t, int cap)
  {
@@ -31484,8 +31500,10 @@ diff -urNp linux-2.6.26.3/kernel/capability.c linux-2.6.26.3/kernel/capability.c
 +	return 0;
 +}
 +
+ #include <linux/vserver/base.h>
  int capable(int cap)
  {
+@@ -397,3 +397,4 @@ int capable(int cap)
  	return __capable(current, cap);
  }
  EXPORT_SYMBOL(capable);
@@ -31529,9 +31547,9 @@ diff -urNp linux-2.6.26.3/kernel/exit.c linux-2.6.26.3/kernel/exit.c
 --- linux-2.6.26.3/kernel/exit.c	2008-08-06 12:19:01.000000000 -0400
 +++ linux-2.6.26.3/kernel/exit.c	2008-08-09 12:03:30.000000000 -0400
 @@ -45,6 +45,11 @@
- #include <linux/resource.h>
- #include <linux/blkdev.h>
- #include <linux/task_io_accounting_ops.h>
+ #include <linux/vs_network.h>
+ #include <linux/vs_pid.h>
+ #include <linux/vserver/global.h>
 +#include <linux/grsecurity.h>
 +
 +#ifdef CONFIG_GRKERNSEC
@@ -31613,9 +31631,9 @@ diff -urNp linux-2.6.26.3/kernel/fork.c linux-2.6.26.3/kernel/fork.c
 --- linux-2.6.26.3/kernel/fork.c	2008-08-06 12:19:01.000000000 -0400
 +++ linux-2.6.26.3/kernel/fork.c	2008-08-09 12:03:30.000000000 -0400
 @@ -54,6 +54,7 @@
- #include <linux/tty.h>
- #include <linux/proc_fs.h>
- #include <linux/blkdev.h>
+ #include <linux/vs_limit.h>
+ #include <linux/vs_memory.h>
+ #include <linux/vserver/global.h>
 +#include <linux/grsecurity.h>
  
  #include <asm/pgtable.h>
@@ -31705,9 +31723,9 @@ diff -urNp linux-2.6.26.3/kernel/fork.c linux-2.6.26.3/kernel/fork.c
 +
 +	gr_learn_resource(p, RLIMIT_NPROC, atomic_read(&p->user->processes), 0);
 +
+ 	if (!vx_nproc_avail(1))
+ 		goto bad_fork_cleanup_vm;
  	if (atomic_read(&p->user->processes) >=
- 			p->signal->rlim[RLIMIT_NPROC].rlim_cur) {
- 		if (!capable(CAP_SYS_ADMIN) && !capable(CAP_SYS_RESOURCE) &&
 @@ -1080,6 +1110,8 @@ static struct task_struct *copy_process(
  	if (clone_flags & CLONE_THREAD)
  		p->tgid = current->tgid;
@@ -32456,9 +32474,9 @@ diff -urNp linux-2.6.26.3/kernel/pid.c linux-2.6.26.3/kernel/pid.c
 --- linux-2.6.26.3/kernel/pid.c	2008-08-06 12:19:01.000000000 -0400
 +++ linux-2.6.26.3/kernel/pid.c	2008-08-09 12:03:30.000000000 -0400
 @@ -35,6 +35,7 @@
- #include <linux/pid_namespace.h>
- #include <linux/init_task.h>
  #include <linux/syscalls.h>
+ #include <linux/vs_pid.h>
+ #include <linux/vserver/global.h>
 +#include <linux/grsecurity.h>
  
  #define pid_hashfn(nr, ns)	\
@@ -32523,16 +32541,16 @@ diff -urNp linux-2.6.26.3/kernel/printk.c linux-2.6.26.3/kernel/printk.c
 --- linux-2.6.26.3/kernel/printk.c	2008-08-06 12:19:01.000000000 -0400
 +++ linux-2.6.26.3/kernel/printk.c	2008-08-09 12:03:30.000000000 -0400
 @@ -32,6 +32,7 @@
- #include <linux/security.h>
  #include <linux/bootmem.h>
  #include <linux/syscalls.h>
+ #include <linux/vs_cvirt.h>
 +#include <linux/grsecurity.h>
  
  #include <asm/uaccess.h>
  
 @@ -302,6 +303,11 @@ int do_syslog(int type, char __user *buf
  	char c;
- 	int error = 0;
+ 	int error;
  
 +#ifdef CONFIG_GRKERNSEC_DMESG
 +	if (grsec_enable_dmesg && !capable(CAP_SYS_ADMIN))
@@ -32546,9 +32564,9 @@ diff -urNp linux-2.6.26.3/kernel/ptrace.c linux-2.6.26.3/kernel/ptrace.c
 --- linux-2.6.26.3/kernel/ptrace.c	2008-08-06 12:19:01.000000000 -0400
 +++ linux-2.6.26.3/kernel/ptrace.c	2008-08-09 12:03:30.000000000 -0400
 @@ -21,6 +21,7 @@
- #include <linux/audit.h>
  #include <linux/pid_namespace.h>
  #include <linux/syscalls.h>
+ #include <linux/vs_context.h>
 +#include <linux/grsecurity.h>
  
  #include <asm/pgtable.h>
@@ -32566,8 +32584,8 @@ diff -urNp linux-2.6.26.3/kernel/ptrace.c linux-2.6.26.3/kernel/ptrace.c
 -	if (!dumpable && !capable(CAP_SYS_PTRACE))
 +	if (!dumpable && !capable_nolog(CAP_SYS_PTRACE))
  		return -EPERM;
- 
- 	return security_ptrace(current, task);
+ 	if (!vx_check(task->xid, VS_ADMIN_P|VS_IDENT))
+ 		return -EPERM;
 @@ -201,7 +202,7 @@ repeat:
  
  	/* Go */
@@ -32627,9 +32645,9 @@ diff -urNp linux-2.6.26.3/kernel/sched.c linux-2.6.26.3/kernel/sched.c
 --- linux-2.6.26.3/kernel/sched.c	2008-08-06 12:19:01.000000000 -0400
 +++ linux-2.6.26.3/kernel/sched.c	2008-08-09 12:03:30.000000000 -0400
 @@ -70,6 +70,7 @@
- #include <linux/bootmem.h>
- #include <linux/debugfs.h>
  #include <linux/ctype.h>
+ #include <linux/vs_sched.h>
+ #include <linux/vs_cvirt.h>
 +#include <linux/grsecurity.h>
  
  #include <asm/tlb.h>
@@ -32641,7 +32659,7 @@ diff -urNp linux-2.6.26.3/kernel/sched.c linux-2.6.26.3/kernel/sched.c
 -	if (increment < 0 && !can_nice(current, nice))
 +	if (increment < 0 && (!can_nice(current, nice) ||
 +			      gr_handle_chroot_nice()))
- 		return -EPERM;
+ 		return vx_flags(VXF_IGNEG_NICE, 0) ? 0 : -EPERM;
  
  	retval = security_task_setnice(current, nice);
 @@ -5902,7 +5904,7 @@ static struct ctl_table sd_ctl_dir[] = {
@@ -32671,12 +32689,12 @@ diff -urNp linux-2.6.26.3/kernel/signal.c linux-2.6.26.3/kernel/signal.c
  #include <linux/pid_namespace.h>
 +#include <linux/grsecurity.h>
  #include <linux/nsproxy.h>
- 
- #include <asm/param.h>
+ #include <linux/vs_context.h>
+ #include <linux/vs_pid.h>
 @@ -597,6 +598,9 @@ static int check_kill_permission(int sig
- 		}
+ 		return error;
  	}
- 
+ skip:
 +	if (gr_handle_signal(t, sig))
 +		return -EPERM;
 +
@@ -33084,7 +33102,7 @@ diff -urNp linux-2.6.26.3/kernel/time.c linux-2.6.26.3/kernel/time.c
 @@ -92,6 +93,9 @@ asmlinkage long sys_stime(time_t __user 
  		return err;
  
- 	do_settimeofday(&tv);
+ 	vx_settimeofday(&tv);
 +
 +	gr_log_timechange();
 +
@@ -33838,9 +33856,9 @@ diff -urNp linux-2.6.26.3/mm/mlock.c linux-2.6.26.3/mm/mlock.c
 --- linux-2.6.26.3/mm/mlock.c	2008-08-09 13:05:27.000000000 -0400
 +++ linux-2.6.26.3/mm/mlock.c	2008-08-09 13:05:39.000000000 -0400
 @@ -12,6 +12,7 @@
- #include <linux/syscalls.h>
  #include <linux/sched.h>
  #include <linux/module.h>
+ #include <linux/vs_memory.h>
 +#include <linux/grsecurity.h>
  
  int can_do_mlock(void)
@@ -33902,9 +33920,9 @@ diff -urNp linux-2.6.26.3/mm/mlock.c linux-2.6.26.3/mm/mlock.c
  
  	ret = -ENOMEM;
 +	gr_learn_resource(current, RLIMIT_MEMLOCK, current->mm->total_vm, 1);
+ 	if (!vx_vmlocked_avail(current->mm, current->mm->total_vm))
+ 		goto out;
  	if (!(flags & MCL_CURRENT) || (current->mm->total_vm <= lock_limit) ||
- 	    capable(CAP_IPC_LOCK))
- 		ret = do_mlockall(flags);
 diff -urNp linux-2.6.26.3/mm/mmap.c linux-2.6.26.3/mm/mmap.c
 --- linux-2.6.26.3/mm/mmap.c	2008-08-06 12:19:01.000000000 -0400
 +++ linux-2.6.26.3/mm/mmap.c	2008-08-09 12:03:30.000000000 -0400
@@ -34318,7 +34336,7 @@ diff -urNp linux-2.6.26.3/mm/mmap.c linux-2.6.26.3/mm/mmap.c
  	/* Once vma denies write, undo our temporary denial count */
 @@ -1212,6 +1366,7 @@ munmap_back:
  out:
- 	mm->total_vm += len >> PAGE_SHIFT;
+ 	vx_vmpages_add(mm, len >> PAGE_SHIFT);
  	vm_stat_account(mm, vm_flags, file, len >> PAGE_SHIFT);
 +	track_exec_limit(mm, addr, addr + len, vm_flags);
  	if (vm_flags & VM_LOCKED) {
@@ -34655,9 +34673,9 @@ diff -urNp linux-2.6.26.3/mm/mmap.c linux-2.6.26.3/mm/mmap.c
 +		}
 +#endif
 +
- 		mm->total_vm -= nrpages;
+ 		vx_vmpages_sub(mm, nrpages);
  		if (vma->vm_flags & VM_LOCKED)
- 			mm->locked_vm -= nrpages;
+ 			vx_vmlocked_sub(mm, nrpages)vx_vmlocked_sub(mm, nrpages);
 @@ -1781,6 +2041,16 @@ detach_vmas_to_be_unmapped(struct mm_str
  
  	insertion_point = (prev ? &prev->vm_next : &mm->mmap);
@@ -34907,8 +34925,8 @@ diff -urNp linux-2.6.26.3/mm/mmap.c linux-2.6.26.3/mm/mmap.c
 +		gr_learn_resource(current, RLIMIT_MEMLOCK, locked << PAGE_SHIFT, 1);
  		if (locked > lock_limit && !capable(CAP_IPC_LOCK))
  			return -EAGAIN;
- 	}
-@@ -1994,22 +2404,22 @@ unsigned long do_brk(unsigned long addr,
+ 		if (!vx_vmlocked_avail(mm, len >> PAGE_SHIFT))
+@@ -1994,23 +2404,23 @@ unsigned long do_brk(unsigned long addr,
  	/*
  	 * Clear old maps.  this also does some error checking for us
  	 */
@@ -34930,8 +34948,10 @@ diff -urNp linux-2.6.26.3/mm/mmap.c linux-2.6.26.3/mm/mmap.c
  	if (mm->map_count > sysctl_max_map_count)
  		return -ENOMEM;
  
--	if (security_vm_enough_memory(len >> PAGE_SHIFT))
-+	if (security_vm_enough_memory(charged))
+-	if (security_vm_enough_memory(len >> PAGE_SHIFT) ||
+-		!vx_vmpages_avail(mm, len >> PAGE_SHIFT))
++	if (security_vm_enough_memory(charged) ||
++		!vx_vmpages_avail(mm, charged))
  		return -ENOMEM;
  
  	/* Can we just expand an old private anonymous mapping? */
@@ -34969,11 +34989,11 @@ diff -urNp linux-2.6.26.3/mm/mmap.c linux-2.6.26.3/mm/mmap.c
 +#endif
 +
  out:
--	mm->total_vm += len >> PAGE_SHIFT;
-+	mm->total_vm += charged;
+-	vx_vmpages_add(mm, len >> PAGE_SHIFT);
++	vx_vmpages_add(mm, charged);
  	if (flags & VM_LOCKED) {
--		mm->locked_vm += len >> PAGE_SHIFT;
-+		mm->locked_vm += charged;
+-		vx_vmlocked_add(mm, len >> PAGE_SHIFT);
++		vx_vmpages_add(mm, charged);
  		make_pages_present(addr, addr + len);
  	}
 +	track_exec_limit(mm, addr, addr + len, flags);
@@ -35004,8 +35024,8 @@ diff -urNp linux-2.6.26.3/mm/mmap.c linux-2.6.26.3/mm/mmap.c
  	 * The vm_pgoff of a purely anonymous vma should be irrelevant
  	 * until its first write fault, when page's anon_vma and index
 @@ -2106,7 +2540,22 @@ int insert_vm_struct(struct mm_struct * 
- 	if ((vma->vm_flags & VM_ACCOUNT) &&
- 	     security_vm_enough_memory_mm(mm, vma_pages(vma)))
+ 		(security_vm_enough_memory_mm(mm, vma_pages(vma)) ||
+ 		!vx_vmpages_avail(mm, vma_pages(vma))))
  		return -ENOMEM;
 +
 +#ifdef CONFIG_PAX_SEGMEXEC
@@ -35763,7 +35783,7 @@ diff -urNp linux-2.6.26.3/net/ipv4/inet_connection_sock.c linux-2.6.26.3/net/ipv
 diff -urNp linux-2.6.26.3/net/ipv4/inet_hashtables.c linux-2.6.26.3/net/ipv4/inet_hashtables.c
 --- linux-2.6.26.3/net/ipv4/inet_hashtables.c	2008-08-06 12:19:01.000000000 -0400
 +++ linux-2.6.26.3/net/ipv4/inet_hashtables.c	2008-08-09 12:03:30.000000000 -0400
-@@ -18,11 +18,14 @@
+@@ -18,12 +18,15 @@
  #include <linux/sched.h>
  #include <linux/slab.h>
  #include <linux/wait.h>
@@ -35771,6 +35791,7 @@ diff -urNp linux-2.6.26.3/net/ipv4/inet_hashtables.c linux-2.6.26.3/net/ipv4/ine
  
  #include <net/inet_connection_sock.h>
  #include <net/inet_hashtables.h>
+ #include <net/route.h>
  #include <net/ip.h>
  
 +extern void gr_update_task_in_ip_table(struct task_struct *task, const struct inet_sock *inet);
@@ -36225,9 +36246,9 @@ diff -urNp linux-2.6.26.3/net/unix/af_unix.c linux-2.6.26.3/net/unix/af_unix.c
 --- linux-2.6.26.3/net/unix/af_unix.c	2008-08-06 12:19:01.000000000 -0400
 +++ linux-2.6.26.3/net/unix/af_unix.c	2008-08-09 12:03:30.000000000 -0400
 @@ -116,6 +116,7 @@
- #include <linux/mount.h>
- #include <net/checksum.h>
  #include <linux/security.h>
+ #include <linux/vs_context.h>
+ #include <linux/vs_limit.h>
 +#include <linux/grsecurity.h>
  
  static struct hlist_head unix_socket_table[UNIX_HASH_SIZE + 1];
@@ -36324,26 +36345,26 @@ diff -urNp linux-2.6.26.3/security/commoncap.c linux-2.6.26.3/security/commoncap
 --- linux-2.6.26.3/security/commoncap.c	2008-08-06 12:19:01.000000000 -0400
 +++ linux-2.6.26.3/security/commoncap.c	2008-08-09 12:03:30.000000000 -0400
 @@ -26,10 +26,13 @@
- #include <linux/sched.h>
  #include <linux/prctl.h>
  #include <linux/securebits.h>
+ #include <linux/vs_context.h>
 +#include <linux/grsecurity.h>
 +
 +extern kernel_cap_t gr_cap_rtnetlink(struct sock *sk);
  
  int cap_netlink_send(struct sock *sk, struct sk_buff *skb)
  {
--	NETLINK_CB(skb).eff_cap = current->cap_effective;
+-	NETLINK_CB(skb).eff_cap = vx_mbcaps(current->cap_effective);
 +	NETLINK_CB(skb).eff_cap = gr_cap_rtnetlink(sk);
  	return 0;
  }
  
 @@ -51,7 +54,15 @@ EXPORT_SYMBOL(cap_netlink_recv);
- int cap_capable (struct task_struct *tsk, int cap)
+ int cap_capable (struct tASk_struct *tsk, int cap)
  {
  	/* Derived from include/linux/sched.h:capable. */
--	if (cap_raised(tsk->cap_effective, cap))
-+	if (cap_raised (tsk->cap_effective, cap))
+-	if (vx_cap_raised(vxi, tsk->cap_effective, cap))
++	if (vx_cap_raised (vxi, tsk->cap_effective, cap))
 +		return 0;
 +	return -EPERM;
 +}
@@ -36351,7 +36372,7 @@ diff -urNp linux-2.6.26.3/security/commoncap.c linux-2.6.26.3/security/commoncap
 +int cap_capable_nolog (struct task_struct *tsk, int cap)
 +{
 +	/* tsk = current for all callers */
-+	if (cap_raised(tsk->cap_effective, cap) && gr_is_capable_nolog(cap))
++	if (vx_cap_raised(tsk->vx_info, tsk->cap_effective, cap) && gr_is_capable_nolog(cap))
  		return 0;
  	return -EPERM;
  }
@@ -36391,9 +36412,9 @@ diff -urNp linux-2.6.26.3/security/dummy.c linux-2.6.26.3/security/dummy.c
 --- linux-2.6.26.3/security/dummy.c	2008-08-06 12:19:01.000000000 -0400
 +++ linux-2.6.26.3/security/dummy.c	2008-08-09 12:03:30.000000000 -0400
 @@ -29,6 +29,7 @@
- #include <linux/file.h>
  #include <linux/prctl.h>
  #include <linux/securebits.h>
+ #include <linux/vs_context.h>
 +#include <linux/grsecurity.h>
  
  static int dummy_ptrace (struct task_struct *parent, struct task_struct *child)
