@@ -264,19 +264,19 @@ index 13e464f..2928618 100644
  #include <net/flow.h>
 -#include <net/sock.h>
 +#include <net/inet_sock.h>
+ // #include <linux/in.h>
  #include <linux/in_route.h>
  #include <linux/rtnetlink.h>
- #include <linux/route.h>
-@@ -161,6 +161,9 @@ static inline int ip_route_connect(struct rtable **rp, __be32 dst,
- 	int err;
+@@ -175,6 +175,9 @@
  	struct net *net = sock_net(sk);
  	struct nx_info *nx_info = current->nx_info;
-+
+ 
 +	if (inet_sk(sk)->transparent)
 +		fl.flags |= FLOWI_FLAG_ANYSRC;
- 
++
  	if (sk)
  		nx_info = sk->sk_nx_info;
+ 
 -- 
 1.5.2.5
 
@@ -720,15 +720,15 @@ index cacb9cb..9da59f3 100644
  /* (C) 1999-2001 Paul `Rusty' Russell
   * (C) 2002-2004 Netfilter Core Team <coreteam@netfilter.org>
   *
-@@ -24,6 +25,7 @@
+@@ -23,6 +24,7 @@
  #include <net/netfilter/nf_conntrack_l3proto.h>
  #include <net/netfilter/nf_conntrack_core.h>
  #include <net/netfilter/ipv4/nf_conntrack_ipv4.h>
 +#include <net/netfilter/ipv4/nf_defrag_ipv4.h>
+ #include <net/netfilter/nf_nat_helper.h>
  
  int (*nf_nat_seq_adjust_hook)(struct sk_buff *skb,
- 			      struct nf_conn *ct,
-@@ -63,23 +65,6 @@ static int ipv4_print_tuple(struct seq_file *s,
+@@ -63,23 +65,6 @@
  			  NIPQUAD(tuple->dst.u3.ip));
  }
  
@@ -752,7 +752,7 @@ index cacb9cb..9da59f3 100644
  static int ipv4_get_l4proto(const struct sk_buff *skb, unsigned int nhoff,
  			    unsigned int *dataoff, u_int8_t *protonum)
  {
-@@ -144,28 +129,6 @@ out:
+@@ -144,28 +129,6 @@
  	return nf_conntrack_confirm(skb);
  }
  
@@ -781,7 +781,7 @@ index cacb9cb..9da59f3 100644
  static unsigned int ipv4_conntrack_in(unsigned int hooknum,
  				      struct sk_buff *skb,
  				      const struct net_device *in,
-@@ -195,13 +158,6 @@ static unsigned int ipv4_conntrack_local(unsigned int hooknum,
+@@ -195,13 +158,6 @@
     make it the first hook. */
  static struct nf_hook_ops ipv4_conntrack_ops[] __read_mostly = {
  	{
@@ -795,7 +795,7 @@ index cacb9cb..9da59f3 100644
  		.hook		= ipv4_conntrack_in,
  		.owner		= THIS_MODULE,
  		.pf		= PF_INET,
-@@ -209,13 +165,6 @@ static struct nf_hook_ops ipv4_conntrack_ops[] __read_mostly = {
+@@ -209,13 +165,6 @@
  		.priority	= NF_IP_PRI_CONNTRACK,
  	},
  	{
@@ -809,7 +809,7 @@ index cacb9cb..9da59f3 100644
  		.hook		= ipv4_conntrack_local,
  		.owner		= THIS_MODULE,
  		.pf		= PF_INET,
-@@ -422,6 +371,7 @@ static int __init nf_conntrack_l3proto_ipv4_init(void)
+@@ -422,6 +371,7 @@
  	int ret = 0;
  
  	need_conntrack();
@@ -1531,7 +1531,7 @@ diff --git a/net/ipv4/tcp_ipv4.c b/net/ipv4/tcp_ipv4.c
 index 58873ad..8937675 100644
 --- a/net/ipv4/tcp_ipv4.c
 +++ b/net/ipv4/tcp_ipv4.c
-@@ -1647,8 +1647,17 @@ int tcp_v4_rcv(struct sk_buff *skb)
+@@ -1643,6 +1643,15 @@
  	TCP_SKB_CB(skb)->flags	 = iph->tos;
  	TCP_SKB_CB(skb)->sacked	 = 0;
  
@@ -1543,12 +1543,10 @@ index 58873ad..8937675 100644
 +		skb->sk = NULL;
 +	} else
 +#endif
- 	sk = __inet_lookup(skb->dev->nd_net, &tcp_hashinfo, iph->saddr,
- 			th->source, iph->daddr, th->dest, inet_iif(skb));
 +
+ 	sk = __inet_lookup(dev_net(skb->dev), &tcp_hashinfo, iph->saddr,
+ 			th->source, iph->daddr, th->dest, inet_iif(skb));
  	if (!sk)
- 		goto no_tcp_socket;
- 
 -- 
 1.5.2.5
 
@@ -1568,7 +1566,7 @@ diff --git a/net/ipv4/udp.c b/net/ipv4/udp.c
 index 672d0d4..c29597c 100644
 --- a/net/ipv4/udp.c
 +++ b/net/ipv4/udp.c
-@@ -364,6 +364,14 @@ void __udp4_lib_err(struct sk_buff *skb, u32 info, struct hlist_head udptable[])
+@@ -365,6 +365,14 @@
  	int harderr;
  	int err;
  
@@ -1580,10 +1578,10 @@ index 672d0d4..c29597c 100644
 +		skb->sk = NULL;
 +	} else
 +#endif
- 	sk = __udp4_lib_lookup(skb->dev->nd_net, iph->daddr, uh->dest,
+ 	sk = __udp4_lib_lookup(dev_net(skb->dev), iph->daddr, uh->dest,
  			iph->saddr, uh->source, skb->dev->ifindex, udptable);
  	if (sk == NULL) {
-@@ -1188,6 +1196,14 @@ int __udp4_lib_rcv(struct sk_buff *skb, struct hlist_head udptable[],
+@@ -1199,6 +1207,14 @@
  	if (rt->rt_flags & (RTCF_BROADCAST|RTCF_MULTICAST))
  		return __udp4_lib_mcast_deliver(skb, uh, saddr, daddr, udptable);
  
@@ -1595,7 +1593,7 @@ index 672d0d4..c29597c 100644
 +		skb->sk = NULL;
 +	} else
 +#endif
- 	sk = __udp4_lib_lookup(skb->dev->nd_net, saddr, uh->source, daddr,
+ 	sk = __udp4_lib_lookup(dev_net(skb->dev), saddr, uh->source, daddr,
  			uh->dest, inet_iif(skb), udptable);
  
 -- 
