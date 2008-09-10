@@ -37004,3 +37004,124 @@ diff -urNp linux-2.6.26.3/virt/kvm/kvm_main.c linux-2.6.26.3/virt/kvm/kvm_main.c
  };
  
  static void hardware_enable(void *junk)
+diff -u linux-2.6.26/arch/x86/kernel/entry_32.S linux-2.6.26/arch/x86/kernel/entry_32.S
+--- linux-2.6.26/arch/x86/kernel/entry_32.S	2008-07-14 03:52:23.000000000 +0200
++++ linux-2.6.26/arch/x86/kernel/entry_32.S	2008-09-09 10:26:49.000000000 +0200
+@@ -347,10 +347,10 @@
+  * Load the potential sixth argument from user stack.
+  * Careful about security.
+  */
+-	movl 12(%esp),%ebp
++	movl PT_OLDESP(%esp),%ebp
+ 
+ #ifdef CONFIG_PAX_MEMORY_UDEREF
+-	mov 16(%esp),%ds
++	mov PT_OLDSS(%esp),%ds
+ 1:	movl %ds:(%ebp),%ebp
+ #else
+ 	cmpl $__PAGE_OFFSET-3,%ebp
+diff -u linux-2.6.26/arch/x86/mm/init_32.c linux-2.6.26/arch/x86/mm/init_32.c
+--- linux-2.6.26/arch/x86/mm/init_32.c	2008-08-24 22:31:06.000000000 +0200
++++ linux-2.6.26/arch/x86/mm/init_32.c	2008-09-03 03:28:09.000000000 +0200
+@@ -237,7 +237,7 @@
+ {
+ 	if (!pagenr)
+ 		return 1;
+-	if (160 <= pagenr && pagenr < 256)
++	if ((ISA_START_ADDRESS >> PAGE_SHIFT) <= pagenr && pagenr < (ISA_END_ADDRESS >> PAGE_SHIFT))
+ 		return 1;
+ 	if (!page_is_ram(pagenr))
+ 		return 1;
+diff -u linux-2.6.26/arch/x86/mm/init_64.c linux-2.6.26/arch/x86/mm/init_64.c
+--- linux-2.6.26/arch/x86/mm/init_64.c	2008-08-24 22:30:59.000000000 +0200
++++ linux-2.6.26/arch/x86/mm/init_64.c	2008-09-03 03:28:40.000000000 +0200
+@@ -682,7 +682,7 @@
+ {
+ 	if (!pagenr)
+ 		return 1;
+-	if (160 <= pagenr && pagenr < 256)
++	if ((ISA_START_ADDRESS >> PAGE_SHIFT) <= pagenr && pagenr < (ISA_END_ADDRESS >> PAGE_SHIFT))
+ 		return 1;
+ 	if (!page_is_ram(pagenr))
+ 		return 1;
+diff -u linux-2.6.26/arch/x86/mm/ioremap.c linux-2.6.26/arch/x86/mm/ioremap.c
+--- linux-2.6.26/arch/x86/mm/ioremap.c	2008-07-14 03:52:23.000000000 +0200
++++ linux-2.6.26/arch/x86/mm/ioremap.c	2008-09-03 03:22:40.000000000 +0200
+@@ -62,8 +62,8 @@
+ 	 * Second special case: Some BIOSen report the PC BIOS
+ 	 * area (640->1Mb) as ram even though it is not.
+ 	 */
+-	if (pagenr >= (BIOS_BEGIN >> PAGE_SHIFT) &&
+-		    pagenr < (BIOS_END >> PAGE_SHIFT))
++	if (pagenr >= (ISA_START_ADDRESS >> PAGE_SHIFT) &&
++		    pagenr < (ISA_END_ADDRESS >> PAGE_SHIFT))
+ 		return 0;
+ 
+ 	for (i = 0; i < e820.nr_map; i++) {
+diff -u linux-2.6.26/fs/binfmt_elf.c linux-2.6.26/fs/binfmt_elf.c
+--- linux-2.6.26/fs/binfmt_elf.c	2008-07-14 03:52:23.000000000 +0200
++++ linux-2.6.26/fs/binfmt_elf.c	2008-09-06 18:44:35.000000000 +0200
+@@ -970,9 +970,10 @@
+ 	SET_PERSONALITY(loc->elf_ex, 0);
+ 
+ #if defined(CONFIG_PAX_PAGEEXEC) || defined(CONFIG_PAX_SEGMEXEC)
+-	if (current->mm->pax_flags & (MF_PAX_PAGEEXEC | MF_PAX_SEGMEXEC))
++	if (current->mm->pax_flags & (MF_PAX_PAGEEXEC | MF_PAX_SEGMEXEC)) {
+ 		executable_stack = EXSTACK_DISABLE_X;
+-	else
++		current->personality &= ~READ_IMPLIES_EXEC;
++	} else
+ #endif
+ 
+ 	if (elf_read_implies_exec(loc->elf_ex, executable_stack))
+only in patch2:
+unchanged:
+--- linux-2.6.26/arch/x86/Makefile	2008-07-14 03:51:38.000000000 +0200
++++ linux-2.6.26/arch/x86/Makefile	2008-09-07 01:51:07.000000000 +0200
+@@ -258,3 +258,11 @@ endef
+ CLEAN_FILES += arch/x86/boot/fdimage \
+ 	       arch/x86/boot/image.iso \
+ 	       arch/x86/boot/mtools.conf
++
++#archprepare:
++#	@if ! $(LD) --build-id=none /dev/null -o /dev/null >/dev/null 2>&1 ; then \
++#		echo -n '*** ${VERSION}.${PATCHLEVEL} PaX kernels no longer build ' ; \
++#		echo 'correctly with old versions of binutils.' ; \
++#		echo '*** Please upgrade your binutils to 2.18 or newer' ; \
++#		false ; \
++#	fi
+only in patch2:
+unchanged:
+--- linux-2.6.26/arch/x86/kernel/mpparse.c	2008-07-14 03:51:39.000000000 +0200
++++ linux-2.6.26/arch/x86/kernel/mpparse.c	2008-09-03 03:26:35.000000000 +0200
+@@ -313,14 +313,14 @@ static int __init smp_read_mpc(struct mp
+ 
+ 	memcpy(str, mpc->mpc_productid, 12);
+ 	str[12] = 0;
+-	printk("Product ID: %s ", str);
++	printk(KERN_CONT "Product ID: %s ", str);
+ 
+ #ifdef CONFIG_X86_32
+ 	mps_oem_check(mpc, oem, str);
+ #endif
+-	printk(KERN_INFO "MPTABLE: Product ID: %s ", str);
++	printk(KERN_CONT "MPTABLE: Product ID: %s ", str);
+ 
+-	printk(KERN_INFO "MPTABLE: APIC at: 0x%X\n", mpc->mpc_lapic);
++	printk(KERN_CONT "MPTABLE: APIC at: 0x%X\n", mpc->mpc_lapic);
+ 
+ 	/* save the local APIC address, it might be non-default */
+ 	if (!acpi_lapic)
+only in patch2:
+unchanged:
+--- linux-2.6.26/include/asm-x86/e820.h	2008-04-17 04:49:44.000000000 +0200
++++ linux-2.6.26/include/asm-x86/e820.h	2008-09-03 03:20:38.000000000 +0200
+@@ -25,7 +25,7 @@ struct e820map {
+ #define ISA_START_ADDRESS	0xa0000
+ #define ISA_END_ADDRESS		0x100000
+ 
+-#define BIOS_BEGIN		0x000a0000
++#define BIOS_BEGIN		0x000c0000
+ #define BIOS_END		0x00100000
+ 
+ #ifdef __KERNEL__
