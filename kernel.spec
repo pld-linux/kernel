@@ -308,10 +308,8 @@ Patch102:	linux-2.6-vs2.2.patch
 # Fix verified for that kernel version.
 Patch130:	linux-2.6-forcedeth-WON.patch
 
-# FIXME: web site refuses connections!
 # http://download.filesystems.org/unionfs/unionfs-2.x/unionfs-2.4_for_2.6.26.diff.gz
-#Patch140:	kernel-unionfs.patch
-#Patch141:	kernel-unionfs-vserver.patch
+Patch140:	kernel-unionfs.patch
 
 Patch200:	linux-2.6-ppc-ICE-hacks.patch
 
@@ -875,8 +873,7 @@ install -m 755 %{SOURCE6} .
 %patch130 -p1
 
 # unionfs
-#FIXME%patch140 -p1
-#{?with_vserver:%patch141 -p1}
+%patch140 -p1
 
 %patch2500 -p1
 
