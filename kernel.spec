@@ -1,9 +1,4 @@
 #
-# STATUS: 2.6.25 works, needs testing
-#
-# NOTE:
-# - suspend2 renamed to tuxonice (as project name)
-#
 # TODO:
 # - benchmark NO_HZ & HZ=1000 vs HZ=300 on i686
 # - apparmor (needs testing)
@@ -105,7 +100,7 @@
 %endif
 
 %define		_basever		2.6.26
-%define		_postver		.3
+%define		_postver		.5
 %define		_prepatch		%{nil}
 %define		_pre_rc			%{nil}
 %define		_rc			%{nil}
@@ -153,7 +148,7 @@ Source90:	http://www.kernel.org/pub/linux/kernel/v2.6/testing/patch-%{_prepatch}
 %endif
 %if "%{_postver}" != "%{nil}"
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
-# Source1-md5:	556282beb8feabee2972e1971984f6dd
+# Source1-md5:	2bceb4747e65394d34066f3db778fd0f
 %endif
 
 Source3:	kernel-autoconf.h
@@ -291,7 +286,7 @@ Patch72:	kernel-2.6-ueagle-atm-freezer.patch
 # http://patches.aircrack-ng.org/hostap-kernel-2.6.18.patch
 Patch85:	hostap-kernel-2.6.18.patch
 
-# http://vserver.13thfloor.at/Experimental/patch-2.6.26.3-vs2.3.0.35.5.diff
+# http://vserver.13thfloor.at/Experimental/patch-2.6.26.5-vs2.3.0.35.5.diff
 Patch100:	linux-2.6-vs2.3.patch
 Patch101:	kernel-vserver-fixes.patch
 # based on http://vserver.13thfloor.at/Experimental/patch-2.6.24-rc7-vs2.2.0.5.0.7-pre.diff
