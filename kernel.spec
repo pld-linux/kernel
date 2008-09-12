@@ -214,7 +214,7 @@ Patch9:		linux-static-dev.patch
 
 Patch10:	kernel-pom-ng-IPV4OPTSSTRIP.patch
 Patch11:	kernel-pom-ng-ipv4options.patch
-Patch12:	kernel-pom-ng-set.patch
+
 Patch14:	kernel-pom-ng-ROUTE.patch
 Patch16:	kernel-pom-ng-mms-conntrack-nat.patch
 Patch22:	kernel-pom-ng-rsh.patch
@@ -773,9 +773,6 @@ install -m 755 %{SOURCE6} .
 
 # kernel-pom-ng-ipv4options.patch
 %patch11 -p1
-
-# kernel-pom-ng-set.patch
-%patch12 -p1
 
 # kernel-pom-ng-ROUTE.patch
 #FIXME%patch14 -p1
