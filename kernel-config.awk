@@ -3,7 +3,7 @@
 # It also has some file merging facilities.
 #
 # usage:
-#  awk -v arch=%{_target_base_arch} -f path/to/kernel-config.awk \
+#  awk -v basearch=%{_target_base_arch} -v arch=%{_target_cpu} -f path/to/kernel-config.awk \
 #    kernel-important.config kernel-multiarch.config \
 #    kernel-%{arch}.config kernel-%{some_feature}.config \
 #     > .config
@@ -15,8 +15,6 @@
 # - glen@pld-linux.org
 # 
 # TODO:
-#  - smarter arch split, there could be strings with spaces
-#    ( kernel-config.py does not suppoty it either )
 #  - use as many warnings as possible, we want our configs to be clean
 
 # no:
@@ -99,7 +97,7 @@ function dieLater( code ) {
 		if ( line ~ /"/ ) {
 			# there can be white spaces
 			i = 0
-			while ( match( line, /^[^=]+="[^"]*"/ ) ) {
+			while ( match( line, /^[^=]+="([^"]|\\")*"/ ) ) {
 				archs[ (++i) ] = substr( line, RSTART, RLENGTH )
 				line = substr( line, RSTART + RLENGTH )
 				sub( /^[ \t]*/, "", line )
@@ -110,10 +108,12 @@ function dieLater( code ) {
 
 		level = 0
 		for ( i in archs ) {
-			split( archs[i], opt, "=" );
-			tl = targetLevel[ opt[ 1 ] ]
+			arch = val = archs[ i ]
+			sub( /=.*$/, "", arch )
+			sub( /^[^=]*=/, "", val )
+			tl = targetLevel[ arch ]
 			if ( tl > level ) {
-				value = opt[2]
+				value = val
 				level = tl
 			}
 		}
@@ -144,7 +144,7 @@ function dieLater( code ) {
 
 		if ( value == "y" || value == "m" )
 			; # OK
-		else if ( value ~ /^"[^"]*"$/ )
+		else if ( value ~ /^"([^"]|\\")*"$/ )
 			; # OK
 		else if ( value ~ /^-?[0-9]+$/ || value ~ /^0x[0-9A-Fa-f]+$/ )
 			; # OK
