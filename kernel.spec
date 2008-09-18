@@ -35,7 +35,6 @@
 
 %bcond_without	vserver		# support for VServer (enabled by default)
 %bcond_without	tuxonice	# support for tuxonice (ex-suspend2) (enabled by default)
-%bcond_with	vs22		# use vserver 2.2 instead of 2.3 (see comment near patch 102)
 %bcond_with	apparmor	# build kernel with apparmor (very exerimental mix)
 
 %bcond_with	rescuecd	# build kernel for our rescue
@@ -290,11 +289,6 @@ Patch85:	hostap-kernel-2.6.18.patch
 Patch100:	linux-2.6-vs2.3.patch
 Patch101:	kernel-vserver-fixes.patch
 # based on http://vserver.13thfloor.at/Experimental/patch-2.6.24-rc7-vs2.2.0.5.0.7-pre.diff
-Patch102:	linux-2.6-vs2.2.patch
-# note about vserver 2.2 vs 2.3: 2.2 is "stable", 2.3 is "development", currently (2007-09-03)
-# the preferred 2.3 vserver needs CONFIG_IPV6=y config, which break things for some users;
-# it was proposed to use 2.2 as a temp replacement. One could use vs 2.2 instead of 2.3
-# by using vs22 bcond - this bcond also changes IPV6 option from "y" to "m".
 
 # from http://www.cl.cam.ac.uk/Research/SRG/netos/xen/downloads/xen-3.0.2-src.tgz
 #Patch120: xen-3.0-2.6.16.patch
@@ -842,12 +836,8 @@ install -m 755 %{SOURCE6} .
 
 # vserver
 %if %{with vserver}
-%if %{with vs22}
-%patch102 -p1
-%else
 %patch100 -p1
 %patch101 -p1
-%endif
 %endif
 
 #%if %{with xen0} || %{with xenU}
@@ -1089,9 +1079,6 @@ BuildConfig() {
 
 %if %{with vserver}
 	cat %{SOURCE43} >> %{defconfig}
-%if %{with vs22}
-	sed -i "s:CONFIG_IPV6=y:CONFIG_IPV6=m:" %{defconfig}
-%endif
 %endif
 
 %if %{without ipv6}
