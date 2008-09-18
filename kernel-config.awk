@@ -113,32 +113,42 @@ function dieLater( code ) {
 		}
 	}
 
-	if ( option in outputArray ) {
-		warn( option " already defined in: " outputArray[ option ] )
+	# completely ignore lines with no value
+	if ( length( value ) == 0 )
 		next
-	}
 
-	if ( length( value ) ) {
-		if ( value == "n" )
-			out = "# " option " is not set"
-		else {
-			out = option "=" value
+	fileOption = FILENAME "/" option
+	if ( fileOption in outputByFile ) {
+		warn( "ERROR: " option " already defined in this file at line " outputByFile[ fileOption ] )
+		dieLater( 2 )
+		next
+	} else
+		outputByFile[ fileOption ] = FNR
 
-			if ( value == "y" || value == "m" )
-				; # OK
-			else if ( value ~ /^"[^"]*"$/ )
-				; # OK
-			else if ( value ~ /^-?[0-9]+$/ || value ~ /^0x[0-9A-Fa-f]+$/ )
-				; # OK
-			else {
-				warn( "ERROR: Incorrect value: " $0 )
-				dieLater( 1 )
-			}
-		}
-	
-		print out
+	if ( option in outputArray ) {
+		warn( "Warning: " option " already defined in: " outputArray[ option ] )
+		next
+	} else
 		outputArray[ option ] = fileLine()
+
+	if ( value == "n" )
+		out = "# " option " is not set"
+	else {
+		out = option "=" value
+
+		if ( value == "y" || value == "m" )
+			; # OK
+		else if ( value ~ /^"[^"]*"$/ )
+			; # OK
+		else if ( value ~ /^-?[0-9]+$/ || value ~ /^0x[0-9A-Fa-f]+$/ )
+			; # OK
+		else {
+			warn( "ERROR: Incorrect value: " $0 )
+			dieLater( 1 )
+		}
 	}
+	
+	print out
 }
 
 END {
