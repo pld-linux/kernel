@@ -50,6 +50,13 @@ BEGIN {
 		print "arch= must be specified" > "/dev/stderr"
 		exit 1
 	}
+	if ( ! basearch )
+		basearch = arch
+
+	targetLevel[ "all" ] = 1
+	targetLevel[ basearch ] = 2
+	targetLevel[ arch ] = 3
+
 	shouldDie = 0
 }
 
@@ -100,15 +107,14 @@ function dieLater( code ) {
 		} else {
 			split( line, archs )
 		}
+
+		level = 0
 		for ( i in archs ) {
 			split( archs[i], opt, "=" );
-			if ( opt[1] == "all" )
+			tl = targetLevel[ opt[ 1 ] ]
+			if ( tl > level ) {
 				value = opt[2]
-
-			if ( opt[1] == arch ) {
-				# found best match, don't look further
-				value = opt[2]
-				break
+				level = tl
 			}
 		}
 	}
