@@ -12,8 +12,6 @@
 # - Przemysław Iskra <sparky@pld-linux.org>
 # 
 # TODO:
-#  - check value correctness, should allow only:
-#    y, m, n, -[0-9]+, 0x[0-9A-Fa-f]+, ".*"
 #  - smarter arch split, there could be strings with spaces
 #    ( kernel-config.py does not suppoty it either )
 #  - use as many warnings as possible, we want our configs to be clean
@@ -49,6 +47,12 @@ BEGIN {
 		print "arch= must be specified" > "/dev/stderr"
 		exit 1
 	}
+	shouldDie = 0
+}
+
+function dieLater( code ) {
+	if ( shouldDie < code )
+		shouldDie = code
 }
 
 # convert special case:
@@ -102,8 +106,20 @@ BEGIN {
 	if ( length( value ) ) {
 		if ( value == "n" )
 			out = "# " option " is not set"
-		else
+		else {
 			out = option "=" value
+
+			if ( value == "y" || value == "m" )
+				;
+			else if ( value ~ /^"[^"]*"$/ )
+				;
+			else if ( value ~ /^-?[0-9]+$/ || value ~ /^0x[0-9A-Fa-f]+$/ )
+				;
+			else {
+				warn( "ERROR: Incorrect value: " $0 )
+				dieLater( 1 )
+			}
+		}
 	
 		print out
 		outputArray[ option ] = fileLine()
@@ -111,4 +127,5 @@ BEGIN {
 }
 
 END {
+	exit shouldDie
 }
