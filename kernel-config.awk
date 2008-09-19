@@ -78,6 +78,12 @@ function dieLater( code ) {
 	next
 }
 
+!/^[A-Za-z0-9_]+(=|[ \t]+[A-Za-z0-9_-]+=)/ {
+	warn( "ERROR: Incorrect line: " $0 )
+	dieLater( 3 )
+	next
+}
+
 !/^CONFIG_/ {
 	$0 = "CONFIG_" $0
 }
