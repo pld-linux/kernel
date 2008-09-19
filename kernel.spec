@@ -1055,7 +1055,7 @@ BuildConfig() {
 	KernelVer=%{kernel_release}
 	echo "Building config file using $Config.conf..."
 	%{__awk} -v basearch=%{_target_base_arch} -v arch=%{_target_cpu} -f %{SOURCE6} \
-		$RPM_SOURCE_DIR/kernel-$Config.config $RPM_SOURCE_DIR/kernel-multiarch.config \
+		%{SOURCE19} $RPM_SOURCE_DIR/kernel-$Config.config \
 		> %{defconfig}
 	TuneUpConfigForIX86 %{defconfig}
 
@@ -1171,6 +1171,7 @@ sed -i "s:CONFIG_SECURITY_SMACK=y:# CONFIG_SECURITY_SMACK is not set:" %{defconf
 BuildKernel() {
 	%{?debug:set -x}
 	echo "Building kernel $1 ..."
+	install .config %{defconfig}
 	%{__make} %CrossOpts mrproper \
 		RCS_FIND_IGNORE='-name build-done -prune -o'
 	ln -sf %{defconfig} .config
