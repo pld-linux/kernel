@@ -1632,6 +1632,9 @@ fi
 %defattr(644,root,root,755)
 %{_kernelsrcdir}/arch/*/[!Mk]*
 %{_kernelsrcdir}/arch/*/kernel/[!M]*
+%{_kernelsrcdir}/arch/ia64/kvm
+%{_kernelsrcdir}/arch/powerpc/kvm
+%{_kernelsrcdir}/arch/s390/kvm
 %{_kernelsrcdir}/arch/x86/kvm
 %exclude %{_kernelsrcdir}/arch/*/kernel/asm-offsets*
 %exclude %{_kernelsrcdir}/arch/*/kernel/sigframe*.h
