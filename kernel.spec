@@ -153,7 +153,7 @@ Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
 Source3:	kernel-autoconf.h
 Source4:	kernel-config.h
 Source5:	kernel-ppclibs.Makefile
-Source6:	kernel-config.py
+Source6:	kernel-config.awk
 Source7:	kernel-module-build.pl
 
 Source19:	kernel-multiarch.config
@@ -356,8 +356,6 @@ BuildRequires:	gcc >= 5:3.2
 # for hostname command
 BuildRequires:	net-tools
 BuildRequires:	perl-base
-BuildRequires:	python
-BuildRequires:	python-modules
 BuildRequires:	rpmbuild(macros) >= 1.217
 Autoreqprov:	no
 Requires(post):	coreutils
@@ -1056,9 +1054,9 @@ BuildConfig() {
 	Config="%{_target_base_arch}"
 	KernelVer=%{kernel_release}
 	echo "Building config file using $Config.conf..."
-	cat $RPM_SOURCE_DIR/kernel-$Config.config > %{defconfig}
-	./kernel-config.py %{_target_base_arch} $RPM_SOURCE_DIR/kernel-multiarch.config \
-		%{defconfig} %{defconfig}
+	%{__awk} -v basearch=%{_target_base_arch} -v arch=%{_target_cpu} -f %{SOURCE6} \
+		$RPM_SOURCE_DIR/kernel-$Config.config $RPM_SOURCE_DIR/kernel-multiarch.config \
+		> %{defconfig}
 	TuneUpConfigForIX86 %{defconfig}
 
 # netfilter
