@@ -274,6 +274,8 @@ Patch59:	kernel-rndis_host-wm5.patch
 
 Patch60:	kernel-ahci_pata_marvell.patch
 
+Patch61:	kernel-vesa-upstream.patch
+
 # Project suspend2 renamed to tuxonice
 # http://www.tuxonice.net/downloads/all/tuxonice-3.0-rc7a-for-2.6.26.patch.bz2
 Patch69:	linux-2.6-suspend2.patch
@@ -828,6 +830,8 @@ install -m 755 %{SOURCE6} .
 
 # you can use marvell_enable=0 to prevent stealing device by ahci module.
 %patch60 -p1
+
+%patch61 -p1
 
 # hostap enhancements from/for aircrack-ng
 %patch85 -p1
