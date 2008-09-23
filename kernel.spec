@@ -735,10 +735,10 @@ install -m 755 %{SOURCE6} .
 %endif
 
 %patch2 -p1
-%patch3 -p1
 %if %{with fbcondecor}
-%patch4 -p1
+%patch3 -p1
 %endif
+%patch4 -p1
 
 # squashfs
 %patch5 -p1
