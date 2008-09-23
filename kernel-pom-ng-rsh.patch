@@ -367,6 +367,10 @@ diff -NurpP --minimal linux/net/netfilter/nf_conntrack_rsh.c linux/net/netfilter
 +
 +static struct nf_conntrack_helper rsh_helpers[MAX_PORTS];
 +static char rsh_names[MAX_PORTS][10];
++static const struct nf_conntrack_expect_policy rsh_exp_policy = {
++	.max_expected      = 1,
++	.timeout      = 5, /* stes bug timeout=0 */
++};
 +
 +static void fini(void);
 +
@@ -400,8 +404,7 @@ diff -NurpP --minimal linux/net/netfilter/nf_conntrack_rsh.c linux/net/netfilter
 +		rsh_helpers[port].name = tmpname;
 +
 +		rsh_helpers[port].me = THIS_MODULE;
-+		rsh_helpers[port].max_expected = 1;
-+		rsh_helpers[port].timeout = 5; /* stes bug timeout=0 */
++		rpc_helpers[port].expect_policy = &rsh_exp_policy;
 +
 +		rsh_helpers[port].tuple.dst.protonum = IPPROTO_TCP;
 +

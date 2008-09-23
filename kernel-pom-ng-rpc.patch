@@ -161,7 +161,7 @@ diff -Nur --exclude '*.orig' linux/net/ipv4/netfilter/Makefile linux/net/ipv4/ne
 diff -Nur --exclude '*.orig' linux/net/ipv4/netfilter/ip_conntrack_rpc_tcp.c linux/net/ipv4/netfilter/ip_conntrack_rpc_tcp.c
 --- linux/net/ipv4/netfilter/ip_conntrack_rpc_tcp.c	1970-01-01 01:00:00.000000000 +0100
 +++ linux/net/ipv4/netfilter/ip_conntrack_rpc_tcp.c	2007-08-15 03:04:53.000000000 +0200
-@@ -0,0 +1,554 @@
+@@ -0,0 +1,557 @@
 +/* RPC extension for IP (TCP) connection tracking, Version 2.2
 + * (C) 2000 by Marcelo Barbosa Lima <marcelo.lima@dcc.unicamp.br>
 + *	- original rpc tracking module
@@ -635,6 +635,10 @@ diff -Nur --exclude '*.orig' linux/net/ipv4/netfilter/ip_conntrack_rpc_tcp.c lin
 +
 +static struct nf_conntrack_helper rpc_helpers[MAX_PORTS];
 +static char rpc_names[MAX_PORTS][10];
++static const struct nf_conntrack_expect_policy rpc_exp_policy = {
++	.max_expected      = 1,
++	.timeout      = 5 * 60, /* stes */
++};
 +
 +static void fini(void);
 +
@@ -658,8 +662,7 @@ diff -Nur --exclude '*.orig' linux/net/ipv4/netfilter/ip_conntrack_rpc_tcp.c lin
 +		rpc_helpers[port].name = tmpname;
 +
 +		rpc_helpers[port].me = THIS_MODULE;
-+		rpc_helpers[port].max_expected = 1;
-+		rpc_helpers[port].timeout = 5 * 60; /* stes */
++		rpc_helpers[port].expect_policy = &rpc_exp_policy;
 +
 +		rpc_helpers[port].tuple.dst.protonum = IPPROTO_TCP;
 +
@@ -719,7 +722,7 @@ diff -Nur --exclude '*.orig' linux/net/ipv4/netfilter/ip_conntrack_rpc_tcp.c lin
 diff -Nur --exclude '*.orig' linux/net/ipv4/netfilter/ip_conntrack_rpc_udp.c linux/net/ipv4/netfilter/ip_conntrack_rpc_udp.c
 --- linux/net/ipv4/netfilter/ip_conntrack_rpc_udp.c	1970-01-01 01:00:00.000000000 +0100
 +++ linux/net/ipv4/netfilter/ip_conntrack_rpc_udp.c	2007-08-15 01:44:02.000000000 +0200
-@@ -0,0 +1,527 @@
+@@ -0,0 +1,530 @@
 +/* RPC extension for IP (UDP) connection tracking, Version 2.2
 + * (C) 2000 by Marcelo Barbosa Lima <marcelo.lima@dcc.unicamp.br>
 + *	- original rpc tracking module
@@ -1169,6 +1172,10 @@ diff -Nur --exclude '*.orig' linux/net/ipv4/netfilter/ip_conntrack_rpc_udp.c lin
 +
 +static struct nf_conntrack_helper rpc_helpers[MAX_PORTS];
 +static char rpc_names[MAX_PORTS][10];
++static const struct nf_conntrack_expect_policy rpc_exp_policy = {
++	.max_expected      = 1,
++	.timeout      = 5 * 60, /* stes */
++};
 +
 +static void fini(void);
 +
@@ -1192,8 +1199,7 @@ diff -Nur --exclude '*.orig' linux/net/ipv4/netfilter/ip_conntrack_rpc_udp.c lin
 +		rpc_helpers[port].name = tmpname;
 +
 +		rpc_helpers[port].me = THIS_MODULE;
-+		rpc_helpers[port].max_expected = 1;
-+		rpc_helpers[port].timeout = 5 * 60; /* stes */
++		rpc_helpers[port].expect_policy = &rpc_exp_policy;
 +
 +		rpc_helpers[port].tuple.dst.protonum = IPPROTO_UDP;
 +
