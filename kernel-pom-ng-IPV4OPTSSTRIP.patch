@@ -31,7 +31,7 @@ diff -NurpP --minimal linux-2.6.21.b/net/ipv4/netfilter/Makefile linux-2.6.21.a/
 diff -NurpP --minimal linux-2.6.21.b/net/ipv4/netfilter/ipt_IPV4OPTSSTRIP.c linux-2.6.21.a/net/ipv4/netfilter/ipt_IPV4OPTSSTRIP.c
 --- linux-2.6.21.b/net/ipv4/netfilter/ipt_IPV4OPTSSTRIP.c	1970-01-01 01:00:00.000000000 +0100
 +++ linux-2.6.21.a/net/ipv4/netfilter/ipt_IPV4OPTSSTRIP.c	2007-05-30 11:18:08.000000000 +0200
-@@ -0,0 +1,87 @@
+@@ -0,0 +1,84 @@
 +/**
 + * Strip all IP options in the IP packet header.
 + *
@@ -51,7 +51,7 @@ diff -NurpP --minimal linux-2.6.21.b/net/ipv4/netfilter/ipt_IPV4OPTSSTRIP.c linu
 +MODULE_LICENSE("GPL");
 +
 +static unsigned int
-+target(struct sk_buff **pskb,
++target(struct sk_buff *skb,
 +       const struct net_device *in,
 +       const struct net_device *out,
 +       unsigned int hooknum,
@@ -59,16 +59,14 @@ diff -NurpP --minimal linux-2.6.21.b/net/ipv4/netfilter/ipt_IPV4OPTSSTRIP.c linu
 +       const void *targinfo)
 +{
 +	struct iphdr *iph;
-+	struct sk_buff *skb;
 +	struct ip_options *opt;
-+	unsigned char *optiph;
++	sk_buff_data_t optiph;
 +	int l;
 +	
-+	if (!skb_make_writable(pskb, (*pskb)->len))
++	if (!skb_make_writable(skb, skb->len))
 +		return NF_DROP;
 + 
-+	skb = (*pskb);
-+	iph = ip_hdr(*pskb);
++	iph = ip_hdr(skb);
 +	optiph = skb->network_header;
 +	l = ((struct ip_options *)(&(IPCB(skb)->opt)))->optlen;
 +
@@ -80,7 +78,6 @@ diff -NurpP --minimal linux-2.6.21.b/net/ipv4/netfilter/ipt_IPV4OPTSSTRIP.c linu
 +	memset(&(IPCB(skb)->opt), 0, sizeof(struct ip_options));
 +	memset(optiph+sizeof(struct iphdr), IPOPT_NOOP, l);
 +	opt = &(IPCB(skb)->opt);
-+	opt->is_data = 0;
 +	opt->optlen = l;
 +
 +        return IPT_CONTINUE;
