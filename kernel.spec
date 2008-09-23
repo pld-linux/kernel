@@ -25,7 +25,7 @@
 %bcond_with	pax_full	# build pax and full grsecurity (ie. grsec_full && pax)
 %bcond_with	pax		# build pax support
 
-%bcond_with	fbcondecor	# fbsplash/fbcondecor instead of bootsplash
+%bcond_with	fbcondecor	# build fbcondecor (disable FB_TILEBLITTING and affected fb modules)
 %bcond_with	pae		# build PAE (HIGHMEM64G) support on uniprocessor
 %bcond_with	nfsroot		# build with root on NFS support
 
@@ -187,16 +187,14 @@ Source59:	kernel-bzip2-lzma.config
 # tahoe9xx http://www.tahoe.pl/drivers/tahoe9xx-2.6.24.patch
 Patch2:		tahoe9xx-2.6.24.patch
 
-# ftp://ftp.openbios.org/pub/bootsplash/kernel/bootsplash-3.1.6-2.6.21.diff.gz
-Patch3:		linux-2.6-bootsplash.patch
 # http://dev.gentoo.org/~spock/projects/fbcondecor/archive/fbcondecor-0.9.4-2.6.25-rc6.patch
-Patch4:		kernel-fbcondecor.patch
+Patch3:		kernel-fbcondecor.patch
+Patch4:		linux-fbcon-margins.patch
 
 # based on http://mesh.dl.sourceforge.net/sourceforge/squashfs/squashfs3.3.tgz
 # squashfs3.3/kernel-patches/linux-2.6.24/squashfs3.3-patch
-Patch6:		kernel-squashfs.patch
-Patch8:		linux-fbcon-margins.patch
-Patch9:		linux-static-dev.patch
+Patch5:		kernel-squashfs.patch
+Patch6:		linux-static-dev.patch
 
 # netfilter related stuff mostly based on patch-o-matic-ng
 # snapshot 20061213 with some fixes related to changes in
@@ -737,19 +735,15 @@ install -m 755 %{SOURCE6} .
 %endif
 
 %patch2 -p1
-
-%patch8 -p1
-
-%if !%{with fbcondecor}
 %patch3 -p1
-%else
+%if %{with fbcondecor}
 %patch4 -p1
 %endif
 
 # squashfs
-%patch6 -p1
+%patch5 -p1
 
-%patch9 -p1
+%patch6 -p1
 
 ## netfilter
 #
@@ -1138,9 +1132,11 @@ BuildConfig() {
 %endif
 
 %if %{with fbcondecor}
+	sed -i "s:CONFIG_FB_S3=m:# CONFIG_FB_S3 is not set:" %{defconfig}
+	sed -i "s:CONFIG_FB_VT8623=m:# CONFIG_FB_VT8623 is not set:" %{defconfig}
+	sed -i "s:CONFIG_FB_ARK=m:# CONFIG_FB_ARK is not set:" %{defconfig}
+	sed -i "s:CONFIG_FB_TILEBLITTING=y:# CONFIG_FB_TILEBLITTING is not set:" %{defconfig}
 	echo "CONFIG_FB_CON_DECOR=y" >> %{defconfig}
-%else
-	echo "CONFIG_BOOTSPLASH=y" >> %{defconfig}
 %endif
 
 %if %{with nfsroot}
