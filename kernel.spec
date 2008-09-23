@@ -184,11 +184,8 @@ Source57:	kernel-wrr.config
 Source58:	kernel-inittmpfs.config
 Source59:	kernel-bzip2-lzma.config
 
-###
-#	Patches
-###
-# tahoe9XX http://tahoe.pl/drivers/tahoe9xx-2.6.11.5.patch
-Patch2:		tahoe9xx-2.6.11.5.patch
+# tahoe9xx http://www.tahoe.pl/drivers/tahoe9xx-2.6.24.patch
+Patch2:		tahoe9xx-2.6.24.patch
 
 # ftp://ftp.openbios.org/pub/bootsplash/kernel/bootsplash-3.1.6-2.6.21.diff.gz
 Patch3:		linux-2.6-bootsplash.patch
