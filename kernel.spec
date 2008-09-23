@@ -209,7 +209,7 @@ Patch16:	kernel-pom-ng-mms-conntrack-nat.patch
 Patch22:	kernel-pom-ng-rsh.patch
 Patch23:	kernel-pom-ng-rpc.patch
 
-# based on http://mike.it-loops.com/rtsp/rtsp-2.6.24.patch
+# based on http://mike.it-loops.com/rtsp/rtsp-2.6.26.patch
 Patch36:	kernel-nf_rtsp.patch
 
 # http://ftp.linux-vserver.org/pub/people/dhozac/p/k/delta-owner-xid-feat02.diff
@@ -333,7 +333,7 @@ Patch9997:	pax_selinux_hooks-2.6.20.patch
 # based on http://www.grsecurity.net/~paxguy1/pax-linux-2.6.24.6-test45.patch
 Patch9998:	kernel-pax.patch
 
-# based on http://www.grsecurity.net/~spender/grsecurity-2.1.12-2.6.25.4-200805181334.patch
+# based on http://www.grsecurity.net/~spender/grsecurity-2.1.12-2.6.26.3-200809012141.patch
 Patch9999:	linux-2.6-grsec_full.patch
 Patch10000:	linux-2.6-grsec-caps.patch
 Patch10001:	linux-2.6-grsec-common.patch
@@ -749,25 +749,25 @@ install -m 755 %{SOURCE6} .
 #
 
 # kernel-pom-ng-IPV4OPTSSTRIP.patch
-#FIXME%patch10 -p1
+%patch10 -p1
 
 # kernel-pom-ng-ipv4options.patch
 %patch11 -p1
 
 # kernel-pom-ng-ROUTE.patch
-#FIXME%patch14 -p1
+%patch14 -p1
 
 # kernel-pom-ng-mms-conntrack-nat.patch
-#FIXME%patch16 -p1
+%patch16 -p1
 
 # kernel-pom-ng-rsh.patch
-#FIXME%patch22 -p1
+%patch22 -p1
 
 # kernel-pom-ng-rpc.patch
-#FIXME%patch23 -p1
+%patch23 -p1
 
 # kernel-nf_rtsp.patch
-#FIXME%patch36 -p1
+%patch36 -p1
 
 # kernel-owner-xid.patch
 %if %{with vserver}
