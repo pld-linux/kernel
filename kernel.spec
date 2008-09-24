@@ -109,7 +109,7 @@
 %define		_prepatch		%{nil}
 %define		_pre_rc			%{nil}
 %define		_rc			%{nil}
-%define		_rel			1
+%define		_rel			2
 
 %define		_enable_debug_packages			0
 
@@ -302,6 +302,10 @@ Patch102:	linux-2.6-vs2.2.patch
 # Wake-On-Lan fix for nForce drivers; using http://atlas.et.tudelft.nl/verwei90/nforce2/wol.html
 # Fix verified for that kernel version.
 Patch130:	linux-2.6-forcedeth-WON.patch
+
+# http://marc.info/?l=linux-wireless&m=120995431512335&w=2
+# enables monitor mode for iwl3945 (without this only beacons are captured) 
+Patch131:	kernel-iwl3945-monitor.patch
 
 # http://download.filesystems.org/unionfs/unionfs-2.x/unionfs-2.2.4_for_2.6.25-rc2.diff.gz
 Patch140:	kernel-unionfs.patch
@@ -876,6 +880,9 @@ install -m 755 %{SOURCE6} .
 
 # forcedeth
 %patch130 -p1
+
+# iwl3945 monitor mode
+%patch131 -p1
 
 # unionfs
 %patch140 -p1
