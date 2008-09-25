@@ -367,6 +367,7 @@ Provides:	%{name}(vermagic) = %{kernel_release}
 %if %{with xen0} || %{with xenU}
 Provides:	kernel(xen) = %{_xen_version}
 %endif
+Obsoletes:	kernel-misc-acer_acpi
 Obsoletes:	kernel-misc-fuse
 Obsoletes:	kernel-modules
 Obsoletes:	kernel-net-hostap
