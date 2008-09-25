@@ -372,6 +372,7 @@ Obsoletes:	kernel-modules
 Obsoletes:	kernel-net-hostap
 Obsoletes:	kernel-net-ieee80211
 Obsoletes:	kernel-net-ipp2p
+Obsoletes:	kernel-net-rt61
 Obsoletes:	kernel-smp
 Conflicts:	e2fsprogs < 1.29
 Conflicts:	isdn4k-utils < 3.1pre1
