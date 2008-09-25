@@ -254,8 +254,9 @@ Patch52:	kernel-wrr.patch
 # http://fatooh.org/esfq-2.6/sfq-2.6.24.1.tar.bz2
 Patch53:	esfq-kernel.patch
 
-# http://memebeam.org/free-software/toshiba_acpi/toshiba_acpi-dev_toshiba_test5-linux_2.6.21.patch
+# http://memebeam.org/free-software/toshiba_acpi/toshiba_acpi-dev_toshiba_test5-linux_2.6.26.patch
 Patch54:	linux-2.6-toshiba_acpi.patch
+
 # by Baggins request:
 # derived from ftp://ftp.cmf.nrl.navy.mil/pub/chas/linux-atm/vbr/vbr-kernel-diffs
 Patch55:	linux-2.6-atm-vbr.patch
@@ -812,7 +813,7 @@ install -m 755 %{SOURCE6} .
 %endif
 
 # toshiba_acpi
-#FIXME%patch54 -p1
+%patch54 -p1
 
 %patch55 -p1
 %patch56 -p1
