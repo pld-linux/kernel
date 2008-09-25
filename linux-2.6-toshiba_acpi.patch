@@ -1,5 +1,5 @@
---- linux-2.6.21/drivers/acpi/toshiba_acpi.c.21.orig	2007-04-28 00:49:26.000000000 +0300
-+++ linux-2.6.21/drivers/acpi/toshiba_acpi.c	2007-05-15 19:23:32.000000000 +0300
+--- linux-2.6/drivers/acpi/toshiba_acpi.c.orig	2008-08-30 22:12:50.000000000 -0700
++++ linux-2.6/drivers/acpi/toshiba_acpi.c	2008-08-31 12:03:07.000000000 -0700
 @@ -28,12 +28,26 @@
   *	Yasushi Nagato - changes for linux kernel 2.4 -> 2.5
   *	Rob Miller - TV out and hotkeys help
@@ -28,17 +28,18 @@
  #define PROC_INTERFACE_VERSION	1
  
  #include <linux/kernel.h>
-@@ -41,6 +55,9 @@
+@@ -41,6 +55,10 @@
  #include <linux/init.h>
  #include <linux/types.h>
  #include <linux/proc_fs.h>
++#include <linux/seq_file.h>
 +#include <linux/miscdevice.h>
 +#include <linux/toshiba.h>
 +#include <asm/io.h>
  #include <linux/backlight.h>
  
  #include <asm/uaccess.h>
-@@ -490,6 +507,179 @@
+@@ -497,6 +515,191 @@
  	return p;
  }
  
@@ -157,9 +158,8 @@
 +
 +/* /proc/toshiba read handler */
 +static int
-+tosh_get_info(char* buffer, char** start, off_t fpos, int length)
++tosh_proc_show(struct seq_file *m, void *v)
 +{
-+	char* temp = buffer;
 +	/* TODO: tosh_fn_status() */
 +	int key = 0;
 +
@@ -172,7 +172,7 @@
 +	 *    5) Fn Key status
 +	 */
 +
-+	temp += sprintf(temp, "1.1 0x%04x %d.%d %d.%d 0x%04x 0x%02x\n",
++	seq_printf(m, "1.1 0x%04x %d.%d %d.%d 0x%04x 0x%02x\n",
 +		tosh_id,
 +		(tosh_sci & 0xff00)>>8,
 +		tosh_sci & 0xff,
@@ -181,8 +181,21 @@
 +		tosh_date,
 +		key);
 +
-+	return temp-buffer;
++	return 0;
 +}
++
++static int tosh_proc_open(struct inode *inode, struct file *file)
++{
++	return single_open(file, tosh_proc_show, NULL);
++}
++
++static const struct file_operations tosh_proc_fops = {
++	.owner		= THIS_MODULE,
++	.open		= tosh_proc_open,
++	.read		= seq_read,
++	.llseek		= seq_lseek,
++	.release	= single_release,
++};
 +
 +static int __init
 +old_driver_emulation_init(void)
@@ -199,7 +212,7 @@
 +	}
 +
 +	setup_tosh_info(bios);
-+	create_proc_info_entry(OLD_PROC_TOSHIBA, 0, NULL, tosh_get_info);
++	proc_create(OLD_PROC_TOSHIBA, 0, NULL, &tosh_proc_fops);
 +
 +	iounmap(bios);
 +
@@ -218,7 +231,7 @@
  /* proc and module init
   */
  
-@@ -548,6 +738,8 @@
+@@ -555,6 +758,8 @@
  	if (toshiba_proc_dir)
  		remove_proc_entry(PROC_TOSHIBA, acpi_root_dir);
  
@@ -227,7 +240,7 @@
  	return;
  }
  
-@@ -555,6 +747,7 @@
+@@ -562,6 +767,7 @@
  {
  	acpi_status status = AE_OK;
  	u32 hci_result;
@@ -235,7 +248,7 @@
  
  	if (acpi_disabled)
  		return -ENODEV;
-@@ -571,6 +764,9 @@
+@@ -578,6 +784,9 @@
  	       TOSHIBA_ACPI_VERSION);
  	printk(MY_INFO "    HCI method: %s\n", method_hci);
  
