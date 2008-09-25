@@ -369,6 +369,7 @@ Provides:	kernel(xen) = %{_xen_version}
 %endif
 Obsoletes:	kernel-misc-acer_acpi
 Obsoletes:	kernel-misc-fuse
+Obsoletes:	kernel-misc-uvc
 Obsoletes:	kernel-modules
 Obsoletes:	kernel-net-hostap
 Obsoletes:	kernel-net-ieee80211
