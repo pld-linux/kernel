@@ -932,68 +932,55 @@ find '(' -name '*~' -o -name '*.orig' -o -name '.gitignore' ')' -print0 | xargs 
 %build
 TuneUpConfigForIX86 () {
 	set -x
+	cat <<-EOCONFIG > $1
 %ifarch %{ix86}
-	pae=
-	[ "$2" = "yes" ] && pae=yes
-	%if %{with pae}
-	pae=yes
-	%endif
-	%ifnarch i386
-	sed -i 's:CONFIG_M386=y:# CONFIG_M386 is not set:' $1
-	%endif
-	%ifarch i486
-	sed -i 's:# CONFIG_M486 is not set:CONFIG_M486=y:' $1
-	%endif
-	%ifarch i586
-	sed -i 's:# CONFIG_M586 is not set:CONFIG_M586=y:' $1
-	%endif
-	%ifarch i686
-	sed -i 's:# CONFIG_M686 is not set:CONFIG_M686=y:' $1
-	%endif
-	%ifarch pentium3
-	sed -i 's:# CONFIG_MPENTIUMIII is not set:CONFIG_MPENTIUMIII=y:' $1
-	%endif
-	%ifarch pentium4
-	sed -i 's:# CONFIG_MPENTIUM4 is not set:CONFIG_MPENTIUM4=y:' $1
-	%endif
-	%ifarch athlon
-	sed -i 's:# CONFIG_MK7 is not set:CONFIG_MK7=y:' $1
-	%endif
-	%ifarch i686 athlon pentium3 pentium4
-	if [ "$pae" = "yes" ]; then
-		sed -i "s:CONFIG_HIGHMEM4G=y:# CONFIG_HIGHMEM4G is not set:" $1
-		sed -i "s:# CONFIG_HIGHMEM64G is not set:CONFIG_HIGHMEM64G=y\nCONFIG_X86_PAE=y:" $1
-	fi
-	sed -i 's:CONFIG_MATH_EMULATION=y:# CONFIG_MATH_EMULATION is not set:' $1
-	%endif
-	return 0
+		# this part can be moved into i386 config file
+		CONFIG_M386 i386=y i486=n i586=n i686=n pentium3=n pentium4=n athlon=n
+		CONFIG_M486 i386=n i486=y
+		CONFIG_M586 i386=n i586=y
+		CONFIG_M686 i386=n i686=y
+		CONFIG_MPENTIUMIII i386=n pentium3=y
+		CONFIG_MPENTIUM4 i386=n pentium4=y
+		CONFIG_MK7 i386=n athlon=y
+
+		CONFIG_MATH_EMULATION i386=y i686=n pentium3=n pentium4=n athlon=n
+  %ifarch i686 athlon pentium3 pentium4
+    %if %{with pae}
+		CONFIG_HIGHMEM4G=n
+		CONFIG_HIGHMEM64G=y
+		CONFIG_X86_PAE=y
+    %endif
+  %endif
 %endif
+EOCONFIG
+	return 0
 }
 
 PaXconfig () {
 	set -x
+	cat <<-EOCONFIG > $1
 	%ifarch %{ix86}
-		sed -i 's:# CONFIG_PAX_SEGMEXEC is not set:CONFIG_PAX_SEGMEXEC=y:' $1
+		CONFIG_PAX_SEGMEXEC=y
 		# performance impact on CPUs without NX bit
-		sed -i 's:CONFIG_PAX_PAGEEXEC=y:# CONFIG_PAX_PAGEEXEC is not set:' $1
+		CONFIG_PAX_PAGEEXEC=n
 		# Testing KERNEXEC
 
-		# sed -i 's:CONFIG_HOTPLUG_PCI_COMPAQ_NVRAM=y:# CONFIG_HOTPLUG_PCI_COMPAQ_NVRAM is not set:' $1
-		# sed -i 's:CONFIG_PCI_BIOS=y:# CONFIG_PCI_BIOS is not set:' $1
-		# sed -i 's:CONFIG_EFI=y:# CONFIG_EFI is not set:' $1
-
+		CONFIG_HOTPLUG_PCI_COMPAQ_NVRAM=n
+		CONFIG_PCI_BIOS=n
+		CONFIG_EFI=n
 	%endif
+
 	%ifarch ppc64
-		sed -i 's:CONFIG_PAX_NOELFRELOCS=y:# CONFIG_PAX_NOELFRELOCS is not set:' $1
+		CONFIG_PAX_NOELFRELOCS=n
 	%endif
 	%ifarch ppc
-		sed -i 's:# CONFIG_PAX_EMUTRAMP is not set:CONFIG_PAX_EMUTRAMP=y:' $1
-		sed -i 's:# CONFIG_PAX_EMUSIGRT is not set:CONFIG_PAX_EMUSIGRT=y:' $1
-		sed -i 's:# CONFIG_PAX_EMUPLT is not set:CONFIG_PAX_EMUPLT=y:' $1
+		CONFIG_PAX_EMUTRAMP=y
+		CONFIG_PAX_EMUSIGRT=y
+		CONFIG_PAX_EMUPLT=y
 	%endif
 
 	%ifarch sparc sparc64 alpha
-		sed -i 's:# CONFIG_PAX_EMUPLT is not set:CONFIG_PAX_EMUPLT=y:' $1
+		CONFIG_PAX_EMUPLT=y
 	%endif
 
 	# Now we have to check MAC system integration. Grsecurity (full) uses PAX_HAVE_ACL_FLAGS
@@ -1003,169 +990,173 @@ PaXconfig () {
 
 	%if %{with grsec_full}
 		# Hardening grsec options if with pax
-		sed -i "s:# CONFIG_GRKERNSEC_PROC_MEMMAP is not set:CONFIG_GRKERNSEC_PROC_MEMMAP=y:" $1
+		CONFIG_GRKERNSEC_PROC_MEMMAP=y
 		# almost rational (see HIDESYM help)
-		sed -i "s:# CONFIG_GRKERNSEC_HIDESYM is not set:CONFIG_GRKERNSEC_HIDESYM=y:" $1
+		CONFIG_GRKERNSEC_HIDESYM=y
 
 		# no change needed CONFIG=PAX_HAVE_ACL_FLAGS=y is taken from the kernel-pax.config
 	%else
 		# selinux or other hooks?
-		sed -i 's:CONFIG_PAX_HAVE_ACL_FLAGS=y:# CONFIG_PAX_HAVE_ACL_FLAGS is not set:' $1
-		sed -i 's:# CONFIG_PAX_HOOK_ACL_FLAGS is not set:CONFIG_PAX_HOOK_ACL_FLAGS=y:' $1
+		CONFIG_PAX_HAVE_ACL_FLAGS=n
+		CONFIG_PAX_HOOK_ACL_FLAGS=y
 	%endif
+EOCONFIG
 
 	return 0
 }
 
 RescueConfig() {
 	set -x
-	cat %{SOURCE58} >> $1
-	cat %{SOURCE59} >> $1
-	sed -i "s:CONFIG_SOUND=.:# CONFIG_SOUND is not set:" $1
-	sed -i "s:CONFIG_AUDIT=.:# CONFIG_AUDIT is not set:" $1
-	sed -i "s:CONFIG_TR=.:# CONFIG_TR is not set:" $1
-	sed -i "s:CONFIG_BT=.:# CONFIG_BT is not set:" $1
-	sed -i "s:CONFIG_VIDEO_DEV=.:# CONFIG_VIDEO_DEV is not set:" $1
-	sed -i "s:CONFIG_DVB_CORE=.:# CONFIG_DVB_CORE is not set:" $1
-	sed -i "s:CONFIG_HAMRADIO=.:# CONFIG_HAMRADIO is not set:" $1
-	sed -i "s:CONFIG_ARCNET=.:# CONFIG_ARCNET is not set:" $1
-	sed -i "s:CONFIG_FB=.:# CONFIG_FB is not set:" $1
-	sed -i "s:CONFIG_DRM\(.*\)=.:# CONFIG_DRM\1 is not set:" $1
-	sed -i "s:CONFIG_WATCHDOG=.:# CONFIG_WATCHDOG is not set:" $1
-	sed -i "s:CONFIG_INPUT_JOYSTICK=.:# CONFIG_INPUT_JOYSTICK is not set:" $1
-	sed -i "s:CONFIG_DEBUG_KERNEL=.:# CONFIG_DEBUG_KERNEL is not set:" $1
-	sed -i "s:CONFIG_ISDN=.:# CONFIG_ISDN is not set:" $1
-	sed -i "s:CONFIG_AGP\(.*\)=.:# CONFIG_AGP\1 is not set:" $1
-	sed -i "s:CONFIG_SECURITY=.:# CONFIG_SECURITY is not set:" $1
-	sed -i "s:CONFIG_PARIDE=.:# CONFIG_PARIDE is not set:" $1
-	sed -i "s:CONFIG_CPU_FREQ=.:# CONFIG_CPU_FREQ is not set:" $1
-	sed -i "s:CONFIG_GAMEPORT=.:# CONFIG_GAMEPORT is not set:" $1
-	sed -i "s:CONFIG_KVM=.:# CONFIG_KVM is not set:" $1
-	sed -i "s:CONFIG_PHONE=.:# CONFIG_PHONE is not set:" $1
-	sed -i "s:CONFIG_BLK_DEV_LOOP=m:CONFIG_BLK_DEV_LOOP=y:" $1
-	sed -i "s:CONFIG_ISO9660_FS=m:CONFIG_ISO9660_FS=y:" $1
-	sed -i "s:CONFIG_NLS_UTF8=m:CONFIG_NLS_UTF8=y:" $1
+	cat <<-EOCONFIG > $1
+		# CONFIG_SOUND is not set
+		# CONFIG_AUDIT is not set
+		# CONFIG_TR is not set
+		# CONFIG_BT is not set
+		# CONFIG_VIDEO_DEV is not set
+		# CONFIG_DVB_CORE is not set
+		# CONFIG_HAMRADIO is not set
+		# CONFIG_ARCNET is not set
+		# CONFIG_FB is not set
+		# CONFIG_DRM is not set
+		# CONFIG_WATCHDOG is not set
+		# CONFIG_INPUT_JOYSTICK is not set
+		# CONFIG_DEBUG_KERNEL is not set
+		# CONFIG_ISDN is not set
+		# CONFIG_AGP is not set
+		# CONFIG_SECURITY is not set
+		# CONFIG_PARIDE is not set
+		# CONFIG_CPU_FREQ is not set
+		# CONFIG_GAMEPORT is not set
+		# CONFIG_KVM is not set
+		# CONFIG_PHONE is not set
+		CONFIG_BLK_DEV_LOOP=y
+		CONFIG_ISO9660_FS=y
+		CONFIG_NLS_UTF8=y
+EOCONFIG
+
+	return 0
 }
 
 BuildConfig() {
 	%{?debug:set -x}
+	set -e
+
 	# is this a special kernel we want to build?
 	Config="%{_target_base_arch}"
 	KernelVer=%{kernel_release}
 	echo "Building config file using $Config.conf..."
-	%{__awk} -v basearch=%{_target_base_arch} -v arch=%{_target_cpu} -f %{SOURCE6} \
-		%{SOURCE19} $RPM_SOURCE_DIR/kernel-$Config.config \
-		> %{defconfig}
-	TuneUpConfigForIX86 %{defconfig}
 
-# netfilter
-	cat %{SOURCE40} >> %{defconfig}
-
-# squashfs
-	cat %{SOURCE41} >> %{defconfig}
-
-# tuxonice
-%if %{with tuxonice}
-%ifarch %{ix86} %{x8664} ia64 ppc ppc64
-	cat %{SOURCE42} >> %{defconfig}
-%endif
-%ifarch ppc ppc64
-	sed -i "s:CONFIG_TOI=y:# CONFIG_TOI is not set:" %{defconfig}
-%endif
-%endif
-
-%if %{with vserver}
-	cat %{SOURCE43} >> %{defconfig}
-%endif
-
-%if %{without ipv6}
-	sed -i "s:CONFIG_IPV6=.:# CONFIG_IPV6 is not set:" %{defconfig}
-%endif
-
-# grsecurity & pax stuff
-#
-
-%if %{with pax_full}
-	cat %{SOURCE45} >> %{defconfig}
-	cat %{SOURCE49} >> %{defconfig}
-	PaXconfig %{defconfig}
-%else
-
-%if %{with grsec_full}
-	cat %{SOURCE45} >> %{defconfig}
-	cat %{SOURCE50} >> %{defconfig}
-%else
-%if %{with grsec_minimal}
-	cat %{SOURCE51} >> %{defconfig}
-%endif
-%endif
-
-%if %{with pax}
-	cat %{SOURCE49} >> %{defconfig}
-	PaXconfig %{defconfig}
-%endif
-
-%endif
-
-# Temporary disabled RELOCATABLE. Needed only on x86??
-%if %{with pax} || %{with grsec_full}
-	sed -i "s:CONFIG_RELOCATABLE=y:# CONFIG_RELOCATABLE is not set:" %{defconfig}
-%endif
-
-#
-# end of grsecurity & pax stuff
-
-%if %{with imq}
-	cat %{SOURCE55} >> %{defconfig}
-%endif
-
-%if %{with wrr}
-	cat %{SOURCE57} >> %{defconfig}
-%endif
-
-%if %{with reiser4}
-	cat %{SOURCE56} >> %{defconfig}
-%endif
-
-%if %{with xen0}
-	cat %{SOURCE46} >> %{defconfig}
-%endif
-
-%if %{with xenU}
-	cat %{SOURCE47} >> %{defconfig}
-%endif
-
-%if %{with fbcondecor}
-	sed -i "s:CONFIG_FB_S3=m:# CONFIG_FB_S3 is not set:" %{defconfig}
-	sed -i "s:CONFIG_FB_VT8623=m:# CONFIG_FB_VT8623 is not set:" %{defconfig}
-	sed -i "s:CONFIG_FB_ARK=m:# CONFIG_FB_ARK is not set:" %{defconfig}
-	sed -i "s:CONFIG_FB_TILEBLITTING=y:# CONFIG_FB_TILEBLITTING is not set:" %{defconfig}
-	echo "CONFIG_FB_CON_DECOR=y" >> %{defconfig}
-%endif
-
-%if %{with nfsroot}
-	sed -i "s:CONFIG_NFS_FS=m:CONFIG_NFS_FS=y:" %{defconfig}
-	echo "CONFIG_ROOT_NFS=y" >> %{defconfig}
-%endif
-
-%if %{with rescuecd}
-	RescueConfig %{defconfig}
+	# prepare local and important options
+	cat <<-EOCONFIG > important.config
+%if 0%{?debug:1}
+		CONFIG_DEBUG_SLAB=y
+		CONFIG_DEBUG_PREEMPT=y
+		CONFIG_RT_DEADLOCK_DETECT=y
 %endif
 
 # apparmor, will be moved to external file if works
 %if %{with apparmor}
-echo CONFIG_SECURITY_APPARMOR=y >> %{defconfig}
-echo CONFIG_SECURITY_APPARMOR_BOOTPARAM_VALUE=1 >> %{defconfig}
-echo "# CONFIG_SECURITY_APPARMOR_DISABLE is not set" >> %{defconfig}
-# patch for unionfs not ready yet
-sed -i "s:CONFIG_UNION_FS=m:# CONFIG_UNION_FS is not set:" %{defconfig}
-# some conflict with smack, todo
-sed -i "s:CONFIG_SECURITY_SMACK=y:# CONFIG_SECURITY_SMACK is not set:" %{defconfig}
+		CONFIG_SECURITY_APPARMOR=y
+		CONFIG_SECURITY_APPARMOR_BOOTPARAM_VALUE=1
+		CONFIG_SECURITY_APPARMOR_DISABLE=n
+		# patch for unionfs not ready yet
+		CONFIG_UNION_FS=n
+		# some conflict with smack, todo
+		CONFIG_SECURITY_SMACK=n
 %endif
 
-%{?debug:sed -i "s:# CONFIG_DEBUG_SLAB is not set:CONFIG_DEBUG_SLAB=y:" %{defconfig}}
-%{?debug:sed -i "s:# CONFIG_DEBUG_PREEMPT is not set:CONFIG_DEBUG_PREEMPT=y:" %{defconfig}}
-%{?debug:sed -i "s:# CONFIG_RT_DEADLOCK_DETECT is not set:CONFIG_RT_DEADLOCK_DETECT=y:" %{defconfig}}
+%if %{with tuxonice}
+%ifarch ppc ppc64
+		# move to tuxonice config
+		CONFIG_TOI=n
+%endif
+%endif
+
+%if %{without ipv6}
+		CONFIG_IPV6=n
+%endif
+
+%if %{with fbcondecor}
+		CONFIG_FB_S3=n
+		CONFIG_FB_VT8623=n
+		CONFIG_FB_ARK=n
+		CONFIG_FB_TILEBLITTING=n
+		CONFIG_FB_CON_DECOR=y
+%endif
+
+%if %{with nfsroot}
+		CONFIG_NFS_FS=y
+		CONFIG_ROOT_NFS=y
+%endif
+EOCONFIG
+
+	TuneUpConfigForIX86 ix86.config
+
+	RescueConfig rescue.config
+	PaXconfig pax.config
+
+# Temporary disabled RELOCATABLE. Needed only on x86??
+%if %{with pax} || %{with grsec_full}
+	echo "CONFIG_RELOCATABLE=n" >> important.config
+%endif
+
+	# prepare kernel-style config file from multiple config files
+	%{__awk} -v basearch=%{_target_base_arch} -v arch=%{_target_cpu} -f %{SOURCE6} \
+		important.config \
+%if %{with rescuecd}
+		%{SOURCE58} \
+		%{SOURCE59} \
+		rescue.config \
+%endif
+%if %{with xenU}
+		%{SOURCE47} \
+%endif
+%if %{with xen0}
+		%{SOURCE46} \
+%endif
+		\
+%if %{with pax_full}
+		%{SOURCE45} \
+		%{SOURCE49} \
+		pax.config \
+%else
+  %if %{with grsec_full}
+		%{SOURCE45} \
+		%{SOURCE50} \
+  %else
+    %if %{with grsec_minimal}
+		%{SOURCE51} \
+    %endif
+  %endif
+  %if %{with pax}
+		%{SOURCE49} \
+		pax.config \
+  %endif
+%endif
+		\
+%if %{with reiser4}
+		%{SOURCE56} \
+%endif
+%if %{with wrr}
+		%{SOURCE57} \
+%endif
+%if %{with imq}
+		%{SOURCE55} \
+%endif
+%if %{with vserver}
+		%{SOURCE43} \
+%endif
+%if %{with tuxonice}
+%ifarch %{ix86} %{x8664} ia64 ppc ppc64
+		%{SOURCE42} \
+%endif
+%endif
+		%{SOURCE40} %{?0:netfilter} \
+		%{SOURCE41} %{?0:squashfs} \
+		ix86.config \
+		%{SOURCE19} \
+		$RPM_SOURCE_DIR/kernel-$Config.config \
+		> %{defconfig}
 
 }
 
