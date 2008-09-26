@@ -1071,13 +1071,6 @@ BuildConfig() {
 		CONFIG_SECURITY_SMACK=n
 %endif
 
-%if %{with tuxonice}
-%ifarch ppc ppc64
-		# move to tuxonice config
-		CONFIG_TOI=n
-%endif
-%endif
-
 %if %{without ipv6}
 		CONFIG_IPV6=n
 %endif
