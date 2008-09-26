@@ -1050,6 +1050,7 @@ BuildConfig() {
 	cat <<-EOCONFIG > important.config
 %if 0%{?debug:1}
 		CONFIG_DEBUG_SLAB=y
+		CONFIG_DEBUG_SLAB_LEAK=y
 		CONFIG_DEBUG_PREEMPT=y
 		CONFIG_RT_DEADLOCK_DETECT=y
 %endif
