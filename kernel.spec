@@ -39,6 +39,7 @@
 
 %bcond_with	rescuecd	# build kernel for our rescue
 
+%bcond_without	smp		# build uniprocessor instead of SMP kernel
 %bcond_with	myown		# build with your own config (kernel-myown.config)
 
 %{?debug:%define with_verbose 1}
@@ -1053,6 +1054,10 @@ BuildConfig() {
 		CONFIG_DEBUG_SLAB_LEAK=y
 		CONFIG_DEBUG_PREEMPT=y
 		CONFIG_RT_DEADLOCK_DETECT=y
+%endif
+
+%if %{without smp}
+		CONFIG_SMP=n
 %endif
 
 # apparmor, will be moved to external file if works
