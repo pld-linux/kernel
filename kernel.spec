@@ -448,7 +448,7 @@ BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 	%define	DepMod /sbin/depmod
 	%endif
 
-	%ifarch ppc ppc64
+	%if "%{_target_base_arch}" == ppc || "%{_target_base_arch}" == "ppc64"
 	%define CrossOpts ARCH=powerpc CROSS_COMPILE=%{_target_cpu}-pld-linux-
 	%endif
 %else
@@ -459,6 +459,7 @@ BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 	%endif
 	%define	DepMod /sbin/depmod
 %endif
+%define MakeOpts %{CrossOpts} HOSTCC="%{__cc}"
 
 %define __features Netfilter module dated: %{netfilter_snap}\
 %{?with_grsec_full:Grsecurity full support - enabled}\
@@ -1163,27 +1164,27 @@ BuildKernel() {
 	%{?debug:set -x}
 	echo "Building kernel $1 ..."
 	install .config %{defconfig}
-	%{__make} %CrossOpts mrproper \
+	%{__make} %{MakeOpts} mrproper \
 		RCS_FIND_IGNORE='-name build-done -prune -o'
 	ln -sf %{defconfig} .config
 
-	%{__make} %CrossOpts clean \
+	%{__make} %{MakeOpts} clean \
 		RCS_FIND_IGNORE='-name build-done -prune -o'
-	%{__make} %CrossOpts include/linux/version.h \
+	%{__make} %{MakeOpts} include/linux/version.h \
 		%{?with_verbose:V=1}
 
-	%{__make} %CrossOpts scripts/mkcompile_h \
+	%{__make} %{MakeOpts} scripts/mkcompile_h \
 		%{?with_verbose:V=1}
 
 # make does vmlinux, modules and bzImage at once
 %ifarch sparc64
-	%{__make} %CrossOpts image \
+	%{__make} %{MakeOpts} image \
 		%{?with_verbose:V=1}
 
-	%{__make} %CrossOpts modules \
+	%{__make} %{MakeOpts} modules \
 		%{?with_verbose:V=1}
 %else
-	%{__make} %CrossOpts \
+	%{__make} %{MakeOpts} \
 		%{?with_verbose:V=1}
 %endif
 }
@@ -1229,7 +1230,7 @@ PreInstallKernel() {
 	install arch/arm/boot/zImage $KERNEL_INSTALL_DIR/boot/vmlinuz-$KernelVer
 %endif
 
-	%{__make} %CrossOpts modules_install \
+	%{__make} %{MakeOpts} modules_install \
 		%{?with_verbose:V=1} \
 		DEPMOD=%DepMod \
 		INSTALL_MOD_PATH=$KERNEL_INSTALL_DIR \
@@ -1260,7 +1261,7 @@ cat $RPM_SOURCE_DIR/kernel-myown.config > %{defconfig}
 ln -sf %{defconfig} .config
 install -d $KERNEL_INSTALL_DIR%{_kernelsrcdir}/include/linux
 rm -f include/linux/autoconf.h
-%{__make} %CrossOpts include/linux/autoconf.h
+%{__make} %{MakeOpts} include/linux/autoconf.h
 install include/linux/autoconf.h \
 	$KERNEL_INSTALL_DIR%{_kernelsrcdir}/include/linux/autoconf-dist.h
 install .config \
@@ -1268,7 +1269,7 @@ install .config \
 BuildKernel
 PreInstallKernel
 
-%{__make} %CrossOpts include/linux/utsrelease.h
+%{__make} %{MakeOpts} include/linux/utsrelease.h
 cp include/linux/utsrelease.h{,.save}
 cp include/linux/version.h{,.save}
 cp scripts/mkcompile_h{,.save}
@@ -1302,7 +1303,7 @@ find . -maxdepth 1 ! -name "build-done" ! -name "." -exec cp -a$l "{}" "$RPM_BUI
 
 cd $RPM_BUILD_ROOT%{_kernelsrcdir}
 
-%{__make} %CrossOpts mrproper archclean \
+%{__make} %{MakeOpts} mrproper archclean \
 	RCS_FIND_IGNORE='-name build-done -prune -o'
 
 if [ -e $KERNEL_BUILD_DIR/build-done/kernel%{_kernelsrcdir}/include/linux/autoconf-dist.h ]; then
@@ -1315,7 +1316,7 @@ fi
 cp -Rdp$l $KERNEL_BUILD_DIR/include/linux/* \
 	$RPM_BUILD_ROOT%{_kernelsrcdir}/include/linux
 
-%{__make} %CrossOpts mrproper
+%{__make} %{MakeOpts} mrproper
 mv -f include/linux/utsrelease.h.save $RPM_BUILD_ROOT%{_kernelsrcdir}/include/linux/utsrelease.h
 cp include/linux/version.h{.save,}
 cp scripts/mkcompile_h{.save,}
