@@ -100,6 +100,7 @@ function dieLater( code ) {
 		sub( "^" option, "", line )
 		sub( /^[ \t]*/, "", line )
 
+		delete archs
 		if ( line ~ /"/ ) {
 			# there can be white spaces
 			i = 0
