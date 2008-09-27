@@ -932,32 +932,6 @@ sed -i -e 's/^EXTRA_CFLAGS := -Werror/EXTRA_CFLAGS := /' arch/sparc64/kernel/Mak
 find '(' -name '*~' -o -name '*.orig' -o -name '.gitignore' ')' -print0 | xargs -0 -r -l512 rm -f
 
 %build
-TuneUpConfigForIX86 () {
-	set -x
-	cat <<-EOCONFIG > $1
-%ifarch %{ix86}
-		# this part can be moved into i386 config file
-		CONFIG_M386 i386=y i486=n i586=n i686=n pentium3=n pentium4=n athlon=n
-		CONFIG_M486 i386=n i486=y
-		CONFIG_M586 i386=n i586=y
-		CONFIG_M686 i386=n i686=y
-		CONFIG_MPENTIUMIII i386=n pentium3=y
-		CONFIG_MPENTIUM4 i386=n pentium4=y
-		CONFIG_MK7 i386=n athlon=y
-
-		CONFIG_MATH_EMULATION i386=y i686=n pentium3=n pentium4=n athlon=n
-  %ifarch i686 athlon pentium3 pentium4
-    %if %{with pae}
-		CONFIG_HIGHMEM4G=n
-		CONFIG_HIGHMEM64G=y
-		CONFIG_X86_PAE=y
-    %endif
-  %endif
-%endif
-EOCONFIG
-	return 0
-}
-
 PaXconfig () {
 	set -x
 	cat <<-EOCONFIG > $1
@@ -1076,6 +1050,14 @@ BuildConfig() {
 		CONFIG_IPV6=n
 %endif
 
+%ifarch i686 athlon pentium3 pentium4
+  %if %{with pae}
+		CONFIG_HIGHMEM4G=n
+		CONFIG_HIGHMEM64G=y
+		CONFIG_X86_PAE=y
+  %endif
+%endif
+
 %if %{with fbcondecor}
 		CONFIG_FB_S3=n
 		CONFIG_FB_VT8623=n
@@ -1089,8 +1071,6 @@ BuildConfig() {
 		CONFIG_ROOT_NFS=y
 %endif
 EOCONFIG
-
-	TuneUpConfigForIX86 ix86.config
 
 	RescueConfig rescue.config
 	PaXconfig pax.config
@@ -1153,7 +1133,6 @@ EOCONFIG
 %endif
 		%{SOURCE40} %{?0:netfilter} \
 		%{SOURCE41} %{?0:squashfs} \
-		ix86.config \
 		%{SOURCE19} \
 		$RPM_SOURCE_DIR/kernel-$Config.config \
 		> %{defconfig}
