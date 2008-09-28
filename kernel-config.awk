@@ -56,11 +56,22 @@ BEGIN {
 	targetLevel[ arch ] = 3
 
 	shouldDie = 0
+
+	lastFile = ""
 }
 
 function dieLater( code ) {
 	if ( shouldDie < code )
 		shouldDie = code
+}
+
+{
+	f = FILENAME
+	sub( /^.*\//, "", f ) # strip path
+	if ( f != lastFile ) {
+		print "\n# file: " f
+		lastFile = f
+	}
 }
 
 # convert special case:

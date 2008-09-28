@@ -6,17 +6,23 @@ BEGIN {
 		exit 1
 	}
 
+	file = ""
 	while ( getline < infile ) {
+		name = ""
 		if ( match( $0, /^# CONFIG_[A-Za-z0-9_]+ is not set$/ ) ) {
-			optionArray[ $2 ] = "n";
+			name = $2
+			value = "n"
 		} else if ( match( $0, /^CONFIG_[A-Za-z0-9_]+=/ ) ) {
 			name = value = $1
 
 			sub( /=.*$/, "", name )
 			sub( /^[^=]*=/, "", value )
-
-			optionArray[ name ] = value;
-			continue
+		} else if ( match( $0, /^# file:/ ) ) {
+			file = $3
+		}
+		if ( length( name ) ) {
+			optionArray[ name ] = value
+			optionFile[ name ] = file
 		}
 	}
 
@@ -49,7 +55,7 @@ BEGIN {
 		#print "Warning: new option " name " with value " value
 	} else {
 		if ( value != orig ) {
-			print "ERROR: option " name " redefined from " orig " to " value
+			print "ERROR (" optionFile[ name ] "): option " name " redefined from " orig " to " value
 			foundErrors++
 		}
 	}
