@@ -156,6 +156,9 @@ Source4:	kernel-config.h
 Source5:	kernel-ppclibs.Makefile
 Source6:	kernel-config.awk
 Source7:	kernel-module-build.pl
+Source8:	kernel-track-config-change.awk
+# not used by kernel.spec, but it's good to have it in SOURCES
+Source9:	kernel-config-sort.pl
 
 Source19:	kernel-multiarch.config
 Source20:	kernel-i386.config
@@ -1245,6 +1248,9 @@ install include/linux/autoconf.h \
 	$KERNEL_INSTALL_DIR%{_kernelsrcdir}/include/linux/autoconf-dist.h
 install .config \
 	$KERNEL_INSTALL_DIR%{_kernelsrcdir}/config-dist
+
+%{__awk} -v infile=%{defconfig} -f %{SOURCE8} .config
+
 BuildKernel
 PreInstallKernel
 
