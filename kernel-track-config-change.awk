@@ -55,7 +55,8 @@ BEGIN {
 		#print "Warning: new option " name " with value " value
 	} else {
 		if ( value != orig ) {
-			print "ERROR (" optionFile[ name ] "): option " name " redefined from " orig " to " value
+			print "ERROR (" optionFile[ name ] "): " name \
+			      " redefined from `" orig "' to `" value "'" > "/dev/stderr"
 			foundErrors++
 		}
 	}
@@ -63,7 +64,7 @@ BEGIN {
 
 END {
 	if ( foundErrors ) {
-		print "There were " foundErrors " errors"
+		print "There were " foundErrors " errors" > "/dev/stderr"
 		if ( dieOnError )
 			exit 1
 	}
