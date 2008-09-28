@@ -19,6 +19,8 @@ BEGIN {
 			continue
 		}
 	}
+
+	foundErrors = 0
 }
 
 
@@ -48,10 +50,15 @@ BEGIN {
 	} else {
 		if ( value != orig ) {
 			print "ERROR: option " name " redefined from " orig " to " value
+			foundErrors++
 		}
 	}
 }
 
 END {
-	exit 0
+	if ( foundErrors ) {
+		print "There were " foundErrors " errors"
+		if ( dieOnError )
+			exit 1
+	}
 }
