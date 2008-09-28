@@ -1249,7 +1249,7 @@ install include/linux/autoconf.h \
 install .config \
 	$KERNEL_INSTALL_DIR%{_kernelsrcdir}/config-dist
 
-%{__awk} -v infile=%{defconfig} -f %{SOURCE8} .config
+%{__awk} %{?debug:-v dieOnError=1} -v infile=%{defconfig} -f %{SOURCE8} .config
 
 BuildKernel
 PreInstallKernel
