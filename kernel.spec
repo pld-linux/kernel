@@ -1061,6 +1061,10 @@ BuildConfig() {
   %endif
 %endif
 
+%if %{without pcmcia}
+		CONFIG_PCMCIA=n
+%endif
+
 %if %{with fbcondecor}
 		CONFIG_FB_S3=n
 		CONFIG_FB_VT8623=n
