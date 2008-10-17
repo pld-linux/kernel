@@ -99,8 +99,8 @@
 %define		have_oss	0
 %endif
 
-%define		_basever		2.6.26
-%define		_postver		.6
+%define		_basever		2.6.27
+%define		_postver		.1
 %define		_prepatch		%{nil}
 %define		_pre_rc			%{nil}
 %define		_rc			%{nil}
@@ -141,14 +141,14 @@ License:	GPL v2
 Group:		Base/Kernel
 #Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_rc}.tar.bz2
 Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{_basever}%{_rc}.tar.bz2
-# Source0-md5:	5169d01c405bc3f866c59338e217968c
+# Source0-md5:	b3e78977aa79d3754cb7f8143d7ddabd
 %if "%{_prepatch}" != "%{nil}"
 Source90:	http://www.kernel.org/pub/linux/kernel/v2.6/testing/patch-%{_prepatch}-%{_pre_rc}.bz2
 # Source90-md5:	b78873f8a3aff5bdc719fc7fb4c66a9b
 %endif
 %if "%{_postver}" != "%{nil}"
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
-# Source1-md5:	522a28eca9b5d5debed3f48997e3da32
+# Source1-md5:	f2ede3425df6c18f2978d256be7eb5de
 %endif
 
 Source3:	kernel-autoconf.h
@@ -248,9 +248,8 @@ Patch49:	kernel-zph.patch
 # try unoficial version: http://kapturkiewicz.name/linux-2.6.25-imq1.diff
 Patch50:	kernel-imq.patch
 
-# previously based on ftp://ftp.namesys.com/pub/reiser4-for-2.6/2.6.22/reiser4-for-2.6.22-2.patch.gz
-# now based on http://www.kernel.org/pub/linux/kernel/people/edward/reiser4/reiser4-for-2.6/reiser4-for-2.6.25.patch.bz2
-Patch51:	kernel-reiser4.patch
+# http://www.kernel.org/pub/linux/kernel/people/edward/reiser4/reiser4-for-2.6/reiser4-for-2.6.27.patch.bz2
+Patch51:       kernel-reiser4.patch
 
 # http://www.zz9.dk/patches/wrr-linux-071203-2.6.25.patch.gz
 Patch52:	kernel-wrr.patch
@@ -271,8 +270,6 @@ Patch58:	linux-PF_RING.patch
 
 # http://synce.svn.sourceforge.net/svnroot/synce/trunk/patches/linux-2.6.22-rndis_host-wm5.patch
 Patch59:	kernel-rndis_host-wm5.patch
-
-Patch60:	kernel-ahci_pata_marvell.patch
 
 Patch61:	kernel-vesa-upstream.patch
 
@@ -309,7 +306,7 @@ Patch200:	linux-2.6-ppc-ICE-hacks.patch
 # alternative routes, the reverse path protection (rp_filter),
 # the NAT processing to use correctly the routing when multiple
 # gateways are used.
-# http://www.ssi.bg/~ja/routes-2.6.26-15.diff
+# http://www.ssi.bg/~ja/routes-2.6.27-15.diff
 Patch300:	kernel-routes.patch
 
 Patch1000:	linux-2.6-grsec-minimal.patch
@@ -793,7 +790,8 @@ install -m 755 %{SOURCE6} .
 %patch40 -p1
 
 # ipvs-nfct
-%patch41 -p1
+#FIXME
+#patch41 -p1
 
 ##
 # end of netfilter
@@ -827,9 +825,6 @@ install -m 755 %{SOURCE6} .
 
 # kernel-rndis_host-wm5.patch
 %patch59 -p1
-
-# you can use marvell_enable=0 to prevent stealing device by ahci module.
-%patch60 -p1
 
 %patch61 -p1
 
