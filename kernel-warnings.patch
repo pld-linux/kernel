@@ -1,5 +1,5 @@
---- linux-2.6.20/include/asm-sparc64/spinlock.h~	2007-02-04 19:44:54.000000000 +0100
-+++ linux-2.6.20/include/asm-sparc64/spinlock.h	2007-04-10 01:05:35.426190250 +0200
+--- linux-2.6.27/arch/sparc/include/asm/spinlock_64.h~	2007-02-04 19:44:54.000000000 +0100
++++ linux-2.6.27/arch/sparc/include/asm/spinlock_64.h	2007-04-10 01:05:35.426190250 +0200
 @@ -105,7 +105,7 @@
  
  /* Multi-reader locks, these are much saner than the 32-bit Sparc ones... */
@@ -73,83 +73,6 @@
  {
  	return call_prom("getproplen", 2, 1, node, ADDR(pname));
  }
---- linux-2.6.20/include/asm-powerpc/spinlock.h~	2007-02-04 19:44:54.000000000 +0100
-+++ linux-2.6.20/include/asm-powerpc/spinlock.h	2007-04-10 02:04:45.976085750 +0200
-@@ -72,7 +72,7 @@
- 	return tmp;
- }
- 
--static int __inline__ __raw_spin_trylock(raw_spinlock_t *lock)
-+static __inline__ int __raw_spin_trylock(raw_spinlock_t *lock)
- {
- 	CLEAR_IO_SYNC;
- 	return __spin_trylock(lock) == 0;
-@@ -103,7 +103,7 @@
- #define SHARED_PROCESSOR	0
- #endif
- 
--static void __inline__ __raw_spin_lock(raw_spinlock_t *lock)
-+static __inline__ void __raw_spin_lock(raw_spinlock_t *lock)
- {
- 	CLEAR_IO_SYNC;
- 	while (1) {
-@@ -118,7 +118,7 @@
- 	}
- }
- 
--static void __inline__ __raw_spin_lock_flags(raw_spinlock_t *lock, unsigned long flags)
-+static __inline__ void __raw_spin_lock_flags(raw_spinlock_t *lock, unsigned long flags)
- {
- 	unsigned long flags_dis;
- 
-@@ -179,7 +179,7 @@
-  * This returns the old value in the lock + 1,
-  * so we got a read lock if the return value is > 0.
-  */
--static long __inline__ __read_trylock(raw_rwlock_t *rw)
-+static __inline__ long __read_trylock(raw_rwlock_t *rw)
- {
- 	long tmp;
- 
-@@ -223,7 +223,7 @@
- 	return tmp;
- }
- 
--static void __inline__ __raw_read_lock(raw_rwlock_t *rw)
-+static __inline__ void __raw_read_lock(raw_rwlock_t *rw)
- {
- 	while (1) {
- 		if (likely(__read_trylock(rw) > 0))
-@@ -237,7 +237,7 @@
- 	}
- }
- 
--static void __inline__ __raw_write_lock(raw_rwlock_t *rw)
-+static __inline__ void __raw_write_lock(raw_rwlock_t *rw)
- {
- 	while (1) {
- 		if (likely(__write_trylock(rw) == 0))
-@@ -251,17 +251,17 @@
- 	}
- }
- 
--static int __inline__ __raw_read_trylock(raw_rwlock_t *rw)
-+static __inline__ int __raw_read_trylock(raw_rwlock_t *rw)
- {
- 	return __read_trylock(rw) > 0;
- }
- 
--static int __inline__ __raw_write_trylock(raw_rwlock_t *rw)
-+static __inline__ int __raw_write_trylock(raw_rwlock_t *rw)
- {
- 	return __write_trylock(rw) == 0;
- }
- 
--static void __inline__ __raw_read_unlock(raw_rwlock_t *rw)
-+static __inline__ void __raw_read_unlock(raw_rwlock_t *rw)
- {
- 	long tmp;
- 
 --- linux-2.6.20/include/linux/cpuset.h~	2007-02-04 19:44:54.000000000 +0100
 +++ linux-2.6.20/include/linux/cpuset.h	2007-04-10 02:06:13.121532000 +0200
 @@ -33,13 +33,13 @@

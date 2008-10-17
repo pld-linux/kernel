@@ -256,20 +256,20 @@ diff --unified --recursive --new-file linux-2.6.21.4/net/Kconfig linux-2.6.21.4-
 diff --unified --recursive --new-file linux-2.6.21.4/net/Makefile linux-2.6.21.4-1-686-smp-ring3/net/Makefile
 --- linux-2.6.21.4/net/Makefile	2007-06-07 21:27:31.000000000 +0000
 +++ linux-2.6.21.4-1-686-smp-ring3/net/Makefile	2007-06-10 16:43:04.394423425 +0000
-@@ -42,6 +42,7 @@
- obj-$(CONFIG_DECNET)		+= decnet/
- obj-$(CONFIG_ECONET)		+= econet/
- obj-$(CONFIG_VLAN_8021Q)	+= 8021q/
+@@ -45,6 +45,7 @@
+ ifneq ($(CONFIG_VLAN_8021Q),)
+ obj-y				+= 8021q/
+ endif
 +obj-$(CONFIG_RING)		+= ring/
  obj-$(CONFIG_IP_DCCP)		+= dccp/
  obj-$(CONFIG_IP_SCTP)		+= sctp/
- obj-$(CONFIG_IEEE80211)		+= ieee80211/
+ obj-y				+= wireless/
 diff --unified --recursive --new-file linux-2.6.21.4/net/core/dev.c linux-2.6.21.4-1-686-smp-ring3/net/core/dev.c
 --- linux-2.6.21.4/net/core/dev.c	2007-06-07 21:27:31.000000000 +0000
 +++ linux-2.6.21.4-1-686-smp-ring3/net/core/dev.c	2007-06-10 16:43:04.382422906 +0000
-@@ -117,6 +117,56 @@
- #include <linux/err.h>
- #include <linux/ctype.h>
+@@ -133,6 +133,56 @@
+ 
+ #include "net-sysfs.h"
  
 +#if defined (CONFIG_RING) || defined(CONFIG_RING_MODULE)
 +
@@ -324,18 +324,17 @@ diff --unified --recursive --new-file linux-2.6.21.4/net/core/dev.c linux-2.6.21
  /*
   *	The list of packet types we will receive (as opposed to discard)
   *	and the routines to invoke.
-@@ -1474,6 +1524,10 @@
+@@ -1809,6 +1859,9 @@
  	skb->tc_verd = SET_TC_AT(skb->tc_verd,AT_EGRESS);
  #endif
  	if (q->enqueue) {
 +#if defined (CONFIG_RING) || defined(CONFIG_RING_MODULE)
 +	if(ring_handler) ring_handler(skb, 0, 1);
 +#endif /* CONFIG_RING */
-+
- 		/* Grab device queue */
- 		spin_lock(&dev->queue_lock);
- 		q = dev->qdisc;
-@@ -1574,6 +1628,13 @@
+ 		spinlock_t *root_lock = qdisc_lock(q);
+ 
+ 		spin_lock(root_lock);
+@@ -1908,6 +1961,13 @@
  	unsigned long flags;
  
  	/* if netpoll wants it, pretend we never saw it */
@@ -349,8 +348,8 @@ diff --unified --recursive --new-file linux-2.6.21.4/net/core/dev.c linux-2.6.21
  	if (netpoll_rx(skb))
  		return NET_RX_DROP;
  
-@@ -1764,6 +1825,13 @@
- 	struct net_device *orig_dev;
+@@ -2193,6 +2253,13 @@
+ 	struct net_device *null_or_orig;
  	int ret = NET_RX_DROP;
  	__be16 type;
 +#if defined (CONFIG_RING) || defined(CONFIG_RING_MODULE)
@@ -362,7 +361,7 @@ diff --unified --recursive --new-file linux-2.6.21.4/net/core/dev.c linux-2.6.21
 +
  
  	/* if we've gotten here through NAPI, check netpoll */
- 	if (skb->dev->poll && netpoll_rx(skb))
+ 	if (netpoll_receive_skb(skb))
 diff --unified --recursive --new-file linux-2.6.21.4/net/ring/Kconfig linux-2.6.21.4-1-686-smp-ring3/net/ring/Kconfig
 --- linux-2.6.21.4/net/ring/Kconfig	1970-01-01 00:00:00.000000000 +0000
 +++ linux-2.6.21.4-1-686-smp-ring3/net/ring/Kconfig	2007-06-10 16:43:04.406423944 +0000
