@@ -379,7 +379,7 @@ Obsoletes:	kernel-net-ieee80211
 Obsoletes:	kernel-net-ipp2p
 Obsoletes:	kernel-net-rt61
 Obsoletes:	kernel-smp
-Obsoletes:	mISDN
+Obsoletes:	kernel%{_alt_kernel}-isdn-mISDN
 Conflicts:	e2fsprogs < 1.29
 Conflicts:	isdn4k-utils < 3.1pre1
 Conflicts:	jfsutils < 1.1.3
