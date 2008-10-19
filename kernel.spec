@@ -1085,7 +1085,7 @@ EOCONFIG
 %endif
 
 	# prepare kernel-style config file from multiple config files
-	%{__awk} -v basearch=%{_target_base_arch} -v arch=%{_target_cpu} -f %{SOURCE6} \
+	%{__awk} -v arch="all %{target_arch_dir} %{_target_base_arch} %{_target_cpu}" -f %{SOURCE6} \
 		important.config \
 %if %{with rescuecd}
 		%{SOURCE58} \
@@ -1140,7 +1140,6 @@ EOCONFIG
 		%{SOURCE19} \
 		$RPM_SOURCE_DIR/kernel-$Config.config \
 		> %{defconfig}
-
 }
 
 BuildKernel() {
