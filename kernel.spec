@@ -100,7 +100,7 @@
 %endif
 
 %define		_basever		2.6.27
-%define		_postver		.1
+%define		_postver		.2
 %define		_prepatch		%{nil}
 %define		_pre_rc			%{nil}
 %define		_rc			%{nil}
@@ -148,7 +148,7 @@ Source90:	http://www.kernel.org/pub/linux/kernel/v2.6/testing/patch-%{_prepatch}
 %endif
 %if "%{_postver}" != "%{nil}"
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
-# Source1-md5:	f2ede3425df6c18f2978d256be7eb5de
+# Source1-md5:	9d4c3a044f04c4a35be09a6501b0ef30
 %endif
 
 Source3:	kernel-autoconf.h
@@ -789,7 +789,7 @@ install -m 755 %{SOURCE6} .
 %patch39 -p1
 
 # kernel-layer7.patch
-%patch40 -p1
+#%%patch40 -p1 # NEEDS UPDATE
 
 # ipvs-nfct
 #FIXME
@@ -811,7 +811,7 @@ install -m 755 %{SOURCE6} .
 %endif
 
 # esfq
-%patch53 -p1
+#%%patch53 -p1 # NEEDS UPDATE
 
 %if %{with wrr}
 %patch52 -p1
@@ -823,7 +823,7 @@ install -m 755 %{SOURCE6} .
 %patch55 -p1
 %patch56 -p1
 
-%patch58 -p1
+#%%patch58 -p1 # NEEDS UPDATE
 
 # kernel-rndis_host-wm5.patch
 %patch59 -p1
@@ -1446,7 +1446,7 @@ fi
 /lib/modules/%{kernel_release}/kernel/crypto
 /lib/modules/%{kernel_release}/kernel/drivers
 %if %{have_drm} && %{without myown}
-%exclude /lib/modules/%{kernel_release}/kernel/drivers/char/drm
+%exclude /lib/modules/%{kernel_release}/kernel/drivers/gpu
 %endif
 /lib/modules/%{kernel_release}/kernel/fs
 
@@ -1502,7 +1502,7 @@ fi
 %if %{have_drm} && %{without myown}
 %files drm
 %defattr(644,root,root,755)
-/lib/modules/%{kernel_release}/kernel/drivers/char/drm
+/lib/modules/%{kernel_release}/kernel/drivers/gpu
 %endif
 
 %if %{with pcmcia} && %{without myown}
