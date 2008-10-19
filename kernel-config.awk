@@ -48,12 +48,10 @@ BEGIN {
 		print "arch= must be specified" > "/dev/stderr"
 		exit 1
 	}
-	if ( ! basearch )
-		basearch = arch
-
-	targetLevel[ "all" ] = 1
-	targetLevel[ basearch ] = 2
-	targetLevel[ arch ] = 3
+	split( arch, Archs )
+	for (i = 1; i in Archs; i++) {
+		targetLevel[ Archs[ i ] ] = i
+	}
 
 	shouldDie = 0
 
