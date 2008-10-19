@@ -160,15 +160,13 @@ Source8:	kernel-track-config-change.awk
 # not used by kernel.spec, but it's good to have it in SOURCES
 Source9:	kernel-config-sort.pl
 
-Source19:	kernel-multiarch.config
-Source20:	kernel-i386.config
-Source21:	kernel-x86_64.config
+Source20:	kernel-multiarch.config
+Source21:	kernel-x86.config
 Source22:	kernel-sparc.config
 Source23:	kernel-sparc64.config
 Source24:	kernel-alpha.config
-Source25:	kernel-ppc.config
+Source25:	kernel-powerpc.config
 Source26:	kernel-ia64.config
-Source27:	kernel-ppc64.config
 
 Source40:	kernel-netfilter.config
 Source41:	kernel-squashfs.config
@@ -1018,9 +1016,9 @@ BuildConfig() {
 	set -e
 
 	# is this a special kernel we want to build?
-	Config="%{_target_base_arch}"
+	Config="%{target_arch_dir}"
 	KernelVer=%{kernel_release}
-	echo "Building config file using $Config.conf..."
+	echo "Building config file for %{_target_cpu} using kernel-$Config.config et al."
 
 	# prepare local and important options
 	cat <<-EOCONFIG > important.config
@@ -1137,7 +1135,7 @@ EOCONFIG
 %endif
 		%{SOURCE40} %{?0:netfilter} \
 		%{SOURCE41} %{?0:squashfs} \
-		%{SOURCE19} \
+		%{SOURCE20} \
 		$RPM_SOURCE_DIR/kernel-$Config.config \
 		> %{defconfig}
 }
