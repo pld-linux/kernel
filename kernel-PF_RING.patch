@@ -2630,12 +2630,12 @@ diff --unified --recursive --new-file linux-2.6.21.4/net/ring/ring_packet.c linu
 +    return;
 +  }
 +
-+  BUG_TRAP(!atomic_read(&sk->sk_rmem_alloc));
-+  BUG_TRAP(!atomic_read(&sk->sk_wmem_alloc));
++  BUG_ON(!atomic_read(&sk->sk_rmem_alloc));
++  BUG_ON(!atomic_read(&sk->sk_wmem_alloc));
 +#else
 +
-+  BUG_TRAP(atomic_read(&sk->rmem_alloc)==0);
-+  BUG_TRAP(atomic_read(&sk->wmem_alloc)==0);
++  BUG_ON(atomic_read(&sk->rmem_alloc)==0);
++  BUG_ON(atomic_read(&sk->wmem_alloc)==0);
 +
 +  if (!sk->dead) {
 +#if defined(RING_DEBUG)
@@ -3288,7 +3288,7 @@ diff --unified --recursive --new-file linux-2.6.21.4/net/ring/ring_packet.c linu
 +    skb->data -= displ;
 +
 +    /* send it */
-+    if (pfr->reflector_dev->xmit_lock_owner != cpu) {
++    if (netdev_get_tx_queue(pfr->reflector_dev, 0)->xmit_lock_owner != cpu) {
 +      /* Patch below courtesy of Matthew J. Roth <mroth@imminc.com> */
 +#if (LINUX_VERSION_CODE < KERNEL_VERSION(2,6,18))
 +      spin_lock_bh(&pfr->reflector_dev->xmit_lock);
@@ -3718,7 +3718,7 @@ diff --unified --recursive --new-file linux-2.6.21.4/net/ring/ring_packet.c linu
 +
 +/* ********************************** */
 +
-+static int ring_create(struct socket *sock, int protocol) {
++static int ring_create(struct net *net, struct socket *sock, int protocol) {
 +  struct sock *sk;
 +  struct ring_opt *pfr;
 +  int err;
@@ -3751,7 +3751,7 @@ diff --unified --recursive --new-file linux-2.6.21.4/net/ring/ring_packet.c linu
 +#else
 +  // BD: API changed in 2.6.12, ref:
 +  // http://svn.clkao.org/svnweb/linux/revision/?rev=28201
-+  sk = sk_alloc(PF_RING, GFP_ATOMIC, &ring_proto, 1);
++  sk = sk_alloc(net, PF_RING, GFP_ATOMIC, &ring_proto);
 +#endif
 +#else
 +  /* Kernel 2.4 */
