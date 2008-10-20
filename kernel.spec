@@ -821,7 +821,7 @@ install -m 755 %{SOURCE6} .
 %patch55 -p1
 %patch56 -p1
 
-#%%patch58 -p1 # NEEDS UPDATE
+%patch58 -p1
 
 # kernel-rndis_host-wm5.patch
 %patch59 -p1
