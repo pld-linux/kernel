@@ -807,7 +807,7 @@ install %{SOURCE5} Makefile.ppclibs
 %endif
 
 # esfq
-#%%patch53 -p1 # NEEDS UPDATE
+%patch53 -p1
 
 %if %{with wrr}
 %patch52 -p1
