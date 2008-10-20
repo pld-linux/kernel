@@ -169,7 +169,7 @@ Source25:	kernel-powerpc.config
 Source26:	kernel-ia64.config
 
 Source40:	kernel-netfilter.config
-Source41:	kernel-squashfs.config
+Source41:	kernel-patches.config
 Source42:	kernel-tuxonice.config
 Source43:	kernel-vserver.config
 Source45:	kernel-grsec.config
@@ -247,7 +247,7 @@ Patch49:	kernel-zph.patch
 Patch50:	kernel-imq.patch
 
 # http://www.kernel.org/pub/linux/kernel/people/edward/reiser4/reiser4-for-2.6/reiser4-for-2.6.27.patch.bz2
-Patch51:       kernel-reiser4.patch
+Patch51:	kernel-reiser4.patch
 
 # http://www.zz9.dk/patches/wrr-linux-071203-2.6.25.patch.gz
 Patch52:	kernel-wrr.patch
@@ -727,8 +727,6 @@ install %{SOURCE5} Makefile.ppclibs
 %{__bzip2} -dc %{SOURCE1} | patch -p1 -s
 %endif
 
-install -m 755 %{SOURCE6} .
-
 # tuxonice:
 %if %{with tuxonice}
 ##ifarch %{ix86} %{x8664} ia64 ppc alpha
@@ -1015,10 +1013,8 @@ BuildConfig() {
 	%{?debug:set -x}
 	set -e
 
-	# is this a special kernel we want to build?
-	Config="%{target_arch_dir}"
-	KernelVer=%{kernel_release}
-	echo "Building config file for %{_target_cpu} using kernel-$Config.config et al."
+	Config="kernel-%{target_arch_dir}.config"
+	echo "Building config file for %{_target_cpu} using $Config et al."
 
 	# prepare local and important options
 	cat <<-EOCONFIG > important.config
@@ -1072,15 +1068,15 @@ BuildConfig() {
 		CONFIG_NFS_FS=y
 		CONFIG_ROOT_NFS=y
 %endif
+
+# Temporary disabled RELOCATABLE. Needed only on x86??
+%if %{with pax} || %{with grsec_full}
+		CONFIG_RELOCATABLE=n
+%endif
 EOCONFIG
 
 	RescueConfig rescue.config
 	PaXconfig pax.config
-
-# Temporary disabled RELOCATABLE. Needed only on x86??
-%if %{with pax} || %{with grsec_full}
-	echo "CONFIG_RELOCATABLE=n" >> important.config
-%endif
 
 	# prepare kernel-style config file from multiple config files
 	%{__awk} -v arch="all %{target_arch_dir} %{_target_base_arch} %{_target_cpu}" -f %{SOURCE6} \
@@ -1134,9 +1130,9 @@ EOCONFIG
 %endif
 %endif
 		%{SOURCE40} %{?0:netfilter} \
-		%{SOURCE41} %{?0:squashfs} \
+		%{SOURCE41} %{?0:patches} \
 		%{SOURCE20} \
-		$RPM_SOURCE_DIR/kernel-$Config.config \
+		$RPM_SOURCE_DIR/$Config \
 		> %{defconfig}
 }
 
@@ -1276,7 +1272,7 @@ KERNEL_BUILD_DIR=`pwd`
 
 cp -a$l $KERNEL_BUILD_DIR/build-done/kernel/* $RPM_BUILD_ROOT
 
-if [ -e  $RPM_BUILD_ROOT/lib/modules/%{kernel_release} ] ; then
+if [ -e $RPM_BUILD_ROOT/lib/modules/%{kernel_release} ] ; then
 	rm -f $RPM_BUILD_ROOT/lib/modules/%{kernel_release}/build
 	ln -sf %{_kernelsrcdir} $RPM_BUILD_ROOT/lib/modules/%{kernel_release}/build
 	install -d $RPM_BUILD_ROOT/lib/modules/%{kernel_release}/{cluster,misc}
