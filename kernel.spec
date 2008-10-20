@@ -789,7 +789,7 @@ install %{SOURCE5} Makefile.ppclibs
 %patch53 -p1
 
 %if %{with wrr}
-%patch52 -p1
+#patch52 -p1	NEEDS UPDATE!
 %endif
 
 # toshiba_acpi
