@@ -603,13 +603,13 @@ diff -Naur linux-2.6.24.orig/net/sched/sch_esfq.c linux-2.6.24/net/sched/sch_esf
 +	}
 +}
 +	
-+static int esfq_q_init(struct esfq_sched_data *q, struct rtattr *opt)
++static int esfq_q_init(struct esfq_sched_data *q, struct nlattr *opt)
 +{
-+	struct tc_esfq_qopt *ctl = RTA_DATA(opt);
++	struct tc_esfq_qopt *ctl = nla_data(opt);
 +	esfq_index p = ~0U/2;
 +	int i;
 +	
-+	if (opt && opt->rta_len < RTA_LENGTH(sizeof(*ctl)))
++	if (opt && opt->nla_len < nla_attr_size(sizeof(*ctl)))
 +		return -EINVAL;
 +
 +	q->perturbation = 0;
@@ -621,7 +621,7 @@ diff -Naur linux-2.6.24.orig/net/sched/sch_esfq.c linux-2.6.24/net/sched/sch_esf
 +		q->tail = q->limit = q->depth = 128;
 +		
 +	} else {
-+		struct tc_esfq_qopt *ctl = RTA_DATA(opt);
++		struct tc_esfq_qopt *ctl = nla_data(opt);
 +		if (ctl->quantum)
 +			q->quantum = ctl->quantum;
 +		q->perturb_period = ctl->perturb_period*HZ;
@@ -674,12 +674,12 @@ diff -Naur linux-2.6.24.orig/net/sched/sch_esfq.c linux-2.6.24/net/sched/sch_esf
 +	return -ENOBUFS;
 +}
 +
-+static int esfq_init(struct Qdisc *sch, struct rtattr *opt)
++static int esfq_init(struct Qdisc *sch, struct nlattr *opt)
 +{
 +	struct esfq_sched_data *q = qdisc_priv(sch);
 +	int err;
 +	
-+	q->quantum = psched_mtu(sch->dev); /* default */
++	q->quantum = psched_mtu(qdisc_dev(sch)); /* default */
 +	if ((err = esfq_q_init(q, opt)))
 +		return err;
 +
@@ -694,7 +694,7 @@ diff -Naur linux-2.6.24.orig/net/sched/sch_esfq.c linux-2.6.24/net/sched/sch_esf
 +	return 0;
 +}
 +
-+static int esfq_change(struct Qdisc *sch, struct rtattr *opt)
++static int esfq_change(struct Qdisc *sch, struct nlattr *opt)
 +{
 +	struct esfq_sched_data *q = qdisc_priv(sch);
 +	struct esfq_sched_data new;
@@ -703,7 +703,7 @@ diff -Naur linux-2.6.24.orig/net/sched/sch_esfq.c linux-2.6.24/net/sched/sch_esf
 +	
 +	/* set up new queue */
 +	memset(&new, 0, sizeof(struct esfq_sched_data));
-+	new.quantum = psched_mtu(sch->dev); /* default */
++	new.quantum = psched_mtu(qdisc_dev(sch)); /* default */
 +	if ((err = esfq_q_init(&new, opt)))
 +		return err;
 +
@@ -756,11 +756,11 @@ diff -Naur linux-2.6.24.orig/net/sched/sch_esfq.c linux-2.6.24/net/sched/sch_esf
 +	opt.flows = q->depth;
 +	opt.hash_kind = q->hash_kind;
 +
-+	RTA_PUT(skb, TCA_OPTIONS, sizeof(opt), &opt);
++	NLA_PUT(skb, TCA_OPTIONS, sizeof(opt), &opt);
 +
 +	return skb->len;
 +
-+rtattr_failure:
++nla_put_failure:
 +	nlmsg_trim(skb, b);
 +	return -1;
 +}
