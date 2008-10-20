@@ -99,12 +99,9 @@
 %define		have_oss	0
 %endif
 
-%define		_basever		2.6.27
-%define		_postver		.2
-%define		_prepatch		%{nil}
-%define		_pre_rc			%{nil}
-%define		_rc			%{nil}
-%define		_rel			0.1
+%define		basever		2.6.27
+%define		postver		.2
+%define		rel		0.1
 
 %define		_enable_debug_packages			0
 
@@ -117,9 +114,9 @@
 
 # kernel release (used in filesystem and eventually in uname -r)
 # modules will be looked from /lib/modules/%{kernel_release}
-# _localversion is just that without version for "> localversion"
-%define		_localversion %{_rel}
-%define		kernel_release %{version}%{?_alt_kernel:%{_alt_kernel}}-%{_localversion}
+# localversion is just that without version for "> localversion"
+%define		localversion %{rel}
+%define		kernel_release %{version}%{?_alt_kernel:%{_alt_kernel}}-%{localversion}
 
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de.UTF-8):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
@@ -127,26 +124,14 @@ Summary(et.UTF-8):	Linuxi kernel (ehk operatsioonisüsteemi tuum)
 Summary(fr.UTF-8):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl.UTF-8):	Jądro Linuksa
 Name:		kernel%{_alt_kernel}
-
-%if "%{_prepatch}" == "%{nil}"
-Version:	%{_basever}%{_postver}
-Release:	%{_rel}
-%else
-Version:	%{_prepatch}
-Release:	0.%{_pre_rc}.%{_rel}
-%endif
-
+Version:	%{basever}%{postver}
+Release:	%{rel}
 Epoch:		3
 License:	GPL v2
 Group:		Base/Kernel
-#Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_rc}.tar.bz2
-Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{_basever}%{_rc}.tar.bz2
+Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{basever}.tar.bz2
 # Source0-md5:	b3e78977aa79d3754cb7f8143d7ddabd
-%if "%{_prepatch}" != "%{nil}"
-Source90:	http://www.kernel.org/pub/linux/kernel/v2.6/testing/patch-%{_prepatch}-%{_pre_rc}.bz2
-# Source90-md5:	b78873f8a3aff5bdc719fc7fb4c66a9b
-%endif
-%if "%{_postver}" != "%{nil}"
+%if "%{postver}" != "%{nil}"
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
 # Source1-md5:	9d4c3a044f04c4a35be09a6501b0ef30
 %endif
@@ -706,7 +691,7 @@ Pakiet zawiera dokumentację do jądra Linuksa pochodzącą z katalogu
 /usr/src/linux/Documentation.
 
 %prep
-%setup -q -n linux-%{_basever}%{_rc}
+%setup -q -n linux-%{basever}
 
 # hack against warning in pax/grsec
 %ifarch alpha
@@ -717,13 +702,7 @@ sed -i 's/-Werror//' arch/alpha/kernel/Makefile
 install %{SOURCE5} Makefile.ppclibs
 %endif
 
-# sources 1 and 90 should be mutually exclusive btw.
-
-%if "%{_prepatch}" != "%{nil}"
-%{__bzip2} -dc %{SOURCE90} | patch -p1 -s
-%endif
-
-%if "%{_postver}" != "%{nil}"
+%if "%{postver}" != "%{nil}"
 %{__bzip2} -dc %{SOURCE1} | patch -p1 -s
 %endif
 
@@ -916,7 +895,7 @@ install %{SOURCE5} Makefile.ppclibs
 %patch2001 -p1
 
 # Fix EXTRAVERSION in main Makefile
-sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{_postver}%{?_alt_kernel:%{_alt_kernel}}#g' Makefile
+sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{postver}%{?_alt_kernel:%{_alt_kernel}}#g' Makefile
 
 # on sparc this line causes CONFIG_INPUT=m (instead of =y), thus breaking build
 sed -i -e '/select INPUT/d' net/bluetooth/hidp/Kconfig
@@ -1225,7 +1204,7 @@ PreInstallKernel() {
 }
 
 KERNEL_BUILD_DIR=`pwd`
-echo "-%{_localversion}" > localversion
+echo "-%{localversion}" > localversion
 
 KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR/build-done/kernel"
 rm -rf $KERNEL_INSTALL_DIR
