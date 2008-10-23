@@ -9,35 +9,6 @@ Missing header for routes patch, caused vs2.3 route.h mixing
  #include <net/tcp.h>  /* For tcp_prot in getorigdst */
  #include <linux/icmp.h>
  #include <linux/udp.h>
---- linux-2.6.26/kernel/power/tuxonice_netlink.c.orig	2008-09-08 15:18:33.000000000 +0200
-+++ linux-2.6.26/kernel/power/tuxonice_netlink.c	2008-09-08 15:14:51.000000000 +0200
-@@ -95,7 +95,7 @@
- 	netlink_unicast(uhd->nl, skb, uhd->pid, 0);
- 
- 	read_lock(&tasklist_lock);
--	t = find_task_by_pid(uhd->pid);
-+	t = find_task_by_pid(uhd->pid,&init_pid_ns);
- 	if (!t) {
- 		read_unlock(&tasklist_lock);
- 		if (uhd->pid > -1)
-@@ -133,7 +133,7 @@
- 	struct task_struct *t;
- 
- 	read_lock(&tasklist_lock);
--	t = find_task_by_pid(pid);
-+	t = find_task_by_pid(pid,&init_pid_ns);
- 	if (!t) {
- 		read_unlock(&tasklist_lock);
- 		printk(KERN_INFO "Strange. Can't find the userspace task %d.\n",
-@@ -286,7 +286,7 @@
- 	struct task_struct *t;
- 
- 	read_lock(&tasklist_lock);
--	t = find_task_by_pid(uhd->pid);
-+	t = find_task_by_pid(uhd->pid,&init_pid_ns);
- 	if (t)
- 		t->flags &= ~PF_NOFREEZE;
- 	read_unlock(&tasklist_lock);
 diff -upr linux-2.6.25/security/selinux/include/av_perm_to_string.h linux-2.6.25/security/selinux/include/av_perm_to_string.h
 --- linux-2.6.25/security/selinux/include/av_perm_to_string.h	2008-04-17 02:49:44.000000000 +0000
 +++ linux-2.6.25/security/selinux/include/av_perm_to_string.h	2008-05-21 08:48:33.061933886 +0000
