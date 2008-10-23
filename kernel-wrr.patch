@@ -1317,7 +1317,7 @@ diff -urN linux-2.6.26.2.org/net/sched/wrr.c linux-2.6.26.2/net/sched/wrr.c
 +static int wrr_dump(struct Qdisc *sch, struct sk_buff *skb)
 +{
 +	struct wrr_sched_data *q = qdisc_priv(sch);
-+	unsigned char *b = skb->tail;
++	sk_buff_data_t b = skb->tail;
 +	struct tc_wrr_qdisc_stats opt;
 +
 +	opt.qdisc_crt.qdisc_modf = q->qdisc_modf;
@@ -1343,7 +1343,7 @@ diff -urN linux-2.6.26.2.org/net/sched/wrr.c linux-2.6.26.2/net/sched/wrr.c
 +	return skb->len;
 +
 +      nla_put_failure:		/* NLA_PUT may jump to this label */
-+	skb_trim(skb, b - skb->data);
++	skb_trim(skb, (unsigned char *) &b - skb->data);
 +	return -1;
 +}
 +
@@ -1479,7 +1479,7 @@ diff -urN linux-2.6.26.2.org/net/sched/wrr.c linux-2.6.26.2/net/sched/wrr.c
 +			  struct sk_buff *skb, struct tcmsg *tcm)
 +{
 +	struct wrr_sched_data *q = qdisc_priv(sch);
-+	unsigned char *b = skb->tail;
++	sk_buff_data_t b = skb->tail;
 +	struct tc_wrr_class_stats opt;
 +
 +	/* Handle of this class */
@@ -1522,7 +1522,7 @@ diff -urN linux-2.6.26.2.org/net/sched/wrr.c linux-2.6.26.2/net/sched/wrr.c
 +	return skb->len;
 +
 +      nla_put_failure:		/* NLA_PUT may jump here */
-+	skb_trim(skb, b - skb->data);
++	skb_trim(skb, (unsigned char *) &b - skb->data);
 +	return -1;
 +}
 +
