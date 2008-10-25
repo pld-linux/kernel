@@ -100,7 +100,7 @@
 %endif
 
 %define		_basever		2.6.26
-%define		_postver		.6
+%define		_postver		.7
 %define		_prepatch		%{nil}
 %define		_pre_rc			%{nil}
 %define		_rc			%{nil}
@@ -148,7 +148,7 @@ Source90:	http://www.kernel.org/pub/linux/kernel/v2.6/testing/patch-%{_prepatch}
 %endif
 %if "%{_postver}" != "%{nil}"
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
-# Source1-md5:	522a28eca9b5d5debed3f48997e3da32
+# Source1-md5:	70e7706e289f759925f6474f26c74b89
 %endif
 
 Source3:	kernel-autoconf.h
@@ -311,6 +311,9 @@ Patch200:	linux-2.6-ppc-ICE-hacks.patch
 # gateways are used.
 # http://www.ssi.bg/~ja/routes-2.6.26-15.diff
 Patch300:	kernel-routes.patch
+
+# from ftp://ftp.kernel.org/pub/linux/kernel/people/tytso/ext4-patches/2.6.26-ext4-7/2.6.26-ext4-7.bz2
+Patch400:	kernel-ext4.patch
 
 Patch1000:	linux-2.6-grsec-minimal.patch
 
@@ -917,6 +920,9 @@ install -m 755 %{SOURCE6} .
 
 # routes
 %patch300 -p1
+
+# ext4dev
+%patch400 -p1
 
 # Small fixes:
 %patch2000 -p1
