@@ -1,10 +1,9 @@
 netlink
-no-stack-protector
 cap_dac*
 diff -upr a/grsecurity/gracl_cap.c c/grsecurity/gracl_cap.c
 --- a/grsecurity/gracl_cap.c	2007-12-01 00:54:57.312774500 +0000
 +++ c/grsecurity/gracl_cap.c	2007-12-01 01:09:34.923621750 +0000
-@@ -110,3 +110,20 @@ gr_is_capable_nolog(const int cap)
+@@ -110,3 +110,19 @@ gr_is_capable_nolog(const int cap)
  	return 0;
  }
 
@@ -15,11 +14,10 @@ diff -upr a/grsecurity/gracl_cap.c c/grsecurity/gracl_cap.c
 +
 +	if (gr_acl_is_enabled()) {
 +		read_lock(&tasklist_lock);
-+		p = find_task_by_pid(pid);
++		p = find_task_by_vpid(pid);
 +		if (p) {
-+			task_lock(p);
++			get_task_struct(p);
 +			gr_log_cap(GR_DONT_AUDIT, GR_CAP_ACL_MSG, p, captab_log[cap]);
-+			task_unlock(p);
 +		}
 +		read_unlock(&tasklist_lock);
 +	}
@@ -27,15 +25,15 @@ diff -upr a/grsecurity/gracl_cap.c c/grsecurity/gracl_cap.c
 +}
 --- a/grsecurity/grsec_sock.c	2008-03-24 00:24:22.482633101 +0100
 +++ c/grsecurity/grsec_sock.c	2008-03-24 00:27:01.971671763 +0100
-@@ -251,23 +251,24 @@ __u32
+@@ -251,23 +251,26 @@ __u32
  gr_cap_rtnetlink(struct sock *sock)
  {
  #ifdef CONFIG_GRKERNSEC
 +	struct acl_subject_label *curracl;
-+	__u32 cap_drop = 0, cap_mask = 0;
++	kernel_cap_t cap_dropp = __cap_empty_set, cap_mask = __cap_empty_set;
 +
- 	if (!gr_acl_is_enabled())
- 		return current->cap_effective;
+	if (!gr_acl_is_enabled())
+		return current->cap_effective;
 -	else if (sock->sk_protocol == NETLINK_ISCSI &&
 -		 cap_raised(current->cap_effective, CAP_SYS_ADMIN) &&
 -		 gr_task_is_capable(current, CAP_SYS_ADMIN))
@@ -50,19 +48,21 @@ diff -upr a/grsecurity/gracl_cap.c c/grsecurity/gracl_cap.c
 -		 gr_task_is_capable(current, CAP_NET_ADMIN))
 -		return current->cap_effective;
 -	else
--		return 0;
+-		return __cap_empty_set;
 +	else {
 +		curracl = current->acl;
 +
-+		cap_drop = curracl->cap_lower;
++		cap_dropp  = curracl->cap_lower;
 +		cap_mask = curracl->cap_mask;
 +
 +		while ((curracl = curracl->parent_subject)) {
-+			cap_drop |= curracl->cap_lower & \
-+				    (cap_mask & ~curracl->cap_mask);
-+			cap_mask |= curracl->cap_mask;
++			cap_dropp = cap_combine(cap_dropp,
++				    cap_intersect(curracl->cap_lower,
++				    cap_drop(cap_mask, curracl->cap_mask)));
++			cap_mask = cap_combine(cap_mask, curracl->cap_mask);
 +		}
-+		return (current->cap_effective & ~(cap_drop & cap_mask));
++		return cap_drop(current->cap_effective,
++				cap_intersect(cap_dropp, cap_mask));
 +	}
  #else
  	return current->cap_effective;
@@ -146,49 +146,3 @@ diff -upr a/fs./namei.c a/fs/namei.c
  		goto ok;
  
  	return -EACCES;
-Tylko w fs: namei.c~
-diff -upr a/fs./xfs/xfs_inode.c a/fs/xfs/xfs_inode.c
---- a/fs./xfs/xfs_inode.c	2008-04-05 01:23:48.241413000 +0200
-+++ a/fs/xfs/xfs_inode.c	2008-04-05 14:55:58.270625942 +0200
-@@ -3663,20 +3663,16 @@ xfs_iaccess(
- 	 * Read/write DACs are always overridable.
- 	 * Executable DACs are overridable if at least one exec bit is set.
- 	 */
-+	if ((orgmode == S_IRUSR) ||
-+	    (S_ISDIR(inode->i_mode) && (!(orgmode & S_IWUSR))))
-+		if (capable_nolog(CAP_DAC_OVERRIDE) || capable_cred(cr, CAP_DAC_READ_SEARCH))
-+			return 0;
-+
- 	if (!(orgmode & S_IXUSR) ||
- 	    (inode->i_mode & S_IXUGO) || S_ISDIR(inode->i_mode))
- 		if (capable_cred(cr, CAP_DAC_OVERRIDE))
- 			return 0;
- 
--	if ((orgmode == S_IRUSR) ||
--	    (S_ISDIR(inode->i_mode) && (!(orgmode & S_IWUSR)))) {
--		if (capable_cred(cr, CAP_DAC_READ_SEARCH))
--			return 0;
--#ifdef	NOISE
--		cmn_err(CE_NOTE, "Ick: mode=%o, orgmode=%o", mode, orgmode);
--#endif	/* NOISE */
--		return XFS_ERROR(EACCES);
--	}
- 	return XFS_ERROR(EACCES);
- }
- 
-===
-=== check if -fno-stack-protector is accessible
-===
---- linux-2.6.24/arch/x86/kernel/Makefile_64~	2008-04-16 21:15:48.278373002 +0000
-+++ linux-2.6.24/arch/x86/kernel/Makefile_64	2008-04-16 21:18:33.833661431 +0000
-@@ -42,6 +42,7 @@
- obj-y				+= topology.o
- obj-y				+= pcspeaker.o
- 
--CFLAGS_vsyscall_64.o		:= $(PROFILING) -g0 -fno-stack-protector
--CFLAGS_hpet.o			:= -fno-stack-protector
--CFLAGS_tsc_64.o			:= -fno-stack-protector
-+nostackp := $(call cc-option, -fno-stack-protector)
-+CFLAGS_vsyscall_64.o		:= $(PROFILING) -g0 $(nostackp)
-+CFLAGS_hpet.o			:= $(nostackp)
-+CFLAGS_tsc_64.o			:= $(nostackp)
