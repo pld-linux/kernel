@@ -36,7 +36,7 @@
 
 %bcond_without	vserver		# support for VServer (enabled by default)
 %bcond_without	tuxonice	# support for tuxonice (ex-suspend2) (enabled by default)
-%bcond_with	apparmor	# build kernel with apparmor (very exerimental mix)
+%bcond_with	apparmor	# build kernel with apparmor (exerimental mix)
 
 %bcond_with	rescuecd	# build kernel for our rescue
 
@@ -301,10 +301,12 @@ Patch2001:	linux-2.6.21.1-pwc-uncompress.patch
 # (only warnings, so just remove parts of this patch if conflics)
 Patch2500:	linux-2.6-warnings.patch
 
-# based on https://forgesvn1.novell.com/svn/apparmor/trunk/kernel-patches/2.6.25 rev 1266
-# repatched and adapted for vserver/grsec changes in vfs API, very experimental
+# based on https://forgesvn1.novell.com/svn/apparmor/trunk/kernel-patches/2.6.27 rev 1303
+# repatched and adapted for vserver/grsec changes in vfs API, experimental
 Patch5000:	kernel-apparmor.patch
-#Patch5001:	linux-2.6-apparmor-caps.patch
+# with grsec_full version
+Patch5001:	kernel-apparmor-after-grsec_full.patch
+Patch5002:	kernel-apparmor-common.patch
 
 # for rescuecd
 # based on http://ftp.leg.uct.ac.za/pub/linux/rip/inittmpfs-2.6.14.diff.gz
@@ -879,8 +881,13 @@ install %{SOURCE5} Makefile.ppclibs
 
 # apparmor
 %if %{with apparmor}
+%if %{with grsec_full} || %{with pax_full}
+%patch5001 -p1
+%patch5002 -p1
+%else
 %patch5000 -p1
-# %patch5001 -p1
+%patch5002 -p1
+%endif
 %endif
 
 %ifarch ppc ppc64
