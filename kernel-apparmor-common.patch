@@ -1,0 +1,38 @@
+===
+=== apparmor api in vserver addons
+===
+--- i/fs/namei.c	2008-10-29 15:18:09.918901818 +0100
++++ i/fs/namei.c~	2008-10-29 15:16:48.000000000 +0100
+@@ -3212,8 +3212,8 @@
+ 		new_path.dentry->d_name.len,
+ 		old_path.dentry->d_name.len, old_path.dentry->d_name.name,
+ 		old_path.dentry->d_name.len);
+-	ret = vfs_rename(dir_nd.path.dentry->d_inode, new_path.dentry,
+-		old_nd.path.dentry->d_parent->d_inode, old_path.dentry);
++	ret = vfs_rename(dir_nd.path.dentry->d_inode, new_path.dentry, new_path.mnt,
++		old_nd.path.dentry->d_parent->d_inode, old_path.dentry, old_path.mnt);
+ 	vxdprintk(VXD_CBIT(misc, 2), "vfs_rename: %d", ret);
+ 	res = new_path.dentry;
+ 
+@@ -3238,7 +3238,7 @@
+ 		goto out_redo;
+ 
+ 	/* error path cleanup */
+-	vfs_unlink(dir->d_inode, new_path.dentry);
++	vfs_unlink(dir->d_inode, new_path.dentry, new_path.mnt);
+ 	dput(new_path.dentry);
+ 
+ out_redo:
+===
+=== we add this export in small_fixes.patch with regard to unionfs
+===
+--- i/security/security.c~	2008-10-29 15:38:27.000000000 +0100
++++ i/security/security.c	2008-10-29 15:45:30.761065898 +0100
+@@ -415,7 +415,6 @@ int security_inode_mknod(struct inode *d
+ 		return 0;
+ 	return security_ops->inode_mknod(dir, dentry, mnt, mode, dev);
+ }
+-EXPORT_SYMBOL_GPL(security_inode_permission);
+ 
+ int security_inode_rename(struct inode *old_dir, struct dentry *old_dentry,
+ 			  struct vfsmount *old_mnt, struct inode *new_dir,
