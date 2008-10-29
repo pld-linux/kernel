@@ -1,0 +1,49 @@
+diff -Nur linux-2.6.25/include/net/inet_sock.h linux-2.6.25-zph/include/net/inet_sock.h
+--- linux-2.6.25/include/net/inet_sock.h	2008-04-16 21:49:44.000000000 -0500
++++ linux-2.6.25-zph/include/net/inet_sock.h	2008-04-23 10:14:10.000000000 -0500
+@@ -142,6 +142,7 @@
+ 		__be32			addr;
+ 		struct flowi		fl;
+ 	} cork;
++	__u8                    zph_tos;        /* ZPH TOS received on connect */ 
+ };
+ 
+ #define IPCORK_OPT	1	/* ip-options has been held in ipcork.opt */
+diff -Nur linux-2.6.25/net/ipv4/ip_sockglue.c linux-2.6.25-zph/net/ipv4/ip_sockglue.c
+--- linux-2.6.25/net/ipv4/ip_sockglue.c	2008-04-16 21:49:44.000000000 -0500
++++ linux-2.6.25-zph/net/ipv4/ip_sockglue.c	2008-04-23 10:15:17.000000000 -0500
+@@ -1120,6 +1120,10 @@
+ 			int hlim = inet->mc_ttl;
+ 			put_cmsg(&msg, SOL_IP, IP_TTL, sizeof(hlim), &hlim);
+ 		}
++		if (inet->cmsg_flags&IP_CMSG_TOS) {
++                	int hlim = inet->zph_tos;
++                	put_cmsg(&msg, SOL_IP, IP_TOS, sizeof(hlim), &hlim);
++                }
+ 		len -= msg.msg_controllen;
+ 		return put_user(len, optlen);
+ 	}
+diff -Nur linux-2.6.25/net/ipv4/tcp_input.c linux-2.6.25-zph/net/ipv4/tcp_input.c
+--- linux-2.6.25/net/ipv4/tcp_input.c	2008-04-16 21:49:44.000000000 -0500
++++ linux-2.6.25-zph/net/ipv4/tcp_input.c	2008-04-23 10:16:35.000000000 -0500
+@@ -4883,6 +4883,8 @@
+ {
+ 	struct tcp_sock *tp = tcp_sk(sk);
+ 	struct inet_connection_sock *icsk = inet_csk(sk);
++	struct inet_sock *inet = inet_sk(sk);
++	struct iphdr *iph = ip_hdr(skb);
+ 	int saved_clamp = tp->rx_opt.mss_clamp;
+ 
+ 	tcp_parse_options(skb, &tp->rx_opt, 0);
+@@ -4941,6 +4943,12 @@
+ 
+ 		TCP_ECN_rcv_synack(tp, th);
+ 
++		/* ZPH:
++		 * Copy TOS field from the SYNACK packet to zph_tos field
++		 * of the af_inet member of sock structure
++		 */
++		inet->zph_tos = iph->tos;
++
+ 		tp->snd_wl1 = TCP_SKB_CB(skb)->seq;
+ 		tcp_ack(sk, skb, FLAG_SLOWPATH);

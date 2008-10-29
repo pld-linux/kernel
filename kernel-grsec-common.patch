@@ -1,0 +1,84 @@
+--- linux-2.6.20/grsecurity/gracl_shm.c~	2007-03-24 04:54:27.000000000 +0100
++++ linux-2.6.20/grsecurity/gracl_shm.c	2007-03-24 04:55:46.332159000 +0100
+@@ -6,6 +6,7 @@
+ #include <linux/gracl.h>
+ #include <linux/grsecurity.h>
+ #include <linux/grinternal.h>
++#include <linux/vs_pid.h>
+ 
+ int
+ gr_handle_shmat(const pid_t shm_cprid, const pid_t shm_lapid,
+--- linux-2.6.20/localversion-grsec	2007-03-24 04:54:27.000000000 +0100
++++ /dev/null	2007-03-24 05:05:10.455414500 +0100
+@@ -1 +0,0 @@
+--grsec
+--- linux-2.6.20/grsecurity/grsec_sock.c~	2007-03-24 05:38:40.000000000 +0100
++++ linux-2.6.20/grsecurity/grsec_sock.c	2007-03-24 05:47:11.347998750 +0100
+@@ -7,6 +7,7 @@
+ #include <linux/ip.h>
+ #include <net/sock.h>
+ #include <net/inet_sock.h>
++#include <linux/vs_context.h>
+ #include <linux/grsecurity.h>
+ #include <linux/grinternal.h>
+ #include <linux/gracl.h>
+===
+=== analogous as capable()
+===
+--- a/kernel/capability.c~	2007-12-11 00:46:02.000000000 +0100
++++ a/kernel/capability.c	2007-12-11 01:35:00.244481500 +0100
+@@ -253,6 +253,8 @@ int __capable(struct task_struct *t, int
+ }
+ int capable_nolog(int cap)
+ {
++	if (vs_check_bit(VXC_CAP_MASK, cap) && !vx_mcaps(1L << cap))
++		return 0;
+ 	if ((security_capable(current, cap) == 0) && gr_is_capable_nolog(cap)) {
+ 		current->flags |= PF_SUPERPRIV;
+ 		return 1;
+===
+=== let vserver block signals before grsec
+===
+--- a/kernel/signal.c  2007-10-02 00:08:49.954483500 +0200
++++ b/kernel/signal.c  2007-10-02 00:24:31.969355750 +0200
+@@ -553,6 +553,11 @@ static int check_kill_permission(int sig
+ 			sig, info, t, vx_task_xid(t), t->pid, current->xid);
+ 		return error;
+ 	}
++
++	error = -EPERM;
++	if (gr_handle_signal(t, sig))
++		return error;
++
+ skip:
+ 	return security_task_kill(t, info, sig, 0);
+ }
+===
+=== vserver netlink protection
+===
+--- a/security/commoncap.c~	2007-12-10 23:52:36.000000000 +0100
++++ a/security/commoncap.c	2007-12-11 01:43:04.426741000 +0100
+@@ -27,7 +27,7 @@
+ 
+ int cap_netlink_send(struct sock *sk, struct sk_buff *skb)
+ {
+-	NETLINK_CB(skb).eff_cap = gr_cap_rtnetlink(sk);
++	NETLINK_CB(skb).eff_cap = cap_intersect(gr_cap_rtnetlink(sk), vx_mbcaps(current->cap_effective));
+ 	return 0;
+ }
+ 
+--- i/grsecurity/gracl_shm.c~	2008-09-08 17:28:55.000000000 +0200
++++ i/grsecurity/gracl_shm.c	2008-09-08 17:29:39.004293022 +0200
+@@ -17,10 +17,10 @@
+ 	if (!gr_acl_is_enabled())
+ 		return 1;
+ 
+-	task = find_task_by_pid(shm_cprid);
++	task = find_task_by_real_pid(shm_cprid);
+ 
+ 	if (unlikely(!task))
+-		task = find_task_by_pid(shm_lapid);
++		task = find_task_by_real_pid(shm_lapid);
+ 
+ 	if (unlikely(task && (time_before_eq((unsigned long)task->start_time.tv_sec, (unsigned long)shm_createtime) ||
+ 			      (task->pid == shm_lapid)) &&
