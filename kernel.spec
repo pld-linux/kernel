@@ -1192,10 +1192,11 @@ PreInstallKernel() {
 	install arch/arm/boot/zImage $KERNEL_INSTALL_DIR/boot/vmlinuz-$KernelVer
 %endif
 
-	%{__make} %{MakeOpts} modules_install \
+	%{__make} %{MakeOpts} modules_install firmware_install \
 		%{?with_verbose:V=1} \
 		DEPMOD=%DepMod \
 		INSTALL_MOD_PATH=$KERNEL_INSTALL_DIR \
+		INSTALL_FW_PATH=$KERNEL_INSTALL_DIR/lib/firmware/$KernelVer \
 		KERNELRELEASE=$KernelVer
 
 	# You'd probabelly want to make it somewhat different
@@ -1417,6 +1418,7 @@ fi
 /boot/vmlinuz-%{kernel_release}
 /boot/System.map-%{kernel_release}
 %ghost %{initrd_dir}/initrd-%{kernel_release}.gz
+/lib/firmware/%{kernel_release}
 %dir /lib/modules/%{kernel_release}
 %dir /lib/modules/%{kernel_release}/kernel
 %ifnarch sparc
