@@ -1022,8 +1022,6 @@ BuildConfig() {
 		CONFIG_SECURITY_APPARMOR_DISABLE=n
 		# patch for unionfs not ready yet
 		CONFIG_UNION_FS=n
-		# some conflict with smack, todo
-		CONFIG_SECURITY_SMACK=n
 %endif
 
 %if %{without ipv6}
