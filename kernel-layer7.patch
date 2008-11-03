@@ -2098,3 +2098,75 @@
 +};
 +
 +#endif /* _XT_LAYER7_H */
+--- g/net/netfilter/xt_layer7.c	2008-11-03 19:41:35.213475229 +0100
++++ g/net/netfilter/xt_layer7.c	2008-11-03 21:45:33.903747755 +0100
+@@ -24,6 +24,7 @@
+ #include <linux/skbuff.h>
+ #include <linux/netfilter.h>
+ #include <net/netfilter/nf_conntrack.h>
++#include <net/netfilter/nf_conntrack_acct.h>
+ #include <net/netfilter/nf_conntrack_core.h>
+ #include <linux/netfilter/x_tables.h>
+ #include <linux/netfilter/xt_layer7.h>
+@@ -47,8 +47,8 @@ MODULE_PARM_DESC(maxdatalen, "maximum by
+ 	#define DPRINTK(format,args...)
+ #endif
+ 
+-#define TOTAL_PACKETS master_conntrack->counters[IP_CT_DIR_ORIGINAL].packets + \
+-		      master_conntrack->counters[IP_CT_DIR_REPLY].packets
++#define TOTAL_PACKETS acct[IP_CT_DIR_ORIGINAL].packets + \
++		      acct[IP_CT_DIR_REPLY].packets
+ 
+ /* Number of packets whose data we look at.
+ This can be modified through /proc/net/layer7_numpackets */
+@@ -238,11 +238,15 @@ static int match_no_append(struct nf_con
+                            enum ip_conntrack_info master_ctinfo,
+                            const struct xt_layer7_info * info)
+ {
++	struct nf_conn_counter *acct;
++	acct = nf_conn_acct_find(master_conntrack);
++
+ 	/* If we're in here, throw the app data away */
+ 	if(master_conntrack->layer7.app_data != NULL) {
+ 
+ 	#ifdef CONFIG_IP_NF_MATCH_LAYER7_DEBUG
+-		if(!master_conntrack->layer7.app_proto) {
++		acct = nf_conn_acct_find(master_conntrack);
++		if(!master_conntrack->layer7.app_proto && acct) {
+ 			char * f = 
+ 			  friendly_print(master_conntrack->layer7.app_data);
+ 			char * g = 
+@@ -414,6 +418,7 @@ match(const struct sk_buff *skbin,
+ 	unsigned char * app_data;
+ 	unsigned int pattern_result, appdatalen;
+ 	regexp * comppattern;
++	struct nf_conn_counter *acct;
+ 
+ 	/* Be paranoid/incompetent - lock the entire match function. */
+ 	spin_lock_bh(&l7_lock);
+@@ -438,6 +443,8 @@ match(const struct sk_buff *skbin,
+ 	while (master_ct(master_conntrack) != NULL)
+ 		master_conntrack = master_ct(master_conntrack);
+ 
++	acct = nf_conn_acct_find(master_conntrack);
++	if (acct)
+ 	/* if we've classified it or seen too many packets */
+ 	if(TOTAL_PACKETS > num_packets ||
+ 	   master_conntrack->layer7.app_proto) {
+@@ -473,6 +480,7 @@ match(const struct sk_buff *skbin,
+ 	/* the return value gets checked later, when we're ready to use it */
+ 	comppattern = compile_and_cache(info->pattern, info->protocol);
+ 
++	if (acct)
+ 	/* On the first packet of a connection, allocate space for app data */
+ 	if(TOTAL_PACKETS == 1 && !skb->cb[0] && 
+ 	   !master_conntrack->layer7.app_data){
+@@ -514,7 +522,7 @@ match(const struct sk_buff *skbin,
+ 		pattern_result = 0;
+ 	/* If looking for "unset", then always match. "Unset" means that we
+ 	haven't yet classified the connection. */
+-	} else if(!strcmp(info->protocol, "unset")) {
++	} else if(!strcmp(info->protocol, "unset") && acct) {
+ 		pattern_result = 2;
+ 		DPRINTK("layer7: matched unset: not yet classified "
+ 			"(%d/%d packets)\n", TOTAL_PACKETS, num_packets);
