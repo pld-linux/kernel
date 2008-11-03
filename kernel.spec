@@ -323,15 +323,17 @@ Patch200:	linux-2.6-ppc-ICE-hacks.patch
 Patch201:	linux-2.6-x86_64-stack-protector.patch
 Patch202:	linux-2.6-unwind-through-signal-frames.patch
 
-# Wake-On-Lan patch for nVidia nForce ethernet driver forcedeth
-Patch250:	linux-2.6.16-forcedeth-WON.patch
-Patch251:	linux-nvidia.patch
+# nForce ethernet driver forcedeth and newer nvidia sata drivers from nvidia's website
+Patch250:	linux-nvidia.patch
 
 # From ALSA 1.0.13 for nVidia
 Patch252:	linux-alsa-hda.patch
 
 # add tty ioctl to figure physical device of the console. used by showconsole.spec (blogd)
 Patch256:	kernel-TIOCGDEV.patch
+
+# HP/Compaq cciss driver
+Patch260:	linux-2.6-cciss-3.6.18.patch
 
 Patch1000:	linux-2.6-grsec-minimal.patch
 Patch1001:	linux-2.6-grsec-wrong-deref.patch
@@ -971,10 +973,11 @@ rm -rf suspend2-%{suspend_version}-for-2.6.16.9
 %endif
 
 %patch250 -p1
-%patch251 -p1
 
 %patch252 -p1
 %patch256 -p1
+
+%patch260 -p1
 
 # security patches
 
