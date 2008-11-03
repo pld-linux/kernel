@@ -279,8 +279,9 @@ Patch101:	kernel-vserver-fixes.patch
 # Fix verified for that kernel version.
 Patch130:	linux-2.6-forcedeth-WON.patch
 
-# http://download.filesystems.org/unionfs/unionfs-2.x/unionfs-2.4_for_2.6.26.diff.gz
+# http://download.filesystems.org/unionfs/unionfs-2.x/unionfs-2.5_for_2.6.27-rc6.diff.gz
 Patch140:	kernel-unionfs.patch
+Patch141:	kernel-unionfs-apparmor.patch
 
 Patch200:	linux-2.6-ppc-ICE-hacks.patch
 
@@ -331,7 +332,7 @@ BuildRequires:	binutils >= 3:2.14.90.0.7
 %ifarch sparc sparc64
 BuildRequires:	elftoaout
 %endif
-%ifarch ppc
+%if "%{_arch}" == ppc
 BuildRequires:	uboot-mkimage
 %endif
 BuildRequires:	/sbin/depmod
@@ -832,6 +833,7 @@ install %{SOURCE5} Makefile.ppclibs
 
 # unionfs
 %patch140 -p1
+%patch141 -p1
 
 %patch2500 -p1
 
@@ -1020,8 +1022,6 @@ BuildConfig() {
 		CONFIG_SECURITY_APPARMOR=y
 		CONFIG_SECURITY_APPARMOR_BOOTPARAM_VALUE=1
 		CONFIG_SECURITY_APPARMOR_DISABLE=n
-		# patch for unionfs not ready yet
-		CONFIG_UNION_FS=n
 %endif
 
 %if %{without ipv6}
