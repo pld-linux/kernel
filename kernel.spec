@@ -209,11 +209,11 @@ Patch38:	kernel-ipt_account.patch
 # based on http://www.intra2net.com/de/produkte/opensource/ipt_account/pom-ng-ipt_ACCOUNT-1.12.tgz
 Patch39:	kernel-ipt_ACCOUNT.patch
 
-# kernel-2.6.25-layer7-2.18.patch from
-# http://switch.dl.sourceforge.net/sourceforge/l7-filter/netfilter-layer7-v2.18.tar.gz
+# based on kernel-2.6.25-layer7-2.20.patch from
+# http://switch.dl.sourceforge.net/sourceforge/l7-filter/netfilter-layer7-v2.20.tar.gz
 Patch40:	kernel-layer7.patch
 
-# http://www.ssi.bg/~ja/nfct/ipvs-nfct-2.6.25-1.diff
+# http://www.ssi.bg/~ja/nfct/ipvs-nfct-2.6.27-1.diff
 Patch41:	kernel-ipvs-nfct.patch
 
 # based on http://www.balabit.com/downloads/files/tproxy/tproxy-kernel-2.6.25-20080509-164605-1210344365.tar.bz2
@@ -224,7 +224,7 @@ Patch41:	kernel-ipvs-nfct.patch
 
 ### End netfilter
 
-# http://zph.bratcheda.org/linux-2.6.25-zph.patch
+# http://zph.bratcheda.org/linux-2.6.26.3-zph.patch
 Patch49:	kernel-zph.patch
 
 # based on http://www.linuximq.net/patchs/linux-2.6.24-imq.diff
@@ -312,7 +312,8 @@ Patch5002:	kernel-apparmor-common.patch
 # for rescuecd
 # based on http://ftp.leg.uct.ac.za/pub/linux/rip/inittmpfs-2.6.14.diff.gz
 Patch7000:	kernel-inittmpfs.patch
-# based on http://www.udpcast.linux.lu/download/bzip2-lzma-kernel-2.6.23.12.patch.gz
+### based on http://udpcast.linux.lu/download/bzip2-lzma-kernel-2.6.26.3.patch.gz
+# http://lkml.org/lkml/2008/10/14/268
 Patch7001:	kernel-bzip2-lzma.patch
 
 # not ready yet
@@ -767,11 +768,10 @@ install %{SOURCE5} Makefile.ppclibs
 %patch39 -p1
 
 # kernel-layer7.patch
-#%%patch40 -p1 # NEEDS UPDATE
+%patch40 -p1
 
 # ipvs-nfct
-#FIXME
-#patch41 -p1
+%patch41 -p1
 
 ##
 # end of netfilter
