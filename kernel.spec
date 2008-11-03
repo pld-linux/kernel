@@ -78,6 +78,7 @@
 %define		have_sound	1
 
 %if %{with rescuecd}
+%undefine	with_apparmor
 %undefine	with_tuxonice
 %undefine	with_grsec_full
 %undefine	with_grsec_minimal
