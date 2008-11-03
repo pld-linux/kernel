@@ -1,5 +1,5 @@
---- /dev/null
-+++ b/drivers/net/imq.c
+--- linux-2.6.25.7/drivers/net/imq.c	1970-01-01 02:00:00.000000000 +0200
++++ linux-2.6.25.7.imq/drivers/net/imq.c	2008-06-17 15:03:01.000000000 +0300
 @@ -0,0 +1,474 @@
 +/*
 + *             Pseudo-driver for the intermediate queue device.
@@ -50,11 +50,11 @@
 + *             I didn't forget anybody). I apologize again for my lack of time.
 + *
 + *
-+ *             2008/06/17 - 2.6.25 - Changed imq.c to use qdisc_run() instead
++ *             2008/06/17 - 2.6.25 - Changed imq.c to use qdisc_run() instead 
 + *	       of qdisc_restart() and moved qdisc_run() to tasklet to avoid
 + *             recursive locking. New initialization routines to fix 'rmmod' not
 + *             working anymore. Used code from ifb.c. (Jussi Kivilinna)
-+ *
++ *	       
 + *	       Also, many thanks to pablo Sebastian Greco for making the initial
 + *	       patch and to those who helped the testing.
 + *
@@ -79,7 +79,7 @@
 +
 +struct imq_private {
 +	struct tasklet_struct tasklet;
-+	unsigned long tasklet_pending;
++	long tasklet_pending;
 +};
 +
 +static nf_hookfn imq_nf_hook;
@@ -222,8 +222,8 @@
 +	dev->stats.rx_bytes += entry->skb->len;
 +	dev->stats.rx_packets++;
 +
-+	spin_lock_bh(&dev->queue_lock);
-+	q = dev->qdisc;
++	netif_tx_lock_bh(dev);
++	q = netdev_get_tx_queue(dev, queue_num)->qdisc;
 +	if (q->enqueue) {
 +		q->enqueue(skb_get(entry->skb), q);
 +		if (skb_shared(entry->skb)) {
@@ -234,7 +234,7 @@
 +	}
 +	if (!test_and_set_bit(1, &priv->tasklet_pending))
 +		tasklet_schedule(&priv->tasklet);
-+	spin_unlock_bh(&dev->queue_lock);
++	netif_tx_unlock_bh(dev);
 +
 +	if (skb2)
 +		kfree_skb(ret ? entry->skb : skb2);
@@ -252,10 +252,10 @@
 +	struct net_device *dev = (struct net_device *)arg;
 +	struct imq_private *priv = netdev_priv(dev);
 +
-+	spin_lock(&dev->queue_lock);
-+	qdisc_run(dev);
++	netif_tx_lock(dev);
++	qdisc_run(netdev_get_tx_queue(dev, 0)->qdisc);
 +	clear_bit(1, &priv->tasklet_pending);
-+	spin_unlock(&dev->queue_lock);
++	netif_tx_unlock(dev);
 +}
 +
 +static unsigned int imq_nf_hook(unsigned int hook, struct sk_buff *pskb,
@@ -475,9 +475,9 @@
 +MODULE_LICENSE("GPL");
 +MODULE_ALIAS_RTNL_LINK("imq");
 +
---- a/drivers/net/Kconfig
-+++ b/drivers/net/Kconfig
-@@ -109,6 +109,129 @@ config EQUALIZER
+--- linux-2.6.25.7/drivers/net/Kconfig	2008-06-16 23:24:36.000000000 +0300
++++ linux-2.6.25.7.imq/drivers/net/Kconfig	2008-06-17 15:03:21.000000000 +0300
+@@ -117,6 +117,129 @@
  	  To compile this driver as a module, choose M here: the module
  	  will be called eql.  If unsure, say N.
  
@@ -607,18 +607,12 @@
  config TUN
  	tristate "Universal TUN/TAP device driver support"
  	select CRC32
---- a/drivers/net/Makefile
-+++ b/drivers/net/Makefile
-@@ -144,6 +144,7 @@ obj-$(CONFIG_SLHC) += slhc.o
- obj-$(CONFIG_XEN_NETDEV_FRONTEND) += xen-netfront.o
- 
- obj-$(CONFIG_DUMMY) += dummy.o
+--- linux-2.6.25.7/drivers/net/Makefile	2008-06-16 23:24:36.000000000 +0300
++++ linux-2.6.25.7.imq/drivers/net/Makefile	2008-06-17 14:56:58.000000000 +0300
+@@ -0,0 +0,1 @@
 +obj-$(CONFIG_IMQ) += imq.o
- obj-$(CONFIG_IFB) += ifb.o
- obj-$(CONFIG_MACVLAN) += macvlan.o
- obj-$(CONFIG_DE600) += de600.o
---- /dev/null
-+++ b/include/linux/imq.h
+--- linux-2.6.25.7/include/linux/imq.h	1970-01-01 02:00:00.000000000 +0200
++++ linux-2.6.25.7.imq/include/linux/imq.h	2008-06-17 14:56:58.000000000 +0300
 @@ -0,0 +1,9 @@
 +#ifndef _IMQ_H
 +#define _IMQ_H
@@ -629,8 +623,8 @@
 +#define IMQ_F_ENQUEUE  0x80
 +
 +#endif /* _IMQ_H */
---- /dev/null
-+++ b/include/linux/netfilter_ipv4/ipt_IMQ.h
+--- linux-2.6.25.7/include/linux/netfilter_ipv4/ipt_IMQ.h	1970-01-01 02:00:00.000000000 +0200
++++ linux-2.6.25.7.imq/include/linux/netfilter_ipv4/ipt_IMQ.h	2008-06-17 14:56:58.000000000 +0300
 @@ -0,0 +1,8 @@
 +#ifndef _IPT_IMQ_H
 +#define _IPT_IMQ_H
@@ -640,8 +634,8 @@
 +};
 +
 +#endif /* _IPT_IMQ_H */
---- /dev/null
-+++ b/include/linux/netfilter_ipv6/ip6t_IMQ.h
+--- linux-2.6.25.7/include/linux/netfilter_ipv6/ip6t_IMQ.h	1970-01-01 02:00:00.000000000 +0200
++++ linux-2.6.25.7.imq/include/linux/netfilter_ipv6/ip6t_IMQ.h	2008-06-17 14:56:58.000000000 +0300
 @@ -0,0 +1,8 @@
 +#ifndef _IP6T_IMQ_H
 +#define _IP6T_IMQ_H
@@ -651,9 +645,9 @@
 +};
 +
 +#endif /* _IP6T_IMQ_H */
---- a/include/linux/skbuff.h
-+++ b/include/linux/skbuff.h
-@@ -302,6 +302,10 @@ struct sk_buff {
+--- linux-2.6.25.7/include/linux/skbuff.h	2008-06-16 23:24:36.000000000 +0300
++++ linux-2.6.25.7.imq/include/linux/skbuff.h	2008-06-17 14:56:58.000000000 +0300
+@@ -296,6 +296,10 @@
  	struct nf_conntrack	*nfct;
  	struct sk_buff		*nfct_reasm;
  #endif
@@ -664,7 +658,7 @@
  #ifdef CONFIG_BRIDGE_NETFILTER
  	struct nf_bridge_info	*nf_bridge;
  #endif
-@@ -1642,6 +1646,10 @@ static inline void __nf_copy(struct sk_b
+@@ -1736,6 +1740,10 @@
  	dst->nfct_reasm = src->nfct_reasm;
  	nf_conntrack_get_reasm(src->nfct_reasm);
  #endif
@@ -675,9 +669,9 @@
  #ifdef CONFIG_BRIDGE_NETFILTER
  	dst->nf_bridge  = src->nf_bridge;
  	nf_bridge_get(src->nf_bridge);
---- a/net/core/dev.c
-+++ b/net/core/dev.c
-@@ -96,6 +96,9 @@
+--- linux-2.6.25.7/net/core/dev.c	2008-06-16 23:24:36.000000000 +0300
++++ linux-2.6.25.7.imq/net/core/dev.c	2008-06-17 14:56:58.000000000 +0300
+@@ -95,6 +95,9 @@
  #include <net/net_namespace.h>
  #include <net/sock.h>
  #include <linux/rtnetlink.h>
@@ -687,8 +681,8 @@
  #include <linux/proc_fs.h>
  #include <linux/seq_file.h>
  #include <linux/stat.h>
-@@ -1624,7 +1627,11 @@ int dev_hard_start_xmit(struct sk_buff *
- 			struct netdev_queue *txq)
+@@ -1537,7 +1540,11 @@
+ int dev_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
  {
  	if (likely(!skb->next)) {
 -		if (!list_empty(&ptype_all))
@@ -700,8 +694,8 @@
  			dev_queue_xmit_nit(skb, dev);
  
  		if (netif_needs_gso(dev, skb)) {
---- /dev/null
-+++ b/net/ipv4/netfilter/ipt_IMQ.c
+--- linux-2.6.25.7/net/ipv4/netfilter/ipt_IMQ.c	1970-01-01 02:00:00.000000000 +0200
++++ linux-2.6.25.7.imq/net/ipv4/netfilter/ipt_IMQ.c	2008-06-17 14:56:58.000000000 +0300
 @@ -0,0 +1,69 @@
 +/*
 + * This target marks packets to be enqueued to an imq device
@@ -772,15 +766,15 @@
 +MODULE_AUTHOR("http://www.linuximq.net");
 +MODULE_DESCRIPTION("Pseudo-driver for the intermediate queue device. See http://www.linuximq.net/ for more information.");
 +MODULE_LICENSE("GPL");
---- a/net/ipv4/netfilter/Kconfig
-+++ b/net/ipv4/netfilter/Kconfig
-@@ -145,6 +145,17 @@ config IP_NF_FILTER
+--- linux-2.6.25.7/net/ipv4/netfilter/Kconfig	2008-06-16 23:24:36.000000000 +0300
++++ linux-2.6.25.7.imq/net/ipv4/netfilter/Kconfig	2008-06-17 14:56:58.000000000 +0300
+@@ -123,6 +123,17 @@
  
  	  To compile it as a module, choose M here.  If unsure, say N.
  
 +config IP_NF_TARGET_IMQ
 +       tristate "IMQ target support"
-+       depends on IP_NF_MANGLE && IMQ
++       depends on IP_NF_MANGLE
 +       help
 +         This option adds a `IMQ' target which is used to specify if and
 +         to which IMQ device packets should get enqueued/dequeued.
@@ -792,18 +786,12 @@
  config IP_NF_TARGET_REJECT
  	tristate "REJECT target support"
  	depends on IP_NF_FILTER
---- a/net/ipv4/netfilter/Makefile
-+++ b/net/ipv4/netfilter/Makefile
-@@ -60,6 +60,7 @@
- obj-$(CONFIG_IP_NF_TARGET_CLUSTERIP) += ipt_CLUSTERIP.o
- obj-$(CONFIG_IP_NF_TARGET_ECN) += ipt_ECN.o
- obj-$(CONFIG_IP_NF_TARGET_LOG) += ipt_LOG.o
+--- linux-2.6.25.7/net/ipv4/netfilter/Makefile	2008-06-16 23:24:36.000000000 +0300
++++ linux-2.6.25.7.imq/net/ipv4/netfilter/Makefile	2008-06-17 14:56:58.000000000 +0300
+@@ -0,0 +0,1 @@
 +obj-$(CONFIG_IP_NF_TARGET_IMQ) += ipt_IMQ.o
- obj-$(CONFIG_IP_NF_TARGET_IPV4OPTSSTRIP) += ipt_IPV4OPTSSTRIP.o
- obj-$(CONFIG_IP_NF_TARGET_MASQUERADE) += ipt_MASQUERADE.o
- obj-$(CONFIG_IP_NF_TARGET_NETMAP) += ipt_NETMAP.o
---- /dev/null
-+++ b/net/ipv6/netfilter/ip6t_IMQ.c
+--- linux-2.6.25.7/net/ipv6/netfilter/ip6t_IMQ.c	1970-01-01 02:00:00.000000000 +0200
++++ linux-2.6.25.7.imq/net/ipv6/netfilter/ip6t_IMQ.c	2008-06-17 14:56:58.000000000 +0300
 @@ -0,0 +1,69 @@
 +/*
 + * This target marks packets to be enqueued to an imq device
@@ -874,15 +862,15 @@
 +MODULE_AUTHOR("http://www.linuximq.net");
 +MODULE_DESCRIPTION("Pseudo-driver for the intermediate queue device. See http://www.linuximq.net/ for more information.");
 +MODULE_LICENSE("GPL");
---- a/net/ipv6/netfilter/Kconfig
-+++ b/net/ipv6/netfilter/Kconfig
-@@ -179,6 +179,15 @@ config IP6_NF_MANGLE
+--- linux-2.6.25.7/net/ipv6/netfilter/Kconfig	2008-06-16 23:24:36.000000000 +0300
++++ linux-2.6.25.7.imq/net/ipv6/netfilter/Kconfig	2008-06-17 14:56:58.000000000 +0300
+@@ -179,6 +179,15 @@
  
  	  To compile it as a module, choose M here.  If unsure, say N.
  
 +config IP6_NF_TARGET_IMQ
 +	tristate "IMQ target support"
-+	depends on IP6_NF_MANGLE && IMQ
++	depends on IP6_NF_MANGLE
 +	help
 +          This option adds a `IMQ' target which is used to specify if and
 +          to which imq device packets should get enqueued/dequeued.
@@ -892,21 +880,15 @@
  config IP6_NF_TARGET_HL
  	tristate  'HL (hoplimit) target support'
  	depends on IP6_NF_MANGLE
---- a/net/ipv6/netfilter/Makefile
-+++ b/net/ipv6/netfilter/Makefile
-@@ -6,6 +6,7 @@
- obj-$(CONFIG_IP6_NF_IPTABLES) += ip6_tables.o
- obj-$(CONFIG_IP6_NF_FILTER) += ip6table_filter.o
- obj-$(CONFIG_IP6_NF_MANGLE) += ip6table_mangle.o
+--- linux-2.6.25.7/net/ipv6/netfilter/Makefile	2008-06-16 23:24:36.000000000 +0300
++++ linux-2.6.25.7.imq/net/ipv6/netfilter/Makefile	2008-06-17 14:56:58.000000000 +0300
+@@ -0,0 +0,1 @@
 +obj-$(CONFIG_IP6_NF_TARGET_IMQ) += ip6t_IMQ.o
- obj-$(CONFIG_IP6_NF_QUEUE) += ip6_queue.o
- obj-$(CONFIG_IP6_NF_RAW) += ip6table_raw.o
- obj-$(CONFIG_IP6_NF_SECURITY) += ip6table_security.o
---- a/net/sched/sch_generic.c
-+++ b/net/sched/sch_generic.c
-@@ -188,6 +188,7 @@ void __qdisc_run(struct Qdisc *q)
+--- linux-2.6.25.7/net/sched/sch_generic.c	2008-06-16 23:24:36.000000000 +0300
++++ linux-2.6.25.7.imq/net/sched/sch_generic.c	2008-06-17 14:56:58.000000000 +0300
+@@ -203,6 +203,7 @@
  
- 	clear_bit(__QDISC_STATE_RUNNING, &q->state);
+ 	clear_bit(__LINK_STATE_QDISC_RUNNING, &dev->state);
  }
 +EXPORT_SYMBOL(__qdisc_run);
  
