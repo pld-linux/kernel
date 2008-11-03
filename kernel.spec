@@ -22,7 +22,7 @@
 
 %bcond_without	grsecurity	# don't build grsecurity nor pax at all
 %bcond_without	grsec_minimal	# build only minimal subset (proc,link,fifo,shm)
-%bcond_with	grsec_full	# build full grsecurity
+%bcond_without	grsec_full	# build full grsecurity
 %bcond_with	pax_full	# build pax and full grsecurity (ie. grsec_full && pax)
 %bcond_with	pax		# build pax support
 
@@ -36,7 +36,7 @@
 
 %bcond_without	vserver		# support for VServer (enabled by default)
 %bcond_without	tuxonice	# support for tuxonice (ex-suspend2) (enabled by default)
-%bcond_with	apparmor	# build kernel with apparmor (exerimental mix)
+%bcond_without	apparmor	# build kernel with apparmor (exerimental mix)
 
 %bcond_with	rescuecd	# build kernel for our rescue
 
@@ -111,7 +111,7 @@
 %define		netfilter_snap		20070806
 %define		xen_version		3.0.2
 
-%define		_alt_kernel	%{?with_pax:-pax}%{?with_grsec_full:-grsecurity}%{?with_xen0:-xen0}%{?with_xenU:-xenU}%{?with_rescuecd:-rescuecd}%{?with_pae:-pae}%{?with_myown:-myown}%{?with_apparmor:-aa}
+%define		_alt_kernel	%{?with_pax:-pax}%{!?with_grsec_full:-nogrsecurity}%{?with_xen0:-xen0}%{?with_xenU:-xenU}%{?with_rescuecd:-rescuecd}%{?with_pae:-pae}%{?with_myown:-myown}%{!?with_apparmor:-noaa}
 
 # kernel release (used in filesystem and eventually in uname -r)
 # modules will be looked from /lib/modules/%{kernel_release}
