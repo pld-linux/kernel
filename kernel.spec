@@ -834,7 +834,7 @@ install %{SOURCE5} Makefile.ppclibs
 
 # unionfs
 %patch140 -p1
-%patch141 -p1
+%{?with_apparmor:%patch141 -p1}
 
 %patch2500 -p1
 
