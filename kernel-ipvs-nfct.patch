@@ -1,9 +1,9 @@
 diff -urNp v2.6.25/linux/include/net/ip_vs.h linux/include/net/ip_vs.h
 --- v2.6.25/linux/include/net/ip_vs.h	2008-04-17 09:58:08.000000000 +0300
 +++ linux/include/net/ip_vs.h	2008-04-19 19:59:24.000000000 +0300
-@@ -11,6 +11,16 @@
+@@ -22,6 +22,16 @@
  
- #include <linux/sysctl.h>	/* For ctl_path */
+ #include <net/checksum.h>
  
 +#ifdef __KERNEL__
 +#include <linux/skbuff.h>
@@ -15,9 +15,9 @@ diff -urNp v2.6.25/linux/include/net/ip_vs.h linux/include/net/ip_vs.h
 +#endif
 +#endif
 +
- #define IP_VS_VERSION_CODE	0x010201
- #define NVERSION(version)			\
- 	(version >> 16) & 0xFF,			\
+ #ifdef CONFIG_IP_VS_DEBUG
+ #include <linux/net.h>
+ 
 @@ -686,6 +696,16 @@ extern void ip_vs_init_hash_table(struct
   */
  
@@ -35,13 +35,13 @@ diff -urNp v2.6.25/linux/include/net/ip_vs.h linux/include/net/ip_vs.h
   *     IPVS connection entry hash table
   */
  #ifndef CONFIG_IP_VS_TAB_BITS
-@@ -855,9 +875,42 @@ extern int sysctl_ip_vs_expire_nodest_co
+@@ -653,9 +663,42 @@
  extern int sysctl_ip_vs_expire_quiescent_template;
  extern int sysctl_ip_vs_sync_threshold[2];
  extern int sysctl_ip_vs_nat_icmp_send;
 +extern int sysctl_ip_vs_snat_reroute;
  extern struct ip_vs_stats ip_vs_stats;
- extern struct ctl_path net_vs_ctl_path[];
+ extern const struct ctl_path net_vs_ctl_path[];
  
 +#ifdef CONFIG_IP_VS_NFCT
 +
@@ -49,28 +49,28 @@ diff -urNp v2.6.25/linux/include/net/ip_vs.h linux/include/net/ip_vs.h
 +
 +static inline int ip_vs_use_conntrack(struct sk_buff *skb)
 +{
-+	return sysctl_ip_vs_conntrack && skb->nfct;
++       return sysctl_ip_vs_conntrack && skb->nfct;
 +}
 +
 +/* Returns boolean and skb is freed on failure */
 +static inline int ip_vs_confirm_conntrack(struct sk_buff *skb, struct ip_vs_conn *cp, unsigned int hooknum)
 +{
-+	if (!ip_vs_use_conntrack(skb))
-+		return 1;
-+	return nf_ct_is_confirmed((struct nf_conn *) skb->nfct) ||
-+		ip_vs_nfct_confirm(skb, cp, hooknum);
++       if (!ip_vs_use_conntrack(skb))
++               return 1;
++       return nf_ct_is_confirmed((struct nf_conn *) skb->nfct) ||
++               ip_vs_nfct_confirm(skb, cp, hooknum);
 +}
 +
 +#else
 +
 +static inline int ip_vs_use_conntrack(struct sk_buff *skb)
 +{
-+	return 0;
++       return 0;
 +}
 +
 +static inline int ip_vs_confirm_conntrack(struct sk_buff *skb, struct ip_vs_conn *cp, unsigned int hooknum)
 +{
-+	return 1;
++       return 1;
 +}
 +
 +#endif
