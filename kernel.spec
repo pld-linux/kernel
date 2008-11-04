@@ -284,6 +284,8 @@ Patch130:	linux-2.6-forcedeth-WON.patch
 Patch140:	kernel-unionfs.patch
 Patch141:	kernel-unionfs-apparmor.patch
 
+Patch150:	kernel-ppc-crtsavres.patch
+
 Patch200:	linux-2.6-ppc-ICE-hacks.patch
 
 # The following patch extend the routing functionality in Linux
@@ -892,6 +894,8 @@ install %{SOURCE5} Makefile.ppclibs
 %patch5002 -p1
 %endif
 %endif
+
+%patch150 -p1
 
 %ifarch ppc ppc64
 #patch200 -p1
@@ -1563,6 +1567,9 @@ fi
 /lib/modules/%{kernel_release}/build
 %{_kernelsrcdir}/Kbuild
 %{_kernelsrcdir}/localversion
+%ifarch ppc ppc64
+%{_kernelsrcdir}/arch/powerpc/lib/crtsavres.*
+%endif
 %{_kernelsrcdir}/arch/*/kernel/asm-offsets*
 %{_kernelsrcdir}/arch/*/kernel/sigframe*.h
 %{_kernelsrcdir}/drivers/lguest/lg.h
@@ -1592,6 +1599,9 @@ fi
 %{_kernelsrcdir}/arch/*/kernel/[!M]*
 %{_kernelsrcdir}/arch/ia64/kvm
 %{_kernelsrcdir}/arch/powerpc/kvm
+%ifarch ppc ppc64
+%exclude %{_kernelsrcdir}/arch/powerpc/lib/crtsavres.
+%endif
 %{_kernelsrcdir}/arch/s390/kvm
 %{_kernelsrcdir}/arch/x86/kvm
 %exclude %{_kernelsrcdir}/arch/*/kernel/asm-offsets*
