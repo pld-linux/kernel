@@ -27438,27 +27438,3 @@ diff -NurpP --minimal linux-2.6.27.4/security/selinux/hooks.c linux-2.6.27.4-vs2
  #include <linux/parser.h>
  #include <linux/nfs_mount.h>
  #include <net/ipv6.h>
-diff -NurpP linux-2.6.22.19-vs2.2.0.7/fs/namei.c linux-2.6.22.19-vs2.2.0.7.1/fs/namei.c
---- linux-2.6.22.19-vs2.2.0.7/fs/namei.c	2008-01-18 12:59:22 +0100
-+++ linux-2.6.22.19-vs2.2.0.7.1/fs/namei.c	2008-11-01 19:24:11 +0100
-@@ -2807,14 +2807,16 @@ retry:
- 
- 	/* this puppy downs the inode mutex */
- 	new_dentry = lookup_create(&dir_nd, 0);
--	vxdprintk(VXD_CBIT(misc, 2),
--		"lookup_create(new): %p [»%.*s«:%d]", new_dentry,
--		new_dentry->d_name.len, new_dentry->d_name.name,
--		new_dentry->d_name.len);
- 	if (!new_dentry || IS_ERR(new_dentry)) {
-+		vxdprintk(VXD_CBIT(misc, 2),
-+			"lookup_create(new): %ld", PTR_ERR(new_dentry));
- 		path_release(&dir_nd);
- 		goto retry;
- 	}
-+	vxdprintk(VXD_CBIT(misc, 2),
-+		"lookup_create(new): %p [»%.*s«:%d]", new_dentry,
-+		new_dentry->d_name.len, new_dentry->d_name.name,
-+		new_dentry->d_name.len);
- 	dir = dir_nd.dentry;
- 
- 	ret = vfs_create(dir_nd.dentry->d_inode, new_dentry, mode, &dir_nd);
