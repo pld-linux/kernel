@@ -112,8 +112,11 @@
 %define		netfilter_snap		20070806
 %define		xen_version		3.0.2
 
-%define		_alt_kernel	%{?with_pax:-pax}%{!?with_grsec_full:-nogrsecurity}%{?with_xen0:-xen0}%{?with_xenU:-xenU}%{?with_pae:-pae}%{?with_myown:-myown}%{!?with_apparmor:-noaa}
-%define		_alt_kernel	%{?with_rescuecd:-rescuecd}
+%if %{without rescuecd}
+%define		_alt_kernel	%{?with_pax:-pax}%{!?with_grsec_full:-nogrsecurity}%{!?with_apparmor:-noaa}%{?with_xen0:-xen0}%{?with_xenU:-xenU}%{?with_pae:-pae}%{?with_myown:-myown}
+%else
+%define		_alt_kernel	-rescuecd
+%endif
 
 # kernel release (used in filesystem and eventually in uname -r)
 # modules will be looked from /lib/modules/%{kernel_release}
@@ -337,7 +340,7 @@ BuildRequires:	binutils >= 3:2.14.90.0.7
 %ifarch sparc sparc64
 BuildRequires:	elftoaout
 %endif
-%if "%{_arch}" == ppc
+%ifarch ppc
 BuildRequires:	uboot-mkimage
 %endif
 BuildRequires:	/sbin/depmod
