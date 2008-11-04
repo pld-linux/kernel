@@ -112,7 +112,8 @@
 %define		netfilter_snap		20070806
 %define		xen_version		3.0.2
 
-%define		_alt_kernel	%{?with_pax:-pax}%{!?with_grsec_full:-nogrsecurity}%{?with_xen0:-xen0}%{?with_xenU:-xenU}%{?with_rescuecd:-rescuecd}%{?with_pae:-pae}%{?with_myown:-myown}%{!?with_apparmor:-noaa}
+%define		_alt_kernel	%{?with_pax:-pax}%{!?with_grsec_full:-nogrsecurity}%{?with_xen0:-xen0}%{?with_xenU:-xenU}%{?with_pae:-pae}%{?with_myown:-myown}%{!?with_apparmor:-noaa}
+%define		_alt_kernel	%{?with_rescuecd:-rescuecd}
 
 # kernel release (used in filesystem and eventually in uname -r)
 # modules will be looked from /lib/modules/%{kernel_release}
