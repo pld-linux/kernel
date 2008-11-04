@@ -1600,7 +1600,7 @@ fi
 %{_kernelsrcdir}/arch/ia64/kvm
 %{_kernelsrcdir}/arch/powerpc/kvm
 %ifarch ppc ppc64
-%exclude %{_kernelsrcdir}/arch/powerpc/lib/crtsavres.
+%exclude %{_kernelsrcdir}/arch/powerpc/lib/crtsavres.*
 %endif
 %{_kernelsrcdir}/arch/s390/kvm
 %{_kernelsrcdir}/arch/x86/kvm
