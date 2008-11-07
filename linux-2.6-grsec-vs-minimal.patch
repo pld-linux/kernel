@@ -1,7 +1,7 @@
-diff -urNp linux-2.6.26.orig/arch/sparc/Makefile linux-2.6.26/arch/sparc/Makefile
---- linux-2.6.26.orig/arch/sparc/Makefile	2008-09-01 11:44:21.000000000 +0200
-+++ linux-2.6.26/arch/sparc/Makefile	2008-09-02 12:17:21.000000000 +0200
-@@ -36,7 +36,7 @@ drivers-$(CONFIG_OPROFILE)	+= arch/sparc
+diff -urNp linux-2.6.27.4/arch/sparc/Makefile linux-2.6.27.4/arch/sparc/Makefile
+--- linux-2.6.27.4/arch/sparc/Makefile	2008-10-22 17:38:01.000000000 -0400
++++ linux-2.6.27.4/arch/sparc/Makefile	2008-10-25 12:03:06.000000000 -0400
+@@ -37,7 +37,7 @@ drivers-$(CONFIG_OPROFILE)	+= arch/sparc
  # Renaming is done to avoid confusing pattern matching rules in 2.5.45 (multy-)
  INIT_Y		:= $(patsubst %/, %/built-in.o, $(init-y))
  CORE_Y		:= $(core-y)
@@ -10,10 +10,10 @@ diff -urNp linux-2.6.26.orig/arch/sparc/Makefile linux-2.6.26/arch/sparc/Makefil
  CORE_Y		:= $(patsubst %/, %/built-in.o, $(CORE_Y))
  DRIVERS_Y	:= $(patsubst %/, %/built-in.o, $(drivers-y))
  NET_Y		:= $(patsubst %/, %/built-in.o, $(net-y))
-diff -urNp linux-2.6.26.orig/drivers/char/keyboard.c linux-2.6.26/drivers/char/keyboard.c
---- linux-2.6.26.orig/drivers/char/keyboard.c	2008-09-01 11:43:37.000000000 +0200
-+++ linux-2.6.26/drivers/char/keyboard.c	2008-09-02 12:17:21.000000000 +0200
-@@ -633,6 +633,16 @@ static void k_spec(struct vc_data *vc, u
+diff -urNp linux-2.6.27.4/drivers/char/keyboard.c linux-2.6.27.4/drivers/char/keyboard.c
+--- linux-2.6.27.4/drivers/char/keyboard.c	2008-10-22 17:38:01.000000000 -0400
++++ linux-2.6.27.4/drivers/char/keyboard.c	2008-10-27 22:36:17.000000000 -0400
+@@ -635,6 +635,16 @@ static void k_spec(struct vc_data *vc, u
  	     kbd->kbdmode == VC_MEDIUMRAW) &&
  	     value != KVAL(K_SAK))
  		return;		/* SAK is allowed even in raw mode */
@@ -30,10 +30,10 @@ diff -urNp linux-2.6.26.orig/drivers/char/keyboard.c linux-2.6.26/drivers/char/k
  	fn_handler[value](vc);
  }
  
-diff -urNp linux-2.6.26.orig/drivers/pci/proc.c linux-2.6.26/drivers/pci/proc.c
---- linux-2.6.26.orig/drivers/pci/proc.c	2008-09-01 11:43:47.000000000 +0200
-+++ linux-2.6.26/drivers/pci/proc.c	2008-09-02 12:17:21.000000000 +0200
-@@ -472,7 +472,16 @@ static const struct file_operations proc
+diff -urNp linux-2.6.27.4/drivers/pci/proc.c linux-2.6.27.4/drivers/pci/proc.c
+--- linux-2.6.27.4/drivers/pci/proc.c	2008-10-22 17:38:01.000000000 -0400
++++ linux-2.6.27.4/drivers/pci/proc.c	2008-10-25 12:03:06.000000000 -0400
+@@ -470,7 +470,16 @@ static const struct file_operations proc
  static int __init pci_proc_init(void)
  {
  	struct pci_dev *dev = NULL;
@@ -50,43 +50,25 @@ diff -urNp linux-2.6.26.orig/drivers/pci/proc.c linux-2.6.26/drivers/pci/proc.c
  	proc_create("devices", 0, proc_bus_pci_dir,
  		    &proc_bus_pci_dev_operations);
  	proc_initialized = 1;
-diff -urNp linux-2.6.26.orig/fs/Kconfig linux-2.6.26/fs/Kconfig
---- linux-2.6.26.orig/fs/Kconfig	2008-09-01 11:43:58.000000000 +0200
-+++ linux-2.6.26/fs/Kconfig	2008-09-02 12:17:21.000000000 +0200
-@@ -926,12 +926,12 @@ config PROC_FS
- 
- config PROC_KCORE
- 	bool "/proc/kcore support" if !ARM
--	depends on PROC_FS && MMU
-+	depends on PROC_FS && MMU && !GRKERNSEC_PROC_ADD
- 
- config PROC_VMCORE
-         bool "/proc/vmcore support (EXPERIMENTAL)"
--        depends on PROC_FS && EXPERIMENTAL && CRASH_DUMP
--	default y
-+        depends on PROC_FS && EXPERIMENTAL && CRASH_DUMP && !GRKERNSEC
-+	default n
-         help
-         Exports the dump image of crashed kernel in ELF format.
- 
-diff -urNp linux-2.6.26.orig/fs/namei.c linux-2.6.26/fs/namei.c
---- linux-2.6.26.orig/fs/namei.c	2008-09-01 11:43:59.000000000 +0200
-+++ linux-2.6.26/fs/namei.c	2008-09-02 12:17:21.000000000 +0200
-@@ -38,6 +38,7 @@
- #include <linux/vs_cowbl.h>
- #include <linux/vs_device.h>
- #include <linux/vs_context.h>
+diff -urNp linux-2.6.27.4/fs/namei.c linux-2.6.27.4/fs/namei.c
+--- linux-2.6.27.4/fs/namei.c	2008-10-22 17:38:01.000000000 -0400
++++ linux-2.6.27.4/fs/namei.c	2008-10-27 22:36:18.000000000 -0400
+@@ -31,6 +31,8 @@
+ #include <linux/file.h>
+ #include <linux/fcntl.h>
+ #include <linux/device_cgroup.h>
 +#include <linux/grsecurity.h>
- #include <asm/namei.h>
++
  #include <asm/uaccess.h>
  
-@@ -740,6 +741,13 @@ static inline int do_follow_link(struct 
+ #define ACC_MODE(x) ("\000\004\002\006"[(x)&O_ACCMODE])
+@@ -677,6 +679,13 @@ static inline int do_follow_link(struct 
  	err = security_inode_follow_link(path->dentry, nd);
  	if (err)
  		goto loop;
 +
 +	if (gr_handle_follow_link(path->dentry->d_parent->d_inode,
-+				  path->dentry->d_inode, path->dentry)) {
++				  path->dentry->d_inode, path->dentry, nd->path.mnt)) {
 +		err = -EACCES;
 +		goto loop;
 +	}
@@ -94,12 +76,12 @@ diff -urNp linux-2.6.26.orig/fs/namei.c linux-2.6.26/fs/namei.c
  	current->link_count++;
  	current->total_link_count++;
  	nd->depth++;
-@@ -1925,6 +1933,12 @@ do_last:
+@@ -1759,6 +1794,12 @@ do_last:
  	/*
  	 * It already exists.
  	 */
 +
-+	if (gr_handle_fifo(path.dentry, dir, flag, acc_mode)) {
++	if (gr_handle_fifo(path.dentry, nd.path.mnt, dir, flag, acc_mode)) {
 +		error = -EACCES;
 +		goto exit_mutex_unlock;
 +	}
@@ -107,13 +89,13 @@ diff -urNp linux-2.6.26.orig/fs/namei.c linux-2.6.26/fs/namei.c
  	mutex_unlock(&dir->d_inode->i_mutex);
  	audit_inode(pathname, path.dentry);
  
-@@ -2028,6 +2042,13 @@ do_link:
+@@ -1843,6 +1892,13 @@ do_link:
  	error = security_inode_follow_link(path.dentry, &nd);
  	if (error)
  		goto exit_dput;
 +
 +	if (gr_handle_follow_link(path.dentry->d_parent->d_inode, path.dentry->d_inode,
-+				  path.dentry)) {
++				  path.dentry, nd.path.mnt)) {
 +		error = -EACCES;
 +		goto exit_dput;
 +	}
@@ -121,13 +103,14 @@ diff -urNp linux-2.6.26.orig/fs/namei.c linux-2.6.26/fs/namei.c
  	error = __do_follow_link(&path, &nd);
  	if (error) {
  		/* Does someone understand code flow here? Or it is only
-@@ -2669,6 +2690,13 @@ asmlinkage long sys_linkat(int olddfd, c
+@@ -2453,6 +2572,14 @@ asmlinkage long sys_linkat(int olddfd, c
  	error = PTR_ERR(new_dentry);
  	if (IS_ERR(new_dentry))
  		goto out_unlock;
 +
-+	if (gr_handle_hardlink(old_nd.path.dentry, old_nd.path.dentry->d_inode,
-+			       old_nd.path.dentry->d_inode->i_mode, to)) {
++	if (gr_handle_hardlink(old_path.dentry, old_path.mnt,
++			       old_path.dentry->d_inode,
++			       old_path.dentry->d_inode->i_mode, to)) {
 +		error = -EACCES;
 +		goto out_dput;
 +	}
@@ -135,10 +118,10 @@ diff -urNp linux-2.6.26.orig/fs/namei.c linux-2.6.26/fs/namei.c
  	error = mnt_want_write(nd.path.mnt);
  	if (error)
  		goto out_dput;
-diff -urNp linux-2.6.26.orig/fs/proc/array.c linux-2.6.26/fs/proc/array.c
---- linux-2.6.26.orig/fs/proc/array.c	2008-09-01 11:43:59.000000000 +0200
-+++ linux-2.6.26/fs/proc/array.c	2008-09-02 12:17:21.000000000 +0200
-@@ -639,3 +639,10 @@ int proc_pid_statm(struct seq_file *m, s
+diff -urNp linux-2.6.27.4/fs/proc/array.c linux-2.6.27.4/fs/proc/array.c
+--- linux-2.6.27.4/fs/proc/array.c	2008-10-22 17:38:01.000000000 -0400
++++ linux-2.6.27.4/fs/proc/array.c	2008-10-27 22:36:18.000000000 -0400
+@@ -524,3 +569,10 @@ int proc_pid_statm(struct seq_file *m, s
  
  	return 0;
  }
@@ -149,13 +132,13 @@ diff -urNp linux-2.6.26.orig/fs/proc/array.c linux-2.6.26/fs/proc/array.c
 +	return sprintf(buffer, "%u.%u.%u.%u\n", NIPQUAD(task->signal->curr_ip));
 +}
 +#endif
-diff -urNp linux-2.6.26.orig/fs/proc/base.c linux-2.6.26/fs/proc/base.c
---- linux-2.6.26.orig/fs/proc/base.c	2008-09-01 11:43:59.000000000 +0200
-+++ linux-2.6.26/fs/proc/base.c	2008-09-02 12:23:45.000000000 +0200
+diff -urNp linux-2.6.27.4/fs/proc/base.c linux-2.6.27.4/fs/proc/base.c
+--- linux-2.6.27.4/fs/proc/base.c	2008-10-22 17:38:01.000000000 -0400
++++ linux-2.6.27.4/fs/proc/base.c	2008-10-27 22:36:18.000000000 -0400
 @@ -79,6 +79,8 @@
+ #include <linux/oom.h>
+ #include <linux/elf.h>
  #include <linux/pid_namespace.h>
- #include <linux/vs_context.h>
- #include <linux/vs_network.h>
 +#include <linux/grsecurity.h>
 +
  #include "internal.h"
@@ -170,7 +153,7 @@ diff -urNp linux-2.6.26.orig/fs/proc/base.c linux-2.6.26/fs/proc/base.c
  EXPORT_SYMBOL(maps_protect);
  
  static struct fs_struct *get_fs_struct(struct task_struct *task)
-@@ -307,9 +312,9 @@ static int proc_pid_auxv(struct task_str
+@@ -312,9 +317,9 @@ static int proc_pid_auxv(struct task_str
  	struct mm_struct *mm = get_task_mm(task);
  	if (mm) {
  		unsigned int nwords = 0;
@@ -182,7 +165,7 @@ diff -urNp linux-2.6.26.orig/fs/proc/base.c linux-2.6.26/fs/proc/base.c
  		res = nwords * sizeof(mm->saved_auxv[0]);
  		if (res > PAGE_SIZE)
  			res = PAGE_SIZE;
-@@ -1412,7 +1417,11 @@ static struct inode *proc_pid_make_inode
+@@ -1437,7 +1442,11 @@ static struct inode *proc_pid_make_inode
  	inode->i_gid = 0;
  	if (task_dumpable(task)) {
  		inode->i_uid = task->euid;
@@ -192,9 +175,9 @@ diff -urNp linux-2.6.26.orig/fs/proc/base.c linux-2.6.26/fs/proc/base.c
  		inode->i_gid = task->egid;
 +#endif
  	}
- 	/* procfs is xid tagged */
- 	inode->i_tag = (tag_t)vx_task_xid(task);
-@@ -1430,17 +1439,39 @@ static int pid_getattr(struct vfsmount *
+ 	security_task_to_inode(task, inode);
+ 
+@@ -1453,17 +1462,39 @@ static int pid_getattr(struct vfsmount *
  {
  	struct inode *inode = dentry->d_inode;
  	struct task_struct *task;
@@ -235,7 +218,7 @@ diff -urNp linux-2.6.26.orig/fs/proc/base.c linux-2.6.26/fs/proc/base.c
  		}
  	}
  	rcu_read_unlock();
-@@ -1468,11 +1505,21 @@ static int pid_revalidate(struct dentry 
+@@ -1491,11 +1528,21 @@ static int pid_revalidate(struct dentry 
  {
  	struct inode *inode = dentry->d_inode;
  	struct task_struct *task = get_proc_task(inode);
@@ -257,8 +240,8 @@ diff -urNp linux-2.6.26.orig/fs/proc/base.c linux-2.6.26/fs/proc/base.c
  		} else {
  			inode->i_uid = 0;
  			inode->i_gid = 0;
-@@ -1841,12 +1888,19 @@ static int proc_fd_permission(struct ino
- 				struct nameidata *nd)
+@@ -1863,12 +1910,19 @@ static const struct file_operations proc
+ static int proc_fd_permission(struct inode *inode, int mask)
  {
  	int rv;
 +	struct task_struct *task;
@@ -279,7 +262,17 @@ diff -urNp linux-2.6.26.orig/fs/proc/base.c linux-2.6.26/fs/proc/base.c
  	return rv;
  }
  
-@@ -2617,7 +2683,14 @@ static struct dentry *proc_pid_instantia
+@@ -2518,6 +2584,9 @@ static const struct pid_entry tgid_base_
+ #ifdef CONFIG_TASK_IO_ACCOUNTING
+ 	INF("io",	S_IRUGO, tgid_io_accounting),
+ #endif
++#ifdef CONFIG_GRKERNSEC_PROC_IPADDR
++	INF("ipaddr",	  S_IRUSR, pid_ipaddr),
++#endif
+ };
+ 
+ static int proc_tgid_base_readdir(struct file * filp,
+@@ -2647,7 +2716,14 @@ static struct dentry *proc_pid_instantia
  	if (!inode)
  		goto out;
  
@@ -294,17 +287,17 @@ diff -urNp linux-2.6.26.orig/fs/proc/base.c linux-2.6.26/fs/proc/base.c
  	inode->i_op = &proc_tgid_base_inode_operations;
  	inode->i_fop = &proc_tgid_base_operations;
  	inode->i_flags|=S_IMMUTABLE;
-@@ -2724,6 +2801,9 @@ int proc_pid_readdir(struct file * filp,
+@@ -2754,6 +2834,9 @@ int proc_pid_readdir(struct file * filp,
  {
  	unsigned int nr = filp->f_pos - FIRST_PROCESS_ENTRY;
- 	struct task_struct *reaper = get_proc_task_real(filp->f_path.dentry->d_inode);
+ 	struct task_struct *reaper = get_proc_task(filp->f_path.dentry->d_inode);
 +#if defined(CONFIG_GRKERNSEC_PROC_USER) || defined(CONFIG_GRKERNSEC_PROC_USERGROUP)
 +	struct task_struct *tmp = current;
 +#endif
  	struct tgid_iter iter;
  	struct pid_namespace *ns;
  
-@@ -2742,6 +2822,15 @@ int proc_pid_readdir(struct file * filp,
+@@ -2772,6 +2855,15 @@ int proc_pid_readdir(struct file * filp,
  	for (iter = next_tgid(ns, iter);
  	     iter.task;
  	     iter.tgid += 1, iter = next_tgid(ns, iter)) {
@@ -318,22 +311,12 @@ diff -urNp linux-2.6.26.orig/fs/proc/base.c linux-2.6.26/fs/proc/base.c
 +			continue;
 +
  		filp->f_pos = iter.tgid + TGID_OFFSET;
- 		if (!vx_proc_task_visible(iter.task))
- 			continue;
-@@ -2815,6 +2906,9 @@ static const struct pid_entry tid_base_s
- #ifdef CONFIG_FAULT_INJECTION
- 	REG("make-it-fail", S_IRUGO|S_IWUSR, fault_inject),
- #endif
-+#ifdef CONFIG_GRKERNSEC_PROC_IPADDR
-+	INF("ipaddr",	  S_IRUSR, pid_ipaddr),
-+#endif
- };
- 
- static int proc_tid_base_readdir(struct file * filp,
-diff -urNp linux-2.6.26.orig/fs/proc/inode.c linux-2.6.26/fs/proc/inode.c
---- linux-2.6.26.orig/fs/proc/inode.c	2008-09-01 11:43:59.000000000 +0200
-+++ linux-2.6.26/fs/proc/inode.c	2008-09-02 12:17:21.000000000 +0200
-@@ -403,7 +403,11 @@ struct inode *proc_get_inode(struct supe
+ 		if (proc_pid_fill_cache(filp, dirent, filldir, iter) < 0) {
+ 			put_task_struct(iter.task);
+diff -urNp linux-2.6.27.4/fs/proc/inode.c linux-2.6.27.4/fs/proc/inode.c
+--- linux-2.6.27.4/fs/proc/inode.c	2008-10-22 17:38:01.000000000 -0400
++++ linux-2.6.27.4/fs/proc/inode.c	2008-10-25 12:03:07.000000000 -0400
+@@ -467,7 +467,11 @@ struct inode *proc_get_inode(struct supe
  		if (de->mode) {
  			inode->i_mode = de->mode;
  			inode->i_uid = de->uid;
@@ -343,25 +326,44 @@ diff -urNp linux-2.6.26.orig/fs/proc/inode.c linux-2.6.26/fs/proc/inode.c
  			inode->i_gid = de->gid;
 +#endif
  		}
- 		if (de->vx_flags)
- 			PROC_I(inode)->vx_flags = de->vx_flags;
-diff -urNp linux-2.6.26.orig/fs/proc/internal.h linux-2.6.26/fs/proc/internal.h
---- linux-2.6.26.orig/fs/proc/internal.h	2008-09-01 11:43:59.000000000 +0200
-+++ linux-2.6.26/fs/proc/internal.h	2008-09-02 12:17:21.000000000 +0200
-@@ -58,6 +58,9 @@ extern int proc_pid_statm(struct seq_fil
+ 		if (de->size)
+ 			inode->i_size = de->size;
+diff -urNp linux-2.6.27.4/fs/proc/internal.h linux-2.6.27.4/fs/proc/internal.h
+--- linux-2.6.27.4/fs/proc/internal.h	2008-10-22 17:38:01.000000000 -0400
++++ linux-2.6.27.4/fs/proc/internal.h	2008-10-25 12:03:07.000000000 -0400
+@@ -55,6 +55,9 @@ extern int proc_pid_status(struct seq_fi
  				struct pid *pid, struct task_struct *task);
- extern int proc_pid_nsproxy(struct seq_file *m, struct pid_namespace *ns,
+ extern int proc_pid_statm(struct seq_file *m, struct pid_namespace *ns,
  				struct pid *pid, struct task_struct *task);
 +#ifdef CONFIG_GRKERNSEC_PROC_IPADDR
 +extern int proc_pid_ipaddr(struct task_struct *task, char *buffer);
 +#endif
- 
  extern loff_t mem_lseek(struct file *file, loff_t offset, int orig);
  
-diff -urNp linux-2.6.26.orig/fs/proc/proc_misc.c linux-2.6.26/fs/proc/proc_misc.c
---- linux-2.6.26.orig/fs/proc/proc_misc.c	2008-09-01 11:43:59.000000000 +0200
-+++ linux-2.6.26/fs/proc/proc_misc.c	2008-09-02 12:17:21.000000000 +0200
-@@ -851,6 +851,8 @@ struct proc_dir_entry *proc_root_kcore;
+ extern const struct file_operations proc_maps_operations;
+diff -urNp linux-2.6.27.4/fs/proc/Kconfig linux-2.6.27.4/fs/proc/Kconfig
+--- linux-2.6.27.4/fs/proc/Kconfig	2008-10-22 17:38:01.000000000 -0400
++++ linux-2.6.27.4/fs/proc/Kconfig	2008-10-25 12:20:56.000000000 -0400
+@@ -30,12 +30,12 @@ config PROC_FS
+ 
+ config PROC_KCORE
+ 	bool "/proc/kcore support" if !ARM
+-	depends on PROC_FS && MMU
++	depends on PROC_FS && MMU && !GRKERNSEC_PROC_ADD
+ 
+ config PROC_VMCORE
+         bool "/proc/vmcore support (EXPERIMENTAL)"
+-        depends on PROC_FS && CRASH_DUMP
+-	default y
++        depends on PROC_FS && CRASH_DUMP && !GRKERNSEC
++	default n
+         help
+         Exports the dump image of crashed kernel in ELF format.
+ 
+diff -urNp linux-2.6.27.4/fs/proc/proc_misc.c linux-2.6.27.4/fs/proc/proc_misc.c
+--- linux-2.6.27.4/fs/proc/proc_misc.c	2008-10-22 17:38:01.000000000 -0400
++++ linux-2.6.27.4/fs/proc/proc_misc.c	2008-10-25 12:03:07.000000000 -0400
+@@ -860,6 +860,8 @@ struct proc_dir_entry *proc_root_kcore;
  
  void __init proc_misc_init(void)
  {
@@ -370,7 +372,7 @@ diff -urNp linux-2.6.26.orig/fs/proc/proc_misc.c linux-2.6.26/fs/proc/proc_misc.
  	static struct {
  		char *name;
  		int (*read_proc)(char*,char**,off_t,int,int*,void*);
-@@ -866,13 +868,24 @@ void __init proc_misc_init(void)
+@@ -875,13 +877,24 @@ void __init proc_misc_init(void)
  		{"stram",	stram_read_proc},
  #endif
  		{"filesystems",	filesystems_read_proc},
@@ -395,7 +397,7 @@ diff -urNp linux-2.6.26.orig/fs/proc/proc_misc.c linux-2.6.26/fs/proc/proc_misc.
  	proc_symlink("mounts", NULL, "self/mounts");
  
  	/* And now for trickier ones */
-@@ -880,14 +893,18 @@ void __init proc_misc_init(void)
+@@ -889,14 +902,18 @@ void __init proc_misc_init(void)
  	proc_create("kmsg", S_IRUSR, NULL, &proc_kmsg_operations);
  #endif
  	proc_create("locks", 0, NULL, &proc_locks_operations);
@@ -415,7 +417,7 @@ diff -urNp linux-2.6.26.orig/fs/proc/proc_misc.c linux-2.6.26/fs/proc/proc_misc.
  	proc_create("slabinfo",S_IWUSR|S_IRUGO,NULL,&proc_slabinfo_operations);
  #ifdef CONFIG_DEBUG_SLAB_LEAK
  	proc_create("slab_allocators", 0, NULL, &proc_slabstats_operations);
-@@ -909,7 +926,7 @@ void __init proc_misc_init(void)
+@@ -918,7 +935,7 @@ void __init proc_misc_init(void)
  #ifdef CONFIG_SCHEDSTATS
  	proc_create("schedstat", 0, NULL, &proc_schedstat_operations);
  #endif
@@ -424,10 +426,28 @@ diff -urNp linux-2.6.26.orig/fs/proc/proc_misc.c linux-2.6.26/fs/proc/proc_misc.
  	proc_root_kcore = proc_create("kcore", S_IRUSR, NULL, &proc_kcore_operations);
  	if (proc_root_kcore)
  		proc_root_kcore->size =
-diff -urNp linux-2.6.26.orig/fs/proc/root.c linux-2.6.26/fs/proc/root.c
---- linux-2.6.26.orig/fs/proc/root.c	2008-09-01 11:43:59.000000000 +0200
-+++ linux-2.6.26/fs/proc/root.c	2008-09-02 12:17:21.000000000 +0200
-@@ -139,7 +139,15 @@ void __init proc_root_init(void)
+diff -urNp linux-2.6.27.4/fs/proc/proc_net.c linux-2.6.27.4/fs/proc/proc_net.c
+--- linux-2.6.27.4/fs/proc/proc_net.c	2008-10-22 17:38:01.000000000 -0400
++++ linux-2.6.27.4/fs/proc/proc_net.c	2008-10-25 12:03:07.000000000 -0400
+@@ -106,6 +106,14 @@ static struct net *get_proc_task_net(str
+ 	struct nsproxy *ns;
+ 	struct net *net = NULL;
+ 
++#ifdef CONFIG_GRKERNSEC_PROC_USER
++	if (current->fsuid)
++		return net;
++#elif defined(CONFIG_GRKERNSEC_PROC_USERGROUP)
++	if (current->fsuid && !in_group_p(CONFIG_GRKERNSEC_PROC_GID))
++		return net;
++#endif
++
+ 	rcu_read_lock();
+ 	task = pid_task(proc_pid(dir), PIDTYPE_PID);
+ 	if (task != NULL) {
+diff -urNp linux-2.6.27.4/fs/proc/root.c linux-2.6.27.4/fs/proc/root.c
+--- linux-2.6.27.4/fs/proc/root.c	2008-10-22 17:38:01.000000000 -0400
++++ linux-2.6.27.4/fs/proc/root.c	2008-10-25 12:03:07.000000000 -0400
+@@ -135,7 +135,15 @@ void __init proc_root_init(void)
  #ifdef CONFIG_PROC_DEVICETREE
  	proc_device_tree_init();
  #endif
@@ -441,11 +461,11 @@ diff -urNp linux-2.6.26.orig/fs/proc/root.c linux-2.6.26/fs/proc/root.c
  	proc_mkdir("bus", NULL);
 +#endif
  	proc_sys_init();
- 	proc_vx_init();
  }
-diff -urNp linux-2.6.26.orig/grsecurity/grsec_disabled.c linux-2.6.26/grsecurity/grsec_disabled.c
---- linux-2.6.26.orig/grsecurity/grsec_disabled.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux-2.6.26/grsecurity/grsec_disabled.c	2008-09-02 12:17:21.000000000 +0200
+ 
+diff -urNp linux-2.6.27.4/grsecurity/grsec_disabled.c linux-2.6.27.4/grsecurity/grsec_disabled.c
+--- linux-2.6.27.4/grsecurity/grsec_disabled.c	1969-12-31 19:00:00.000000000 -0500
++++ linux-2.6.27.4/grsecurity/grsec_disabled.c	2008-10-25 12:03:07.000000000 -0400
 @@ -0,0 +1,6 @@
 +void
 +grsecurity_init(void)
@@ -453,9 +473,9 @@ diff -urNp linux-2.6.26.orig/grsecurity/grsec_disabled.c linux-2.6.26/grsecurity
 +	return;
 +}
 +
-diff -urNp linux-2.6.26.orig/grsecurity/grsec_fifo.c linux-2.6.26/grsecurity/grsec_fifo.c
---- linux-2.6.26.orig/grsecurity/grsec_fifo.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux-2.6.26/grsecurity/grsec_fifo.c	2008-09-02 12:17:21.000000000 +0200
+diff -urNp linux-2.6.27.4/grsecurity/grsec_fifo.c linux-2.6.27.4/grsecurity/grsec_fifo.c
+--- linux-2.6.27.4/grsecurity/grsec_fifo.c	1969-12-31 19:00:00.000000000 -0500
++++ linux-2.6.27.4/grsecurity/grsec_fifo.c	2008-10-25 12:03:07.000000000 -0400
 @@ -0,0 +1,20 @@
 +#include <linux/kernel.h>
 +#include <linux/sched.h>
@@ -477,10 +497,10 @@ diff -urNp linux-2.6.26.orig/grsecurity/grsec_fifo.c linux-2.6.26/grsecurity/grs
 +#endif
 +	return 0;
 +}
-diff -urNp linux-2.6.26.orig/grsecurity/grsec_init.c linux-2.6.26/grsecurity/grsec_init.c
---- linux-2.6.26.orig/grsecurity/grsec_init.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux-2.6.26/grsecurity/grsec_init.c	2008-09-02 12:17:21.000000000 +0200
-@@ -0,0 +1,29 @@
+diff -urNp linux-2.6.27.4/grsecurity/grsec_init.c linux-2.6.27.4/grsecurity/grsec_init.c
+--- linux-2.6.27.4/grsecurity/grsec_init.c	1969-12-31 19:00:00.000000000 -0500
++++ linux-2.6.27.4/grsecurity/grsec_init.c	2008-10-25 12:03:07.000000000 -0400
+@@ -0,0 +1,32 @@
 +#include <linux/kernel.h>
 +#include <linux/sched.h>
 +#include <linux/mm.h>
@@ -503,6 +523,9 @@ diff -urNp linux-2.6.26.orig/grsecurity/grsec_init.c linux-2.6.26/grsecurity/grs
 +#ifdef CONFIG_GRKERNSEC_LINK
 +	grsec_enable_link = 1;
 +#endif
++#ifdef CONFIG_GRKERNSEC_DMESG
++	grsec_enable_dmesg = 1;
++#endif
 +#ifdef CONFIG_GRKERNSEC_FIFO
 +	grsec_enable_fifo = 1;
 +#endif
@@ -510,9 +533,9 @@ diff -urNp linux-2.6.26.orig/grsecurity/grsec_init.c linux-2.6.26/grsecurity/grs
 +
 +	return;
 +}
-diff -urNp linux-2.6.26.orig/grsecurity/grsec_link.c linux-2.6.26/grsecurity/grsec_link.c
---- linux-2.6.26.orig/grsecurity/grsec_link.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux-2.6.26/grsecurity/grsec_link.c	2008-09-02 12:17:21.000000000 +0200
+diff -urNp linux-2.6.27.4/grsecurity/grsec_link.c linux-2.6.27.4/grsecurity/grsec_link.c
+--- linux-2.6.27.4/grsecurity/grsec_link.c	1969-12-31 19:00:00.000000000 -0500
++++ linux-2.6.27.4/grsecurity/grsec_link.c	2008-10-25 12:03:07.000000000 -0400
 @@ -0,0 +1,37 @@
 +#include <linux/kernel.h>
 +#include <linux/sched.h>
@@ -551,10 +574,10 @@ diff -urNp linux-2.6.26.orig/grsecurity/grsec_link.c linux-2.6.26/grsecurity/grs
 +#endif
 +	return 0;
 +}
-diff -urNp linux-2.6.26.orig/grsecurity/grsec_sock.c linux-2.6.26/grsecurity/grsec_sock.c
---- linux-2.6.26.orig/grsecurity/grsec_sock.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux-2.6.26/grsecurity/grsec_sock.c	2008-09-02 12:17:21.000000000 +0200
-@@ -0,0 +1,170 @@
+diff -urNp linux-2.6.27.4/grsecurity/grsec_sock.c linux-2.6.27.4/grsecurity/grsec_sock.c
+--- linux-2.6.27.4/grsecurity/grsec_sock.c	1969-12-31 19:00:00.000000000 -0500
++++ linux-2.6.27.4/grsecurity/grsec_sock.c	2008-10-28 01:32:07.000000000 -0400
+@@ -0,0 +1,169 @@
 +#include <linux/kernel.h>
 +#include <linux/module.h>
 +#include <linux/sched.h>
@@ -575,7 +598,7 @@ diff -urNp linux-2.6.26.orig/grsecurity/grsec_sock.c linux-2.6.26/grsecurity/grs
 +};
 +
 +struct conn_table_entry *gr_conn_table[gr_conn_table_size];
-+spinlock_t gr_conn_table_lock = SPIN_LOCK_UNLOCKED;
++DEFINE_SPINLOCK(gr_conn_table_lock);
 +
 +extern const char * gr_socktype_to_name(unsigned char type);
 +extern const char * gr_proto_to_name(unsigned char proto);
@@ -724,10 +747,9 @@ diff -urNp linux-2.6.26.orig/grsecurity/grsec_sock.c linux-2.6.26/grsecurity/grs
 +#endif
 +	return;
 +}
-+
-diff -urNp linux-2.6.26.orig/grsecurity/grsec_sysctl.c linux-2.6.26/grsecurity/grsec_sysctl.c
---- linux-2.6.26.orig/grsecurity/grsec_sysctl.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux-2.6.26/grsecurity/grsec_sysctl.c	2008-09-02 12:17:21.000000000 +0200
+diff -urNp linux-2.6.27.4/grsecurity/grsec_sysctl.c linux-2.6.27.4/grsecurity/grsec_sysctl.c
+--- linux-2.6.27.4/grsecurity/grsec_sysctl.c	1969-12-31 19:00:00.000000000 -0500
++++ linux-2.6.27.4/grsecurity/grsec_sysctl.c	2008-10-25 13:42:27.000000000 -0400
 @@ -0,0 +1,52 @@
 +#include <linux/kernel.h>
 +#include <linux/sched.h>
@@ -739,7 +761,7 @@ diff -urNp linux-2.6.26.orig/grsecurity/grsec_sysctl.c linux-2.6.26/grsecurity/g
 +gr_handle_sysctl_mod(const char *dirname, const char *name, const int op)
 +{
 +#ifdef CONFIG_GRKERNSEC_SYSCTL
-+	if (!strcmp(dirname, "grsecurity") && grsec_lock && (op & 002)) {
++	if (!strcmp(dirname, "grsecurity") && grsec_lock && (op & MAY_WRITE)) {
 +		return -EACCES;
 +	}
 +#endif
@@ -781,10 +803,10 @@ diff -urNp linux-2.6.26.orig/grsecurity/grsec_sysctl.c linux-2.6.26/grsecurity/g
 +	{ .ctl_name = 0 }
 +};
 +#endif
-diff -urNp linux-2.6.26.orig/grsecurity/Kconfig linux-2.6.26/grsecurity/Kconfig
---- linux-2.6.26.orig/grsecurity/Kconfig	1970-01-01 01:00:00.000000000 +0100
-+++ linux-2.6.26/grsecurity/Kconfig	2008-09-02 12:17:21.000000000 +0200
-@@ -0,0 +1,123 @@
+diff -urNp linux-2.6.27.4/grsecurity/Kconfig linux-2.6.27.4/grsecurity/Kconfig
+--- linux-2.6.27.4/grsecurity/Kconfig	1969-12-31 19:00:00.000000000 -0500
++++ linux-2.6.27.4/grsecurity/Kconfig	2008-10-25 12:03:07.000000000 -0400
+@@ -0,0 +1,128 @@
 +#
 +# grecurity configuration
 +#
@@ -868,18 +890,10 @@ diff -urNp linux-2.6.26.orig/grsecurity/Kconfig linux-2.6.26/grsecurity/Kconfig
 +	  option is enabled, a sysctl option with name "fifo_restrictions" is
 +	  created.
 +
-+config GRKERNSEC_PROC_IPADDR
-+	bool "/proc/<pid>/ipaddr support"
-+	help
-+	  If you say Y here, a new entry will be added to each /proc/<pid>
-+	  directory that contains the IP address of the person using the task.
-+	  The IP is carried across local TCP and AF_UNIX stream sockets.
-+	  This information can be useful for IDS/IPSes to perform remote response
-+	  to a local attack.  The entry is readable by only the owner of the
-+	  process (and root if he has CAP_DAC_OVERRIDE, which can be removed via
-+	  the RBAC system), and thus does not create privacy concerns.
-+
 +endmenu
++
++menu "Sysctl support"
++depends on GRKERNSEC && SYSCTL
 +
 +config GRKERNSEC_SYSCTL
 +	bool "Sysctl support"
@@ -908,9 +922,22 @@ diff -urNp linux-2.6.26.orig/grsecurity/Kconfig linux-2.6.26/grsecurity/Kconfig
 +	  the sysctl entries.
 +
 +endmenu
-diff -urNp linux-2.6.26.orig/grsecurity/Makefile linux-2.6.26/grsecurity/Makefile
---- linux-2.6.26.orig/grsecurity/Makefile	1970-01-01 01:00:00.000000000 +0100
-+++ linux-2.6.26/grsecurity/Makefile	2008-09-02 12:17:21.000000000 +0200
++
++config GRKERNSEC_PROC_IPADDR
++	bool "/proc/<pid>/ipaddr support"
++	help
++	  If you say Y here, a new entry will be added to each /proc/<pid>
++	  directory that contains the IP address of the person using the task.
++	  The IP is carried across local TCP and AF_UNIX stream sockets.
++	  This information can be useful for IDS/IPSes to perform remote response
++	  to a local attack.  The entry is readable by only the owner of the
++	  process (and root if he has CAP_DAC_OVERRIDE, which can be removed via
++	  the RBAC system), and thus does not create privacy concerns.
++
++endmenu
+diff -urNp linux-2.6.27.4/grsecurity/Makefile linux-2.6.27.4/grsecurity/Makefile
+--- linux-2.6.27.4/grsecurity/Makefile	1969-12-31 19:00:00.000000000 -0500
++++ linux-2.6.27.4/grsecurity/Makefile	2008-10-25 12:03:07.000000000 -0400
 @@ -0,0 +1,11 @@
 +# All code in this directory and various hooks inserted throughout the kernel
 +# are copyright Brad Spengler, and released under the GPL v2 or higher
@@ -923,9 +950,9 @@ diff -urNp linux-2.6.26.orig/grsecurity/Makefile linux-2.6.26/grsecurity/Makefil
 +obj-y += grsec_disabled.o
 +endif
 +
-diff -urNp linux-2.6.26.orig/include/linux/grinternal.h linux-2.6.26/include/linux/grinternal.h
---- linux-2.6.26.orig/include/linux/grinternal.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux-2.6.26/include/linux/grinternal.h	2008-09-02 12:17:21.000000000 +0200
+diff -urNp linux-2.6.27.4/include/linux/grinternal.h linux-2.6.27.4/include/linux/grinternal.h
+--- linux-2.6.27.4/include/linux/grinternal.h	1969-12-31 19:00:00.000000000 -0500
++++ linux-2.6.27.4/include/linux/grinternal.h	2008-10-25 12:03:07.000000000 -0400
 @@ -0,0 +1,14 @@
 +#ifndef __GRINTERNAL_H
 +#define __GRINTERNAL_H
@@ -941,10 +968,10 @@ diff -urNp linux-2.6.26.orig/include/linux/grinternal.h linux-2.6.26/include/lin
 +#endif
 +
 +#endif
-diff -urNp linux-2.6.26.orig/include/linux/grsecurity.h linux-2.6.26/include/linux/grsecurity.h
---- linux-2.6.26.orig/include/linux/grsecurity.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux-2.6.26/include/linux/grsecurity.h	2008-09-02 12:17:21.000000000 +0200
-@@ -0,0 +1,18 @@
+diff -urNp linux-2.6.27.4/include/linux/grsecurity.h linux-2.6.27.4/include/linux/grsecurity.h
+--- linux-2.6.27.4/include/linux/grsecurity.h	1969-12-31 19:00:00.000000000 -0500
++++ linux-2.6.27.4/include/linux/grsecurity.h	2008-10-25 12:03:07.000000000 -0400
+@@ -0,0 +1,21 @@
 +#ifndef GR_SECURITY_H
 +#define GR_SECURITY_H
 +#include <linux/fs.h>
@@ -954,19 +981,22 @@ diff -urNp linux-2.6.26.orig/include/linux/grsecurity.h linux-2.6.26/include/lin
 +
 +int gr_handle_follow_link(const struct inode *parent,
 +				 const struct inode *inode,
-+				 const struct dentry *dentry);
++				 const struct dentry *dentry,
++				 const struct vfsmount *mnt);
 +int gr_handle_fifo(const struct dentry *dentry,
++			  const struct vfsmount *mnt,
 +			  const struct dentry *dir, const int flag,
 +			  const int acc_mode);
 +int gr_handle_hardlink(const struct dentry *dentry,
++			      const struct vfsmount *mnt,
 +			      struct inode *inode,
 +			      const int mode, const char *to);
 +
 +#endif
-diff -urNp linux-2.6.26.orig/include/linux/sched.h linux-2.6.26/include/linux/sched.h
---- linux-2.6.26.orig/include/linux/sched.h	2008-09-01 11:43:34.000000000 +0200
-+++ linux-2.6.26/include/linux/sched.h	2008-09-02 12:17:21.000000000 +0200
-@@ -544,6 +544,15 @@ struct signal_struct {
+diff -urNp linux-2.6.27.4/include/linux/sched.h linux-2.6.27.4/include/linux/sched.h
+--- linux-2.6.27.4/include/linux/sched.h	2008-10-22 17:38:01.000000000 -0400
++++ linux-2.6.27.4/include/linux/sched.h	2008-10-27 22:36:18.000000000 -0400
+@@ -545,6 +546,15 @@ struct signal_struct {
  	unsigned audit_tty;
  	struct tty_audit_buf *tty_audit_buf;
  #endif
@@ -982,25 +1012,35 @@ diff -urNp linux-2.6.26.orig/include/linux/sched.h linux-2.6.26/include/linux/sc
  };
  
  /* Context switch must be unlocked if interrupts are to be enabled */
-diff -urNp linux-2.6.26.orig/include/linux/sysctl.h linux-2.6.26/include/linux/sysctl.h
---- linux-2.6.26.orig/include/linux/sysctl.h	2008-09-01 11:43:34.000000000 +0200
-+++ linux-2.6.26/include/linux/sysctl.h	2008-09-02 12:17:21.000000000 +0200
-@@ -165,8 +165,11 @@ enum
- 	KERN_MAX_LOCK_DEPTH=74,
- 	KERN_NMI_WATCHDOG=75, /* int: enable/disable nmi watchdog */
- 	KERN_PANIC_ON_NMI=76, /* int: whether we will panic on an unrecovered */
--};
-+#ifdef CONFIG_GRKERNSEC
-+	KERN_GRSECURITY=98,	/* grsecurity */
-+#endif
+diff -urNp linux-2.6.27.4/init/Kconfig linux-2.6.27.4/init/Kconfig
+--- linux-2.6.27.4/init/Kconfig	2008-10-22 17:38:01.000000000 -0400
++++ linux-2.6.27.4/init/Kconfig	2008-10-25 12:03:07.000000000 -0400
+@@ -780,8 +781,8 @@ config MARKERS
+ source "arch/Kconfig"
  
-+};
+ config PROC_PAGE_MONITOR
+- 	default y
+-	depends on PROC_FS && MMU
++ 	default n
++	depends on PROC_FS && MMU && !GRKERNSEC
+ 	bool "Enable /proc page monitoring" if EMBEDDED
+  	help
+ 	  Various /proc files exist to monitor process memory utilization:
+@@ -797,9 +798,9 @@ config HAVE_GENERIC_DMA_COHERENT
  
+ config SLABINFO
+ 	bool
+-	depends on PROC_FS
++	depends on PROC_FS && !GRKERNSEC_PROC_ADD
+ 	depends on SLAB || SLUB_DEBUG
+-	default y
++	default n
  
- /* CTL_VM names: */
-diff -urNp linux-2.6.26.orig/kernel/configs.c linux-2.6.26/kernel/configs.c
---- linux-2.6.26.orig/kernel/configs.c	2008-09-01 11:43:58.000000000 +0200
-+++ linux-2.6.26/kernel/configs.c	2008-09-02 12:17:21.000000000 +0200
+ config RT_MUTEXES
+ 	boolean
+diff -urNp linux-2.6.27.4/kernel/configs.c linux-2.6.27.4/kernel/configs.c
+--- linux-2.6.27.4/kernel/configs.c	2008-10-22 17:38:01.000000000 -0400
++++ linux-2.6.27.4/kernel/configs.c	2008-10-25 12:03:07.000000000 -0400
 @@ -79,8 +79,19 @@ static int __init ikconfig_init(void)
  	struct proc_dir_entry *entry;
  
@@ -1021,18 +1061,18 @@ diff -urNp linux-2.6.26.orig/kernel/configs.c linux-2.6.26/kernel/configs.c
  	if (!entry)
  		return -ENOMEM;
  
-diff -urNp linux-2.6.26.orig/kernel/exit.c linux-2.6.26/kernel/exit.c
---- linux-2.6.26.orig/kernel/exit.c	2008-09-01 11:43:58.000000000 +0200
-+++ linux-2.6.26/kernel/exit.c	2008-09-02 12:17:21.000000000 +0200
-@@ -50,6 +50,7 @@
- #include <linux/vs_network.h>
- #include <linux/vs_pid.h>
- #include <linux/vserver/global.h>
+diff -urNp linux-2.6.27.4/kernel/exit.c linux-2.6.27.4/kernel/exit.c
+--- linux-2.6.27.4/kernel/exit.c	2008-10-22 17:38:01.000000000 -0400
++++ linux-2.6.27.4/kernel/exit.c	2008-10-27 22:36:18.000000000 -0400
+@@ -47,6 +47,7 @@
+ #include <linux/blkdev.h>
+ #include <linux/task_io_accounting_ops.h>
+ #include <linux/tracehook.h>
 +#include <linux/grsecurity.h>
  
  #include <asm/uaccess.h>
  #include <asm/unistd.h>
-@@ -137,6 +138,7 @@ static void __exit_signal(struct task_st
+@@ -134,6 +139,7 @@ static void __exit_signal(struct task_st
  	 */
  	flush_sigqueue(&tsk->pending);
  
@@ -1040,10 +1080,10 @@ diff -urNp linux-2.6.26.orig/kernel/exit.c linux-2.6.26/kernel/exit.c
  	tsk->signal = NULL;
  	tsk->sighand = NULL;
  	spin_unlock(&sighand->siglock);
-diff -urNp linux-2.6.26.orig/kernel/kallsyms.c linux-2.6.26/kernel/kallsyms.c
---- linux-2.6.26.orig/kernel/kallsyms.c	2008-09-01 11:43:58.000000000 +0200
-+++ linux-2.6.26/kernel/kallsyms.c	2008-09-02 12:17:21.000000000 +0200
-@@ -472,7 +472,15 @@ static const struct file_operations kall
+diff -urNp linux-2.6.27.4/kernel/kallsyms.c linux-2.6.27.4/kernel/kallsyms.c
+--- linux-2.6.27.4/kernel/kallsyms.c	2008-10-22 17:38:01.000000000 -0400
++++ linux-2.6.27.4/kernel/kallsyms.c	2008-10-27 22:36:18.000000000 -0400
+@@ -472,7 +484,15 @@ static const struct file_operations kall
  
  static int __init kallsyms_init(void)
  {
@@ -1059,9 +1099,9 @@ diff -urNp linux-2.6.26.orig/kernel/kallsyms.c linux-2.6.26/kernel/kallsyms.c
  	return 0;
  }
  __initcall(kallsyms_init);
-diff -urNp linux-2.6.26.orig/kernel/resource.c linux-2.6.26/kernel/resource.c
---- linux-2.6.26.orig/kernel/resource.c	2008-09-01 11:43:58.000000000 +0200
-+++ linux-2.6.26/kernel/resource.c	2008-09-02 12:17:21.000000000 +0200
+diff -urNp linux-2.6.27.4/kernel/resource.c linux-2.6.27.4/kernel/resource.c
+--- linux-2.6.27.4/kernel/resource.c	2008-10-22 17:38:01.000000000 -0400
++++ linux-2.6.27.4/kernel/resource.c	2008-10-25 12:03:07.000000000 -0400
 @@ -131,8 +131,18 @@ static const struct file_operations proc
  
  static int __init ioresources_init(void)
@@ -1081,10 +1121,10 @@ diff -urNp linux-2.6.26.orig/kernel/resource.c linux-2.6.26/kernel/resource.c
  	return 0;
  }
  __initcall(ioresources_init);
-diff -urNp linux-2.6.26.orig/kernel/sysctl.c linux-2.6.26/kernel/sysctl.c
---- linux-2.6.26.orig/kernel/sysctl.c	2008-09-01 11:43:58.000000000 +0200
-+++ linux-2.6.26/kernel/sysctl.c	2008-09-02 12:17:21.000000000 +0200
-@@ -59,6 +59,11 @@
+diff -urNp linux-2.6.27.4/kernel/sysctl.c linux-2.6.27.4/kernel/sysctl.c
+--- linux-2.6.27.4/kernel/sysctl.c	2008-10-22 17:38:01.000000000 -0400
++++ linux-2.6.27.4/kernel/sysctl.c	2008-10-27 22:36:18.000000000 -0400
+@@ -61,6 +61,11 @@
  static int deprecated_sysctl_warning(struct __sysctl_args *args);
  
  #if defined(CONFIG_SYSCTL)
@@ -1096,7 +1136,7 @@ diff -urNp linux-2.6.26.orig/kernel/sysctl.c linux-2.6.26/kernel/sysctl.c
  
  /* External variables not in a header file. */
  extern int C_A_D;
-@@ -153,6 +158,7 @@ static int proc_do_cad_pid(struct ctl_ta
+@@ -155,6 +162,7 @@ static int proc_do_cad_pid(struct ctl_ta
  static int proc_dointvec_taint(struct ctl_table *table, int write, struct file *filp,
  			       void __user *buffer, size_t *lenp, loff_t *ppos);
  #endif
@@ -1104,8 +1144,8 @@ diff -urNp linux-2.6.26.orig/kernel/sysctl.c linux-2.6.26/kernel/sysctl.c
  
  static struct ctl_table root_table[];
  static struct ctl_table_root sysctl_table_root;
-@@ -823,6 +829,15 @@ static struct ctl_table kern_table[] = {
- 		.child		= key_sysctls,
+@@ -847,6 +871,16 @@ static struct ctl_table kern_table[] = {
+ 		.proc_handler   = &proc_dointvec,
  	},
  #endif
 +
@@ -1117,24 +1157,61 @@ diff -urNp linux-2.6.26.orig/kernel/sysctl.c linux-2.6.26/kernel/sysctl.c
 +		.child		= grsecurity_table,
 +	},
 +#endif
++
  /*
   * NOTE: do not add new entries to this table unless you have read
   * Documentation/sysctl/ctl_unnumbered.txt
-@@ -1585,6 +1600,10 @@ int sysctl_perm(struct ctl_table_root *r
- 	int error;
- 	int mode;
+@@ -1543,6 +1587,8 @@ static int do_sysctl_strategy(struct ctl
+ 	return 0;
+ }
  
++static int sysctl_perm_nochk(struct ctl_table_root *root, struct ctl_table *table, int op);
++
+ static int parse_table(int __user *name, int nlen,
+ 		       void __user *oldval, size_t __user *oldlenp,
+ 		       void __user *newval, size_t newlen,
+@@ -1561,7 +1607,7 @@ repeat:
+ 		if (n == table->ctl_name) {
+ 			int error;
+ 			if (table->child) {
+-				if (sysctl_perm(root, table, MAY_EXEC))
++				if (sysctl_perm_nochk(root, table, MAY_EXEC))
+ 					return -EPERM;
+ 				name++;
+ 				nlen--;
+@@ -1658,6 +1704,28 @@ int sysctl_perm(struct ctl_table_root *r
+ 	return test_perm(mode, op);
+ }
+ 
++int sysctl_perm_nochk(struct ctl_table_root *root, struct ctl_table *table, int op)
++{
++	int error;
++	int mode;
++
 +	if (table->parent != NULL && table->parent->procname != NULL &&
-+	    table->procname != NULL &&
++	   table->procname != NULL &&
 +	    gr_handle_sysctl_mod(table->parent->procname, table->procname, op))
 +		return -EACCES;
- 	error = security_sysctl(table, op);
- 	if (error)
- 		return error;
-diff -urNp linux-2.6.26.orig/Makefile linux-2.6.26/Makefile
---- linux-2.6.26.orig/Makefile	2008-09-01 11:44:01.000000000 +0200
-+++ linux-2.6.26/Makefile	2008-09-02 12:17:21.000000000 +0200
-@@ -607,7 +607,7 @@ export mod_strip_cmd
++
++	error = security_sysctl(table, op & (MAY_READ | MAY_WRITE | MAY_EXEC));
++	if (error)
++		return error;
++
++	if (root->permissions)
++		mode = root->permissions(root, current->nsproxy, table);
++	else
++		mode = table->mode;
++
++	return test_perm(mode, op);
++}
++
+ static void sysctl_set_parent(struct ctl_table *parent, struct ctl_table *table)
+ {
+ 	for (; table->ctl_name || table->procname; table++) {
+diff -urNp linux-2.6.27.4/Makefile linux-2.6.27.4/Makefile
+--- linux-2.6.27.4/Makefile	2008-10-27 22:25:00.000000000 -0400
++++ linux-2.6.27.4/Makefile	2008-10-27 22:36:16.000000000 -0400
+@@ -619,7 +619,7 @@ export mod_strip_cmd
  
  
  ifeq ($(KBUILD_EXTMOD),)
@@ -1143,10 +1220,10 @@ diff -urNp linux-2.6.26.orig/Makefile linux-2.6.26/Makefile
  
  vmlinux-dirs	:= $(patsubst %/,%,$(filter %/, $(init-y) $(init-m) \
  		     $(core-y) $(core-m) $(drivers-y) $(drivers-m) \
-diff -urNp linux-2.6.26.orig/net/ipv4/inet_hashtables.c linux-2.6.26/net/ipv4/inet_hashtables.c
---- linux-2.6.26.orig/net/ipv4/inet_hashtables.c	2008-09-01 11:43:37.000000000 +0200
-+++ linux-2.6.26/net/ipv4/inet_hashtables.c	2008-09-02 12:17:21.000000000 +0200
-@@ -18,12 +18,15 @@
+diff -urNp linux-2.6.27.4/net/ipv4/inet_hashtables.c linux-2.6.27.4/net/ipv4/inet_hashtables.c
+--- linux-2.6.27.4/net/ipv4/inet_hashtables.c	2008-10-22 17:38:01.000000000 -0400
++++ linux-2.6.27.4/net/ipv4/inet_hashtables.c	2008-10-25 12:03:07.000000000 -0400
+@@ -18,11 +18,14 @@
  #include <linux/sched.h>
  #include <linux/slab.h>
  #include <linux/wait.h>
@@ -1154,7 +1231,6 @@ diff -urNp linux-2.6.26.orig/net/ipv4/inet_hashtables.c linux-2.6.26/net/ipv4/in
  
  #include <net/inet_connection_sock.h>
  #include <net/inet_hashtables.h>
- #include <net/route.h>
  #include <net/ip.h>
  
 +extern void gr_update_task_in_ip_table(struct task_struct *task, const struct inet_sock *inet);
@@ -1162,7 +1238,7 @@ diff -urNp linux-2.6.26.orig/net/ipv4/inet_hashtables.c linux-2.6.26/net/ipv4/in
  /*
   * Allocate and initialize a new local port bind bucket.
   * The bindhash mutex for snum's hash chain must be held here.
-@@ -484,6 +487,8 @@ ok:
+@@ -487,6 +490,8 @@ ok:
  		}
  		spin_unlock(&head->lock);
  
@@ -1171,10 +1247,10 @@ diff -urNp linux-2.6.26.orig/net/ipv4/inet_hashtables.c linux-2.6.26/net/ipv4/in
  		if (tw) {
  			inet_twsk_deschedule(tw, death_row);
  			inet_twsk_put(tw);
-diff -urNp linux-2.6.26.orig/net/socket.c linux-2.6.26/net/socket.c
---- linux-2.6.26.orig/net/socket.c	2008-09-01 11:43:36.000000000 +0200
-+++ linux-2.6.26/net/socket.c	2008-09-02 12:17:21.000000000 +0200
-@@ -85,6 +85,7 @@
+diff -urNp linux-2.6.27.4/net/socket.c linux-2.6.27.4/net/socket.c
+--- linux-2.6.27.4/net/socket.c	2008-10-22 17:38:01.000000000 -0400
++++ linux-2.6.27.4/net/socket.c	2008-10-26 04:06:08.000000000 -0400
+@@ -87,6 +87,7 @@
  #include <linux/audit.h>
  #include <linux/wireless.h>
  #include <linux/nsproxy.h>
@@ -1182,16 +1258,16 @@ diff -urNp linux-2.6.26.orig/net/socket.c linux-2.6.26/net/socket.c
  
  #include <asm/uaccess.h>
  #include <asm/unistd.h>
-@@ -98,6 +99,8 @@
- #include <linux/vs_inet.h>
- #include <linux/vs_inet6.h>
+@@ -97,6 +98,8 @@
+ #include <net/sock.h>
+ #include <linux/netfilter.h>
  
 +extern void gr_attach_curr_ip(const struct sock *sk);
 +
  static int sock_no_open(struct inode *irrelevant, struct file *dontcare);
  static ssize_t sock_aio_read(struct kiocb *iocb, const struct iovec *iov,
  			 unsigned long nr_segs, loff_t pos);
-@@ -1502,6 +1505,7 @@ asmlinkage long sys_accept(int fd, struc
+@@ -1495,6 +1542,7 @@ long do_accept(int fd, struct sockaddr _
  	err = newfd;
  
  	security_socket_post_accept(sock, newsock);
@@ -1199,9 +1275,9 @@ diff -urNp linux-2.6.26.orig/net/socket.c linux-2.6.26/net/socket.c
  
  out_put:
  	fput_light(sock->file, fput_needed);
-diff -urNp linux-2.6.26.orig/security/Kconfig linux-2.6.26/security/Kconfig
---- linux-2.6.26.orig/security/Kconfig	2008-09-01 11:43:58.000000000 +0200
-+++ linux-2.6.26/security/Kconfig	2008-09-02 12:17:21.000000000 +0200
+diff -urNp linux-2.6.27.4/security/Kconfig linux-2.6.27.4/security/Kconfig
+--- linux-2.6.27.4/security/Kconfig	2008-10-22 17:38:01.000000000 -0400
++++ linux-2.6.27.4/security/Kconfig	2008-10-27 22:57:19.000000000 -0400
 @@ -4,6 +4,8 @@
  
  menu "Security options"
