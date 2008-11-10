@@ -1215,6 +1215,8 @@ PreInstallKernel() {
 		/sbin/depmod --basedir $KERNEL_INSTALL_DIR -ae -F $KERNEL_INSTALL_DIR/boot/System.map-$KernelVer -r $KernelVer || :
 	fi
 	touch $KERNEL_INSTALL_DIR/lib/modules/$KernelVer/modules.dep
+	# binary cache produced by depmod at runtime
+	touch $KERNEL_INSTALL_DIR/lib/modules/$KernelVer/modules.{alias,dep,symbols}.bin
 	echo "KERNEL RELEASE $KernelVer DONE"
 }
 
