@@ -288,6 +288,8 @@ Patch130:	linux-2.6-forcedeth-WON.patch
 Patch140:	kernel-unionfs.patch
 Patch141:	kernel-unionfs-apparmor.patch
 
+Patch142:	kernel-autofs4-2.6.27-v5-update-20081027.patch
+
 Patch150:	kernel-ppc-crtsavres.patch
 
 Patch200:	linux-2.6-ppc-ICE-hacks.patch
@@ -842,6 +844,9 @@ install %{SOURCE5} Makefile.ppclibs
 # unionfs
 %patch140 -p1
 %{?with_apparmor:%patch141 -p1}
+
+# autofs4-v5-update
+%patch142 -p1
 
 %patch2500 -p1
 
