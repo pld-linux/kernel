@@ -343,14 +343,15 @@ BuildRequires:	elftoaout
 %ifarch ppc
 BuildRequires:	uboot-mkimage
 %endif
+AutoReqProv:	no
 BuildRequires:	/sbin/depmod
 BuildRequires:	gcc >= 5:3.2
 %{?with_rescuecd:BuildRequires:	lzma >= 1:4.42.2}
 # for hostname command
 BuildRequires:	net-tools
 BuildRequires:	perl-base
+BuildRequires:	rpm-build >= 4.4.9-56
 BuildRequires:	rpmbuild(macros) >= 1.217
-Autoreqprov:	no
 Requires(post):	coreutils
 Requires(post):	geninitrd >= 2.57
 Requires(post):	module-init-tools >= 0.9.9
@@ -363,6 +364,7 @@ Provides:	%{name}(vermagic) = %{kernel_release}
 %if %{with xen0} || %{with xenU}
 Provides:	kernel(xen) = %{_xen_version}
 %endif
+Obsoletes:	kernel%{_alt_kernel}-isdn-mISDN
 Obsoletes:	kernel-misc-acer_acpi
 Obsoletes:	kernel-misc-fuse
 Obsoletes:	kernel-misc-uvc
@@ -373,7 +375,6 @@ Obsoletes:	kernel-net-ieee80211
 Obsoletes:	kernel-net-ipp2p
 Obsoletes:	kernel-net-rt61
 Obsoletes:	kernel-smp
-Obsoletes:	kernel%{_alt_kernel}-isdn-mISDN
 Conflicts:	e2fsprogs < 1.29
 Conflicts:	isdn4k-utils < 3.1pre1
 Conflicts:	jfsutils < 1.1.3
@@ -1095,9 +1096,9 @@ EOCONFIG
 		%{SOURCE45} \
 		%{SOURCE50} \
   %else
-    %if %{with grsec_minimal}
+	%if %{with grsec_minimal}
 		%{SOURCE51} \
-    %endif
+	%endif
   %endif
   %if %{with pax}
 		%{SOURCE49} \
