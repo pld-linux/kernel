@@ -338,7 +338,7 @@ Patch10001:	linux-2.6-grsec-common.patch
 Patch10002:	kernel-grsec_fixes.patch
 
 URL:		http://www.kernel.org/
-BuildRequires:	binutils >= 3:2.14.90.0.7
+BuildRequires:	binutils >= 3:2.18
 %ifarch sparc sparc64
 BuildRequires:	elftoaout
 %endif
