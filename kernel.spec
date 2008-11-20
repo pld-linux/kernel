@@ -102,12 +102,12 @@
 %endif
 
 %define		basever		2.6.27
-%define		postver		.6
-%define		rel		3
+%define		postver		.7
+%define		rel		1
 
 %define		_enable_debug_packages			0
 
-%define		squashfs_version	3.3
+%define		squashfs_version	3.4
 %define		tuxonice_version	3.0-rc7a
 %define		netfilter_snap		20070806
 %define		xen_version		3.0.2
@@ -139,7 +139,7 @@ Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{basever}.tar.bz2
 # Source0-md5:	b3e78977aa79d3754cb7f8143d7ddabd
 %if "%{postver}" != "%{nil}"
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
-# Source1-md5:	beec5a958abb1045c0b723dc1f195f7e
+# Source1-md5:	1d0e83c620f3960d4d1e813f186b39f6
 %endif
 
 Source3:	kernel-autoconf.h
@@ -184,8 +184,8 @@ Patch2:		tahoe9xx-2.6.24.patch
 Patch3:		kernel-fbcondecor.patch
 Patch4:		linux-fbcon-margins.patch
 
-# based on http://mesh.dl.sourceforge.net/sourceforge/squashfs/squashfs3.3.tgz
-# squashfs3.3/kernel-patches/linux-2.6.24/squashfs3.3-patch
+# http://mesh.dl.sourceforge.net/sourceforge/squashfs/squashfs3.4.tgz
+# squashfs3.4/kernel-patches/linux-2.6.27-rc4/squashfs3.4-patch
 Patch5:		kernel-squashfs.patch
 Patch6:		linux-static-dev.patch
 
