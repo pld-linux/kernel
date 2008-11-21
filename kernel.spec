@@ -396,6 +396,7 @@ Conflicts:	reiser4progs < 1.0.0
 Conflicts:	reiserfsprogs < 3.6.3
 Conflicts:	udev < 1:071
 Conflicts:	util-linux < 2.10o
+Conflicts:	util-vserver < 0.30.215-10
 Conflicts:	xfsprogs < 2.6.0
 %if %{with xen0} || %{with xenU} || %{with pae}
 ExclusiveArch:	%{ix86}
