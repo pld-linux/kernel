@@ -113,16 +113,20 @@
 %define		xen_version		3.0.2
 
 %if %{without rescuecd}
-%define		_alt_kernel	%{?with_pax:-pax}%{!?with_grsec_full:-nogrsecurity}%{!?with_apparmor:-noaa}%{?with_xen0:-xen0}%{?with_xenU:-xenU}%{?with_pae:-pae}%{?with_myown:-myown}
+%define		__alt_kernel	%{?with_pax:pax}%{!?with_grsec_full:nogrsecurity}%{!?with_apparmor:noaa}%{?with_xen0:xen0}%{?with_xenU:xenU}%{?with_pae:pae}%{?with_myown:myown}
 %else
-%define		_alt_kernel	-rescuecd
+%define		__alt_kernel	rescuecd
+%endif
+
+%if "%{__alt_kernel}" != ""
+%define		alt_kernel	%{__alt_kernel}
 %endif
 
 # kernel release (used in filesystem and eventually in uname -r)
 # modules will be looked from /lib/modules/%{kernel_release}
 # localversion is just that without version for "> localversion"
-%define		localversion %{rel}
-%define		kernel_release %{version}%{?_alt_kernel:%{_alt_kernel}}-%{localversion}
+%define		localversion	%{rel}
+%define		kernel_release	%{version}%{?alt_kernel:_%{alt_kernel}}-%{localversion}
 
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de.UTF-8):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
@@ -705,7 +709,8 @@ Pakiet zawiera dokumentację do jądra Linuksa pochodzącą z katalogu
 /usr/src/linux/Documentation.
 
 %prep
-%setup -q -n linux-%{basever}
+%setup -qc
+cd linux-%{basever}
 
 # hack against warning in pax/grsec
 %ifarch alpha
@@ -919,7 +924,7 @@ install %{SOURCE5} Makefile.ppclibs
 %patch2001 -p1
 
 # Fix EXTRAVERSION in main Makefile
-sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{postver}%{?_alt_kernel:%{_alt_kernel}}#g' Makefile
+sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{postver}%{?alt_kernel:_%{alt_kernel}}#g' Makefile
 
 # on sparc this line causes CONFIG_INPUT=m (instead of =y), thus breaking build
 sed -i -e '/select INPUT/d' net/bluetooth/hidp/Kconfig
@@ -931,6 +936,7 @@ sed -i -e 's/^EXTRA_CFLAGS := -Werror/EXTRA_CFLAGS := /' arch/sparc64/kernel/Mak
 find '(' -name '*~' -o -name '*.orig' -o -name '.gitignore' ')' -print0 | xargs -0 -r -l512 rm -f
 
 %build
+cd linux-%{basever}
 PaXconfig () {
 	set -x
 	cat <<-EOCONFIG > $1
@@ -1257,8 +1263,9 @@ cp scripts/mkcompile_h{,.save}
 
 %install
 rm -rf $RPM_BUILD_ROOT
-umask 022
+cd linux-%{basever}
 
+umask 022
 export DEPMOD=%DepMod
 
 install -d $RPM_BUILD_ROOT%{_kernelsrcdir}
@@ -1307,7 +1314,7 @@ install %{SOURCE3} $RPM_BUILD_ROOT%{_kernelsrcdir}/include/linux/autoconf.h
 install %{SOURCE4} $RPM_BUILD_ROOT%{_kernelsrcdir}/include/linux/config.h
 
 # collect module-build files and directories
-perl %{SOURCE7} %{_kernelsrcdir} $KERNEL_BUILD_DIR
+perl %{SOURCE7} %{_kernelsrcdir} %{_builddir}/%{name}-%{version}
 
 # ghosted initrd
 touch $RPM_BUILD_ROOT%{initrd_dir}/initrd-%{kernel_release}.gz
@@ -1330,38 +1337,29 @@ fi
 %post
 %ifarch ia64
 mv -f /boot/efi/vmlinuz{,.old} 2> /dev/null
-%{?_alt_kernel:mv -f /boot/efi/vmlinuz%{_alt_kernel}{,.old} 2> /dev/null}
+%{?alt_kernel:mv -f /boot/efi/vmlinuz%{_alt_kernel}{,.old} 2> /dev/null}
 ln -sf vmlinuz-%{kernel_release} /boot/efi/vmlinuz
-%{?_alt_kernel:ln -sf vmlinuz-%{kernel_release} /boot/efi/vmlinuz%{_alt_kernel}}
+%{?alt_kernel:ln -sf vmlinuz-%{kernel_release} /boot/efi/vmlinuz%{_alt_kernel}}
 %endif
 mv -f /boot/vmlinuz{,.old} 2> /dev/null
-%{?_alt_kernel:mv -f /boot/vmlinuz%{_alt_kernel}{,.old} 2> /dev/null}
+%{?alt_kernel:mv -f /boot/vmlinuz%{_alt_kernel}{,.old} 2> /dev/null}
 mv -f /boot/System.map{,.old} 2> /dev/null
-%{?_alt_kernel:mv -f /boot/System%{_alt_kernel}.map{,.old} 2> /dev/null}
+%{?alt_kernel:mv -f /boot/System%{_alt_kernel}.map{,.old} 2> /dev/null}
 ln -sf vmlinuz-%{kernel_release} /boot/vmlinuz
-%{?_alt_kernel:ln -sf vmlinuz-%{kernel_release} /boot/vmlinuz%{_alt_kernel}}
+%{?alt_kernel:ln -sf vmlinuz-%{kernel_release} /boot/vmlinuz%{_alt_kernel}}
 ln -sf System.map-%{kernel_release} /boot/System.map
-%{?_alt_kernel:ln -sf System.map-%{kernel_release} /boot/System.map%{_alt_kernel}}
+%{?alt_kernel:ln -sf System.map-%{kernel_release} /boot/System.map%{_alt_kernel}}
 
 %depmod %{kernel_release}
 
 /sbin/geninitrd -f --initrdfs=rom %{initrd_dir}/initrd-%{kernel_release}.gz %{kernel_release}
 mv -f %{initrd_dir}/initrd{,.old} 2> /dev/null
-%{?_alt_kernel:mv -f %{initrd_dir}/initrd%{_alt_kernel}{,.old} 2> /dev/null}
+%{?alt_kernel:mv -f %{initrd_dir}/initrd%{_alt_kernel}{,.old} 2> /dev/null}
 ln -sf initrd-%{kernel_release}.gz %{initrd_dir}/initrd
-%{?_alt_kernel:ln -sf initrd-%{kernel_release}.gz %{initrd_dir}/initrd%{_alt_kernel}}
+%{?alt_kernel:ln -sf initrd-%{kernel_release}.gz %{initrd_dir}/initrd%{_alt_kernel}}
 
 if [ -x /sbin/new-kernel-pkg ]; then
-	if [ -f /etc/pld-release ]; then
-		title=$(sed 's/^[0-9.]\+ //' < /etc/pld-release)
-	else
-		title='PLD Linux'
-	fi
-
-	ext='%{_alt_kernel}'
-	if [ "$ext" ]; then
-		title="$title $ext"
-	fi
+	title="PLD Linux (%{pld_release})%{?alt_kernel: / %{alt_kernel}}"
 
 	/sbin/new-kernel-pkg --initrdfile=%{initrd_dir}/initrd-%{kernel_release}.gz --install %{kernel_release} --banner "$title"
 elif [ -x /sbin/rc-boot ]; then
