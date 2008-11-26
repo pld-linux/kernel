@@ -1576,7 +1576,6 @@ fi
 # symlinks pointint to kernelsrcdir
 %dir /lib/modules/%{kernel_release}
 /lib/modules/%{kernel_release}/build
-%{_kernelsrcdir}/Kbuild
 %{_kernelsrcdir}/localversion
 %ifarch ppc ppc64
 %{_kernelsrcdir}/arch/powerpc/lib/crtsavres.*
