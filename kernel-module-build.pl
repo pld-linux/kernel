@@ -12,7 +12,7 @@ find(\&wanted, ".");
 
 sub wanted {
 	return unless -f;
-	return unless /^Kconfig/ or /^Makefile/;
+	return unless /^Kconfig/ or /^Makefile/ or /^Kbuild/;
 	#return if /\.orig$/;
 	return if $File::Find::name =~ /(Documentation|scripts)/;
 	(my $file = $File::Find::name) =~ s#^\./##;
