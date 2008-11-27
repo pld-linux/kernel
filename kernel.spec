@@ -103,7 +103,7 @@
 
 %define		basever		2.6.27
 %define		postver		.7
-%define		rel		3
+%define		rel		4
 
 %define		_enable_debug_packages			0
 
@@ -276,6 +276,9 @@ Patch72:	kernel-2.6-ueagle-atm-freezer.patch
 # adds some ids for hostap suported cards and monitor_enable from/for aircrack-ng
 # http://patches.aircrack-ng.org/hostap-kernel-2.6.18.patch
 Patch85:	hostap-kernel-2.6.18.patch
+
+# Taken from http://download.opensuse.org/factory/repo/src-oss/suse/src/kernel-source-2.6.27.7-3.1.src.rpm
+Patch90:	kernel-mpt-fusion.patch
 
 # http://vserver.13thfloor.at/Experimental/patch-2.6.27.3-vs2.3.0.35.7.diff
 Patch100:	linux-2.6-vs2.3.patch
@@ -826,6 +829,9 @@ install %{SOURCE5} Makefile.ppclibs
 
 # hostap enhancements from/for aircrack-ng
 %patch85 -p1
+
+# LSI MPT Fusion driver update
+%patch90 -p1
 
 # vserver
 %if %{with vserver}
