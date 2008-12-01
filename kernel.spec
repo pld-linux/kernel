@@ -343,6 +343,7 @@ Patch9999:	linux-2.6-grsec_full.patch
 Patch10000:	linux-2.6-grsec-caps.patch
 Patch10001:	linux-2.6-grsec-common.patch
 Patch10002:	kernel-grsec_fixes.patch
+Patch10003:	linux-2.6-grsec-no-stupid-SoB.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 3:2.18
@@ -874,6 +875,7 @@ install %{SOURCE5} Makefile.ppclibs
 %{?with_vserver:%patch10000 -p1}
 %{?with_vserver:%patch10001 -p1}
 %{?with_vserver:%patch10002 -p1}
+%{?with_vserver:%patch10003 -p1}
 %else
 
 %if %{with grsec_full}
@@ -881,6 +883,7 @@ install %{SOURCE5} Makefile.ppclibs
 %{?with_vserver:%patch10000 -p1}
 %{?with_vserver:%patch10001 -p1}
 %{?with_vserver:%patch10002 -p1}
+%{?with_vserver:%patch10003 -p1}
 %else
 %if %{with grsec_minimal}
 %patch1000 -p1
