@@ -194,3 +194,33 @@ index 0fa6790..9d5674f 100644
  
  #include "squashfs.h"
  
+XFS: Fix hang after disallowed rename across directory quota domains
+
+When project quota is active and is being used for directory tree
+quota control, we disallow rename outside the current directory
+tree. This requires a check to be made after all the inodes
+involved in the rename are locked. We fail to unlock the inodes
+correctly if we disallow the rename when the target is outside the
+current directory tree. This results in a hang on the next access
+to the inodes involved in failed rename.
+
+Reported-by: Arkadiusz Miskiewicz <arekm@maven.pl>
+Signed-off-by: Dave Chinner <david@fromorbit.com>
+---
+ fs/xfs/xfs_rename.c |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
+
+diff --git a/fs/xfs/xfs_rename.c b/fs/xfs/xfs_rename.c
+index d700dac..c903130 100644
+--- a/fs/xfs/xfs_rename.c
++++ b/fs/xfs/xfs_rename.c
+@@ -212,7 +212,7 @@ xfs_rename(
+ 	if (unlikely((target_dp->i_d.di_flags & XFS_DIFLAG_PROJINHERIT) &&
+ 		     (target_dp->i_d.di_projid != src_ip->i_d.di_projid))) {
+ 		error = XFS_ERROR(EXDEV);
+-		xfs_rename_unlock4(inodes, XFS_ILOCK_SHARED);
++		xfs_rename_unlock4(inodes, XFS_ILOCK_EXCL);
+ 		xfs_trans_cancel(tp, cancel_flags);
+ 		goto std_return;
+ 	}
+
