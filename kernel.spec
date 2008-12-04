@@ -313,6 +313,7 @@ Patch1000:	linux-2.6-grsec-minimal.patch
 
 Patch2000:	kernel-small_fixes.patch
 Patch2001:	linux-2.6.21.1-pwc-uncompress.patch
+Patch2002:	kernel-netns-inet6-tw.patch
 
 # kill some thousands of warnings
 # (only warnings, so just remove parts of this patch if conflics)
@@ -932,6 +933,7 @@ install %{SOURCE5} Makefile.ppclibs
 # Small fixes:
 %patch2000 -p1
 %patch2001 -p1
+%patch2002 -p1
 
 # Fix EXTRAVERSION in main Makefile
 sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{postver}%{?alt_kernel:_%{alt_kernel}}#g' Makefile
