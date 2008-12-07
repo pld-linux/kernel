@@ -308,6 +308,10 @@ Patch2000:	kernel-small_fixes.patch
 # http://lkml.org/lkml/2006/7/22/98
 Patch2001:	kernel-2.6-pnpbios.patch
 
+# buildfix (problems with new gcc?)
+Patch2002:      kernel-2.6.17-sumversion-buildfix.patch
+Patch2003:	kernel-2.6.17-thread_info-buildfix.patch
+
 #wanpipe
 #Patch3000:	wanpipe-beta7-2.3.4.patch
 
@@ -974,6 +978,8 @@ done
 ##Small fixes:
 %patch2000 -p1
 %patch2001 -p1
+%patch2002 -p1
+%patch2003 -p1
 
 %if %{with abi}
 patch -p1 -s < kernel-patch-linuxabi-20060404/linuxabi-2.6.17-0.patch
