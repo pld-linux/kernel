@@ -1,0 +1,45 @@
+
+From: Chuck Ebbert <76306.1226@compuserve.com>
+
+Using C code for current_thread_info() lets the compiler optimize it.
+With gcc 4.0.2, kernel is smaller:
+
+    text           data     bss     dec     hex filename
+ 3645212         555556  312024 4512792  44dc18 2.6.17-rc6-nb-post/vmlinux
+ 3647276         555556  312024 4514856  44e428 2.6.17-rc6-nb/vmlinux
+ -------
+   -2064
+
+Signed-off-by: Chuck Ebbert <76306.1226@compuserve.com>
+Signed-off-by: Andrew Morton <akpm@osdl.org>
+---
+
+ include/asm-i386/thread_info.h |   10 ++++------
+ 1 file changed, 4 insertions(+), 6 deletions(-)
+
+diff -puN include/asm-i386/thread_info.h~i386-use-c-code-for-current_thread_info include/asm-i386/thread_info.h
+--- a/include/asm-i386/thread_info.h~i386-use-c-code-for-current_thread_info
++++ a/include/asm-i386/thread_info.h
+@@ -83,17 +83,15 @@ struct thread_info {
+ #define init_stack		(init_thread_union.stack)
+ 
+ 
++/* how to get the current stack pointer from C */
++register unsigned long current_stack_pointer asm("esp") __attribute_used__;
++
+ /* how to get the thread information struct from C */
+ static inline struct thread_info *current_thread_info(void)
+ {
+-	struct thread_info *ti;
+-	__asm__("andl %%esp,%0; ":"=r" (ti) : "0" (~(THREAD_SIZE - 1)));
+-	return ti;
++	return (struct thread_info *)(current_stack_pointer & ~(THREAD_SIZE - 1));
+ }
+ 
+-/* how to get the current stack pointer from C */
+-register unsigned long current_stack_pointer asm("esp") __attribute_used__;
+-
+ /* thread information allocation */
+ #ifdef CONFIG_DEBUG_STACK_USAGE
+ #define alloc_thread_info(tsk)					\
+_
