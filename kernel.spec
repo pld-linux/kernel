@@ -1271,6 +1271,7 @@ BuildKernel
 PreInstallKernel
 
 %{__make} %{MakeOpts} include/linux/utsrelease.h
+cp include/config/kernel.release{,.save}
 cp include/linux/utsrelease.h{,.save}
 cp include/linux/version.h{,.save}
 cp scripts/mkcompile_h{,.save}
@@ -1319,11 +1320,10 @@ cp -Rdp$l $KERNEL_BUILD_DIR/include/linux/* \
 	$RPM_BUILD_ROOT%{_kernelsrcdir}/include/linux
 
 %{__make} %{MakeOpts} mrproper
-mv -f include/linux/utsrelease.h.save $RPM_BUILD_ROOT%{_kernelsrcdir}/include/linux/utsrelease.h
-cp include/linux/version.h{.save,}
-cp scripts/mkcompile_h{.save,}
-rm -rf include/linux/version.h.save
-rm -rf scripts/mkcompile_h.save
+install -D $KERNEL_BUILD_DIR/include/config/kernel.release.save include/config/kernel.release
+mv -f include/linux/utsrelease.h{.save,}
+mv -f include/linux/version.h{.save,}
+mv -f scripts/mkcompile_h{.save,}
 install %{SOURCE3} $RPM_BUILD_ROOT%{_kernelsrcdir}/include/linux/autoconf.h
 install %{SOURCE4} $RPM_BUILD_ROOT%{_kernelsrcdir}/include/linux/config.h
 
