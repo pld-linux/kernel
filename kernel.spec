@@ -103,7 +103,7 @@
 
 %define		basever		2.6.27
 %define		postver		.9
-%define		rel		2
+%define		rel		3
 
 %define		_enable_debug_packages			0
 
@@ -1319,7 +1319,6 @@ cp -Rdp$l $KERNEL_BUILD_DIR/include/linux/* \
 	$RPM_BUILD_ROOT%{_kernelsrcdir}/include/linux
 
 %{__make} %{MakeOpts} mrproper
-install -D $KERNEL_BUILD_DIR/include/config/kernel.release.save include/config/kernel.release
 mv -f include/linux/utsrelease.h{.save,}
 mv -f include/linux/version.h{.save,}
 mv -f scripts/mkcompile_h{.save,}
