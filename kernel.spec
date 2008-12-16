@@ -103,7 +103,7 @@
 
 %define		basever		2.6.27
 %define		postver		.9
-%define		rel		1
+%define		rel		2
 
 %define		_enable_debug_packages			0
 
@@ -1271,7 +1271,6 @@ BuildKernel
 PreInstallKernel
 
 %{__make} %{MakeOpts} include/linux/utsrelease.h
-cp include/config/kernel.release{,.save}
 cp include/linux/utsrelease.h{,.save}
 cp include/linux/version.h{,.save}
 cp scripts/mkcompile_h{,.save}
