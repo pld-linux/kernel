@@ -30,7 +30,7 @@
 %bcond_with	pae		# build PAE (HIGHMEM64G) support on uniprocessor
 %bcond_with	nfsroot		# build with root on NFS support
 
-%bcond_without	imq		# imq support
+%bcond_with	imq		# imq support
 %bcond_without	wrr		# wrr support
 %bcond_without	ipv6		# ipv6 support
 
