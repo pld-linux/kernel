@@ -48,3 +48,63 @@ index 7a785a0..1c4f928 100644
 -- 
 1.5.6.5
 
+From: Trond Myklebust <Trond.Myklebust@netapp.com>
+Date: Thu, 20 Nov 2008 21:06:21 +0000 (-0500)
+Subject: SUNRPC: Fix a performance regression in the RPC authentication code
+X-Git-Tag: v2.6.28-rc6~4
+X-Git-Url: http://git.kernel.org/?p=linux%2Fkernel%2Fgit%2Ftorvalds%2Flinux-2.6.git;a=commitdiff_plain;h=23918b03060f6e572168fdde1798a905679d2e06
+
+SUNRPC: Fix a performance regression in the RPC authentication code
+
+Fix a regression reported by Max Kellermann whereby kernel profiling
+showed that his clients were spending 45% of their time in
+rpcauth_lookup_credcache.
+
+It turns out that although his processes had identical uid/gid/groups,
+generic_match() was failing to detect this, because the task->group_info
+pointers were not shared. This again lead to the creation of a huge number
+of identical credentials at the RPC layer.
+
+The regression is fixed by comparing the contents of task->group_info
+if the actual pointers are not identical.
+
+Signed-off-by: Trond Myklebust <Trond.Myklebust@netapp.com>
+Signed-off-by: Linus Torvalds <torvalds@linux-foundation.org>
+---
+
+diff --git a/net/sunrpc/auth_generic.c b/net/sunrpc/auth_generic.c
+index 744b79f..4028502 100644
+--- a/net/sunrpc/auth_generic.c
++++ b/net/sunrpc/auth_generic.c
+@@ -133,13 +133,29 @@ static int
+ generic_match(struct auth_cred *acred, struct rpc_cred *cred, int flags)
+ {
+ 	struct generic_cred *gcred = container_of(cred, struct generic_cred, gc_base);
++	int i;
+ 
+ 	if (gcred->acred.uid != acred->uid ||
+ 	    gcred->acred.gid != acred->gid ||
+-	    gcred->acred.group_info != acred->group_info ||
+ 	    gcred->acred.machine_cred != acred->machine_cred)
+-		return 0;
++		goto out_nomatch;
++
++	/* Optimisation in the case where pointers are identical... */
++	if (gcred->acred.group_info == acred->group_info)
++		goto out_match;
++
++	/* Slow path... */
++	if (gcred->acred.group_info->ngroups != acred->group_info->ngroups)
++		goto out_nomatch;
++	for (i = 0; i < gcred->acred.group_info->ngroups; i++) {
++		if (GROUP_AT(gcred->acred.group_info, i) !=
++				GROUP_AT(acred->group_info, i))
++			goto out_nomatch;
++	}
++out_match:
+ 	return 1;
++out_nomatch:
++	return 0;
+ }
+ 
+ void __init rpc_init_generic_auth(void)
