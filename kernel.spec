@@ -102,8 +102,8 @@
 %endif
 
 %define		basever		2.6.27
-%define		postver		.9
-%define		rel		3
+%define		postver		.10
+%define		rel		1
 
 %define		_enable_debug_packages			0
 
@@ -143,7 +143,7 @@ Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{basever}.tar.bz2
 # Source0-md5:	b3e78977aa79d3754cb7f8143d7ddabd
 %if "%{postver}" != "%{nil}"
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
-# Source1-md5:	1a0b0c727fee22a4d2545276176ac089
+# Source1-md5:	82691ff96bff9b4fa19f91b69a9695f9
 %endif
 
 Source3:	kernel-autoconf.h
@@ -935,7 +935,7 @@ install %{SOURCE5} Makefile.ppclibs
 %patch2000 -p1
 %patch2001 -p1
 %patch2002 -p1
-%patch2003 -p1
+#%patch2003 -p1
 
 # Fix EXTRAVERSION in main Makefile
 sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{postver}%{?alt_kernel:_%{alt_kernel}}#g' Makefile
