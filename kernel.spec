@@ -101,9 +101,9 @@
 %define		have_oss	0
 %endif
 
-%define		basever		2.6.27
-%define		postver		.10
-%define		rel		1
+%define		basever		2.6.28
+%define		postver		%{nil}
+%define		rel		0.1
 
 %define		_enable_debug_packages			0
 
@@ -140,7 +140,7 @@ Epoch:		3
 License:	GPL v2
 Group:		Base/Kernel
 Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{basever}.tar.bz2
-# Source0-md5:	b3e78977aa79d3754cb7f8143d7ddabd
+# Source0-md5:	d351e44709c9810b85e29b877f50968a
 %if "%{postver}" != "%{nil}"
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
 # Source1-md5:	82691ff96bff9b4fa19f91b69a9695f9
@@ -264,8 +264,6 @@ Patch58:	linux-PF_RING.patch
 # http://synce.svn.sourceforge.net/svnroot/synce/trunk/patches/linux-2.6.22-rndis_host-wm5.patch
 Patch59:	kernel-rndis_host-wm5.patch
 
-Patch61:	kernel-vesa-upstream.patch
-
 # Project suspend2 renamed to tuxonice
 # http://www.tuxonice.net/downloads/all/tuxonice-3.0-rc7a-for-2.6.26.patch.bz2
 Patch69:	linux-2.6-suspend2.patch
@@ -294,8 +292,6 @@ Patch130:	linux-2.6-forcedeth-WON.patch
 # http://download.filesystems.org/unionfs/unionfs-2.x/unionfs-2.5_for_2.6.27-rc6.diff.gz
 Patch140:	kernel-unionfs.patch
 Patch141:	kernel-unionfs-apparmor.patch
-
-Patch142:	kernel-autofs4-2.6.27-v5-update-20081027.patch
 
 Patch150:	kernel-ppc-crtsavres.patch
 
@@ -828,13 +824,12 @@ install %{SOURCE5} Makefile.ppclibs
 # kernel-rndis_host-wm5.patch
 %patch59 -p1
 
-%patch61 -p1
-
 # hostap enhancements from/for aircrack-ng
 %patch85 -p1
 
 # LSI MPT Fusion driver update
-%patch90 -p1
+# TODO: finish updated for 2.6.28
+#%%patch90 -p1
 
 # vserver
 %if %{with vserver}
@@ -859,9 +854,6 @@ install %{SOURCE5} Makefile.ppclibs
 # unionfs
 %patch140 -p1
 %{?with_apparmor:%patch141 -p1}
-
-# autofs4-v5-update
-%patch142 -p1
 
 %patch2500 -p1
 
