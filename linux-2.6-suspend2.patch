@@ -3062,7 +3062,7 @@ index 278946a..ba2eb75 100644
   Exit:
  	BUG_ON(in_atomic());
  	printk("\n");
-@@ -257,11 +270,35 @@ static void thaw_tasks(bool nosig_only)
+@@ -145,10 +158,33 @@
  
  void thaw_processes(void)
  {
@@ -3091,8 +3091,6 @@ index 278946a..ba2eb75 100644
  	printk("done.\n");
  }
  
- EXPORT_SYMBOL(refrigerator);
-+
 +void thaw_kernel_threads(void)
 +{
 +	freezer_state = FREEZER_USERSPACE_FROZEN;
@@ -5788,7 +5786,7 @@ index 0000000..e5525d2
 +	int flags = mode & FMODE_WRITE ? O_RDWR : O_RDONLY;
 +	flags |= O_NONBLOCK;
 +	if (bdev)
-+		err = blkdev_get(bdev, mode, flags);
++		err = blkdev_get(bdev, flags);
 +	return err ? ERR_PTR(err) : bdev;
 +}
 +EXPORT_SYMBOL_GPL(toi_open_by_devnum);
@@ -19772,7 +19770,7 @@ diff --git a/mm/vmscan.c b/mm/vmscan.c
 index 1ff1a58..c02c6e6 100644
 --- a/mm/vmscan.c
 +++ b/mm/vmscan.c
-@@ -811,6 +811,28 @@ static unsigned long isolate_lru_pages(unsigned long nr_to_scan,
+@@ -938,6 +938,28 @@
  	return nr_taken;
  }
  
@@ -19801,7 +19799,7 @@ index 1ff1a58..c02c6e6 100644
  static unsigned long isolate_pages_global(unsigned long nr,
  					struct list_head *dst,
  					unsigned long *scanned, int order,
-@@ -861,7 +883,6 @@ static unsigned long shrink_inactive_list(unsigned long max_scan,
+@@ -1041,7 +1063,6 @@
  	lru_add_drain();
  	spin_lock_irq(&zone->lru_lock);
  	do {
@@ -19809,30 +19807,40 @@ index 1ff1a58..c02c6e6 100644
  		unsigned long nr_taken;
  		unsigned long nr_scan;
  		unsigned long nr_freed;
-@@ -923,21 +944,7 @@ static unsigned long shrink_inactive_list(unsigned long max_scan,
+@@ -1126,31 +1147,7 @@
  		/*
  		 * Put back any unfreeable pages.
  		 */
 -		while (!list_empty(&page_list)) {
+-			int lru;
 -			page = lru_to_page(&page_list);
 -			VM_BUG_ON(PageLRU(page));
--			SetPageLRU(page);
 -			list_del(&page->lru);
--			if (PageActive(page))
--				add_page_to_active_list(zone, page);
--			else
--				add_page_to_inactive_list(zone, page);
+-			if (unlikely(!page_evictable(page, NULL))) {
+-				spin_unlock_irq(&zone->lru_lock);
+-				putback_lru_page(page);
+-				spin_lock_irq(&zone->lru_lock);
+-				continue;
+-			}
+-			SetPageLRU(page);
+-			lru = page_lru(page);
+-			add_page_to_lru_list(zone, page, lru);
+-			mem_cgroup_move_lists(page, lru);
+-			if (PageActive(page) && scan_global_lru(sc)) {
+-				int file = !!page_is_file_cache(page);
+-				zone->recent_rotated[file]++;
+-			}
 -			if (!pagevec_add(&pvec, page)) {
 -				spin_unlock_irq(&zone->lru_lock);
 -				__pagevec_release(&pvec);
 -				spin_lock_irq(&zone->lru_lock);
 -			}
 -		}
-+		return_lru_pages(&page_list, zone, &pvec);
++		return lru_pages(&page_list, zone, &pvec);
    	} while (nr_scanned < max_scan);
  	spin_unlock(&zone->lru_lock);
  done:
-@@ -1665,6 +1672,72 @@ out:
+@@ -1878,6 +1875,72 @@
  	return nr_reclaimed;
  }
  
@@ -19904,8 +19912,8 @@ index 1ff1a58..c02c6e6 100644
 +
  /*
   * The background pageout daemon, started as a kernel thread
-  * from the init process. 
-@@ -1749,6 +1822,9 @@ void wakeup_kswapd(struct zone *zone, int order)
+  * from the init process.
+@@ -1962,6 +2025,9 @@
  	if (!populated_zone(zone))
  		return;
  
@@ -19915,7 +19923,7 @@ index 1ff1a58..c02c6e6 100644
  	pgdat = zone->zone_pgdat;
  	if (zone_watermark_ok(zone, order, zone->pages_low, 0, 0))
  		return;
-@@ -1762,6 +1838,109 @@ void wakeup_kswapd(struct zone *zone, int order)
+@@ -1983,6 +2049,109 @@
  }
  
  #ifdef CONFIG_PM
