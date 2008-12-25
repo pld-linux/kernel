@@ -789,7 +789,7 @@ install %{SOURCE5} Makefile.ppclibs
 %patch40 -p1
 
 # ipvs-nfct
-%patch41 -p1
+#%%patch41 -p1
 
 ##
 # end of netfilter
@@ -1476,7 +1476,7 @@ fi
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/telephony/ixj_pcmcia.ko*
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/usb/gadget/g_midi.ko*
 %endif
-%exclude /lib/modules/%{kernel_release}/kernel/drivers/ide/legacy/ide-cs.ko*
+%exclude /lib/modules/%{kernel_release}/kernel/drivers/ide/ide-cs.ko*
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/net/wireless/*_cs.ko*
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/net/wireless/b43
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/net/wireless/hostap/hostap_cs.ko*
@@ -1516,7 +1516,7 @@ fi
 /lib/modules/%{kernel_release}/kernel/drivers/telephony/ixj_pcmcia.ko*
 %endif
 /lib/modules/%{kernel_release}/kernel/drivers/ata/pata_pcmcia.ko*
-/lib/modules/%{kernel_release}/kernel/drivers/ide/legacy/ide-cs.ko*
+/lib/modules/%{kernel_release}/kernel/drivers/ide/ide-cs.ko*
 /lib/modules/%{kernel_release}/kernel/drivers/net/wireless/*_cs.ko*
 /lib/modules/%{kernel_release}/kernel/drivers/net/wireless/b43
 /lib/modules/%{kernel_release}/kernel/drivers/net/wireless/hostap/hostap_cs.ko*
