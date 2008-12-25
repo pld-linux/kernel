@@ -948,11 +948,11 @@ diff -urp v2.6.27/linux/net/ipv4/netfilter/ipt_MASQUERADE.c linux/net/ipv4/netfi
 @@ -77,13 +77,28 @@ masquerade_tg(struct sk_buff *skb, const
  		return NF_ACCEPT;
  
- 	mr = targinfo;
+ 	mr = par->targinfo;
 -	rt = skb->rtable;
--	newsrc = inet_select_addr(out, rt->rt_gateway, RT_SCOPE_UNIVERSE);
+-	newsrc = inet_select_addr(par->out, rt->rt_gateway, RT_SCOPE_UNIVERSE);
 -	if (!newsrc) {
--		printk("MASQUERADE: %s ate my IP address\n", out->name);
+-		printk("MASQUERADE: %s ate my IP address\n", par->out->name);
 -		return NF_DROP;
 +
 +	{
@@ -963,8 +963,8 @@ diff -urp v2.6.27/linux/net/ipv4/netfilter/ipt_MASQUERADE.c linux/net/ipv4/netfi
 +						.gw = skb->rtable->rt_gateway,
 +					      } },
 +				    .mark = skb->mark,
-+				    .oif = out->ifindex };
-+		if (ip_route_output_key(dev_net(out), &rt, &fl) != 0) {
++				    .oif = par->out->ifindex };
++		if (ip_route_output_key(dev_net(par->out), &rt, &fl) != 0) {
 +			/* Funky routing can do this. */
 +			if (net_ratelimit())
 +				printk("MASQUERADE:"
