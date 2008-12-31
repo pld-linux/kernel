@@ -14785,7 +14785,7 @@ Signed-off-by: Hannes Reinecke <hare@suse.de>
 +	return fasync_helper(fd, filep, mode, &async_queue);
  }
  
- static int
+ /*=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
 @@ -582,6 +644,7 @@ __mptctl_ioctl(struct file *file, unsign
  	int ret;
  	MPT_ADAPTER *iocp = NULL;
@@ -15864,7 +15864,7 @@ Signed-off-by: Hannes Reinecke <hare@suse.de>
 +static struct file_operations mptctl_fops = {
  	.owner =	THIS_MODULE,
  	.llseek =	no_llseek,
- 	.release =	mptctl_release,
+	.fasync = 	mptctl_fasync,
 @@ -2743,8 +2888,9 @@ compat_mptfwxfer_ioctl(struct file *filp
  	iocnumX = kfw32.iocnum & 0xFF;
  	if (((iocnum = mpt_verify_adapter(iocnumX, &iocp)) < 0) ||
@@ -16558,7 +16558,7 @@ Signed-off-by: Hannes Reinecke <hare@suse.de>
  /*=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
  /*
 @@ -165,6 +164,11 @@ DEFINE_RWLOCK(bad_naa_lock);
- #endif
+ static u32 tx_max_out_p = 127 - 16;
  
  /*=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
 +/*
@@ -16632,14 +16632,6 @@ Signed-off-by: Hannes Reinecke <hare@suse.de>
  		return 1;
  	}
  
-@@ -805,6 +810,7 @@ mpt_lan_sdu_send (struct sk_buff *skb, s
- }
- #endif
- 
-+
- 	pTrans->TransactionDetails[0] = cpu_to_le32((cur_naa         << 16) |
- 						    (mac[0] <<  8) |
- 						    (mac[1] <<  0));
 @@ -828,7 +834,7 @@ mpt_lan_sdu_send (struct sk_buff *skb, s
  			  MPI_SGE_FLAGS_END_OF_LIST) << MPI_SGE_FLAGS_SHIFT) |
  			skb->len);
@@ -24521,25 +24513,7 @@ Signed-off-by: Hannes Reinecke <hare@suse.de>
  			(dma_addr_t) -1);
  	} else {
  		/* Add a 32 or 64 bit SGE */
-@@ -1472,7 +1445,7 @@ mptscsih_qcmd(struct scsi_cmnd *SCpnt, v
- }
- 
- /*=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
--/*
-+/**
-  *	mptscsih_freeChainBuffers - Function to free chain buffers associated
-  *	with a SCSI IO request
-  *	@hd: Pointer to the MPT_SCSI_HOST instance
-@@ -1480,7 +1453,7 @@ mptscsih_qcmd(struct scsi_cmnd *SCpnt, v
-  *
-  *	Called if SG chain buffer allocation fails and mptscsih callbacks.
-  *	No return.
-- */
-+ **/
- static void
- mptscsih_freeChainBuffers(MPT_ADAPTER *ioc, int req_idx)
- {
-@@ -1527,243 +1500,457 @@ mptscsih_freeChainBuffers(MPT_ADAPTER *i
+@@ -1527,239 +1500,454 @@ mptscsih_freeChainBuffers(MPT_ADAPTER *i
   */
  
  /*=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
@@ -24872,7 +24846,6 @@ Signed-off-by: Hannes Reinecke <hare@suse.de>
 -	case FC:
 -		return 40;
 -	case SAS:
--		return 10;
 +	MPT_SCSI_HOST	*hd;
 +
 +	if ((ioc->sh == NULL) || (ioc->sh->hostdata == NULL))
@@ -25189,11 +25162,7 @@ Signed-off-by: Hannes Reinecke <hare@suse.de>
 +		return 30;
  	case SPI:
  	default:
--		return 2;
-+		return 10;
- 	}
- }
- 
+ 		return 10;
 @@ -1786,7 +1973,7 @@ mptscsih_abort(struct scsi_cmnd * SCpnt)
  	int		 retval;
  	VirtDevice	 *vdevice;
