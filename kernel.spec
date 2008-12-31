@@ -103,7 +103,7 @@
 
 %define		basever		2.6.28
 %define		postver		%{nil}
-%define		rel		0.1
+%define		rel		0.2
 
 %define		_enable_debug_packages			0
 
@@ -828,8 +828,7 @@ install %{SOURCE5} Makefile.ppclibs
 %patch85 -p1
 
 # LSI MPT Fusion driver update
-# TODO: finish updated for 2.6.28
-#%%patch90 -p1
+%patch90 -p1
 
 # vserver
 %if %{with vserver}
