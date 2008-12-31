@@ -1,7 +1,6 @@
 #
 # TODO before 2.6.28-1:
 # - apparmor/grsecurity 
-# - reiser4
 #
 # TODO:
 # - benchmark NO_HZ & HZ=1000 vs HZ=300 on i686
@@ -107,7 +106,7 @@
 
 %define		basever		2.6.28
 %define		postver		%{nil}
-%define		rel		0.2
+%define		rel		0.3
 
 %define		_enable_debug_packages			0
 
@@ -245,7 +244,7 @@ Patch49:	kernel-zph.patch
 # try unoficial version: http://kapturkiewicz.name/linux-2.6.25-imq1.diff
 Patch50:	kernel-imq.patch
 
-# http://www.kernel.org/pub/linux/kernel/people/edward/reiser4/reiser4-for-2.6/reiser4-for-2.6.27.patch.bz2
+# http://www.kernel.org/pub/linux/kernel/people/edward/reiser4/reiser4-for-2.6/reiser4-for-2.6.28.patch.bz2
 Patch51:	kernel-reiser4.patch
 
 # http://www.zz9.dk/patches/wrr-linux-071203-2.6.25.patch.gz
