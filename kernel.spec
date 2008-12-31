@@ -1,4 +1,9 @@
 #
+# TODO before 2.6.28-1:
+# - apparmor/grsecurity 
+# - tuxonice
+# - reiser4
+#
 # TODO:
 # - benchmark NO_HZ & HZ=1000 vs HZ=300 on i686
 # - apparmor (needs testing)
@@ -278,7 +283,7 @@ Patch85:	hostap-kernel-2.6.18.patch
 # Taken from http://download.opensuse.org/factory/repo/src-oss/suse/src/kernel-source-2.6.27.7-3.1.src.rpm
 Patch90:	kernel-mpt-fusion.patch
 
-# http://vserver.13thfloor.at/Experimental/patch-2.6.27.6-vs2.3.0.36.2.diff
+# http://vserver.13thfloor.at/Experimental/patch-2.6.28-vs2.3.0.36.2.diff
 Patch100:	linux-2.6-vs2.3.patch
 Patch101:	kernel-vserver-fixes.patch
 
