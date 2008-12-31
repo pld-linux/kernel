@@ -1,7 +1,6 @@
 #
 # TODO before 2.6.28-1:
 # - apparmor/grsecurity 
-# - tuxonice
 # - reiser4
 #
 # TODO:
@@ -273,8 +272,6 @@ Patch59:	kernel-rndis_host-wm5.patch
 # http://www.tuxonice.net/downloads/all/tuxonice-3.0-rc7a-for-2.6.26.patch.bz2
 Patch69:	linux-2.6-suspend2.patch
 Patch70:	kernel-suspend2-headers.patch
-Patch71:	linux-2.6-suspend2-page.patch
-Patch72:	kernel-2.6-ueagle-atm-freezer.patch
 
 # adds some ids for hostap suported cards and monitor_enable from/for aircrack-ng
 # http://patches.aircrack-ng.org/hostap-kernel-2.6.18.patch
@@ -738,9 +735,6 @@ install %{SOURCE5} Makefile.ppclibs
 ##ifarch %{ix86} %{x8664} ia64 ppc alpha
 %patch69 -p1
 %patch70 -p1
-%patch71 -p1
-# kernel-2.6-ueagle-atm-freezer.patch
-%patch72 -p1
 ##endif
 %endif
 
