@@ -51,8 +51,8 @@ diff -urNp linux-2.6.26.orig/drivers/pci/proc.c linux-2.6.26/drivers/pci/proc.c
  		    &proc_bus_pci_dev_operations);
  	proc_initialized = 1;
 diff -urNp linux-2.6.26.orig/fs/Kconfig linux-2.6.26/fs/Kconfig
---- linux-2.6.26.orig/fs/Kconfig	2008-09-01 11:43:58.000000000 +0200
-+++ linux-2.6.26/fs/Kconfig	2008-09-02 12:17:21.000000000 +0200
+--- linux-2.6.26.orig/fs/proc/Kconfig	2008-09-01 11:43:58.000000000 +0200
++++ linux-2.6.26/fs/proc/Kconfig	2008-09-02 12:17:21.000000000 +0200
 @@ -926,12 +926,12 @@ config PROC_FS
  
  config PROC_KCORE
@@ -62,9 +62,9 @@ diff -urNp linux-2.6.26.orig/fs/Kconfig linux-2.6.26/fs/Kconfig
  
  config PROC_VMCORE
          bool "/proc/vmcore support (EXPERIMENTAL)"
--        depends on PROC_FS && EXPERIMENTAL && CRASH_DUMP
+-        depends on PROC_FS && CRASH_DUMP
 -	default y
-+        depends on PROC_FS && EXPERIMENTAL && CRASH_DUMP && !GRKERNSEC
++        depends on PROC_FS && CRASH_DUMP && !GRKERNSEC
 +	default n
          help
          Exports the dump image of crashed kernel in ELF format.
@@ -77,7 +77,7 @@ diff -urNp linux-2.6.26.orig/fs/namei.c linux-2.6.26/fs/namei.c
  #include <linux/vs_device.h>
  #include <linux/vs_context.h>
 +#include <linux/grsecurity.h>
- #include <asm/namei.h>
+ #include <linux/pid_namespace.h>
  #include <asm/uaccess.h>
  
 @@ -740,6 +741,13 @@ static inline int do_follow_link(struct 
@@ -126,8 +126,8 @@ diff -urNp linux-2.6.26.orig/fs/namei.c linux-2.6.26/fs/namei.c
  	if (IS_ERR(new_dentry))
  		goto out_unlock;
 +
-+	if (gr_handle_hardlink(old_nd.path.dentry, old_nd.path.dentry->d_inode,
-+			       old_nd.path.dentry->d_inode->i_mode, to)) {
++	if (gr_handle_hardlink(old_path.dentry, old_path.dentry->d_inode,
++			       old_path.dentry->d_inode->i_mode, to)) {
 +		error = -EACCES;
 +		goto out_dput;
 +	}
@@ -161,15 +161,6 @@ diff -urNp linux-2.6.26.orig/fs/proc/base.c linux-2.6.26/fs/proc/base.c
  #include "internal.h"
  
  /* NOTE:
-@@ -148,7 +150,7 @@ static unsigned int pid_entry_count_dirs
- 	return count;
- }
- 
--int maps_protect;
-+int maps_protect = 1;
- EXPORT_SYMBOL(maps_protect);
- 
- static struct fs_struct *get_fs_struct(struct task_struct *task)
 @@ -307,9 +312,9 @@ static int proc_pid_auxv(struct task_str
  	struct mm_struct *mm = get_task_mm(task);
  	if (mm) {
@@ -358,72 +349,57 @@ diff -urNp linux-2.6.26.orig/fs/proc/internal.h linux-2.6.26/fs/proc/internal.h
  
  extern loff_t mem_lseek(struct file *file, loff_t offset, int orig);
  
-diff -urNp linux-2.6.26.orig/fs/proc/proc_misc.c linux-2.6.26/fs/proc/proc_misc.c
---- linux-2.6.26.orig/fs/proc/proc_misc.c	2008-09-01 11:43:59.000000000 +0200
-+++ linux-2.6.26/fs/proc/proc_misc.c	2008-09-02 12:17:21.000000000 +0200
-@@ -851,6 +851,8 @@ struct proc_dir_entry *proc_root_kcore;
+--- linux-2.6.26.orig/fs/proc/cmdline.c	2008-12-25 00:26:37.000000000 +0100
++++ linux-2.6.26/fs/proc/cmdline.c	2009-01-02 17:46:34.278247774 +0100
+@@ -23,7 +23,15 @@
  
- void __init proc_misc_init(void)
+ static int __init proc_cmdline_init(void)
  {
+-	proc_create("cmdline", 0, NULL, &cmdline_proc_fops);
 +	int gr_mode = 0;
-+
- 	static struct {
- 		char *name;
- 		int (*read_proc)(char*,char**,off_t,int,int*,void*);
-@@ -866,13 +868,24 @@ void __init proc_misc_init(void)
- 		{"stram",	stram_read_proc},
- #endif
- 		{"filesystems",	filesystems_read_proc},
-+#ifndef CONFIG_GRKERNSEC_PROC_ADD
- 		{"cmdline",	cmdline_read_proc},
-+#endif
- 		{"execdomains",	execdomains_read_proc},
- 		{NULL,}
- 	};
- 	for (p = simple_ones; p->name; p++)
- 		create_proc_read_entry(p->name, 0, NULL, p->read_proc, NULL);
- 
 +#ifdef CONFIG_GRKERNSEC_PROC_USER
 +	gr_mode = S_IRUSR;
 +#elif defined(CONFIG_GRKERNSEC_PROC_USERGROUP)
 +	gr_mode = S_IRUSR | S_IRGRP;
 +#endif
 +#ifdef CONFIG_GRKERNSEC_PROC_ADD
-+	create_proc_read_entry("cmdline", gr_mode, NULL, &cmdline_read_proc, NULL);
++	proc_create("cmdline", gr_mode, NULL, &cmdline_proc_fops);
 +#endif
-+
- 	proc_symlink("mounts", NULL, "self/mounts");
+ 	return 0;
+ }
+ module_init(proc_cmdline_init);
+--- linux-2.6.26.orig/fs/proc/devices.c	2008-12-25 00:26:37.000000000 +0100
++++ linux-2.6.26/fs/proc/devices.c	2009-01-02 17:43:00.758269666 +0100
+@@ -64,7 +64,13 @@
  
- 	/* And now for trickier ones */
-@@ -880,14 +893,18 @@ void __init proc_misc_init(void)
- 	proc_create("kmsg", S_IRUSR, NULL, &proc_kmsg_operations);
- #endif
- 	proc_create("locks", 0, NULL, &proc_locks_operations);
-+#ifdef CONFIG_GRKERNSEC_PROC_ADD
-+	proc_create("devices", gr_mode, NULL, &proc_devinfo_operations);
-+#else
- 	proc_create("devices", 0, NULL, &proc_devinfo_operations);
+ static int __init proc_devices_init(void)
+ {
+-	proc_create("devices", 0, NULL, &proc_devinfo_operations);
++	int gr_mode = 0;
++#ifdef CONFIG_GRKERNSEC_PROC_USER
++	gr_mode = S_IRUSR;
++#elif defined(CONFIG_GRKERNSEC_PROC_USERGROUP)
++	gr_mode = S_IRUSR | S_IRGRP;
 +#endif
- 	proc_create("cpuinfo", 0, NULL, &proc_cpuinfo_operations);
- #ifdef CONFIG_BLOCK
- 	proc_create("partitions", 0, NULL, &proc_partitions_operations);
- #endif
- 	proc_create("stat", 0, NULL, &proc_stat_operations);
- 	proc_create("interrupts", 0, NULL, &proc_interrupts_operations);
--#ifdef CONFIG_SLABINFO
-+#if defined(CONFIG_SLABINFO) && !defined(CONFIG_GRKERNSEC_PROC_ADD)
- 	proc_create("slabinfo",S_IWUSR|S_IRUGO,NULL,&proc_slabinfo_operations);
- #ifdef CONFIG_DEBUG_SLAB_LEAK
- 	proc_create("slab_allocators", 0, NULL, &proc_slabstats_operations);
-@@ -909,7 +926,7 @@ void __init proc_misc_init(void)
- #ifdef CONFIG_SCHEDSTATS
- 	proc_create("schedstat", 0, NULL, &proc_schedstat_operations);
- #endif
--#ifdef CONFIG_PROC_KCORE
++	proc_create("devices", gr_mode, NULL, &proc_devinfo_operations);
+ 	return 0;
+ }
+ module_init(proc_devices_init);
+--- linux-2.6.26.orig/fs/proc/kcore.c	2008-12-25 00:26:37.000000000 +0100
++++ linux-2.6.26/fs/proc/kcore.c	2009-01-02 17:45:03.714922801 +0100
+@@ -404,10 +404,12 @@
+ 
+ static int __init proc_kcore_init(void)
+ {
 +#if defined(CONFIG_PROC_KCORE) && !defined(CONFIG_GRKERNSEC_PROC_ADD)
  	proc_root_kcore = proc_create("kcore", S_IRUSR, NULL, &proc_kcore_operations);
  	if (proc_root_kcore)
  		proc_root_kcore->size =
+ 				(size_t)high_memory - PAGE_OFFSET + PAGE_SIZE;
++#endif
+ 	return 0;
+ }
+ module_init(proc_kcore_init);
 diff -urNp linux-2.6.26.orig/fs/proc/root.c linux-2.6.26/fs/proc/root.c
 --- linux-2.6.26.orig/fs/proc/root.c	2008-09-01 11:43:59.000000000 +0200
 +++ linux-2.6.26/fs/proc/root.c	2008-09-02 12:17:21.000000000 +0200
@@ -1025,9 +1001,9 @@ diff -urNp linux-2.6.26.orig/kernel/exit.c linux-2.6.26/kernel/exit.c
 --- linux-2.6.26.orig/kernel/exit.c	2008-09-01 11:43:58.000000000 +0200
 +++ linux-2.6.26/kernel/exit.c	2008-09-02 12:17:21.000000000 +0200
 @@ -50,6 +50,7 @@
- #include <linux/vs_network.h>
  #include <linux/vs_pid.h>
  #include <linux/vserver/global.h>
+ #include <trace/sched.h>
 +#include <linux/grsecurity.h>
  
  #include <asm/uaccess.h>
@@ -1128,7 +1104,7 @@ diff -urNp linux-2.6.26.orig/kernel/sysctl.c linux-2.6.26/kernel/sysctl.c
 +	    table->procname != NULL &&
 +	    gr_handle_sysctl_mod(table->parent->procname, table->procname, op))
 +		return -EACCES;
- 	error = security_sysctl(table, op);
+ 	error = security_sysctl(table, op & (MAY_READ | MAY_WRITE | MAY_EXEC));
  	if (error)
  		return error;
 diff -urNp linux-2.6.26.orig/Makefile linux-2.6.26/Makefile
