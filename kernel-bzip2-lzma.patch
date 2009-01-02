@@ -28,7 +28,7 @@ diff -urNp linux-2.6.27.orig/arch/x86/boot/compressed/Makefile linux-2.6.27/arch
  endif
  LDFLAGS_piggy.o := -r --format binary --oformat elf32-i386 -T
  
-@@ -56,9 +64,17 @@ else
+@@ -56,8 +64,16 @@ else
  $(obj)/vmlinux.bin.gz: $(obj)/vmlinux.bin FORCE
  	$(call if_changed,gzip)
  
@@ -38,7 +38,6 @@ diff -urNp linux-2.6.27.orig/arch/x86/boot/compressed/Makefile linux-2.6.27/arch
 +	$(call if_changed,lzma)
  LDFLAGS_piggy.o := -r --format binary --oformat elf64-x86-64 -T
  endif
- 
  
 -$(obj)/piggy.o: $(obj)/vmlinux.scr $(obj)/vmlinux.bin.gz FORCE
 +suffix_$(CONFIG_KERNEL_GZIP)  = gz
@@ -250,9 +249,9 @@ diff -urNp linux-2.6.27.orig/drivers/block/Kconfig linux-2.6.27/drivers/block/Kc
  config CDROM_PKTCDVD
  	tristate "Packet writing on CD/DVD media"
  	depends on !UML
-diff -urNp linux-2.6.27.orig/include/asm-x86/boot.h linux-2.6.27/include/asm-x86/boot.h
---- linux-2.6.27.orig/include/asm-x86/boot.h	2008-10-29 08:47:54.000000000 +0100
-+++ linux-2.6.27/include/asm-x86/boot.h	2008-10-30 22:27:38.000000000 +0100
+diff -urNp linux-2.6.28/arch/x86/include/asm/boot.h linux-2.6.28/arch/x86/include/asm/boot.h
+--- linux-2.6.28/arch/x86/include/asm/boot.h	2008-10-29 08:47:54.000000000 +0100
++++ linux-2.6.28/arch/x86/include/asm/boot.h	2008-10-30 22:27:38.000000000 +0100
 @@ -17,11 +17,21 @@
  				+ (CONFIG_PHYSICAL_ALIGN - 1)) \
  				& ~(CONFIG_PHYSICAL_ALIGN - 1))
@@ -828,7 +827,7 @@ diff -urNp linux-2.6.27.orig/init/initramfs.c linux-2.6.27/init/initramfs.c
  	state = Start;
  	this_header = 0;
  	message = NULL;
-@@ -452,21 +397,39 @@ static char * __init unpack_to_rootfs(ch
+@@ -452,22 +397,40 @@ static char * __init unpack_to_rootfs(ch
  			continue;
  		}
  		this_header = 0;
@@ -877,6 +876,7 @@ diff -urNp linux-2.6.27.orig/init/initramfs.c linux-2.6.27/init/initramfs.c
 +		buf += my_inptr;
 +		len -= my_inptr;
  	}
+ 	dir_utime();
 -	kfree(window);
  	kfree(name_buf);
  	kfree(symlink_buf);
