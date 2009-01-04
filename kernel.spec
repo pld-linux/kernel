@@ -8,7 +8,6 @@
 # - add a subpackage (kernel-firmware?) for ~35 firmware files
 #
 # FUTURE:
-# - update xen patch
 # - pom-ng quake3-conntrack-nat -> nf_conntrack ?
 # - pom-ng talk-conntrack-nat -> nf_conntrack ?
 # - nf-hipac ?
@@ -19,8 +18,6 @@
 %bcond_without	pcmcia		# don't build pcmcia
 
 %bcond_with	verbose		# verbose build (V=1)
-%bcond_with	xen0		# added Xen0 support
-%bcond_with	xenU		# added XenU support
 %bcond_without	reiser4		# support for reiser4 fs (experimental)
 
 %bcond_without	grsecurity	# don't build grsecurity nor pax at all
@@ -113,10 +110,9 @@
 %define		squashfs_version	3.4
 %define		tuxonice_version	3.0-rc7a
 %define		netfilter_snap		20070806
-%define		xen_version		3.0.2
 
 %if %{without rescuecd}
-%define		__alt_kernel	%{?with_pax:pax}%{!?with_grsec_full:nogrsecurity}%{!?with_apparmor:noaa}%{?with_xen0:xen0}%{?with_xenU:xenU}%{?with_pae:pae}%{?with_myown:myown}
+%define		__alt_kernel	%{?with_pax:pax}%{!?with_grsec_full:nogrsecurity}%{!?with_apparmor:noaa}%{?with_pae:pae}%{?with_myown:myown}
 %else
 %define		__alt_kernel	rescuecd
 %endif
@@ -171,8 +167,6 @@ Source41:	kernel-patches.config
 Source42:	kernel-tuxonice.config
 Source43:	kernel-vserver.config
 Source45:	kernel-grsec.config
-Source46:	kernel-xen0.config
-Source47:	kernel-xenU.config
 
 Source49:	kernel-pax.config
 Source50:	kernel-no-pax.config
@@ -283,9 +277,6 @@ Patch90:	kernel-mpt-fusion.patch
 Patch100:	linux-2.6-vs2.3.patch
 Patch101:	kernel-vserver-fixes.patch
 
-# from http://www.cl.cam.ac.uk/Research/SRG/netos/xen/downloads/xen-3.0.2-src.tgz
-#Patch120: xen-3.0-2.6.16.patch
-
 # Wake-On-Lan fix for nForce drivers; using http://atlas.et.tudelft.nl/verwei90/nforce2/wol.html
 # Fix verified for that kernel version.
 Patch130:	linux-2.6-forcedeth-WON.patch
@@ -370,9 +361,6 @@ Requires:	geninitrd >= 2.57
 Requires:	module-init-tools >= 0.9.9
 Provides:	%{name}(netfilter) = %{netfilter_snap}
 Provides:	%{name}(vermagic) = %{kernel_release}
-%if %{with xen0} || %{with xenU}
-Provides:	kernel(xen) = %{_xen_version}
-%endif
 Obsoletes:	kernel%{_alt_kernel}-isdn-mISDN
 Obsoletes:	kernel-misc-acer_acpi
 Obsoletes:	kernel-misc-fuse
@@ -401,11 +389,8 @@ Conflicts:	udev < 1:071
 Conflicts:	util-linux < 2.10o
 Conflicts:	util-vserver < 0.30.215-10
 Conflicts:	xfsprogs < 2.6.0
-%if %{with xen0} || %{with xenU} || %{with pae}
-ExclusiveArch:	%{ix86}
 %if %{with pae}
 ExcludeArch:	i386 i486 i586
-%endif
 %else
 ExclusiveArch:	%{ix86} %{x8664} alpha arm ia64 ppc ppc64 sparc sparc64
 %endif
@@ -471,8 +456,6 @@ BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 %define __features Netfilter module dated: %{netfilter_snap}\
 %{?with_grsec_full:Grsecurity full support - enabled}\
 %{?with_pax:PaX support - enabled}\
-%{?with_xen0:Xen 0 - enabled}\
-%{?with_xenU:Xen U - enabled}\
 %{?with_fbcondecor:Fbsplash/fbcondecor - enabled }\
 %{?with_nfsroot:Root on NFS - enabled}
 
@@ -834,12 +817,6 @@ install %{SOURCE5} Makefile.ppclibs
 %patch101 -p1
 %endif
 
-#%if %{with xen0} || %{with xenU}
-#%ifarch %{ix86} %{x8664} ia64
-#%patch120 -p1
-#%endif
-#%endif
-
 # tproxy
 %if %{without rescuecd} && %{with vserver}
 #patch42 -p1
@@ -1093,12 +1070,6 @@ EOCONFIG
 		%{SOURCE58} \
 		%{SOURCE59} \
 		rescue.config \
-%endif
-%if %{with xenU}
-		%{SOURCE47} \
-%endif
-%if %{with xen0}
-		%{SOURCE46} \
 %endif
 		\
 %if %{with pax_full}
