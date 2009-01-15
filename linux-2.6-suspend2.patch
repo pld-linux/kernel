@@ -1252,6 +1252,18 @@ index fbc8fa5..b2b74f8 100644
  U14-34F SCSI DRIVER
  P:	Dario Ballabio
  M:	ballabio_dario@emc.com
+diff --git a/arch/powerpc/mm/pgtable_32.c b/arch/powerpc/mm/pgtable_32.c
+index c31d6d2..7a6a924 100644
+--- a/arch/powerpc/mm/pgtable_32.c
++++ b/arch/powerpc/mm/pgtable_32.c
+@@ -397,6 +397,7 @@ void kernel_map_pages(struct page *page, int numpages, int enable)
+ 
+ 	change_page_attr(page, numpages, enable ? PAGE_KERNEL : __pgprot(0));
+ }
++EXPORT_SYMBOL_GPL(kernel_map_pages);
+ #endif /* CONFIG_DEBUG_PAGEALLOC */
+ 
+ static int fixmaps;
 diff --git a/arch/x86/kernel/reboot.c b/arch/x86/kernel/reboot.c
 index cc5a254..1216ab3 100644
 --- a/arch/x86/kernel/reboot.c
@@ -1264,6 +1276,27 @@ index cc5a254..1216ab3 100644
  
  void machine_halt(void)
  {
+diff --git a/arch/x86/mm/pageattr.c b/arch/x86/mm/pageattr.c
+index e89d248..7fb630d 100644
+--- a/arch/x86/mm/pageattr.c
++++ b/arch/x86/mm/pageattr.c
+@@ -1116,6 +1116,7 @@ void kernel_map_pages(struct page *page, int numpages, int enable)
+ 	 */
+ 	__flush_tlb_all();
+ }
++EXPORT_SYMBOL_GPL(kernel_map_pages);
+ 
+ #ifdef CONFIG_HIBERNATION
+ 
+@@ -1130,7 +1131,7 @@ bool kernel_page_present(struct page *page)
+ 	pte = lookup_address((unsigned long)page_address(page), &level);
+ 	return (pte_val(*pte) & _PAGE_PRESENT);
+ }
+-
++EXPORT_SYMBOL_GPL(kernel_page_present);
+ #endif /* CONFIG_HIBERNATION */
+ 
+ #endif /* CONFIG_DEBUG_PAGEALLOC */
 diff --git a/arch/x86/power/cpu_64.c b/arch/x86/power/cpu_64.c
 index e3b6cf7..bdd74a8 100644
 --- a/arch/x86/power/cpu_64.c
@@ -1693,18 +1726,10 @@ index 0000000..ccaf83a
 +MODULE_DESCRIPTION("LZF Compression Algorithm");
 +MODULE_AUTHOR("Marc Alexander Lehmann & Nigel Cunningham");
 diff --git a/drivers/base/power/main.c b/drivers/base/power/main.c
-index 692c20b..a39a294 100644
+index 692c20b..b7dfeea 100644
 --- a/drivers/base/power/main.c
 +++ b/drivers/base/power/main.c
-@@ -23,6 +23,7 @@
- #include <linux/pm.h>
- #include <linux/resume-trace.h>
- #include <linux/rwsem.h>
-+#include <linux/suspend.h>
- 
- #include "../base.h"
- #include "power.h"
-@@ -54,6 +55,7 @@ void device_pm_lock(void)
+@@ -54,6 +54,7 @@ void device_pm_lock(void)
  {
  	mutex_lock(&dpm_list_mtx);
  }
@@ -1712,7 +1737,7 @@ index 692c20b..a39a294 100644
  
  /**
   *	device_pm_unlock - unlock the list of active devices used by the PM core
-@@ -62,6 +64,7 @@ void device_pm_unlock(void)
+@@ -62,6 +63,7 @@ void device_pm_unlock(void)
  {
  	mutex_unlock(&dpm_list_mtx);
  }
@@ -2311,78 +2336,6 @@ index 3ce64b9..2645af6 100644
  int fsync_super(struct super_block *);
  int fsync_no_super(struct block_device *);
  struct buffer_head *__find_get_block(struct block_device *bdev, sector_t block,
-diff --git a/include/linux/dyn_pageflags.h b/include/linux/dyn_pageflags.h
-new file mode 100644
-index 0000000..143ec39
---- /dev/null
-+++ b/include/linux/dyn_pageflags.h
-@@ -0,0 +1,66 @@
-+/*
-+ * include/linux/dyn_pageflags.h
-+ *
-+ * Copyright (C) 2004-2008 Nigel Cunningham <nigel at tuxonice net>
-+ *
-+ * This file is released under the GPLv2.
-+ *
-+ * It implements support for dynamically allocated bitmaps that are
-+ * used for temporary or infrequently used pageflags, in lieu of
-+ * bits in the struct page flags entry.
-+ */
-+
-+#ifndef DYN_PAGEFLAGS_H
-+#define DYN_PAGEFLAGS_H
-+
-+#include <linux/mm.h>
-+
-+struct dyn_pageflags {
-+	unsigned long ****bitmap; /* [pg_dat][zone][page_num] */
-+	int sparse, initialised;
-+	struct list_head list;
-+	spinlock_t struct_lock;
-+};
-+
-+#define DYN_PAGEFLAGS_INIT(name) { \
-+	.list = LIST_HEAD_INIT(name.list), \
-+	.struct_lock = __SPIN_LOCK_UNLOCKED(name.lock) \
-+}
-+
-+#define DECLARE_DYN_PAGEFLAGS(name) \
-+	struct dyn_pageflags name = DYN_PAGEFLAGS_INIT(name);
-+
-+#define BITMAP_FOR_EACH_SET(BITMAP, CTR) \
-+	for (CTR = get_next_bit_on(BITMAP, max_pfn + 1); CTR <= max_pfn; \
-+		CTR = get_next_bit_on(BITMAP, CTR))
-+
-+extern void clear_dyn_pageflags(struct dyn_pageflags *pagemap);
-+extern int allocate_dyn_pageflags(struct dyn_pageflags *pagemap, int sparse);
-+extern void free_dyn_pageflags(struct dyn_pageflags *pagemap);
-+extern unsigned long get_next_bit_on(struct dyn_pageflags *bitmap,
-+	unsigned long counter);
-+
-+extern int test_dynpageflag(struct dyn_pageflags *bitmap, struct page *page);
-+/*
-+ * In sparse bitmaps, setting a flag can fail (we can fail to allocate
-+ * the page to store the bit. If this happens, we will BUG(). If you don't
-+ * want this behaviour, don't allocate sparse pageflags.
-+ */
-+extern void set_dynpageflag(struct dyn_pageflags *bitmap, struct page *page);
-+extern void clear_dynpageflag(struct dyn_pageflags *bitmap, struct page *page);
-+extern void dump_pagemap(struct dyn_pageflags *pagemap);
-+
-+/*
-+ * With the above macros defined, you can do...
-+ * #define PagePageset1(page) (test_dynpageflag(&pageset1_map, page))
-+ * #define SetPagePageset1(page) (set_dynpageflag(&pageset1_map, page))
-+ * #define ClearPagePageset1(page) (clear_dynpageflag(&pageset1_map, page))
-+ */
-+
-+extern void __init dyn_pageflags_init(void);
-+extern void __init dyn_pageflags_use_kzalloc(void);
-+
-+#ifdef CONFIG_MEMORY_HOTPLUG_SPARSE
-+extern void dyn_pageflags_hotplug(struct zone *zone);
-+#endif
-+#endif
 diff --git a/include/linux/freezer.h b/include/linux/freezer.h
 index 5a361f8..c775cd1 100644
 --- a/include/linux/freezer.h
@@ -2488,10 +2441,10 @@ index 9ff1b54..100dc2e 100644
  #define MAX_LINKS 32		
  
 diff --git a/include/linux/suspend.h b/include/linux/suspend.h
-index 2ce8207..3c64844 100644
+index 2ce8207..f469faf 100644
 --- a/include/linux/suspend.h
 +++ b/include/linux/suspend.h
-@@ -280,4 +280,69 @@ static inline void register_nosave_region_late(unsigned long b, unsigned long e)
+@@ -280,4 +280,70 @@ static inline void register_nosave_region_late(unsigned long b, unsigned long e)
  
  extern struct mutex pm_mutex;
  
@@ -2512,6 +2465,7 @@ index 2ce8207..3c64844 100644
 +	TOI_IO_STOPPED,
 +	TOI_NOTIFIERS_PREPARE,
 +	TOI_CLUSTER_MODE,
++	TOI_BOOT_KERNEL,
 +};
 +
 +#ifdef CONFIG_TOI
@@ -2562,7 +2516,7 @@ index 2ce8207..3c64844 100644
 +#endif
  #endif /* _LINUX_SUSPEND_H */
 diff --git a/include/linux/swap.h b/include/linux/swap.h
-index a3af95b..38be018 100644
+index a3af95b..e168ed5 100644
 --- a/include/linux/swap.h
 +++ b/include/linux/swap.h
 @@ -165,6 +165,7 @@ extern unsigned long totalram_pages;
@@ -2573,26 +2527,6 @@ index a3af95b..38be018 100644
  extern unsigned int nr_free_pagecache_pages(void);
  
  /* Definition of global_page_state not available yet */
-@@ -216,6 +217,8 @@ extern unsigned long try_to_free_mem_cgroup_pages(struct mem_cgroup *mem,
- 							gfp_t gfp_mask);
- extern int __isolate_lru_page(struct page *page, int mode, int file);
- extern unsigned long shrink_all_memory(unsigned long nr_pages);
-+extern void shrink_one_zone(struct zone *zone, unsigned long desired_size,
-+		int ps_wanted);
- extern int vm_swappiness;
- extern int remove_mapping(struct address_space *mapping, struct page *page);
- extern long vm_total_pages;
-@@ -416,5 +419,10 @@ static inline swp_entry_t get_swap_page(void)
- #define disable_swap_token() do { } while(0)
- 
- #endif /* CONFIG_SWAP */
-+
-+/* For TuxOnIce - unlink LRU pages while saving separately */
-+void unlink_lru_lists(void);
-+void relink_lru_lists(void);
-+
- #endif /* __KERNEL__*/
- #endif /* _LINUX_SWAP_H */
 diff --git a/init/do_mounts.c b/init/do_mounts.c
 index d055b19..06efbe5 100644
 --- a/init/do_mounts.c
@@ -2639,44 +2573,28 @@ index 614241b..f3ea292 100644
  	sys_fchdir(old_fd);
  	sys_mount("/", ".", NULL, MS_MOVE, NULL);
 diff --git a/init/main.c b/init/main.c
-index 7e117a2..fed41ad 100644
+index 7e117a2..63758ff 100644
 --- a/init/main.c
 +++ b/init/main.c
-@@ -59,6 +59,7 @@
- #include <linux/pid_namespace.h>
- #include <linux/device.h>
- #include <linux/kthread.h>
-+#include <linux/dyn_pageflags.h>
- #include <linux/sched.h>
- #include <linux/signal.h>
- #include <linux/idr.h>
-@@ -610,6 +611,7 @@ asmlinkage void __init start_kernel(void)
- 	softirq_init();
- 	timekeeping_init();
- 	time_init();
-+	dyn_pageflags_init();
- 	sched_clock_init();
- 	profile_init();
- 	if (!irqs_disabled())
-@@ -653,6 +655,7 @@ asmlinkage void __init start_kernel(void)
- 	enable_debug_pagealloc();
- 	cpu_hotplug_init();
- 	kmem_cache_init();
-+	dyn_pageflags_use_kzalloc();
- 	debug_objects_mem_init();
- 	idr_init_cache();
- 	setup_per_cpu_pageset();
+@@ -123,6 +123,7 @@ extern void softirq_init(void);
+ char __initdata boot_command_line[COMMAND_LINE_SIZE];
+ /* Untouched saved command line (eg. for /proc) */
+ char *saved_command_line;
++EXPORT_SYMBOL_GPL(saved_command_line);
+ /* Command line for parameter parsing */
+ static char *static_command_line;
+ 
 diff --git a/kernel/cpu.c b/kernel/cpu.c
-index 8ea32e8..9ca7d5e 100644
+index 8ea32e8..bf3c78f 100644
 --- a/kernel/cpu.c
 +++ b/kernel/cpu.c
-@@ -363,6 +363,7 @@ out_notify:
- 
- 	return ret;
+@@ -428,6 +428,7 @@ int disable_nonboot_cpus(void)
+ 	cpu_maps_update_done();
+ 	return error;
  }
 +EXPORT_SYMBOL_GPL(disable_nonboot_cpus);
  
- int __cpuinit cpu_up(unsigned int cpu)
+ void __ref enable_nonboot_cpus(void)
  {
 @@ -452,6 +453,7 @@ void __ref enable_nonboot_cpus(void)
  out:
@@ -2719,7 +2637,7 @@ index 3d3c3ea..7b668e1 100644
  static void helper_lock(void)
  {
 diff --git a/kernel/power/Kconfig b/kernel/power/Kconfig
-index 23bd4da..ee097f4 100644
+index 23bd4da..3e39c7c 100644
 --- a/kernel/power/Kconfig
 +++ b/kernel/power/Kconfig
 @@ -38,6 +38,13 @@ config CAN_PM_TRACE
@@ -2736,7 +2654,7 @@ index 23bd4da..ee097f4 100644
  config PM_TRACE
  	bool
  	help
-@@ -179,6 +186,264 @@ config PM_STD_PARTITION
+@@ -179,6 +186,256 @@ config PM_STD_PARTITION
  	  suspended image to. It will simply pick the first available swap 
  	  device.
  
@@ -2978,13 +2896,6 @@ index 23bd4da..ee097f4 100644
 +		  always says no pages were resaved, you may be able to safely disable this
 +		  option.
 +
-+	config	TOI_PAGEFLAGS_TEST
-+		tristate "Test pageflags"
-+		default N
-+		depends on TOI_CORE
-+		help
-+		  Test pageflags.
-+
 +config TOI
 +	bool
 +	depends on TOI_CORE!=n
@@ -2994,18 +2905,17 @@ index 23bd4da..ee097f4 100644
 +	bool
 +	depends on TOI_SWAP=m || TOI_FILE=m || \
 +		TOI_CRYPTO=m || TOI_CLUSTER=m || \
-+		TOI_USERUI=m || TOI_PAGEFLAGS=m || \
-+		TOI_CORE=m
++		TOI_USERUI=m || TOI_CORE=m
 +	default y
 +
  config APM_EMULATION
  	tristate "Advanced Power Management Emulation"
  	depends on PM && SYS_SUPPORTS_APM_EMULATION
 diff --git a/kernel/power/Makefile b/kernel/power/Makefile
-index 597823b..6d44035 100644
+index 597823b..61d7360 100644
 --- a/kernel/power/Makefile
 +++ b/kernel/power/Makefile
-@@ -4,6 +4,37 @@ EXTRA_CFLAGS	+=	-DDEBUG
+@@ -4,6 +4,35 @@ EXTRA_CFLAGS	+=	-DDEBUG
  endif
  
  obj-y				:= main.o
@@ -3038,8 +2948,6 @@ index 597823b..6d44035 100644
 +
 +obj-$(CONFIG_TOI_USERUI)	+= tuxonice_userui.o
 +
-+obj-$(CONFIG_TOI_PAGEFLAGS_TEST)	+= toi_pageflags_test.o
-+
  obj-$(CONFIG_PM_SLEEP)		+= process.o console.o
  obj-$(CONFIG_HIBERNATION)	+= swsusp.o disk.o snapshot.o swap.o user.o
  
@@ -3062,13 +2970,14 @@ index b8628be..0d11c15 100644
 +EXPORT_SYMBOL_GPL(pm_restore_console);
  #endif
 diff --git a/kernel/power/disk.c b/kernel/power/disk.c
-index c9d7408..e0d3036 100644
+index c9d7408..daa8a86 100644
 --- a/kernel/power/disk.c
 +++ b/kernel/power/disk.c
-@@ -26,9 +26,12 @@
+@@ -25,10 +25,12 @@
+ #include <linux/ftrace.h>
  
  #include "power.h"
- 
+-
 +#include "tuxonice.h"
  
  static int noresume = 0;
@@ -3079,7 +2988,7 @@ index c9d7408..e0d3036 100644
  dev_t swsusp_resume_device;
  sector_t swsusp_resume_block;
  
-@@ -106,55 +109,60 @@ static int hibernation_test(int level) { return 0; }
+@@ -106,55 +108,60 @@ static int hibernation_test(int level) { return 0; }
   *	hibernation
   */
  
@@ -3145,7 +3054,7 @@ index c9d7408..e0d3036 100644
  
  /**
   *	platform_pre_restore - prepare the platform for the restoration from a
-@@ -162,11 +170,12 @@ static void platform_finish(int platform_mode)
+@@ -162,11 +169,12 @@ static void platform_finish(int platform_mode)
   *	called, platform_restore_cleanup() must be called.
   */
  
@@ -3159,7 +3068,7 @@ index c9d7408..e0d3036 100644
  
  /**
   *	platform_restore_cleanup - switch the platform to the normal mode of
-@@ -175,22 +184,24 @@ static int platform_pre_restore(int platform_mode)
+@@ -175,22 +183,24 @@ static int platform_pre_restore(int platform_mode)
   *	regardless of the result of platform_pre_restore().
   */
  
@@ -3186,7 +3095,7 @@ index c9d7408..e0d3036 100644
  
  /**
   *	create_image - freeze devices that need to be frozen with interrupts
-@@ -394,6 +405,7 @@ int hibernation_restore(int platform_mode)
+@@ -394,6 +404,7 @@ int hibernation_restore(int platform_mode)
  	pm_restore_console();
  	return error;
  }
@@ -3194,7 +3103,7 @@ index c9d7408..e0d3036 100644
  
  /**
   *	hibernation_platform_enter - enter the hibernation state using the
-@@ -509,6 +521,9 @@ int hibernate(void)
+@@ -509,6 +520,9 @@ int hibernate(void)
  {
  	int error;
  
@@ -3204,7 +3113,7 @@ index c9d7408..e0d3036 100644
  	mutex_lock(&pm_mutex);
  	/* The snapshot device should not be opened while we're running */
  	if (!atomic_add_unless(&snapshot_device_available, -1, 0)) {
-@@ -586,10 +601,19 @@ int hibernate(void)
+@@ -586,10 +600,19 @@ int hibernate(void)
   *
   */
  
@@ -3225,7 +3134,7 @@ index c9d7408..e0d3036 100644
  
  	/*
  	 * name_to_dev_t() below takes a sysfs buffer mutex when sysfs
-@@ -893,6 +917,7 @@ static int __init resume_offset_setup(char *str)
+@@ -893,6 +916,7 @@ static int __init resume_offset_setup(char *str)
  static int __init noresume_setup(char *str)
  {
  	noresume = 1;
@@ -3280,10 +3189,10 @@ index b8f7ce9..33dfb1c 100644
  /**
   *	state - control system power state.
 diff --git a/kernel/power/power.h b/kernel/power/power.h
-index 46b5ec7..647841a 100644
+index 46b5ec7..4cfac49 100644
 --- a/kernel/power/power.h
 +++ b/kernel/power/power.h
-@@ -1,7 +1,16 @@
+@@ -1,3 +1,10 @@
 +/*
 + * Copyright (C) 2004-2008 Nigel Cunningham (nigel at tuxonice net)
 + */
@@ -3294,13 +3203,7 @@ index 46b5ec7..647841a 100644
  #include <linux/suspend.h>
  #include <linux/suspend_ioctls.h>
  #include <linux/utsname.h>
- #include <linux/freezer.h>
-+#include "tuxonice.h"
-+#include "tuxonice_builtin.h"
- 
- struct swsusp_info {
- 	struct new_utsname	uts;
-@@ -21,18 +30,22 @@ struct swsusp_info {
+@@ -21,18 +28,22 @@ struct swsusp_info {
  extern int arch_hibernation_header_save(void *addr, unsigned int max_size);
  extern int arch_hibernation_header_restore(void *addr);
  
@@ -3325,7 +3228,7 @@ index 46b5ec7..647841a 100644
  /*
   * Keep some memory free so that I/O operations can succeed without paging
   * [Might this be more than 4 MB?]
-@@ -49,6 +62,7 @@ static inline char *check_image_kernel(struct swsusp_info *info)
+@@ -49,6 +60,7 @@ static inline char *check_image_kernel(struct swsusp_info *info)
  extern int hibernation_snapshot(int platform_mode);
  extern int hibernation_restore(int platform_mode);
  extern int hibernation_platform_enter(void);
@@ -3333,7 +3236,7 @@ index 46b5ec7..647841a 100644
  #endif
  
  extern int pfn_is_nosave(unsigned long);
-@@ -63,6 +77,8 @@ static struct kobj_attribute _name##_attr = {	\
+@@ -63,6 +75,8 @@ static struct kobj_attribute _name##_attr = {	\
  	.store	= _name##_store,		\
  }
  
@@ -3342,7 +3245,7 @@ index 46b5ec7..647841a 100644
  /* Preferred image size in bytes (default 500 MB) */
  extern unsigned long image_size;
  extern int in_suspend;
-@@ -223,3 +239,32 @@ static inline void suspend_thaw_processes(void)
+@@ -223,3 +237,90 @@ static inline void suspend_thaw_processes(void)
  {
  }
  #endif
@@ -3373,6 +3276,64 @@ index 46b5ec7..647841a 100644
 +#endif
 +
 +#define ZONE_START(thiszone) ((thiszone)->zone_start_pfn - PHYS_PFN_OFFSET)
++
++#define BM_END_OF_MAP	(~0UL)
++
++#define BM_BITS_PER_BLOCK	(PAGE_SIZE << 3)
++
++struct bm_block {
++	struct bm_block *next;		/* next element of the list */
++	unsigned long start_pfn;	/* pfn represented by the first bit */
++	unsigned long end_pfn;	/* pfn represented by the last bit plus 1 */
++	unsigned long *data;	/* bitmap representing pages */
++};
++
++struct zone_bitmap {
++	struct zone_bitmap *next;	/* next element of the list */
++	unsigned long start_pfn;	/* minimal pfn in this zone */
++	unsigned long end_pfn;		/* maximal pfn in this zone plus 1 */
++	struct bm_block *bm_blocks;	/* list of bitmap blocks */
++	struct bm_block *cur_block;	/* recently used bitmap block */
++};
++
++/* strcut bm_position is used for browsing memory bitmaps */
++
++struct bm_position {
++	struct zone_bitmap *zone_bm;
++	struct bm_block *block;
++	int bit;
++};
++
++struct memory_bitmap {
++	struct zone_bitmap *zone_bm_list;	/* list of zone bitmaps */
++	struct linked_page *p_list;	/* list of pages used to store zone
++					 * bitmap objects and bitmap block
++					 * objects
++					 */
++	struct bm_position cur;	/* most recently used bit position */
++};
++
++extern int memory_bm_create(struct memory_bitmap *bm, gfp_t gfp_mask,
++		int safe_needed);
++extern void memory_bm_free(struct memory_bitmap *bm, int clear_nosave_free);
++extern void memory_bm_set_bit(struct memory_bitmap *bm, unsigned long pfn);
++extern void memory_bm_clear_bit(struct memory_bitmap *bm, unsigned long pfn);
++extern int memory_bm_test_bit(struct memory_bitmap *bm, unsigned long pfn);
++extern unsigned long memory_bm_next_pfn(struct memory_bitmap *bm);
++extern void memory_bm_position_reset(struct memory_bitmap *bm);
++extern void memory_bm_clear(struct memory_bitmap *bm);
++extern void memory_bm_copy(struct memory_bitmap *source,
++		struct memory_bitmap *dest);
++extern void memory_bm_dup(struct memory_bitmap *source,
++		struct memory_bitmap *dest);
++
++#ifdef CONFIG_TOI
++struct toi_module_ops;
++extern int memory_bm_read(struct memory_bitmap *bm, int (*rw_chunk)
++	(int rw, struct toi_module_ops *owner, char *buffer, int buffer_size));
++extern int memory_bm_write(struct memory_bitmap *bm, int (*rw_chunk)
++	(int rw, struct toi_module_ops *owner, char *buffer, int buffer_size));
++#endif
 +
 +#endif
 diff --git a/kernel/power/process.c b/kernel/power/process.c
@@ -3479,7 +3440,7 @@ index ca63401..ac19ff7 100644
 + */
 +EXPORT_SYMBOL_GPL(thaw_kernel_threads);
 diff --git a/kernel/power/snapshot.c b/kernel/power/snapshot.c
-index 5d2ab83..4a51893 100644
+index 5d2ab83..8fc59e9 100644
 --- a/kernel/power/snapshot.c
 +++ b/kernel/power/snapshot.c
 @@ -33,6 +33,8 @@
@@ -3512,28 +3473,340 @@ index 5d2ab83..4a51893 100644
  	return (unsigned long)get_image_page(gfp_mask, PG_SAFE);
  }
  
-@@ -561,18 +570,8 @@ static unsigned long memory_bm_next_pfn(struct memory_bitmap *bm)
+@@ -228,50 +237,14 @@ static void chain_free(struct chain_allocator *ca, int clear_page_nosave)
+  *	the represented memory area.
+  */
+ 
+-#define BM_END_OF_MAP	(~0UL)
+-
+-#define BM_BITS_PER_BLOCK	(PAGE_SIZE << 3)
+-
+-struct bm_block {
+-	struct bm_block *next;		/* next element of the list */
+-	unsigned long start_pfn;	/* pfn represented by the first bit */
+-	unsigned long end_pfn;	/* pfn represented by the last bit plus 1 */
+-	unsigned long *data;	/* bitmap representing pages */
+-};
+-
+ static inline unsigned long bm_block_bits(struct bm_block *bb)
+ {
+ 	return bb->end_pfn - bb->start_pfn;
+ }
+ 
+-struct zone_bitmap {
+-	struct zone_bitmap *next;	/* next element of the list */
+-	unsigned long start_pfn;	/* minimal pfn in this zone */
+-	unsigned long end_pfn;		/* maximal pfn in this zone plus 1 */
+-	struct bm_block *bm_blocks;	/* list of bitmap blocks */
+-	struct bm_block *cur_block;	/* recently used bitmap block */
+-};
+-
+-/* strcut bm_position is used for browsing memory bitmaps */
+-
+-struct bm_position {
+-	struct zone_bitmap *zone_bm;
+-	struct bm_block *block;
+-	int bit;
+-};
+-
+-struct memory_bitmap {
+-	struct zone_bitmap *zone_bm_list;	/* list of zone bitmaps */
+-	struct linked_page *p_list;	/* list of pages used to store zone
+-					 * bitmap objects and bitmap block
+-					 * objects
+-					 */
+-	struct bm_position cur;	/* most recently used bit position */
+-};
+-
+ /* Functions that operate on memory bitmaps */
+ 
+-static void memory_bm_position_reset(struct memory_bitmap *bm)
++void memory_bm_position_reset(struct memory_bitmap *bm)
+ {
+ 	struct zone_bitmap *zone_bm;
+ 
+@@ -280,8 +253,9 @@ static void memory_bm_position_reset(struct memory_bitmap *bm)
+ 	bm->cur.block = zone_bm->bm_blocks;
+ 	bm->cur.bit = 0;
+ }
++EXPORT_SYMBOL_GPL(memory_bm_position_reset);
+ 
+-static void memory_bm_free(struct memory_bitmap *bm, int clear_nosave_free);
++void memory_bm_free(struct memory_bitmap *bm, int clear_nosave_free);
+ 
+ /**
+  *	create_bm_block_list - create a list of block bitmap objects
+@@ -331,7 +305,7 @@ create_zone_bm_list(unsigned int nr_zones, struct chain_allocator *ca)
+   *	memory_bm_create - allocate memory for a memory bitmap
+   */
+ 
+-static int
++int
+ memory_bm_create(struct memory_bitmap *bm, gfp_t gfp_mask, int safe_needed)
+ {
+ 	struct chain_allocator ca;
+@@ -406,15 +380,19 @@ memory_bm_create(struct memory_bitmap *bm, gfp_t gfp_mask, int safe_needed)
+ 	memory_bm_free(bm, PG_UNSAFE_CLEAR);
+ 	return -ENOMEM;
+ }
++EXPORT_SYMBOL_GPL(memory_bm_create);
+ 
+ /**
+   *	memory_bm_free - free memory occupied by the memory bitmap @bm
+   */
+ 
+-static void memory_bm_free(struct memory_bitmap *bm, int clear_nosave_free)
++void memory_bm_free(struct memory_bitmap *bm, int clear_nosave_free)
+ {
+ 	struct zone_bitmap *zone_bm;
+ 
++	if (!bm->zone_bm_list)
++		return;
++
+ 	/* Free the list of bit blocks for each zone_bitmap object */
+ 	zone_bm = bm->zone_bm_list;
+ 	while (zone_bm) {
+@@ -431,6 +409,7 @@ static void memory_bm_free(struct memory_bitmap *bm, int clear_nosave_free)
+ 	free_list_of_pages(bm->p_list, clear_nosave_free);
+ 	bm->zone_bm_list = NULL;
+ }
++EXPORT_SYMBOL_GPL(memory_bm_free);
+ 
+ /**
+  *	memory_bm_find_bit - find the bit in the bitmap @bm that corresponds
+@@ -474,7 +453,7 @@ static int memory_bm_find_bit(struct memory_bitmap *bm, unsigned long pfn,
+ 	return 0;
+ }
+ 
+-static void memory_bm_set_bit(struct memory_bitmap *bm, unsigned long pfn)
++void memory_bm_set_bit(struct memory_bitmap *bm, unsigned long pfn)
+ {
+ 	void *addr;
+ 	unsigned int bit;
+@@ -484,6 +463,7 @@ static void memory_bm_set_bit(struct memory_bitmap *bm, unsigned long pfn)
+ 	BUG_ON(error);
+ 	set_bit(bit, addr);
+ }
++EXPORT_SYMBOL_GPL(memory_bm_set_bit);
+ 
+ static int mem_bm_set_bit_check(struct memory_bitmap *bm, unsigned long pfn)
+ {
+@@ -497,7 +477,7 @@ static int mem_bm_set_bit_check(struct memory_bitmap *bm, unsigned long pfn)
+ 	return error;
+ }
+ 
+-static void memory_bm_clear_bit(struct memory_bitmap *bm, unsigned long pfn)
++void memory_bm_clear_bit(struct memory_bitmap *bm, unsigned long pfn)
+ {
+ 	void *addr;
+ 	unsigned int bit;
+@@ -507,8 +487,9 @@ static void memory_bm_clear_bit(struct memory_bitmap *bm, unsigned long pfn)
+ 	BUG_ON(error);
+ 	clear_bit(bit, addr);
+ }
++EXPORT_SYMBOL_GPL(memory_bm_clear_bit);
+ 
+-static int memory_bm_test_bit(struct memory_bitmap *bm, unsigned long pfn)
++int memory_bm_test_bit(struct memory_bitmap *bm, unsigned long pfn)
+ {
+ 	void *addr;
+ 	unsigned int bit;
+@@ -518,6 +499,7 @@ static int memory_bm_test_bit(struct memory_bitmap *bm, unsigned long pfn)
+ 	BUG_ON(error);
+ 	return test_bit(bit, addr);
+ }
++EXPORT_SYMBOL_GPL(memory_bm_test_bit);
+ 
+ /**
+  *	memory_bm_next_pfn - find the pfn that corresponds to the next set bit
+@@ -528,7 +510,7 @@ static int memory_bm_test_bit(struct memory_bitmap *bm, unsigned long pfn)
+  *	this function.
+  */
+ 
+-static unsigned long memory_bm_next_pfn(struct memory_bitmap *bm)
++unsigned long memory_bm_next_pfn(struct memory_bitmap *bm)
+ {
+ 	struct zone_bitmap *zone_bm;
+ 	struct bm_block *bb;
+@@ -560,19 +542,167 @@ static unsigned long memory_bm_next_pfn(struct memory_bitmap *bm)
+ 	bm->cur.bit = bit + 1;
  	return bb->start_pfn + bit;
  }
++EXPORT_SYMBOL_GPL(memory_bm_next_pfn);
  
 -/**
 - *	This structure represents a range of page frames the contents of which
 - *	should not be saved during the suspend.
 - */
--
++void memory_bm_clear(struct memory_bitmap *bm)
++{
++	unsigned long pfn;
+ 
 -struct nosave_region {
 -	struct list_head list;
 -	unsigned long start_pfn;
 -	unsigned long end_pfn;
 -};
--
++	memory_bm_position_reset(bm);
++	pfn = memory_bm_next_pfn(bm);
++	while (pfn != BM_END_OF_MAP) {
++		memory_bm_clear_bit(bm, pfn);
++		pfn = memory_bm_next_pfn(bm);
++	}
++}
++EXPORT_SYMBOL_GPL(memory_bm_clear);
++
++void memory_bm_copy(struct memory_bitmap *source, struct memory_bitmap *dest)
++{
++	unsigned long pfn;
++
++	memory_bm_position_reset(source);
++	pfn = memory_bm_next_pfn(source);
++	while (pfn != BM_END_OF_MAP) {
++		memory_bm_set_bit(dest, pfn);
++		pfn = memory_bm_next_pfn(source);
++	}
++}
++EXPORT_SYMBOL_GPL(memory_bm_copy);
++
++void memory_bm_dup(struct memory_bitmap *source, struct memory_bitmap *dest)
++{
++	memory_bm_clear(dest);
++	memory_bm_copy(source, dest);
++}
++EXPORT_SYMBOL_GPL(memory_bm_dup);
++
++#ifdef CONFIG_TOI
++int memory_bm_write(struct memory_bitmap *bm, int (*rw_chunk)
++	(int rw, struct toi_module_ops *owner, char *buffer, int buffer_size))
++{
++	int result = 0;
++	unsigned int nr = 0;
++	struct zone_bitmap *zone_bm;
++	struct bm_block *bb;
++
++	if (!bm)
++		return result;
++
++	for (zone_bm = bm->zone_bm_list; zone_bm; zone_bm = zone_bm->next)
++		nr++;
++
++	result = (*rw_chunk)(WRITE, NULL, (char *) &nr, sizeof(unsigned int));
++	if (result)
++		return result;
++
++	for (zone_bm = bm->zone_bm_list; zone_bm; zone_bm = zone_bm->next) {
++		result = (*rw_chunk)(WRITE, NULL, (char *) &zone_bm->start_pfn,
++				2 * sizeof(unsigned long));
++		if (result)
++			return result;
++
++		nr = 0;
++		for (bb = zone_bm->bm_blocks; bb; bb = bb->next)
++			nr++;
++
++		result = (*rw_chunk)(WRITE, NULL, (char *) &nr,
++				sizeof(unsigned int));
+ 
 -static LIST_HEAD(nosave_regions);
++		if (result)
++			return result;
++
++		for (bb = zone_bm->bm_blocks; bb; bb = bb->next) {
++			result = (*rw_chunk)(WRITE, NULL, (char *) bb->data,
++					PAGE_SIZE);
++			if (result)
++				return result;
++		}
++	}
++
++	return 0;
++}
++EXPORT_SYMBOL_GPL(memory_bm_write);
++
++int memory_bm_read(struct memory_bitmap *bm, int (*rw_chunk)
++	(int rw, struct toi_module_ops *owner, char *buffer, int buffer_size))
++{
++	int result = 0;
++	unsigned int nr;
++	struct zone_bitmap *zone_bm;
++	struct bm_block *bb;
++	struct chain_allocator ca;
++
++	if (!bm)
++		return result;
++
++	chain_init(&ca, GFP_ATOMIC, 0);
++
++	result = (*rw_chunk)(READ, NULL, (char *) &nr, sizeof(unsigned int));
++	if (result)
++		return result;
++
++	zone_bm = create_zone_bm_list(nr, &ca);
++	bm->zone_bm_list = zone_bm;
++	if (!zone_bm) {
++		chain_free(&ca, PG_ANY);
++		return -ENOMEM;
++	}
++
++	for (zone_bm = bm->zone_bm_list; zone_bm; zone_bm = zone_bm->next) {
++		unsigned long pfn;
++
++		result = (*rw_chunk)(READ, NULL, (char *) &zone_bm->start_pfn,
++				2 * sizeof(unsigned long));
++		if (result)
++			return result;
++
++		result = (*rw_chunk)(READ, NULL, (char *) &nr,
++				sizeof(unsigned int));
++
++		if (result)
++			return result;
++
++		bb = create_bm_block_list(nr, &ca);
++		zone_bm->bm_blocks = bb;
++		zone_bm->cur_block = bb;
++		if (!bb)
++			goto Free;
++
++		pfn = zone_bm->start_pfn;
++
++		for (bb = zone_bm->bm_blocks; bb; bb = bb->next) {
++			bb->data = get_image_page(GFP_ATOMIC, 0);
++			if (!bb->data)
++				goto Free;
++
++			bb->start_pfn = pfn;
++			if (pfn + BM_BITS_PER_BLOCK > zone_bm->end_pfn)
++				bb->end_pfn = zone_bm->end_pfn;
++			else
++				bb->end_pfn = bb->start_pfn + BM_BITS_PER_BLOCK;
++			pfn = bb->end_pfn;
++			result = (*rw_chunk)(READ, NULL, (char *) bb->data,
++					PAGE_SIZE);
++			if (result)
++				return result;
++		}
++	}
++	bm->p_list = ca.chain;
++	memory_bm_position_reset(bm);
++
++	return 0;
++
++Free:
++	bm->p_list = ca.chain;
++	memory_bm_free(bm, PG_ANY);
++	return -ENOMEM;
++}
++EXPORT_SYMBOL_GPL(memory_bm_read);
++#endif
++
 +LIST_HEAD(nosave_regions);
 +EXPORT_SYMBOL_GPL(nosave_regions);
  
  /**
   *	register_nosave_region - register a range of page frames the contents
-@@ -809,7 +808,7 @@ static unsigned int count_free_highmem_pages(void)
+@@ -809,7 +939,7 @@ static unsigned int count_free_highmem_pages(void)
   *	and it isn't a part of a free chunk of pages.
   */
  
@@ -3542,7 +3815,7 @@ index 5d2ab83..4a51893 100644
  {
  	struct page *page;
  
-@@ -826,6 +825,7 @@ static struct page *saveable_highmem_page(unsigned long pfn)
+@@ -826,6 +956,7 @@ static struct page *saveable_highmem_page(unsigned long pfn)
  
  	return page;
  }
@@ -3550,7 +3823,7 @@ index 5d2ab83..4a51893 100644
  
  /**
   *	count_highmem_pages - compute the total number of saveable highmem
-@@ -851,8 +851,6 @@ unsigned int count_highmem_pages(void)
+@@ -851,8 +982,6 @@ unsigned int count_highmem_pages(void)
  	}
  	return n;
  }
@@ -3559,7 +3832,7 @@ index 5d2ab83..4a51893 100644
  #endif /* CONFIG_HIGHMEM */
  
  /**
-@@ -864,7 +862,7 @@ static inline void *saveable_highmem_page(unsigned long pfn) { return NULL; }
+@@ -864,7 +993,7 @@ static inline void *saveable_highmem_page(unsigned long pfn) { return NULL; }
   *	a free chunk of pages.
   */
  
@@ -3568,7 +3841,7 @@ index 5d2ab83..4a51893 100644
  {
  	struct page *page;
  
-@@ -884,6 +882,7 @@ static struct page *saveable_page(unsigned long pfn)
+@@ -884,6 +1013,7 @@ static struct page *saveable_page(unsigned long pfn)
  
  	return page;
  }
@@ -3576,7 +3849,7 @@ index 5d2ab83..4a51893 100644
  
  /**
   *	count_data_pages - compute the total number of saveable non-highmem
-@@ -1198,6 +1197,9 @@ asmlinkage int swsusp_save(void)
+@@ -1198,6 +1328,9 @@ asmlinkage int swsusp_save(void)
  {
  	unsigned int nr_pages, nr_highmem;
  
@@ -3586,7 +3859,7 @@ index 5d2ab83..4a51893 100644
  	printk(KERN_INFO "PM: Creating hibernation image: \n");
  
  	drain_local_pages(NULL);
-@@ -1238,14 +1240,14 @@ asmlinkage int swsusp_save(void)
+@@ -1238,14 +1371,14 @@ asmlinkage int swsusp_save(void)
  }
  
  #ifndef CONFIG_ARCH_HIBERNATION_HEADER
@@ -3603,7 +3876,7 @@ index 5d2ab83..4a51893 100644
  {
  	if (info->version_code != LINUX_VERSION_CODE)
  		return "kernel version";
-@@ -1259,6 +1261,7 @@ static char *check_image_kernel(struct swsusp_info *info)
+@@ -1259,6 +1392,7 @@ static char *check_image_kernel(struct swsusp_info *info)
  		return "machine";
  	return NULL;
  }
@@ -3611,7 +3884,7 @@ index 5d2ab83..4a51893 100644
  #endif /* CONFIG_ARCH_HIBERNATION_HEADER */
  
  unsigned long snapshot_get_image_size(void)
-@@ -1266,7 +1269,7 @@ unsigned long snapshot_get_image_size(void)
+@@ -1266,7 +1400,7 @@ unsigned long snapshot_get_image_size(void)
  	return nr_copy_pages + nr_meta_pages + 1;
  }
  
@@ -3620,7 +3893,7 @@ index 5d2ab83..4a51893 100644
  {
  	memset(info, 0, sizeof(struct swsusp_info));
  	info->num_physpages = num_physpages;
-@@ -1274,8 +1277,9 @@ static int init_header(struct swsusp_info *info)
+@@ -1274,8 +1408,9 @@ static int init_header(struct swsusp_info *info)
  	info->pages = snapshot_get_image_size();
  	info->size = info->pages;
  	info->size <<= PAGE_SHIFT;
@@ -3631,7 +3904,7 @@ index 5d2ab83..4a51893 100644
  
  /**
   *	pack_pfns - pfns corresponding to the set bits found in the bitmap @bm
-@@ -1330,7 +1334,7 @@ int snapshot_read_next(struct snapshot_handle *handle, size_t count)
+@@ -1330,7 +1465,7 @@ int snapshot_read_next(struct snapshot_handle *handle, size_t count)
  	if (!handle->offset) {
  		int error;
  
@@ -3640,7 +3913,7 @@ index 5d2ab83..4a51893 100644
  		if (error)
  			return error;
  		handle->buffer = buffer;
-@@ -1427,7 +1431,7 @@ static int check_header(struct swsusp_info *info)
+@@ -1427,7 +1562,7 @@ static int check_header(struct swsusp_info *info)
  {
  	char *reason;
  
@@ -3649,98 +3922,12 @@ index 5d2ab83..4a51893 100644
  	if (!reason && info->num_physpages != num_physpages)
  		reason = "memory size";
  	if (reason) {
-diff --git a/kernel/power/toi_pageflags_test.c b/kernel/power/toi_pageflags_test.c
-new file mode 100644
-index 0000000..1f51ec1
---- /dev/null
-+++ b/kernel/power/toi_pageflags_test.c
-@@ -0,0 +1,80 @@
-+/*
-+ * TuxOnIce pageflags tester.
-+ */
-+
-+#include "linux/bootmem.h"
-+#include "linux/sched.h"
-+#include "linux/dyn_pageflags.h"
-+#include <linux/module.h>
-+
-+DECLARE_DYN_PAGEFLAGS(test_map);
-+
-+static char *bits_on(void)
-+{
-+	char *page = (char *) get_zeroed_page(GFP_KERNEL);
-+	unsigned long index = get_next_bit_on(&test_map, max_pfn + 1);
-+	int pos = 0;
-+
-+	while (index <= max_pfn) {
-+		pos += scnprintf(page + pos, PAGE_SIZE - pos - 1, "%d ",
-+				index);
-+		index = get_next_bit_on(&test_map, index);
-+	}
-+
-+	return page;
-+}
-+
-+static __init int do_check(void)
-+{
-+	unsigned long index;
-+	int step = 1, steps = 100;
-+
-+	allocate_dyn_pageflags(&test_map, 0);
-+
-+	for (index = 1; index < max_pfn; index++) {
-+		char *result;
-+		char compare[100];
-+
-+		if (index > (max_pfn / steps * step)) {
-+			printk(KERN_INFO "%d/%d\r", step, steps);
-+			step++;
-+		}
-+
-+
-+		if (!pfn_valid(index))
-+			continue;
-+
-+		clear_dyn_pageflags(&test_map);
-+		set_dynpageflag(&test_map, pfn_to_page(0));
-+		set_dynpageflag(&test_map, pfn_to_page(index));
-+
-+		sprintf(compare, "0 %lu ", index);
-+
-+		result = bits_on();
-+
-+		if (strcmp(result, compare)) {
-+			printk(KERN_INFO "Expected \"%s\", got \"%s\"\n",
-+					result, compare);
-+		}
-+
-+		free_page((unsigned long) result);
-+		schedule();
-+	}
-+
-+	free_dyn_pageflags(&test_map);
-+	return 0;
-+}
-+
-+#ifdef MODULE
-+static __exit void check_unload(void)
-+{
-+}
-+
-+module_init(do_check);
-+module_exit(check_unload);
-+MODULE_AUTHOR("Nigel Cunningham");
-+MODULE_DESCRIPTION("Pageflags testing");
-+MODULE_LICENSE("GPL");
-+#else
-+late_initcall(do_check);
-+#endif
 diff --git a/kernel/power/tuxonice.h b/kernel/power/tuxonice.h
 new file mode 100644
-index 0000000..e90ed43
+index 0000000..2e27b7b
 --- /dev/null
 +++ b/kernel/power/tuxonice.h
-@@ -0,0 +1,212 @@
+@@ -0,0 +1,211 @@
 +/*
 + * kernel/power/tuxonice.h
 + *
@@ -3758,13 +3945,12 @@ index 0000000..e90ed43
 +#include <linux/delay.h>
 +#include <linux/bootmem.h>
 +#include <linux/suspend.h>
-+#include <linux/dyn_pageflags.h>
 +#include <linux/fs.h>
 +#include <linux/kmod.h>
 +#include <asm/setup.h>
 +#include "tuxonice_pageflags.h"
 +
-+#define TOI_CORE_VERSION "3.0-rc7"
++#define TOI_CORE_VERSION "3.0-rc8"
 +
 +#define MY_BOOT_KERNEL_DATA_VERSION 1
 +
@@ -3773,7 +3959,7 @@ index 0000000..e90ed43
 +	int size;
 +	unsigned long toi_action;
 +	unsigned long toi_debug_state;
-+	int toi_default_console_level;
++	u32 toi_default_console_level;
 +	int toi_io_time[2][2];
 +	char toi_nosave_commandline[COMMAND_LINE_SIZE];
 +};
@@ -3955,10 +4141,10 @@ index 0000000..e90ed43
 +#endif
 diff --git a/kernel/power/tuxonice_alloc.c b/kernel/power/tuxonice_alloc.c
 new file mode 100644
-index 0000000..0ee69c0
+index 0000000..5e3aae8
 --- /dev/null
 +++ b/kernel/power/tuxonice_alloc.c
-@@ -0,0 +1,285 @@
+@@ -0,0 +1,287 @@
 +/*
 + * kernel/power/tuxonice_alloc.c
 + *
@@ -3972,11 +4158,13 @@ index 0000000..0ee69c0
 +#include <linux/module.h>
 +#include <linux/slab.h>
 +#include "tuxonice_modules.h"
++#include "tuxonice_alloc.h"
 +#include "tuxonice_sysfs.h"
++#include "tuxonice.h"
 +
 +#define TOI_ALLOC_PATHS 39
 +
-+DEFINE_MUTEX(toi_alloc_mutex);
++static DEFINE_MUTEX(toi_alloc_mutex);
 +
 +static struct toi_module_ops toi_alloc_ops;
 +
@@ -3985,8 +4173,8 @@ index 0000000..0ee69c0
 +		toi_free_count[TOI_ALLOC_PATHS],
 +		toi_test_count[TOI_ALLOC_PATHS],
 +		toi_fail_count[TOI_ALLOC_PATHS];
-+int toi_cur_allocd[TOI_ALLOC_PATHS], toi_max_allocd[TOI_ALLOC_PATHS];
-+int cur_allocd, max_allocd;
++static int toi_cur_allocd[TOI_ALLOC_PATHS], toi_max_allocd[TOI_ALLOC_PATHS];
++static int cur_allocd, max_allocd;
 +
 +static char *toi_alloc_desc[TOI_ALLOC_PATHS] = {
 +	"", /* 0 */
@@ -4108,7 +4296,7 @@ index 0000000..0ee69c0
 +	struct page *result;
 +
 +	if (toi_alloc_ops.enabled)
-+		MIGHT_FAIL(fail_num, 0);
++		MIGHT_FAIL(fail_num, NULL);
 +	result = alloc_page(mask);
 +	if (toi_alloc_ops.enabled)
 +		alloc_update_stats(fail_num, (void *) result);
@@ -4303,10 +4491,10 @@ index 0000000..a1dd8ff
 +#endif
 diff --git a/kernel/power/tuxonice_atomic_copy.c b/kernel/power/tuxonice_atomic_copy.c
 new file mode 100644
-index 0000000..421cb6e
+index 0000000..64e5749
 --- /dev/null
 +++ b/kernel/power/tuxonice_atomic_copy.c
-@@ -0,0 +1,392 @@
+@@ -0,0 +1,398 @@
 +/*
 + * kernel/power/tuxonice_atomic_copy.c
 + *
@@ -4452,8 +4640,11 @@ index 0000000..421cb6e
 +	int i;
 +	unsigned long source_index, dest_index;
 +
-+	source_index = get_next_bit_on(&pageset1_map, max_pfn + 1);
-+	dest_index = get_next_bit_on(&pageset1_copy_map, max_pfn + 1);
++	memory_bm_position_reset(&pageset1_map);
++	memory_bm_position_reset(&pageset1_copy_map);
++
++	source_index = memory_bm_next_pfn(&pageset1_map);
++	dest_index = memory_bm_next_pfn(&pageset1_copy_map);
 +
 +	for (i = 0; i < pagedir1.size; i++) {
 +		unsigned long *origvirt, *copyvirt;
@@ -4490,8 +4681,8 @@ index 0000000..421cb6e
 +		if (PageHighMem(copypage))
 +			kunmap_atomic(copyvirt, KM_USER1);
 +
-+		source_index = get_next_bit_on(&pageset1_map, source_index);
-+		dest_index = get_next_bit_on(&pageset1_copy_map, dest_index);
++		source_index = memory_bm_next_pfn(&pageset1_map);
++		dest_index = memory_bm_next_pfn(&pageset1_copy_map);
 +	}
 +}
 +
@@ -4571,6 +4762,9 @@ index 0000000..421cb6e
 +	toi_running = 1;
 +
 +	toi_prepare_status(DONT_CLEAR_BAR,	"Atomic restore.");
++
++	memcpy(&toi_bkd.toi_nosave_commandline, saved_command_line,
++		COMMAND_LINE_SIZE);
 +
 +	if (add_boot_kernel_data_pbe())
 +		goto Failed;
@@ -4729,10 +4923,10 @@ index 0000000..8df3552
 +void toi_end_atomic(int stage, int toi_time, int error);
 diff --git a/kernel/power/tuxonice_block_io.c b/kernel/power/tuxonice_block_io.c
 new file mode 100644
-index 0000000..8cddf02
+index 0000000..0af7fc5
 --- /dev/null
 +++ b/kernel/power/tuxonice_block_io.c
-@@ -0,0 +1,1187 @@
+@@ -0,0 +1,1211 @@
 +/*
 + * kernel/power/tuxonice_block_io.c
 + *
@@ -4759,7 +4953,8 @@ index 0000000..8cddf02
 +#include "tuxonice_alloc.h"
 +#include "tuxonice_io.h"
 +
-+#define TARGET_OUTSTANDING_IO 16384
++#define ANY_REASON 0
++#define MEMORY_ONLY 1
 +
 +/* #define MEASURE_MUTEX_CONTENTION */
 +#ifndef MEASURE_MUTEX_CONTENTION
@@ -4789,13 +4984,13 @@ index 0000000..8cddf02
 +static atomic_t toi_bio_queue_size;
 +static DEFINE_SPINLOCK(bio_queue_lock);
 +
-+static int free_mem_throttle;
++static int free_mem_throttle, throughput_throttle;
 +static int more_readahead = 1;
 +static struct page *readahead_list_head, *readahead_list_tail;
 +
 +static struct page *waiting_on;
 +
-+static atomic_t toi_io_in_progress;
++static atomic_t toi_io_in_progress, toi_io_done;
 +static DECLARE_WAIT_QUEUE_HEAD(num_in_progress_wait);
 +
 +static int extra_page_forward;
@@ -4819,7 +5014,7 @@ index 0000000..8cddf02
 +
 +static struct toi_bdev_info *toi_devinfo;
 +
-+DEFINE_MUTEX(toi_bio_mutex);
++static DEFINE_MUTEX(toi_bio_mutex);
 +
 +static struct task_struct *toi_queue_flusher;
 +static int toi_bio_queue_flush_pages(int dedicated_thread);
@@ -4828,14 +5023,14 @@ index 0000000..8cddf02
 +	       atomic_read(&toi_bio_queue_size))
 +
 +/**
-+ * set_throttle: Set the point where we pause to avoid oom.
++ * set_free_mem_throttle: Set the point where we pause to avoid oom.
 + *
 + * Initially, this value is zero, but when we first fail to allocate memory,
 + * we set it (plus a buffer) and thereafter throttle i/o once that limit is
 + * reached.
 + */
 +
-+static void set_throttle(void)
++static void set_free_mem_throttle(void)
 +{
 +	int new_throttle = nr_unallocated_buffer_pages() + 256;
 +
@@ -4843,19 +5038,16 @@ index 0000000..8cddf02
 +		free_mem_throttle = new_throttle;
 +}
 +
-+#define NUM_REASONS 10
++#define NUM_REASONS 7
 +static atomic_t reasons[NUM_REASONS];
 +static char *reason_name[NUM_REASONS] = {
 +	"readahead not ready",
 +	"bio allocation",
-+	"io_struct allocation",
-+	"submit buffer",
 +	"synchronous I/O",
-+	"bio mutex when reading",
-+	"bio mutex when writing",
 +	"toi_bio_get_new_page",
 +	"memory low",
-+	"readahead buffer allocation"
++	"readahead buffer allocation",
++	"throughput_throttle",
 +};
 +
 +/**
@@ -4883,15 +5075,23 @@ index 0000000..8cddf02
 +	}
 +}
 +
-+static void throttle_if_memory_low(void)
++static void throttle_if_needed(int reason)
 +{
 +	int free_pages = nr_unallocated_buffer_pages();
 +
 +	/* Getting low on memory and I/O is in progress? */
 +	while (unlikely(free_pages < free_mem_throttle) &&
 +			atomic_read(&toi_io_in_progress)) {
-+		do_bio_wait(8);
++		do_bio_wait(4);
 +		free_pages = nr_unallocated_buffer_pages();
++	}
++
++	while (reason == ANY_REASON && throughput_throttle &&
++		TOTAL_OUTSTANDING_IO >= throughput_throttle) {
++		atomic_inc(&reasons[6]);
++		wait_event(num_in_progress_wait,
++			!atomic_read(&toi_io_in_progress) ||
++			TOTAL_OUTSTANDING_IO < throughput_throttle);
 +	}
 +}
 +
@@ -4914,6 +5114,21 @@ index 0000000..8cddf02
 +			TOTAL_OUTSTANDING_IO >= new_max);
 +		orig = TOTAL_OUTSTANDING_IO;
 +	}
++}
++
++/**
++ * update_throughput_throttle: Update the raw throughput throttle.
++ *
++ * Called once per second by the core, used to limit the amount of I/O
++ * we submit at once, spreading out our waiting through the whole job
++ * and letting userui get an opportunity to do its work.
++ *
++ * We throttle to 1/10s worth of I/O.
++ */
++static void update_throughput_throttle(int jif_index)
++{
++	int done = atomic_read(&toi_io_done);
++	throughput_throttle = done / jif_index;
 +}
 +
 +/**
@@ -4955,6 +5170,7 @@ index 0000000..8cddf02
 +	bio_put(bio);
 +
 +	atomic_dec(&toi_io_in_progress);
++	atomic_inc(&toi_io_done);
 +
 +	wake_up(&num_in_progress_wait);
 +}
@@ -4977,12 +5193,12 @@ index 0000000..8cddf02
 +	struct bio *bio = NULL;
 +	int cur_outstanding_io;
 +
-+	throttle_if_memory_low();
++	throttle_if_needed(MEMORY_ONLY);
 +
 +	while (!bio) {
 +		bio = bio_alloc(TOI_ATOMIC_GFP, 1);
 +		if (!bio) {
-+			set_throttle();
++			set_free_mem_throttle();
 +			do_bio_wait(1);
 +		}
 +	}
@@ -5066,7 +5282,7 @@ index 0000000..8cddf02
 +		return -EFAULT;
 +
 +	if (syncio)
-+		do_bio_wait(4);
++		do_bio_wait(2);
 +
 +	return 0;
 +}
@@ -5316,6 +5532,7 @@ index 0000000..8cddf02
 +	else
 +		toi_extent_state_goto_start(&toi_writer_posn);
 +
++	atomic_set(&toi_io_done, 0);
 +	toi_writer_buffer = (char *) toi_get_zeroed_page(11, TOI_ATOMIC_GFP);
 +	toi_writer_buffer_posn = writing ? 0 : PAGE_SIZE;
 +
@@ -5415,12 +5632,12 @@ index 0000000..8cddf02
 +	return 0;
 +}
 +
-+int toi_start_one_readahead(int dedicated_thread)
++static int toi_start_one_readahead(int dedicated_thread)
 +{
 +	char *buffer = NULL;
 +	int oom = 0;
 +
-+	throttle_if_memory_low();
++	throttle_if_needed(ANY_REASON);
 +
 +	while (!buffer) {
 +		buffer = (char *) toi_get_zeroed_page(12,
@@ -5430,8 +5647,8 @@ index 0000000..8cddf02
 +				return -EIO;
 +
 +			oom = 1;
-+			set_throttle();
-+			do_bio_wait(9);
++			set_free_mem_throttle();
++			do_bio_wait(5);
 +		}
 +	}
 +
@@ -5579,13 +5796,13 @@ index 0000000..8cddf02
 + */
 +static void toi_bio_get_new_page(char **full_buffer)
 +{
-+	throttle_if_memory_low();
++	throttle_if_needed(ANY_REASON);
 +
 +	while (!*full_buffer) {
 +		*full_buffer = (char *) toi_get_zeroed_page(11, TOI_ATOMIC_GFP);
 +		if (!*full_buffer) {
-+			set_throttle();
-+			do_bio_wait(7);
++			set_free_mem_throttle();
++			do_bio_wait(3);
 +		}
 +	}
 +}
@@ -5858,6 +6075,7 @@ index 0000000..8cddf02
 +	.bdev_page_io = toi_bdev_page_io,
 +	.finish_all_io = toi_finish_all_io,
 +	.monitor_outstanding_io	= toi_monitor_outstanding_io,
++	.update_throughput_throttle = update_throughput_throttle,
 +	.forward_one_page = go_next_page,
 +	.set_extra_page_forward = set_extra_page_forward,
 +	.set_devinfo = toi_set_devinfo,
@@ -5875,7 +6093,7 @@ index 0000000..8cddf02
 +
 +static struct toi_sysfs_data sysfs_params[] = {
 +	SYSFS_INT("target_outstanding_io", SYSFS_RW, &target_outstanding_io,
-+			0, TARGET_OUTSTANDING_IO, 0, NULL),
++			0, 16384, 0, NULL),
 +};
 +
 +static struct toi_module_ops toi_blockwriter_ops = {
@@ -5922,10 +6140,10 @@ index 0000000..8cddf02
 +#endif
 diff --git a/kernel/power/tuxonice_block_io.h b/kernel/power/tuxonice_block_io.h
 new file mode 100644
-index 0000000..d7eccb5
+index 0000000..364e6e2
 --- /dev/null
 +++ b/kernel/power/tuxonice_block_io.h
-@@ -0,0 +1,58 @@
+@@ -0,0 +1,59 @@
 +/*
 + * kernel/power/tuxonice_block_io.h
 + *
@@ -5958,6 +6176,7 @@ index 0000000..d7eccb5
 +	void (*check_io_stats) (void);
 +	void (*reset_io_stats) (void);
 +	void (*monitor_outstanding_io) (void);
++	void (*update_throughput_throttle) (int jif_index);
 +	void (*finish_all_io) (void);
 +	int (*forward_one_page) (int writing);
 +	void (*set_extra_page_forward) (void);
@@ -5986,10 +6205,10 @@ index 0000000..d7eccb5
 +extern struct toi_extent_iterate_state toi_writer_posn;
 diff --git a/kernel/power/tuxonice_builtin.c b/kernel/power/tuxonice_builtin.c
 new file mode 100644
-index 0000000..b550088
+index 0000000..de72f05
 --- /dev/null
 +++ b/kernel/power/tuxonice_builtin.c
-@@ -0,0 +1,320 @@
+@@ -0,0 +1,319 @@
 +/*
 + * Copyright (C) 2004-2008 Nigel Cunningham (nigel at tuxonice net)
 + *
@@ -6008,7 +6227,6 @@ index 0000000..b550088
 +#include <linux/tty.h>
 +#include <linux/crypto.h>
 +#include <linux/cpu.h>
-+#include <linux/dyn_pageflags.h>
 +#include <linux/ctype.h>
 +#include "tuxonice_io.h"
 +#include "tuxonice.h"
@@ -6092,7 +6310,7 @@ index 0000000..b550088
 +}
 +
 +#else /* CONFIG_HIGHMEM */
-+void copyback_high(void) { }
++static void copyback_high(void) { }
 +#endif
 +
 +char toi_wait_for_keypress_dev_console(int timeout)
@@ -6185,10 +6403,10 @@ index 0000000..b550088
 +struct toi_core_fns *toi_core_fns;
 +EXPORT_SYMBOL_GPL(toi_core_fns);
 +
-+DECLARE_DYN_PAGEFLAGS(pageset1_map);
++struct memory_bitmap pageset1_map;
 +EXPORT_SYMBOL_GPL(pageset1_map);
 +
-+DECLARE_DYN_PAGEFLAGS(pageset1_copy_map);
++struct memory_bitmap pageset1_copy_map;
 +EXPORT_SYMBOL_GPL(pageset1_copy_map);
 +
 +unsigned long toi_result;
@@ -6312,16 +6530,15 @@ index 0000000..b550088
 +__setup("toi_initramfs_resume_only", toi_ignore_late_initcall_setup);
 diff --git a/kernel/power/tuxonice_builtin.h b/kernel/power/tuxonice_builtin.h
 new file mode 100644
-index 0000000..581597b
+index 0000000..49b25b7
 --- /dev/null
 +++ b/kernel/power/tuxonice_builtin.h
-@@ -0,0 +1,31 @@
+@@ -0,0 +1,27 @@
 +/*
 + * Copyright (C) 2004-2008 Nigel Cunningham (nigel at tuxonice net)
 + *
 + * This file is released under the GPLv2.
 + */
-+#include <linux/dyn_pageflags.h>
 +#include <asm/setup.h>
 +
 +extern struct toi_core_fns *toi_core_fns;
@@ -6332,9 +6549,6 @@ index 0000000..581597b
 +extern __nosavedata struct pbe *restore_highmem_pblist;
 +
 +int toi_lowlevel_builtin(void);
-+
-+extern struct dyn_pageflags __nosavedata toi_nosave_origmap;
-+extern struct dyn_pageflags __nosavedata toi_nosave_copymap;
 +
 +#ifdef CONFIG_HIGHMEM
 +extern __nosavedata struct zone_data *toi_nosave_zone_list;
@@ -6349,7 +6563,7 @@ index 0000000..581597b
 +extern int toi_wait;
 diff --git a/kernel/power/tuxonice_checksum.c b/kernel/power/tuxonice_checksum.c
 new file mode 100644
-index 0000000..53f5407
+index 0000000..1e5d62e
 --- /dev/null
 +++ b/kernel/power/tuxonice_checksum.c
 @@ -0,0 +1,373 @@
@@ -6640,7 +6854,6 @@ index 0000000..53f5407
 +void check_checksums(void)
 +{
 +	int pfn, index = 0, cpu = smp_processor_id();
-+	unsigned long next_page, this_checksum = 0;
 +	char current_checksum[CHECKSUM_SIZE];
 +	struct cpu_context *ctx = &per_cpu(contexts, cpu);
 +
@@ -6650,8 +6863,9 @@ index 0000000..53f5407
 +	next_page = (unsigned long) page_list;
 +
 +	toi_num_resaved = 0;
++	this_checksum = 0;
 +
-+	BITMAP_FOR_EACH_SET(&pageset2_map, pfn) {
++	BITMAP_FOR_EACH_SET(pageset2_map, pfn) {
 +		int ret;
 +		char *pa;
 +		struct page *page = pfn_to_page(pfn);
@@ -7866,7 +8080,7 @@ index 0000000..b0f8918
 +
 diff --git a/kernel/power/tuxonice_compress.c b/kernel/power/tuxonice_compress.c
 new file mode 100644
-index 0000000..1b565a8
+index 0000000..2c934d3
 --- /dev/null
 +++ b/kernel/power/tuxonice_compress.c
 @@ -0,0 +1,432 @@
@@ -8006,7 +8220,7 @@ index 0000000..1b565a8
 + * toi_compress_rw_init()
 + */
 +
-+int toi_compress_rw_init(int rw, int stream_number)
++static int toi_compress_rw_init(int rw, int stream_number)
 +{
 +	if (toi_compress_prepare_result) {
 +		printk("Failed to initialise compression algorithm.\n");
@@ -8304,10 +8518,10 @@ index 0000000..1b565a8
 +#endif
 diff --git a/kernel/power/tuxonice_extent.c b/kernel/power/tuxonice_extent.c
 new file mode 100644
-index 0000000..75d9819
+index 0000000..3abf881
 --- /dev/null
 +++ b/kernel/power/tuxonice_extent.c
-@@ -0,0 +1,300 @@
+@@ -0,0 +1,299 @@
 +/*
 + * kernel/power/tuxonice_extent.c
 + *
@@ -8315,8 +8529,7 @@ index 0000000..75d9819
 + *
 + * Distributed under GPLv2.
 + *
-+ * These functions encapsulate the manipulation of storage metadata. For
-+ * pageflags, we use dynamically allocated bitmaps.
++ * These functions encapsulate the manipulation of storage metadata.
 + */
 +
 +#include <linux/module.h>
@@ -8688,10 +8901,10 @@ index 0000000..22ffb9b
 +#endif
 diff --git a/kernel/power/tuxonice_file.c b/kernel/power/tuxonice_file.c
 new file mode 100644
-index 0000000..9342fd1
+index 0000000..85e509d
 --- /dev/null
 +++ b/kernel/power/tuxonice_file.c
-@@ -0,0 +1,1121 @@
+@@ -0,0 +1,1123 @@
 +/*
 + * kernel/power/tuxonice_file.c
 + *
@@ -8744,12 +8957,13 @@ index 0000000..9342fd1
 +#include "tuxonice_storage.h"
 +#include "tuxonice_block_io.h"
 +#include "tuxonice_alloc.h"
++#include "tuxonice_builtin.h"
 +
 +static struct toi_module_ops toi_fileops;
 +
 +/* Details of our target.  */
 +
-+char toi_file_target[256];
++static char toi_file_target[256];
 +static struct inode *target_inode;
 +static struct file *target_file;
 +static struct block_device *toi_file_target_bdev;
@@ -8987,10 +9201,10 @@ index 0000000..9342fd1
 +		target_storage_available = 0;
 +	}
 +
-+	if (target_file > 0) {
++	if (target_file && !IS_ERR(target_file))
 +		filp_close(target_file, NULL);
-+		target_file = NULL;
-+	}
++
++	target_file = NULL;
 +}
 +
 +/*
@@ -9349,7 +9563,7 @@ index 0000000..9342fd1
 +	int result = 0, changed = 0;
 +	struct toi_file_header *header;
 +
-+	if (toi_file_target_bdev <= 0)
++	if (IS_ERR(toi_file_target_bdev))
 +		return -1;
 +
 +	cur = (char *) toi_get_zeroed_page(17, TOI_ATOMIC_GFP);
@@ -9793,6 +10007,7 @@ index 0000000..9342fd1
 +	toi_fileops.rw_header_chunk_noreadahead =
 +		toi_bio_ops.rw_header_chunk_noreadahead;
 +	toi_fileops.io_flusher = toi_bio_ops.io_flusher;
++	toi_fileops.update_throughput_throttle = toi_bio_ops.update_throughput_throttle;
 +	toi_fileops.monitor_outstanding_io = toi_bio_ops.monitor_outstanding_io;
 +	toi_fileops.finish_all_io = toi_bio_ops.finish_all_io;
 +
@@ -9815,10 +10030,10 @@ index 0000000..9342fd1
 +#endif
 diff --git a/kernel/power/tuxonice_highlevel.c b/kernel/power/tuxonice_highlevel.c
 new file mode 100644
-index 0000000..0157047
+index 0000000..d081ee6
 --- /dev/null
 +++ b/kernel/power/tuxonice_highlevel.c
-@@ -0,0 +1,1285 @@
+@@ -0,0 +1,1279 @@
 +/*
 + * kernel/power/tuxonice_highlevel.c
 + */
@@ -9897,6 +10112,7 @@ index 0000000..0157047
 +#include <linux/writeback.h>
 +#include <linux/uaccess.h> /* for get/set_fs & KERNEL_DS on i386 */
 +
++#include "tuxonice.h"
 +#include "tuxonice_modules.h"
 +#include "tuxonice_sysfs.h"
 +#include "tuxonice_prepare_image.h"
@@ -9922,9 +10138,6 @@ index 0000000..0157047
 +
 +char *tuxonice_signature = "\xed\xc3\x02\xe9\x98\x56\xe5\x0c";
 +EXPORT_SYMBOL_GPL(tuxonice_signature);
-+
-+int toi_fail_num;
-+EXPORT_SYMBOL_GPL(toi_fail_num);
 +
 +int do_toi_step(int step);
 +
@@ -10103,13 +10316,13 @@ index 0000000..0157047
 + */
 +static int allocate_bitmaps(void)
 +{
-+	if (allocate_dyn_pageflags(&pageset1_map, 0) ||
-+	    allocate_dyn_pageflags(&pageset1_copy_map, 0) ||
-+	    allocate_dyn_pageflags(&pageset2_map, 0) ||
-+	    allocate_dyn_pageflags(&io_map, 0) ||
-+	    allocate_dyn_pageflags(&nosave_map, 0) ||
-+	    allocate_dyn_pageflags(&free_map, 0) ||
-+	    allocate_dyn_pageflags(&page_resave_map, 0))
++	if (memory_bm_create(&pageset1_map, GFP_KERNEL, 0) ||
++	    memory_bm_create(&pageset1_copy_map, GFP_KERNEL, 0) ||
++	    memory_bm_create(&pageset2_map, GFP_KERNEL, 0) ||
++	    memory_bm_create(&io_map, GFP_KERNEL, 0) ||
++	    memory_bm_create(&nosave_map, GFP_KERNEL, 0) ||
++	    memory_bm_create(&free_map, GFP_KERNEL, 0) ||
++	    memory_bm_create(&page_resave_map, GFP_KERNEL, 0))
 +		return 1;
 +
 +	return 0;
@@ -10119,17 +10332,17 @@ index 0000000..0157047
 + * free_bitmaps: Free the bitmaps used to record page states.
 + *
 + * Free the bitmaps allocated above. It is not an error to call
-+ * free_dyn_pageflags on a bitmap that isn't currentyl allocated.
++ * memory_bm_free on a bitmap that isn't currently allocated.
 + */
 +static void free_bitmaps(void)
 +{
-+	free_dyn_pageflags(&pageset1_map);
-+	free_dyn_pageflags(&pageset1_copy_map);
-+	free_dyn_pageflags(&pageset2_map);
-+	free_dyn_pageflags(&io_map);
-+	free_dyn_pageflags(&nosave_map);
-+	free_dyn_pageflags(&free_map);
-+	free_dyn_pageflags(&page_resave_map);
++	memory_bm_free(&pageset1_map, 0);
++	memory_bm_free(&pageset1_copy_map, 0);
++	memory_bm_free(&pageset2_map, 0);
++	memory_bm_free(&io_map, 0);
++	memory_bm_free(&nosave_map, 0);
++	memory_bm_free(&free_map, 0);
++	memory_bm_free(&page_resave_map, 0);
 +}
 +
 +/**
@@ -10250,10 +10463,12 @@ index 0000000..0157047
 +	set_highmem_size(pagedir2, 0);
 +
 +	if (boot_kernel_data_buffer) {
-+		toi_free_page(37, boot_kernel_data_buffer);
++		if (!test_toi_state(TOI_BOOT_KERNEL))
++			toi_free_page(37, boot_kernel_data_buffer);
 +		boot_kernel_data_buffer = 0;
 +	}
 +
++	clear_toi_state(TOI_BOOT_KERNEL);
 +	thaw_processes();
 +
 +#ifdef CONFIG_TOI_KEEP_IMAGE
@@ -10689,30 +10904,24 @@ index 0000000..0157047
 + */
 +static void prepare_restore_load_alt_image(int prepare)
 +{
-+	static struct dyn_pageflags pageset1_map_save, pageset1_copy_map_save;
++	static struct memory_bitmap pageset1_map_save, pageset1_copy_map_save;
 +
 +	if (prepare) {
 +		memcpy(&pageset1_map_save, &pageset1_map,
-+				sizeof(struct dyn_pageflags));
-+		pageset1_map.bitmap = NULL;
-+		pageset1_map.sparse = 0;
-+		pageset1_map.initialised = 0;
++				sizeof(struct memory_bitmap));
++		memset(&pageset1_map, 0, sizeof(struct memory_bitmap));
 +		memcpy(&pageset1_copy_map_save, &pageset1_copy_map,
-+			sizeof(struct dyn_pageflags));
-+		pageset1_copy_map.bitmap = NULL;
-+		pageset1_copy_map.sparse = 0;
-+		pageset1_copy_map.initialised = 0;
++				sizeof(struct memory_bitmap));
++		memset(&pageset1_copy_map, 0, sizeof(struct memory_bitmap));
 +		set_toi_state(TOI_LOADING_ALT_IMAGE);
 +		toi_reset_alt_image_pageset2_pfn();
 +	} else {
-+		if (pageset1_map.bitmap)
-+			free_dyn_pageflags(&pageset1_map);
++		memory_bm_free(&pageset1_map, 0);
 +		memcpy(&pageset1_map, &pageset1_map_save,
-+			sizeof(struct dyn_pageflags));
-+		if (pageset1_copy_map.bitmap)
-+			free_dyn_pageflags(&pageset1_copy_map);
++				sizeof(struct memory_bitmap));
++		memory_bm_free(&pageset1_copy_map, 0);
 +		memcpy(&pageset1_copy_map, &pageset1_copy_map_save,
-+			sizeof(struct dyn_pageflags));
++				sizeof(struct memory_bitmap));
 +		clear_toi_state(TOI_NOW_RESUMING);
 +		clear_toi_state(TOI_LOADING_ALT_IMAGE);
 +	}
@@ -10808,7 +11017,7 @@ index 0000000..0157047
 + * Wrapper for when __toi_try_resume is called from init/do_mounts.c,
 + * rather than from echo > /sys/power/tuxonice/do_resume.
 + */
-+void _toi_try_resume(void)
++static void _toi_try_resume(void)
 +{
 +	resume_attempted = 1;
 +
@@ -10831,8 +11040,8 @@ index 0000000..0157047
 +	 */
 +	clear_toi_state(TOI_BOOT_TIME);
 +
-+out:
 +	toi_finish_anything(SYSFS_RESUMING);
++out:
 +	lockdep_on();
 +}
 +
@@ -11027,7 +11236,7 @@ index 0000000..0157047
 +#endif
 +};
 +
-+struct toi_core_fns my_fns = {
++static struct toi_core_fns my_fns = {
 +	.get_nonconflicting_page = __toi_get_nonconflicting_page,
 +	.post_context_save = __toi_post_context_save,
 +	.try_hibernate = _toi_try_hibernate,
@@ -11106,10 +11315,10 @@ index 0000000..0157047
 +#endif
 diff --git a/kernel/power/tuxonice_io.c b/kernel/power/tuxonice_io.c
 new file mode 100644
-index 0000000..8cfd824
+index 0000000..df9cc52
 --- /dev/null
 +++ b/kernel/power/tuxonice_io.c
-@@ -0,0 +1,1460 @@
+@@ -0,0 +1,1475 @@
 +/*
 + * kernel/power/tuxonice_io.c
 + *
@@ -11131,7 +11340,6 @@ index 0000000..8cfd824
 +#include <linux/highmem.h>
 +#include <linux/module.h>
 +#include <linux/kthread.h>
-+#include <linux/dyn_pageflags.h>
 +#include <linux/cpu.h>
 +#include <asm/tlbflush.h>
 +
@@ -11167,6 +11375,9 @@ index 0000000..8cfd824
 +
 +int toi_bio_queue_flusher_should_finish;
 +EXPORT_SYMBOL_GPL(toi_bio_queue_flusher_should_finish);
++
++/* Indicates that this thread should be used for checking throughput */
++#define MONITOR ((void *) 1)
 +
 +/* toi_attempt_to_parse_resume_device
 + *
@@ -11494,7 +11705,7 @@ index 0000000..8cfd824
 + */
 +static int worker_rw_loop(void *data)
 +{
-+	unsigned long orig_pfn, write_pfn;
++	unsigned long orig_pfn, write_pfn, next_jiffies = jiffies + HZ / 10, jif_index = 1;
 +	int result, my_io_index = 0, temp, last_worker, i_finished_first = 0;
 +	struct toi_module_ops *first_filter = toi_get_next_filter(NULL);
 +	struct page *buffer = toi_alloc_page(28, TOI_ATOMIC_GFP);
@@ -11503,7 +11714,14 @@ index 0000000..8cfd824
 +	mutex_lock(&io_mutex);
 +
 +	do {
-+		int buf_size;
++		unsigned int buf_size;
++
++		if (data && jiffies > next_jiffies) {
++			next_jiffies += HZ / 10;
++			if (toiActiveAllocator->update_throughput_throttle)
++				toiActiveAllocator->update_throughput_throttle(jif_index);
++			jif_index++;
++		}
 +
 +		/*
 +		 * What page to use? If reading, don't know yet which page's
@@ -11515,7 +11733,7 @@ index 0000000..8cfd824
 +			struct page *page;
 +			char **my_checksum_locn = &__get_cpu_var(checksum_locn);
 +
-+			pfn = get_next_bit_on(&io_map, pfn);
++			pfn = memory_bm_next_pfn(&io_map);
 +
 +			/* Another thread could have beaten us to it. */
 +			if (pfn == max_pfn + 1) {
@@ -11538,10 +11756,9 @@ index 0000000..8cfd824
 +			 * Other_pfn is updated by all threads, so we're not
 +			 * writing the same page multiple times.
 +			 */
-+			clear_dynpageflag(&io_map, pfn_to_page(pfn));
++			memory_bm_clear_bit(&io_map, pfn);
 +			if (io_pageset == 1) {
-+				other_pfn = get_next_bit_on(&pageset1_map,
-+						other_pfn);
++				other_pfn = memory_bm_next_pfn(&pageset1_map);
 +				write_pfn = other_pfn;
 +			}
 +			page = pfn_to_page(pfn);
@@ -11581,7 +11798,7 @@ index 0000000..8cfd824
 +			if (buf_size != PAGE_SIZE) {
 +				abort_hibernate(TOI_FAILED_IO,
 +					"I/O pipeline returned %d bytes instead"
-+					" of %d.\n", buf_size, PAGE_SIZE);
++					" of %ud.\n", buf_size, PAGE_SIZE);
 +				mutex_lock(&io_mutex);
 +				break;
 +			}
@@ -11616,13 +11833,13 @@ index 0000000..8cfd824
 +				BUG_ON(!copy_page);
 +			}
 +
-+			if (test_dynpageflag(&io_map, final_page)) {
++			if (memory_bm_test_bit(&io_map, write_pfn)) {
 +				virt = kmap(copy_page);
 +				buffer_virt = kmap(buffer);
 +				memcpy(virt, buffer_virt, PAGE_SIZE);
 +				kunmap(copy_page);
 +				kunmap(buffer);
-+				clear_dynpageflag(&io_map, final_page);
++				memory_bm_clear_bit(&io_map, write_pfn);
 +			} else {
 +				mutex_lock(&io_mutex);
 +				atomic_inc(&io_count);
@@ -11687,7 +11904,7 @@ index 0000000..8cfd824
 +	return 0;
 +}
 +
-+int start_other_threads(void)
++static int start_other_threads(void)
 +{
 +	int cpu, num_started = 0;
 +	struct task_struct *p;
@@ -11696,7 +11913,8 @@ index 0000000..8cfd824
 +		if (cpu == smp_processor_id())
 +			continue;
 +
-+		p = kthread_create(worker_rw_loop, NULL, "ks2io/%d", cpu);
++		p = kthread_create(worker_rw_loop, num_started ? NULL : MONITOR,
++				"ks2io/%d", cpu);
 +		if (IS_ERR(p)) {
 +			printk("ks2io for %i failed\n", cpu);
 +			continue;
@@ -11715,7 +11933,7 @@ index 0000000..8cfd824
 + *
 + * The main I/O loop for reading or writing pages.
 + */
-+static int do_rw_loop(int write, int finish_at, struct dyn_pageflags *pageflags,
++static int do_rw_loop(int write, int finish_at, struct memory_bitmap *pageflags,
 +		int base, int barmax, int pageset)
 +{
 +	int index = 0, cpu, num_other_threads = 0;
@@ -11743,14 +11961,16 @@ index 0000000..8cfd824
 +	}
 +
 +	/* Ensure all bits clear */
-+	clear_dyn_pageflags(&io_map);
++	memory_bm_clear(&io_map);
 +
 +	/* Set the bits for the pages to write */
-+	pfn = get_next_bit_on(pageflags, max_pfn + 1);
++	memory_bm_position_reset(pageflags);
++
++	pfn = memory_bm_next_pfn(pageflags);
 +
 +	while (pfn < max_pfn + 1 && index < finish_at) {
-+		set_dynpageflag(&io_map, pfn_to_page(pfn));
-+		pfn = get_next_bit_on(pageflags, pfn);
++		memory_bm_set_bit(&io_map, pfn);
++		pfn = memory_bm_next_pfn(pageflags);
 +		index++;
 +	}
 +
@@ -11761,14 +11981,17 @@ index 0000000..8cfd824
 +	pfn = max_pfn + 1;
 +	other_pfn = pfn;
 +
++	memory_bm_position_reset(&pageset1_map);
++
 +	clear_toi_state(TOI_IO_STOPPED);
++	memory_bm_position_reset(&io_map);
 +
 +	if (!test_action_state(TOI_NO_MULTITHREADED_IO))
 +		num_other_threads = start_other_threads();
 +
 +	if (!num_other_threads || !toiActiveAllocator->io_flusher ||
 +		test_action_state(TOI_NO_FLUSHER_THREAD))
-+		worker_rw_loop(NULL);
++		worker_rw_loop(num_other_threads ? NULL : MONITOR);
 +	else
 +		toiActiveAllocator->io_flusher(write);
 +
@@ -11792,7 +12015,7 @@ index 0000000..8cfd824
 +	if (io_write && test_result_state(TOI_ABORTED))
 +		io_result = 1;
 +	else { /* All I/O done? */
-+		if  (get_next_bit_on(&io_map, max_pfn + 1) != max_pfn + 1) {
++		if  (memory_bm_next_pfn(&io_map) != BM_END_OF_MAP) {
 +			printk(KERN_INFO "Finished I/O loop but still work to "
 +					"do?\nFinish at = %d. io_count = %d.\n",
 +					finish_at, atomic_read(&io_count));
@@ -11815,7 +12038,7 @@ index 0000000..8cfd824
 +	int finish_at, base = 0, start_time, end_time;
 +	int barmax = pagedir1.size + pagedir2.size;
 +	long error = 0;
-+	struct dyn_pageflags *pageflags;
++	struct memory_bitmap *pageflags;
 +
 +	/*
 +	 * Even if there is nothing to read or write, the allocator
@@ -11880,7 +12103,7 @@ index 0000000..8cfd824
 +	int result = 0, base = 0, start_time, end_time;
 +	int finish_at = pagedir->size;
 +	int barmax = pagedir1.size + pagedir2.size;
-+	struct dyn_pageflags *pageflags;
++	struct memory_bitmap *pageflags;
 +
 +	if (pagedir->id == 1) {
 +		toi_prepare_status(DONT_CLEAR_BAR,
@@ -12166,7 +12389,7 @@ index 0000000..8cfd824
 +		goto write_image_header_abort;
 +	}
 +
-+	save_dyn_pageflags(&pageset1_map);
++	memory_bm_write(&pageset1_map, toiActiveAllocator->rw_header_chunk);
 +
 +	/* Flush data and let allocator cleanup */
 +	if (toiActiveAllocator->write_header_cleanup()) {
@@ -12215,7 +12438,7 @@ index 0000000..8cfd824
 +		}
 +	}
 +
-+	return 0;
++	return NULL;
 +}
 +
 +/* __read_pageset1
@@ -12325,6 +12548,8 @@ index 0000000..8cfd824
 +	for (i = 0; i < 4; i++)
 +		toi_bkd.toi_io_time[i/2][i%2] =
 +			toi_header->io_time[i/2][i%2];
++
++	set_toi_state(TOI_BOOT_KERNEL);
 +	boot_kernel_data_buffer = toi_header->bkd;
 +
 +	/* Read module configurations */
@@ -12365,12 +12590,11 @@ index 0000000..8cfd824
 +	 * use for the data to be restored.
 +	 */
 +
-+	if (allocate_dyn_pageflags(&pageset1_map, 0) ||
-+	    allocate_dyn_pageflags(&pageset1_copy_map, 0) ||
-+	    allocate_dyn_pageflags(&io_map, 0))
++	if (memory_bm_create(&pageset1_copy_map, GFP_KERNEL, 0) ||
++	    memory_bm_create(&io_map, GFP_KERNEL, 0))
 +		goto out_thaw;
 +
-+	if (load_dyn_pageflags(&pageset1_map))
++	if (memory_bm_read(&pageset1_map, toiActiveAllocator->rw_header_chunk))
 +		goto out_thaw;
 +
 +	/* Clean up after reading the header */
@@ -12422,9 +12646,9 @@ index 0000000..8cfd824
 +out_reset_console:
 +	toi_cleanup_console();
 +out_remove_image:
-+	free_dyn_pageflags(&pageset1_map);
-+	free_dyn_pageflags(&pageset1_copy_map);
-+	free_dyn_pageflags(&io_map);
++	memory_bm_free(&pageset1_map, 0);
++	memory_bm_free(&pageset1_copy_map, 0);
++	memory_bm_free(&io_map, 0);
 +	result = -EINVAL;
 +	if (!test_action_state(TOI_KEEP_IMAGE))
 +		toiActiveAllocator->remove_image();
@@ -12649,7 +12873,7 @@ index 0000000..86e8996
 +extern int toi_bio_queue_flusher_should_finish;
 diff --git a/kernel/power/tuxonice_modules.c b/kernel/power/tuxonice_modules.c
 new file mode 100644
-index 0000000..60f26c3
+index 0000000..29d9100
 --- /dev/null
 +++ b/kernel/power/tuxonice_modules.c
 @@ -0,0 +1,464 @@
@@ -12674,7 +12898,7 @@ index 0000000..60f26c3
 +struct toi_module_ops *toiActiveAllocator;
 +EXPORT_SYMBOL_GPL(toiActiveAllocator);
 +
-+int toi_num_filters;
++static int toi_num_filters;
 +int toiNumAllocators, toi_num_modules;
 +
 +/*
@@ -13119,10 +13343,10 @@ index 0000000..60f26c3
 +}
 diff --git a/kernel/power/tuxonice_modules.h b/kernel/power/tuxonice_modules.h
 new file mode 100644
-index 0000000..015af85
+index 0000000..1c13561
 --- /dev/null
 +++ b/kernel/power/tuxonice_modules.h
-@@ -0,0 +1,182 @@
+@@ -0,0 +1,185 @@
 +/*
 + * kernel/power/tuxonice_modules.h
 + *
@@ -13251,6 +13475,9 @@ index 0000000..015af85
 +	/* Attempt to parse an image location */
 +	int (*parse_sig_location) (char *buffer, int only_writer, int quiet);
 +
++	/* Throttle I/O according to throughput */
++	void (*update_throughput_throttle) (int jif_index);
++
 +	/* Monitor outstanding I/O */
 +	void (*monitor_outstanding_io) (void);
 +
@@ -13307,10 +13534,10 @@ index 0000000..015af85
 +#endif
 diff --git a/kernel/power/tuxonice_netlink.c b/kernel/power/tuxonice_netlink.c
 new file mode 100644
-index 0000000..26b94d8
+index 0000000..bb027a7
 --- /dev/null
 +++ b/kernel/power/tuxonice_netlink.c
-@@ -0,0 +1,340 @@
+@@ -0,0 +1,343 @@
 +/*
 + * kernel/power/tuxonice_netlink.c
 + *
@@ -13328,7 +13555,7 @@ index 0000000..26b94d8
 +#include "tuxonice_modules.h"
 +#include "tuxonice_alloc.h"
 +
-+struct user_helper_data *uhd_list;
++static struct user_helper_data *uhd_list;
 +
 +/*
 + * Refill our pool of SKBs for use in emergencies (eg, when eating memory and
@@ -13439,17 +13666,17 @@ index 0000000..26b94d8
 +
 +static void send_whether_debugging(struct user_helper_data *uhd)
 +{
-+	static int is_debugging = 1;
++	static u8 is_debugging = 1;
 +
 +	toi_send_netlink_message(uhd, NETLINK_MSG_IS_DEBUGGING,
-+			&is_debugging, sizeof(int));
++			&is_debugging, sizeof(u8));
 +}
 +
 +/*
 + * Set the PF_NOFREEZE flag on the given process to ensure it can run whilst we
 + * are hibernating.
 + */
-+static int nl_set_nofreeze(struct user_helper_data *uhd, int pid)
++static int nl_set_nofreeze(struct user_helper_data *uhd, __u32 pid)
 +{
 +	struct task_struct *t;
 +
@@ -13478,12 +13705,13 @@ index 0000000..26b94d8
 +/*
 + * Called when the userspace process has informed us that it's ready to roll.
 + */
-+static int nl_ready(struct user_helper_data *uhd, int version)
++static int nl_ready(struct user_helper_data *uhd, u32 version)
 +{
 +	if (version != uhd->interface_version) {
 +		printk(KERN_INFO "%s userspace process using invalid interface"
-+				" version. Trying to continue without it.\n",
-+				uhd->name);
++				" version (%d - kernel wants %d). Trying to "
++				"continue without it.\n",
++				uhd->name, version, uhd->interface_version);
 +		if (uhd->not_ready)
 +			uhd->not_ready();
 +		return -EINVAL;
@@ -13534,7 +13762,7 @@ index 0000000..26b94d8
 +		return -EBUSY;
 +	}
 +
-+	data = (int *)NLMSG_DATA(nlh);
++	data = NLMSG_DATA(nlh);
 +
 +	switch (type) {
 +	case NETLINK_MSG_NOFREEZE_ME:
@@ -13543,11 +13771,13 @@ index 0000000..26b94d8
 +		send_whether_debugging(uhd);
 +		return 0;
 +	case NETLINK_MSG_READY:
-+		if (nlh->nlmsg_len < NLMSG_LENGTH(sizeof(int))) {
++		if (nlh->nlmsg_len != NLMSG_LENGTH(sizeof(u32))) {
 +			printk(KERN_INFO "Invalid ready mesage.\n");
++			if (uhd->not_ready)
++				uhd->not_ready();
 +			return -EINVAL;
 +		}
-+		return nl_ready(uhd, *data);
++		return nl_ready(uhd, (u32) *data);
 +	case NETLINK_MSG_CLEANUP:
 +		toi_netlink_close_complete(uhd);
 +		return 0;
@@ -13653,7 +13883,7 @@ index 0000000..26b94d8
 +EXPORT_SYMBOL_GPL(toi_netlink_setup);
 diff --git a/kernel/power/tuxonice_netlink.h b/kernel/power/tuxonice_netlink.h
 new file mode 100644
-index 0000000..9e214a1
+index 0000000..37e174b
 --- /dev/null
 +++ b/kernel/power/tuxonice_netlink.h
 @@ -0,0 +1,62 @@
@@ -13696,7 +13926,7 @@ index 0000000..9e214a1
 +	char *name;
 +	struct user_helper_data *next;
 +	struct completion wait_for_process;
-+	unsigned int interface_version;
++	u32 interface_version;
 +	int must_init;
 +	int debug;
 +};
@@ -13721,10 +13951,10 @@ index 0000000..9e214a1
 +#endif
 diff --git a/kernel/power/tuxonice_pagedir.c b/kernel/power/tuxonice_pagedir.c
 new file mode 100644
-index 0000000..5bb5a90
+index 0000000..934bb27
 --- /dev/null
 +++ b/kernel/power/tuxonice_pagedir.c
-@@ -0,0 +1,347 @@
+@@ -0,0 +1,361 @@
 +/*
 + * kernel/power/tuxonice_pagedir.c
 + *
@@ -13759,10 +13989,11 @@ index 0000000..5bb5a90
 +static int ptoi_pfn;
 +static struct pbe *this_low_pbe;
 +static struct pbe **last_low_pbe_ptr;
++static struct memory_bitmap dup_map1, dup_map2;
 +
 +void toi_reset_alt_image_pageset2_pfn(void)
 +{
-+	ptoi_pfn = max_pfn + 1;
++	memory_bm_position_reset(&pageset2_map);
 +}
 +
 +static struct page *first_conflicting_page;
@@ -13771,7 +14002,7 @@ index 0000000..5bb5a90
 + * free_conflicting_pages
 + */
 +
-+void free_conflicting_pages(void)
++static void free_conflicting_pages(void)
 +{
 +	while (first_conflicting_page) {
 +		struct page *next =
@@ -13791,29 +14022,23 @@ index 0000000..5bb5a90
 +struct page *___toi_get_nonconflicting_page(int can_be_highmem)
 +{
 +	struct page *page;
-+	int flags = TOI_ATOMIC_GFP;
++	gfp_t flags = TOI_ATOMIC_GFP;
 +	if (can_be_highmem)
 +		flags |= __GFP_HIGHMEM;
 +
 +
-+	if (test_toi_state(TOI_LOADING_ALT_IMAGE) && pageset2_map.bitmap &&
-+				(ptoi_pfn < (max_pfn + 2))) {
-+		/*
-+		 * ptoi_pfn = max_pfn + 1 when yet to find first ps2 pfn that
-+		 * can be used.
-+		 * 	   = 0..max_pfn when going through list.
-+		 * 	   = max_pfn + 2 when gone through whole list.
-+		 */
++	if (test_toi_state(TOI_LOADING_ALT_IMAGE) &&
++			pageset2_map.zone_bm_list &&
++			(ptoi_pfn != BM_END_OF_MAP)) {
 +		do {
-+			ptoi_pfn = get_next_bit_on(&pageset2_map, ptoi_pfn);
-+			if (ptoi_pfn <= max_pfn) {
++			ptoi_pfn = memory_bm_next_pfn(&pageset2_map);
++			if (ptoi_pfn != BM_END_OF_MAP) {
 +				page = pfn_to_page(ptoi_pfn);
 +				if (!PagePageset1(page) &&
 +				    (can_be_highmem || !PageHighMem(page)))
 +					return page;
-+			} else
-+				ptoi_pfn++;
-+		} while (ptoi_pfn < max_pfn);
++			}
++		} while (ptoi_pfn != BM_END_OF_MAP);
 +	}
 +
 +	do {
@@ -13821,7 +14046,7 @@ index 0000000..5bb5a90
 +		if (!page) {
 +			printk(KERN_INFO "Failed to get nonconflicting "
 +					"page.\n");
-+			return 0;
++			return NULL;
 +		}
 +		if (PagePageset1(page)) {
 +			struct page **next = (struct page **) kmap(page);
@@ -13840,7 +14065,7 @@ index 0000000..5bb5a90
 +	return page ? (unsigned long) page_address(page) : 0;
 +}
 +
-+struct pbe *get_next_pbe(struct page **page_ptr, struct pbe *this_pbe,
++static struct pbe *get_next_pbe(struct page **page_ptr, struct pbe *this_pbe,
 +		int highmem)
 +{
 +	if (((((unsigned long) this_pbe) & (PAGE_SIZE - 1))
@@ -13873,30 +14098,48 @@ index 0000000..5bb5a90
 +	int low_needed = pagedir1.size - get_highmem_size(pagedir1);
 +	int high_needed = get_highmem_size(pagedir1);
 +	int low_pages_for_highmem = 0;
-+	unsigned long flags = GFP_ATOMIC | __GFP_NOWARN | __GFP_HIGHMEM;
++	gfp_t flags = GFP_ATOMIC | __GFP_NOWARN | __GFP_HIGHMEM;
 +	struct page *page, *high_pbe_page = NULL, *last_high_pbe_page = NULL,
 +		    *low_pbe_page;
 +	struct pbe **last_high_pbe_ptr = &restore_highmem_pblist,
 +		   *this_high_pbe = NULL;
-+	int orig_low_pfn = max_pfn + 1, orig_high_pfn = max_pfn + 1;
++	int orig_low_pfn, orig_high_pfn;
 +	int high_pbes_done = 0, low_pbes_done = 0;
 +	int low_direct = 0, high_direct = 0;
-+	int high_to_free, low_to_free;
++	int high_to_free, low_to_free, result = 0;
++
++	/*
++	 * We need to duplicate pageset1's map because memory_bm_next_pfn's state
++	 * gets stomped on by the PagePageset1() test in setup_pbes.
++	 */
++	memory_bm_create(&dup_map1, GFP_KERNEL, 0);
++	memory_bm_dup(&pageset1_map, &dup_map1);
++
++	memory_bm_create(&dup_map2, GFP_KERNEL, 0);
++	memory_bm_dup(&pageset1_map, &dup_map2);
++
++	memory_bm_position_reset(&pageset1_map);
++	memory_bm_position_reset(&dup_map1);
++	memory_bm_position_reset(&dup_map2);
 +
 +	last_low_pbe_ptr = &restore_pblist;
 +
 +	/* First, allocate pages for the start of our pbe lists. */
 +	if (high_needed) {
 +		high_pbe_page = ___toi_get_nonconflicting_page(1);
-+		if (!high_pbe_page)
-+			return 1;
++		if (!high_pbe_page) {
++			result = -ENOMEM;
++			goto out;
++		}
 +		this_high_pbe = (struct pbe *) kmap(high_pbe_page);
 +		memset(this_high_pbe, 0, PAGE_SIZE);
 +	}
 +
 +	low_pbe_page = ___toi_get_nonconflicting_page(0);
-+	if (!low_pbe_page)
-+		return 1;
++	if (!low_pbe_page) {
++		result = -ENOMEM;
++		goto out;
++	}
 +	this_low_pbe = (struct pbe *) page_address(low_pbe_page);
 +
 +	/*
@@ -13917,7 +14160,7 @@ index 0000000..5bb5a90
 +	 * and how many pages we can reload directly to their original
 +	 * location.
 +	 */
-+	BITMAP_FOR_EACH_SET(&pageset1_copy_map, pfn) {
++	BITMAP_FOR_EACH_SET(pageset1_copy_map, pfn) {
 +		int is_high;
 +		page = pfn_to_page(pfn);
 +		is_high = PageHighMem(page);
@@ -13958,10 +14201,10 @@ index 0000000..5bb5a90
 +	low_to_free = lowallocd - low_needed;
 +
 +	/*
-+	 * Now generate our pbes (which will be used for the atomic restore,
++	 * Now generate our pbes (which will be used for the atomic restore),
 +	 * and free unneeded pages.
 +	 */
-+	BITMAP_FOR_EACH_SET(&pageset1_copy_map, pfn) {
++	BITMAP_FOR_EACH_SET(pageset1_copy_map, pfn) {
 +		int is_high;
 +		page = pfn_to_page(pfn);
 +		is_high = PageHighMem(page);
@@ -13988,9 +14231,8 @@ index 0000000..5bb5a90
 +			if (!is_high)
 +				low_pages_for_highmem--;
 +			do {
-+				orig_high_pfn = get_next_bit_on(&pageset1_map,
-+						orig_high_pfn);
-+				BUG_ON(orig_high_pfn > max_pfn);
++				orig_high_pfn = memory_bm_next_pfn(&dup_map1);
++				BUG_ON(orig_high_pfn == BM_END_OF_MAP);
 +				orig_page = pfn_to_page(orig_high_pfn);
 +			} while (!PageHighMem(orig_page) ||
 +					load_direct(orig_page));
@@ -14021,9 +14263,8 @@ index 0000000..5bb5a90
 +			struct page *orig_page;
 +			low_pbes_done++;
 +			do {
-+				orig_low_pfn = get_next_bit_on(&pageset1_map,
-+						orig_low_pfn);
-+				BUG_ON(orig_low_pfn > max_pfn);
++				orig_low_pfn = memory_bm_next_pfn(&dup_map2);
++				BUG_ON(orig_low_pfn == BM_END_OF_MAP);
 +				orig_page = pfn_to_page(orig_low_pfn);
 +			} while (PageHighMem(orig_page) ||
 +					load_direct(orig_page));
@@ -14053,7 +14294,10 @@ index 0000000..5bb5a90
 +
 +	free_conflicting_pages();
 +
-+	return 0;
++out:
++	memory_bm_free(&dup_map1, 0);
++	memory_bm_free(&dup_map2, 0);
++	return result;
 +}
 +
 +int add_boot_kernel_data_pbe(void)
@@ -14130,10 +14374,10 @@ index 0000000..9d0d929
 +#endif
 diff --git a/kernel/power/tuxonice_pageflags.c b/kernel/power/tuxonice_pageflags.c
 new file mode 100644
-index 0000000..ff9cd94
+index 0000000..23e1873
 --- /dev/null
 +++ b/kernel/power/tuxonice_pageflags.c
-@@ -0,0 +1,162 @@
+@@ -0,0 +1,46 @@
 +/*
 + * kernel/power/tuxonice_pageflags.c
 + *
@@ -14156,218 +14400,101 @@ index 0000000..ff9cd94
 +#include "tuxonice_pagedir.h"
 +#include "tuxonice.h"
 +
-+DECLARE_DYN_PAGEFLAGS(pageset2_map);
-+DECLARE_DYN_PAGEFLAGS(page_resave_map);
-+DECLARE_DYN_PAGEFLAGS(io_map);
-+DECLARE_DYN_PAGEFLAGS(nosave_map);
-+DECLARE_DYN_PAGEFLAGS(free_map);
-+
-+static int pages_for_zone(struct zone *zone)
-+{
-+	return DIV_ROUND_UP(zone->spanned_pages, (PAGE_SIZE << 3));
-+}
++struct memory_bitmap pageset2_map;
++struct memory_bitmap page_resave_map;
++struct memory_bitmap io_map;
++struct memory_bitmap nosave_map;
++struct memory_bitmap free_map;
 +
 +int toi_pageflags_space_needed(void)
 +{
 +	int total = 0;
-+	struct zone *zone;
++	struct zone_bitmap *zone_bm;
++	struct bm_block *bb;
 +
-+	for_each_zone(zone)
-+		if (populated_zone(zone))
-+			total += sizeof(int) * 3 + pages_for_zone(zone) *
-+				PAGE_SIZE;
++	total = sizeof(unsigned int);
 +
-+	total += sizeof(int);
++	for (zone_bm = pageset1_map.zone_bm_list; zone_bm;
++			zone_bm = zone_bm->next) {
++		total += 2 * sizeof(unsigned long) + sizeof(unsigned int);
++
++		for (bb = zone_bm->bm_blocks; bb; bb = bb->next)
++			total += PAGE_SIZE;
++	}
 +
 +	return total;
 +}
-+
-+/* save_dyn_pageflags
-+ *
-+ * Description: Save a set of pageflags.
-+ * Arguments:   struct dyn_pageflags *: Pointer to the bitmap being saved.
-+ */
-+
-+void save_dyn_pageflags(struct dyn_pageflags *pagemap)
-+{
-+	int i, zone_idx, size, node = 0;
-+	struct zone *zone;
-+	struct pglist_data *pgdat;
-+
-+	if (!pagemap)
-+		return;
-+
-+	for_each_online_pgdat(pgdat) {
-+		for (zone_idx = 0; zone_idx < MAX_NR_ZONES; zone_idx++) {
-+			zone = &pgdat->node_zones[zone_idx];
-+
-+			if (!populated_zone(zone))
-+				continue;
-+
-+			toiActiveAllocator->rw_header_chunk(WRITE, NULL,
-+					(char *) &node, sizeof(int));
-+			toiActiveAllocator->rw_header_chunk(WRITE, NULL,
-+					(char *) &zone_idx, sizeof(int));
-+			size = pages_for_zone(zone);
-+			toiActiveAllocator->rw_header_chunk(WRITE, NULL,
-+					(char *) &size, sizeof(int));
-+
-+			for (i = 0; i < size; i++) {
-+				if (!pagemap->bitmap[node][zone_idx][i+2]) {
-+					printk(KERN_INFO "Sparse pagemap?\n");
-+					dump_pagemap(pagemap);
-+					BUG();
-+				}
-+				toiActiveAllocator->rw_header_chunk(WRITE,
-+					NULL, (char *) pagemap->bitmap[node]
-+						[zone_idx][i+2],
-+					PAGE_SIZE);
-+			}
-+		}
-+		node++;
-+	}
-+	node = -1;
-+	toiActiveAllocator->rw_header_chunk(WRITE, NULL,
-+			(char *) &node, sizeof(int));
-+}
-+
-+/* load_dyn_pageflags
-+ *
-+ * Description: Load a set of pageflags.
-+ * Arguments:   struct dyn_pageflags *: Pointer to the bitmap being loaded.
-+ *              (It must be allocated before calling this routine).
-+ */
-+
-+int load_dyn_pageflags(struct dyn_pageflags *pagemap)
-+{
-+	int i, zone_idx, zone_check = 0, size, node = 0;
-+	struct zone *zone;
-+	struct pglist_data *pgdat;
-+
-+	if (!pagemap)
-+		return 1;
-+
-+	for_each_online_pgdat(pgdat) {
-+		for (zone_idx = 0; zone_idx < MAX_NR_ZONES; zone_idx++) {
-+			zone = &pgdat->node_zones[zone_idx];
-+
-+			if (!populated_zone(zone))
-+				continue;
-+
-+			/* Same node? */
-+			toiActiveAllocator->rw_header_chunk(READ, NULL,
-+					(char *) &zone_check, sizeof(int));
-+			if (zone_check != node) {
-+				printk(KERN_INFO "Node read (%d) != node "
-+						"(%d).\n",
-+						zone_check, node);
-+				return 1;
-+			}
-+
-+			/* Same zone? */
-+			toiActiveAllocator->rw_header_chunk(READ, NULL,
-+					(char *) &zone_check, sizeof(int));
-+			if (zone_check != zone_idx) {
-+				printk(KERN_INFO "Zone read (%d) != node "
-+						"(%d).\n",
-+						zone_check, zone_idx);
-+				return 1;
-+			}
-+
-+
-+			toiActiveAllocator->rw_header_chunk(READ, NULL,
-+				(char *) &size, sizeof(int));
-+
-+			for (i = 0; i < size; i++)
-+				toiActiveAllocator->rw_header_chunk(READ, NULL,
-+					(char *) pagemap->bitmap[node][zone_idx]
-+									[i+2],
-+					PAGE_SIZE);
-+		}
-+		node++;
-+	}
-+	toiActiveAllocator->rw_header_chunk(READ, NULL, (char *) &zone_check,
-+			sizeof(int));
-+	if (zone_check != -1) {
-+		printk(KERN_INFO "Didn't read end of dyn pageflag data marker."
-+				"(%x)\n", zone_check);
-+		return 1;
-+	}
-+
-+	return 0;
-+}
 diff --git a/kernel/power/tuxonice_pageflags.h b/kernel/power/tuxonice_pageflags.h
 new file mode 100644
-index 0000000..59439e2
+index 0000000..84142d2
 --- /dev/null
 +++ b/kernel/power/tuxonice_pageflags.h
-@@ -0,0 +1,63 @@
+@@ -0,0 +1,62 @@
 +/*
 + * kernel/power/tuxonice_pageflags.h
 + *
 + * Copyright (C) 2004-2008 Nigel Cunningham (nigel at tuxonice net)
 + *
 + * This file is released under the GPLv2.
-+ *
-+ * TuxOnIce needs a few pageflags while working that aren't otherwise
-+ * used. To save the struct page pageflags, we dynamically allocate
-+ * a bitmap and use that. These are the only non order-0 allocations
-+ * we do.
-+ *
-+ * NOTE!!!
-+ * We assume that PAGE_SIZE - sizeof(void *) is a multiple of
-+ * sizeof(unsigned long). Is this ever false?
 + */
 +
-+#include <linux/dyn_pageflags.h>
-+#include <linux/suspend.h>
++#ifndef KERNEL_POWER_TUXONICE_PAGEFLAGS_H
++#define KERNEL_POWER_TUXONICE_PAGEFLAGS_H
 +
-+extern struct dyn_pageflags pageset1_map;
-+extern struct dyn_pageflags pageset1_copy_map;
-+extern struct dyn_pageflags pageset2_map;
-+extern struct dyn_pageflags page_resave_map;
-+extern struct dyn_pageflags io_map;
-+extern struct dyn_pageflags nosave_map;
-+extern struct dyn_pageflags free_map;
++#include "power.h"
 +
-+#define PagePageset1(page) (test_dynpageflag(&pageset1_map, page))
-+#define SetPagePageset1(page) (set_dynpageflag(&pageset1_map, page))
-+#define ClearPagePageset1(page) (clear_dynpageflag(&pageset1_map, page))
++extern struct memory_bitmap pageset1_map;
++extern struct memory_bitmap pageset1_copy_map;
++extern struct memory_bitmap pageset2_map;
++extern struct memory_bitmap page_resave_map;
++extern struct memory_bitmap io_map;
++extern struct memory_bitmap nosave_map;
++extern struct memory_bitmap free_map;
 +
-+#define PagePageset1Copy(page) (test_dynpageflag(&pageset1_copy_map, page))
-+#define SetPagePageset1Copy(page) (set_dynpageflag(&pageset1_copy_map, page))
++#define PagePageset1(page) (memory_bm_test_bit(&pageset1_map, page_to_pfn(page)))
++#define SetPagePageset1(page) (memory_bm_set_bit(&pageset1_map, page_to_pfn(page)))
++#define ClearPagePageset1(page) (memory_bm_clear_bit(&pageset1_map, page_to_pfn(page)))
++
++#define PagePageset1Copy(page) (memory_bm_test_bit(&pageset1_copy_map, page_to_pfn(page)))
++#define SetPagePageset1Copy(page) (memory_bm_set_bit(&pageset1_copy_map, page_to_pfn(page)))
 +#define ClearPagePageset1Copy(page) \
-+	(clear_dynpageflag(&pageset1_copy_map, page))
++	(memory_bm_clear_bit(&pageset1_copy_map, page_to_pfn(page)))
 +
-+#define PagePageset2(page) (test_dynpageflag(&pageset2_map, page))
-+#define SetPagePageset2(page) (set_dynpageflag(&pageset2_map, page))
-+#define ClearPagePageset2(page) (clear_dynpageflag(&pageset2_map, page))
++#define PagePageset2(page) (memory_bm_test_bit(&pageset2_map, page_to_pfn(page)))
++#define SetPagePageset2(page) (memory_bm_set_bit(&pageset2_map, page_to_pfn(page)))
++#define ClearPagePageset2(page) (memory_bm_clear_bit(&pageset2_map, page_to_pfn(page)))
 +
-+#define PageWasRW(page) (test_dynpageflag(&pageset2_map, page))
-+#define SetPageWasRW(page) (set_dynpageflag(&pageset2_map, page))
-+#define ClearPageWasRW(page) (clear_dynpageflag(&pageset2_map, page))
++#define PageWasRW(page) (memory_bm_test_bit(&pageset2_map, page_to_pfn(page)))
++#define SetPageWasRW(page) (memory_bm_set_bit(&pageset2_map, page_to_pfn(page)))
++#define ClearPageWasRW(page) (memory_bm_clear_bit(&pageset2_map, page_to_pfn(page)))
 +
-+#define PageResave(page) (page_resave_map.bitmap ? \
-+	test_dynpageflag(&page_resave_map, page) : 0)
-+#define SetPageResave(page) (set_dynpageflag(&page_resave_map, page))
-+#define ClearPageResave(page) (clear_dynpageflag(&page_resave_map, page))
++#define PageResave(page) (page_resave_map.zone_bm_list ? \
++	memory_bm_test_bit(&page_resave_map, page_to_pfn(page)) : 0)
++#define SetPageResave(page) (memory_bm_set_bit(&page_resave_map, page_to_pfn(page)))
++#define ClearPageResave(page) (memory_bm_clear_bit(&page_resave_map, page_to_pfn(page)))
 +
-+#define PageNosave(page) (nosave_map.bitmap ? \
-+		test_dynpageflag(&nosave_map, page) : 0)
-+#define SetPageNosave(page) (set_dynpageflag(&nosave_map, page))
-+#define ClearPageNosave(page) (clear_dynpageflag(&nosave_map, page))
++#define PageNosave(page) (nosave_map.zone_bm_list ? \
++		memory_bm_test_bit(&nosave_map, page_to_pfn(page)) : 0)
++#define SetPageNosave(page) (memory_bm_set_bit(&nosave_map, page_to_pfn(page)))
++#define ClearPageNosave(page) (memory_bm_clear_bit(&nosave_map, page_to_pfn(page)))
 +
-+#define PageNosaveFree(page) (free_map.bitmap ? \
-+		test_dynpageflag(&free_map, page) : 0)
-+#define SetPageNosaveFree(page) (set_dynpageflag(&free_map, page))
-+#define ClearPageNosaveFree(page) (clear_dynpageflag(&free_map, page))
++#define PageNosaveFree(page) (free_map.zone_bm_list ? \
++		memory_bm_test_bit(&free_map, page_to_pfn(page)) : 0)
++#define SetPageNosaveFree(page) (memory_bm_set_bit(&free_map, page_to_pfn(page)))
++#define ClearPageNosaveFree(page) (memory_bm_clear_bit(&free_map, page_to_pfn(page)))
 +
-+extern void save_dyn_pageflags(struct dyn_pageflags *pagemap);
-+extern int load_dyn_pageflags(struct dyn_pageflags *pagemap);
++extern void save_pageflags(struct memory_bitmap *pagemap);
++extern int load_pageflags(struct memory_bitmap *pagemap);
 +extern int toi_pageflags_space_needed(void);
++
++#define BITMAP_FOR_EACH_SET(map, pfn) \
++	memory_bm_position_reset(&map); \
++	for (pfn = memory_bm_next_pfn(&map); pfn != BM_END_OF_MAP; \
++		pfn = memory_bm_next_pfn(&map))
++#endif
 diff --git a/kernel/power/tuxonice_power_off.c b/kernel/power/tuxonice_power_off.c
 new file mode 100644
-index 0000000..044f1ca
+index 0000000..d1d5f07
 --- /dev/null
 +++ b/kernel/power/tuxonice_power_off.c
 @@ -0,0 +1,281 @@
@@ -14399,10 +14526,10 @@ index 0000000..044f1ca
 +unsigned long toi_poweroff_method; /* 0 - Kernel power off */
 +EXPORT_SYMBOL_GPL(toi_poweroff_method);
 +
-+int wake_delay;
++static int wake_delay;
 +static char lid_state_file[256], wake_alarm_dir[256];
 +static struct file *lid_file, *alarm_file, *epoch_file;
-+int post_wake_state = -1;
++static int post_wake_state = -1;
 +
 +static int did_suspend_to_both;
 +
@@ -14510,7 +14637,7 @@ index 0000000..044f1ca
 +		if (IS_ERR(*var) || !*var) {
 +			printk(KERN_INFO "Failed to open %s file '%s' (%p).\n",
 +				desc, buf, *var);
-+			*var = 0;
++			*var = NULL;
 +		}
 +	}
 +}
@@ -14654,7 +14781,7 @@ index 0000000..044f1ca
 +}
 diff --git a/kernel/power/tuxonice_power_off.h b/kernel/power/tuxonice_power_off.h
 new file mode 100644
-index 0000000..33d383e
+index 0000000..a85633a
 --- /dev/null
 +++ b/kernel/power/tuxonice_power_off.h
 @@ -0,0 +1,24 @@
@@ -14677,17 +14804,17 @@ index 0000000..33d383e
 +
 +extern int platform_begin(int platform_mode);
 +extern int platform_pre_snapshot(int platform_mode);
-+extern int platform_leave(int platform_mode);
-+extern int platform_end(int platform_mode);
-+extern int platform_finish(int platform_mode);
++extern void platform_leave(int platform_mode);
++extern void platform_end(int platform_mode);
++extern void platform_finish(int platform_mode);
 +extern int platform_pre_restore(int platform_mode);
-+extern int platform_restore_cleanup(int platform_mode);
++extern void platform_restore_cleanup(int platform_mode);
 diff --git a/kernel/power/tuxonice_prepare_image.c b/kernel/power/tuxonice_prepare_image.c
 new file mode 100644
-index 0000000..6346ffe
+index 0000000..bc11c45
 --- /dev/null
 +++ b/kernel/power/tuxonice_prepare_image.c
-@@ -0,0 +1,1038 @@
+@@ -0,0 +1,1039 @@
 +/*
 + * kernel/power/tuxonice_prepare_image.c
 + *
@@ -14732,7 +14859,8 @@ index 0000000..6346ffe
 +static long num_nosave, header_space_allocated, main_storage_allocated,
 +	   storage_available;
 +long extra_pd1_pages_allowance = CONFIG_TOI_DEFAULT_EXTRA_PAGES_ALLOWANCE;
-+int image_size_limit, no_ps2_needed;
++int image_size_limit;
++static int no_ps2_needed;
 +
 +struct attention_list {
 +	struct task_struct *task;
@@ -14877,7 +15005,7 @@ index 0000000..6346ffe
 +	struct task_struct *p;
 +	struct attention_list *this = attention_list;
 +
-+	clear_dyn_pageflags(&pageset2_map);
++	memory_bm_clear(&pageset2_map);
 +
 +	if (test_action_state(TOI_NO_PAGESET2) || no_ps2_needed)
 +		return;
@@ -14958,7 +15086,7 @@ index 0000000..6346ffe
 +static int toi_allocate_extra_pagedir_memory(int extra_pages_needed)
 +{
 +	int j, order, num_to_alloc = extra_pages_needed - extra_pages_allocated;
-+	unsigned long flags = TOI_ATOMIC_GFP;
++	gfp_t flags = TOI_ATOMIC_GFP;
 +
 +	if (num_to_alloc < 1)
 +		return 0;
@@ -15151,13 +15279,13 @@ index 0000000..6346ffe
 +static long any_to_free(int use_image_size_limit)
 +{
 +	long user_limit = (use_image_size_limit && image_size_limit > 0) ?
-+		max_t(long, 0, current_image_size() - (image_size_limit << 8))
-+		: 0;
++			max_t(long, 0, current_image_size() -
++					(image_size_limit << 8)) : 0,
++		storage_limit = storage_still_required(),
++		ram_limit = ram_still_required(),
++		first_max = max(user_limit, storage_limit);
 +
-+	long storage_limit = storage_still_required(),
-+	    ram_limit = ram_still_required();
-+
-+	return max(max(user_limit, storage_limit), ram_limit);
++	return max(first_max, ram_limit);
 +}
 +
 +static int need_pageset2(void)
@@ -15336,12 +15464,12 @@ index 0000000..6346ffe
 +		for_each_migratetype_order(order, t) {
 +			list_for_each(curr,
 +					&zone->free_area[order].free_list[t]) {
-+				unsigned long i;
++				unsigned long j;
 +
 +				pfn = page_to_pfn(list_entry(curr, struct page,
 +							lru));
-+				for (i = 0; i < (1UL << order); i++)
-+					SetPageNosaveFree(pfn_to_page(pfn + i));
++				for (j = 0; j < (1UL << order); j++)
++					SetPageNosaveFree(pfn_to_page(pfn + j));
 +			}
 +		}
 +
@@ -15397,7 +15525,7 @@ index 0000000..6346ffe
 +
 +	num_nosave = 0;
 +
-+	clear_dyn_pageflags(&pageset1_map);
++	memory_bm_clear(&pageset1_map);
 +
 +	generate_free_page_map();
 +
@@ -15470,10 +15598,10 @@ index 0000000..6346ffe
 +
 +void toi_recalculate_image_contents(int atomic_copy)
 +{
-+	clear_dyn_pageflags(&pageset1_map);
++	memory_bm_clear(&pageset1_map);
 +	if (!atomic_copy) {
-+		int pfn;
-+		BITMAP_FOR_EACH_SET(&pageset2_map, pfn)
++		unsigned long pfn;
++		BITMAP_FOR_EACH_SET(pageset2_map, pfn)
 +			ClearPagePageset1Copy(pfn_to_page(pfn));
 +		/* Need to call this before getting pageset1_size! */
 +		toi_mark_pages_for_pageset2();
@@ -15769,7 +15897,7 @@ index 0000000..46eda88
 +
 diff --git a/kernel/power/tuxonice_storage.c b/kernel/power/tuxonice_storage.c
 new file mode 100644
-index 0000000..a2d18c0
+index 0000000..5dafc95
 --- /dev/null
 +++ b/kernel/power/tuxonice_storage.c
 @@ -0,0 +1,282 @@
@@ -16043,7 +16171,7 @@ index 0000000..a2d18c0
 +	usm_helper_data.netlink_id = NETLINK_TOI_USM;
 +	usm_helper_data.name = "userspace storage manager";
 +	usm_helper_data.rcv_msg = usm_user_rcv_msg;
-+	usm_helper_data.interface_version = 1;
++	usm_helper_data.interface_version = 2;
 +	usm_helper_data.must_init = 0;
 +	init_completion(&usm_helper_data.wait_for_process);
 +
@@ -16116,10 +16244,10 @@ index 0000000..5477056
 +#endif
 diff --git a/kernel/power/tuxonice_swap.c b/kernel/power/tuxonice_swap.c
 new file mode 100644
-index 0000000..391d2f6
+index 0000000..3f85a69
 --- /dev/null
 +++ b/kernel/power/tuxonice_swap.c
-@@ -0,0 +1,1277 @@
+@@ -0,0 +1,1279 @@
 +/*
 + * kernel/power/tuxonice_swap.c
 + *
@@ -16146,6 +16274,7 @@ index 0000000..391d2f6
 +#include "tuxonice_extent.h"
 +#include "tuxonice_block_io.h"
 +#include "tuxonice_alloc.h"
++#include "tuxonice_builtin.h"
 +
 +static struct toi_module_ops toi_swapops;
 +
@@ -16189,8 +16318,8 @@ index 0000000..391d2f6
 +static struct toi_bdev_info devinfo[MAX_SWAPFILES];
 +
 +/* Extent chains for swap & blocks */
-+struct hibernate_extent_chain swapextents;
-+struct hibernate_extent_chain block_chain[MAX_SWAPFILES];
++static struct hibernate_extent_chain swapextents;
++static struct hibernate_extent_chain block_chain[MAX_SWAPFILES];
 +
 +static dev_t header_dev_t;
 +static struct block_device *header_block_device;
@@ -16212,7 +16341,7 @@ index 0000000..391d2f6
 +static dev_t resume_swap_dev_t;
 +static struct block_device *resume_block_device;
 +
-+struct sysinfo swapinfo;
++static struct sysinfo swapinfo;
 +
 +/* Block devices open. */
 +struct bdev_opened {
@@ -16975,7 +17104,7 @@ index 0000000..391d2f6
 +	/* Restore device info */
 +	for (i = 0; i < MAX_SWAPFILES; i++) {
 +		dev_t thisdevice = devinfo[i].dev_t;
-+		struct block_device *result;
++		struct block_device *bdev_result;
 +
 +		devinfo[i].bdev = NULL;
 +
@@ -16992,9 +17121,9 @@ index 0000000..391d2f6
 +			continue;
 +		}
 +
-+		result = open_bdev(i, thisdevice, 1);
-+		if (IS_ERR(result))
-+			return PTR_ERR(result);
++		bdev_result = open_bdev(i, thisdevice, 1);
++		if (IS_ERR(bdev_result))
++			return PTR_ERR(bdev_result);
 +		devinfo[i].bdev = bdevs_opened[i]->bdev;
 +	}
 +
@@ -17269,7 +17398,7 @@ index 0000000..391d2f6
 +static int header_locations_read_sysfs(const char *page, int count)
 +{
 +	int i, printedpartitionsmessage = 0, len = 0, haveswap = 0;
-+	struct inode *swapf = 0;
++	struct inode *swapf = NULL;
 +	int zone;
 +	char *path_page = (char *) toi_get_free_page(10, GFP_KERNEL);
 +	char *path, *output = (char *) page;
@@ -17377,6 +17506,7 @@ index 0000000..391d2f6
 +	toi_swapops.rw_header_chunk_noreadahead =
 +		toi_bio_ops.rw_header_chunk_noreadahead;
 +	toi_swapops.io_flusher = toi_bio_ops.io_flusher;
++	toi_swapops.update_throughput_throttle = toi_bio_ops.update_throughput_throttle;
 +	toi_swapops.monitor_outstanding_io = toi_bio_ops.monitor_outstanding_io;
 +	toi_swapops.finish_all_io = toi_bio_ops.finish_all_io;
 +
@@ -18129,10 +18259,10 @@ index 0000000..4da4afd
 +}
 diff --git a/kernel/power/tuxonice_ui.h b/kernel/power/tuxonice_ui.h
 new file mode 100644
-index 0000000..a5b7afc
+index 0000000..884d0c5
 --- /dev/null
 +++ b/kernel/power/tuxonice_ui.h
-@@ -0,0 +1,106 @@
+@@ -0,0 +1,105 @@
 +/*
 + * kernel/power/tuxonice_ui.h
 + *
@@ -18167,22 +18297,21 @@ index 0000000..a5b7afc
 +};
 +
 +struct userui_msg_params {
-+	unsigned long a, b, c, d;
++	u32 a, b, c, d;
 +	char text[255];
 +};
 +
 +struct ui_ops {
 +	char (*wait_for_key) (int timeout);
-+	unsigned long (*update_status) (unsigned long value,
-+		unsigned long maximum, const char *fmt, ...);
++	u32 (*update_status) (u32 value, u32 maximum, const char *fmt, ...);
 +	void (*prepare_status) (int clearbar, const char *fmt, ...);
 +	void (*cond_pause) (int pause, char *message);
 +	void (*abort)(int result_code, const char *fmt, ...);
 +	void (*prepare)(void);
 +	void (*cleanup)(void);
 +	void (*post_atomic_restore)(void);
-+	void (*message)(unsigned long section, unsigned long level,
-+		int normally_logged, const char *fmt, ...);
++	void (*message)(u32 section, u32 level, u32 normally_logged,
++			const char *fmt, ...);
 +};
 +
 +extern struct ui_ops *toi_current_ui;
@@ -18241,10 +18370,10 @@ index 0000000..a5b7afc
 +extern void toi_remove_ui_ops(struct ui_ops *this_ui);
 diff --git a/kernel/power/tuxonice_userui.c b/kernel/power/tuxonice_userui.c
 new file mode 100644
-index 0000000..e4e1771
+index 0000000..7cc5666
 --- /dev/null
 +++ b/kernel/power/tuxonice_userui.c
-@@ -0,0 +1,665 @@
+@@ -0,0 +1,663 @@
 +/*
 + * kernel/power/user_ui.c
 + *
@@ -18312,7 +18441,7 @@ index 0000000..e4e1771
 +static void ui_nl_set_state(int n)
 +{
 +	/* Only let them change certain settings */
-+	static const int toi_action_mask =
++	static const u32 toi_action_mask =
 +		(1 << TOI_REBOOT) | (1 << TOI_PAUSE) |
 +		(1 << TOI_LOGALL) |
 +		(1 << TOI_SINGLESTEP) |
@@ -18418,14 +18547,12 @@ index 0000000..e4e1771
 + * maximum and progress granularity) where status needs to be updated.
 + * This is to reduce unnecessary calls to update_status.
 + */
-+static unsigned long userui_update_status(unsigned long value,
-+		unsigned long maximum, const char *fmt, ...)
++static u32 userui_update_status(u32 value, u32 maximum, const char *fmt, ...)
 +{
-+	static int last_step = -1;
++	static u32 last_step = 9999;
 +	struct userui_msg_params msg;
++	u32 this_step, next_update;
 +	int bitshift;
-+	int this_step;
-+	unsigned long next_update;
 +
 +	if (ui_helper_data.pid == -1)
 +		return 0;
@@ -18444,14 +18571,14 @@ index 0000000..e4e1771
 +	 * of 65536 pixels or more?) */
 +	bitshift = fls(maximum) - 16;
 +	if (bitshift > 0) {
-+		unsigned long temp_maximum = maximum >> bitshift;
-+		unsigned long temp_value = value >> bitshift;
-+		this_step = (int)
++		u32 temp_maximum = maximum >> bitshift;
++		u32 temp_value = value >> bitshift;
++		this_step = (u32)
 +			(temp_value * progress_granularity / temp_maximum);
 +		next_update = (((this_step + 1) * temp_maximum /
 +					progress_granularity) + 1) << bitshift;
 +	} else {
-+		this_step = (int) (value * progress_granularity / maximum);
++		this_step = (u32) (value * progress_granularity / maximum);
 +		next_update = ((this_step + 1) * maximum /
 +				progress_granularity) + 1;
 +	}
@@ -18493,8 +18620,8 @@ index 0000000..e4e1771
 + *
 + * It may be called from an interrupt context - can't sleep!
 + */
-+static void userui_message(unsigned long section, unsigned long level,
-+		int normally_logged, const char *fmt, ...)
++static void userui_message(u32 section, u32 level, u32 normally_logged,
++		const char *fmt, ...)
 +{
 +	struct userui_msg_params msg;
 +
@@ -18878,7 +19005,7 @@ index 0000000..e4e1771
 +	ui_helper_data.netlink_id = NETLINK_TOI_USERUI;
 +	ui_helper_data.name = "userspace ui";
 +	ui_helper_data.rcv_msg = userui_user_rcv_msg;
-+	ui_helper_data.interface_version = 7;
++	ui_helper_data.interface_version = 8;
 +	ui_helper_data.must_init = 0;
 +	ui_helper_data.not_ready = userui_cleanup_console;
 +	init_completion(&ui_helper_data.wait_for_process);
@@ -19039,19 +19166,6 @@ index dbd50fa..ce16e3f 100644
  }
  
  /**
-diff --git a/mm/Makefile b/mm/Makefile
-index c06b45a..1991a38 100644
---- a/mm/Makefile
-+++ b/mm/Makefile
-@@ -11,7 +11,7 @@ obj-y			:= bootmem.o filemap.o mempool.o oom_kill.o fadvise.o \
- 			   maccess.o page_alloc.o page-writeback.o pdflush.o \
- 			   readahead.o swap.o truncate.o vmscan.o \
- 			   prio_tree.o util.o mmzone.o vmstat.o backing-dev.o \
--			   page_isolation.o mm_init.o $(mmu-y)
-+			   dyn_pageflags.o page_isolation.o mm_init.o $(mmu-y)
- 
- obj-$(CONFIG_PROC_PAGE_MONITOR) += pagewalk.o
- obj-$(CONFIG_BOUNCE)	+= bounce.o
 diff --git a/mm/bootmem.c b/mm/bootmem.c
 index ac5a891..b02ac20 100644
 --- a/mm/bootmem.c
@@ -19064,829 +19178,6 @@ index ac5a891..b02ac20 100644
  
  #ifdef CONFIG_CRASH_DUMP
  /*
-diff --git a/mm/dyn_pageflags.c b/mm/dyn_pageflags.c
-new file mode 100644
-index 0000000..e44b671
---- /dev/null
-+++ b/mm/dyn_pageflags.c
-@@ -0,0 +1,817 @@
-+/*
-+ * lib/dyn_pageflags.c
-+ *
-+ * Copyright (C) 2004-2008 Nigel Cunningham <nigel at tuxonice net>
-+ *
-+ * This file is released under the GPLv2.
-+ *
-+ * Routines for dynamically allocating and releasing bitmaps
-+ * used as pseudo-pageflags.
-+ *
-+ * We use bitmaps, built out of order zero allocations and
-+ * linked together by kzalloc'd arrays of pointers into
-+ * an array that looks like...
-+ *
-+ * 	pageflags->bitmap[node][zone_id][page_num][ul]
-+ *
-+ * All of this is transparent to the caller, who just uses
-+ * the allocate & free routines to create/destroy bitmaps,
-+ * and get/set/clear to operate on individual flags.
-+ *
-+ * Bitmaps can be sparse, with the individual pages only being
-+ * allocated when a bit is set in the page.
-+ *
-+ * Memory hotplugging support is work in progress. A zone's
-+ * start_pfn may change. If it does, we need to reallocate
-+ * the zone bitmap, adding additional pages to the front to
-+ * cover the bitmap. For simplicity, we don't shift the
-+ * contents of existing pages around. The lock is only used
-+ * to avoid reentrancy when resizing zones. The replacement
-+ * of old data with new is done atomically. If we try to test
-+ * a bit in the new area before the update is completed, we
-+ * know it's zero.
-+ *
-+ * TuxOnIce knows the structure of these pageflags, so that
-+ * it can serialise them in the image header. TODO: Make
-+ * that support more generic so that TuxOnIce doesn't need
-+ * to know how dyn_pageflags are stored.
-+ */
-+
-+/* Avoid warnings in include/linux/mm.h */
-+struct page;
-+struct dyn_pageflags;
-+int test_dynpageflag(struct dyn_pageflags *bitmap, struct page *page);
-+
-+#include <linux/bootmem.h>
-+#include <linux/dyn_pageflags.h>
-+#include <linux/module.h>
-+#include <linux/suspend.h>
-+
-+static LIST_HEAD(flags_list);
-+static DEFINE_SPINLOCK(flags_list_lock);
-+
-+static int dyn_pageflags_debug;
-+
-+#define PR_DEBUG(a, b...) \
-+	do { if (dyn_pageflags_debug) printk(a, ##b); } while (0)
-+#define DUMP_DEBUG(bitmap) \
-+	do { if (dyn_pageflags_debug) dump_pagemap(bitmap); } while (0)
-+
-+#if BITS_PER_LONG == 32
-+#define UL_SHIFT 5
-+#else
-+#if BITS_PER_LONG == 64
-+#define UL_SHIFT 6
-+#else
-+#error Bits per long not 32 or 64?
-+#endif
-+#endif
-+
-+#ifndef PHYS_PFN_OFFSET
-+#define PHYS_PFN_OFFSET 0
-+#endif
-+
-+#define BIT_NUM_MASK ((sizeof(unsigned long) << 3) - 1)
-+#define PAGE_NUM_MASK (~((1 << (PAGE_SHIFT + 3)) - 1))
-+#define UL_NUM_MASK (~(BIT_NUM_MASK | PAGE_NUM_MASK))
-+
-+#define ZONE_START(thiszone) ((thiszone)->zone_start_pfn - PHYS_PFN_OFFSET)
-+
-+/*
-+ * PAGENUMBER gives the index of the page within the zone.
-+ * PAGEINDEX gives the index of the unsigned long within that page.
-+ * PAGEBIT gives the index of the bit within the unsigned long.
-+ */
-+#define PAGENUMBER(zone_offset) ((int) (zone_offset >> (PAGE_SHIFT + 3)))
-+#define PAGEINDEX(zone_offset) ((int) ((zone_offset & UL_NUM_MASK) >> UL_SHIFT))
-+#define PAGEBIT(zone_offset) ((int) (zone_offset & BIT_NUM_MASK))
-+
-+#define PAGE_UL_PTR(bitmap, node, zone_num, zone_pfn) \
-+       ((bitmap[node][zone_num][PAGENUMBER(zone_pfn)])+PAGEINDEX(zone_pfn))
-+
-+#define pages_for_zone(zone) \
-+	(DIV_ROUND_UP((zone)->spanned_pages, (PAGE_SIZE << 3)))
-+
-+#define pages_for_span(span) \
-+	(DIV_ROUND_UP(span, PAGE_SIZE << 3))
-+
-+static inline unsigned long **get_zone_array(struct dyn_pageflags *pageflags,
-+		int node, int zone_num)
-+{
-+	return pageflags->bitmap && pageflags->bitmap[node] &&
-+		pageflags->bitmap[node][zone_num] ?
-+		pageflags->bitmap[node][zone_num] : NULL;
-+}
-+
-+/* __maybe_unused for testing functions below */
-+#define GET_BIT_AND_UL(pageflags, page) \
-+	struct zone *zone = page_zone(page); \
-+	unsigned long pfn = page_to_pfn(page); \
-+	unsigned long zone_pfn = pfn - ZONE_START(zone); \
-+	int node = page_to_nid(page); \
-+	int zone_num = zone_idx(zone); \
-+	int pagenum = PAGENUMBER(zone_pfn) + 2; \
-+	int page_offset = PAGEINDEX(zone_pfn); \
-+	unsigned long **zone_array = get_zone_array(pageflags, node, \
-+			zone_num); \
-+	unsigned long __maybe_unused *ul = (zone_array && \
-+		(unsigned long) zone_array[0] <= pfn && \
-+		(unsigned long) zone_array[1] >= (pagenum-2) && \
-+		zone_array[pagenum]) ? zone_array[pagenum] + page_offset : \
-+		  NULL; \
-+	int bit __maybe_unused = PAGEBIT(zone_pfn);
-+
-+#define for_each_online_pgdat_zone(pgdat, zone_nr) \
-+	for_each_online_pgdat(pgdat) \
-+		for (zone_nr = 0; zone_nr < MAX_NR_ZONES; zone_nr++)
-+
-+/**
-+ * dump_pagemap - Display the contents of a bitmap for debugging purposes.
-+ *
-+ * @pagemap: The array to be dumped.
-+ */
-+void dump_pagemap(struct dyn_pageflags *pagemap)
-+{
-+	int i = 0;
-+	struct pglist_data *pgdat;
-+	unsigned long ****bitmap = pagemap->bitmap;
-+
-+	printk(" --- Dump bitmap %p ---\n", pagemap);
-+
-+	printk(KERN_INFO "%p: Sparse flag = %d\n",
-+			&pagemap->sparse, pagemap->sparse);
-+	printk(KERN_INFO "%p: Bitmap      = %p\n",
-+			&pagemap->bitmap, bitmap);
-+
-+	if (!bitmap)
-+		goto out;
-+
-+	for_each_online_pgdat(pgdat) {
-+		int node_id = pgdat->node_id, zone_nr;
-+		printk(KERN_INFO "%p: Node %d => %p\n",
-+				&bitmap[node_id], node_id,
-+				bitmap[node_id]);
-+		if (!bitmap[node_id])
-+			continue;
-+		for (zone_nr = 0; zone_nr < MAX_NR_ZONES; zone_nr++) {
-+			printk(KERN_INFO "%p:   Zone %d => %p%s\n",
-+					&bitmap[node_id][zone_nr], zone_nr,
-+					bitmap[node_id][zone_nr],
-+					bitmap[node_id][zone_nr] ? "" :
-+						" (empty)");
-+			if (!bitmap[node_id][zone_nr])
-+				continue;
-+
-+			printk(KERN_INFO "%p:     Zone start pfn  = %p\n",
-+					&bitmap[node_id][zone_nr][0],
-+					bitmap[node_id][zone_nr][0]);
-+			printk(KERN_INFO "%p:     Number of pages = %p\n",
-+					&bitmap[node_id][zone_nr][1],
-+					bitmap[node_id][zone_nr][1]);
-+			for (i = 2; i < (unsigned long) bitmap[node_id]
-+					[zone_nr][1] + 2; i++)
-+				printk(KERN_INFO
-+					"%p:     Page %2d         = %p\n",
-+					&bitmap[node_id][zone_nr][i],
-+					i - 2,
-+					bitmap[node_id][zone_nr][i]);
-+		}
-+	}
-+out:
-+	printk(KERN_INFO " --- Dump of bitmap %p finishes\n", pagemap);
-+}
-+EXPORT_SYMBOL_GPL(dump_pagemap);
-+
-+/**
-+ * clear_dyn_pageflags - Zero all pageflags in a bitmap.
-+ *
-+ * @pagemap: The array to be cleared.
-+ *
-+ * Clear an array used to store dynamically allocated pageflags.
-+ */
-+void clear_dyn_pageflags(struct dyn_pageflags *pagemap)
-+{
-+	int i = 0, zone_idx;
-+	struct pglist_data *pgdat;
-+	unsigned long ****bitmap = pagemap->bitmap;
-+
-+	for_each_online_pgdat_zone(pgdat, zone_idx) {
-+		int node_id = pgdat->node_id;
-+		struct zone *zone = &pgdat->node_zones[zone_idx];
-+
-+		if (!populated_zone(zone) ||
-+		   (!bitmap[node_id] || !bitmap[node_id][zone_idx]))
-+			continue;
-+
-+		for (i = 2; i < pages_for_zone(zone) + 2; i++)
-+			if (bitmap[node_id][zone_idx][i])
-+				memset((bitmap[node_id][zone_idx][i]), 0,
-+						PAGE_SIZE);
-+	}
-+}
-+EXPORT_SYMBOL_GPL(clear_dyn_pageflags);
-+
-+/**
-+ * Allocators.
-+ *
-+ * During boot time, we want to use alloc_bootmem_low. Afterwards, we want
-+ * kzalloc. These routines let us do that without causing compile time warnings
-+ * about mismatched sections, as would happen if we did a simple
-+ * boot ? alloc_bootmem_low() : kzalloc() below.
-+ */
-+
-+/**
-+ * boot_time_allocator - Allocator used while booting.
-+ *
-+ * @size: Number of bytes wanted.
-+ * @flags: Allocation flags (ignored here).
-+ */
-+static __init void *boot_time_allocator(unsigned long size, unsigned long flags)
-+{
-+	return alloc_bootmem_low(size);
-+}
-+
-+/**
-+ * normal_allocator - Allocator used post-boot.
-+ *
-+ * @size: Number of bytes wanted.
-+ * @flags: Allocation flags.
-+ *
-+ * Allocate memory for our page flags.
-+ */
-+static void *normal_allocator(unsigned long size, unsigned long flags)
-+{
-+	if (size == PAGE_SIZE)
-+		return (void *) get_zeroed_page(flags);
-+	else
-+		return kzalloc(size, flags);
-+}
-+
-+static void* (*dyn_allocator)(unsigned long size, unsigned long flags) =
-+	normal_allocator;
-+
-+/**
-+ * dyn_pageflags_init - Do the earliest initialisation.
-+ *
-+ * Very early in the boot process, set our allocator (alloc_bootmem_low) and
-+ * allocate bitmaps for slab and buddy pageflags.
-+ */
-+void __init dyn_pageflags_init(void)
-+{
-+	dyn_allocator = boot_time_allocator;
-+}
-+
-+/**
-+ * dyn_pageflags_use_kzalloc - Reset the allocator for normal use.
-+ *
-+ * Reset the allocator to our normal, post boot function.
-+ */
-+void __init dyn_pageflags_use_kzalloc(void)
-+{
-+	dyn_allocator = (void *) normal_allocator;
-+}
-+
-+/**
-+ * try_alloc_dyn_pageflag_part - Try to allocate a pointer array.
-+ *
-+ * Try to allocate a contiguous array of pointers.
-+ */
-+static int try_alloc_dyn_pageflag_part(int nr_ptrs, void **ptr)
-+{
-+	*ptr = (*dyn_allocator)(sizeof(void *) * nr_ptrs, GFP_ATOMIC);
-+
-+	if (*ptr)
-+		return 0;
-+
-+	printk(KERN_INFO
-+		"Error. Unable to allocate memory for dynamic pageflags.");
-+	return -ENOMEM;
-+}
-+
-+static int populate_bitmap_page(struct dyn_pageflags *pageflags, int take_lock,
-+			unsigned long **page_ptr)
-+{
-+	void *address;
-+	unsigned long flags = 0;
-+
-+	if (take_lock)
-+		spin_lock_irqsave(&pageflags->struct_lock, flags);
-+
-+	/*
-+	 * The page may have been allocated while we waited.
-+	 */
-+	if (*page_ptr)
-+		goto out;
-+
-+	address = (*dyn_allocator)(PAGE_SIZE, GFP_ATOMIC);
-+
-+	if (!address) {
-+		PR_DEBUG("Error. Unable to allocate memory for "
-+			"dynamic pageflags page.");
-+		if (pageflags)
-+			spin_unlock_irqrestore(&pageflags->struct_lock, flags);
-+		return -ENOMEM;
-+	}
-+
-+	*page_ptr = address;
-+out:
-+	if (take_lock)
-+		spin_unlock_irqrestore(&pageflags->struct_lock, flags);
-+	return 0;
-+}
-+
-+/**
-+ * resize_zone_bitmap - Resize the array of pages for a bitmap.
-+ *
-+ * Shrink or extend a list of pages for a zone in a bitmap, preserving
-+ * existing data.
-+ */
-+static int resize_zone_bitmap(struct dyn_pageflags *pagemap, struct zone *zone,
-+		unsigned long old_pages, unsigned long new_pages,
-+		unsigned long copy_offset, int take_lock)
-+{
-+	unsigned long **new_ptr = NULL, ****bitmap = pagemap->bitmap;
-+	int node_id = zone_to_nid(zone), zone_idx = zone_idx(zone),
-+	    to_copy = min(old_pages, new_pages), result = 0;
-+	unsigned long **old_ptr = bitmap[node_id][zone_idx], i;
-+
-+	if (new_pages) {
-+		if (try_alloc_dyn_pageflag_part(new_pages + 2,
-+					(void **) &new_ptr))
-+			return -ENOMEM;
-+
-+		if (old_pages)
-+			memcpy(new_ptr + 2 + copy_offset, old_ptr + 2,
-+					sizeof(unsigned long) * to_copy);
-+
-+		new_ptr[0] = (void *) ZONE_START(zone);
-+		new_ptr[1] = (void *) new_pages;
-+	}
-+
-+	/* Free/alloc bitmap pages. */
-+	if (old_pages > new_pages) {
-+		for (i = new_pages + 2; i < old_pages + 2; i++)
-+			if (old_ptr[i])
-+				free_page((unsigned long) old_ptr[i]);
-+	} else if (!pagemap->sparse) {
-+		for (i = old_pages + 2; i < new_pages + 2; i++)
-+			if (populate_bitmap_page(NULL, take_lock,
-+					(unsigned long **) &new_ptr[i])) {
-+				result = -ENOMEM;
-+				break;
-+			}
-+	}
-+
-+	bitmap[node_id][zone_idx] = new_ptr;
-+	kfree(old_ptr);
-+	return result;
-+}
-+
-+/**
-+ * check_dyn_pageflag_range - Resize a section of a dyn_pageflag array.
-+ *
-+ * @pagemap: The array to be worked on.
-+ * @zone: The zone to get in sync with reality.
-+ *
-+ * Check the pagemap has correct allocations for the zone. This can be
-+ * invoked when allocating a new bitmap, or for hot[un]plug, and so
-+ * must deal with any disparities between zone_start_pfn/spanned_pages
-+ * and what we have allocated. In addition, we must deal with the possibility
-+ * of zone_start_pfn having changed.
-+ */
-+int check_dyn_pageflag_zone(struct dyn_pageflags *pagemap, struct zone *zone,
-+		int force_free_all, int take_lock)
-+{
-+	int node_id = zone_to_nid(zone), zone_idx = zone_idx(zone);
-+	unsigned long copy_offset = 0, old_pages, new_pages;
-+	unsigned long **old_ptr = pagemap->bitmap[node_id][zone_idx];
-+
-+	old_pages = old_ptr ? (unsigned long) old_ptr[1] : 0;
-+	new_pages = force_free_all ? 0 : pages_for_span(zone->spanned_pages);
-+
-+	if (old_pages == new_pages &&
-+	    (!old_pages || (unsigned long) old_ptr[0] == ZONE_START(zone)))
-+		return 0;
-+
-+	if (old_pages &&
-+	    (unsigned long) old_ptr[0] != ZONE_START(zone))
-+		copy_offset = pages_for_span((unsigned long) old_ptr[0] -
-+							ZONE_START(zone));
-+
-+	/* New/expanded zone? */
-+	return resize_zone_bitmap(pagemap, zone, old_pages, new_pages,
-+			copy_offset, take_lock);
-+}
-+
-+#ifdef CONFIG_MEMORY_HOTPLUG_SPARSE
-+/**
-+ * dyn_pageflags_hotplug - Add pages to bitmaps for hotplugged memory.
-+ *
-+ * Seek to expand bitmaps for hotplugged memory. We ignore any failure.
-+ * Since we handle sparse bitmaps anyway, they'll be automatically
-+ * populated as needed.
-+ */
-+void dyn_pageflags_hotplug(struct zone *zone)
-+{
-+	struct dyn_pageflags *this;
-+
-+	list_for_each_entry(this, &flags_list, list)
-+		check_dyn_pageflag_zone(this, zone, 0, 1);
-+}
-+#endif
-+
-+/**
-+ * free_dyn_pageflags - Free an array of dynamically allocated pageflags.
-+ *
-+ * @pagemap: The array to be freed.
-+ *
-+ * Free a dynamically allocated pageflags bitmap.
-+ */
-+void free_dyn_pageflags(struct dyn_pageflags *pagemap)
-+{
-+	int zone_idx;
-+	struct pglist_data *pgdat;
-+	unsigned long flags;
-+
-+	DUMP_DEBUG(pagemap);
-+
-+	if (!pagemap->bitmap)
-+		return;
-+
-+	for_each_online_pgdat_zone(pgdat, zone_idx)
-+		check_dyn_pageflag_zone(pagemap,
-+				&pgdat->node_zones[zone_idx], 1, 1);
-+
-+	for_each_online_pgdat(pgdat) {
-+		int i = pgdat->node_id;
-+
-+		if (pagemap->bitmap[i])
-+			kfree((pagemap->bitmap)[i]);
-+	}
-+
-+	kfree(pagemap->bitmap);
-+	pagemap->bitmap = NULL;
-+
-+	pagemap->initialised = 0;
-+
-+	if (!pagemap->sparse) {
-+		spin_lock_irqsave(&flags_list_lock, flags);
-+		list_del_init(&pagemap->list);
-+		pagemap->sparse = 1;
-+		spin_unlock_irqrestore(&flags_list_lock, flags);
-+	}
-+}
-+EXPORT_SYMBOL_GPL(free_dyn_pageflags);
-+
-+/**
-+ * allocate_dyn_pageflags - Allocate a bitmap.
-+ *
-+ * @pagemap: The bitmap we want to allocate.
-+ * @sparse: Whether to make the array sparse.
-+ *
-+ * The array we're preparing. If sparse, we don't allocate the actual
-+ * pages until they're needed. If not sparse, we add the bitmap to the
-+ * list so that if we're supporting memory hotplugging, we can allocate
-+ * new pages on hotplug events.
-+ *
-+ * This routine may be called directly, or indirectly when the first bit
-+ * needs to be set on a previously unused bitmap.
-+ */
-+int allocate_dyn_pageflags(struct dyn_pageflags *pagemap, int sparse)
-+{
-+	int zone_idx, result = -ENOMEM;
-+	struct zone *zone;
-+	struct pglist_data *pgdat;
-+	unsigned long flags;
-+
-+	spin_lock_irqsave(&pagemap->struct_lock, flags);
-+
-+	if (!sparse && (pagemap->sparse || !pagemap->initialised)) {
-+		spin_lock_irqsave(&flags_list_lock, flags);
-+		list_add(&pagemap->list, &flags_list);
-+		spin_unlock_irqrestore(&flags_list_lock, flags);
-+	}
-+
-+	pagemap->initialised = 1;
-+	pagemap->sparse = sparse;
-+
-+	if (!pagemap->bitmap && try_alloc_dyn_pageflag_part((1 << NODES_WIDTH),
-+				(void **) &pagemap->bitmap))
-+		goto out;
-+
-+	for_each_online_pgdat(pgdat) {
-+		int node_id = pgdat->node_id;
-+
-+		if (!pagemap->bitmap[node_id] &&
-+		    try_alloc_dyn_pageflag_part(MAX_NR_ZONES,
-+			(void **) &(pagemap->bitmap)[node_id]))
-+				goto out;
-+
-+		for (zone_idx = 0; zone_idx < MAX_NR_ZONES; zone_idx++) {
-+			zone = &pgdat->node_zones[zone_idx];
-+
-+			if (populated_zone(zone) &&
-+			    check_dyn_pageflag_zone(pagemap, zone, 0, 0))
-+				goto out;
-+		}
-+	}
-+
-+	result = 0;
-+
-+out:
-+	spin_unlock_irqrestore(&pagemap->struct_lock, flags);
-+	return result;
-+}
-+EXPORT_SYMBOL_GPL(allocate_dyn_pageflags);
-+
-+/**
-+ * test_dynpageflag - Test a page in a bitmap.
-+ *
-+ * @bitmap: The bitmap we're checking.
-+ * @page: The page for which we want to test the matching bit.
-+ *
-+ * Test whether the bit is on in the array. The array may be sparse,
-+ * in which case the result is zero.
-+ */
-+int test_dynpageflag(struct dyn_pageflags *bitmap, struct page *page)
-+{
-+	GET_BIT_AND_UL(bitmap, page);
-+	return ul ? test_bit(bit, ul) : 0;
-+}
-+EXPORT_SYMBOL_GPL(test_dynpageflag);
-+
-+/**
-+ * set_dynpageflag - Set a bit in a bitmap.
-+ *
-+ * @bitmap: The bitmap we're operating on.
-+ * @page: The page for which we want to set the matching bit.
-+ *
-+ * Set the associated bit in the array. If the array is sparse, we
-+ * seek to allocate the missing page.
-+ */
-+void set_dynpageflag(struct dyn_pageflags *pageflags, struct page *page)
-+{
-+	GET_BIT_AND_UL(pageflags, page);
-+
-+	if (!ul) {
-+		/*
-+		 * Sparse, hotplugged or unprepared.
-+		 * Allocate / fill gaps in high levels
-+		 */
-+		if (allocate_dyn_pageflags(pageflags, 1) ||
-+		    populate_bitmap_page(pageflags, 1, (unsigned long **)
-+				&pageflags->bitmap[node][zone_num][pagenum])) {
-+			printk(KERN_EMERG "Failed to allocate storage in a "
-+					"sparse bitmap.\n");
-+			dump_pagemap(pageflags);
-+			BUG();
-+		}
-+		set_dynpageflag(pageflags, page);
-+	} else
-+		set_bit(bit, ul);
-+}
-+EXPORT_SYMBOL_GPL(set_dynpageflag);
-+
-+/**
-+ * clear_dynpageflag - Clear a bit in a bitmap.
-+ *
-+ * @bitmap: The bitmap we're operating on.
-+ * @page: The page for which we want to clear the matching bit.
-+ *
-+ * Clear the associated bit in the array. It is not an error to be asked
-+ * to clear a bit on a page we haven't allocated.
-+ */
-+void clear_dynpageflag(struct dyn_pageflags *bitmap, struct page *page)
-+{
-+	GET_BIT_AND_UL(bitmap, page);
-+	if (ul)
-+		clear_bit(bit, ul);
-+}
-+EXPORT_SYMBOL_GPL(clear_dynpageflag);
-+
-+/**
-+ * get_next_bit_on - Get the next bit in a bitmap.
-+ *
-+ * @pageflags: The bitmap we're searching.
-+ * @counter: The previous pfn. We always return a value > this.
-+ *
-+ * Given a pfn (possibly max_pfn+1), find the next pfn in the bitmap that
-+ * is set. If there are no more flags set, return max_pfn+1.
-+ */
-+unsigned long get_next_bit_on(struct dyn_pageflags *pageflags,
-+		unsigned long counter)
-+{
-+	struct page *page;
-+	struct zone *zone;
-+	unsigned long *ul = NULL;
-+	unsigned long zone_offset;
-+	int pagebit, zone_num, first = (counter == (max_pfn + 1)), node;
-+
-+	if (first)
-+		counter = first_online_pgdat()->node_zones->zone_start_pfn;
-+
-+	page = pfn_to_page(counter);
-+	zone = page_zone(page);
-+	node = zone->zone_pgdat->node_id;
-+	zone_num = zone_idx(zone);
-+	zone_offset = counter - ZONE_START(zone);
-+
-+	if (first)
-+		goto test;
-+
-+	do {
-+		zone_offset++;
-+
-+		if (zone_offset >= zone->spanned_pages) {
-+			do {
-+				zone = next_zone(zone);
-+				if (!zone)
-+					return max_pfn + 1;
-+			} while (!zone->spanned_pages);
-+
-+			zone_num = zone_idx(zone);
-+			node = zone->zone_pgdat->node_id;
-+			zone_offset = 0;
-+		}
-+test:
-+		pagebit = PAGEBIT(zone_offset);
-+
-+		if (!pagebit || !ul) {
-+			unsigned long **zone_array = get_zone_array(pageflags,
-+					node, zone_num);
-+			ul = zone_array ?
-+				zone_array[PAGENUMBER(zone_offset)+2] : NULL;
-+			if (ul)
-+				ul += PAGEINDEX(zone_offset);
-+			else {
-+				PR_DEBUG("Unallocated page. Skipping from zone"
-+					" offset %lu to the start of the next "
-+					"one.\n", zone_offset);
-+				zone_offset = roundup(zone_offset + 1,
-+						PAGE_SIZE << 3) - 1;
-+				PR_DEBUG("New zone offset is %lu.\n",
-+						zone_offset);
-+				continue;
-+			}
-+		}
-+
-+		if (!ul || !(*ul & ~((1 << pagebit) - 1))) {
-+			zone_offset += BITS_PER_LONG - pagebit - 1;
-+			continue;
-+		}
-+
-+	} while (!ul || !test_bit(pagebit, ul));
-+
-+	return ZONE_START(zone) + zone_offset;
-+}
-+EXPORT_SYMBOL_GPL(get_next_bit_on);
-+
-+#ifdef SELF_TEST
-+#include <linux/jiffies.h>
-+
-+static __init int dyn_pageflags_test(void)
-+{
-+	struct dyn_pageflags test_map;
-+	struct page *test_page1 = pfn_to_page(1);
-+	unsigned long pfn = 0, start, end;
-+	int i, iterations;
-+
-+	memset(&test_map, 0, sizeof(test_map));
-+
-+	printk("Dynpageflags testing...\n");
-+
-+	printk(KERN_INFO "Set page 1...");
-+	set_dynpageflag(&test_map, test_page1);
-+	if (test_dynpageflag(&test_map, test_page1))
-+		printk(KERN_INFO "Ok.\n");
-+	else
-+		printk(KERN_INFO "FAILED.\n");
-+
-+	printk(KERN_INFO "Test memory hotplugging #1 ...");
-+	{
-+		unsigned long orig_size;
-+		GET_BIT_AND_UL(&test_map, test_page1);
-+		orig_size = (unsigned long) test_map.bitmap[node][zone_num][1];
-+		/*
-+		 * Use the code triggered when zone_start_pfn lowers,
-+		 * checking that our bit is then set in the third page.
-+		 */
-+		resize_zone_bitmap(&test_map, zone, orig_size,
-+				orig_size + 2, 2);
-+		DUMP_DEBUG(&test_map);
-+		if ((unsigned long) test_map.bitmap[node][zone_num]
-+				[pagenum + 2] &&
-+		    (unsigned long) test_map.bitmap[node][zone_num]
-+				[pagenum + 2][0] == 2UL)
-+			printk(KERN_INFO "Ok.\n");
-+		else
-+			printk(KERN_INFO "FAILED.\n");
-+	}
-+
-+	printk(KERN_INFO "Test memory hotplugging #2 ...");
-+	{
-+		/*
-+		 * Test expanding bitmap length.
-+		 */
-+		unsigned long orig_size;
-+		GET_BIT_AND_UL(&test_map, test_page1);
-+		orig_size = (unsigned long) test_map.bitmap[node]
-+							[zone_num][1];
-+		resize_zone_bitmap(&test_map, zone, orig_size,
-+				orig_size + 2, 0);
-+		DUMP_DEBUG(&test_map);
-+		pagenum += 2; /* Offset for first test */
-+		if (test_map.bitmap[node][zone_num][pagenum] &&
-+		    test_map.bitmap[node][zone_num][pagenum][0] == 2UL &&
-+		    (unsigned long) test_map.bitmap[node][zone_num][1] ==
-+						orig_size + 2)
-+			printk(KERN_INFO "Ok.\n");
-+		else
-+			printk(KERN_INFO "FAILED ([%d][%d][%d]: %p && %lu == "
-+				"2UL  && %p == %lu).\n",
-+				node, zone_num, pagenum,
-+				test_map.bitmap[node][zone_num][pagenum],
-+				test_map.bitmap[node][zone_num][pagenum] ?
-+				test_map.bitmap[node][zone_num][pagenum][0] : 0,
-+				test_map.bitmap[node][zone_num][1],
-+				orig_size + 2);
-+	}
-+
-+	free_dyn_pageflags(&test_map);
-+
-+	allocate_dyn_pageflags(&test_map, 0);
-+
-+	start = jiffies;
-+
-+	iterations = 25000000 / max_pfn;
-+
-+	for (i = 0; i < iterations; i++) {
-+		for (pfn = 0; pfn < max_pfn; pfn++)
-+			set_dynpageflag(&test_map, pfn_to_page(pfn));
-+		for (pfn = 0; pfn < max_pfn; pfn++)
-+			clear_dynpageflag(&test_map, pfn_to_page(pfn));
-+	}
-+
-+	end = jiffies;
-+
-+	free_dyn_pageflags(&test_map);
-+
-+	printk(KERN_INFO "Dyn: %d iterations of setting & clearing all %lu "
-+			"flags took %lu jiffies.\n",
-+			iterations, max_pfn, end - start);
-+
-+	start = jiffies;
-+
-+	for (i = 0; i < iterations; i++) {
-+		for (pfn = 0; pfn < max_pfn; pfn++)
-+			set_bit(7, &(pfn_to_page(pfn))->flags);
-+		for (pfn = 0; pfn < max_pfn; pfn++)
-+			clear_bit(7, &(pfn_to_page(pfn))->flags);
-+	}
-+
-+	end = jiffies;
-+
-+	printk(KERN_INFO "Real flags: %d iterations of setting & clearing "
-+			"all %lu flags took %lu jiffies.\n",
-+			iterations, max_pfn, end - start);
-+
-+	iterations = 25000000;
-+
-+	start = jiffies;
-+
-+	for (i = 0; i < iterations; i++) {
-+		set_dynpageflag(&test_map, pfn_to_page(1));
-+		clear_dynpageflag(&test_map, pfn_to_page(1));
-+	}
-+
-+	end = jiffies;
-+
-+	printk(KERN_INFO "Dyn: %d iterations of setting & clearing all one "
-+			"flag took %lu jiffies.\n", iterations, end - start);
-+
-+	start = jiffies;
-+
-+	for (i = 0; i < iterations; i++) {
-+		set_bit(7, &(pfn_to_page(1))->flags);
-+		clear_bit(7, &(pfn_to_page(1))->flags);
-+	}
-+
-+	end = jiffies;
-+
-+	printk(KERN_INFO "Real pageflag: %d iterations of setting & clearing "
-+			"all one flag took %lu jiffies.\n",
-+			iterations, end - start);
-+	return 0;
-+}
-+
-+late_initcall(dyn_pageflags_test);
-+#endif
-+
-+static int __init dyn_pageflags_debug_setup(char *str)
-+{
-+	printk(KERN_INFO "Dynamic pageflags debugging enabled.\n");
-+	dyn_pageflags_debug = 1;
-+	return 1;
-+}
-+
-+__setup("dyn_pageflags_debug", dyn_pageflags_debug_setup);
 diff --git a/mm/highmem.c b/mm/highmem.c
 index b36b83b..c46ede9 100644
 --- a/mm/highmem.c
@@ -19911,27 +19202,6 @@ index 164951c..e9dc657 100644
  
  /* Can we do the FOLL_ANON optimization? */
  static inline int use_zero_page(struct vm_area_struct *vma)
-diff --git a/mm/memory_hotplug.c b/mm/memory_hotplug.c
-index b173711..b401525 100644
---- a/mm/memory_hotplug.c
-+++ b/mm/memory_hotplug.c
-@@ -11,6 +11,7 @@
- #include <linux/pagemap.h>
- #include <linux/bootmem.h>
- #include <linux/compiler.h>
-+#include <linux/dyn_pageflags.h>
- #include <linux/module.h>
- #include <linux/pagevec.h>
- #include <linux/writeback.h>
-@@ -213,6 +214,8 @@ static int __meminit __add_zone(struct zone *zone, unsigned long phys_start_pfn)
- 	pgdat_resize_unlock(zone->zone_pgdat, &flags);
- 	memmap_init_zone(nr_pages, nid, zone_type,
- 			 phys_start_pfn, MEMMAP_HOTPLUG);
-+
-+	dyn_pageflags_hotplug(zone);
- 	return 0;
- }
- 
 diff --git a/mm/mmzone.c b/mm/mmzone.c
 index 16ce8b9..8dd207b 100644
 --- a/mm/mmzone.c
