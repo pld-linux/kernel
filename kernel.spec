@@ -1,6 +1,7 @@
 #
 # TODO before 2.6.28-1:
 # - apparmor/grsecurity 
+#   ( http://grsecurity.net/test/grsecurity-2.1.12-2.6.28-200901122133.patch )
 #
 # TODO:
 # - benchmark NO_HZ & HZ=1000 vs HZ=300 on i686
