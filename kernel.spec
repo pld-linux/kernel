@@ -108,7 +108,7 @@
 %define		_enable_debug_packages			0
 
 %define		squashfs_version	3.4
-%define		tuxonice_version	3.0-rc7a
+%define		tuxonice_version	3.0-rc8
 %define		netfilter_snap		20070806
 %define		xen_version		3.0.2
 
@@ -267,7 +267,7 @@ Patch59:	kernel-rndis_host-wm5.patch
 Patch61:	kernel-vesa-upstream.patch
 
 # Project suspend2 renamed to tuxonice
-# http://www.tuxonice.net/downloads/all/tuxonice-3.0-rc7a-for-2.6.26.patch.bz2
+# http://www.tuxonice.net/downloads/all/tuxonice-3.0-rc8-for-2.6.27.patch.bz2
 Patch69:	linux-2.6-suspend2.patch
 Patch70:	kernel-suspend2-headers.patch
 
