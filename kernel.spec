@@ -1,7 +1,6 @@
 #
 # TODO before 2.6.28-1:
-# - apparmor/grsecurity 
-#   ( http://grsecurity.net/test/grsecurity-2.1.12-2.6.28-200901122133.patch )
+# - apparmor+grsec_full
 #
 # TODO:
 # - benchmark NO_HZ & HZ=1000 vs HZ=300 on i686
@@ -104,7 +103,7 @@
 
 %define		basever		2.6.28
 %define		postver		%{nil}
-%define		rel		0.4
+%define		rel		0.5
 
 %define		_enable_debug_packages			0
 
@@ -329,7 +328,7 @@ Patch9997:	pax_selinux_hooks-2.6.20.patch
 # based on http://www.grsecurity.net/~paxguy1/pax-linux-2.6.24.6-test45.patch
 Patch9998:	kernel-pax.patch
 
-# based on http://www.grsecurity.net/~spender/grsecurity-2.1.12-2.6.27.4-200810272314.patch
+# based on http://www.grsecurity.net/~spender/grsecurity-2.1.12-2.6.28-200901161810.patch
 Patch9999:	linux-2.6-grsec_full.patch
 Patch10000:	linux-2.6-grsec-caps.patch
 Patch10001:	linux-2.6-grsec-common.patch
