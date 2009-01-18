@@ -2,9 +2,9 @@ diff -uprN linux-2.6.27./fs/afs/dir.c linux-2.6.27/fs/afs/dir.c
 --- linux-2.6.27./fs/afs/dir.c	2008-10-10 00:13:53.000000000 +0200
 +++ linux-2.6.27/fs/afs/dir.c	2008-10-29 02:02:01.686215981 +0100
 @@ -45,6 +45,7 @@ const struct file_operations afs_dir_fil
- 	.release	= afs_release,
  	.readdir	= afs_readdir,
  	.lock		= afs_lock,
+ 	.llseek		= generic_file_llseek,
 +	.fsetattr	= afs_fsetattr,
  };
  
@@ -1125,13 +1125,13 @@ diff -uprN linux-2.6.27./fs/nfsd/nfs4recover.c linux-2.6.27/fs/nfsd/nfs4recover.
 --- linux-2.6.27./fs/nfsd/nfs4recover.c	2008-10-10 00:13:53.000000000 +0200
 +++ linux-2.6.27/fs/nfsd/nfs4recover.c	2008-10-29 02:02:00.593071537 +0100
 @@ -158,7 +158,8 @@ nfsd4_create_clid_dir(struct nfs4_client
- 	status = mnt_want_write(rec_dir.path.mnt);
+ 	status = mnt_want_write(rec_dir.mnt);
  	if (status)
  		goto out_put;
--	status = vfs_mkdir(rec_dir.path.dentry->d_inode, dentry, S_IRWXU);
-+	status = vfs_mkdir(rec_dir.path.dentry->d_inode, dentry,
-+			   rec_dir.path.mnt, S_IRWXU);
- 	mnt_drop_write(rec_dir.path.mnt);
+-	status = vfs_mkdir(rec_dir.dentry->d_inode, dentry, S_IRWXU);
++	status = vfs_mkdir(rec_dir.dentry->d_inode, dentry,
++			   rec_dir.mnt, S_IRWXU);
+ 	mnt_drop_write(rec_dir.mnt);
  out_put:
  	dput(dentry);
 @@ -263,7 +264,7 @@ nfsd4_remove_clid_file(struct dentry *di
@@ -1176,7 +1176,7 @@ diff -uprN linux-2.6.27./fs/nfsd/vfs.c linux-2.6.27/fs/nfsd/vfs.c
  		err = nfserrno(host_err);
  		fh_unlock(fhp);
  	}
-@@ -408,11 +408,12 @@ out_nfserr:
+@@ -408,12 +408,13 @@ out_nfserr:
  #if defined(CONFIG_NFSD_V2_ACL) || \
      defined(CONFIG_NFSD_V3_ACL) || \
      defined(CONFIG_NFSD_V4)
@@ -1185,6 +1185,7 @@ diff -uprN linux-2.6.27./fs/nfsd/vfs.c linux-2.6.27/fs/nfsd/vfs.c
 +			     char *key, void **buf)
  {
  	ssize_t buflen;
+ 	ssize_t ret;
  
 -	buflen = vfs_getxattr(dentry, key, NULL, 0);
 +	buflen = vfs_getxattr(dentry, mnt, key, NULL, 0, NULL);
