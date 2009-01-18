@@ -1,7 +1,7 @@
---- linux-2.6.27/init/Kconfig~	2008-11-20 23:26:34.000000000 +0100
-+++ linux-2.6.27/init/Kconfig	2008-12-01 20:37:12.000000000 +0100
-@@ -781,8 +781,8 @@
- source "arch/Kconfig"
+--- linux-2.6.28/fs/proc/Kconfig~       2008-11-20 23:26:34.000000000 +0100
++++ linux-2.6.28/fs/proc/Kconfig        2008-12-01 20:37:12.000000000 +0100
+@@ -59,8 +59,8 @@
+ 	  limited in memory.
  
  config PROC_PAGE_MONITOR
 - 	default n
@@ -11,31 +11,23 @@
  	bool "Enable /proc page monitoring" if EMBEDDED
   	help
  	  Various /proc files exist to monitor process memory utilization:
-@@ -798,9 +798,9 @@
+--- linux-2.6.28/mm/slab.c~	2009-01-18 02:10:12.395711069 +0100
++++ linux-2.6.28/mm/slab.c	2009-01-18 02:18:05.632401077 +0100
+@@ -4496,8 +4496,15 @@
  
- config SLABINFO
- 	bool
--	depends on PROC_FS && !GRKERNSEC_PROC_ADD
-+	depends on PROC_FS
- 	depends on SLAB || SLUB_DEBUG
--	default n
-+	default y
- 
- config RT_MUTEXES
- 	boolean
---- linux-2.6.27/fs/proc/proc_misc.c~	2008-11-20 23:26:30.000000000 +0100
-+++ linux-2.6.27/fs/proc/proc_misc.c	2008-12-01 20:35:55.000000000 +0100
-@@ -934,8 +934,12 @@
- #endif
- 	proc_create("stat", 0, NULL, &proc_stat_operations);
- 	proc_create("interrupts", 0, NULL, &proc_interrupts_operations);
--#if defined(CONFIG_SLABINFO) && !defined(CONFIG_GRKERNSEC_PROC_ADD)
-+#ifdef CONFIG_SLABINFO
+ static int __init slab_proc_init(void)
+ {
+-#if !defined(CONFIG_GRKERNSEC_PROC_ADD)
+-	proc_create("slabinfo",S_IWUSR|S_IRUGO,NULL,&proc_slabinfo_operations);
++	int gr_mode = S_IWUSR|S_IRUGO;
++#ifdef CONFIG_GRKERNSEC_PROC_USER
++	gr_mode = S_IRUSR;
++#elif defined(CONFIG_GRKERNSEC_PROC_USERGROUP)
++	gr_mode = S_IRUSR | S_IRGRP;
++#endif
++
 +#ifdef CONFIG_GRKERNSEC_PROC_ADD
 +	proc_create("slabinfo",gr_mode,NULL,&proc_slabinfo_operations);
-+#else
- 	proc_create("slabinfo",S_IWUSR|S_IRUGO,NULL,&proc_slabinfo_operations);
-+#endif
  #ifdef CONFIG_DEBUG_SLAB_LEAK
  	proc_create("slab_allocators", 0, NULL, &proc_slabstats_operations);
  #endif

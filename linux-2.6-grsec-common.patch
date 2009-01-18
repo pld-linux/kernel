@@ -37,23 +37,6 @@
  		current->flags |= PF_SUPERPRIV;
  		return 1;
 ===
-=== let vserver block signals before grsec
-===
---- a/kernel/signal.c  2007-10-02 00:08:49.954483500 +0200
-+++ b/kernel/signal.c  2007-10-02 00:24:31.969355750 +0200
-@@ -553,6 +553,11 @@ static int check_kill_permission(int sig
- 			sig, info, t, vx_task_xid(t), t->pid, current->xid);
- 		return error;
- 	}
-+
-+	error = -EPERM;
-+	if (gr_handle_signal(t, sig))
-+		return error;
-+
- skip:
- 	return security_task_kill(t, info, sig, 0);
- }
-===
 === vserver netlink protection
 ===
 --- a/security/commoncap.c~	2007-12-10 23:52:36.000000000 +0100
