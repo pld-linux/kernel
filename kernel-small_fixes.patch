@@ -1,0 +1,351 @@
+diff -Nur linux-2.6.15.6/drivers/input/joystick/iforce/iforce-serio.c linux-2.6.15.6.iforce/drivers/input/joystick/iforce/iforce-serio.c
+--- linux-2.6.15.6/drivers/input/joystick/iforce/iforce-serio.c	2006-03-05 19:07:54.000000000 +0000
++++ linux-2.6.15.6.iforce/drivers/input/joystick/iforce/iforce-serio.c	2006-04-29 23:17:59.000000000 +0000
+@@ -175,6 +175,12 @@
+ 		.id	= SERIO_ANY,
+ 		.extra	= SERIO_ANY,
+ 	},
++	{
++		.type	= SERIO_RS232,
++		.proto	= 0x1f, // Trust ForceFeedback Race Master
++		.id	= SERIO_ANY,
++		.extra	= SERIO_ANY,
++	},
+ 	{ 0 }
+ };
+ 
+--- linux-2.6.27/arch/powerpc/include/asm/io.h~	2006-06-18 01:49:35.000000000 +0000
++++ linux-2.6.27/arch/powerpc/include/asm/io.h	2006-06-22 02:44:19.000000000 +0000
+@@ -445,6 +445,10 @@
+ #define page_to_phys(page)	(page_to_pfn(page) << PAGE_SHIFT)
+ #define page_to_bus(page)	(page_to_phys(page) + PCI_DRAM_OFFSET)
+ 
++#define isa_virt_to_bus virt_to_phys
++#define isa_page_to_bus page_to_phys
++#define isa_bus_to_virt phys_to_virt
++
+ /* Enforce in-order execution of data I/O.
+  * No distinction between read/write on PPC; use eieio for all three.
+  */
+--- linux-2.6.20/drivers/media/common/ir-keymaps.c.orig	2007-02-04 19:44:54.000000000 +0100
++++ linux-2.6.20/drivers/media/common/ir-keymaps.c	2007-02-17 22:22:39.327414970 +0100
+@@ -151,10 +151,6 @@
+ 
+ IR_KEYTAB_TYPE ir_codes_pixelview[IR_KEYTAB_SIZE] = {
+ 
+-	[ 0x1e ] = KEY_POWER,       // power
+-	[ 0x07 ] = KEY_MEDIA,       // source
+-	[ 0x1c ] = KEY_SEARCH,      // scan
+-
+ /* FIXME: duplicate keycodes?
+  *
+  * These four keys seem to share the same GPIO as CH+, CH-, <<< and >>>
+@@ -175,14 +171,10 @@
+  */
+ 
+ 	[ 0x03 ] = KEY_TUNER,       // TV/FM
++	[ 0x07 ] = KEY_SEARCH,      // scan
++	[ 0x1c ] = KEY_ZOOM,        // zoom
+ 
+-	[ 0x00 ] = KEY_RECORD,
+-	[ 0x08 ] = KEY_STOP,
+-	[ 0x11 ] = KEY_PLAY,
+-
+-	[ 0x1a ] = KEY_PLAYPAUSE,   // freeze
+-	[ 0x19 ] = KEY_ZOOM,        // zoom
+-	[ 0x0f ] = KEY_TEXT,        // min
++	[ 0x1e ] = KEY_POWER,       // power
+ 
+ 	[ 0x01 ] = KEY_1,
+ 	[ 0x0b ] = KEY_2,
+@@ -195,20 +187,22 @@
+ 	[ 0x12 ] = KEY_9,
+ 	[ 0x02 ] = KEY_0,
+ 	[ 0x10 ] = KEY_LAST,        // +100
+-	[ 0x13 ] = KEY_LIST,        // recall
++	[ 0x13 ] = KEY_LIST,        // loop
+ 
+-	[ 0x1f ] = KEY_CHANNELUP,   // chn down
+-	[ 0x17 ] = KEY_CHANNELDOWN, // chn up
+-	[ 0x16 ] = KEY_VOLUMEUP,    // vol down
+-	[ 0x14 ] = KEY_VOLUMEDOWN,  // vol up
++	[ 0x1f ] = KEY_VOLUMEUP,    // vol down
++	[ 0x17 ] = KEY_VOLUMEDOWN,  // vol up
++	[ 0x16 ] = KEY_CHANNELUP,   // chn down
++	[ 0x14 ] = KEY_CHANNELDOWN, // chn up
+ 
+-	[ 0x04 ] = KEY_KPMINUS,     // <<<
++	[ 0x00 ] = KEY_MEDIA,       // source
++	[ 0x18 ] = KEY_MUTE,        // mute/unmute
++
++	[ 0x04 ] = KEY_KPMINUS,     // -
+ 	[ 0x0e ] = KEY_SETUP,       // function
+-	[ 0x0c ] = KEY_KPPLUS,      // >>>
++	[ 0x0c ] = KEY_KPPLUS,      // +
+ 
+-	[ 0x0d ] = KEY_GOTO,        // mts
+-	[ 0x1d ] = KEY_REFRESH,     // reset
+-	[ 0x18 ] = KEY_MUTE         // mute/unmute
++	[ 0x0d ] = KEY_REFRESH,     // reset
++	[ 0x0f ] = KEY_PLAYPAUSE    // freeze
+ };
+ 
+ EXPORT_SYMBOL_GPL(ir_codes_pixelview);
+--- linux-2.6.22/drivers/sbus/char/cpwatchdog.c~	2007-07-09 01:32:17.000000000 +0200
++++ linux-2.6.22/drivers/sbus/char/cpwatchdog.c	2007-08-12 03:56:02.739993250 +0200
+@@ -28,6 +28,7 @@
+ #include <asm/ebus.h>
+ #include <asm/oplib.h>
+ #include <asm/uaccess.h>
++#include <asm/io.h>
+ 
+ #include <asm/watchdog.h>
+ 
+--- linux-2.6.27/arch/powerpc/include/asm/suspend.h	2007-07-09 01:32:17.000000000 +0200
++++ linux-2.6.27/arch/powerpc/include/asm/suspend.h	2007-08-28 23:26:16.629658848 +0200
+@@ -6,4 +6,7 @@
+ void save_processor_state(void);
+ void restore_processor_state(void);
+ 
++#define suspend2_faulted (0)
++#define clear_suspend2_fault() do { } while(0)
++
+ #endif /* __ASM_POWERPC_SUSPEND_H */
+--- linux-2.6.26/arch/powerpc/kernel/swsusp.c	2008-09-29 00:01:56.000000000 +0200
++++ linux-2.6.26/arch/powerpc/kernel/swsusp.c	2008-09-29 00:01:42.000000000 +0200
+@@ -9,6 +9,7 @@
+  * 2 of the License, or (at your option) any later version.
+  */
+ 
++#include <linux/module.h>
+ #include <linux/sched.h>
+ #include <asm/suspend.h>
+ #include <asm/system.h>
+@@ -30,6 +31,7 @@
+ #endif
+ 
+ }
++EXPORT_SYMBOL(save_processor_state);
+ 
+ void restore_processor_state(void)
+ {
+--- linux-2.6.27/security/security.c.orig	2008-10-09 22:13:53.000000000 +0000
++++ linux-2.6.27/security/security.c	2008-10-20 17:27:49.000000000 +0000
+@@ -439,6 +439,7 @@
+ 		return 0;
+ 	return security_ops->inode_permission(inode, mask);
+ }
++EXPORT_SYMBOL_GPL(security_inode_permission);
+ 
+ int security_inode_setattr(struct dentry *dentry, struct iattr *attr)
+ {
+--- a/drivers/net/mv643xx_eth.c
++++ b/drivers/net/mv643xx_eth.c
+@@ -38,6 +38,7 @@
+ #include <linux/init.h>
+ #include <linux/dma-mapping.h>
+ #include <linux/in.h>
++#include <linux/ip.h>
+ #include <linux/tcp.h>
+ #include <linux/udp.h>
+ #include <linux/etherdevice.h>
+--- linux-2.6.27/fs/squashfs/inode.c~	2008-12-03 21:49:11.000000000 +0100
++++ linux-2.6.27/fs/squashfs/inode.c	2008-12-03 22:15:09.000000000 +0100
+@@ -33,6 +33,7 @@
+ #include <linux/spinlock.h>
+ #include <linux/smp_lock.h>
+ #include <linux/exportfs.h>
++#include <linux/sched.h>
+ 
+ #include "squashfs.h"
+ 
+From: Hannes Reinecke <hare@suse.de>
+Subject: Retry ALUA device handler initialization on Unit Attention
+
+Whenever we receive a UNIT ATTENTION sense code we should just retry
+the command. No point in checking the various sense codes here.
+
+Signed-off-by: Hannes Reinecke <hare@suse.de>
+
+diff --git a/drivers/scsi/device_handler/scsi_dh_alua.c b/drivers/scsi/device_handler/scsi_dh_alua.c
+index e356b43..a3660a6 100644
+--- a/drivers/scsi/device_handler/scsi_dh_alua.c
++++ b/drivers/scsi/device_handler/scsi_dh_alua.c
+@@ -444,24 +444,10 @@ static int alua_check_sense(struct scsi_device *sdev,
+ 			return SUCCESS;
+ 		break;
+ 	case UNIT_ATTENTION:
+-		if (sense_hdr->asc == 0x29 && sense_hdr->ascq == 0x00)
+-			/*
+-			 * Power On, Reset, or Bus Device Reset, just retry.
+-			 */
+-			return ADD_TO_MLQUEUE;
+-		if (sense_hdr->asc == 0x2a && sense_hdr->ascq == 0x06) {
+-			/*
+-			 * ALUA state changed
+-			 */
+-			return ADD_TO_MLQUEUE;
+-		}
+-		if (sense_hdr->asc == 0x2a && sense_hdr->ascq == 0x07) {
+-			/*
+-			 * Implicit ALUA state transition failed
+-			 */
+-			return ADD_TO_MLQUEUE;
+-		}
+-		break;
++		/*
++		 * Just retry for UNIT_ATTENTION
++		 */
++		return ADD_TO_MLQUEUE;
+ 	}
+ 
+ 	return SCSI_RETURN_NOT_HANDLED;
+From: Hannes Reinecke <hare@suse.de>
+Subject: Always send STPG for explicit tgps mode
+
+When we are in explicit tgps mode we should always send an STPG
+command to enable the active/optimized mode.
+
+Signed-off-by: Hannes Reinecke <hare@suse.de>
+
+---
+ drivers/scsi/device_handler/scsi_dh_alua.c |   10 ++++------
+ 1 file changed, 4 insertions(+), 6 deletions(-)
+
+--- a/drivers/scsi/device_handler/scsi_dh_alua.c
++++ b/drivers/scsi/device_handler/scsi_dh_alua.c
+@@ -593,13 +593,11 @@ static int alua_activate(struct scsi_dev
+ 	struct alua_dh_data *h = get_alua_data(sdev);
+ 	int err = SCSI_DH_OK;
+ 
+-	if (h->group_id != -1) {
+-		err = alua_rtpg(sdev, h);
+-		if (err != SCSI_DH_OK)
+-			goto out;
+-	}
++	err = alua_rtpg(sdev, h);
++	if (err != SCSI_DH_OK)
++		goto out;
+ 
+-	if (h->tpgs == TPGS_MODE_EXPLICIT && h->state != TPGS_STATE_OPTIMIZED)
++	if ((h->tpgs & TPGS_MODE_EXPLICIT) && h->state != TPGS_STATE_OPTIMIZED)
+ 		err = alua_stpg(sdev, TPGS_STATE_OPTIMIZED, h);
+ 
+ out:
+Subject: Initialize path state to be passive when path is not owned
+From: Chandra Seetharaman <sekharan@us.ibm.com>
+Date: Thu Nov 20 14:14:39 2008 +0100:
+References: bnc#442676
+
+Set the path state to be passive when we learn that the controller does
+not own the path to the LUN.
+
+This will avoid sending even a single i/o thru the passive path at the
+probe time.
+
+Signed-off-by: Chandra Seetharaman <sekharan@us.ibm.com>
+Signed-off-by: Hannes Reinecke <hare@suse.de>
+
+---
+ drivers/scsi/device_handler/scsi_dh_rdac.c |    3 +++
+ 1 file changed, 3 insertions(+)
+
+--- a/drivers/scsi/device_handler/scsi_dh_rdac.c
++++ b/drivers/scsi/device_handler/scsi_dh_rdac.c
+@@ -403,6 +403,9 @@ static int check_ownership(struct scsi_d
+ 		}
+ 	}
+ 
++	if (h->lun_state == RDAC_LUN_UNOWNED)
++		h->state = RDAC_STATE_PASSIVE;
++
+ 	return err;
+ }
+ 
+Subject: Retry mode select in RDAC device handler
+From: Chandra Seetharaman <sekharan@us.ibm.com>
+References: bnc#441337
+
+When the mode select sent to the controller fails with the retryable
+error, it is better to retry the mode_select from the hardware handler
+itself, instead of propagating the failure to dm-multipath.
+
+Signed-off-by: Chandra Seetharaman <sekharan@us.ibm.com>
+Signed-off-by: Hannes Reinecke <hare@suse.de>
+
+---
+---
+ drivers/scsi/device_handler/scsi_dh_rdac.c |   15 +++++++++++----
+ 1 file changed, 11 insertions(+), 4 deletions(-)
+
+--- a/drivers/scsi/device_handler/scsi_dh_rdac.c
++++ b/drivers/scsi/device_handler/scsi_dh_rdac.c
+@@ -24,6 +24,7 @@
+ #include <scsi/scsi_dh.h>
+ 
+ #define RDAC_NAME "rdac"
++#define RDAC_RETRY_COUNT 5
+ 
+ /*
+  * LSI mode page stuff
+@@ -475,21 +476,27 @@ static int send_mode_select(struct scsi_
+ {
+ 	struct request *rq;
+ 	struct request_queue *q = sdev->request_queue;
+-	int err = SCSI_DH_RES_TEMP_UNAVAIL;
++	int err, retry_cnt = RDAC_RETRY_COUNT;
+ 
++retry:
++	err = SCSI_DH_RES_TEMP_UNAVAIL;
+ 	rq = rdac_failover_get(sdev, h);
+ 	if (!rq)
+ 		goto done;
+ 
+-	sdev_printk(KERN_INFO, sdev, "queueing MODE_SELECT command.\n");
++	sdev_printk(KERN_INFO, sdev, "%s MODE_SELECT command.\n",
++		(retry_cnt == RDAC_RETRY_COUNT) ? "queueing" : "retrying");
+ 
+ 	err = blk_execute_rq(q, NULL, rq, 1);
+-	if (err != SCSI_DH_OK)
++	blk_put_request(rq);
++	if (err != SCSI_DH_OK) {
+ 		err = mode_select_handle_sense(sdev, h->sense);
++		if (err == SCSI_DH_RETRY && retry_cnt--)
++			goto retry;
++	}
+ 	if (err == SCSI_DH_OK)
+ 		h->state = RDAC_STATE_ACTIVE;
+ 
+-	blk_put_request(rq);
+ done:
+ 	return err;
+ }
+Subject: scsi_dh_rdac: make sure the ownership is set correctly
+From: Chandra Seetharaman <sekharan@us.ibm.com>
+Patch-Mainline: 2.6.28
+References: bnc#441337
+
+When the controller ownership is changed (from passive to active),
+check_ownership() doesn't set the state of the device to ACTIVE.
+
+This patch fixes the problem.
+
+Signed-off-by: Chandra Seetharaman <sekharan@us.ibm.com>
+Reported and tested by: "Moger, Babu" <Babu.Moger@lsi.com>
+Signed-off-by: Hannes Reinecke <hare@suse.de>
+
+---
+---
+ drivers/scsi/device_handler/scsi_dh_rdac.c |    1 +
+ 1 file changed, 1 insertion(+)
+
+--- a/drivers/scsi/device_handler/scsi_dh_rdac.c
++++ b/drivers/scsi/device_handler/scsi_dh_rdac.c
+@@ -386,6 +386,7 @@ static int check_ownership(struct scsi_d
+ 	struct c9_inquiry *inqp;
+ 
+ 	h->lun_state = RDAC_LUN_UNOWNED;
++	h->state = RDAC_STATE_ACTIVE;
+ 	err = submit_inquiry(sdev, 0xC9, sizeof(struct c9_inquiry), h);
+ 	if (err == SCSI_DH_OK) {
+ 		inqp = &h->inq.c9;
