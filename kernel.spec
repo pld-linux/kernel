@@ -1394,6 +1394,7 @@ fi
 
 %files
 %defattr(644,root,root,755)
+%dir %{_kernelsrcdir}
 %ifarch sparc sparc64
 /boot/vmlinux.aout-%{kernel_release}
 %endif
@@ -1537,7 +1538,6 @@ fi
 
 %files headers
 %defattr(644,root,root,755)
-%dir %{_kernelsrcdir}
 %{_kernelsrcdir}/include
 %{_kernelsrcdir}/config-dist
 %{_kernelsrcdir}/Module.symvers-dist
@@ -1570,7 +1570,6 @@ fi
 
 %files doc
 %defattr(644,root,root,755)
-%dir %{_kernelsrcdir}
 %{_kernelsrcdir}/Documentation
 
 %if %{with source}
