@@ -1,6 +1,7 @@
 #
-# TODO before 2.6.28-1:
+# TODO before 2.6.28.X-1:
 # - apparmor+grsec_full
+# - nvidia drivers fail to build
 #
 # TODO:
 # - benchmark NO_HZ & HZ=1000 vs HZ=300 on i686
@@ -506,6 +507,19 @@ vmlinux - dekompressiertes Kernel Bild.
 
 %description vmlinux -l pl.UTF-8
 vmlinux - rozpakowany obraz jądra.
+
+%package dirs
+Summary:	common dirs for kernel packages
+Summary(pl.UTF-8):	Katalogi wspólne dla pakietów kernela
+Group:		Base/Kernel
+
+%description dirs
+This package provides common dirs shared between various kernel
+packages.
+
+%description dirs -l pl.UTF-8
+Katalog ten udostepnia katalogi współdzielone pomiędzy różnymi
+pakietami kernela.
 
 %package drm
 Summary:	DRM kernel modules
@@ -1394,7 +1408,6 @@ fi
 
 %files
 %defattr(644,root,root,755)
-%dir %{_kernelsrcdir}
 %ifarch sparc sparc64
 /boot/vmlinux.aout-%{kernel_release}
 %endif
@@ -1459,6 +1472,10 @@ fi
 %ghost /lib/modules/%{kernel_release}/build
 %ghost /lib/modules/%{kernel_release}/source
 %dir %{_sysconfdir}/modprobe.d/%{kernel_release}
+
+%files dirs
+%defattr(644,root,root,755)
+%dir %{_kernelsrcdir}
 
 %ifarch alpha %{ix86} %{x8664} ppc ppc64 sparc sparc64
 %files vmlinux
