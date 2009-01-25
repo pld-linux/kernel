@@ -16770,11 +16770,12 @@ diff -NurpP --minimal linux-2.6.27.12/kernel/signal.c linux-2.6.27.12-vs2.3.0.36
  		ret = -ESRCH;
  		goto out_unlock;
  	}
-@@ -1141,7 +1163,10 @@ static int kill_something_info(int sig, 
+@@ -1141,8 +1163,10 @@ static int kill_something_info(int sig, 
  		struct task_struct * p;
  
  		for_each_process(p) {
--			if (p->pid > 1 && !same_thread_group(p, current)) {
+-			if (task_pid_vnr(p) > 1 &&
+-					!same_thread_group(p, current)) {
 +			if (vx_check(vx_task_xid(p), VS_ADMIN|VS_IDENT) &&
 +				task_pid_vnr(p) > 1 &&
 +				!same_thread_group(p, current) &&
