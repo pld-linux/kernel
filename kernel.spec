@@ -267,6 +267,9 @@ Patch59:	kernel-rndis_host-wm5.patch
 Patch69:	linux-2.6-suspend2.patch
 Patch70:	kernel-suspend2-headers.patch
 
+# ext4 patches
+Patch71:	kernel-ext4.patch
+
 # adds some ids for hostap suported cards and monitor_enable from/for aircrack-ng
 # http://patches.aircrack-ng.org/hostap-kernel-2.6.18.patch
 Patch85:	hostap-kernel-2.6.18.patch
@@ -733,6 +736,9 @@ install %{SOURCE5} Makefile.ppclibs
 %patch70 -p1
 ##endif
 %endif
+
+# ext4 patch
+%patch71 -p1
 
 %patch2 -p1
 %if %{with fbcondecor}
