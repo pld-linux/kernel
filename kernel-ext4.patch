@@ -33,51 +33,6 @@ Theodore Ts'o (9):
 Yasunori Goto (1):
       ext4: Widen type of ext4_sb_info.s_mb_maxs[]
 
-diff --git a/fs/ext3/namei.c b/fs/ext3/namei.c
-index a48e965..83bd869 100644
---- a/fs/ext3/namei.c
-+++ b/fs/ext3/namei.c
-@@ -1357,7 +1357,7 @@ static int make_indexed_dir(handle_t *handle, struct dentry *dentry,
- 	struct fake_dirent *fde;
- 
- 	blocksize =  dir->i_sb->s_blocksize;
--	dxtrace(printk("Creating index\n"));
-+	dxtrace(printk(KERN_DEBUG "Creating index: inode %lu\n", dir->i_ino));
- 	retval = ext3_journal_get_write_access(handle, bh);
- 	if (retval) {
- 		ext3_std_error(dir->i_sb, retval);
-@@ -1366,6 +1366,19 @@ static int make_indexed_dir(handle_t *handle, struct dentry *dentry,
- 	}
- 	root = (struct dx_root *) bh->b_data;
- 
-+	/* The 0th block becomes the root, move the dirents out */
-+	fde = &root->dotdot;
-+	de = (struct ext3_dir_entry_2 *)((char *)fde +
-+			ext3_rec_len_from_disk(fde->rec_len));
-+	if ((char *) de >= (((char *) root) + blocksize)) {
-+		ext3_error(dir->i_sb, __func__,
-+			   "invalid rec_len for '..' in inode %lu",
-+			   dir->i_ino);
-+		brelse(bh);
-+		return -EIO;
-+	}
-+	len = ((char *) root) + blocksize - (char *) de;
-+
- 	bh2 = ext3_append (handle, dir, &block, &retval);
- 	if (!(bh2)) {
- 		brelse(bh);
-@@ -1374,11 +1387,6 @@ static int make_indexed_dir(handle_t *handle, struct dentry *dentry,
- 	EXT3_I(dir)->i_flags |= EXT3_INDEX_FL;
- 	data1 = bh2->b_data;
- 
--	/* The 0th block becomes the root, move the dirents out */
--	fde = &root->dotdot;
--	de = (struct ext3_dir_entry_2 *)((char *)fde +
--			ext3_rec_len_from_disk(fde->rec_len));
--	len = ((char *) root) + blocksize - (char *) de;
- 	memcpy (data1, de, len);
- 	de = (struct ext3_dir_entry_2 *) data1;
- 	top = data1 + len;
 diff --git a/fs/ext4/balloc.c b/fs/ext4/balloc.c
 index db35cfd..49ae5e4 100644
 --- a/fs/ext4/balloc.c
