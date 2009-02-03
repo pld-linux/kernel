@@ -1,7 +1,7 @@
 #
 # TODO before 2.6.28.X-1:
 # - apparmor+grsec_full
-# - nvidia drivers fail to build
+# - update %files (you need kernel-source to build kernel packages at this moment)
 #
 # TODO:
 # - benchmark NO_HZ & HZ=1000 vs HZ=300 on i686
@@ -269,6 +269,9 @@ Patch70:	kernel-suspend2-headers.patch
 
 # ext4 patches
 Patch71:	kernel-ext4.patch
+
+# touchpad fixes
+Patch72:	kernel-touchpad.patch
 
 # adds some ids for hostap suported cards and monitor_enable from/for aircrack-ng
 # http://patches.aircrack-ng.org/hostap-kernel-2.6.18.patch
@@ -739,6 +742,9 @@ install %{SOURCE5} Makefile.ppclibs
 
 # ext4 patch
 %patch71 -p1
+
+# touchpad fixes
+%patch72 -p1
 
 %patch2 -p1
 %if %{with fbcondecor}
