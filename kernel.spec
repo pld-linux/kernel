@@ -278,6 +278,8 @@ Patch85:	hostap-kernel-2.6.18.patch
 # Taken from http://download.opensuse.org/factory/repo/src-oss/suse/src/kernel-source-2.6.27.7-3.1.src.rpm
 Patch90:	kernel-mpt-fusion.patch
 
+Patch95:	kernel-touchpad.patch
+
 # http://vserver.13thfloor.at/Experimental/patch-2.6.27.6-vs2.3.0.36.2.diff
 Patch100:	linux-2.6-vs2.3.patch
 Patch101:	kernel-vserver-fixes.patch
@@ -830,6 +832,8 @@ install %{SOURCE5} Makefile.ppclibs
 
 # LSI MPT Fusion driver update
 %patch90 -p1
+
+%patch95 -p1
 
 # vserver
 %if %{with vserver}
