@@ -871,8 +871,8 @@ diff -uprN a/fs/namei.c b/fs/namei.c
 -	error = vfs_mkdir(nd.path.dentry->d_inode, dentry, mode);
 +	error = vfs_mkdir(nd.path.dentry->d_inode, dentry, nd.path.mnt, mode);
  	mnt_drop_write(nd.path.mnt);
- out_dput:
- 	dput(dentry);
+ 
+ 	if (!error)
 @@ -2112,7 +2127,7 @@ void dentry_unhash(struct dentry *dentry
  	spin_unlock(&dcache_lock);
  }
@@ -916,8 +916,8 @@ diff -uprN a/fs/namei.c b/fs/namei.c
 -	error = vfs_rmdir(nd.path.dentry->d_inode, dentry);
 +	error = vfs_rmdir(nd.path.dentry->d_inode, dentry, nd.path.mnt);
  	mnt_drop_write(nd.path.mnt);
- exit3:
- 	dput(dentry);
+ 	if (!error && (saved_dev || saved_ino))
+ 		gr_handle_delete(saved_ino, saved_dev);
 @@ -2195,7 +2211,7 @@ SYSCALL_DEFINE1(rmdir, const char __user
  	return do_rmdir(AT_FDCWD, pathname);
  }
@@ -942,9 +942,9 @@ diff -uprN a/fs/namei.c b/fs/namei.c
  			goto exit2;
 -		error = vfs_unlink(nd.path.dentry->d_inode, dentry);
 +		error = vfs_unlink(nd.path.dentry->d_inode, dentry, nd.path.mnt);
+ 		if (!error && (saved_ino || saved_dev))
+ 			gr_handle_delete(saved_ino, saved_dev);
  		mnt_drop_write(nd.path.mnt);
- 	exit2:
- 		dput(dentry);
 @@ -2298,7 +2314,8 @@ SYSCALL_DEFINE1(unlink, const char __use
  	return do_unlinkat(AT_FDCWD, pathname);
  }
@@ -970,9 +970,9 @@ diff -uprN a/fs/namei.c b/fs/namei.c
  		goto out_dput;
 -	error = vfs_symlink(nd.path.dentry->d_inode, dentry, from);
 +	error = vfs_symlink(nd.path.dentry->d_inode, dentry, nd.path.mnt, from);
+ 	if (!error)
+ 		gr_handle_create(dentry, nd.path.mnt);
  	mnt_drop_write(nd.path.mnt);
- out_dput:
- 	dput(dentry);
 @@ -2362,7 +2379,7 @@ SYSCALL_DEFINE2(symlink, const char __us
  	return sys_symlinkat(oldname, AT_FDCWD, newname);
  }
@@ -1000,9 +1000,9 @@ diff -uprN a/fs/namei.c b/fs/namei.c
 +	error = vfs_link(old_path.dentry, old_path.mnt,
 +			 nd.path.dentry->d_inode,
 +			 new_dentry, nd.path.mnt);
+ 	if (!error)
+ 		gr_handle_create(new_dentry, nd.path.mnt);
  	mnt_drop_write(nd.path.mnt);
- out_dput:
- 	dput(new_dentry);
 @@ -2493,7 +2513,8 @@ SYSCALL_DEFINE2(link, const char __user 
   *	   locking].
   */
@@ -1061,9 +1061,9 @@ diff -uprN a/fs/namei.c b/fs/namei.c
 -		error = vfs_rename_other(old_dir,old_dentry,new_dir,new_dentry);
 +		error = vfs_rename_other(old_dir, old_dentry, old_mnt,
 +					 new_dir, new_dentry, new_mnt);
+ 
  	if (!error) {
  		const char *new_name = old_dentry->d_name.name;
- 		fsnotify_move(old_dir, new_dir, old_name, new_name, is_dir,
 @@ -2676,8 +2703,8 @@ SYSCALL_DEFINE4(renameat, int, olddfd, c
  	error = mnt_want_write(oldnd.path.mnt);
  	if (error)
@@ -1072,9 +1072,9 @@ diff -uprN a/fs/namei.c b/fs/namei.c
 -				   new_dir->d_inode, new_dentry);
 +	error = vfs_rename(old_dir->d_inode, old_dentry, oldnd.path.mnt,
 +			   new_dir->d_inode, new_dentry, newnd.path.mnt);
- 	mnt_drop_write(oldnd.path.mnt);
- exit5:
- 	dput(new_dentry);
+ 	if (!error)
+ 		gr_handle_rename(old_dir->d_inode, new_dir->d_inode, old_dentry,
+ 				 new_dentry, oldnd.path.mnt, new_dentry->d_inode ? 1 : 0);
 @@ -2851,6 +2878,7 @@ EXPORT_SYMBOL(path_lookup);
  EXPORT_SYMBOL(kern_path);
  EXPORT_SYMBOL(vfs_path_lookup);
@@ -1611,9 +1611,9 @@ diff -uprN a/fs/open.c b/fs/open.c
  
 -	error = inode_permission(inode, MAY_EXEC | MAY_ACCESS);
 +	error = path_permission(&file->f_path, MAY_EXEC | MAY_ACCESS);
- 	if (!error)
- 		set_fs_pwd(current->fs, &file->f_path);
- out_putf:
+ 
+ 	if (!error && !gr_chroot_fchdir(file->f_path.dentry, file->f_path.mnt))
+ 		error = -EPERM;
 @@ -583,7 +583,7 @@ SYSCALL_DEFINE1(chroot, const char __use
  	if (error)
  		goto out;
@@ -1624,30 +1624,30 @@ diff -uprN a/fs/open.c b/fs/open.c
  		goto dput_and_out;
  
 @@ -623,8 +623,8 @@ SYSCALL_DEFINE2(fchmod, unsigned int, fd
- 	if (mode == (mode_t) -1)
- 		mode = inode->i_mode;
+ 	}
+ 
  	newattrs.ia_mode = (mode & S_IALLUGO) | (inode->i_mode & ~S_IALLUGO);
 -	newattrs.ia_valid = ATTR_MODE | ATTR_CTIME;
 -	err = notify_change(dentry, &newattrs);
 +	newattrs.ia_valid = ATTR_MODE | ATTR_CTIME | ATTR_FILE;
 +	err = fnotify_change(dentry, file->f_path.mnt, &newattrs, file);
  	mutex_unlock(&inode->i_mutex);
- 	mnt_drop_write(file->f_path.mnt);
- out_putf:
+ 
+ out_drop_write:
 @@ -653,7 +653,7 @@ SYSCALL_DEFINE3(fchmodat, int, dfd, cons
- 		mode = inode->i_mode;
+ 
  	newattrs.ia_mode = (mode & S_IALLUGO) | (inode->i_mode & ~S_IALLUGO);
  	newattrs.ia_valid = ATTR_MODE | ATTR_CTIME;
 -	error = notify_change(path.dentry, &newattrs);
 +	error = notify_change(path.dentry, path.mnt, &newattrs);
  	mutex_unlock(&inode->i_mutex);
- 	mnt_drop_write(path.mnt);
- dput_and_out:
+ 
+ out_drop_write:
 @@ -667,7 +667,8 @@ SYSCALL_DEFINE2(chmod, const char __user
  	return sys_fchmodat(AT_FDCWD, filename, mode);
  }
  
--static int chown_common(struct dentry * dentry, uid_t user, gid_t group)
+-static int chown_common(struct dentry * dentry, uid_t user, gid_t group, struct vfsmount *mnt)
 +static int chown_common(struct dentry * dentry, struct vfsmount *mnt,
 +			uid_t user, gid_t group, struct file *file)
  {
@@ -1667,29 +1667,29 @@ diff -uprN a/fs/open.c b/fs/open.c
  
  	return error;
 @@ -703,7 +707,7 @@ SYSCALL_DEFINE3(chown, const char __user
- 	error = mnt_want_write(path.mnt);
- 	if (error)
- 		goto out_release;
--	error = chown_common(path.dentry, user, group);
-+	error = chown_common(path.dentry, path.mnt, user, group, NULL);
+ 	error = cow_check_and_break(&path);
+ 	if (!error)
+ #endif
+-		error = chown_common(path.dentry, user, group, path.mnt);
++		error = chown_common(path.dentry, path.mnt, user, group, NULL);
  	mnt_drop_write(path.mnt);
  out_release:
  	path_put(&path);
 @@ -728,7 +732,7 @@ SYSCALL_DEFINE5(fchownat, int, dfd, cons
- 	error = mnt_want_write(path.mnt);
- 	if (error)
- 		goto out_release;
--	error = chown_common(path.dentry, user, group);
-+	error = chown_common(path.dentry, path.mnt, user, group, NULL);
+ 	error = cow_check_and_break(&path);
+ 	if (!error)
+ #endif
+-		error = chown_common(path.dentry, user, group, path.mnt);
++		error = chown_common(path.dentry, path.mnt, user, group, NULL);
  	mnt_drop_write(path.mnt);
  out_release:
  	path_put(&path);
 @@ -747,7 +751,7 @@ SYSCALL_DEFINE3(lchown, const char __use
- 	error = mnt_want_write(path.mnt);
- 	if (error)
- 		goto out_release;
--	error = chown_common(path.dentry, user, group);
-+	error = chown_common(path.dentry, path.mnt, user, group, NULL);
+ 	error = cow_check_and_break(&path);
+ 	if (!error)
+ #endif
+-		error = chown_common(path.dentry, user, group, path.mnt);
++		error = chown_common(path.dentry, path.mnt, user, group, NULL);
  	mnt_drop_write(path.mnt);
  out_release:
  	path_put(&path);
@@ -1697,7 +1697,7 @@ diff -uprN a/fs/open.c b/fs/open.c
  		goto out_fput;
  	dentry = file->f_path.dentry;
  	audit_inode(NULL, dentry);
--	error = chown_common(dentry, user, group);
+-	error = chown_common(dentry, user, group, file->f_path.mnt);
 +	error = chown_common(dentry, file->f_path.mnt, user, group, file);
  	mnt_drop_write(file->f_path.mnt);
  out_fput:
@@ -1781,8 +1781,8 @@ diff -uprN a/fs/utimes.c b/fs/utimes.c
  	int error;
  	struct iattr newattrs;
 @@ -102,7 +103,7 @@ static int utimes_common(struct path *pa
- 		}
  	}
+ 
  	mutex_lock(&inode->i_mutex);
 -	error = notify_change(path->dentry, &newattrs);
 +	error = fnotify_change(path->dentry, path->mnt, &newattrs, f);
@@ -2826,9 +2826,9 @@ diff -uprN a/net/unix/af_unix.c b/net/unix/af_unix.c
 --- a/net/unix/af_unix.c	2008-12-24 23:26:37.000000000 +0000
 +++ b/net/unix/af_unix.c	2009-02-08 13:26:38.789081510 +0000
 @@ -829,7 +829,8 @@ static int unix_bind(struct socket *sock
- 		err = mnt_want_write(nd.path.mnt);
- 		if (err)
  			goto out_mknod_dput;
+ 		}
+ 
 -		err = vfs_mknod(nd.path.dentry->d_inode, dentry, mode, 0);
 +		err = vfs_mknod(nd.path.dentry->d_inode, dentry, nd.path.mnt,
 +				mode, 0);
