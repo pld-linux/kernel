@@ -1,7 +1,4 @@
 #
-# TODO before 2.6.28.X-1:
-# - update %files (you need kernel-source to build kernel packages at this moment)
-#
 # TODO:
 # - benchmark NO_HZ & HZ=1000 vs HZ=300 on i686
 # - add a subpackage (kernel-firmware?) for ~35 firmware files
@@ -102,7 +99,7 @@
 
 %define		basever		2.6.28
 %define		postver		.4
-%define		rel		0.2
+%define		rel		0.3
 
 %define		_enable_debug_packages			0
 
@@ -1566,6 +1563,12 @@ fi
 %files headers
 %defattr(644,root,root,755)
 %{_kernelsrcdir}/include
+%dir %{_kernelsrcdir}/arch
+%dir %{_kernelsrcdir}/arch/[!K]*
+%{_kernelsrcdir}/arch/*/include
+%dir %{_kernelsrcdir}/security
+%dir %{_kernelsrcdir}/security/selinux
+%{_kernelsrcdir}/security/selinux/include
 %{_kernelsrcdir}/config-dist
 %{_kernelsrcdir}/Module.symvers-dist
 
@@ -1594,6 +1597,11 @@ fi
 %{_kernelsrcdir}/scripts/*.sh
 %{_kernelsrcdir}/scripts/kconfig/*
 %{_kernelsrcdir}/scripts/mkcompile_h
+%dir %{_kernelsrcdir}/scripts/selinux
+%{_kernelsrcdir}/scripts/selinux/Makefile
+%dir %{_kernelsrcdir}/scripts/selinux/mdp
+%{_kernelsrcdir}/scripts/selinux/mdp/Makefile
+%{_kernelsrcdir}/scripts/selinux/mdp/*.c
 
 %files doc
 %defattr(644,root,root,755)
@@ -1602,7 +1610,7 @@ fi
 %if %{with source}
 %files source -f aux_files_exc
 %defattr(644,root,root,755)
-%{_kernelsrcdir}/arch/*/[!Mk]*
+%{_kernelsrcdir}/arch/*/[!Mik]*
 %{_kernelsrcdir}/arch/*/kernel/[!M]*
 %{_kernelsrcdir}/arch/ia64/kvm
 %{_kernelsrcdir}/arch/powerpc/kvm
@@ -1641,6 +1649,7 @@ fi
 %exclude %{_kernelsrcdir}/scripts/*.sh
 %{_kernelsrcdir}/sound
 %{_kernelsrcdir}/security
+%exclude %{_kernelsrcdir}/security/selinux/include
 %{_kernelsrcdir}/usr
 %{_kernelsrcdir}/COPYING
 %{_kernelsrcdir}/CREDITS
