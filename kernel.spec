@@ -1,11 +1,9 @@
 #
 # TODO before 2.6.28.X-1:
-# - apparmor+grsec_full
 # - update %files (you need kernel-source to build kernel packages at this moment)
 #
 # TODO:
 # - benchmark NO_HZ & HZ=1000 vs HZ=300 on i686
-# - apparmor (needs testing)
 # - add a subpackage (kernel-firmware?) for ~35 firmware files
 #
 # FUTURE:
