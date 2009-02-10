@@ -355,11 +355,11 @@ BuildRequires:	perl-base
 BuildRequires:	rpm-build >= 4.4.9-56
 BuildRequires:	rpmbuild(macros) >= 1.217
 Requires(post):	coreutils
-Requires(post):	geninitrd >= 2.57
+Requires(post):	geninitrd >= 10000-3
 Requires(post):	module-init-tools >= 0.9.9
 Requires:	/sbin/depmod
 Requires:	coreutils
-Requires:	geninitrd >= 2.57
+Requires:	geninitrd >= 10000-3
 Requires:	module-init-tools >= 0.9.9
 Provides:	%{name}(netfilter) = %{netfilter_snap}
 Provides:	%{name}(vermagic) = %{kernel_release}
