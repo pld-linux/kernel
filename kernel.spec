@@ -1,4 +1,12 @@
 #
+# NOTE:
+# the following bcond combos will not work
+# - without_vserver and any of the following
+#   - with_apparmor
+#   - with_grsec_minimal
+#   - with_grsec_full
+#   - with_tomoyo
+#
 # TODO:
 # - benchmark NO_HZ & HZ=1000 vs HZ=300 on i686
 # - add a subpackage (kernel-firmware?) for ~35 firmware files
