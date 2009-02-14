@@ -33,6 +33,7 @@
 %bcond_without	vserver		# support for VServer (enabled by default)
 %bcond_without	tuxonice	# support for tuxonice (ex-suspend2) (enabled by default)
 %bcond_without	apparmor	# build kernel with apparmor (exerimental mix)
+%bcond_with	tomoyo		# build kernel with tomoyo support [ disables apparmor ]
 
 %bcond_with	rescuecd	# build kernel for our rescue
 
@@ -83,6 +84,10 @@
 %undefine	with_vserver
 %define		have_drm	0
 %define		have_sound	0
+%endif
+
+%if %{with tomoyo}
+%undefine	with_apparmor
 %endif
 
 %ifarch %{ix86} alpha ppc
@@ -173,6 +178,9 @@ Source57:	kernel-wrr.config
 
 Source58:	kernel-inittmpfs.config
 Source59:	kernel-bzip2-lzma.config
+
+Source6000:	http://globalbase.dl.sourceforge.jp/tomoyo/30297/ccs-patch-1.6.6-20090202.tar.gz
+# Source6000-md5:	cceb1731d3720030eac34ed128848b32
 
 # tahoe9xx http://www.tahoe.pl/drivers/tahoe9xx-2.6.24.patch
 Patch2:		tahoe9xx-2.6.24.patch
@@ -316,6 +324,9 @@ Patch5000:	kernel-apparmor.patch
 # with grsec_full version
 Patch5001:	kernel-apparmor-after-grsec_full.patch
 Patch5002:	kernel-apparmor-common.patch
+
+# tomoyo based on patch from ccs-patch-1.6.6-20090202 tarball
+Patch6000:	kernel-tomoyo.patch
 
 # for rescuecd
 # based on http://ftp.leg.uct.ac.za/pub/linux/rip/inittmpfs-2.6.14.diff.gz
@@ -909,6 +920,12 @@ install %{SOURCE5} Makefile.ppclibs
 %endif
 %endif
 
+# tomoyo
+%if %{with tomoyo}
+%patch6000 -p1
+tar xzvf %{SOURCE6000}
+%endif
+
 %patch150 -p1
 
 %ifarch ppc ppc64
@@ -1128,6 +1145,9 @@ EOCONFIG
 %ifarch %{ix86} %{x8664} ia64 ppc ppc64
 		%{SOURCE42} \
 %endif
+%endif
+%if %{with tomoyo}
+		config.ccs \
 %endif
 		%{SOURCE40} %{?0:netfilter} \
 		%{SOURCE41} %{?0:patches} \
