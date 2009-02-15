@@ -94,10 +94,6 @@
 %define		have_sound	0
 %endif
 
-%if %{with tomoyo}
-%undefine	with_apparmor
-%endif
-
 %ifarch %{ix86} alpha ppc
 %define		have_isa	1
 %else
@@ -335,6 +331,7 @@ Patch5002:	kernel-apparmor-common.patch
 
 # tomoyo based on patch from ccs-patch-1.6.6-20090202 tarball
 Patch6000:	kernel-tomoyo.patch
+Patch6001:	kernel-tomoyo-with-apparmor.patch
 
 # for rescuecd
 # based on http://ftp.leg.uct.ac.za/pub/linux/rip/inittmpfs-2.6.14.diff.gz
@@ -930,8 +927,12 @@ install %{SOURCE5} Makefile.ppclibs
 
 # tomoyo
 %if %{with tomoyo}
+	tar xzvf %{SOURCE6000}
+	%if %{with apparmor}
+%patch6001 -p1
+	%else
 %patch6000 -p1
-tar xzvf %{SOURCE6000}
+	%endif
 %endif
 
 %patch150 -p1
