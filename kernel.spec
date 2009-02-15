@@ -927,7 +927,7 @@ install %{SOURCE5} Makefile.ppclibs
 
 # tomoyo
 %if %{with tomoyo}
-	tar xzvf %{SOURCE6000}
+	tar xzf %{SOURCE6000}
 	%if %{with apparmor}
 %patch6001 -p1
 	%else
