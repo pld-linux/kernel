@@ -475,7 +475,9 @@ BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 %{?with_grsec_full:Grsecurity full support - enabled}\
 %{?with_pax:PaX support - enabled}\
 %{?with_fbcondecor:Fbsplash/fbcondecor - enabled }\
-%{?with_nfsroot:Root on NFS - enabled}
+%{?with_nfsroot:Root on NFS - enabled}\
+%{?with_apparmor:apparmor support - enabled}\
+%{?with_tomoyo:tomoyo support - enabled}
 
 %define Features %(echo "%{__features}" | sed '/^$/d')
 
