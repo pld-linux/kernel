@@ -330,8 +330,8 @@ Patch5001:	kernel-apparmor-after-grsec_full.patch
 Patch5002:	kernel-apparmor-common.patch
 
 # tomoyo based on patch from ccs-patch-1.6.6-20090202 tarball
-Patch6000:	kernel-tomoyo.patch
-Patch6001:	kernel-tomoyo-with-apparmor.patch
+Patch6000:	kernel-tomoyo-with-apparmor.patch
+Patch6001:	kernel-tomoyo-without-apparmor.patch
 
 # for rescuecd
 # based on http://ftp.leg.uct.ac.za/pub/linux/rip/inittmpfs-2.6.14.diff.gz
@@ -929,9 +929,9 @@ install %{SOURCE5} Makefile.ppclibs
 %if %{with tomoyo}
 	tar xzf %{SOURCE6000}
 	%if %{with apparmor}
-%patch6001 -p1
-	%else
 %patch6000 -p1
+	%else
+%patch6001 -p1
 	%endif
 %endif
 
