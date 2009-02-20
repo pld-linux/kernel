@@ -1456,7 +1456,6 @@ fi
 /boot/System.map-%{kernel_release}
 %ghost %{initrd_dir}/initrd-%{kernel_release}.gz
 /lib/firmware/%{kernel_release}
-%dir /lib/modules/%{kernel_release}
 %dir /lib/modules/%{kernel_release}/kernel
 %ifnarch sparc
 /lib/modules/%{kernel_release}/kernel/arch
@@ -1514,6 +1513,7 @@ fi
 %files dirs
 %defattr(644,root,root,755)
 %dir %{_kernelsrcdir}
+%dir /lib/modules/%{kernel_release}
 
 %ifarch alpha %{ix86} %{x8664} ppc ppc64 sparc sparc64
 %files vmlinux
@@ -1606,7 +1606,6 @@ fi
 %files module-build -f aux_files
 %defattr(644,root,root,755)
 # symlinks pointint to kernelsrcdir
-%dir /lib/modules/%{kernel_release}
 /lib/modules/%{kernel_release}/build
 %{_kernelsrcdir}/localversion
 %ifarch ppc ppc64
