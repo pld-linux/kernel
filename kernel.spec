@@ -754,7 +754,7 @@ install %{SOURCE5} Makefile.ppclibs
 %endif
 
 # ext4 patch
-%patch71 -p1
+#%%patch71 -p1
 
 # touchpad fixes
 %patch72 -p1
