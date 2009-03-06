@@ -6,10 +6,14 @@ Aneesh Kumar K.V (3):
 Dan Carpenter (1):
       ext4: Fix NULL dereference in ext4_ext_migrate()'s error handling
 
-Jan Kara (3):
+Jan Kara (4):
       jbd2: Fix return value of jbd2_journal_start_commit()
       Revert "ext4: wait on all pending commits in ext4_sync_fs()"
       jbd2: Avoid possible NULL dereference in jbd2_journal_begin_ordered_truncate()
+      ext4: Fix deadlock in ext4_write_begin() and ext4_da_write_begin()
+
+Theodore Ts'o (1):
+      ext4: Add fallback for find_group_flex
 
 Wei Yongjun (1):
       ext4: Fix to read empty directory blocks correctly in 64k
@@ -27,8 +31,26 @@ index dfccef5..0b0c0fa 100644
  		return 1 << 16;
  	return len;
  }
+diff --git a/fs/ext4/ialloc.c b/fs/ext4/ialloc.c
+index b363c49..03c0819 100644
+--- a/fs/ext4/ialloc.c
++++ b/fs/ext4/ialloc.c
+@@ -703,6 +703,13 @@ struct inode *ext4_new_inode(handle_t *handle, struct inode *dir, int mode)
+ 
+ 	if (sbi->s_log_groups_per_flex) {
+ 		ret2 = find_group_flex(sb, dir, &group);
++		if (ret2 == -1) {
++			ret2 = find_group_other(sb, dir, &group);
++			if (ret2 == 0 && printk_ratelimit())
++				printk(KERN_NOTICE "ext4: find_group_flex "
++				       "failed, fallback succeeded dir %lu\n",
++				       dir->i_ino);
++		}
+ 		goto got_group;
+ 	}
+ 
 diff --git a/fs/ext4/inode.c b/fs/ext4/inode.c
-index ccb6947..c794e61 100644
+index ccb6947..b7f20b0 100644
 --- a/fs/ext4/inode.c
 +++ b/fs/ext4/inode.c
 @@ -46,8 +46,10 @@
@@ -44,7 +66,27 @@ index ccb6947..c794e61 100644
  }
  
  static void ext4_invalidatepage(struct page *page, unsigned long offset);
-@@ -2400,6 +2402,7 @@ static int ext4_da_writepages(struct address_space *mapping,
+@@ -1345,6 +1347,10 @@ retry:
+ 		goto out;
+ 	}
+ 
++	/* We cannot recurse into the filesystem as the transaction is already
++	 * started */
++	flags |= AOP_FLAG_NOFS;
++
+ 	page = grab_cache_page_write_begin(mapping, index, flags);
+ 	if (!page) {
+ 		ext4_journal_stop(handle);
+@@ -1354,7 +1360,7 @@ retry:
+ 	*pagep = page;
+ 
+ 	ret = block_write_begin(file, mapping, pos, len, flags, pagep, fsdata,
+-							ext4_get_block);
++				ext4_get_block);
+ 
+ 	if (!ret && ext4_should_journal_data(inode)) {
+ 		ret = walk_page_buffers(handle, page_buffers(page),
+@@ -2400,6 +2406,7 @@ static int ext4_da_writepages(struct address_space *mapping,
  	struct inode *inode = mapping->host;
  	int no_nrwrite_index_update;
  	long pages_written = 0, pages_skipped;
@@ -52,7 +94,7 @@ index ccb6947..c794e61 100644
  	int needed_blocks, ret = 0, nr_to_writebump = 0;
  	struct ext4_sb_info *sbi = EXT4_SB(mapping->host->i_sb);
  
-@@ -2437,9 +2440,15 @@ static int ext4_da_writepages(struct address_space *mapping,
+@@ -2437,9 +2444,15 @@ static int ext4_da_writepages(struct address_space *mapping,
  	if (wbc->range_start == 0 && wbc->range_end == LLONG_MAX)
  		range_whole = 1;
  
@@ -70,7 +112,7 @@ index ccb6947..c794e61 100644
  		index = wbc->range_start >> PAGE_CACHE_SHIFT;
  
  	mpd.wbc = wbc;
-@@ -2453,6 +2462,7 @@ static int ext4_da_writepages(struct address_space *mapping,
+@@ -2453,6 +2466,7 @@ static int ext4_da_writepages(struct address_space *mapping,
  	wbc->no_nrwrite_index_update = 1;
  	pages_skipped = wbc->pages_skipped;
  
@@ -78,7 +120,7 @@ index ccb6947..c794e61 100644
  	while (!ret && wbc->nr_to_write > 0) {
  
  		/*
-@@ -2495,6 +2505,7 @@ static int ext4_da_writepages(struct address_space *mapping,
+@@ -2495,6 +2509,7 @@ static int ext4_da_writepages(struct address_space *mapping,
  			pages_written += mpd.pages_written;
  			wbc->pages_skipped = pages_skipped;
  			ret = 0;
@@ -86,7 +128,7 @@ index ccb6947..c794e61 100644
  		} else if (wbc->nr_to_write)
  			/*
  			 * There is no more writeout needed
-@@ -2503,6 +2514,13 @@ static int ext4_da_writepages(struct address_space *mapping,
+@@ -2503,6 +2518,13 @@ static int ext4_da_writepages(struct address_space *mapping,
  			 */
  			break;
  	}
@@ -100,7 +142,7 @@ index ccb6947..c794e61 100644
  	if (pages_skipped != wbc->pages_skipped)
  		printk(KERN_EMERG "This should not happen leaving %s "
  				"with nr_to_write = %ld ret = %d\n",
-@@ -2510,6 +2528,7 @@ static int ext4_da_writepages(struct address_space *mapping,
+@@ -2510,6 +2532,7 @@ static int ext4_da_writepages(struct address_space *mapping,
  
  	/* Update index */
  	index += pages_written;
@@ -108,6 +150,16 @@ index ccb6947..c794e61 100644
  	if (wbc->range_cyclic || (range_whole && wbc->nr_to_write > 0))
  		/*
  		 * set the writeback_index so that range_cyclic
+@@ -2584,6 +2607,9 @@ retry:
+ 		ret = PTR_ERR(handle);
+ 		goto out;
+ 	}
++	/* We cannot recurse into the filesystem as the transaction is already
++	 * started */
++	flags |= AOP_FLAG_NOFS;
+ 
+ 	page = grab_cache_page_write_begin(mapping, index, flags);
+ 	if (!page) {
 diff --git a/fs/ext4/mballoc.c b/fs/ext4/mballoc.c
 index 775ef32..f8e923f 100644
 --- a/fs/ext4/mballoc.c
