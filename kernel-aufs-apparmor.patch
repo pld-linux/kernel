@@ -1,0 +1,267 @@
+From: Jeff Mahoney <jeffm@suse.com>
+Subject: aufs: AppArmor compatibility
+
+ This patch adds NULL vfsmounts for AppArmor enabled kernels.
+
+Signed-off-by: Jeff Mahoney <jeffm@suse.com>
+---
+ fs/aufs25/vfsub.c |   18 +++++++++---------
+ 1 file changed, 9 insertions(+), 9 deletions(-)
+
+--- a/fs/aufs/vfsub.c
++++ b/fs/aufs/vfsub.c
+@@ -127,9 +127,9 @@ int do_vfsub_create(struct inode *dir, s
+ }
+ 
+ #if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 27)
+-#define VfsubSymlinkArgs	dir, dentry, symname
++#define VfsubSymlinkArgs	dir, dentry, NULL, symname
+ #else
+-#define VfsubSymlinkArgs	dir, dentry, symname, mode
++#define VfsubSymlinkArgs	dir, dentry, NULL, symname, mode
+ #endif
+ 
+ int do_vfsub_symlink(struct inode *dir, struct dentry *dentry,
+@@ -158,7 +158,7 @@ int do_vfsub_mknod(struct inode *dir, st
+ 	LKTRTrace("i%lu, %.*s, 0x%x\n", dir->i_ino, AuDLNPair(dentry), mode);
+ 	IMustLock(dir);
+ 
+-	err = vfs_mknod(dir, dentry, mode, dev);
++	err = vfs_mknod(dir, dentry, NULL, mode, dev);
+ 	if (!err) {
+ 		/* dir inode is locked */
+ 		au_update_fuse_h_inode(NULL, dentry->d_parent); /*ignore*/
+@@ -177,7 +177,7 @@ int do_vfsub_link(struct dentry *src_den
+ 	IMustLock(dir);
+ 
+ 	lockdep_off();
+-	err = vfs_link(src_dentry, dir, dentry);
++	err = vfs_link(src_dentry, NULL, dir, dentry, 0);
+ 	lockdep_on();
+ 	if (!err) {
+ 		LKTRTrace("src_i %p, dst_i %p\n",
+@@ -203,7 +203,7 @@ int do_vfsub_rename(struct inode *src_di
+ 	IMustLock(src_dir);
+ 
+ 	lockdep_off();
+-	err = vfs_rename(src_dir, src_dentry, dir, dentry);
++	err = vfs_rename(src_dir, src_dentry, NULL, dir, dentry, 0);
+ 	lockdep_on();
+ 	if (!err) {
+ 		/* dir inode is locked */
+@@ -221,7 +221,7 @@ int do_vfsub_mkdir(struct inode *dir, st
+ 	LKTRTrace("i%lu, %.*s, 0x%x\n", dir->i_ino, AuDLNPair(dentry), mode);
+ 	IMustLock(dir);
+ 
+-	err = vfs_mkdir(dir, dentry, mode);
++	err = vfs_mkdir(dir, dentry, NULL, mode);
+ 	if (!err) {
+ 		/* dir inode is locked */
+ 		au_update_fuse_h_inode(NULL, dentry->d_parent); /*ignore*/
+@@ -238,7 +238,7 @@ int do_vfsub_rmdir(struct inode *dir, st
+ 	IMustLock(dir);
+ 
+ 	lockdep_off();
+-	err = vfs_rmdir(dir, dentry);
++	err = vfs_rmdir(dir, dentry, 0);
+ 	lockdep_on();
+ 	/* dir inode is locked */
+ 	if (!err)
+@@ -255,7 +255,7 @@ int do_vfsub_unlink(struct inode *dir, s
+ 
+ 	/* vfs_unlink() locks inode */
+ 	lockdep_off();
+-	err = vfs_unlink(dir, dentry);
++	err = vfs_unlink(dir, dentry, 0);
+ 	lockdep_on();
+ 	/* dir inode is locked */
+ 	if (!err)
+@@ -493,7 +493,7 @@ static void call_notify_change(void *arg
+ 	if (!IS_IMMUTABLE(h_inode) && !IS_APPEND(h_inode)) {
+ 		vfsub_ignore(a->vargs);
+ 		lockdep_off();
+-		*a->errp = notify_change(a->h_dentry, a->ia);
++		*a->errp = notify_change(a->h_dentry, NULL, a->ia);
+ 		lockdep_on();
+ 		if (!*a->errp)
+ 			au_update_fuse_h_inode(NULL, a->h_dentry); /*ignore*/
+
+From: Jeff Mahoney <jeffm@suse.com>
+Subject: Add fsetattr
+
+ An AppArmor patch removed ia_file and ATTR_FILE from struct iattr and
+ replaced it with the fsetattr file_operation.
+
+ This patch fixes aufs to use it.
+
+Signed-off-by: Jeff Mahoney <jeffm@suse.com>
+---
+ fs/aufs25/dir.c   |    1 +
+ fs/aufs25/f_op.c  |    1 +
+ fs/aufs25/i_op.c  |   25 ++++++++++++++-----------
+ fs/aufs25/inode.h |    1 +
+ fs/aufs25/misc.c  |    5 ++---
+ fs/aufs25/vfsub.c |   13 ++++++++++---
+ fs/aufs25/vfsub.h |    2 ++
+ 7 files changed, 31 insertions(+), 17 deletions(-)
+
+--- a/fs/aufs/dir.c
++++ b/fs/aufs/dir.c
+@@ -546,4 +546,5 @@ struct file_operations aufs_dir_fop = {
+ 	.release	= aufs_release_dir,
+ 	.flush		= aufs_flush,
+ 	.fsync		= aufs_fsync_dir,
++	.fsetattr	= aufs_fsetattr,
+ };
+--- a/fs/aufs/f_op.c
++++ b/fs/aufs/f_op.c
+@@ -665,4 +665,5 @@ struct file_operations aufs_file_fop = {
+ 	.splice_write	= aufs_splice_write,
+ 	.splice_read	= aufs_splice_read,
+ #endif
++	.fsetattr	= aufs_fsetattr,
+ };
+--- a/fs/aufs/i_op.c
++++ b/fs/aufs/i_op.c
+@@ -727,13 +727,13 @@ static int au_lock_and_icpup(struct dent
+ 	return err;
+ }
+ 
+-static int aufs_setattr(struct dentry *dentry, struct iattr *ia)
++static int aufs_do_setattr(struct dentry *dentry, struct iattr *ia,
++			   struct file *file)
+ {
+ 	int err;
+ 	struct inode *inode;
+ 	struct super_block *sb;
+ 	__u32 events;
+-	struct file *file;
+ 	loff_t sz;
+ 	struct au_icpup_args *a;
+ 
+@@ -751,12 +751,8 @@ static int aufs_setattr(struct dentry *d
+ 	si_read_lock(sb, AuLock_FLUSH);
+ 	vfsub_args_init(&a->vargs, a->ign, au_test_dlgt(au_mntflags(sb)), 0);
+ 
+-	if (ia->ia_valid & ATTR_FILE) {
+-		/* currently ftruncate(2) only */
+-		file = ia->ia_file;
++        if (file)
+ 		fi_write_lock(file);
+-		ia->ia_file = au_h_fptr(file, au_fbstart(file));
+-	}
+ 
+ 	sz = -1;
+ 	if ((ia->ia_valid & ATTR_SIZE)
+@@ -800,11 +796,8 @@ static int aufs_setattr(struct dentry *d
+ 	au_unpin(&a->pin);
+ 	di_write_unlock(dentry);
+  out_si:
+-	if (file) {
++	if (file)
+ 		fi_write_unlock(file);
+-		ia->ia_file = file;
+-		ia->ia_valid |= ATTR_FILE;
+-	}
+ 	si_read_unlock(sb);
+ 	kfree(a);
+  out:
+@@ -812,6 +805,16 @@ static int aufs_setattr(struct dentry *d
+ 	return err;
+ }
+ 
++static int aufs_setattr(struct dentry *dentry, struct iattr *ia)
++{
++      return aufs_do_setattr(dentry, ia, NULL);
++}
++
++int aufs_fsetattr(struct file *file, struct iattr *ia)
++{
++      return aufs_do_setattr(file->f_dentry, ia, file);
++}
++
+ /* ---------------------------------------------------------------------- */
+ 
+ static int h_readlink(struct dentry *dentry, int bindex, char __user *buf,
+--- a/fs/aufs/inode.h
++++ b/fs/aufs/inode.h
+@@ -84,6 +84,7 @@ int au_test_h_perm_sio(struct inode *h_i
+ 
+ /* i_op.c */
+ extern struct inode_operations aufs_iop, aufs_symlink_iop, aufs_dir_iop;
++int aufs_fsetattr(struct file *file, struct iattr *ia);
+ 
+ /* au_wr_dir flags */
+ #define AuWrDir_ADD_ENTRY	1
+--- a/fs/aufs/misc.c
++++ b/fs/aufs/misc.c
+@@ -267,13 +267,12 @@ int au_copy_file(struct file *dst, struc
+ 		if (err == 1) {
+ 			ia = (void *)buf;
+ 			ia->ia_size = dst->f_pos;
+-			ia->ia_valid = ATTR_SIZE | ATTR_FILE;
+-			ia->ia_file = dst;
++			ia->ia_valid = ATTR_SIZE;
+ 			vfsub_args_reinit(vargs);
+ 			vfsub_ign_hinode(vargs, vfsub_events_notify_change(ia),
+ 					 hdir);
+ 			mutex_lock_nested(&h_i->i_mutex, AuLsc_I_CHILD2);
+-			err = vfsub_notify_change(h_d, ia, vargs);
++                        err = vfsub_fnotify_change(h_d, ia, vargs, dst);
+ 			mutex_unlock(&h_i->i_mutex);
+ 		}
+ 	}
+--- a/fs/aufs/vfsub.c
++++ b/fs/aufs/vfsub.c
+@@ -477,6 +477,7 @@ struct notify_change_args {
+ 	struct dentry *h_dentry;
+ 	struct iattr *ia;
+ 	struct vfsub_args *vargs;
++	struct file *file;
+ };
+ 
+ static void call_notify_change(void *args)
+@@ -493,7 +494,7 @@ static void call_notify_change(void *arg
+ 	if (!IS_IMMUTABLE(h_inode) && !IS_APPEND(h_inode)) {
+ 		vfsub_ignore(a->vargs);
+ 		lockdep_off();
+-		*a->errp = notify_change(a->h_dentry, NULL, a->ia);
++		*a->errp = fnotify_change(a->h_dentry, NULL, a->ia, a->file);
+ 		lockdep_on();
+ 		if (!*a->errp)
+ 			au_update_fuse_h_inode(NULL, a->h_dentry); /*ignore*/
+@@ -525,8 +526,8 @@ static void vfsub_notify_change_dlgt(str
+ }
+ #endif
+ 
+-int vfsub_notify_change(struct dentry *dentry, struct iattr *ia,
+-			struct vfsub_args *vargs)
++int vfsub_fnotify_change(struct dentry *dentry, struct iattr *ia,
++			struct vfsub_args *vargs, struct file *file)
+ {
+ 	int err;
+ 	struct notify_change_args args = {
+@@ -570,6 +571,12 @@ int vfsub_sio_notify_change(struct au_hi
+ 	return err;
+ }
+ 
++int vfsub_notify_change(struct dentry *dentry, struct iattr *ia,
++			struct vfsub_args *vargs)
++{
++	return vfsub_fnotify_change(dentry, ia, vargs, NULL);
++}
++
+ /* ---------------------------------------------------------------------- */
+ 
+ struct unlink_args {
+--- a/fs/aufs/vfsub.h
++++ b/fs/aufs/vfsub.h
+@@ -508,6 +508,8 @@ int vfsub_sio_notify_change(struct au_hi
+ 
+ /* ---------------------------------------------------------------------- */
+ 
++int vfsub_fnotify_change(struct dentry *dentry, struct iattr *ia,
++			struct vfsub_args *vargs, struct file *file);
+ int vfsub_notify_change(struct dentry *dentry, struct iattr *ia,
+ 			struct vfsub_args *vargs);
+ int vfsub_unlink(struct inode *dir, struct dentry *dentry,
