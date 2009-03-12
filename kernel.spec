@@ -108,7 +108,7 @@
 
 %define		basever		2.6.28
 %define		postver		.7
-%define		rel		2
+%define		rel		3
 
 %define		_enable_debug_packages			0
 
@@ -298,6 +298,11 @@ Patch130:	linux-2.6-forcedeth-WON.patch
 # http://download.filesystems.org/unionfs/unionfs-2.x/unionfs-2.5.1_for_2.6.28.1.diff.gz
 Patch140:	kernel-unionfs.patch
 Patch141:	kernel-unionfs-apparmor.patch
+
+# aufs1, http://aufs.sourceforge.net/
+Patch145:	kernel-aufs.patch
+Patch146:	kernel-aufs-support.patch
+Patch147:	kernel-aufs-apparmor.patch
 
 Patch150:	kernel-ppc-crtsavres.patch
 
@@ -867,6 +872,10 @@ install %{SOURCE5} Makefile.ppclibs
 # unionfs
 %patch140 -p1
 %{?with_apparmor:%patch141 -p1}
+
+%patch145 -p1
+%patch146 -p1
+%{?with_apparmor:%patch147 -p1}
 
 %patch2500 -p1
 
