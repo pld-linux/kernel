@@ -363,7 +363,7 @@ diff -uprN a/fs/ecryptfs/inode.c b/fs/ecryptfs/inode.c
  	if (rc || !lower_new_dentry->d_inode)
  		goto out_lock;
  	rc = ecryptfs_interpose(lower_new_dentry, new_dentry, dir->i_sb, 0);
-@@ -440,11 +445,12 @@ static int ecryptfs_unlink(struct inode 
+@@ -440,13 +445,14 @@ static int ecryptfs_unlink(struct inode 
  {
  	int rc = 0;
  	struct dentry *lower_dentry = ecryptfs_dentry_to_lower(dentry);
@@ -372,11 +372,13 @@ diff -uprN a/fs/ecryptfs/inode.c b/fs/ecryptfs/inode.c
  	struct dentry *lower_dir_dentry;
  
  	lower_dir_dentry = lock_parent(lower_dentry);
+ 	dget(lower_dentry);
+ 	atomic_inc(&lower_dentry->d_inode->i_count);
 -	rc = vfs_unlink(lower_dir_inode, lower_dentry);
 +	rc = vfs_unlink(lower_dir_inode, lower_dentry, lower_mnt);
+ 	dput(lower_dentry);
  	if (rc) {
  		printk(KERN_ERR "Error in vfs_unlink; rc = [%d]\n", rc);
- 		goto out_unlock;
 @@ -464,6 +470,7 @@ static int ecryptfs_symlink(struct inode
  {
  	int rc;
