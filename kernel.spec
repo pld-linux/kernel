@@ -108,7 +108,7 @@
 
 %define		basever		2.6.28
 %define		postver		.7
-%define		rel		1
+%define		rel		2
 
 %define		_enable_debug_packages			0
 
@@ -295,7 +295,7 @@ Patch101:	kernel-vserver-fixes.patch
 # Fix verified for that kernel version.
 Patch130:	linux-2.6-forcedeth-WON.patch
 
-# http://download.filesystems.org/unionfs/unionfs-2.x/unionfs-2.5_for_2.6.27-rc6.diff.gz
+# http://download.filesystems.org/unionfs/unionfs-2.x/unionfs-2.5.1_for_2.6.28.1.diff.gz
 Patch140:	kernel-unionfs.patch
 Patch141:	kernel-unionfs-apparmor.patch
 
