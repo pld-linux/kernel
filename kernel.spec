@@ -1053,6 +1053,7 @@ RescueConfig() {
 		# CONFIG_GAMEPORT is not set
 		# CONFIG_KVM is not set
 		# CONFIG_PHONE is not set
+		CONFIG_AUFS=y
 		CONFIG_BLK_DEV_LOOP=y
 		CONFIG_ISO9660_FS=y
 		CONFIG_NLS_UTF8=y
