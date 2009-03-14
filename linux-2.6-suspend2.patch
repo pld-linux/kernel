@@ -1253,7 +1253,7 @@ index fbc8fa5..b2b74f8 100644
  P:	Dario Ballabio
  M:	ballabio_dario@emc.com
 diff --git a/arch/powerpc/mm/pgtable_32.c b/arch/powerpc/mm/pgtable_32.c
-index c31d6d2..7a6a924 100644
+index 2e664f3..cab7111 100644
 --- a/arch/powerpc/mm/pgtable_32.c
 +++ b/arch/powerpc/mm/pgtable_32.c
 @@ -397,6 +397,7 @@ void kernel_map_pages(struct page *page, int numpages, int enable)
@@ -1277,10 +1277,10 @@ index cc5a254..1216ab3 100644
  void machine_halt(void)
  {
 diff --git a/arch/x86/mm/pageattr.c b/arch/x86/mm/pageattr.c
-index 84ba748..5078db0 100644
+index f664bc1..359f62f 100644
 --- a/arch/x86/mm/pageattr.c
 +++ b/arch/x86/mm/pageattr.c
-@@ -1135,6 +1135,7 @@ void kernel_map_pages(struct page *page, int numpages, int enable)
+@@ -1149,6 +1149,7 @@ void kernel_map_pages(struct page *page, int numpages, int enable)
  	 */
  	__flush_tlb_all();
  }
@@ -1288,7 +1288,7 @@ index 84ba748..5078db0 100644
  
  #ifdef CONFIG_HIBERNATION
  
-@@ -1149,7 +1150,7 @@ bool kernel_page_present(struct page *page)
+@@ -1163,7 +1164,7 @@ bool kernel_page_present(struct page *page)
  	pte = lookup_address((unsigned long)page_address(page), &level);
  	return (pte_val(*pte) & _PAGE_PRESENT);
  }
@@ -2309,10 +2309,10 @@ index f7d4bd6..00d5263 100644
  
  /**
 diff --git a/include/linux/Kbuild b/include/linux/Kbuild
-index 3a025d9..190873f 100644
+index d066bbc..09dc57f 100644
 --- a/include/linux/Kbuild
 +++ b/include/linux/Kbuild
-@@ -213,6 +213,7 @@ unifdef-y += filter.h
+@@ -212,6 +212,7 @@ unifdef-y += filter.h
  unifdef-y += flat.h
  unifdef-y += futex.h
  unifdef-y += fs.h
@@ -5027,7 +5027,7 @@ index 0000000..a1dd8ff
 +#endif
 diff --git a/kernel/power/tuxonice_atomic_copy.c b/kernel/power/tuxonice_atomic_copy.c
 new file mode 100644
-index 0000000..d1acbcb
+index 0000000..9cdd00e
 --- /dev/null
 +++ b/kernel/power/tuxonice_atomic_copy.c
 @@ -0,0 +1,406 @@
@@ -5298,7 +5298,7 @@ index 0000000..d1acbcb
 +	toi_prepare_status(DONT_CLEAR_BAR,	"Atomic restore.");
 +
 +	memcpy(&toi_bkd.toi_nosave_commandline, saved_command_line,
-+		COMMAND_LINE_SIZE);
++		strlen(saved_command_line));
 +
 +	if (add_boot_kernel_data_pbe())
 +		goto Failed;
@@ -5467,10 +5467,10 @@ index 0000000..8df3552
 +void toi_end_atomic(int stage, int toi_time, int error);
 diff --git a/kernel/power/tuxonice_block_io.c b/kernel/power/tuxonice_block_io.c
 new file mode 100644
-index 0000000..c4389a5
+index 0000000..e726480
 --- /dev/null
 +++ b/kernel/power/tuxonice_block_io.c
-@@ -0,0 +1,1314 @@
+@@ -0,0 +1,1313 @@
 +/*
 + * kernel/power/tuxonice_block_io.c
 + *
@@ -6239,8 +6239,10 @@ index 0000000..c4389a5
 +		buffer = (char *) toi_get_zeroed_page(12,
 +				TOI_ATOMIC_GFP);
 +		if (!buffer) {
-+			if (oom && !dedicated_thread)
-+				return -EIO;
++			if (oom && !dedicated_thread) {
++				mutex_unlock(&toi_bio_readahead_mutex);
++				return -ENOMEM;
++			}
 +
 +			oom = 1;
 +			set_free_mem_throttle();
@@ -6279,17 +6281,14 @@ index 0000000..c4389a5
 +		return 0;
 +
 +	do {
-+		int result = toi_start_one_readahead(dedicated_thread);
++		last_result = toi_start_one_readahead(dedicated_thread);
 +
-+		if (result == -ENOMEM || result == -EIO)
-+			return 0;
-+		else
-+			last_result = result;
++		if (last_result) {
++			if (last_result == -ENOMEM || last_result == -EIO)
++				return 0;
 +
-+		if (last_result == -ENODATA)
 +			more_readahead = 0;
 +
-+		if (!more_readahead && last_result) {
 +			/*
 +			 * Don't complain about failing to do readahead past
 +			 * the end of storage.
@@ -6301,12 +6300,12 @@ index 0000000..c4389a5
 +		} else
 +			num_submitted++;
 +
-+	} while (more_readahead &&
++	} while (more_readahead && !last_result &&
 +		 (dedicated_thread ||
 +		  (num_submitted < target_outstanding_io &&
 +		   atomic_read(&toi_io_in_progress) < target_outstanding_io)));
 +
-+	return 0;
++	return last_result;
 +}
 +
 +/**
@@ -9566,7 +9565,7 @@ index 0000000..22ffb9b
 +#endif
 diff --git a/kernel/power/tuxonice_file.c b/kernel/power/tuxonice_file.c
 new file mode 100644
-index 0000000..8f69b38
+index 0000000..da5dcae
 --- /dev/null
 +++ b/kernel/power/tuxonice_file.c
 @@ -0,0 +1,1247 @@
@@ -10060,7 +10059,7 @@ index 0000000..8f69b38
 +static int prepare_signature(struct toi_file_header *current_header,
 +		unsigned long first_header_block)
 +{
-+	strncpy(current_header->sig, tuxonice_signature,
++	memcpy(current_header->sig, tuxonice_signature,
 +			sizeof(tuxonice_signature));
 +	current_header->resumed_before = 0;
 +	current_header->first_header_block = first_header_block;
@@ -12128,10 +12127,10 @@ index 0000000..c05b964
 +#endif
 diff --git a/kernel/power/tuxonice_io.c b/kernel/power/tuxonice_io.c
 new file mode 100644
-index 0000000..0e9aa03
+index 0000000..411b265
 --- /dev/null
 +++ b/kernel/power/tuxonice_io.c
-@@ -0,0 +1,1496 @@
+@@ -0,0 +1,1497 @@
 +/*
 + * kernel/power/tuxonice_io.c
 + *
@@ -12815,22 +12814,23 @@ index 0000000..0e9aa03
 +			schedule();
 +	}
 +
-+	if (!io_result) {
++	if (!io_result && !test_result_state(TOI_ABORTED)) {
++		unsigned long next;
++
 +		printk("done.\n");
 +
 +		toi_update_status(io_base + io_finish_at, io_barmax,
 +				" %d/%d MB ",
 +				MB(io_base + io_finish_at), MB(io_barmax));
-+	}
 +
-+	if (test_result_state(TOI_ABORTED))
-+		io_result = 1;
-+	else { /* All I/O done? */
 +		memory_bm_position_reset(io_map);
-+		if  (memory_bm_next_pfn(io_map) != BM_END_OF_MAP) {
++		next = memory_bm_next_pfn(io_map);
++		if  (next != BM_END_OF_MAP) {
 +			printk(KERN_INFO "Finished I/O loop but still work to "
 +					"do?\nFinish at = %d. io_count = %d.\n",
 +					finish_at, atomic_read(&io_count));
++			printk(KERN_INFO "I/O bitmap still records work to do."
++					"%ld.\n", next);
 +			BUG();
 +		}
 +	}
@@ -15641,10 +15641,10 @@ index 0000000..a85633a
 +extern void platform_restore_cleanup(int platform_mode);
 diff --git a/kernel/power/tuxonice_prepare_image.c b/kernel/power/tuxonice_prepare_image.c
 new file mode 100644
-index 0000000..d062f3e
+index 0000000..1aa62e1
 --- /dev/null
 +++ b/kernel/power/tuxonice_prepare_image.c
-@@ -0,0 +1,1047 @@
+@@ -0,0 +1,1048 @@
 +/*
 + * kernel/power/tuxonice_prepare_image.c
 + *
@@ -16322,17 +16322,15 @@ index 0000000..d062f3e
 + * Description:	Return the number of pages that are free, beginning with and
 + * 		including this one.
 + */
-+static int size_of_free_region(struct page *page)
++static int size_of_free_region(struct zone *zone, unsigned long start_pfn)
 +{
-+	struct zone *zone = page_zone(page);
-+	unsigned long this_pfn = page_to_pfn(page),
-+		      orig_pfn = this_pfn,
++	unsigned long this_pfn = start_pfn,
 +		      end_pfn = ZONE_START(zone) + zone->spanned_pages - 1;
 +
 +	while (this_pfn <= end_pfn && PageNosaveFree(pfn_to_page(this_pfn)))
 +		this_pfn++;
 +
-+	return this_pfn - orig_pfn;
++	return this_pfn - start_pfn;
 +}
 +
 +/* flag_image_pages
@@ -16378,21 +16376,24 @@ index 0000000..d062f3e
 +			if (!pfn_valid(pfn))
 +				continue;
 +
-+			page = pfn_to_page(pfn);
-+
-+			chunk_size = size_of_free_region(page);
++			chunk_size = size_of_free_region(zone, pfn);
 +			if (chunk_size) {
 +				num_free += chunk_size;
 +				loop += chunk_size - 1;
 +				continue;
 +			}
 +
-+			if (highmem)
-+				page = saveable_highmem_page(zone, pfn);
-+			else
-+				page = saveable_page(zone, pfn);
++			page = pfn_to_page(pfn);
 +
-+			if (!page || PageNosave(page)) {
++			if (PageNosave(page)) {
++				num_nosave++;
++				continue;
++			}
++
++			page = highmem ? saveable_highmem_page(zone, pfn) :
++				saveable_page(zone, pfn);
++
++			if (!page) {
 +				num_nosave++;
 +				continue;
 +			}
@@ -17023,10 +17024,10 @@ index 0000000..5dafc95
 +}
 diff --git a/kernel/power/tuxonice_storage.h b/kernel/power/tuxonice_storage.h
 new file mode 100644
-index 0000000..5477056
+index 0000000..24f8e8a
 --- /dev/null
 +++ b/kernel/power/tuxonice_storage.h
-@@ -0,0 +1,53 @@
+@@ -0,0 +1,45 @@
 +/*
 + * kernel/power/tuxonice_storage.h
 + *
@@ -17072,14 +17073,6 @@ index 0000000..5477056
 +
 +	USM_MSG_MAX,
 +};
-+
-+#ifdef CONFIG_NET
-+extern __init int toi_usm_init(void);
-+extern __exit void toi_usm_cleanup(void);
-+#else
-+#define toi_usm_init() do { } while (0)
-+#define toi_usm_cleanup() do { } while (0)
-+#endif
 diff --git a/kernel/power/tuxonice_swap.c b/kernel/power/tuxonice_swap.c
 new file mode 100644
 index 0000000..b6009df
@@ -20083,7 +20076,7 @@ index 16ce8b9..8dd207b 100644
  static inline int zref_in_nodemask(struct zoneref *zref, nodemask_t *nodes)
  {
 diff --git a/mm/page-writeback.c b/mm/page-writeback.c
-index 08d2b96..39bc035 100644
+index 5270591..8d64390 100644
 --- a/mm/page-writeback.c
 +++ b/mm/page-writeback.c
 @@ -93,6 +93,7 @@ int dirty_expire_interval = 30 * HZ;
