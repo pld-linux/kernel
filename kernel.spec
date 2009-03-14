@@ -1397,9 +1397,7 @@ ln -sf initrd-%{kernel_release}.gz %{initrd_dir}/initrd
 %{?alt_kernel:ln -sf initrd-%{kernel_release}.gz %{initrd_dir}/initrd%{_alt_kernel}}
 
 if [ -x /sbin/new-kernel-pkg ]; then
-	title="PLD Linux (%{pld_release})%{?alt_kernel: / %{alt_kernel}}"
-
-	/sbin/new-kernel-pkg --initrdfile=%{initrd_dir}/initrd-%{kernel_release}.gz --install %{kernel_release} --banner "$title"
+	/sbin/new-kernel-pkg --initrdfile=%{initrd_dir}/initrd-%{kernel_release}.gz --install %{kernel_release} --banner "PLD Linux (%{pld_release})%{?alt_kernel: / %{alt_kernel}}"
 elif [ -x /sbin/rc-boot ]; then
 	/sbin/rc-boot 1>&2 || :
 fi
