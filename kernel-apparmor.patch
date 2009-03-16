@@ -2991,7 +2991,7 @@ diff -uprN e/security/apparmor/apparmor.h f/security/apparmor/apparmor.h
 +			printk(KERN_DEBUG "AppArmor: " fmt, ##args);	\
 +	} while (0)
 +
-+#define AA_ERROR(fmt, args...)	printk(KERN_ERR "AppArmor: " fmt, ##args)
++#define AA_ERROR(fmt, args...)	do { if (printk_ratelimit()) printk(KERN_ERR "AppArmor: " fmt, ##args) } while (0)
 +
 +/* struct aa_rlimit - rlimits settings for the profile
 + * @mask: which hard limits to set
@@ -5309,8 +5309,8 @@ diff -uprN e/security/apparmor/main.c f/security/apparmor/main.c
 +	ab = audit_log_start(audit_cxt, sa->gfp_mask, type);
 +
 +	if (!ab) {
-+		if (printk_ratelimit())
-+			AA_ERROR("Unable to log event (%d) to audit subsys\n",type);
++		AA_ERROR("Unable to log event (%d) to audit subsys\n",
++			 type);
 +		 /* don't fail operations in complain mode even if logging
 +		  * fails */
 +		return type == AUDIT_APPARMOR_ALLOWED ? 0 : -ENOMEM;
