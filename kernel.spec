@@ -107,8 +107,8 @@
 %endif
 
 %define		basever		2.6.28
-%define		postver		.7
-%define		rel		3
+%define		postver		.8
+%define		rel		1
 
 %define		_enable_debug_packages			0
 
@@ -147,7 +147,7 @@ Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{basever}.tar.bz2
 # Source0-md5:	d351e44709c9810b85e29b877f50968a
 %if "%{postver}" != "%{nil}"
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
-# Source1-md5:	346c912ebaffcf84361859014009be50
+# Source1-md5:	8d3d51f51eaadde0a04a79244e92e435
 %endif
 
 Source3:	kernel-autoconf.h
@@ -273,9 +273,6 @@ Patch59:	kernel-rndis_host-wm5.patch
 # http://www.tuxonice.net/downloads/all/tuxonice-3.0-rc8-for-2.6.28.patch.bz2
 Patch69:	linux-2.6-suspend2.patch
 Patch70:	kernel-suspend2-headers.patch
-
-# ext4 patches
-Patch71:	kernel-ext4.patch
 
 # touchpad fixes
 Patch72:	kernel-touchpad.patch
@@ -760,9 +757,6 @@ install %{SOURCE5} Makefile.ppclibs
 %patch70 -p1
 ##endif
 %endif
-
-# ext4 patch
-%patch71 -p1
 
 # touchpad fixes
 %patch72 -p1
