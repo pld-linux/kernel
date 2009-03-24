@@ -193,11 +193,6 @@ Patch2:		tahoe9xx-2.6.24.patch
 Patch3:		kernel-fbcondecor.patch
 Patch4:		linux-fbcon-margins.patch
 
-# http://mesh.dl.sourceforge.net/sourceforge/squashfs/squashfs3.4.tgz
-# squashfs3.4/kernel-patches/linux-2.6.27-rc4/squashfs3.4-patch
-Patch5:		kernel-squashfs.patch
-Patch6:		linux-static-dev.patch
-
 # netfilter related stuff mostly based on patch-o-matic-ng
 # snapshot 20061213 with some fixes related to changes in
 # netfilter api in 2.6.19 up to 2.6.22. Some modules
@@ -274,15 +269,9 @@ Patch59:	kernel-rndis_host-wm5.patch
 Patch69:	linux-2.6-suspend2.patch
 Patch70:	kernel-suspend2-headers.patch
 
-# touchpad fixes
-Patch72:	kernel-touchpad.patch
-
 # adds some ids for hostap suported cards and monitor_enable from/for aircrack-ng
 # http://patches.aircrack-ng.org/hostap-kernel-2.6.18.patch
 Patch85:	hostap-kernel-2.6.18.patch
-
-# Taken from http://download.opensuse.org/factory/repo/src-oss/suse/src/kernel-source-2.6.27.7-3.1.src.rpm
-Patch90:	kernel-mpt-fusion.patch
 
 # based on http://vserver.13thfloor.at/Experimental/patch-2.6.28.7-vs2.3.0.36.7.diff
 Patch100:	linux-2.6-vs2.3.patch
@@ -310,14 +299,13 @@ Patch200:	linux-2.6-ppc-ICE-hacks.patch
 # alternative routes, the reverse path protection (rp_filter),
 # the NAT processing to use correctly the routing when multiple
 # gateways are used.
-# http://www.ssi.bg/~ja/routes-2.6.27-15.diff
+# http://www.ssi.bg/~ja/routes-2.6.28-16.diff
 Patch300:	kernel-routes.patch
 
 Patch1000:	linux-2.6-grsec-minimal.patch
 
 Patch2000:	kernel-small_fixes.patch
 Patch2001:	linux-2.6.21.1-pwc-uncompress.patch
-Patch2002:	kernel-netns-inet6-tw.patch
 Patch2003:	kernel-regressions.patch
 
 # kill some thousands of warnings
@@ -755,19 +743,13 @@ install %{SOURCE5} Makefile.ppclibs
 ##endif
 %endif
 
-# touchpad fixes
-%patch72 -p1
+# XXX: 2.6.29 - need update
+#%patch2 -p1
 
-%patch2 -p1
 %if %{with fbcondecor}
 %patch3 -p1
 %endif
 %patch4 -p1
-
-# squashfs
-%patch5 -p1
-
-%patch6 -p1
 
 ## netfilter
 #
@@ -846,9 +828,6 @@ install %{SOURCE5} Makefile.ppclibs
 # hostap enhancements from/for aircrack-ng
 %patch85 -p1
 
-# LSI MPT Fusion driver update
-%patch90 -p1
-
 # vserver
 %if %{with vserver}
 %patch100 -p1
@@ -867,9 +846,10 @@ install %{SOURCE5} Makefile.ppclibs
 %patch140 -p1
 %{?with_apparmor:%patch141 -p1}
 
-%patch145 -p1
-%patch146 -p1
-%{?with_apparmor:%patch147 -p1}
+# 2.6.29 FIXME - needs port to creds
+#%patch145 -p1
+#%patch146 -p1
+#%{?with_apparmor:%patch147 -p1}
 
 %patch2500 -p1
 
@@ -952,17 +932,10 @@ install %{SOURCE5} Makefile.ppclibs
 # Small fixes:
 %patch2000 -p1
 %patch2001 -p1
-%patch2002 -p1
 #%patch2003 -p1
 
 # Fix EXTRAVERSION in main Makefile
 sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{postver}%{?alt_kernel:_%{alt_kernel}}#g' Makefile
-
-# on sparc this line causes CONFIG_INPUT=m (instead of =y), thus breaking build
-sed -i -e '/select INPUT/d' net/bluetooth/hidp/Kconfig
-
-# on sparc64 avoid building break due to NULL pointer type warrning
-sed -i -e 's/^EXTRA_CFLAGS := -Werror/EXTRA_CFLAGS := /' arch/sparc64/kernel/Makefile
 
 # cleanup backups after patching
 find '(' -name '*~' -o -name '*.orig' -o -name '.gitignore' ')' -print0 | xargs -0 -r -l512 rm -f
