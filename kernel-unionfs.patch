@@ -532,10 +532,10 @@ index 0000000..1adde69
 +
 +For more information, see <http://unionfs.filesystems.org/>.
 diff --git a/MAINTAINERS b/MAINTAINERS
-index fbc8fa5..9b7a352 100644
+index 3fe4dc2..168cc4d 100644
 --- a/MAINTAINERS
 +++ b/MAINTAINERS
-@@ -4294,6 +4294,14 @@ L:	linux-kernel@vger.kernel.org
+@@ -4370,6 +4370,14 @@ L:	linux-kernel@vger.kernel.org
  W:	http://www.kernel.dk
  S:	Maintained
  
@@ -543,7 +543,7 @@ index fbc8fa5..9b7a352 100644
 +P:	Erez Zadok
 +M:	ezk@cs.sunysb.edu
 +L:	unionfs@filesystems.org
-+W:	http://unionfs.filesystems.org
++W:	http://unionfs.filesystems.org/
 +T:	git git.kernel.org/pub/scm/linux/kernel/git/ezk/unionfs.git
 +S:	Maintained
 +
@@ -589,10 +589,11 @@ index fbc8fa5..9b7a352 100644
  source "fs/hfsplus/Kconfig"
  source "fs/befs/Kconfig"
 diff --git a/fs/Makefile b/fs/Makefile
-index d9f8afe..e7b036c 100644
+diff --git a/fs/Makefile b/fs/Makefile
+index 38bc735..a1b3bda 100644
 --- a/fs/Makefile
 +++ b/fs/Makefile
-@@ -86,6 +86,7 @@ obj-$(CONFIG_ISO9660_FS)	+= isofs/
+@@ -85,6 +85,7 @@ obj-$(CONFIG_ISO9660_FS)	+= isofs/
  obj-$(CONFIG_HFSPLUS_FS)	+= hfsplus/ # Before hfs to find wrapped HFS+
  obj-$(CONFIG_HFS_FS)		+= hfs/
  obj-$(CONFIG_ECRYPT_FS)		+= ecryptfs/
@@ -614,10 +615,10 @@ index 5e59658..4621f89 100644
  out:
  	return rc;
 diff --git a/fs/ecryptfs/inode.c b/fs/ecryptfs/inode.c
-index 5e78fc1..3f13ea1 100644
+index 5697899..8a370a1 100644
 --- a/fs/ecryptfs/inode.c
 +++ b/fs/ecryptfs/inode.c
-@@ -589,9 +589,9 @@ ecryptfs_rename(struct inode *old_dir, struct dentry *old_dentry,
+@@ -628,9 +628,9 @@ ecryptfs_rename(struct inode *old_dir, struct dentry *old_dentry,
  			lower_new_dir_dentry->d_inode, lower_new_dentry);
  	if (rc)
  		goto out_lock;
@@ -629,7 +630,7 @@ index 5e78fc1..3f13ea1 100644
  out_lock:
  	unlock_rename(lower_old_dir_dentry, lower_new_dir_dentry);
  	dput(lower_new_dentry->d_parent);
-@@ -914,7 +914,7 @@ static int ecryptfs_setattr(struct dentry *dentry, struct iattr *ia)
+@@ -952,7 +952,7 @@ static int ecryptfs_setattr(struct dentry *dentry, struct iattr *ia)
  	rc = notify_change(lower_dentry, ia);
  	mutex_unlock(&lower_dentry->d_inode->i_mutex);
  out:
@@ -639,10 +640,10 @@ index 5e78fc1..3f13ea1 100644
  }
  
 diff --git a/fs/ecryptfs/main.c b/fs/ecryptfs/main.c
-index 64d2ba9..f91feb3 100644
+index 789cf2e..7f82ed3 100644
 --- a/fs/ecryptfs/main.c
 +++ b/fs/ecryptfs/main.c
-@@ -193,7 +193,7 @@ int ecryptfs_interpose(struct dentry *lower_dentry, struct dentry *dentry,
+@@ -194,7 +194,7 @@ int ecryptfs_interpose(struct dentry *lower_dentry, struct dentry *dentry,
  		d_add(dentry, inode);
  	else
  		d_instantiate(dentry, inode);
@@ -652,10 +653,10 @@ index 64d2ba9..f91feb3 100644
  	 * other metadata */
  	fsstack_copy_inode_size(inode, lower_inode);
 diff --git a/fs/namei.c b/fs/namei.c
-index 3ca2574..c2f5770 100644
+index bbc15c2..7983d41 100644
 --- a/fs/namei.c
 +++ b/fs/namei.c
-@@ -379,6 +379,7 @@ void release_open_intent(struct nameidata *nd)
+@@ -373,6 +373,7 @@ void release_open_intent(struct nameidata *nd)
  	else
  		fput(nd->intent.open.file);
  }
@@ -664,10 +665,10 @@ index 3ca2574..c2f5770 100644
  static inline struct dentry *
  do_revalidate(struct dentry *dentry, struct nameidata *nd)
 diff --git a/fs/splice.c b/fs/splice.c
-index 1eaef06..53263ac 100644
+index 4ed0ba4..6637e35 100644
 --- a/fs/splice.c
 +++ b/fs/splice.c
-@@ -887,8 +887,8 @@ EXPORT_SYMBOL(generic_splice_sendpage);
+@@ -888,8 +888,8 @@ EXPORT_SYMBOL(generic_splice_sendpage);
  /*
   * Attempt to initiate a splice from pipe to file.
   */
@@ -678,7 +679,7 @@ index 1eaef06..53263ac 100644
  {
  	int ret;
  
-@@ -907,13 +907,14 @@ static long do_splice_from(struct pipe_inode_info *pipe, struct file *out,
+@@ -908,13 +908,14 @@ static long do_splice_from(struct pipe_inode_info *pipe, struct file *out,
  
  	return out->f_op->splice_write(pipe, out, ppos, len, flags);
  }
@@ -696,7 +697,7 @@ index 1eaef06..53263ac 100644
  {
  	int ret;
  
-@@ -929,6 +930,7 @@ static long do_splice_to(struct file *in, loff_t *ppos,
+@@ -930,6 +931,7 @@ static long do_splice_to(struct file *in, loff_t *ppos,
  
  	return in->f_op->splice_read(in, ppos, pipe, len, flags);
  }
@@ -704,7 +705,7 @@ index 1eaef06..53263ac 100644
  
  /**
   * splice_direct_to_actor - splices data directly between two non-pipes
-@@ -998,7 +1000,7 @@ ssize_t splice_direct_to_actor(struct file *in, struct splice_desc *sd,
+@@ -999,7 +1001,7 @@ ssize_t splice_direct_to_actor(struct file *in, struct splice_desc *sd,
  		size_t read_len;
  		loff_t pos = sd->pos, prev_pos = pos;
  
@@ -713,7 +714,7 @@ index 1eaef06..53263ac 100644
  		if (unlikely(ret <= 0))
  			goto out_release;
  
-@@ -1057,7 +1059,7 @@ static int direct_splice_actor(struct pipe_inode_info *pipe,
+@@ -1058,7 +1060,7 @@ static int direct_splice_actor(struct pipe_inode_info *pipe,
  {
  	struct file *file = sd->u.file;
  
@@ -722,7 +723,7 @@ index 1eaef06..53263ac 100644
  }
  
  /**
-@@ -1131,7 +1133,7 @@ static long do_splice(struct file *in, loff_t __user *off_in,
+@@ -1132,7 +1134,7 @@ static long do_splice(struct file *in, loff_t __user *off_in,
  		} else
  			off = &out->f_pos;
  
@@ -731,7 +732,7 @@ index 1eaef06..53263ac 100644
  
  		if (off_out && copy_to_user(off_out, off, sizeof(loff_t)))
  			ret = -EFAULT;
-@@ -1152,7 +1154,7 @@ static long do_splice(struct file *in, loff_t __user *off_in,
+@@ -1153,7 +1155,7 @@ static long do_splice(struct file *in, loff_t __user *off_in,
  		} else
  			off = &in->f_pos;
  
@@ -852,11 +853,11 @@ index 67716f6..cc1443d 100644
  EXPORT_SYMBOL_GPL(fsstack_copy_attr_all);
 diff --git a/fs/unionfs/Makefile b/fs/unionfs/Makefile
 new file mode 100644
-index 0000000..5251b87
+index 0000000..27a4781
 --- /dev/null
 +++ b/fs/unionfs/Makefile
 @@ -0,0 +1,17 @@
-+UNIONFS_VERSION="2.5.1 (for 2.6.28.1)"
++UNIONFS_VERSION="2.5.1 (for 2.6.29-rc2)"
 +
 +EXTRA_CFLAGS += -DUNIONFS_VERSION=\"$(UNIONFS_VERSION)\"
 +
@@ -875,10 +876,10 @@ index 0000000..5251b87
 +endif
 diff --git a/fs/unionfs/commonfops.c b/fs/unionfs/commonfops.c
 new file mode 100644
-index 0000000..63ee085
+index 0000000..e9dc23c
 --- /dev/null
 +++ b/fs/unionfs/commonfops.c
-@@ -0,0 +1,879 @@
+@@ -0,0 +1,880 @@
 +/*
 + * Copyright (c) 2003-2009 Erez Zadok
 + * Copyright (c) 2003-2006 Charles P. Wright
@@ -1059,7 +1060,7 @@ index 0000000..63ee085
 +		lower_file =
 +			dentry_open(lower_dentry,
 +				    unionfs_lower_mnt_idx(dentry, bindex),
-+				    file->f_flags);
++				    file->f_flags, current_cred());
 +		if (IS_ERR(lower_file)) {
 +			branchput(sb, bindex);
 +			err = PTR_ERR(lower_file);
@@ -1104,7 +1105,7 @@ index 0000000..63ee085
 +	unionfs_mntget(dentry, bstart);
 +	lower_file = dentry_open(lower_dentry,
 +				 unionfs_lower_mnt_idx(dentry, bstart),
-+				 file->f_flags);
++				 file->f_flags, current_cred());
 +	if (IS_ERR(lower_file)) {
 +		err = PTR_ERR(lower_file);
 +		goto out;
@@ -1338,7 +1339,8 @@ index 0000000..63ee085
 +		dget(lower_dentry);
 +		unionfs_mntget(file->f_path.dentry, bindex);
 +		mnt = unionfs_lower_mnt_idx(file->f_path.dentry, bindex);
-+		lower_file = dentry_open(lower_dentry, mnt, file->f_flags);
++		lower_file = dentry_open(lower_dentry, mnt, file->f_flags,
++					 current_cred());
 +		if (IS_ERR(lower_file))
 +			return PTR_ERR(lower_file);
 +
@@ -1409,7 +1411,7 @@ index 0000000..63ee085
 +	lower_file =
 +		dentry_open(lower_dentry,
 +			    unionfs_lower_mnt_idx(file->f_path.dentry, bstart),
-+			    lower_flags);
++			    lower_flags, current_cred());
 +	if (IS_ERR(lower_file))
 +		return PTR_ERR(lower_file);
 +
@@ -1760,10 +1762,10 @@ index 0000000..63ee085
 +}
 diff --git a/fs/unionfs/copyup.c b/fs/unionfs/copyup.c
 new file mode 100644
-index 0000000..c7d3f9f
+index 0000000..3d0c0ca
 --- /dev/null
 +++ b/fs/unionfs/copyup.c
-@@ -0,0 +1,888 @@
+@@ -0,0 +1,897 @@
 +/*
 + * Copyright (c) 2003-2009 Erez Zadok
 + * Copyright (c) 2003-2006 Charles P. Wright
@@ -1858,10 +1860,19 @@ index 0000000..c7d3f9f
 +		 * XXX: move entire copyup code to SIOQ.
 +		 */
 +		if (err == -EPERM && !capable(CAP_FOWNER)) {
-+			cap_raise(current->cap_effective, CAP_FOWNER);
++			const struct cred *old_creds;
++			struct cred *new_creds;
++
++			new_creds = prepare_creds();
++			if (unlikely(!new_creds)) {
++				err = -ENOMEM;
++				goto out;
++			}
++			cap_raise(new_creds->cap_effective, CAP_FOWNER);
++			old_creds = override_creds(new_creds);
 +			err = vfs_setxattr(new_lower_dentry, name_list,
 +					   attr_value, size, 0);
-+			cap_lower(current->cap_effective, CAP_FOWNER);
++			revert_creds(old_creds);
 +		}
 +		if (err < 0)
 +			goto out;
@@ -2006,7 +2017,7 @@ index 0000000..c7d3f9f
 +	/* dentry_open calls dput and mntput if it returns an error */
 +	input_file = dentry_open(old_lower_dentry,
 +				 unionfs_lower_mnt_idx(dentry, old_bindex),
-+				 O_RDONLY | O_LARGEFILE);
++				 O_RDONLY | O_LARGEFILE, current_cred());
 +	if (IS_ERR(input_file)) {
 +		dput(old_lower_dentry);
 +		err = PTR_ERR(input_file);
@@ -2022,7 +2033,7 @@ index 0000000..c7d3f9f
 +	output_mnt = unionfs_mntget(sb->s_root, new_bindex);
 +	branchget(sb, new_bindex);
 +	output_file = dentry_open(new_lower_dentry, output_mnt,
-+				  O_RDWR | O_LARGEFILE);
++				  O_RDWR | O_LARGEFILE, current_cred());
 +	if (IS_ERR(output_file)) {
 +		err = PTR_ERR(output_file);
 +		goto out_close_in2;
@@ -3904,7 +3915,7 @@ index 0000000..eccb9ae
 +};
 diff --git a/fs/unionfs/dirhelper.c b/fs/unionfs/dirhelper.c
 new file mode 100644
-index 0000000..b2c645e
+index 0000000..2ecaafa
 --- /dev/null
 +++ b/fs/unionfs/dirhelper.c
 @@ -0,0 +1,158 @@
@@ -4030,7 +4041,7 @@ index 0000000..b2c645e
 +		dget(lower_dentry);
 +		mnt = unionfs_mntget(dentry, bindex);
 +		branchget(sb, bindex);
-+		lower_file = dentry_open(lower_dentry, mnt, O_RDONLY);
++		lower_file = dentry_open(lower_dentry, mnt, O_RDONLY, current_cred());
 +		if (IS_ERR(lower_file)) {
 +			err = PTR_ERR(lower_file);
 +			branchput(sb, bindex);
@@ -4481,10 +4492,10 @@ index 0000000..04ffa85
 +#endif	/* not _FANOUT_H */
 diff --git a/fs/unionfs/file.c b/fs/unionfs/file.c
 new file mode 100644
-index 0000000..af6f8a7
+index 0000000..281169e
 --- /dev/null
 +++ b/fs/unionfs/file.c
-@@ -0,0 +1,364 @@
+@@ -0,0 +1,380 @@
 +/*
 + * Copyright (c) 2003-2009 Erez Zadok
 + * Copyright (c) 2003-2006 Charles P. Wright
@@ -4587,6 +4598,21 @@ index 0000000..af6f8a7
 +	struct dentry *parent;
 +	struct vm_operations_struct *saved_vm_ops = NULL;
 +
++	/*
++	 * Since mm/memory.c:might_fault() (under PROVE_LOCKING) was
++	 * modified in 2.6.29-rc1 to call might_lock_read on mmap_sem, this
++	 * has been causing false positives in file system stacking layers.
++	 * In particular, our ->mmap is called after sys_mmap2 already holds
++	 * mmap_sem, then we lock our own mutexes; but earlier, it's
++	 * possible for lockdep to have locked our mutexes first, and then
++	 * we call a lower ->readdir which could call might_fault.  The
++	 * different ordering of the locks is what lockdep complains about
++	 * -- unnecessarily.  Therefore, we have no choice but to tell
++	 * lockdep to temporarily turn off lockdep here.  Note: the comments
++	 * inside might_sleep also suggest that it would have been
++	 * nicer to only annotate paths that needs that might_lock_read.
++	 */
++	lockdep_off();
 +	unionfs_read_lock(dentry->d_sb, UNIONFS_SMUTEX_PARENT);
 +	parent = unionfs_lock_parent(dentry, UNIONFS_DMUTEX_PARENT);
 +	unionfs_lock_dentry(dentry, UNIONFS_DMUTEX_CHILD);
@@ -4656,6 +4682,7 @@ index 0000000..af6f8a7
 +	unionfs_unlock_dentry(dentry);
 +	unionfs_unlock_parent(dentry, parent);
 +	unionfs_read_unlock(dentry->d_sb);
++	lockdep_on();
 +	return err;
 +}
 +
@@ -10445,10 +10472,10 @@ index 0000000..b6d8e10
 +}
 diff --git a/fs/unionfs/whiteout.c b/fs/unionfs/whiteout.c
 new file mode 100644
-index 0000000..6f5e19e
+index 0000000..a55684d
 --- /dev/null
 +++ b/fs/unionfs/whiteout.c
-@@ -0,0 +1,577 @@
+@@ -0,0 +1,584 @@
 +/*
 + * Copyright (c) 2003-2009 Erez Zadok
 + * Copyright (c) 2003-2006 Charles P. Wright
@@ -10983,7 +11010,8 @@ index 0000000..6f5e19e
 +	struct dentry *lower_dentry, *diropq;
 +	struct inode *lower_dir;
 +	struct nameidata nd;
-+	kernel_cap_t orig_cap;
++	const struct cred *old_creds;
++	struct cred *new_creds;
 +
 +	/*
 +	 * Opaque directory whiteout markers are special files (like regular
@@ -10993,9 +11021,14 @@ index 0000000..6f5e19e
 +	 * creation of the .wh.__dir_opaque: file.  Note, this does not
 +	 * circumvent normal ->permission).
 +	 */
-+	orig_cap = current->cap_effective;
-+	cap_raise(current->cap_effective, CAP_DAC_READ_SEARCH);
-+	cap_raise(current->cap_effective, CAP_DAC_OVERRIDE);
++	new_creds = prepare_creds();
++	if (unlikely(!new_creds)) {
++		err = -ENOMEM;
++		goto out_err;
++	}
++	cap_raise(new_creds->cap_effective, CAP_DAC_READ_SEARCH);
++	cap_raise(new_creds->cap_effective, CAP_DAC_OVERRIDE);
++	old_creds = override_creds(new_creds);
 +
 +	lower_dentry = unionfs_lower_dentry_idx(dentry, bindex);
 +	lower_dir = lower_dentry->d_inode;
@@ -11023,7 +11056,8 @@ index 0000000..6f5e19e
 +
 +out:
 +	mutex_unlock(&lower_dir->i_mutex);
-+	current->cap_effective = orig_cap;
++	revert_creds(old_creds);
++out_err:
 +	return err;
 +}
 diff --git a/fs/unionfs/xattr.c b/fs/unionfs/xattr.c
@@ -11243,10 +11277,10 @@ index bb516ce..64f1ced 100644
  /* inlines */
  static inline void fsstack_copy_attr_atime(struct inode *dest,
 diff --git a/include/linux/magic.h b/include/linux/magic.h
-index f7f3fdd..5f3e56f 100644
+index 0b4df7e..2170b8a 100644
 --- a/include/linux/magic.h
 +++ b/include/linux/magic.h
-@@ -39,6 +39,8 @@
+@@ -42,6 +42,8 @@
  #define REISER2FS_SUPER_MAGIC_STRING	"ReIsEr2Fs"
  #define REISER2FS_JR_SUPER_MAGIC_STRING	"ReIsEr3Fs"
  
@@ -11298,3 +11332,15 @@ index 0000000..c84d97e
 +
 +#endif /* _LINUX_UNIONFS_H */
 +
+diff --git a/security/security.c b/security/security.c
+index c3586c0..17c2cdf 100644
+--- a/security/security.c
++++ b/security/security.c
+@@ -520,6 +520,7 @@ int security_inode_permission(struct inode *inode, int mask)
+ 		return 0;
+ 	return security_ops->inode_permission(inode, mask);
+ }
++EXPORT_SYMBOL(security_inode_permission);
+ 
+ int security_inode_setattr(struct dentry *dentry, struct iattr *attr)
+ {
