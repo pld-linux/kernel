@@ -106,9 +106,9 @@
 %define		have_oss	0
 %endif
 
-%define		basever		2.6.28
-%define		postver		.9
-%define		rel		1
+%define		basever		2.6.29
+%define		postver		%{nil}
+%define		rel		0.1
 
 %define		_enable_debug_packages			0
 
@@ -144,7 +144,7 @@ Epoch:		3
 License:	GPL v2
 Group:		Base/Kernel
 Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{basever}.tar.bz2
-# Source0-md5:	d351e44709c9810b85e29b877f50968a
+# Source0-md5:	64921b5ff5cdadbccfcd3820f03be7d8
 %if "%{postver}" != "%{nil}"
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
 # Source1-md5:	27a43f76cf4b90db18df6d1c5e72789b
