@@ -107,7 +107,7 @@
 %endif
 
 %define		basever		2.6.28
-%define		postver		.8
+%define		postver		.9
 %define		rel		1
 
 %define		_enable_debug_packages			0
@@ -147,7 +147,7 @@ Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{basever}.tar.bz2
 # Source0-md5:	d351e44709c9810b85e29b877f50968a
 %if "%{postver}" != "%{nil}"
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
-# Source1-md5:	8d3d51f51eaadde0a04a79244e92e435
+# Source1-md5:	27a43f76cf4b90db18df6d1c5e72789b
 %endif
 
 Source3:	kernel-autoconf.h
@@ -319,9 +319,6 @@ Patch2000:	kernel-small_fixes.patch
 Patch2001:	linux-2.6.21.1-pwc-uncompress.patch
 Patch2002:	kernel-netns-inet6-tw.patch
 Patch2003:	kernel-regressions.patch
-
-# http://intellinuxgraphics.org/download/2008Q4-rc4/2008q4-kernel-against-2.6.28.patch
-Patch2200:	linux-intelgraphics-2008q4.patch
 
 # kill some thousands of warnings
 # (only warnings, so just remove parts of this patch if conflics)
@@ -957,8 +954,6 @@ install %{SOURCE5} Makefile.ppclibs
 %patch2001 -p1
 %patch2002 -p1
 #%patch2003 -p1
-
-%patch2200 -p1
 
 # Fix EXTRAVERSION in main Makefile
 sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{postver}%{?alt_kernel:_%{alt_kernel}}#g' Makefile
