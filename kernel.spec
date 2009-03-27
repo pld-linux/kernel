@@ -393,7 +393,7 @@ Conflicts:	quota-tools < 3.09
 Conflicts:	reiser4progs < 1.0.0
 %endif
 Conflicts:	reiserfsprogs < 3.6.3
-Conflicts:	udev < 1:071
+Conflicts:	udev < 1:081
 Conflicts:	util-linux < 2.10o
 Conflicts:	util-vserver < 0.30.215-10
 Conflicts:	xfsprogs < 2.6.0
