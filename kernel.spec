@@ -273,6 +273,9 @@ Patch70:	kernel-suspend2-headers.patch
 # http://patches.aircrack-ng.org/hostap-kernel-2.6.18.patch
 Patch85:	hostap-kernel-2.6.18.patch
 
+# Taken from http://download.opensuse.org/factory/repo/src-oss/suse/src/kernel-source-2.6.27.7-3.1.src.rpm
+Patch90:	kernel-mpt-fusion.patch
+
 # based on http://vserver.13thfloor.at/Experimental/patch-2.6.28.7-vs2.3.0.36.7.diff
 Patch100:	linux-2.6-vs2.3.patch
 Patch101:	kernel-vserver-fixes.patch
@@ -827,6 +830,10 @@ install %{SOURCE5} Makefile.ppclibs
 
 # hostap enhancements from/for aircrack-ng
 %patch85 -p1
+
+# LSI MPT Fusion driver update (by LSI via SUSE folks)
+# NEEDS UPDATE
+#%patch90 -p1
 
 # vserver
 %if %{with vserver}
