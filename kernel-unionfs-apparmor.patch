@@ -54,15 +54,15 @@ diff -upr linux-2.6.27/fs/unionfs./copyup.c linux-2.6.27/fs/unionfs/copyup.c
  		/*
  		 * Selinux depends on "security.*" xattrs, so to maintain
  		 * the security of copied-up files, if Selinux is active,
-@@ -93,8 +94,8 @@ static int copyup_xattrs(struct dentry *
- 		 */
- 		if (err == -EPERM && !capable(CAP_FOWNER)) {
- 			cap_raise(current->cap_effective, CAP_FOWNER);
+@@ -103,8 +103,8 @@
+ 			}
+ 			cap_raise(new_creds->cap_effective, CAP_FOWNER);
+ 			old_creds = override_creds(new_creds);
 -			err = vfs_setxattr(new_lower_dentry, name_list,
 -					   attr_value, size, 0);
 +			err = vfs_setxattr(new_lower_dentry, NULL, name_list,
 +					   attr_value, size, 0, NULL);
- 			cap_lower(current->cap_effective, CAP_FOWNER);
+ 			revert_creds(old_creds);
  		}
  		if (err < 0)
 @@ -136,14 +136,14 @@ static int copyup_permissions(struct sup
