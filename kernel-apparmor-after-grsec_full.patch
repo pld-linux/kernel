@@ -138,7 +138,7 @@ diff -uprN a/fs/attr.c b/fs/attr.c
 diff -uprN a/fs/dcache.c b/fs/dcache.c
 --- a/fs/dcache.c	2009-02-08 13:22:56.398269260 +0000
 +++ b/fs/dcache.c	2009-02-08 13:26:38.879284319 +0000
-@@ -1908,44 +1908,46 @@ static int prepend_name(char **buffer, i
+@@ -1908,45 +1908,46 @@ static int prepend_name(char **buffer, i
   * @root: root vfsmnt/dentry (may be modified by this function)
   * @buffer: buffer to return value in
   * @buflen: buffer length
@@ -147,7 +147,8 @@ diff -uprN a/fs/dcache.c b/fs/dcache.c
 - * Convert a dentry into an ASCII path name. If the entry has been deleted
 - * the string " (deleted)" is appended. Note that this is ambiguous.
 - *
-- * Returns the buffer or an error code if the path was too long.
+- * Returns a pointer into the buffer or an error code if the
+- * path was too long.
 - *
 - * "buflen" should be positive. Caller holds the dcache_lock.
 + * Convert a dentry into an ASCII path name. If the entry has been deleted,
@@ -363,7 +364,7 @@ diff -uprN a/fs/ecryptfs/inode.c b/fs/ecryptfs/inode.c
  	if (rc || !lower_new_dentry->d_inode)
  		goto out_lock;
  	rc = ecryptfs_interpose(lower_new_dentry, new_dentry, dir->i_sb, 0);
-@@ -440,13 +445,14 @@ static int ecryptfs_unlink(struct inode 
+@@ -474,11 +474,12 @@
  {
  	int rc = 0;
  	struct dentry *lower_dentry = ecryptfs_dentry_to_lower(dentry);
@@ -372,13 +373,11 @@ diff -uprN a/fs/ecryptfs/inode.c b/fs/ecryptfs/inode.c
  	struct dentry *lower_dir_dentry;
  
  	lower_dir_dentry = lock_parent(lower_dentry);
- 	dget(lower_dentry);
- 	atomic_inc(&lower_dentry->d_inode->i_count);
 -	rc = vfs_unlink(lower_dir_inode, lower_dentry);
 +	rc = vfs_unlink(lower_dir_inode, lower_dentry, lower_mnt);
- 	dput(lower_dentry);
  	if (rc) {
  		printk(KERN_ERR "Error in vfs_unlink; rc = [%d]\n", rc);
+ 		goto out_unlock;
 @@ -464,6 +470,7 @@ static int ecryptfs_symlink(struct inode
  {
  	int rc;
@@ -395,12 +394,12 @@ diff -uprN a/fs/ecryptfs/inode.c b/fs/ecryptfs/inode.c
  	lower_dir_dentry = lock_parent(lower_dentry);
  	encoded_symlen = ecryptfs_encode_filename(crypt_stat, symname,
  						  strlen(symname),
-@@ -479,7 +487,7 @@ static int ecryptfs_symlink(struct inode
- 		rc = encoded_symlen;
+@@ -517,7 +518,7 @@
+ 						  strlen(symname));
+ 	if (rc)
  		goto out_lock;
- 	}
 -	rc = vfs_symlink(lower_dir_dentry->d_inode, lower_dentry,
-+	rc = vfs_symlink(lower_dir_dentry->d_inode, lower_dentry, lower_mnt,
++	rc = vfs_symlink(lower_dir_dentry->d_inode, lower_dentry, lower_mnt
  			 encoded_symname);
  	kfree(encoded_symname);
  	if (rc || !lower_dentry->d_inode)
@@ -624,9 +623,9 @@ diff -uprN a/fs/fuse/file.c b/fs/fuse/file.c
  };
  
 @@ -1496,6 +1502,7 @@ static const struct file_operations fuse
- 	.fsync		= fuse_fsync,
- 	.lock		= fuse_file_lock,
- 	.flock		= fuse_file_flock,
+ 	.unlocked_ioctl	= fuse_file_ioctl,
+ 	.compat_ioctl	= fuse_file_compat_ioctl,
+ 	.poll		= fuse_file_poll,
 +	.fsetattr	= fuse_fsetattr,
  	/* no mmap and splice_read */
  };
@@ -657,9 +656,9 @@ diff -uprN a/fs/hpfs/namei.c b/fs/hpfs/namei.c
  			put_write_access(inode);
  			if (!err)
  				goto again;
-diff -uprN a/fs/inotify_user.c b/fs/inotify_user.c
---- a/fs/inotify_user.c	2009-02-08 13:22:56.408263679 +0000
-+++ b/fs/inotify_user.c	2009-02-08 13:26:38.905951221 +0000
+diff -uprN a/fs/notify/inotify/inotify_user.c b/fs/notify/inotify/inotify_user.c
+--- a/fs/notify/inotify/inotify_user.c	2009-02-08 13:22:56.408263679 +0000
++++ b/fs/notify/inotify/inotify_user.c	2009-02-08 13:26:38.905951221 +0000
 @@ -372,7 +372,7 @@ static int find_inode(const char __user 
  	if (error)
  		return error;
