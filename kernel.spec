@@ -1187,10 +1187,12 @@ cat $RPM_SOURCE_DIR/kernel-myown.config > %{defconfig}
 ln -sf %{defconfig} .config
 cd -
 
-# build kernel
-%{__make} TARGETOBJ=%{targetobj} all
+%{__make} TARGETOBJ=%{targetobj} oldconfig
 
 %{__awk} %{?debug:-v dieOnError=1} -v infile=%{objdir}/%{defconfig} -f %{SOURCE8} %{objdir}/.config
+
+# build kernel
+%{__make} TARGETOBJ=%{targetobj} all
 
 %install
 rm -rf $RPM_BUILD_ROOT
