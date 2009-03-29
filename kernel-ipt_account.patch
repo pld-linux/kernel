@@ -1,7 +1,7 @@
 diff -uNrp linux/net/ipv4/netfilter/ipt_account.c linux/net/ipv4/netfilter/ipt_account.c
 --- linux/net/ipv4/netfilter/ipt_account.c	1970-01-01 01:00:00.000000000 +0100
 +++ linux/net/ipv4/netfilter/ipt_account.c	2007-08-04 16:22:15.000000000 +0200
-@@ -0,0 +1,973 @@
+@@ -0,0 +1,985 @@
 +/* Copyright (c) 2004-2007 Piotr 'QuakeR' Gasidlo <quaker@barbara.eu.org>
 + *
 + * This program is free software; you can redistribute it and/or modify
@@ -21,7 +21,7 @@ diff -uNrp linux/net/ipv4/netfilter/ipt_account.c linux/net/ipv4/netfilter/ipt_a
 +
 +#define IPT_ACCOUNT_VERSION "0.1.21"
 +
-+//#define DEBUG_IPT_ACCOUNT
++#define DEBUG_IPT_ACCOUNT
 +
 +MODULE_AUTHOR("Piotr Gasidlo <quaker@barbara.eu.org>");
 +MODULE_DESCRIPTION("Traffic accounting module");
@@ -356,6 +356,7 @@ diff -uNrp linux/net/ipv4/netfilter/ipt_account.c linux/net/ipv4/netfilter/ipt_a
 + */
 +static bool
 +match(const struct sk_buff *skb,
++#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,28)
 +      const struct net_device *in,
 +      const struct net_device *out,
 +#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,17)
@@ -365,8 +366,11 @@ diff -uNrp linux/net/ipv4/netfilter/ipt_account.c linux/net/ipv4/netfilter/ipt_a
 +      int offset,
 +      unsigned int protoff,
 +      bool *hotdrop)
++#else
++	const struct xt_match_param *par)
++#endif
 +{
-+  struct t_ipt_account_info *info = (struct t_ipt_account_info *)matchinfo;
++  struct t_ipt_account_info *info = (struct t_ipt_account_info *)par->matchinfo;
 +  struct t_ipt_account_table *table = info->table;
 +  u_int32_t address;  
 +  /* Get current time. */
@@ -459,6 +463,9 @@ diff -uNrp linux/net/ipv4/netfilter/ipt_account.c linux/net/ipv4/netfilter/ipt_a
 + * Checkentry function.
 + */
 +static bool
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,28)
++checkentry(const struct xt_mtchk_param *par)
++#else
 +checkentry(const char *tablename,
 +#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,16)    
 +     const void *ip,
@@ -473,8 +480,9 @@ diff -uNrp linux/net/ipv4/netfilter/ipt_account.c linux/net/ipv4/netfilter/ipt_a
 +     unsigned int matchsize,
 +#endif     
 +     unsigned int hook_mask)
++#endif
 +{
-+  struct t_ipt_account_info *info = matchinfo;
++  struct t_ipt_account_info *info = par->matchinfo;
 +  struct t_ipt_account_table *table;
 +
 +#ifdef DEBUG_IPT_ACCOUNT  
@@ -567,6 +575,9 @@ diff -uNrp linux/net/ipv4/netfilter/ipt_account.c linux/net/ipv4/netfilter/ipt_a
 + */
 +static void
 +destroy(
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,28)
++    const struct xt_mtdtor_param *par
++#else
 +#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,17)    
 +    const struct xt_match *match,
 +#endif    
@@ -576,9 +587,10 @@ diff -uNrp linux/net/ipv4/netfilter/ipt_account.c linux/net/ipv4/netfilter/ipt_a
 +    void *matchinfo,
 +    unsigned int matchsize
 +#endif    
++#endif
 +)
 +{
-+  struct t_ipt_account_info *info = matchinfo;
++  struct t_ipt_account_info *info = par->matchinfo;
 +  
 +#ifdef DEBUG_IPT_ACCOUNT  
 +  if (debug) printk(KERN_DEBUG "ipt_account [destroy]: name = %s\n", info->name);
@@ -610,8 +622,8 @@ diff -uNrp linux/net/ipv4/netfilter/ipt_account.c linux/net/ipv4/netfilter/ipt_a
 +#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,21)
 +  .family = AF_INET,
 +#endif  
-+  .match = &match, 
-+  .checkentry = &checkentry, 
++  .match = match, 
++  .checkentry = checkentry, 
 +#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,17)
 +  .matchsize = sizeof(struct t_ipt_account_info),
 +#endif  
