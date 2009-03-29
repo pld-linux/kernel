@@ -266,7 +266,7 @@ Patch58:	linux-PF_RING.patch
 Patch59:	kernel-rndis_host-wm5.patch
 
 # Project suspend2 renamed to tuxonice
-# http://www.tuxonice.net/downloads/all/tuxonice-3.0-rc8-for-2.6.28.patch.bz2
+# http://www.tuxonice.net/downloads/all/current-tuxonice-for-head.patch-20090313-v1.bz2
 Patch69:	linux-2.6-suspend2.patch
 Patch70:	kernel-suspend2-headers.patch
 
@@ -277,7 +277,7 @@ Patch85:	hostap-kernel-2.6.18.patch
 # Taken from http://download.opensuse.org/factory/repo/src-oss/suse/src/kernel-source-2.6.27.7-3.1.src.rpm
 Patch90:	kernel-mpt-fusion.patch
 
-# based on http://vserver.13thfloor.at/Experimental/patch-2.6.28.7-vs2.3.0.36.7.diff
+# based on http://vserver.13thfloor.at/Experimental/patch-2.6.29-vs2.3.0.36.9-pre2.diff
 Patch100:	linux-2.6-vs2.3.patch
 Patch101:	kernel-vserver-fixes.patch
 
