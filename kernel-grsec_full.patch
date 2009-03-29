@@ -19623,8 +19623,8 @@ diff -urNp linux-2.6.29/fs/proc/base.c linux-2.6.29/fs/proc/base.c
 +#endif
  	struct tgid_iter iter;
  	struct pid_namespace *ns;
- 
-@@ -2901,6 +2915,20 @@
+
+@@ -2901,6 +2901,20 @@
  	for (iter = next_tgid(ns, iter);
  	     iter.task;
  	     iter.tgid += 1, iter = next_tgid(ns, iter)) {
@@ -19645,15 +19645,16 @@ diff -urNp linux-2.6.29/fs/proc/base.c linux-2.6.29/fs/proc/base.c
  		filp->f_pos = iter.tgid + TGID_OFFSET;
  		if (!vx_proc_task_visible(iter.task))
  			continue;
-@@ -2930,7 +2958,7 @@
- #ifdef CONFIG_SCHED_DEBUG
- 	REG("sched",     S_IRUGO|S_IWUSR, proc_pid_sched_operations),
+@@ -2910,6 +2984,9 @@
+ #ifdef CONFIG_TASK_IO_ACCOUNTING
+ 	INF("io",	S_IRUGO, proc_tid_io_accounting),
  #endif
--#ifdef CONFIG_HAVE_ARCH_TRACEHOOK
-+#if defined(CONFIG_HAVE_ARCH_TRACEHOOK) && !defined(CONFIG_GRKERNSEC_PROC_MEMMAP)
- 	INF("syscall",   S_IRUSR, proc_pid_syscall),
- #endif
- 	INF("cmdline",   S_IRUGO, proc_pid_cmdline),
++#ifdef CONFIG_GRKERNSEC_PROC_IPADDR
++	INF("ipaddr",	  S_IRUSR, proc_pid_ipaddr),
++#endif
+ };
+ 
+ static int proc_tid_base_readdir(struct file * filp,
 diff -urNp linux-2.6.29/fs/proc/cmdline.c linux-2.6.29/fs/proc/cmdline.c
 --- linux-2.6.29/fs/proc/cmdline.c	2009-03-23 19:12:14.000000000 -0400
 +++ linux-2.6.29/fs/proc/cmdline.c	2009-03-28 14:26:20.000000000 -0400
@@ -34654,25 +34655,6 @@ diff -urNp linux-2.6.29/mm/mmap.c linux-2.6.29/mm/mmap.c
  		if (vm_flags & VM_EXECUTABLE)
  			added_exe_file_vma(mm);
  	} else if (vm_flags & VM_SHARED) {
-@@ -1215,12 +1348,18 @@ munmap_back:
- 	vma_link(mm, vma, prev, rb_link, rb_parent);
- 	file = vma->vm_file;
- 
-+#ifdef CONFIG_PAX_SEGMEXEC
-+	if (vma_m)
-+		pax_mirror_vma(vma_m, vma);
-+#endif
-+
- 	/* Once vma denies write, undo our temporary denial count */
- 	if (correct_wcount)
- 		atomic_inc(&inode->i_writecount);
- out:
- 	// mm->total_vm += len >> PAGE_SHIFT;
- 	vm_stat_account(mm, vm_flags, file, len >> PAGE_SHIFT);
-+	track_exec_limit(mm, addr, addr + len, vm_flags);
- 	if (vm_flags & VM_LOCKED) {
- 		/*
- 		 * makes pages present; downgrades, drops, reacquires mmap_sem
 @@ -1243,6 +1382,12 @@ unmap_and_free_vma:
  	unmap_region(mm, vma, prev, vma->vm_start, vma->vm_end);
  	charged = 0;
@@ -34750,6 +34732,27 @@ diff -urNp linux-2.6.29/mm/mmap.c linux-2.6.29/mm/mmap.c
  
  	/* requested length too big for entire address space */
  	if (len > TASK_SIZE)
+@@ -1348,6 +1348,12 @@
+ 	vma_link(mm, vma, prev, rb_link, rb_parent);
+ 	file = vma->vm_file;
+ 
++#ifdef CONFIG_PAX_SEGMEXEC
++	if (vma_m)
++		pax_mirror_vma(vma_m, vma);
++#endif
++
++
+ 	/* Once vma denies write, undo our temporary denial count */
+ 	if (correct_wcount)
+ 		atomic_inc(&inode->i_writecount);
+@@ -1355,6 +1361,7 @@
+ 	// mm->total_vm += len >> PAGE_SHIFT;
+ 	vx_vmpages_add(mm, len >> PAGE_SHIFT);
+ 	vm_stat_account(mm, vm_flags, file, len >> PAGE_SHIFT);
++	track_exec_limit(mm, addr, addr + len, vm_flags);
+ 	if (vm_flags & VM_LOCKED) {
+ 		/*
+ 		 * makes pages present; downgrades, drops, reacquires mmap_sem
 @@ -1352,6 +1506,10 @@ arch_get_unmapped_area_topdown(struct fi
  	if (flags & MAP_FIXED)
  		return addr;
