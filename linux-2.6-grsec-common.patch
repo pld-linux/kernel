@@ -27,47 +27,13 @@
 ===
 --- a/kernel/capability.c~	2007-12-11 00:46:02.000000000 +0100
 +++ a/kernel/capability.c	2007-12-11 01:35:00.244481500 +0100
-@@ -253,6 +253,8 @@ int __capable(struct task_struct *t, int
- }
+@@ -322,6 +322,8 @@
+ 
  int capable_nolog(int cap)
  {
 +	if (vs_check_bit(VXC_CAP_MASK, cap) && !vx_mcaps(1L << cap))
 +		return 0;
- 	if (has_capability(current, cap) && gr_is_capable_nolog(cap)) {
+ 	if (security_capable(cap) == 0 && gr_is_capable_nolog(cap)) {
  		current->flags |= PF_SUPERPRIV;
  		return 1;
-===
-=== vserver netlink protection
-===
---- a/security/commoncap.c~	2007-12-10 23:52:36.000000000 +0100
-+++ a/security/commoncap.c	2007-12-11 01:43:04.426741000 +0100
-@@ -27,7 +27,7 @@
- 
- int cap_netlink_send(struct sock *sk, struct sk_buff *skb)
- {
--	NETLINK_CB(skb).eff_cap = gr_cap_rtnetlink(sk);
-+	NETLINK_CB(skb).eff_cap = cap_intersect(gr_cap_rtnetlink(sk), vx_mbcaps(current->cap_effective));
- 	return 0;
- }
- 
-===
-=== vserver hooks in cap_capable_nolog
-===
---- i/security/commoncap.c1	2008-10-28 21:28:07.873037469 +0100
-+++ i/security/commoncap.c	2008-10-28 21:36:20.429660261 +0100
-@@ -76,8 +76,14 @@ int cap_capable (struct task_struct *tsk
- 
- int cap_capable_nolog (struct task_struct *tsk, int cap)
- {
-+	struct vx_info *vxi = tsk->vx_info;
-+	/* special case SETUP */  /* co to jest? - zbyniu */
-+	if (vx_info_flags(vxi, VXF_STATE_SETUP, 0) &&
-+		cap_raised(tsk->cap_effective, cap))
-+		return 0;
-+
- 	/* tsk = current for all callers */
--	if (cap_raised(tsk->cap_effective, cap) && gr_is_capable_nolog(cap))
-+	if (vx_cap_raised(vxi, tsk->cap_effective, cap) && gr_is_capable_nolog(cap))
- 		return 0;
- 
- 	return -EPERM;
+

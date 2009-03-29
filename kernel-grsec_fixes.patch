@@ -25,28 +25,28 @@ diff -upr a/grsecurity/gracl_cap.c c/grsecurity/gracl_cap.c
 +}
 --- a/grsecurity/grsec_sock.c	2008-03-24 00:24:22.482633101 +0100
 +++ c/grsecurity/grsec_sock.c	2008-03-24 00:27:01.971671763 +0100
-@@ -251,23 +251,26 @@ __u32
+@@ -247,23 +247,26 @@
  gr_cap_rtnetlink(struct sock *sock)
  {
  #ifdef CONFIG_GRKERNSEC
 +	struct acl_subject_label *curracl;
 +	kernel_cap_t cap_dropp = __cap_empty_set, cap_mask = __cap_empty_set;
 +
-	if (!gr_acl_is_enabled())
-		return current->cap_effective;
+ 	if (!gr_acl_is_enabled())
+ 		return current_cap();
 -	else if (sock->sk_protocol == NETLINK_ISCSI &&
--		 cap_raised(current->cap_effective, CAP_SYS_ADMIN) &&
--		 gr_task_is_capable(current, CAP_SYS_ADMIN))
--		return current->cap_effective;
+-		 cap_raised(current_cap(), CAP_SYS_ADMIN) &&
+-		 gr_is_capable(CAP_SYS_ADMIN))
+-		return current_cap();
 -	else if (sock->sk_protocol == NETLINK_AUDIT &&
--		 cap_raised(current->cap_effective, CAP_AUDIT_WRITE) &&
--		 gr_task_is_capable(current, CAP_AUDIT_WRITE) &&
--		 cap_raised(current->cap_effective, CAP_AUDIT_CONTROL) &&
--		 gr_task_is_capable(current, CAP_AUDIT_CONTROL))
--		return current->cap_effective;
--	else if (cap_raised(current->cap_effective, CAP_NET_ADMIN) &&
--		 gr_task_is_capable(current, CAP_NET_ADMIN))
--		return current->cap_effective;
+-		 cap_raised(current_cap(), CAP_AUDIT_WRITE) &&
+-		 gr_is_capable(CAP_AUDIT_WRITE) &&
+-		 cap_raised(current_cap(), CAP_AUDIT_CONTROL) &&
+-		 gr_is_capable(CAP_AUDIT_CONTROL))
+-		return current_cap();
+-	else if (cap_raised(current_cap(), CAP_NET_ADMIN) &&
+-		 gr_is_capable(CAP_NET_ADMIN))
+-		return current_cap();
 -	else
 -		return __cap_empty_set;
 +	else {
@@ -57,15 +57,15 @@ diff -upr a/grsecurity/gracl_cap.c c/grsecurity/gracl_cap.c
 +
 +		while ((curracl = curracl->parent_subject)) {
 +			cap_dropp = cap_combine(cap_dropp,
-+				    cap_intersect(curracl->cap_lower,
-+				    cap_drop(cap_mask, curracl->cap_mask)));
++					cap_intersect(curracl->cap_lower,
++						cap_drop(cap_mask, curracl->cap_mask)));
 +			cap_mask = cap_combine(cap_mask, curracl->cap_mask);
 +		}
 +		return cap_drop(current->cap_effective,
 +				cap_intersect(cap_dropp, cap_mask));
 +	}
  #else
- 	return current->cap_effective;
+ 	return current_cap();
  #endif
 diff -upr a/include/linux/grsecurity.h c/include/linux/grsecurity.h
 --- a/include/linux/grsecurity.h	2007-12-01 00:54:57.224769000 +0000
