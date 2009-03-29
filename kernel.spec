@@ -810,8 +810,9 @@ install %{SOURCE5} Makefile.ppclibs
 %patch51 -p1
 %endif
 
+# XXX: 2.6.29 fixme
 # esfq
-%patch53 -p1
+# %patch53 -p1
 
 %if %{with wrr}
 %patch52 -p1
