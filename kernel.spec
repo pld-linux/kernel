@@ -841,8 +841,7 @@ install %{SOURCE5} Makefile.ppclibs
 %patch85 -p1
 
 # LSI MPT Fusion driver update (by LSI via SUSE folks)
-# NEEDS UPDATE
-#%patch90 -p1
+%patch90 -p1
 
 # vserver
 %if %{with vserver}
