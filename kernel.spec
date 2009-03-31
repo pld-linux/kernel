@@ -17,6 +17,9 @@
 # - nf-hipac ?
 # - pax hooks for selinux (experimental)
 #
+# HOWTO:
+# - update main config: ./kernel-config-sort.pl ./BUILD/kernel-*/linux-2.6.29 kernel-multiarch.config
+#
 # Conditional build:
 %bcond_without	source		# don't build kernel-source package
 %bcond_without	pcmcia		# don't build pcmcia
@@ -330,8 +333,8 @@ Patch6001:	kernel-tomoyo-without-apparmor.patch
 # for rescuecd
 # based on http://ftp.leg.uct.ac.za/pub/linux/rip/inittmpfs-2.6.14.diff.gz
 Patch7000:	kernel-inittmpfs.patch
-### based on http://udpcast.linux.lu/download/bzip2-lzma-kernel-2.6.26.3.patch.gz
-# http://lkml.org/lkml/2008/10/14/268
+
+# http://lkml.org/lkml/2009/3/26/267
 Patch7001:	kernel-bzip2-lzma.patch
 
 # not ready yet
@@ -358,7 +361,7 @@ BuildRequires:	uboot-mkimage
 AutoReqProv:	no
 BuildRequires:	/sbin/depmod
 BuildRequires:	gcc >= 5:3.2
-%{?with_rescuecd:BuildRequires:	lzma >= 1:4.42.2}
+BuildRequires:	lzma >= 1:4.999.5
 # for hostname command
 BuildRequires:	net-tools
 BuildRequires:	perl-base
@@ -870,8 +873,10 @@ install %{SOURCE5} Makefile.ppclibs
 
 %if %{with rescuecd}
 %patch7000 -p1
-%patch7001 -p1
 %endif
+
+# merged into 2.6.30 git :)
+%patch7001 -p1
 
 # grsecurity & pax stuff
 #
