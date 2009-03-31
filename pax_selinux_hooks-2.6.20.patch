@@ -1,0 +1,119 @@
+diff -urN linux-2.6.2/security/selinux/hooks.c linux-2.6.2-pax/security/selinux/hooks.c
+--- linux-2.6.2/security/selinux/hooks.c	2004-02-08 02:41:59.000000000 -0600
++++ linux-2.6.2-pax/security/selinux/hooks.c	2004-02-07 23:40:47.000000000 -0600
+@@ -61,6 +61,10 @@
+ #include "objsec.h"
+ #include "netif.h"
+ 
++#ifdef CONFIG_PAX_HOOK_ACL_FLAGS
++static void avc_pax_set_flags(struct linux_binprm * bprm);
++#endif
++
+ #define XATTR_SELINUX_SUFFIX "selinux"
+ #define XATTR_NAME_SELINUX XATTR_SECURITY_PREFIX XATTR_SELINUX_SUFFIX
+ 
+@@ -3738,12 +3742,104 @@
+ 	}
+ 	spin_unlock(&sb_security_lock);
+ 	spin_unlock(&sb_lock);
++
++        #ifdef CONFIG_PAX_HOOK_ACL_FLAGS
++        printk(KERN_DEBUG "SELinux:  Setting PaX callback function\n");
++        pax_set_flags_func = avc_pax_set_flags;
++        #endif
+ }
+ 
+ /* SELinux requires early initialization in order to label
+    all processes and objects when they are created. */
+ security_initcall(selinux_init);
+ 
++#ifdef CONFIG_PAX_HOOK_ACL_FLAGS
++
++static void avc_pax_set_flags(struct linux_binprm * bprm)
++{
++        struct inode_security_struct *isec;
++        struct av_decision avd;
++        /* these are good default flags for i386 */
++        unsigned long flags = (PF_PAX_SEGMEXEC | PF_PAX_MPROTECT | PF_PAX_RANDMMAP);
++        unsigned long oldflags = current->flags;
++        int rc;
++
++        char *scontext;
++        u32 scontext_len;
++
++        /*
++         * get the security struct from the inode of the file 
++         * since the bprm security struct will just point to 
++         * the user running the binary
++         */
++        struct inode *inode = bprm->file->f_dentry->d_inode;
++        isec = inode->i_security;
++
++        /* PAGEEXEC is disabled by default, we'll check if it should enabled */
++        rc = avc_has_perm(isec->sid, isec->sid, SECCLASS_PAX, PAX__PAGEEXEC, &isec->avcr,NULL);
++        if (!rc) {
++                flags |= PF_PAX_PAGEEXEC;
++	}
++        /* EMUTRAMP is disabled by default, we'll check if it should enabled */
++        rc = avc_has_perm(isec->sid, isec->sid, SECCLASS_PAX, PAX__EMUTRAMP, &isec->avcr, NULL);
++        if (!rc) {
++                flags |= PF_PAX_EMUTRAMP;
++	}
++        /* RANDEXEC is disabled by default, we'll check if it should enabled */
++        rc = avc_has_perm(isec->sid, isec->sid, SECCLASS_PAX, PAX__RANDEXEC, &isec->avcr, NULL);
++        if (!rc) {
++                flags |= PF_PAX_RANDEXEC;
++	}
++	/* MPROTECT is enabled by default, nomprotect disables */
++        rc = avc_has_perm(isec->sid, isec->sid, SECCLASS_PAX, PAX__NOMPROTECT, &isec->avcr, NULL);
++        if (!rc) {
++                flags &= ~PF_PAX_MPROTECT;
++	}
++	/* RANDMMAP is enabled by default, norandmmap disables */
++        rc = avc_has_perm(isec->sid, isec->sid, SECCLASS_PAX, PAX__NORANDMMAP, &isec->avcr, NULL);
++        if (!rc) {
++                flags &= ~PF_PAX_RANDMMAP;
++	}
++	/* SEGMEXEC is enabled by default, nosegmexec disables */
++        rc = avc_has_perm(isec->sid, isec->sid, SECCLASS_PAX, PAX__NOSEGMEXEC, &isec->avcr, NULL);
++        if (!rc) {
++                flags &= ~PF_PAX_SEGMEXEC;
++	}
++
++	if (selinux_enforcing) {
++
++		/* pull all the pax flags in current */
++	        current->flags &= ~(PF_PAX_PAGEEXEC | PF_PAX_EMUTRAMP | PF_PAX_MPROTECT | PF_PAX_RANDMMAP | PF_PAX_RANDEXEC | PF_PAX_SEGMEXEC);
++        	/* and add ours */
++	        current->flags |= flags;
++
++		printk( KERN_WARNING "avc: setting flags %lx\n", flags );
++
++        	if (pax_check_flags(&current->flags) < 0)
++                	printk(KERN_WARNING
++                        	"avc: pax flags were changed from %lx to %lx by pax_check_flags, please check your policy for incompatible or disabled options\n",
++        	                flags,
++                	        current->flags
++                        	);
++	
++	        security_sid_to_context(isec->sid, &scontext, &scontext_len);
++        	if (current->flags != oldflags)
++                	printk(KERN_INFO
++	                         "avc: pax changing flags for process %u (%s) %s to %lx from %lx \n",
++        	                 current->pid,
++                	         scontext,
++                        	 bprm->filename,
++	                         current->flags,
++        	                 oldflags
++                	        );
++	        kfree(scontext);
++	}
++
++        return;
++}
++
++#endif /* CONFIG_PAX_HOOK_ACL_FLAGS */
++
+ #if defined(CONFIG_NETFILTER)
+ 
+ static struct nf_hook_ops selinux_ipv4_op = {

@@ -7511,7 +7511,7 @@ diff -urN linux/fs/aufs/export.c linux-aufs/fs/aufs/export.c
 +	if (nsi_lock)
 +		si_read_unlock(parent->d_sb);
 +	path_get(path);
-+	file = dentry_open(parent, path->mnt, au_dir_roflags);
++	file = dentry_open(parent, path->mnt, au_dir_roflags, current_cred());
 +	dentry = (void *)file;
 +	if (IS_ERR(file))
 +		goto out;
@@ -8056,7 +8056,7 @@ diff -urN linux/fs/aufs/file.c linux-aufs/fs/aufs/file.c
 +	if (file && au_test_nfs(h_dentry->d_sb))
 +		h_file = au_h_intent(dentry, bindex, file);
 +	if (!h_file)
-+		h_file = dentry_open(dget(h_dentry), mntget(br->br_mnt), flags);
++		h_file = dentry_open(dget(h_dentry), mntget(br->br_mnt), flags, current_cred());
 +
 +	/*
 +	 * a dirty trick for handling FMODE_EXEC and deny_write_access().
@@ -28491,7 +28491,7 @@ diff -urN linux/fs/aufs/xino.c linux-aufs/fs/aufs/xino.c
 +		goto out_dput;
 +	}
 +	file = dentry_open(dget(dentry), mntget(base_file->f_vfsmnt),
-+			   O_RDWR | O_CREAT | O_EXCL | O_LARGEFILE);
++			   O_RDWR | O_CREAT | O_EXCL | O_LARGEFILE, current_cred());
 +	if (IS_ERR(file)) {
 +		AuErr("%.*s open err %ld\n", AuLNPair(name), PTR_ERR(file));
 +		goto out_dput;

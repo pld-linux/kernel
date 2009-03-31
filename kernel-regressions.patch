@@ -1,288 +1,3 @@
-From jlayton@redhat.com  Thu Dec 11 08:49:55 2008
-From: Jeff Layton <jlayton@redhat.com>
-Date: Wed, 10 Dec 2008 06:44:29 -0500
-Subject: cifs: fix a regression in cifs umount codepath
-To: greg@kroah.com, stable@kernel.org
-Cc: smfrench@gmail.com, shirishp@us.ibm.com, sjayaraman@suse.de
-Message-ID: <1228909469-438-1-git-send-email-jlayton@redhat.com>
-
-From: Jeff Layton <jlayton@redhat.com>
-
-backport of 469ee614aaa367d9cde01cbdd2027212f56c6cc6 upstream.
-
-Several cifs patches were added to 2.6.27.8 to fix some races in the
-mount/umount codepath. When this was done, a couple of prerequisite
-patches were missed causing a minor regression.
-
-When the last cifs mount to a server goes away, the kthread that manages
-the socket is supposed to come down. The patches that went into 2.6.27.8
-removed the kthread_stop calls that used to take down these threads, but
-left the thread function expecting them. This made the thread stay up
-even after the last mount was gone.
-
-This patch should fix up this regression and also prevent a possible
-race where a dead task could be signalled.
-
-Signed-off-by: Jeff Layton <jlayton@redhat.com>
-Cc: Suresh Jayaraman <sjayaraman@suse.de>
-Acked-by: Steve French <smfrench@gmail.com>
-Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
-
----
- fs/cifs/connect.c |   36 +++++++++++++++++++++---------------
- 1 file changed, 21 insertions(+), 15 deletions(-)
-
---- a/fs/cifs/connect.c
-+++ b/fs/cifs/connect.c
-@@ -128,7 +128,7 @@ cifs_reconnect(struct TCP_Server_Info *s
- 	struct mid_q_entry *mid_entry;
- 
- 	spin_lock(&GlobalMid_Lock);
--	if (kthread_should_stop()) {
-+	if (server->tcpStatus == CifsExiting) {
- 		/* the demux thread will exit normally
- 		next time through the loop */
- 		spin_unlock(&GlobalMid_Lock);
-@@ -182,7 +182,8 @@ cifs_reconnect(struct TCP_Server_Info *s
- 	spin_unlock(&GlobalMid_Lock);
- 	up(&server->tcpSem);
- 
--	while ((!kthread_should_stop()) && (server->tcpStatus != CifsGood)) {
-+	while ((server->tcpStatus != CifsExiting) &&
-+	       (server->tcpStatus != CifsGood)) {
- 		try_to_freeze();
- 		if (server->addr.sockAddr6.sin6_family == AF_INET6) {
- 			rc = ipv6_connect(&server->addr.sockAddr6,
-@@ -200,7 +201,7 @@ cifs_reconnect(struct TCP_Server_Info *s
- 		} else {
- 			atomic_inc(&tcpSesReconnectCount);
- 			spin_lock(&GlobalMid_Lock);
--			if (!kthread_should_stop())
-+			if (server->tcpStatus != CifsExiting)
- 				server->tcpStatus = CifsGood;
- 			server->sequence_number = 0;
- 			spin_unlock(&GlobalMid_Lock);
-@@ -355,7 +356,7 @@ cifs_demultiplex_thread(struct TCP_Serve
- 				GFP_KERNEL);
- 
- 	set_freezable();
--	while (!kthread_should_stop()) {
-+	while (server->tcpStatus != CifsExiting) {
- 		if (try_to_freeze())
- 			continue;
- 		if (bigbuf == NULL) {
-@@ -396,7 +397,7 @@ incomplete_rcv:
- 		    kernel_recvmsg(csocket, &smb_msg,
- 				&iov, 1, pdu_length, 0 /* BB other flags? */);
- 
--		if (kthread_should_stop()) {
-+		if (server->tcpStatus == CifsExiting) {
- 			break;
- 		} else if (server->tcpStatus == CifsNeedReconnect) {
- 			cFYI(1, ("Reconnect after server stopped responding"));
-@@ -527,7 +528,7 @@ incomplete_rcv:
- 		     total_read += length) {
- 			length = kernel_recvmsg(csocket, &smb_msg, &iov, 1,
- 						pdu_length - total_read, 0);
--			if (kthread_should_stop() ||
-+			if ((server->tcpStatus == CifsExiting) ||
- 			    (length == -EINTR)) {
- 				/* then will exit */
- 				reconnect = 2;
-@@ -661,14 +662,6 @@ multi_t2_fnd:
- 	spin_unlock(&GlobalMid_Lock);
- 	wake_up_all(&server->response_q);
- 
--	/* don't exit until kthread_stop is called */
--	set_current_state(TASK_UNINTERRUPTIBLE);
--	while (!kthread_should_stop()) {
--		schedule();
--		set_current_state(TASK_UNINTERRUPTIBLE);
--	}
--	set_current_state(TASK_RUNNING);
--
- 	/* check if we have blocked requests that need to free */
- 	/* Note that cifs_max_pending is normally 50, but
- 	can be set at module install time to as little as two */
-@@ -764,6 +757,7 @@ multi_t2_fnd:
- 	read_unlock(&cifs_tcp_ses_lock);
- 
- 	kfree(server->hostname);
-+	task_to_wake = xchg(&server->tsk, NULL);
- 	kfree(server);
- 
- 	length = atomic_dec_return(&tcpSesAllocCount);
-@@ -771,6 +765,16 @@ multi_t2_fnd:
- 		mempool_resize(cifs_req_poolp, length + cifs_min_rcv,
- 				GFP_KERNEL);
- 
-+	/* if server->tsk was NULL then wait for a signal before exiting */
-+	if (!task_to_wake) {
-+		set_current_state(TASK_INTERRUPTIBLE);
-+		while (!signal_pending(current)) {
-+			schedule();
-+			set_current_state(TASK_INTERRUPTIBLE);
-+		}
-+		set_current_state(TASK_RUNNING);
-+	}
-+
- 	return 0;
- }
- 
-@@ -2310,7 +2314,7 @@ cifs_mount(struct super_block *sb, struc
- 	/* on error free sesinfo and tcon struct if needed */
- mount_fail_check:
- 	if (rc) {
--		 /* If find_unc succeeded then rc == 0 so we can not end */
-+		/* If find_unc succeeded then rc == 0 so we can not end */
- 		/* up accidently freeing someone elses tcon struct */
- 		if (tcon)
- 			cifs_put_tcon(tcon);
-@@ -3715,8 +3719,10 @@ int cifs_setup_session(unsigned int xid,
- 		cERROR(1, ("Send error in SessSetup = %d", rc));
- 	} else {
- 		cFYI(1, ("CIFS Session Established successfully"));
-+			spin_lock(&GlobalMid_Lock);
- 			pSesInfo->status = CifsGood;
- 			pSesInfo->need_reconnect = false;
-+			spin_unlock(&GlobalMid_Lock);
- 	}
- 
- ss_err_exit:
-From 218d11a8b071b23b76c484fd5f72a4fe3306801e Mon Sep 17 00:00:00 2001
-From: Jonathan Corbet <corbet@lwn.net>
-Date: Fri, 5 Dec 2008 16:12:48 -0700
-Subject: Fix a race condition in FASYNC handling
-
-From: Jonathan Corbet <corbet@lwn.net>
-
-commit 218d11a8b071b23b76c484fd5f72a4fe3306801e upstream.
-
-Changeset a238b790d5f99c7832f9b73ac8847025815b85f7 (Call fasync()
-functions without the BKL) introduced a race which could leave
-file->f_flags in a state inconsistent with what the underlying
-driver/filesystem believes.  Revert that change, and also fix the same
-races in ioctl_fioasync() and ioctl_fionbio().
-
-This is a minimal, short-term fix; the real fix will not involve the
-BKL.
-
-Reported-by: Oleg Nesterov <oleg@redhat.com>
-Cc: Andi Kleen <ak@linux.intel.com>
-Cc: Al Viro <viro@zeniv.linux.org.uk>
-Signed-off-by: Jonathan Corbet <corbet@lwn.net>
-Signed-off-by: Linus Torvalds <torvalds@linux-foundation.org>
-Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
-
----
- fs/fcntl.c |    7 +++++++
- fs/ioctl.c |   12 ++++++++----
- 2 files changed, 15 insertions(+), 4 deletions(-)
-
---- a/fs/fcntl.c
-+++ b/fs/fcntl.c
-@@ -19,6 +19,7 @@
- #include <linux/module.h>
- #include <linux/security.h>
- #include <linux/ptrace.h>
-+#include <linux/smp_lock.h>
- #include <linux/signal.h>
- #include <linux/rcupdate.h>
- #include <linux/pid_namespace.h>
-@@ -175,6 +176,11 @@ static int setfl(int fd, struct file * f
- 	if (error)
- 		return error;
- 
-+	/*
-+	 * We still need a lock here for now to keep multiple FASYNC calls
-+	 * from racing with each other.
-+	 */
-+	lock_kernel();
- 	if ((arg ^ filp->f_flags) & FASYNC) {
- 		if (filp->f_op && filp->f_op->fasync) {
- 			error = filp->f_op->fasync(fd, filp, (arg & FASYNC) != 0);
-@@ -185,6 +191,7 @@ static int setfl(int fd, struct file * f
- 
- 	filp->f_flags = (arg & SETFL_MASK) | (filp->f_flags & ~SETFL_MASK);
-  out:
-+	unlock_kernel();
- 	return error;
- }
- 
---- a/fs/ioctl.c
-+++ b/fs/ioctl.c
-@@ -123,11 +123,9 @@ static int ioctl_fioasync(unsigned int f
- 
- 	/* Did FASYNC state change ? */
- 	if ((flag ^ filp->f_flags) & FASYNC) {
--		if (filp->f_op && filp->f_op->fasync) {
--			lock_kernel();
-+		if (filp->f_op && filp->f_op->fasync)
- 			error = filp->f_op->fasync(fd, filp, on);
--			unlock_kernel();
--		} else
-+		else
- 			error = -ENOTTY;
- 	}
- 	if (error)
-@@ -163,11 +161,17 @@ int do_vfs_ioctl(struct file *filp, unsi
- 		break;
- 
- 	case FIONBIO:
-+		/* BKL needed to avoid races tweaking f_flags */
-+		lock_kernel();
- 		error = ioctl_fionbio(filp, argp);
-+		unlock_kernel();
- 		break;
- 
- 	case FIOASYNC:
-+		/* BKL needed to avoid races tweaking f_flags */
-+		lock_kernel();
- 		error = ioctl_fioasync(fd, filp, argp);
-+		unlock_kernel();
- 		break;
- 
- 	case FIOQSIZE:
-From 49c50342c728344b79c8f9e8293637fe80ef5ad5 Mon Sep 17 00:00:00 2001
-From: Matt Mackall <mpm@selenic.com>
-Date: Tue, 9 Dec 2008 13:14:21 -0800
-Subject: pagemap: fix 32-bit pagemap regression
-
-From: Matt Mackall <mpm@selenic.com>
-
-commit 49c50342c728344b79c8f9e8293637fe80ef5ad5 upstream.
-
-The large pages fix from bcf8039ed45 broke 32-bit pagemap by pulling the
-pagemap entry code out into a function with the wrong return type.
-Pagemap entries are 64 bits on all systems and unsigned long is only 32
-bits on 32-bit systems.
-
-Signed-off-by: Matt Mackall <mpm@selenic.com>
-Reported-by: Doug Graham <dgraham@nortel.com>
-Cc: Alexey Dobriyan <adobriyan@gmail.com>
-Cc: Dave Hansen <dave@linux.vnet.ibm.com>
-Signed-off-by: Andrew Morton <akpm@linux-foundation.org>
-Signed-off-by: Linus Torvalds <torvalds@linux-foundation.org>
-Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
-
----
- fs/proc/task_mmu.c |    4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
-
---- a/fs/proc/task_mmu.c
-+++ b/fs/proc/task_mmu.c
-@@ -563,9 +563,9 @@ static u64 swap_pte_to_pagemap_entry(pte
- 	return swp_type(e) | (swp_offset(e) << MAX_SWAPFILES_SHIFT);
- }
- 
--static unsigned long pte_to_pagemap_entry(pte_t pte)
-+static u64 pte_to_pagemap_entry(pte_t pte)
- {
--	unsigned long pme = 0;
-+	u64 pme = 0;
- 	if (is_swap_pte(pte))
- 		pme = PM_PFRAME(swap_pte_to_pagemap_entry(pte))
- 			| PM_PSHIFT(PAGE_SHIFT) | PM_SWAP;
 rom ae060e0b7bc071bd73dd5319b93c3344d9e10212 Mon Sep 17 00:00:00 2001
 From: Manfred Spraul <manfred@colorfullife.com>
 To: torvalds@linux-foundation.org
@@ -333,3 +48,63 @@ index 7a785a0..1c4f928 100644
 -- 
 1.5.6.5
 
+From: Trond Myklebust <Trond.Myklebust@netapp.com>
+Date: Thu, 20 Nov 2008 21:06:21 +0000 (-0500)
+Subject: SUNRPC: Fix a performance regression in the RPC authentication code
+X-Git-Tag: v2.6.28-rc6~4
+X-Git-Url: http://git.kernel.org/?p=linux%2Fkernel%2Fgit%2Ftorvalds%2Flinux-2.6.git;a=commitdiff_plain;h=23918b03060f6e572168fdde1798a905679d2e06
+
+SUNRPC: Fix a performance regression in the RPC authentication code
+
+Fix a regression reported by Max Kellermann whereby kernel profiling
+showed that his clients were spending 45% of their time in
+rpcauth_lookup_credcache.
+
+It turns out that although his processes had identical uid/gid/groups,
+generic_match() was failing to detect this, because the task->group_info
+pointers were not shared. This again lead to the creation of a huge number
+of identical credentials at the RPC layer.
+
+The regression is fixed by comparing the contents of task->group_info
+if the actual pointers are not identical.
+
+Signed-off-by: Trond Myklebust <Trond.Myklebust@netapp.com>
+Signed-off-by: Linus Torvalds <torvalds@linux-foundation.org>
+---
+
+diff --git a/net/sunrpc/auth_generic.c b/net/sunrpc/auth_generic.c
+index 744b79f..4028502 100644
+--- a/net/sunrpc/auth_generic.c
++++ b/net/sunrpc/auth_generic.c
+@@ -133,13 +133,29 @@ static int
+ generic_match(struct auth_cred *acred, struct rpc_cred *cred, int flags)
+ {
+ 	struct generic_cred *gcred = container_of(cred, struct generic_cred, gc_base);
++	int i;
+ 
+ 	if (gcred->acred.uid != acred->uid ||
+ 	    gcred->acred.gid != acred->gid ||
+-	    gcred->acred.group_info != acred->group_info ||
+ 	    gcred->acred.machine_cred != acred->machine_cred)
+-		return 0;
++		goto out_nomatch;
++
++	/* Optimisation in the case where pointers are identical... */
++	if (gcred->acred.group_info == acred->group_info)
++		goto out_match;
++
++	/* Slow path... */
++	if (gcred->acred.group_info->ngroups != acred->group_info->ngroups)
++		goto out_nomatch;
++	for (i = 0; i < gcred->acred.group_info->ngroups; i++) {
++		if (GROUP_AT(gcred->acred.group_info, i) !=
++				GROUP_AT(acred->group_info, i))
++			goto out_nomatch;
++	}
++out_match:
+ 	return 1;
++out_nomatch:
++	return 0;
+ }
+ 
+ void __init rpc_init_generic_auth(void)

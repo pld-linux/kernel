@@ -1,0 +1,39 @@
+--- linux-2.6.20/grsecurity/gracl_shm.c~	2007-03-24 04:54:27.000000000 +0100
++++ linux-2.6.20/grsecurity/gracl_shm.c	2007-03-24 04:55:46.332159000 +0100
+@@ -6,6 +6,7 @@
+ #include <linux/gracl.h>
+ #include <linux/grsecurity.h>
+ #include <linux/grinternal.h>
++#include <linux/vs_pid.h>
+ 
+ int
+ gr_handle_shmat(const pid_t shm_cprid, const pid_t shm_lapid,
+--- linux-2.6.20/localversion-grsec	2007-03-24 04:54:27.000000000 +0100
++++ /dev/null	2007-03-24 05:05:10.455414500 +0100
+@@ -1 +0,0 @@
+--grsec
+--- linux-2.6.20/grsecurity/grsec_sock.c~	2007-03-24 05:38:40.000000000 +0100
++++ linux-2.6.20/grsecurity/grsec_sock.c	2007-03-24 05:47:11.347998750 +0100
+@@ -7,6 +7,7 @@
+ #include <linux/ip.h>
+ #include <net/sock.h>
+ #include <net/inet_sock.h>
++#include <linux/vs_context.h>
+ #include <linux/grsecurity.h>
+ #include <linux/grinternal.h>
+ #include <linux/gracl.h>
+===
+=== analogous as capable()
+===
+--- a/kernel/capability.c~	2007-12-11 00:46:02.000000000 +0100
++++ a/kernel/capability.c	2007-12-11 01:35:00.244481500 +0100
+@@ -322,6 +322,8 @@
+ 
+ int capable_nolog(int cap)
+ {
++	if (vs_check_bit(VXC_CAP_MASK, cap) && !vx_mcaps(1L << cap))
++		return 0;
+ 	if (security_capable(cap) == 0 && gr_is_capable_nolog(cap)) {
+ 		current->flags |= PF_SUPERPRIV;
+ 		return 1;
+

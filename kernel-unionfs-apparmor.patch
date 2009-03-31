@@ -1,0 +1,303 @@
+diff -upr linux-2.6.27/fs/unionfs./commonfops.c linux-2.6.27/fs/unionfs/commonfops.c
+--- linux-2.6.27/fs/unionfs./commonfops.c	2008-11-01 23:44:27.122271002 +0100
++++ linux-2.6.27/fs/unionfs/commonfops.c	2008-11-02 21:59:38.452286527 +0100
+@@ -87,7 +87,7 @@ retry:
+ 					    lower_dentry->d_inode);
+ 	}
+ 	lower_dir_dentry = lock_parent(lower_dentry);
+-	err = vfs_unlink(lower_dir_dentry->d_inode, lower_dentry);
++	err = vfs_unlink(lower_dir_dentry->d_inode, lower_dentry, 0);
+ 	unlock_dir(lower_dir_dentry);
+ 
+ out:
+diff -upr linux-2.6.27/fs/unionfs./copyup.c linux-2.6.27/fs/unionfs/copyup.c
+--- linux-2.6.27/fs/unionfs./copyup.c	2008-11-01 23:44:27.125604213 +0100
++++ linux-2.6.27/fs/unionfs/copyup.c	2008-11-02 22:01:23.969645868 +0100
+@@ -35,7 +35,7 @@ static int copyup_xattrs(struct dentry *
+ 	char *name_list_buf = NULL;
+ 
+ 	/* query the actual size of the xattr list */
+-	list_size = vfs_listxattr(old_lower_dentry, NULL, 0);
++	list_size = vfs_listxattr(old_lower_dentry, NULL, NULL, 0, NULL);
+ 	if (list_size <= 0) {
+ 		err = list_size;
+ 		goto out;
+@@ -51,7 +51,8 @@ static int copyup_xattrs(struct dentry *
+ 	name_list_buf = name_list; /* save for kfree at end */
+ 
+ 	/* now get the actual xattr list of the source file */
+-	list_size = vfs_listxattr(old_lower_dentry, name_list, list_size);
++	list_size = vfs_listxattr(old_lower_dentry, NULL, name_list, list_size,
++				  NULL);
+ 	if (list_size <= 0) {
+ 		err = list_size;
+ 		goto out;
+@@ -70,8 +71,8 @@ static int copyup_xattrs(struct dentry *
+ 
+ 		/* Lock here since vfs_getxattr doesn't lock for us */
+ 		mutex_lock(&old_lower_dentry->d_inode->i_mutex);
+-		size = vfs_getxattr(old_lower_dentry, name_list,
+-				    attr_value, XATTR_SIZE_MAX);
++		size = vfs_getxattr(old_lower_dentry, NULL, name_list,
++				    attr_value, XATTR_SIZE_MAX, NULL);
+ 		mutex_unlock(&old_lower_dentry->d_inode->i_mutex);
+ 		if (size < 0) {
+ 			err = size;
+@@ -82,8 +83,8 @@ static int copyup_xattrs(struct dentry *
+ 			goto out;
+ 		}
+ 		/* Don't lock here since vfs_setxattr does it for us. */
+-		err = vfs_setxattr(new_lower_dentry, name_list, attr_value,
+-				   size, 0);
++		err = vfs_setxattr(new_lower_dentry, NULL, name_list,
++				   attr_value, size, 0, NULL);
+ 		/*
+ 		 * Selinux depends on "security.*" xattrs, so to maintain
+ 		 * the security of copied-up files, if Selinux is active,
+@@ -103,8 +103,8 @@
+ 			}
+ 			cap_raise(new_creds->cap_effective, CAP_FOWNER);
+ 			old_creds = override_creds(new_creds);
+-			err = vfs_setxattr(new_lower_dentry, name_list,
+-					   attr_value, size, 0);
++			err = vfs_setxattr(new_lower_dentry, NULL, name_list,
++					   attr_value, size, 0, NULL);
+ 			revert_creds(old_creds);
+ 		}
+ 		if (err < 0)
+@@ -136,14 +136,14 @@ static int copyup_permissions(struct sup
+ 		ATTR_ATIME_SET | ATTR_MTIME_SET | ATTR_FORCE |
+ 		ATTR_GID | ATTR_UID;
+ 	mutex_lock(&new_lower_dentry->d_inode->i_mutex);
+-	err = notify_change(new_lower_dentry, &newattrs);
++	err = notify_change(new_lower_dentry, NULL, &newattrs);
+ 	if (err)
+ 		goto out;
+ 
+ 	/* now try to change the mode and ignore EOPNOTSUPP on symlinks */
+ 	newattrs.ia_mode = i->i_mode;
+ 	newattrs.ia_valid = ATTR_MODE | ATTR_FORCE;
+-	err = notify_change(new_lower_dentry, &newattrs);
++	err = notify_change(new_lower_dentry, NULL, &newattrs);
+ 	if (err == -EOPNOTSUPP &&
+ 	    S_ISLNK(new_lower_dentry->d_inode->i_mode)) {
+ 		printk(KERN_WARNING
+@@ -487,7 +487,7 @@ out_unlink:
+ 	 * quota, or something else happened so let's unlink; we don't
+ 	 * really care about the return value of vfs_unlink
+ 	 */
+-	vfs_unlink(new_lower_parent_dentry->d_inode, new_lower_dentry);
++	vfs_unlink(new_lower_parent_dentry->d_inode, new_lower_dentry, 0);
+ 
+ 	if (copyup_file) {
+ 		/* need to close the file */
+diff -upr linux-2.6.27/fs/unionfs./inode.c linux-2.6.27/fs/unionfs/inode.c
+--- linux-2.6.27/fs/unionfs./inode.c	2008-11-01 23:44:27.125604213 +0100
++++ linux-2.6.27/fs/unionfs/inode.c	2008-11-02 22:01:34.062010764 +0100
+@@ -279,8 +279,8 @@ static int unionfs_link(struct dentry *o
+ 	if (!err) {
+ 		/* see Documentation/filesystems/unionfs/issues.txt */
+ 		lockdep_off();
+-		err = vfs_link(lower_old_dentry, lower_dir_dentry->d_inode,
+-			       lower_new_dentry);
++		err = vfs_link(lower_old_dentry, NULL, lower_dir_dentry->d_inode,
++			       lower_new_dentry, 0);
+ 		lockdep_on();
+ 	}
+ 	unlock_dir(lower_dir_dentry);
+@@ -307,9 +307,9 @@ docopyup:
+ 			/* see Documentation/filesystems/unionfs/issues.txt */
+ 			lockdep_off();
+ 			/* do vfs_link */
+-			err = vfs_link(lower_old_dentry,
++			err = vfs_link(lower_old_dentry, NULL,
+ 				       lower_dir_dentry->d_inode,
+-				       lower_new_dentry);
++				       lower_new_dentry, 0);
+ 			lockdep_on();
+ 			unlock_dir(lower_dir_dentry);
+ 			goto check_link;
+@@ -394,7 +394,7 @@ static int unionfs_symlink(struct inode 
+ 	}
+ 
+ 	mode = S_IALLUGO;
+-	err = vfs_symlink(lower_parent_dentry->d_inode, lower_dentry, symname);
++	err = vfs_symlink(lower_parent_dentry->d_inode, lower_dentry, NULL, symname);
+ 	if (!err) {
+ 		err = PTR_ERR(unionfs_interpose(dentry, dir->i_sb, 0));
+ 		if (!err) {
+@@ -486,7 +486,7 @@ static int unionfs_mkdir(struct inode *d
+ 		}
+ 
+ 		err = vfs_mkdir(lower_parent_dentry->d_inode, lower_dentry,
+-				mode);
++				NULL, mode);
+ 
+ 		unlock_dir(lower_parent_dentry);
+ 
+@@ -586,7 +586,7 @@ static int unionfs_mknod(struct inode *d
+ 		goto out;
+ 	}
+ 
+-	err = vfs_mknod(lower_parent_dentry->d_inode, lower_dentry, mode, dev);
++	err = vfs_mknod(lower_parent_dentry->d_inode, lower_dentry, NULL, mode, dev);
+ 	if (!err) {
+ 		err = PTR_ERR(unionfs_interpose(dentry, dir->i_sb, 0));
+ 		if (!err) {
+@@ -964,7 +964,7 @@ static int unionfs_setattr(struct dentry
+ 
+ 	/* notify the (possibly copied-up) lower inode */
+ 	mutex_lock(&lower_inode->i_mutex);
+-	err = notify_change(lower_dentry, ia);
++	err = notify_change(lower_dentry, NULL, ia);
+ 	mutex_unlock(&lower_inode->i_mutex);
+ 	if (err)
+ 		goto out;
+diff -upr linux-2.6.27/fs/unionfs./rename.c linux-2.6.27/fs/unionfs/rename.c
+--- linux-2.6.27/fs/unionfs./rename.c	2008-11-01 23:44:27.129984553 +0100
++++ linux-2.6.27/fs/unionfs/rename.c	2008-11-02 21:59:52.069643557 +0100
+@@ -121,8 +121,8 @@ static int __unionfs_rename(struct inode
+ 		err = -ENOTEMPTY;
+ 		goto out_err_unlock;
+ 	}
+-	err = vfs_rename(lower_old_dir_dentry->d_inode, lower_old_dentry,
+-			 lower_new_dir_dentry->d_inode, lower_new_dentry);
++	err = vfs_rename(lower_old_dir_dentry->d_inode, lower_old_dentry, NULL,
++			 lower_new_dir_dentry->d_inode, lower_new_dentry, 0);
+ out_err_unlock:
+ 	if (!err) {
+ 		/* update parent dir times */
+@@ -206,7 +206,7 @@ static int do_unionfs_rename(struct inod
+ 		err = is_robranch_super(old_dir->i_sb, bindex);
+ 		if (!err)
+ 			err = vfs_unlink(unlink_dir_dentry->d_inode,
+-					 unlink_dentry);
++					 unlink_dentry, 0);
+ 
+ 		fsstack_copy_attr_times(new_parent->d_inode,
+ 					unlink_dir_dentry->d_inode);
+diff -upr linux-2.6.27/fs/unionfs./sioq.c linux-2.6.27/fs/unionfs/sioq.c
+--- linux-2.6.27/fs/unionfs./sioq.c	2008-11-01 23:44:27.129984553 +0100
++++ linux-2.6.27/fs/unionfs/sioq.c	2008-11-02 21:59:59.574937832 +0100
+@@ -69,7 +69,7 @@ void __unionfs_mkdir(struct work_struct 
+ 	struct sioq_args *args = container_of(work, struct sioq_args, work);
+ 	struct mkdir_args *m = &args->mkdir;
+ 
+-	args->err = vfs_mkdir(m->parent, m->dentry, m->mode);
++	args->err = vfs_mkdir(m->parent, m->dentry, NULL, m->mode);
+ 	complete(&args->comp);
+ }
+ 
+@@ -78,7 +78,7 @@ void __unionfs_mknod(struct work_struct 
+ 	struct sioq_args *args = container_of(work, struct sioq_args, work);
+ 	struct mknod_args *m = &args->mknod;
+ 
+-	args->err = vfs_mknod(m->parent, m->dentry, m->mode, m->dev);
++	args->err = vfs_mknod(m->parent, m->dentry, NULL, m->mode, m->dev);
+ 	complete(&args->comp);
+ }
+ 
+@@ -87,7 +87,7 @@ void __unionfs_symlink(struct work_struc
+ 	struct sioq_args *args = container_of(work, struct sioq_args, work);
+ 	struct symlink_args *s = &args->symlink;
+ 
+-	args->err = vfs_symlink(s->parent, s->dentry, s->symbuf);
++	args->err = vfs_symlink(s->parent, s->dentry, NULL, s->symbuf);
+ 	complete(&args->comp);
+ }
+ 
+@@ -96,6 +96,6 @@ void __unionfs_unlink(struct work_struct
+ 	struct sioq_args *args = container_of(work, struct sioq_args, work);
+ 	struct unlink_args *u = &args->unlink;
+ 
+-	args->err = vfs_unlink(u->parent, u->dentry);
++	args->err = vfs_unlink(u->parent, u->dentry, 0);
+ 	complete(&args->comp);
+ }
+diff -upr linux-2.6.27/fs/unionfs./unlink.c linux-2.6.27/fs/unionfs/unlink.c
+--- linux-2.6.27/fs/unionfs./unlink.c	2008-11-01 23:44:27.129984553 +0100
++++ linux-2.6.27/fs/unionfs/unlink.c	2008-11-02 22:00:09.670923950 +0100
+@@ -72,10 +72,10 @@ static int unionfs_unlink_whiteout(struc
+ 			lockdep_off();
+ 			if (!S_ISDIR(lower_dentry->d_inode->i_mode))
+ 				err = vfs_unlink(lower_dir_dentry->d_inode,
+-								lower_dentry);
++								lower_dentry, 0);
+ 			else
+ 				err = vfs_rmdir(lower_dir_dentry->d_inode,
+-								lower_dentry);
++								lower_dentry, 0);
+ 			lockdep_on();
+ 		}
+ 
+@@ -187,7 +187,7 @@ static int unionfs_rmdir_first(struct in
+ 	if (!err) {
+ 		/* see Documentation/filesystems/unionfs/issues.txt */
+ 		lockdep_off();
+-		err = vfs_rmdir(lower_dir_dentry->d_inode, lower_dentry);
++		err = vfs_rmdir(lower_dir_dentry->d_inode, lower_dentry, 0);
+ 		lockdep_on();
+ 	}
+ 	dput(lower_dentry);
+diff -upr linux-2.6.27/fs/unionfs./whiteout.c linux-2.6.27/fs/unionfs/whiteout.c
+--- linux-2.6.27/fs/unionfs./whiteout.c	2008-11-01 23:44:27.129984553 +0100
++++ linux-2.6.27/fs/unionfs/whiteout.c	2008-11-02 22:00:49.862895378 +0100
+@@ -171,7 +171,7 @@ int unlink_whiteout(struct dentry *wh_de
+ 
+ 	/* see Documentation/filesystems/unionfs/issues.txt */
+ 	lockdep_off();
+-	err = vfs_unlink(lower_dir_dentry->d_inode, wh_dentry);
++	err = vfs_unlink(lower_dir_dentry->d_inode, wh_dentry, 0);
+ 	lockdep_on();
+ 	unlock_dir(lower_dir_dentry);
+ 
+@@ -405,7 +405,7 @@ static int do_delete_whiteouts(struct de
+ 				break;
+ 			}
+ 			if (lower_dentry->d_inode)
+-				err = vfs_unlink(lower_dir, lower_dentry);
++				err = vfs_unlink(lower_dir, lower_dentry, 0);
+ 			dput(lower_dentry);
+ 			if (err)
+ 				break;
+--- linux-2.6.27/fs/unionfs/xattr.c
++++ linux-2.6.27/fs/unionfs/xattr.c
+@@ -55,7 +55,8 @@ ssize_t unionfs_getxattr(struct dentry *
+ 
+ 	lower_dentry = unionfs_lower_dentry(dentry);
+ 
+-	err = vfs_getxattr(lower_dentry, (char *) name, value, size);
++	err = vfs_getxattr(lower_dentry, NULL, (char *) name, value, size,
++			   NULL);
+ 
+ out:
+ 	unionfs_check_dentry(dentry);
+@@ -84,8 +85,8 @@ int unionfs_setxattr(struct dentry *dent
+ 
+ 	lower_dentry = unionfs_lower_dentry(dentry);
+ 
+-	err = vfs_setxattr(lower_dentry, (char *) name, (void *) value,
+-			   size, flags);
++	err = vfs_setxattr(lower_dentry, NULL, (char *) name, (void *) value,
++			   size, flags, NULL);
+ 
+ out:
+ 	unionfs_check_dentry(dentry);
+@@ -113,7 +114,7 @@ int unionfs_removexattr(struct dentry *d
+ 
+ 	lower_dentry = unionfs_lower_dentry(dentry);
+ 
+-	err = vfs_removexattr(lower_dentry, (char *) name);
++	err = vfs_removexattr(lower_dentry, NULL, (char *) name, NULL);
+ 
+ out:
+ 	unionfs_check_dentry(dentry);
+@@ -143,7 +144,7 @@ ssize_t unionfs_listxattr(struct dentry 
+ 	lower_dentry = unionfs_lower_dentry(dentry);
+ 
+ 	encoded_list = list;
+-	err = vfs_listxattr(lower_dentry, encoded_list, size);
++	err = vfs_listxattr(lower_dentry, NULL, encoded_list, size, NULL);
+ 
+ out:
+ 	unionfs_check_dentry(dentry);

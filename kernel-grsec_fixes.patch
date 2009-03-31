@@ -1,0 +1,149 @@
+netlink
+cap_dac*
+diff -upr a/grsecurity/gracl_cap.c c/grsecurity/gracl_cap.c
+--- a/grsecurity/gracl_cap.c	2007-12-01 00:54:57.312774500 +0000
++++ c/grsecurity/gracl_cap.c	2007-12-01 01:09:34.923621750 +0000
+@@ -110,3 +110,19 @@ gr_is_capable_nolog(const int cap)
+ 	return 0;
+ }
+
++void
++gr_log_cap_pid(const int cap, const pid_t pid)
++{
++	struct task_struct *p;
++
++	if (gr_acl_is_enabled()) {
++		read_lock(&tasklist_lock);
++		p = find_task_by_vpid(pid);
++		if (p) {
++			get_task_struct(p);
++			gr_log_cap(GR_DONT_AUDIT, GR_CAP_ACL_MSG, p, captab_log[cap]);
++		}
++		read_unlock(&tasklist_lock);
++	}
++	return;
++}
+--- a/grsecurity/grsec_sock.c	2008-03-24 00:24:22.482633101 +0100
++++ c/grsecurity/grsec_sock.c	2008-03-24 00:27:01.971671763 +0100
+@@ -247,23 +247,26 @@
+ gr_cap_rtnetlink(struct sock *sock)
+ {
+ #ifdef CONFIG_GRKERNSEC
++	struct acl_subject_label *curracl;
++	kernel_cap_t cap_dropp = __cap_empty_set, cap_mask = __cap_empty_set;
++
+ 	if (!gr_acl_is_enabled())
+ 		return current_cap();
+-	else if (sock->sk_protocol == NETLINK_ISCSI &&
+-		 cap_raised(current_cap(), CAP_SYS_ADMIN) &&
+-		 gr_is_capable(CAP_SYS_ADMIN))
+-		return current_cap();
+-	else if (sock->sk_protocol == NETLINK_AUDIT &&
+-		 cap_raised(current_cap(), CAP_AUDIT_WRITE) &&
+-		 gr_is_capable(CAP_AUDIT_WRITE) &&
+-		 cap_raised(current_cap(), CAP_AUDIT_CONTROL) &&
+-		 gr_is_capable(CAP_AUDIT_CONTROL))
+-		return current_cap();
+-	else if (cap_raised(current_cap(), CAP_NET_ADMIN) &&
+-		 gr_is_capable(CAP_NET_ADMIN))
+-		return current_cap();
+-	else
+-		return __cap_empty_set;
++	else {
++		curracl = current->acl;
++
++		cap_dropp  = curracl->cap_lower;
++		cap_mask = curracl->cap_mask;
++
++		while ((curracl = curracl->parent_subject)) {
++			cap_dropp = cap_combine(cap_dropp,
++					cap_intersect(curracl->cap_lower,
++						cap_drop(cap_mask, curracl->cap_mask)));
++			cap_mask = cap_combine(cap_mask, curracl->cap_mask);
++		}
++		return cap_drop(current_cap(),
++				cap_intersect(cap_dropp, cap_mask));
++	}
+ #else
+ 	return current_cap();
+ #endif
+diff -upr a/include/linux/grsecurity.h c/include/linux/grsecurity.h
+--- a/include/linux/grsecurity.h	2007-12-01 00:54:57.224769000 +0000
++++ c/include/linux/grsecurity.h	2007-12-01 01:09:34.923621750 +0000
+@@ -76,6 +76,7 @@ void gr_log_semrm(const uid_t uid, const
+ void gr_log_shmget(const int err, const int shmflg, const size_t size);
+ void gr_log_shmrm(const uid_t uid, const uid_t cuid);
+ void gr_log_textrel(struct vm_area_struct *vma);
++void gr_log_cap_pid(const int cap, pid_t pid);
+ 
+ int gr_handle_follow_link(const struct inode *parent,
+ 				 const struct inode *inode,
+diff -upr a/security/commoncap.c c/security/commoncap.c
+--- a/security/commoncap.c	2007-12-01 00:54:57.300773750 +0000
++++ c/security/commoncap.c	2007-12-01 01:09:34.923621750 +0000
+@@ -55,8 +55,12 @@
+ 
+ int cap_netlink_recv(struct sk_buff *skb, int cap)
+ {
+-	if (!cap_raised(NETLINK_CB(skb).eff_cap, cap))
++	if (!cap_raised(NETLINK_CB(skb).eff_cap, cap)) {
++#ifdef CONFIG_GRKERNSEC
++		gr_log_cap_pid(cap, NETLINK_CREDS(skb)->pid);
++#endif
+ 		return -EPERM;
++	}
+ 	return 0;
+ }
+ 
+===
+=== cap_dac_ succession with capable_nolog
+===
+diff -upr a/fs./namei.c a/fs/namei.c
+--- a/fs./namei.c	2008-04-05 01:23:49.741310000 +0200
++++ a/fs/namei.c	2008-04-05 14:36:39.350275977 +0200
+@@ -215,6 +215,13 @@ int generic_permission(struct inode *ino
+ 
+  check_capabilities:
+ 	/*
++	 * Searching includes executable on directories, else just read.
++	 */
++	if (mask == MAY_READ || (S_ISDIR(inode->i_mode) && !(mask & MAY_WRITE)))
++		if (capable_nolog(CAP_DAC_OVERRIDE) || capable(CAP_DAC_READ_SEARCH))
++			return 0;
++
++	/*
+ 	 * Read/write DACs are always overridable.
+ 	 * Executable DACs are overridable if at least one exec bit is set.
+ 	 */
+@@ -223,13 +230,6 @@ int generic_permission(struct inode *ino
+ 		if (capable(CAP_DAC_OVERRIDE))
+ 			return 0;
+ 
+-	/*
+-	 * Searching includes executable on directories, else just read.
+-	 */
+-	if (mask == MAY_READ || (S_ISDIR(inode->i_mode) && !(mask & MAY_WRITE)))
+-		if (capable(CAP_DAC_READ_SEARCH))
+-			return 0;
+-
+ 	return -EACCES;
+ }
+ 
+@@ -498,13 +498,13 @@ static int exec_permission_lite(struct i
+ 	if (mode & MAY_EXEC)
+ 		goto ok;
+ 
+-	if ((inode->i_mode & S_IXUGO) && capable(CAP_DAC_OVERRIDE))
++	if (S_ISDIR(inode->i_mode) && capable_nolog(CAP_DAC_OVERRIDE))
+ 		goto ok;
+ 
+-	if (S_ISDIR(inode->i_mode) && capable(CAP_DAC_OVERRIDE))
++	if (S_ISDIR(inode->i_mode) && capable(CAP_DAC_READ_SEARCH))
+ 		goto ok;
+ 
+-	if (S_ISDIR(inode->i_mode) && capable(CAP_DAC_READ_SEARCH))
++	if ((inode->i_mode & S_IXUGO) && capable(CAP_DAC_OVERRIDE))
+ 		goto ok;
+ 
+ 	return -EACCES;
+
