@@ -166,10 +166,9 @@ Source10:	kernel.make
 Source20:	kernel-multiarch.config
 Source21:	kernel-x86.config
 Source22:	kernel-sparc.config
-Source23:	kernel-sparc64.config
-Source24:	kernel-alpha.config
-Source25:	kernel-powerpc.config
-Source26:	kernel-ia64.config
+Source23:	kernel-alpha.config
+Source24:	kernel-powerpc.config
+Source25:	kernel-ia64.config
 
 Source40:	kernel-netfilter.config
 Source41:	kernel-patches.config
@@ -418,7 +417,10 @@ BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 %ifarch ppc ppc64
 %define		target_arch_dir		powerpc
 %endif
-%ifnarch %{ix86} %{x8664} ppc ppc64
+%ifarch sparc sparc64
+%define		target_arch_dir		sparc
+%endif
+%ifnarch %{ix86} %{x8664} ppc ppc64 sparc sparc64
 %define		target_arch_dir		%{_target_base_arch}
 %endif
 
@@ -460,7 +462,7 @@ BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 	%define	DepMod /sbin/depmod
 	%endif
 
-	%if "%{_target_base_arch}" == ppc || "%{_target_base_arch}" == "ppc64"
+	%if "%{_target_base_arch}" == "ppc" || "%{_target_base_arch}" == "ppc64"
 	%define CrossOpts ARCH=powerpc CROSS_COMPILE=%{_target_cpu}-pld-linux-
 	%endif
 %else
