@@ -1,4 +1,3 @@
-diff -Nur linux-2.6.15.6/drivers/input/joystick/iforce/iforce-serio.c linux-2.6.15.6.iforce/drivers/input/joystick/iforce/iforce-serio.c
 --- linux-2.6.15.6/drivers/input/joystick/iforce/iforce-serio.c	2006-03-05 19:07:54.000000000 +0000
 +++ linux-2.6.15.6.iforce/drivers/input/joystick/iforce/iforce-serio.c	2006-04-29 23:17:59.000000000 +0000
 @@ -175,6 +175,12 @@
@@ -119,4 +118,27 @@ diff -Nur linux-2.6.15.6/drivers/input/joystick/iforce/iforce-serio.c linux-2.6.
  
  void restore_processor_state(void)
  {
-
+--- a/net/core/dev.c
++++ b/net/core/dev.c
+@@ -2588,18 +2588,15 @@ static int process_backlog(struct napi_s
+ 		local_irq_disable();
+ 		skb = __skb_dequeue(&queue->input_pkt_queue);
+ 		if (!skb) {
++			__napi_complete(napi);
+ 			local_irq_enable();
+-			napi_complete(napi);
+-			goto out;
++			break;
+ 		}
+ 		local_irq_enable();
+ 
+-		napi_gro_receive(napi, skb);
++		netif_receive_skb(skb);
+ 	} while (++work < quota && jiffies == start_time);
+ 
+-	napi_gro_flush(napi);
+-
+-out:
+ 	return work;
+ }
+ 
