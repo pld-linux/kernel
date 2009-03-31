@@ -195,7 +195,7 @@ Patch2:		kernel-tahoe9xx.patch
 
 # http://dev.gentoo.org/~spock/projects/fbcondecor/archive/fbcondecor-0.9.4-2.6.25-rc6.patch
 Patch3:		kernel-fbcondecor.patch
-Patch4:		linux-fbcon-margins.patch
+Patch4:		kernel-fbcon-margins.patch
 
 # netfilter related stuff mostly based on patch-o-matic-ng
 # snapshot 20061213 with some fixes related to changes in
@@ -252,41 +252,41 @@ Patch51:	kernel-reiser4.patch
 Patch52:	kernel-wrr.patch
 
 # http://fatooh.org/esfq-2.6/sfq-2.6.24.1.tar.bz2
-Patch53:	esfq-kernel.patch
+Patch53:	kernel-esfq.patch
 
 # http://memebeam.org/free-software/toshiba_acpi/toshiba_acpi-dev_toshiba_test5-linux_2.6.26.patch
-Patch54:	linux-2.6-toshiba_acpi.patch
+Patch54:	kernel-toshiba_acpi.patch
 
 # by Baggins request:
 # derived from ftp://ftp.cmf.nrl.navy.mil/pub/chas/linux-atm/vbr/vbr-kernel-diffs
-Patch55:	linux-2.6-atm-vbr.patch
-Patch56:	linux-2.6-atmdd.patch
+Patch55:	kernel-atm-vbr.patch
+Patch56:	kernel-atmdd.patch
 
 # http://www.ntop.org/PF_RING.html 20070610
-Patch58:	linux-PF_RING.patch
+Patch58:	kernel-PF_RING.patch
 
 # http://synce.svn.sourceforge.net/svnroot/synce/trunk/patches/linux-2.6.22-rndis_host-wm5.patch
 Patch59:	kernel-rndis_host-wm5.patch
 
 # Project suspend2 renamed to tuxonice
 # http://www.tuxonice.net/downloads/all/current-tuxonice-for-head.patch-20090313-v1.bz2
-Patch69:	linux-2.6-suspend2.patch
-Patch70:	kernel-suspend2-headers.patch
+Patch69:	kernel-tuxonice.patch
+Patch70:	kernel-tuxonice-headers.patch
 
 # adds some ids for hostap suported cards and monitor_enable from/for aircrack-ng
 # http://patches.aircrack-ng.org/hostap-kernel-2.6.18.patch
-Patch85:	hostap-kernel-2.6.18.patch
+Patch85:	kernel-hostap.patch
 
 # Taken from http://download.opensuse.org/factory/repo/src-oss/suse/src/kernel-source-2.6.27.7-3.1.src.rpm
 Patch90:	kernel-mpt-fusion.patch
 
 # based on http://vserver.13thfloor.at/Experimental/patch-2.6.29-vs2.3.0.36.9-pre2.diff
-Patch100:	linux-2.6-vs2.3.patch
+Patch100:	kernel-vserver-2.3.patch
 Patch101:	kernel-vserver-fixes.patch
 
 # Wake-On-Lan fix for nForce drivers; using http://atlas.et.tudelft.nl/verwei90/nforce2/wol.html
 # Fix verified for that kernel version.
-Patch130:	linux-2.6-forcedeth-WON.patch
+Patch130:	kernel-forcedeth-WON.patch
 
 # http://download.filesystems.org/unionfs/unionfs-2.x/unionfs-2.5.1_for_2.6.28.1.diff.gz
 Patch140:	kernel-unionfs.patch
@@ -299,7 +299,7 @@ Patch147:	kernel-aufs-apparmor.patch
 
 Patch150:	kernel-ppc-crtsavres.patch
 
-Patch200:	linux-2.6-ppc-ICE-hacks.patch
+Patch200:	kernel-ppc-ICE-hacks.patch
 
 # The following patch extend the routing functionality in Linux
 # to support static routes (defined by user), new way to use the
@@ -309,15 +309,15 @@ Patch200:	linux-2.6-ppc-ICE-hacks.patch
 # http://www.ssi.bg/~ja/routes-2.6.28-16.diff
 Patch300:	kernel-routes.patch
 
-Patch1000:	linux-2.6-grsec-minimal.patch
+Patch1000:	kernel-grsec-minimal.patch
 
 Patch2000:	kernel-small_fixes.patch
-Patch2001:	linux-2.6.21.1-pwc-uncompress.patch
+Patch2001:	kernel-pwc-uncompress.patch
 Patch2003:	kernel-regressions.patch
 
 # kill some thousands of warnings
 # (only warnings, so just remove parts of this patch if conflics)
-Patch2500:	linux-2.6-warnings.patch
+Patch2500:	kernel-warnings.patch
 
 # based on https://forgesvn1.novell.com/svn/apparmor/trunk/kernel-patches/2.6.27 rev 1303
 # repatched and adapted for vserver/grsec changes in vfs API, experimental
@@ -338,17 +338,17 @@ Patch7000:	kernel-inittmpfs.patch
 Patch7001:	kernel-bzip2-lzma.patch
 
 # not ready yet
-Patch9997:	pax_selinux_hooks-2.6.20.patch
+Patch9997:	kernel-pax_selinux_hooks.patch
 
 # based on http://www.grsecurity.net/~paxguy1/pax-linux-2.6.24.6-test45.patch
 Patch9998:	kernel-pax.patch
 
 # based on http://www.grsecurity.net/~spender/grsecurity-2.1.12-2.6.28-200901161810.patch
-Patch9999:	linux-2.6-grsec_full.patch
-Patch10000:	linux-2.6-grsec-caps.patch
-Patch10001:	linux-2.6-grsec-common.patch
+Patch9999:	kernel-grsec_full.patch
+Patch10000:	kernel-grsec-caps.patch
+Patch10001:	kernel-grsec-common.patch
 Patch10002:	kernel-grsec_fixes.patch
-Patch10003:	linux-2.6-grsec-no-stupid-SoB.patch
+Patch10003:	kernel-grsec-no-stupid-SbO.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 3:2.18
