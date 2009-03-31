@@ -1,6 +1,167 @@
-diff -urNp linux-2.6.27.orig/arch/x86/boot/compressed/Makefile linux-2.6.27/arch/x86/boot/compressed/Makefile
---- linux-2.6.27.orig/arch/x86/boot/compressed/Makefile	2008-10-29 08:48:23.000000000 +0100
-+++ linux-2.6.27/arch/x86/boot/compressed/Makefile	2008-10-30 22:30:21.000000000 +0100
+Linus,
+
+Please pull the latest bzip2-lzma-for-linus git tree from:
+
+   git://git.kernel.org/pub/scm/linux/kernel/git/tip/linux-2.6-tip.git bzip2-lzma-for-linus
+
+We are sending this as a separate tree as it affects generic
+files as well.
+
+Highlights:
+
+ - Add kernel image compression mode config options:
+
+    Kernel compression mode
+    > 1. Gzip (KERNEL_GZIP) (NEW)
+      2. Bzip2 (KERNEL_BZIP2) (NEW)
+      3. LZMA (KERNEL_LZMA) (NEW)
+
+    Initial ramdisk compressed using gzip (RD_GZIP) [Y/n/?] (NEW)
+    Initial ramdisk compressed using bzip2 (RD_BZIP2) [N/y/?] (NEW)
+    Initial ramdisk compressed using lzma (RD_LZMA) [N/y/?] (NEW)
+
+    Built-in initramfs compression mode
+    > 1. None (INITRAMFS_COMPRESSION_NONE) (NEW)
+      2. Gzip (INITRAMFS_COMPRESSION_GZIP) (NEW)
+    choice[1-2?]:
+
+   ... and matching compression and decompression implementations.
+
+Risks:
+
+ - This has been a historically problematic topic thus we skipped 
+   the v2.6.28 and v2.6.29 merge windows with it. Boot failures, 
+   panics, initrd decompression problems have been observed and 
+   fixed.
+
+ - On x86 we switch over from lib/inflate.c to zlib - same 
+   functionality but different library. Other architectures are not 
+   affected by that, use of this new facility is opt-in. (This was 
+   the last in-kernel user of lib/inflate.c on x86.)
+
+ - To build a kernel with a different compressor the 'bzip2' or 'lzma'
+   tools are needed. If the kernel is built with CONFIG_KERNEL_LZMA=y
+   and the tool is not available the kernel build will fail with a clear
+   message. This tool is available in all major kernel distros, but
+   it is not generally a default-installed package. bzip2 is generally
+   installed by default.
+
+ - There are no known regressions.
+
+ Thanks,
+
+	Ingo
+
+------------------>
+Alain Knaff (8):
+      bzip2/lzma: library support for gzip, bzip2 and lzma decompression
+      bzip2/lzma: config and initramfs support for bzip2/lzma decompression
+      bzip2/lzma: x86 kernel compression support
+      bzip2/lzma: fix built-in initramfs vs CONFIG_RD_GZIP
+      bzip2/lzma: fix decompress_inflate.c vs multi-block-with-embedded-filename
+      bzip2/lzma: don't stop search at first unconfigured compression
+      bzip2/lzma: don't leave empty files around on failure
+      bzip2/lzma: make internal initramfs compression configurable
+
+Cyrill Gorcunov (1):
+      x86: headers cleanup - boot.h
+
+H. Peter Anvin (11):
+      bzip2/lzma: use a table to search for initramfs compression formats
+      bzip2/lzma: handle failures from bzip2 and lzma correctly
+      bzip2/lzma: make config machinery an arch configurable
+      bzip2/lzma: proper Kconfig dependencies for the ramdisk options
+      bzip2/lzma: DECOMPRESS_GZIP should select ZLIB_INFLATE
+      bzip2/lzma: move initrd/ramfs options out of BLK_DEV
+      bzip2/lzma: fix constant in decompress_inflate
+      bzip2/lzma: centralize format detection
+      bzip2/lzma: comprehensible error messages for missing decompressor
+      init: make initrd/initramfs decompression failure a KERN_EMERG event
+      bzip2/lzma: update boot protocol specification
+
+Ingo Molnar (1):
+      bzip2/lzma: make flush_buffer() unconditional
+
+
+ Documentation/x86/boot.txt         |    5 +-
+ arch/x86/Kconfig                   |    3 +
+ arch/x86/boot/compressed/Makefile  |   21 +-
+ arch/x86/boot/compressed/misc.c    |  118 +-----
+ arch/x86/include/asm/boot.h        |   16 +-
+ include/linux/decompress/bunzip2.h |   10 +
+ include/linux/decompress/generic.h |   33 ++
+ include/linux/decompress/inflate.h |   13 +
+ include/linux/decompress/mm.h      |   87 +++++
+ include/linux/decompress/unlzma.h  |   12 +
+ init/Kconfig                       |   60 +++
+ init/do_mounts_rd.c                |  178 +++-------
+ init/initramfs.c                   |  122 ++-----
+ lib/Kconfig                        |   14 +
+ lib/Makefile                       |    7 +-
+ lib/decompress.c                   |   54 +++
+ lib/decompress_bunzip2.c           |  735 ++++++++++++++++++++++++++++++++++++
+ lib/decompress_inflate.c           |  167 ++++++++
+ lib/decompress_unlzma.c            |  647 +++++++++++++++++++++++++++++++
+ lib/zlib_inflate/inflate.h         |    4 +
+ lib/zlib_inflate/inftrees.h        |    4 +
+ scripts/Makefile.lib               |   14 +
+ scripts/bin_size                   |   10 +
+ scripts/gen_initramfs_list.sh      |   18 +-
+ usr/Kconfig                        |   89 +++++
+ usr/Makefile                       |   36 ++-
+ usr/initramfs_data.S               |    2 +-
+ usr/initramfs_data.bz2.S           |   29 ++
+ usr/initramfs_data.gz.S            |   29 ++
+ usr/initramfs_data.lzma.S          |   29 ++
+ 30 files changed, 2222 insertions(+), 344 deletions(-)
+ create mode 100644 include/linux/decompress/bunzip2.h
+ create mode 100644 include/linux/decompress/generic.h
+ create mode 100644 include/linux/decompress/inflate.h
+ create mode 100644 include/linux/decompress/mm.h
+ create mode 100644 include/linux/decompress/unlzma.h
+ create mode 100644 lib/decompress.c
+ create mode 100644 lib/decompress_bunzip2.c
+ create mode 100644 lib/decompress_inflate.c
+ create mode 100644 lib/decompress_unlzma.c
+ create mode 100644 scripts/bin_size
+ create mode 100644 usr/initramfs_data.bz2.S
+ create mode 100644 usr/initramfs_data.gz.S
+ create mode 100644 usr/initramfs_data.lzma.S
+
+diff --git a/Documentation/x86/boot.txt b/Documentation/x86/boot.txt
+index 7b4596a..d05730e 100644
+--- a/Documentation/x86/boot.txt
++++ b/Documentation/x86/boot.txt
+@@ -542,7 +542,10 @@ Protocol:	2.08+
+ 
+   The payload may be compressed. The format of both the compressed and
+   uncompressed data should be determined using the standard magic
+-  numbers. Currently only gzip compressed ELF is used.
++  numbers.  The currently supported compression formats are gzip
++  (magic numbers 1F 8B or 1F 9E), bzip2 (magic number 42 5A) and LZMA
++  (magic number 5D 00).  The uncompressed payload is currently always ELF
++  (magic number 7F 45 4C 46).
+   
+ Field name:	payload_length
+ Type:		read
+diff --git a/arch/x86/Kconfig b/arch/x86/Kconfig
+index bc2fbad..a233768 100644
+--- a/arch/x86/Kconfig
++++ b/arch/x86/Kconfig
+@@ -40,6 +40,9 @@ config X86
+ 	select HAVE_GENERIC_DMA_COHERENT if X86_32
+ 	select HAVE_EFFICIENT_UNALIGNED_ACCESS
+ 	select USER_STACKTRACE_SUPPORT
++	select HAVE_KERNEL_GZIP
++	select HAVE_KERNEL_BZIP2
++	select HAVE_KERNEL_LZMA
+ 
+ config ARCH_DEFCONFIG
+ 	string
+diff --git a/arch/x86/boot/compressed/Makefile b/arch/x86/boot/compressed/Makefile
+index 1771c80..3ca4c19 100644
+--- a/arch/x86/boot/compressed/Makefile
++++ b/arch/x86/boot/compressed/Makefile
 @@ -4,7 +4,7 @@
  # create a compressed vmlinux image from the original vmlinux
  #
@@ -10,7 +171,7 @@ diff -urNp linux-2.6.27.orig/arch/x86/boot/compressed/Makefile linux-2.6.27/arch
  
  KBUILD_CFLAGS := -m$(BITS) -D__KERNEL__ $(LINUX_INCLUDE) -O2
  KBUILD_CFLAGS += -fno-strict-aliasing -fPIC
-@@ -46,9 +46,17 @@ $(obj)/vmlinux.bin.all: $(vmlinux.bin.al
+@@ -47,18 +47,35 @@ ifeq ($(CONFIG_X86_32),y)
  ifdef CONFIG_RELOCATABLE
  $(obj)/vmlinux.bin.gz: $(obj)/vmlinux.bin.all FORCE
  	$(call if_changed,gzip)
@@ -28,14 +189,15 @@ diff -urNp linux-2.6.27.orig/arch/x86/boot/compressed/Makefile linux-2.6.27/arch
  endif
  LDFLAGS_piggy.o := -r --format binary --oformat elf32-i386 -T
  
-@@ -56,8 +64,16 @@ else
+ else
++
  $(obj)/vmlinux.bin.gz: $(obj)/vmlinux.bin FORCE
  	$(call if_changed,gzip)
- 
 +$(obj)/vmlinux.bin.bz2: $(obj)/vmlinux.bin FORCE
 +	$(call if_changed,bzip2)
 +$(obj)/vmlinux.bin.lzma: $(obj)/vmlinux.bin FORCE
 +	$(call if_changed,lzma)
+ 
  LDFLAGS_piggy.o := -r --format binary --oformat elf64-x86-64 -T
  endif
  
@@ -46,9 +208,10 @@ diff -urNp linux-2.6.27.orig/arch/x86/boot/compressed/Makefile linux-2.6.27/arch
 +
 +$(obj)/piggy.o: $(obj)/vmlinux.scr $(obj)/vmlinux.bin.$(suffix_y) FORCE
  	$(call if_changed,ld)
-diff -urNp linux-2.6.27.orig/arch/x86/boot/compressed/misc.c linux-2.6.27/arch/x86/boot/compressed/misc.c
---- linux-2.6.27.orig/arch/x86/boot/compressed/misc.c	2008-10-29 08:48:23.000000000 +0100
-+++ linux-2.6.27/arch/x86/boot/compressed/misc.c	2008-10-30 22:27:54.000000000 +0100
+diff --git a/arch/x86/boot/compressed/misc.c b/arch/x86/boot/compressed/misc.c
+index da06221..e45be73 100644
+--- a/arch/x86/boot/compressed/misc.c
++++ b/arch/x86/boot/compressed/misc.c
 @@ -116,71 +116,13 @@
  /*
   * gzip declarations
@@ -78,7 +241,7 @@ diff -urNp linux-2.6.27.orig/arch/x86/boot/compressed/misc.c linux-2.6.27/arch/x
 -
 -/* Sliding window buffer (and final output buffer): */
 -static unsigned char	*window;
- 
+-
 -/* Valid bytes in inbuf: */
 -static unsigned		insize;
 -
@@ -115,13 +278,13 @@ diff -urNp linux-2.6.27.orig/arch/x86/boot/compressed/misc.c linux-2.6.27/arch/x
 -#  define Tracec(c, x)
 -#  define Tracecv(c, x)
 -#endif
--
+ 
 -static int  fill_inbuf(void);
 -static void flush_window(void);
  static void error(char *m);
  
  /*
-@@ -189,11 +131,6 @@ static void error(char *m);
+@@ -189,13 +131,8 @@ static void error(char *m);
  static struct boot_params *real_mode;		/* Pointer to real-mode data */
  static int quiet;
  
@@ -131,14 +294,18 @@ diff -urNp linux-2.6.27.orig/arch/x86/boot/compressed/misc.c linux-2.6.27/arch/x
 -static long bytes_out;
 -
  static void *memset(void *s, int c, unsigned n);
- static void *memcpy(void *dest, const void *src, unsigned n);
+-static void *memcpy(void *dest, const void *src, unsigned n);
++void *memcpy(void *dest, const void *src, unsigned n);
  
+ static void __putstr(int, const char *);
+ #define putstr(__x)  __putstr(0, __x)
 @@ -213,7 +150,17 @@ static char *vidmem;
  static int vidport;
  static int lines, cols;
  
+-#include "../../../../lib/inflate.c"
 +#ifdef CONFIG_KERNEL_GZIP
- #include "../../../../lib/inflate.c"
++#include "../../../../lib/decompress_inflate.c"
 +#endif
 +
 +#ifdef CONFIG_KERNEL_BZIP2
@@ -151,7 +318,16 @@ diff -urNp linux-2.6.27.orig/arch/x86/boot/compressed/misc.c linux-2.6.27/arch/x
  
  static void scroll(void)
  {
-@@ -291,38 +238,6 @@ static void *memcpy(void *dest, const vo
+@@ -282,7 +229,7 @@ static void *memset(void *s, int c, unsigned n)
+ 	return s;
+ }
+ 
+-static void *memcpy(void *dest, const void *src, unsigned n)
++void *memcpy(void *dest, const void *src, unsigned n)
+ {
+ 	int i;
+ 	const char *s = src;
+@@ -293,38 +240,6 @@ static void *memcpy(void *dest, const void *src, unsigned n)
  	return dest;
  }
  
@@ -190,7 +366,7 @@ diff -urNp linux-2.6.27.orig/arch/x86/boot/compressed/misc.c linux-2.6.27/arch/x
  
  static void error(char *x)
  {
-@@ -405,12 +320,8 @@ asmlinkage void decompress_kernel(void *
+@@ -407,12 +322,8 @@ asmlinkage void decompress_kernel(void *rmode, memptr heap,
  	lines = real_mode->screen_info.orig_video_lines;
  	cols = real_mode->screen_info.orig_video_cols;
  
@@ -203,7 +379,7 @@ diff -urNp linux-2.6.27.orig/arch/x86/boot/compressed/misc.c linux-2.6.27/arch/x
  
  #ifdef CONFIG_X86_64
  	if ((unsigned long)output & (__KERNEL_ALIGN - 1))
-@@ -428,10 +339,9 @@ asmlinkage void decompress_kernel(void *
+@@ -430,10 +341,9 @@ asmlinkage void decompress_kernel(void *rmode, memptr heap,
  #endif
  #endif
  
@@ -215,50 +391,24 @@ diff -urNp linux-2.6.27.orig/arch/x86/boot/compressed/misc.c linux-2.6.27/arch/x
  	parse_elf(output);
  	if (!quiet)
  		putstr("done.\nBooting the kernel.\n");
-diff -urNp linux-2.6.27.orig/drivers/block/Kconfig linux-2.6.27/drivers/block/Kconfig
---- linux-2.6.27.orig/drivers/block/Kconfig	2008-10-29 08:48:02.000000000 +0100
-+++ linux-2.6.27/drivers/block/Kconfig	2008-10-30 22:27:34.000000000 +0100
-@@ -357,6 +357,30 @@ config BLK_DEV_XIP
- 	  will prevent RAM block device backing store memory from being
- 	  allocated from highmem (only a problem for highmem systems).
+diff --git a/arch/x86/include/asm/boot.h b/arch/x86/include/asm/boot.h
+index dd61616..6526cf0 100644
+--- a/arch/x86/include/asm/boot.h
++++ b/arch/x86/include/asm/boot.h
+@@ -10,17 +10,31 @@
+ #define EXTENDED_VGA	0xfffe		/* 80x50 mode */
+ #define ASK_VGA		0xfffd		/* ask for it at bootup */
  
-+config RD_BZIP2
-+	bool "Initial ramdisk compressed using bzip2"
-+	default n
-+	depends on BLK_DEV_INITRD=y
-+	help
-+	  Support loading of a bzip2 encoded initial ramdisk or cpio buffer
-+	  If unsure, say N.
++#ifdef __KERNEL__
 +
-+config RD_LZMA
-+	bool "Initial ramdisk compressed using lzma"
-+	default n
-+	depends on BLK_DEV_INITRD=y
-+	help
-+	  Support loading of a lzma encoded initial ramdisk or cpio buffer
-+	  If unsure, say N.
-+
-+config RD_GZIP
-+	bool "Initial ramdisk compressed using gzip"
-+	default y
-+	depends on BLK_DEV_INITRD=y
-+	help
-+	  Support loading of a gzip encoded initial ramdisk or cpio buffer.
-+	  If unsure, say Y.
-+
- config CDROM_PKTCDVD
- 	tristate "Packet writing on CD/DVD media"
- 	depends on !UML
-diff -urNp linux-2.6.28/arch/x86/include/asm/boot.h linux-2.6.28/arch/x86/include/asm/boot.h
---- linux-2.6.28/arch/x86/include/asm/boot.h	2008-10-29 08:47:54.000000000 +0100
-+++ linux-2.6.28/arch/x86/include/asm/boot.h	2008-10-30 22:27:38.000000000 +0100
-@@ -17,11 +17,21 @@
+ /* Physical address where kernel should be loaded. */
+ #define LOAD_PHYSICAL_ADDR ((CONFIG_PHYSICAL_START \
  				+ (CONFIG_PHYSICAL_ALIGN - 1)) \
  				& ~(CONFIG_PHYSICAL_ALIGN - 1))
  
-+#if (defined CONFIG_KERNEL_BZIP2)
++#ifdef CONFIG_KERNEL_BZIP2
 +#define BOOT_HEAP_SIZE             0x400000
-+#else
++#else /* !CONFIG_KERNEL_BZIP2 */
 +
  #ifdef CONFIG_X86_64
  #define BOOT_HEAP_SIZE	0x7000
@@ -267,7 +417,7 @@ diff -urNp linux-2.6.28/arch/x86/include/asm/boot.h linux-2.6.28/arch/x86/includ
  #define BOOT_HEAP_SIZE	0x4000
 +#endif
 +
-+#endif
++#endif /* !CONFIG_KERNEL_BZIP2 */
 +
 +#ifdef CONFIG_X86_64
 +#define BOOT_STACK_SIZE	0x4000
@@ -275,9 +425,14 @@ diff -urNp linux-2.6.28/arch/x86/include/asm/boot.h linux-2.6.28/arch/x86/includ
  #define BOOT_STACK_SIZE	0x1000
  #endif
  
-diff -urNp linux-2.6.27.orig/include/linux/decompress/bunzip2.h linux-2.6.27/include/linux/decompress/bunzip2.h
---- linux-2.6.27.orig/include/linux/decompress/bunzip2.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux-2.6.27/include/linux/decompress/bunzip2.h	2008-10-30 22:27:29.000000000 +0100
++#endif /* __KERNEL__ */
++
+ #endif /* _ASM_X86_BOOT_H */
+diff --git a/include/linux/decompress/bunzip2.h b/include/linux/decompress/bunzip2.h
+new file mode 100644
+index 0000000..1152721
+--- /dev/null
++++ b/include/linux/decompress/bunzip2.h
 @@ -0,0 +1,10 @@
 +#ifndef DECOMPRESS_BUNZIP2_H
 +#define DECOMPRESS_BUNZIP2_H
@@ -289,10 +444,12 @@ diff -urNp linux-2.6.27.orig/include/linux/decompress/bunzip2.h linux-2.6.27/inc
 +	    int *pos,
 +	    void(*error)(char *x));
 +#endif
-diff -urNp linux-2.6.27.orig/include/linux/decompress/generic.h linux-2.6.27/include/linux/decompress/generic.h
---- linux-2.6.27.orig/include/linux/decompress/generic.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux-2.6.27/include/linux/decompress/generic.h	2008-10-30 22:27:29.000000000 +0100
-@@ -0,0 +1,30 @@
+diff --git a/include/linux/decompress/generic.h b/include/linux/decompress/generic.h
+new file mode 100644
+index 0000000..6dfb856
+--- /dev/null
++++ b/include/linux/decompress/generic.h
+@@ -0,0 +1,33 @@
 +#ifndef DECOMPRESS_GENERIC_H
 +#define DECOMPRESS_GENERIC_H
 +
@@ -321,11 +478,16 @@ diff -urNp linux-2.6.27.orig/include/linux/decompress/generic.h linux-2.6.27/inc
 + *fill should be called (repeatedly...) to read data, at most IOBUF_SIZE
 + */
 +
++/* Utility routine to detect the decompression method */
++decompress_fn decompress_method(const unsigned char *inbuf, int len,
++				const char **name);
 +
 +#endif
-diff -urNp linux-2.6.27.orig/include/linux/decompress/inflate.h linux-2.6.27/include/linux/decompress/inflate.h
---- linux-2.6.27.orig/include/linux/decompress/inflate.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux-2.6.27/include/linux/decompress/inflate.h	2008-10-30 22:27:29.000000000 +0100
+diff --git a/include/linux/decompress/inflate.h b/include/linux/decompress/inflate.h
+new file mode 100644
+index 0000000..f9b06cc
+--- /dev/null
++++ b/include/linux/decompress/inflate.h
 @@ -0,0 +1,13 @@
 +#ifndef INFLATE_H
 +#define INFLATE_H
@@ -340,10 +502,12 @@ diff -urNp linux-2.6.27.orig/include/linux/decompress/inflate.h linux-2.6.27/inc
 +	   int *pos,
 +	   void(*error_fn)(char *x));
 +#endif
-diff -urNp linux-2.6.27.orig/include/linux/decompress/mm.h linux-2.6.27/include/linux/decompress/mm.h
---- linux-2.6.27.orig/include/linux/decompress/mm.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux-2.6.27/include/linux/decompress/mm.h	2008-10-30 22:27:54.000000000 +0100
-@@ -0,0 +1,88 @@
+diff --git a/include/linux/decompress/mm.h b/include/linux/decompress/mm.h
+new file mode 100644
+index 0000000..12ff8c3
+--- /dev/null
++++ b/include/linux/decompress/mm.h
+@@ -0,0 +1,87 @@
 +/*
 + * linux/compr_mm.h
 + *
@@ -398,7 +562,6 @@ diff -urNp linux-2.6.27.orig/include/linux/decompress/mm.h linux-2.6.27/include/
 +#define large_free(a) free(a)
 +
 +#define set_error_fn(x)
-+#define panic error
 +
 +#define INIT
 +
@@ -432,9 +595,11 @@ diff -urNp linux-2.6.27.orig/include/linux/decompress/mm.h linux-2.6.27/include/
 +#endif /* STATIC */
 +
 +#endif /* DECOMPR_MM_H */
-diff -urNp linux-2.6.27.orig/include/linux/decompress/unlzma.h linux-2.6.27/include/linux/decompress/unlzma.h
---- linux-2.6.27.orig/include/linux/decompress/unlzma.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux-2.6.27/include/linux/decompress/unlzma.h	2008-10-30 22:27:29.000000000 +0100
+diff --git a/include/linux/decompress/unlzma.h b/include/linux/decompress/unlzma.h
+new file mode 100644
+index 0000000..7796538
+--- /dev/null
++++ b/include/linux/decompress/unlzma.h
 @@ -0,0 +1,12 @@
 +#ifndef DECOMPRESS_UNLZMA_H
 +#define DECOMPRESS_UNLZMA_H
@@ -448,23 +613,92 @@ diff -urNp linux-2.6.27.orig/include/linux/decompress/unlzma.h linux-2.6.27/incl
 +	);
 +
 +#endif
-diff -urNp linux-2.6.27.orig/init/do_mounts_rd.c linux-2.6.27/init/do_mounts_rd.c
---- linux-2.6.27.orig/init/do_mounts_rd.c	2008-10-29 08:48:10.000000000 +0100
-+++ linux-2.6.27/init/do_mounts_rd.c	2008-10-30 22:27:34.000000000 +0100
-@@ -10,6 +10,12 @@
+diff --git a/init/Kconfig b/init/Kconfig
+index 6a5c5fe..38396ec 100644
+--- a/init/Kconfig
++++ b/init/Kconfig
+@@ -101,6 +101,66 @@ config LOCALVERSION_AUTO
  
+ 	  which is done within the script "scripts/setlocalversion".)
+ 
++config HAVE_KERNEL_GZIP
++	bool
++
++config HAVE_KERNEL_BZIP2
++	bool
++
++config HAVE_KERNEL_LZMA
++	bool
++
++choice
++	prompt "Kernel compression mode"
++	default KERNEL_GZIP
++	depends on HAVE_KERNEL_GZIP || HAVE_KERNEL_BZIP2 || HAVE_KERNEL_LZMA
++	help
++	  The linux kernel is a kind of self-extracting executable.
++	  Several compression algorithms are available, which differ
++	  in efficiency, compression and decompression speed.
++	  Compression speed is only relevant when building a kernel.
++	  Decompression speed is relevant at each boot.
++
++	  If you have any problems with bzip2 or lzma compressed
++	  kernels, mail me (Alain Knaff) <alain@knaff.lu>. (An older
++	  version of this functionality (bzip2 only), for 2.4, was
++	  supplied by Christian Ludwig)
++
++	  High compression options are mostly useful for users, who
++	  are low on disk space (embedded systems), but for whom ram
++	  size matters less.
++
++	  If in doubt, select 'gzip'
++
++config KERNEL_GZIP
++	bool "Gzip"
++	depends on HAVE_KERNEL_GZIP
++	help
++	  The old and tried gzip compression. Its compression ratio is
++	  the poorest among the 3 choices; however its speed (both
++	  compression and decompression) is the fastest.
++
++config KERNEL_BZIP2
++	bool "Bzip2"
++	depends on HAVE_KERNEL_BZIP2
++	help
++	  Its compression ratio and speed is intermediate.
++	  Decompression speed is slowest among the three.  The kernel
++	  size is about 10% smaller with bzip2, in comparison to gzip.
++	  Bzip2 uses a large amount of memory. For modern kernels you
++	  will need at least 8MB RAM or more for booting.
++
++config KERNEL_LZMA
++	bool "LZMA"
++	depends on HAVE_KERNEL_LZMA
++	help
++	  The most recent compression algorithm.
++	  Its ratio is best, decompression speed is between the other
++	  two. Compression is slowest.	The kernel size is about 33%
++	  smaller with LZMA in comparison to gzip.
++
++endchoice
++
+ config SWAP
+ 	bool "Support for paging of anonymous memory (swap)"
+ 	depends on MMU && BLOCK
+diff --git a/init/do_mounts_rd.c b/init/do_mounts_rd.c
+index 0f0f0cf..027a402 100644
+--- a/init/do_mounts_rd.c
++++ b/init/do_mounts_rd.c
+@@ -11,6 +11,9 @@
  #include "do_mounts.h"
+ #include "../fs/squashfs/squashfs_fs.h"
  
 +#include <linux/decompress/generic.h>
 +
-+#include <linux/decompress/bunzip2.h>
-+#include <linux/decompress/unlzma.h>
-+#include <linux/decompress/inflate.h>
 +
  int __initdata rd_prompt = 1;/* 1 = prompt for RAM disk, 0 = don't prompt */
  
  static int __init prompt_ramdisk(char *str)
-@@ -28,7 +34,7 @@ static int __init ramdisk_start_setup(ch
+@@ -29,7 +32,7 @@ static int __init ramdisk_start_setup(char *str)
  }
  __setup("ramdisk_start=", ramdisk_start_setup);
  
@@ -473,64 +707,73 @@ diff -urNp linux-2.6.27.orig/init/do_mounts_rd.c linux-2.6.27/init/do_mounts_rd.
  
  /*
   * This routine tries to find a RAM disk image to load, and returns the
-@@ -44,7 +50,7 @@ static int __init crd_load(int in_fd, in
-  * 	gzip
+@@ -38,15 +41,15 @@ static int __init crd_load(int in_fd, int out_fd);
+  * numbers could not be found.
+  *
+  * We currently check for the following magic numbers:
+- * 	minix
+- * 	ext2
++ *	minix
++ *	ext2
+  *	romfs
+  *	cramfs
+  *	squashfs
+- * 	gzip
++ *	gzip
   */
- static int __init 
+-static int __init 
 -identify_ramdisk_image(int fd, int start_block)
++static int __init
 +identify_ramdisk_image(int fd, int start_block, decompress_fn *decompressor)
  {
  	const int size = 512;
  	struct minix_super_block *minixsb;
-@@ -70,6 +76,7 @@ identify_ramdisk_image(int fd, int start
+@@ -56,6 +59,7 @@ identify_ramdisk_image(int fd, int start_block)
+ 	struct squashfs_super_block *squashfsb;
+ 	int nblocks = -1;
+ 	unsigned char *buf;
++	const char *compress_name;
+ 
+ 	buf = kmalloc(size, GFP_KERNEL);
+ 	if (!buf)
+@@ -69,18 +73,19 @@ identify_ramdisk_image(int fd, int start_block)
+ 	memset(buf, 0xe5, size);
+ 
+ 	/*
+-	 * Read block 0 to test for gzipped kernel
++	 * Read block 0 to test for compressed kernel
+ 	 */
  	sys_lseek(fd, start_block * BLOCK_SIZE, 0);
  	sys_read(fd, buf, size);
  
-+#ifdef CONFIG_RD_GZIP
- 	/*
- 	 * If it matches the gzip magic numbers, return -1
- 	 */
-@@ -77,9 +84,39 @@ identify_ramdisk_image(int fd, int start
- 		printk(KERN_NOTICE
- 		       "RAMDISK: Compressed image found at block %d\n",
- 		       start_block);
-+		*decompressor = gunzip;
-+		nblocks = 0;
-+		goto done;
-+	}
-+#endif
-+
-+#ifdef CONFIG_RD_BZIP2
-+	/*
-+	 * If it matches the bzip2 magic numbers, return -1
-+	 */
-+	if (buf[0] == 0x42 && (buf[1] == 0x5a)) {
-+		printk(KERN_NOTICE
-+		       "RAMDISK: Bzipped image found at block %d\n",
-+		       start_block);
-+		*decompressor = bunzip2;
+-	/*
+-	 * If it matches the gzip magic numbers, return 0
+-	 */
+-	if (buf[0] == 037 && ((buf[1] == 0213) || (buf[1] == 0236))) {
+-		printk(KERN_NOTICE
+-		       "RAMDISK: Compressed image found at block %d\n",
+-		       start_block);
++	*decompressor = decompress_method(buf, size, &compress_name);
++	if (compress_name) {
++		printk(KERN_NOTICE "RAMDISK: %s image found at block %d\n",
++		       compress_name, start_block);
++		if (!*decompressor)
++			printk(KERN_EMERG
++			       "RAMDISK: %s decompressor not configured!\n",
++			       compress_name);
  		nblocks = 0;
  		goto done;
  	}
-+#endif
+@@ -142,7 +147,7 @@ identify_ramdisk_image(int fd, int start_block)
+ 	printk(KERN_NOTICE
+ 	       "RAMDISK: Couldn't find valid RAM disk image starting at %d.\n",
+ 	       start_block);
+-	
 +
-+#ifdef CONFIG_RD_LZMA
-+	/*
-+	 * If it matches the lzma magic numbers, return -1
-+	 */
-+	if (buf[0] == 0x5d && (buf[1] == 0x00)) {
-+		printk(KERN_NOTICE
-+		       "RAMDISK: Lzma image found at block %d\n",
-+		       start_block);
-+		*decompressor = unlzma;
-+		nblocks = 0;
-+		goto done;
-+	}
-+#endif
- 
- 	/* romfs is at block zero too */
- 	if (romfsb->word0 == ROMSB_WORD0 &&
-@@ -143,6 +180,7 @@ int __init rd_load_image(char *from)
+ done:
+ 	sys_lseek(fd, start_block * BLOCK_SIZE, 0);
+ 	kfree(buf);
+@@ -157,6 +162,7 @@ int __init rd_load_image(char *from)
  	int nblocks, i, disk;
  	char *buf = NULL;
  	unsigned short rotate = 0;
@@ -538,7 +781,7 @@ diff -urNp linux-2.6.27.orig/init/do_mounts_rd.c linux-2.6.27/init/do_mounts_rd.
  #if !defined(CONFIG_S390) && !defined(CONFIG_PPC_ISERIES)
  	char rotator[4] = { '|' , '/' , '-' , '\\' };
  #endif
-@@ -155,12 +193,12 @@ int __init rd_load_image(char *from)
+@@ -169,12 +175,12 @@ int __init rd_load_image(char *from)
  	if (in_fd < 0)
  		goto noclose_input;
  
@@ -553,7 +796,16 @@ diff -urNp linux-2.6.27.orig/init/do_mounts_rd.c linux-2.6.27/init/do_mounts_rd.
  			goto successful_load;
  		goto done;
  	}
-@@ -259,138 +297,48 @@ int __init rd_load_disk(int n)
+@@ -200,7 +206,7 @@ int __init rd_load_image(char *from)
+ 		       nblocks, rd_blocks);
+ 		goto done;
+ 	}
+-		
++
+ 	/*
+ 	 * OK, time to copy in the data
+ 	 */
+@@ -273,138 +279,48 @@ int __init rd_load_disk(int n)
  	return rd_load_image("/dev/root");
  }
  
@@ -715,15 +967,15 @@ diff -urNp linux-2.6.27.orig/init/do_mounts_rd.c linux-2.6.27/init/do_mounts_rd.
 -	kfree(window);
  	return result;
  }
-diff -urNp linux-2.6.27.orig/init/initramfs.c linux-2.6.27/init/initramfs.c
---- linux-2.6.27.orig/init/initramfs.c	2008-10-29 08:48:10.000000000 +0100
-+++ linux-2.6.27/init/initramfs.c	2008-10-30 22:27:34.000000000 +0100
-@@ -337,11 +337,14 @@ static int __init write_buffer(char *buf
+diff --git a/init/initramfs.c b/init/initramfs.c
+index d9c941c..7dcde7e 100644
+--- a/init/initramfs.c
++++ b/init/initramfs.c
+@@ -390,11 +390,13 @@ static int __init write_buffer(char *buf, unsigned len)
  	return len - count;
  }
  
 -static void __init flush_buffer(char *buf, unsigned len)
-+
 +static int __init flush_buffer(void *bufv, unsigned len)
  {
 +	char *buf = (char *) bufv;
@@ -735,7 +987,7 @@ diff -urNp linux-2.6.27.orig/init/initramfs.c linux-2.6.27/init/initramfs.c
  	while ((written = write_buffer(buf, len)) < len && !message) {
  		char c = buf[written];
  		if (c == '0') {
-@@ -355,73 +358,14 @@ static void __init flush_buffer(char *bu
+@@ -408,84 +410,28 @@ static void __init flush_buffer(char *buf, unsigned len)
  		} else
  			error("junk in compressed archive");
  	}
@@ -745,14 +997,14 @@ diff -urNp linux-2.6.27.orig/init/initramfs.c linux-2.6.27/init/initramfs.c
 -/*
 - * gzip declarations
 - */
--
++static unsigned my_inptr;   /* index of next byte to be processed in inbuf */
+ 
 -#define OF(args)  args
 -
 -#ifndef memzero
 -#define memzero(s, n)     memset ((s), 0, (n))
 -#endif
-+static unsigned my_inptr;   /* index of next byte to be processed in inbuf */
- 
+-
 -typedef unsigned char  uch;
 -typedef unsigned short ush;
 -typedef unsigned long  ulg;
@@ -808,13 +1060,16 @@ diff -urNp linux-2.6.27.orig/init/initramfs.c linux-2.6.27/init/initramfs.c
 -	bytes_out += (ulg)outcnt;
 -	outcnt = 0;
 -}
-+#include <linux/decompress/bunzip2.h>
-+#include <linux/decompress/unlzma.h>
-+#include <linux/decompress/inflate.h>
++#include <linux/decompress/generic.h>
  
  static char * __init unpack_to_rootfs(char *buf, unsigned len, int check_only)
  {
-@@ -430,9 +374,10 @@ static char * __init unpack_to_rootfs(ch
+ 	int written;
++	decompress_fn decompress;
++	const char *compress_name;
++	static __initdata char msg_buf[64];
++
+ 	dry_run = check_only;
  	header_buf = kmalloc(110, GFP_KERNEL);
  	symlink_buf = kmalloc(PATH_MAX + N_ALIGN(PATH_MAX) + 1, GFP_KERNEL);
  	name_buf = kmalloc(N_ALIGN(PATH_MAX), GFP_KERNEL);
@@ -827,7 +1082,7 @@ diff -urNp linux-2.6.27.orig/init/initramfs.c linux-2.6.27/init/initramfs.c
  	state = Start;
  	this_header = 0;
  	message = NULL;
-@@ -452,22 +397,40 @@ static char * __init unpack_to_rootfs(ch
+@@ -505,22 +451,25 @@ static char * __init unpack_to_rootfs(char *buf, unsigned len, int check_only)
  			continue;
  		}
  		this_header = 0;
@@ -839,33 +1094,18 @@ diff -urNp linux-2.6.27.orig/init/initramfs.c linux-2.6.27/init/initramfs.c
 -		crc = (ulg)0xffffffffL; /* shift register contents */
 -		makecrc();
 -		gunzip();
-+		if (!gunzip(buf, len, NULL, flush_buffer, NULL,
-+			    &my_inptr, error) &&
-+		    message == NULL)
-+			goto ok;
-+
-+#ifdef CONFIG_RD_BZIP2
-+		message = NULL; /* Zero out message, or else cpio will
-+				   think an error has already occured */
-+		if (!bunzip2(buf, len, NULL, flush_buffer, NULL,
-+			     &my_inptr, error) < 0
-+		    &&
-+		    message == NULL) {
-+			goto ok;
++		decompress = decompress_method(buf, len, &compress_name);
++		if (decompress)
++			decompress(buf, len, NULL, flush_buffer, NULL,
++				   &my_inptr, error);
++		else if (compress_name) {
++			if (!message) {
++				snprintf(msg_buf, sizeof msg_buf,
++					 "compression method %s not configured",
++					 compress_name);
++				message = msg_buf;
++			}
 +		}
-+#endif
-+
-+#ifdef CONFIG_RD_LZMA
-+		message = NULL; /* Zero out message, or else cpio will
-+				   think an error has already occured */
-+		if (!unlzma(buf, len, NULL, flush_buffer, NULL,
-+			    &my_inptr, error) < 0
-+		    &&
-+		    message == NULL) {
-+			goto ok;
-+		}
-+#endif
-+ok:
  		if (state != Reset)
 -			error("junk in gzipped archive");
 -		this_header = saved_offset + inptr;
@@ -881,69 +1121,146 @@ diff -urNp linux-2.6.27.orig/init/initramfs.c linux-2.6.27/init/initramfs.c
  	kfree(name_buf);
  	kfree(symlink_buf);
  	kfree(header_buf);
-diff -urNp linux-2.6.27.orig/init/Kconfig linux-2.6.27/init/Kconfig
---- linux-2.6.27.orig/init/Kconfig	2008-10-29 08:48:10.000000000 +0100
-+++ linux-2.6.27/init/Kconfig	2008-10-30 22:27:34.000000000 +0100
-@@ -101,6 +101,56 @@ config LOCALVERSION_AUTO
+@@ -579,7 +528,7 @@ static int __init populate_rootfs(void)
+ 	char *err = unpack_to_rootfs(__initramfs_start,
+ 			 __initramfs_end - __initramfs_start, 0);
+ 	if (err)
+-		panic(err);
++		panic(err);	/* Failed to decompress INTERNAL initramfs */
+ 	if (initrd_start) {
+ #ifdef CONFIG_BLK_DEV_RAM
+ 		int fd;
+@@ -605,9 +554,12 @@ static int __init populate_rootfs(void)
+ 		printk(KERN_INFO "Unpacking initramfs...");
+ 		err = unpack_to_rootfs((char *)initrd_start,
+ 			initrd_end - initrd_start, 0);
+-		if (err)
+-			panic(err);
+-		printk(" done\n");
++		if (err) {
++			printk(" failed!\n");
++			printk(KERN_EMERG "%s\n", err);
++		} else {
++			printk(" done\n");
++		}
+ 		free_initrd();
+ #endif
+ 	}
+diff --git a/lib/Kconfig b/lib/Kconfig
+index 03c2c24..daa4818 100644
+--- a/lib/Kconfig
++++ b/lib/Kconfig
+@@ -98,6 +98,20 @@ config LZO_DECOMPRESS
+ 	tristate
  
- 	  which is done within the script "scripts/setlocalversion".)
+ #
++# These all provide a common interface (hence the apparent duplication with
++# ZLIB_INFLATE; DECOMPRESS_GZIP is just a wrapper.)
++#
++config DECOMPRESS_GZIP
++	select ZLIB_INFLATE
++	tristate
++
++config DECOMPRESS_BZIP2
++	tristate
++
++config DECOMPRESS_LZMA
++	tristate
++
++#
+ # Generic allocator support is selected if needed
+ #
+ config GENERIC_ALLOCATOR
+diff --git a/lib/Makefile b/lib/Makefile
+index 32b0e64..790de7c 100644
+--- a/lib/Makefile
++++ b/lib/Makefile
+@@ -11,7 +11,8 @@ lib-y := ctype.o string.o vsprintf.o cmdline.o \
+ 	 rbtree.o radix-tree.o dump_stack.o \
+ 	 idr.o int_sqrt.o extable.o prio_tree.o \
+ 	 sha1.o irq_regs.o reciprocal_div.o argv_split.o \
+-	 proportions.o prio_heap.o ratelimit.o show_mem.o is_single_threaded.o
++	 proportions.o prio_heap.o ratelimit.o show_mem.o \
++	 is_single_threaded.o decompress.o
  
-+choice
-+        prompt "Kernel compression mode"
-+        default KERNEL_GZIP
-+        help
-+	  The linux kernel is a kind of self-extracting executable.
-+	  Several compression algorithms are available, which differ
-+	  in efficiency, compression and decompression speed.
-+	  Compression speed is only relevant when building a kernel.
-+	  Decompression speed is relevant at each boot.
+ lib-$(CONFIG_MMU) += ioremap.o
+ lib-$(CONFIG_SMP) += cpumask.o
+@@ -65,6 +66,10 @@ obj-$(CONFIG_REED_SOLOMON) += reed_solomon/
+ obj-$(CONFIG_LZO_COMPRESS) += lzo/
+ obj-$(CONFIG_LZO_DECOMPRESS) += lzo/
+ 
++lib-$(CONFIG_DECOMPRESS_GZIP) += decompress_inflate.o
++lib-$(CONFIG_DECOMPRESS_BZIP2) += decompress_bunzip2.o
++lib-$(CONFIG_DECOMPRESS_LZMA) += decompress_unlzma.o
 +
-+	  If you have any problems with bzip2 or lzma compressed
-+	  kernels, mail me (Alain Knaff) <alain@knaff.lu>. (An older
-+	  version of this functionality (bzip2 only), for 2.4, was
-+	  supplied by Christian Ludwig)
+ obj-$(CONFIG_TEXTSEARCH) += textsearch.o
+ obj-$(CONFIG_TEXTSEARCH_KMP) += ts_kmp.o
+ obj-$(CONFIG_TEXTSEARCH_BM) += ts_bm.o
+diff --git a/lib/decompress.c b/lib/decompress.c
+new file mode 100644
+index 0000000..d2842f5
+--- /dev/null
++++ b/lib/decompress.c
+@@ -0,0 +1,54 @@
++/*
++ * decompress.c
++ *
++ * Detect the decompression method based on magic number
++ */
 +
-+	  High compression options are mostly useful for users, who
-+	  are low on disk space (embedded systems), but for whom ram
-+	  size matters less.
++#include <linux/decompress/generic.h>
 +
-+	  If in doubt, select 'gzip'
++#include <linux/decompress/bunzip2.h>
++#include <linux/decompress/unlzma.h>
++#include <linux/decompress/inflate.h>
 +
-+config KERNEL_GZIP
-+       bool "Gzip"
-+       help
-+         The old and tried gzip compression. Its compression ratio is
-+	 the poorest among the 3 choices; however its speed (both
-+	 compression and decompression) is the fastest.
++#include <linux/types.h>
++#include <linux/string.h>
 +
-+config KERNEL_BZIP2
-+	bool "Bzip2"
-+	help
-+	  Its compression ratio and speed is intermediate.
-+	  Decompression speed is slowest among the 3.
-+	  The kernel size is about 10 per cent smaller with bzip2,
-+	  in comparison to gzip.
-+	  Bzip2 uses a large amount of memory. For modern kernels
-+	  you will need at least 8MB RAM or more for booting.
++#ifndef CONFIG_DECOMPRESS_GZIP
++# define gunzip NULL
++#endif
++#ifndef CONFIG_DECOMPRESS_BZIP2
++# define bunzip2 NULL
++#endif
++#ifndef CONFIG_DECOMPRESS_LZMA
++# define unlzma NULL
++#endif
 +
-+config KERNEL_LZMA
-+       bool "LZMA"
-+       help
-+         The most recent compression algorithm.
-+	 Its ratio is best, decompression speed is between the other
-+	 2. Compression is slowest.
-+	 The kernel size is about 33 per cent smaller with lzma,
-+	 in comparison to gzip.
++static const struct compress_format {
++	unsigned char magic[2];
++	const char *name;
++	decompress_fn decompressor;
++} compressed_formats[] = {
++	{ {037, 0213}, "gzip", gunzip },
++	{ {037, 0236}, "gzip", gunzip },
++	{ {0x42, 0x5a}, "bzip2", bunzip2 },
++	{ {0x5d, 0x00}, "lzma", unlzma },
++	{ {0, 0}, NULL, NULL }
++};
 +
-+endchoice
++decompress_fn decompress_method(const unsigned char *inbuf, int len,
++				const char **name)
++{
++	const struct compress_format *cf;
 +
++	if (len < 2)
++		return NULL;	/* Need at least this much... */
 +
- config SWAP
- 	bool "Support for paging of anonymous memory (swap)"
- 	depends on MMU && BLOCK
-diff -urNp linux-2.6.27.orig/lib/decompress_bunzip2.c linux-2.6.27/lib/decompress_bunzip2.c
---- linux-2.6.27.orig/lib/decompress_bunzip2.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux-2.6.27/lib/decompress_bunzip2.c	2008-10-30 22:27:29.000000000 +0100
++	for (cf = compressed_formats; cf->name; cf++) {
++		if (!memcmp(inbuf, cf->magic, 2))
++			break;
++
++	}
++	if (name)
++		*name = cf->name;
++	return cf->decompressor;
++}
+diff --git a/lib/decompress_bunzip2.c b/lib/decompress_bunzip2.c
+new file mode 100644
+index 0000000..5d3ddb5
+--- /dev/null
++++ b/lib/decompress_bunzip2.c
 @@ -0,0 +1,735 @@
 +/* vi: set sw = 4 ts = 4: */
 +/*	Small bzip2 deflate implementation, by Rob Landley (rob@landley.net).
@@ -1680,9 +1997,184 @@ diff -urNp linux-2.6.27.orig/lib/decompress_bunzip2.c linux-2.6.27/lib/decompres
 +}
 +
 +#define decompress bunzip2
-diff -urNp linux-2.6.27.orig/lib/decompress_unlzma.c linux-2.6.27/lib/decompress_unlzma.c
---- linux-2.6.27.orig/lib/decompress_unlzma.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux-2.6.27/lib/decompress_unlzma.c	2008-10-30 22:27:29.000000000 +0100
+diff --git a/lib/decompress_inflate.c b/lib/decompress_inflate.c
+new file mode 100644
+index 0000000..839a329
+--- /dev/null
++++ b/lib/decompress_inflate.c
+@@ -0,0 +1,167 @@
++#ifdef STATIC
++/* Pre-boot environment: included */
++
++/* prevent inclusion of _LINUX_KERNEL_H in pre-boot environment: lots
++ * errors about console_printk etc... on ARM */
++#define _LINUX_KERNEL_H
++
++#include "zlib_inflate/inftrees.c"
++#include "zlib_inflate/inffast.c"
++#include "zlib_inflate/inflate.c"
++
++#else /* STATIC */
++/* initramfs et al: linked */
++
++#include <linux/zutil.h>
++
++#include "zlib_inflate/inftrees.h"
++#include "zlib_inflate/inffast.h"
++#include "zlib_inflate/inflate.h"
++
++#include "zlib_inflate/infutil.h"
++
++#endif /* STATIC */
++
++#include <linux/decompress/mm.h>
++
++#define INBUF_LEN (16*1024)
++
++/* Included from initramfs et al code */
++STATIC int INIT gunzip(unsigned char *buf, int len,
++		       int(*fill)(void*, unsigned int),
++		       int(*flush)(void*, unsigned int),
++		       unsigned char *out_buf,
++		       int *pos,
++		       void(*error_fn)(char *x)) {
++	u8 *zbuf;
++	struct z_stream_s *strm;
++	int rc;
++	size_t out_len;
++
++	set_error_fn(error_fn);
++	rc = -1;
++	if (flush) {
++		out_len = 0x8000; /* 32 K */
++		out_buf = malloc(out_len);
++	} else {
++		out_len = 0x7fffffff; /* no limit */
++	}
++	if (!out_buf) {
++		error("Out of memory while allocating output buffer");
++		goto gunzip_nomem1;
++	}
++
++	if (buf)
++		zbuf = buf;
++	else {
++		zbuf = malloc(INBUF_LEN);
++		len = 0;
++	}
++	if (!zbuf) {
++		error("Out of memory while allocating input buffer");
++		goto gunzip_nomem2;
++	}
++
++	strm = malloc(sizeof(*strm));
++	if (strm == NULL) {
++		error("Out of memory while allocating z_stream");
++		goto gunzip_nomem3;
++	}
++
++	strm->workspace = malloc(flush ? zlib_inflate_workspacesize() :
++				 sizeof(struct inflate_state));
++	if (strm->workspace == NULL) {
++		error("Out of memory while allocating workspace");
++		goto gunzip_nomem4;
++	}
++
++	if (len == 0)
++		len = fill(zbuf, INBUF_LEN);
++
++	/* verify the gzip header */
++	if (len < 10 ||
++	   zbuf[0] != 0x1f || zbuf[1] != 0x8b || zbuf[2] != 0x08) {
++		if (pos)
++			*pos = 0;
++		error("Not a gzip file");
++		goto gunzip_5;
++	}
++
++	/* skip over gzip header (1f,8b,08... 10 bytes total +
++	 * possible asciz filename)
++	 */
++	strm->next_in = zbuf + 10;
++	/* skip over asciz filename */
++	if (zbuf[3] & 0x8) {
++		while (strm->next_in[0])
++			strm->next_in++;
++		strm->next_in++;
++	}
++	strm->avail_in = len - (strm->next_in - zbuf);
++
++	strm->next_out = out_buf;
++	strm->avail_out = out_len;
++
++	rc = zlib_inflateInit2(strm, -MAX_WBITS);
++
++	if (!flush) {
++		WS(strm)->inflate_state.wsize = 0;
++		WS(strm)->inflate_state.window = NULL;
++	}
++
++	while (rc == Z_OK) {
++		if (strm->avail_in == 0) {
++			/* TODO: handle case where both pos and fill are set */
++			len = fill(zbuf, INBUF_LEN);
++			if (len < 0) {
++				rc = -1;
++				error("read error");
++				break;
++			}
++			strm->next_in = zbuf;
++			strm->avail_in = len;
++		}
++		rc = zlib_inflate(strm, 0);
++
++		/* Write any data generated */
++		if (flush && strm->next_out > out_buf) {
++			int l = strm->next_out - out_buf;
++			if (l != flush(out_buf, l)) {
++				rc = -1;
++				error("write error");
++				break;
++			}
++			strm->next_out = out_buf;
++			strm->avail_out = out_len;
++		}
++
++		/* after Z_FINISH, only Z_STREAM_END is "we unpacked it all" */
++		if (rc == Z_STREAM_END) {
++			rc = 0;
++			break;
++		} else if (rc != Z_OK) {
++			error("uncompression error");
++			rc = -1;
++		}
++	}
++
++	zlib_inflateEnd(strm);
++	if (pos)
++		/* add + 8 to skip over trailer */
++		*pos = strm->next_in - zbuf+8;
++
++gunzip_5:
++	free(strm->workspace);
++gunzip_nomem4:
++	free(strm);
++gunzip_nomem3:
++	if (!buf)
++		free(zbuf);
++gunzip_nomem2:
++	if (flush)
++		free(out_buf);
++gunzip_nomem1:
++	return rc; /* returns Z_OK (0) if successful */
++}
++
++#define decompress gunzip
+diff --git a/lib/decompress_unlzma.c b/lib/decompress_unlzma.c
+new file mode 100644
+index 0000000..546f2f4
+--- /dev/null
++++ b/lib/decompress_unlzma.c
 @@ -0,0 +1,647 @@
 +/* Lzma decompressor for Linux kernel. Shamelessly snarfed
 + *from busybox 1.1.1
@@ -2331,547 +2823,65 @@ diff -urNp linux-2.6.27.orig/lib/decompress_unlzma.c linux-2.6.27/lib/decompress
 +}
 +
 +#define decompress unlzma
-diff -urNp linux-2.6.27.orig/lib/inflate.c linux-2.6.27/lib/inflate.c
---- linux-2.6.27.orig/lib/inflate.c	2008-10-29 08:47:55.000000000 +0100
-+++ linux-2.6.27/lib/inflate.c	2008-10-30 22:27:54.000000000 +0100
-@@ -109,20 +109,76 @@ static char rcsid[] = "#Id: inflate.c,v 
- #endif
- 
- #ifndef STATIC
-+#include <linux/decompress/inflate.h>
-+#endif /* ! STATIC */
- 
--#if defined(STDC_HEADERS) || defined(HAVE_STDLIB_H)
--#  include <sys/types.h>
--#  include <stdlib.h>
--#endif
-+#include <linux/decompress/mm.h>
+diff --git a/lib/zlib_inflate/inflate.h b/lib/zlib_inflate/inflate.h
+index df8a6c9..3d17b3d 100644
+--- a/lib/zlib_inflate/inflate.h
++++ b/lib/zlib_inflate/inflate.h
+@@ -1,3 +1,6 @@
++#ifndef INFLATE_H
++#define INFLATE_H
 +
-+#include <linux/string.h>
- 
--#include "gzip.h"
--#define STATIC
--#endif /* !STATIC */
-+static int(*flush_cb)(void*, unsigned int);
-+static int(*fill_cb)(void*, unsigned int);
- 
--#ifndef INIT
--#define INIT
-+/* Begin stuff copied from initramfs */
-+/*
-+ * gzip declarations
-+ */
-+
-+#define OF(args)  args
-+
-+#ifndef memzero
-+#define memzero(s, n)     memset((s), 0, (n))
- #endif
--	
-+
-+#define INBUFSIZ 4096
-+
-+#define WSIZE 0x8000    /* window size--must be a power of two, and */
-+			/*  at least 32K for zip's deflate method */
-+
-+static uint8_t *inbuf;
-+static uint8_t *window;
-+
-+static unsigned insize;  /* valid bytes in inbuf */
-+static unsigned outcnt;  /* bytes in output buffer */
-+static long bytes_out;
-+
-+/* --- */
-+
-+static unsigned inptr;   /* index of next byte to be processed in inbuf */
-+
-+/* --- */
-+
-+/* ===========================================================================
-+ * Fill the input buffer. This is called only when the buffer is empty
-+ * and at least one byte is really needed.
-+ * Returning -1 does not guarantee that gunzip() will ever return.
-+ */
-+static int INIT fill_inbuf(void)
-+{
-+	insize = fill_cb(inbuf, INBUFSIZ);
-+	if (insize <= 0) {
-+		error("RAMDISK: ran out of compressed data");
-+		return -1;
-+	}
-+
-+	inptr = 1;
-+
-+	return inbuf[0];
-+}
-+
-+#define get_byte()  (inptr < insize ? inbuf[inptr++] : fill_inbuf())
-+
-+/* Diagnostic functions (stubbed out) */
-+#define Assert(cond, msg)
-+#define Trace(x)
-+#define Tracev(x)
-+#define Tracevv(x)
-+#define Tracec(c, x)
-+#define Tracecv(c, x)
-+
-+static void flush_window(void);
-+/* End stuff copied from initramfs */
-+
- #define slide window
- 
- /* Huffman code lookup table entry--this entry is four bytes for machines
-@@ -133,10 +189,10 @@ static char rcsid[] = "#Id: inflate.c,v 
-    an unused code.  If a code with e == 99 is looked up, this implies an
-    error in the data. */
- struct huft {
--  uch e;                /* number of extra bits or operation */
--  uch b;                /* number of bits in this code or subcode */
-+  uint8_t e;                /* number of extra bits or operation */
-+  uint8_t b;                /* number of bits in this code or subcode */
-   union {
--    ush n;              /* literal, length base, or distance base */
-+    uint16_t n;              /* literal, length base, or distance base */
-     struct huft *t;     /* pointer to next level of table */
-   } v;
+ /* inflate.h -- internal inflate state definition
+  * Copyright (C) 1995-2004 Mark Adler
+  * For conditions of distribution and use, see copyright notice in zlib.h
+@@ -105,3 +108,4 @@ struct inflate_state {
+     unsigned short work[288];   /* work area for code table building */
+     code codes[ENOUGH];         /* space for code tables */
  };
-@@ -144,7 +200,7 @@ struct huft {
- 
- /* Function prototypes */
- STATIC int INIT huft_build OF((unsigned *, unsigned, unsigned, 
--		const ush *, const ush *, struct huft **, int *));
-+		const uint16_t *, const uint16_t *, struct huft **, int *));
- STATIC int INIT huft_free OF((struct huft *));
- STATIC int INIT inflate_codes OF((struct huft *, struct huft *, int, int));
- STATIC int INIT inflate_stored OF((void));
-@@ -159,28 +215,28 @@ STATIC int INIT inflate OF((void));
-    circular buffer.  The index is updated simply by incrementing and then
-    ANDing with 0x7fff (32K-1). */
- /* It is left to other modules to supply the 32 K area.  It is assumed
--   to be usable as if it were declared "uch slide[32768];" or as just
--   "uch *slide;" and then malloc'ed in the latter case.  The definition
-+   to be usable as if it were declared "uint8_t slide[32768];" or as just
-+   "uint8_t *slide;" and then malloc'ed in the latter case.  The definition
-    must be in unzip.h, included above. */
- /* unsigned wp;             current position in slide */
- #define wp outcnt
- #define flush_output(w) (wp=(w),flush_window())
- 
- /* Tables for deflate from PKZIP's appnote.txt. */
--static const unsigned border[] = {    /* Order of the bit length code lengths */
-+static const unsigned border[] = {   /* Order of the bit length code lengths */
-         16, 17, 18, 0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15};
--static const ush cplens[] = {         /* Copy lengths for literal codes 257..285 */
-+static const uint16_t cplens[] = { /* Copy lengths for literal codes 257..285 */
-         3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 15, 17, 19, 23, 27, 31,
-         35, 43, 51, 59, 67, 83, 99, 115, 131, 163, 195, 227, 258, 0, 0};
-         /* note: see note #13 above about the 258 in this list. */
--static const ush cplext[] = {         /* Extra bits for literal codes 257..285 */
-+static const uint16_t cplext[] = {   /* Extra bits for literal codes 257..285 */
-         0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2,
-         3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 0, 99, 99}; /* 99==invalid */
--static const ush cpdist[] = {         /* Copy offsets for distance codes 0..29 */
-+static const uint16_t cpdist[] = {   /* Copy offsets for distance codes 0..29 */
-         1, 2, 3, 4, 5, 7, 9, 13, 17, 25, 33, 49, 65, 97, 129, 193,
-         257, 385, 513, 769, 1025, 1537, 2049, 3073, 4097, 6145,
-         8193, 12289, 16385, 24577};
--static const ush cpdext[] = {         /* Extra bits for distance codes */
-+static const uint16_t cpdext[] = {   /* Extra bits for distance codes */
-         0, 0, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6,
-         7, 7, 8, 8, 9, 9, 10, 10, 11, 11,
-         12, 12, 13, 13};
-@@ -217,59 +273,21 @@ static const ush cpdext[] = {         /*
-    the stream.
-  */
- 
--STATIC ulg bb;                         /* bit buffer */
-+STATIC uint32_t bb;                         /* bit buffer */
- STATIC unsigned bk;                    /* bits in bit buffer */
- 
--STATIC const ush mask_bits[] = {
-+STATIC const uint16_t mask_bits[] = {
-     0x0000,
-     0x0001, 0x0003, 0x0007, 0x000f, 0x001f, 0x003f, 0x007f, 0x00ff,
-     0x01ff, 0x03ff, 0x07ff, 0x0fff, 0x1fff, 0x3fff, 0x7fff, 0xffff
- };
- 
--#define NEXTBYTE()  ({ int v = get_byte(); if (v < 0) goto underrun; (uch)v; })
--#define NEEDBITS(n) {while(k<(n)){b|=((ulg)NEXTBYTE())<<k;k+=8;}}
-+#define NEXTBYTE()  ({ int v = get_byte(); if (v < 0) goto underrun; \
-+			(uint8_t)v; })
-+#define NEEDBITS(n) {while (k < (n)) \
-+			{b |= ((uint32_t)NEXTBYTE())<<k; k += 8; } }
- #define DUMPBITS(n) {b>>=(n);k-=(n);}
- 
--#ifndef NO_INFLATE_MALLOC
--/* A trivial malloc implementation, adapted from
-- *  malloc by Hannu Savolainen 1993 and Matthias Urlichs 1994
-- */
--
--static unsigned long malloc_ptr;
--static int malloc_count;
--
--static void *malloc(int size)
--{
--       void *p;
--
--       if (size < 0)
--		error("Malloc error");
--       if (!malloc_ptr)
--		malloc_ptr = free_mem_ptr;
--
--       malloc_ptr = (malloc_ptr + 3) & ~3;     /* Align */
--
--       p = (void *)malloc_ptr;
--       malloc_ptr += size;
--
--       if (free_mem_end_ptr && malloc_ptr >= free_mem_end_ptr)
--		error("Out of memory");
--
--       malloc_count++;
--       return p;
--}
--
--static void free(void *where)
--{
--       malloc_count--;
--       if (!malloc_count)
--		malloc_ptr = free_mem_ptr;
--}
--#else
--#define malloc(a) kmalloc(a, GFP_KERNEL)
--#define free(a) kfree(a)
--#endif
--
- /*
-    Huffman code decoding is performed using a multi-level table lookup.
-    The fastest way to decode is to simply build a lookup table whose
-@@ -307,7 +325,7 @@ STATIC const int lbits = 9;          /* 
- STATIC const int dbits = 6;          /* bits in base distance lookup table */
- 
- 
--/* If BMAX needs to be larger than 16, then h and x[] should be ulg. */
-+/* If BMAX needs to be larger than 16, then h and x[] should be uint32_t. */
- #define BMAX 16         /* maximum bit length of any code (16 for explode) */
- #define N_MAX 288       /* maximum number of codes in any set */
- 
-@@ -319,8 +337,8 @@ STATIC int INIT huft_build(
- 	unsigned *b,            /* code lengths in bits (all assumed <= BMAX) */
- 	unsigned n,             /* number of codes (assumed <= N_MAX) */
- 	unsigned s,             /* number of simple-valued codes (0..s-1) */
--	const ush *d,           /* list of base values for non-simple codes */
--	const ush *e,           /* list of extra bits for non-simple codes */
-+	const uint16_t *d,      /* list of base values for non-simple codes */
-+	const uint16_t *e,      /* list of extra bits for non-simple codes */
- 	struct huft **t,        /* result: starting table */
- 	int *m                  /* maximum lookup bits, returns actual */
- 	)
-@@ -500,8 +518,8 @@ DEBG1("5 ");
-         if (h)
-         {
-           x[h] = i;             /* save pattern for backing up */
--          r.b = (uch)l;         /* bits to dump before this table */
--          r.e = (uch)(16 + j);  /* bits in this table */
-+	  r.b = (uint8_t)l;         /* bits to dump before this table */
-+	  r.e = (uint8_t)(16 + j);  /* bits in this table */
-           r.v.t = q;            /* pointer to this table */
-           j = i >> (w - l);     /* (get around Turbo C bug) */
-           u[h-1][j] = r;        /* connect to last table */
-@@ -511,18 +529,18 @@ DEBG1("6 ");
- DEBG("h6c ");
- 
-       /* set up table entry in r */
--      r.b = (uch)(k - w);
-+      r.b = (uint8_t)(k - w);
-       if (p >= v + n)
-         r.e = 99;               /* out of values--invalid code */
-       else if (*p < s)
-       {
--        r.e = (uch)(*p < 256 ? 16 : 15);    /* 256 is end-of-block code */
--        r.v.n = (ush)(*p);             /* simple code is just the value */
-+	r.e = (uint8_t)(*p < 256 ? 16 : 15);    /* 256 is end-of-block code */
-+	r.v.n = (uint16_t)(*p);             /* simple code is just the value */
- 	p++;                           /* one compiler does not like *p++ */
-       }
-       else
-       {
--        r.e = (uch)e[*p - s];   /* non-simple--look up in lists */
-+	r.e = (uint8_t)e[*p - s];   /* non-simple--look up in lists */
-         r.v.n = d[*p++ - s];
-       }
- DEBG("h6d ");
-@@ -592,11 +610,12 @@ STATIC int INIT inflate_codes(
-    Return an error code or zero if it all goes ok. */
- {
-   register unsigned e;  /* table entry flag/number of extra bits */
--  unsigned n, d;        /* length and index for copy */
-+  unsigned n;
-+  int d;              /* source index for copy */
-   unsigned w;           /* current window position */
-   struct huft *t;       /* pointer to table entry */
-   unsigned ml, md;      /* masks for bl and bd bits */
--  register ulg b;       /* bit buffer */
-+  register uint32_t b;       /* bit buffer */
-   register unsigned k;  /* number of bits in bit buffer */
- 
- 
-@@ -622,7 +641,7 @@ STATIC int INIT inflate_codes(
-     DUMPBITS(t->b)
-     if (e == 16)                /* then it's a literal */
-     {
--      slide[w++] = (uch)t->v.n;
-+      slide[w++] = (uint8_t)t->v.n;
-       Tracevv((stderr, "%c", slide[w-1]));
-       if (w == WSIZE)
-       {
-@@ -659,11 +678,22 @@ STATIC int INIT inflate_codes(
- 
-       /* do the copy */
-       do {
--        n -= (e = (e = WSIZE - ((d &= WSIZE-1) > w ? d : w)) > n ? n : e);
-+	if (flush_cb) {
-+		/* Sliding window emulated using circular buffer:
-+		 * manage wrap-around */
-+		e = WSIZE - ((d &= WSIZE-1) > w ? d : w);
-+		if (e > n)
-+			e = n;
-+	} else {
-+		e = n;
-+	}
++#endif
+diff --git a/lib/zlib_inflate/inftrees.h b/lib/zlib_inflate/inftrees.h
+index 5f5219b..b70b473 100644
+--- a/lib/zlib_inflate/inftrees.h
++++ b/lib/zlib_inflate/inftrees.h
+@@ -1,3 +1,6 @@
++#ifndef INFTREES_H
++#define INFTREES_H
 +
-+	n -= e;
+ /* inftrees.h -- header to use inftrees.c
+  * Copyright (C) 1995-2005 Mark Adler
+  * For conditions of distribution and use, see copyright notice in zlib.h
+@@ -53,3 +56,4 @@ typedef enum {
+ extern int zlib_inflate_table (codetype type, unsigned short *lens,
+                              unsigned codes, code **table,
+                              unsigned *bits, unsigned short *work);
++#endif
+diff --git a/scripts/Makefile.lib b/scripts/Makefile.lib
+index e063657..3b949a3 100644
+--- a/scripts/Makefile.lib
++++ b/scripts/Makefile.lib
+@@ -186,3 +186,17 @@ quiet_cmd_gzip = GZIP    $@
+ cmd_gzip = gzip -f -9 < $< > $@
+ 
+ 
++# Bzip2
++# ---------------------------------------------------------------------------
 +
- #if !defined(NOMEMCPY) && !defined(DEBUG)
-         if (w - d >= e)         /* (this test assumes unsigned comparison) */
-         {
--          memcpy(slide + w, slide + d, e);
-+		memcpy(slide + w, slide + d, e);
-           w += e;
-           d += e;
-         }
-@@ -673,9 +703,8 @@ STATIC int INIT inflate_codes(
-             slide[w++] = slide[d++];
- 	    Tracevv((stderr, "%c", slide[w-1]));
-           } while (--e);
--        if (w == WSIZE)
--        {
--          flush_output(w);
-+	if (w == WSIZE) {
-+	  flush_output(w);
-           w = 0;
-         }
-       } while (n);
-@@ -702,7 +731,7 @@ STATIC int INIT inflate_stored(void)
- {
-   unsigned n;           /* number of bytes in block */
-   unsigned w;           /* current window position */
--  register ulg b;       /* bit buffer */
-+  register uint32_t b;       /* bit buffer */
-   register unsigned k;  /* number of bits in bit buffer */
- 
- DEBG("<stor");
-@@ -732,7 +761,7 @@ DEBG("<stor");
-   while (n--)
-   {
-     NEEDBITS(8)
--    slide[w++] = (uch)b;
-+    slide[w++] = (uint8_t)b;
-     if (w == WSIZE)
-     {
-       flush_output(w);
-@@ -838,7 +867,7 @@ STATIC int noinline INIT inflate_dynamic
-   unsigned nl;          /* number of literal/length codes */
-   unsigned nd;          /* number of distance codes */
-   unsigned *ll;         /* literal/length and distance code lengths */
--  register ulg b;       /* bit buffer */
-+  register uint32_t b;       /* bit buffer */
-   register unsigned k;  /* number of bits in bit buffer */
-   int ret;
- 
-@@ -1033,7 +1062,7 @@ STATIC int INIT inflate_block(
- /* decompress an inflated block */
- {
-   unsigned t;           /* block type */
--  register ulg b;       /* bit buffer */
-+  register uint32_t b;       /* bit buffer */
-   register unsigned k;  /* number of bits in bit buffer */
- 
-   DEBG("<blk");
-@@ -1130,8 +1159,8 @@ STATIC int INIT inflate(void)
-  *
-  **********************************************************************/
- 
--static ulg crc_32_tab[256];
--static ulg crc;		/* initialized in makecrc() so it'll reside in bss */
-+static uint32_t crc_32_tab[256];
-+static uint32_t crc;	/* initialized in makecrc() so it'll reside in bss */
- #define CRC_VALUE (crc ^ 0xffffffffUL)
- 
- /*
-@@ -1172,7 +1201,7 @@ makecrc(void)
-   }
- 
-   /* this is initialized here so this code could reside in ROM */
--  crc = (ulg)0xffffffffUL; /* shift register contents */
-+  crc = (uint32_t)0xffffffffUL; /* shift register contents */
- }
- 
- /* gzip flag byte */
-@@ -1184,18 +1213,80 @@ makecrc(void)
- #define ENCRYPTED    0x20 /* bit 5 set: file is encrypted */
- #define RESERVED     0xC0 /* bit 6,7:   reserved */
- 
-+/* ===========================================================================
-+ * Write the output window window[0..outcnt-1] and update crc and bytes_out.
-+ * (Used for the decompressed data only.)
-+ */
-+static void INIT flush_window(void)
-+{
-+	uint32_t c = crc;         /* temporary variable */
-+	unsigned n;
-+	uint8_t *in, ch;
++# Bzip2 does not include size in file... so we have to fake that
++size_append=$(CONFIG_SHELL) $(srctree)/scripts/bin_size
 +
-+	in = window;
-+	for (n = 0; n < outcnt; n++) {
-+		ch = *in++;
-+		c = crc_32_tab[((int)c ^ ch) & 0xff] ^ (c >> 8);
-+	}
-+	crc = c;
-+	bytes_out += (uint32_t)outcnt;
-+	if (flush_cb != NULL)
-+		flush_cb(window, outcnt); /* TODO: handle unzip_error */
-+	else
-+		window += outcnt;
-+	outcnt = 0;
-+}
++quiet_cmd_bzip2 = BZIP2    $@
++cmd_bzip2 = (bzip2 -9 < $< && $(size_append) $<) > $@ || (rm -f $@ ; false)
 +
-+static int empty_fill(void *buf, unsigned int len)
-+{
-+	return 0;
-+}
++# Lzma
++# ---------------------------------------------------------------------------
 +
-+
-+
- /*
-  * Do the uncompression!
-  */
--static int INIT gunzip(void)
-+STATIC int INIT gunzip(unsigned char *buf, int len,
-+		       int(*fill)(void*, unsigned int),
-+		       int(*flush)(void*, unsigned int),
-+		       unsigned char *output,
-+		       int *posp,
-+		       void(*error_fn)(char *x)
-+  )
- {
--    uch flags;
-+    uint8_t flags;
-     unsigned char magic[2]; /* magic header */
-     char method;
--    ulg orig_crc = 0;       /* original crc */
--    ulg orig_len = 0;       /* original uncompressed length */
-+    uint32_t orig_crc = 0;       /* original crc */
-+    uint32_t orig_len = 0;       /* original uncompressed length */
-     int res;
- 
-+    set_error_fn(error_fn);
-+    if (fill == NULL)
-+	    fill_cb = empty_fill;
-+    else
-+	    fill_cb = fill;
-+    if (output)
-+	    window = output;
-+    else {
-+	    window = malloc(0x8000);
-+	    if (!window)
-+		    panic("can't allocate buffers");
-+	    flush_cb = flush;
-+    }
-+
-+    insize = len;
-+    if (buf)
-+	    inbuf = buf;
-+    else
-+	    inbuf = malloc(INBUFSIZ);
-+    inptr = 0;
-+    outcnt = 0;		/* bytes in output buffer */
-+    bytes_out = 0;
-+    crc = (uint32_t)0xffffffffL; /* shift register contents */
-+    makecrc();
-+
-     magic[0] = NEXTBYTE();
-     magic[1] = NEXTBYTE();
-     method   = NEXTBYTE();
-@@ -1212,7 +1303,7 @@ static int INIT gunzip(void)
- 	    return -1;
-     }
- 
--    flags  = (uch)get_byte();
-+    flags  = (uint8_t)get_byte();
-     if ((flags & ENCRYPTED) != 0) {
- 	    error("Input is encrypted");
- 	    return -1;
-@@ -1277,15 +1368,15 @@ static int INIT gunzip(void)
-     /* crc32  (see algorithm.doc)
-      * uncompressed input size modulo 2^32
-      */
--    orig_crc = (ulg) NEXTBYTE();
--    orig_crc |= (ulg) NEXTBYTE() << 8;
--    orig_crc |= (ulg) NEXTBYTE() << 16;
--    orig_crc |= (ulg) NEXTBYTE() << 24;
-+    orig_crc = (uint32_t) NEXTBYTE();
-+    orig_crc |= (uint32_t) NEXTBYTE() << 8;
-+    orig_crc |= (uint32_t) NEXTBYTE() << 16;
-+    orig_crc |= (uint32_t) NEXTBYTE() << 24;
-     
--    orig_len = (ulg) NEXTBYTE();
--    orig_len |= (ulg) NEXTBYTE() << 8;
--    orig_len |= (ulg) NEXTBYTE() << 16;
--    orig_len |= (ulg) NEXTBYTE() << 24;
-+    orig_len = (uint32_t) NEXTBYTE();
-+    orig_len |= (uint32_t) NEXTBYTE() << 8;
-+    orig_len |= (uint32_t) NEXTBYTE() << 16;
-+    orig_len |= (uint32_t) NEXTBYTE() << 24;
-     
-     /* Validate decompression */
-     if (orig_crc != CRC_VALUE) {
-@@ -1296,11 +1387,18 @@ static int INIT gunzip(void)
- 	    error("length error");
- 	    return -1;
-     }
-+    if (!output)
-+	    free(window);
-+    if (posp)
-+	    *posp = inptr;
-     return 0;
- 
-  underrun:			/* NEXTBYTE() goto's here if needed */
-+    free(window);
-+    if (!buf)
-+	    free(inbuf);
-     error("out of input data");
-     return -1;
- }
- 
--
-+#define decompress gunzip
-diff -urNp linux-2.6.27.orig/lib/Makefile linux-2.6.27/lib/Makefile
---- linux-2.6.27.orig/lib/Makefile	2008-10-29 08:47:55.000000000 +0100
-+++ linux-2.6.27/lib/Makefile	2008-10-30 22:27:34.000000000 +0100
-@@ -57,6 +57,10 @@ obj-$(CONFIG_CRC7)	+= crc7.o
- obj-$(CONFIG_LIBCRC32C)	+= libcrc32c.o
- obj-$(CONFIG_GENERIC_ALLOCATOR) += genalloc.o
- 
-+obj-y			+= inflate.o
-+obj-$(CONFIG_RD_BZIP2)	+= decompress_bunzip2.o
-+obj-$(CONFIG_RD_LZMA)	+= decompress_unlzma.o
-+
- obj-$(CONFIG_ZLIB_INFLATE) += zlib_inflate/
- obj-$(CONFIG_ZLIB_DEFLATE) += zlib_deflate/
- obj-$(CONFIG_REED_SOLOMON) += reed_solomon/
-diff -urNp linux-2.6.27.orig/scripts/bin_size linux-2.6.27/scripts/bin_size
---- linux-2.6.27.orig/scripts/bin_size	1970-01-01 01:00:00.000000000 +0100
-+++ linux-2.6.27/scripts/bin_size	2008-10-30 22:27:29.000000000 +0100
++quiet_cmd_lzma = LZMA    $@
++cmd_lzma = (lzma -9 -c $< && $(size_append) $<) >$@ || (rm -f $@ ; false)
+diff --git a/scripts/bin_size b/scripts/bin_size
+new file mode 100644
+index 0000000..43e1b36
+--- /dev/null
++++ b/scripts/bin_size
 @@ -0,0 +1,10 @@
 +#!/bin/sh
 +
@@ -2883,24 +2893,360 @@ diff -urNp linux-2.6.27.orig/scripts/bin_size linux-2.6.27/scripts/bin_size
 +size_hex_echo_string=`printf "%08x" $size_dec |
 +     sed 's/\(..\)\(..\)\(..\)\(..\)/\\\\x\4\\\\x\3\\\\x\2\\\\x\1/g'`
 +/bin/echo -ne $size_hex_echo_string
-diff -urNp linux-2.6.27.orig/scripts/Makefile.lib linux-2.6.27/scripts/Makefile.lib
---- linux-2.6.27.orig/scripts/Makefile.lib	2008-10-29 08:48:11.000000000 +0100
-+++ linux-2.6.27/scripts/Makefile.lib	2008-10-30 22:27:29.000000000 +0100
-@@ -174,3 +174,17 @@ quiet_cmd_gzip = GZIP    $@
- cmd_gzip = gzip -f -9 < $< > $@
+diff --git a/scripts/gen_initramfs_list.sh b/scripts/gen_initramfs_list.sh
+index 5f3415f..3eea8f1 100644
+--- a/scripts/gen_initramfs_list.sh
++++ b/scripts/gen_initramfs_list.sh
+@@ -5,7 +5,7 @@
+ # Released under the terms of the GNU GPL
+ #
+ # Generate a cpio packed initramfs. It uses gen_init_cpio to generate
+-# the cpio archive, and gzip to pack it.
++# the cpio archive, and then compresses it.
+ # The script may also be used to generate the inputfile used for gen_init_cpio
+ # This script assumes that gen_init_cpio is located in usr/ directory
+ 
+@@ -16,8 +16,8 @@ usage() {
+ cat << EOF
+ Usage:
+ $0 [-o <file>] [-u <uid>] [-g <gid>] {-d | <cpio_source>} ...
+-	-o <file>      Create gzipped initramfs file named <file> using
+-		       gen_init_cpio and gzip
++	-o <file>      Create compressed initramfs file named <file> using
++		       gen_init_cpio and compressor depending on the extension
+ 	-u <uid>       User ID to map to user ID 0 (root).
+ 		       <uid> is only meaningful if <cpio_source> is a
+ 		       directory.  "squash" forces all files to uid 0.
+@@ -225,6 +225,7 @@ cpio_list=
+ output="/dev/stdout"
+ output_file=""
+ is_cpio_compressed=
++compr="gzip -9 -f"
+ 
+ arg="$1"
+ case "$arg" in
+@@ -233,11 +234,15 @@ case "$arg" in
+ 		echo "deps_initramfs := \\"
+ 		shift
+ 		;;
+-	"-o")	# generate gzipped cpio image named $1
++	"-o")	# generate compressed cpio image named $1
+ 		shift
+ 		output_file="$1"
+ 		cpio_list="$(mktemp ${TMPDIR:-/tmp}/cpiolist.XXXXXX)"
+ 		output=${cpio_list}
++		echo "$output_file" | grep -q "\.gz$" && compr="gzip -9 -f"
++		echo "$output_file" | grep -q "\.bz2$" && compr="bzip2 -9 -f"
++		echo "$output_file" | grep -q "\.lzma$" && compr="lzma -9 -f"
++		echo "$output_file" | grep -q "\.cpio$" && compr="cat"
+ 		shift
+ 		;;
+ esac
+@@ -274,7 +279,7 @@ while [ $# -gt 0 ]; do
+ 	esac
+ done
+ 
+-# If output_file is set we will generate cpio archive and gzip it
++# If output_file is set we will generate cpio archive and compress it
+ # we are carefull to delete tmp files
+ if [ ! -z ${output_file} ]; then
+ 	if [ -z ${cpio_file} ]; then
+@@ -287,7 +292,8 @@ if [ ! -z ${output_file} ]; then
+ 	if [ "${is_cpio_compressed}" = "compressed" ]; then
+ 		cat ${cpio_tfile} > ${output_file}
+ 	else
+-		cat ${cpio_tfile} | gzip -f -9 - > ${output_file}
++		(cat ${cpio_tfile} | ${compr}  - > ${output_file}) \
++		|| (rm -f ${output_file} ; false)
+ 	fi
+ 	[ -z ${cpio_file} ] && rm ${cpio_tfile}
+ fi
+diff --git a/usr/Kconfig b/usr/Kconfig
+index 86cecb5..43a3a0f 100644
+--- a/usr/Kconfig
++++ b/usr/Kconfig
+@@ -44,3 +44,92 @@ config INITRAMFS_ROOT_GID
+ 	  owned by group root in the initial ramdisk image.
+ 
+ 	  If you are not sure, leave it set to "0".
++
++config RD_GZIP
++	bool "Initial ramdisk compressed using gzip"
++	default y
++	depends on BLK_DEV_INITRD=y
++	select DECOMPRESS_GZIP
++	help
++	  Support loading of a gzip encoded initial ramdisk or cpio buffer.
++	  If unsure, say Y.
++
++config RD_BZIP2
++	bool "Initial ramdisk compressed using bzip2"
++	default n
++	depends on BLK_DEV_INITRD=y
++	select DECOMPRESS_BZIP2
++	help
++	  Support loading of a bzip2 encoded initial ramdisk or cpio buffer
++	  If unsure, say N.
++
++config RD_LZMA
++	bool "Initial ramdisk compressed using lzma"
++	default n
++	depends on BLK_DEV_INITRD=y
++	select DECOMPRESS_LZMA
++	help
++	  Support loading of a lzma encoded initial ramdisk or cpio buffer
++	  If unsure, say N.
++
++choice
++	prompt "Built-in initramfs compression mode"
++	help
++	  This setting is only meaningful if the INITRAMFS_SOURCE is
++	  set. It decides by which algorithm the INITRAMFS_SOURCE will
++	  be compressed.
++	  Several compression algorithms are available, which differ
++	  in efficiency, compression and decompression speed.
++	  Compression speed is only relevant when building a kernel.
++	  Decompression speed is relevant at each boot.
++
++	  If you have any problems with bzip2 or lzma compressed
++	  initramfs, mail me (Alain Knaff) <alain@knaff.lu>.
++
++	  High compression options are mostly useful for users who
++	  are low on disk space (embedded systems), but for whom ram
++	  size matters less.
++
++	  If in doubt, select 'gzip'
++
++config INITRAMFS_COMPRESSION_NONE
++	bool "None"
++	help
++	  Do not compress the built-in initramfs at all. This may
++	  sound wasteful in space, but, you should be aware that the
++	  built-in initramfs will be compressed at a later stage
++	  anyways along with the rest of the kernel, on those
++	  architectures that support this.
++	  However, not compressing the initramfs may lead to slightly
++	  higher memory consumption during a short time at boot, while
++	  both the cpio image and the unpacked filesystem image will
++	  be present in memory simultaneously
++
++config INITRAMFS_COMPRESSION_GZIP
++	bool "Gzip"
++	depends on RD_GZIP
++	help
++	  The old and tried gzip compression. Its compression ratio is
++	  the poorest among the 3 choices; however its speed (both
++	  compression and decompression) is the fastest.
++
++config INITRAMFS_COMPRESSION_BZIP2
++	bool "Bzip2"
++	depends on RD_BZIP2
++	help
++	  Its compression ratio and speed is intermediate.
++	  Decompression speed is slowest among the three.  The initramfs
++	  size is about 10% smaller with bzip2, in comparison to gzip.
++	  Bzip2 uses a large amount of memory. For modern kernels you
++	  will need at least 8MB RAM or more for booting.
++
++config INITRAMFS_COMPRESSION_LZMA
++	bool "LZMA"
++	depends on RD_LZMA
++	help
++	  The most recent compression algorithm.
++	  Its ratio is best, decompression speed is between the other
++	  two. Compression is slowest.	The initramfs size is about 33%
++	  smaller with LZMA in comparison to gzip.
++
++endchoice
+diff --git a/usr/Makefile b/usr/Makefile
+index 201f27f..b84894b 100644
+--- a/usr/Makefile
++++ b/usr/Makefile
+@@ -6,13 +6,25 @@ klibcdirs:;
+ PHONY += klibcdirs
  
  
++# No compression
++suffix_$(CONFIG_INITRAMFS_COMPRESSION_NONE)   =
++
++# Gzip, but no bzip2
++suffix_$(CONFIG_INITRAMFS_COMPRESSION_GZIP)   = .gz
++
 +# Bzip2
-+# ---------------------------------------------------------------------------
-+
-+# Bzip2 does not include size in file... so we have to fake that
-+size_append=$(CONFIG_SHELL) $(srctree)/scripts/bin_size
-+
-+quiet_cmd_bzip2 = BZIP2    $@
-+cmd_bzip2 = (bzip2 -9 < $< ; $(size_append) $<) > $@ || (rm -f $@ ; false)
++suffix_$(CONFIG_INITRAMFS_COMPRESSION_BZIP2)  = .bz2
 +
 +# Lzma
-+# ---------------------------------------------------------------------------
++suffix_$(CONFIG_INITRAMFS_COMPRESSION_LZMA)   = .lzma
 +
-+quiet_cmd_lzma = LZMA    $@
-+cmd_lzma = (lzma -9 --format=alone -c $< ; $(size_append) $<) >$@ || (rm -f $@ ; false)
+ # Generate builtin.o based on initramfs_data.o
+-obj-$(CONFIG_BLK_DEV_INITRD) := initramfs_data.o
++obj-$(CONFIG_BLK_DEV_INITRD) := initramfs_data$(suffix_y).o
+ 
+-# initramfs_data.o contains the initramfs_data.cpio.gz image.
++# initramfs_data.o contains the compressed initramfs_data.cpio image.
+ # The image is included using .incbin, a dependency which is not
+ # tracked automatically.
+-$(obj)/initramfs_data.o: $(obj)/initramfs_data.cpio.gz FORCE
++$(obj)/initramfs_data$(suffix_y).o: $(obj)/initramfs_data.cpio$(suffix_y) FORCE
+ 
+ #####
+ # Generate the initramfs cpio archive
+@@ -25,28 +37,28 @@ ramfs-args  := \
+         $(if $(CONFIG_INITRAMFS_ROOT_UID), -u $(CONFIG_INITRAMFS_ROOT_UID)) \
+         $(if $(CONFIG_INITRAMFS_ROOT_GID), -g $(CONFIG_INITRAMFS_ROOT_GID))
+ 
+-# .initramfs_data.cpio.gz.d is used to identify all files included
++# .initramfs_data.cpio.d is used to identify all files included
+ # in initramfs and to detect if any files are added/removed.
+ # Removed files are identified by directory timestamp being updated
+ # The dependency list is generated by gen_initramfs.sh -l
+-ifneq ($(wildcard $(obj)/.initramfs_data.cpio.gz.d),)
+-	include $(obj)/.initramfs_data.cpio.gz.d
++ifneq ($(wildcard $(obj)/.initramfs_data.cpio.d),)
++	include $(obj)/.initramfs_data.cpio.d
+ endif
+ 
+ quiet_cmd_initfs = GEN     $@
+       cmd_initfs = $(initramfs) -o $@ $(ramfs-args) $(ramfs-input)
+ 
+-targets := initramfs_data.cpio.gz
++targets := initramfs_data.cpio.gz initramfs_data.cpio.bz2 initramfs_data.cpio.lzma initramfs_data.cpio
+ # do not try to update files included in initramfs
+ $(deps_initramfs): ;
+ 
+ $(deps_initramfs): klibcdirs
+-# We rebuild initramfs_data.cpio.gz if:
+-# 1) Any included file is newer then initramfs_data.cpio.gz
++# We rebuild initramfs_data.cpio if:
++# 1) Any included file is newer then initramfs_data.cpio
+ # 2) There are changes in which files are included (added or deleted)
+-# 3) If gen_init_cpio are newer than initramfs_data.cpio.gz
++# 3) If gen_init_cpio are newer than initramfs_data.cpio
+ # 4) arguments to gen_initramfs.sh changes
+-$(obj)/initramfs_data.cpio.gz: $(obj)/gen_init_cpio $(deps_initramfs) klibcdirs
+-	$(Q)$(initramfs) -l $(ramfs-input) > $(obj)/.initramfs_data.cpio.gz.d
++$(obj)/initramfs_data.cpio$(suffix_y): $(obj)/gen_init_cpio $(deps_initramfs) klibcdirs
++	$(Q)$(initramfs) -l $(ramfs-input) > $(obj)/.initramfs_data.cpio.d
+ 	$(call if_changed,initfs)
+ 
+diff --git a/usr/initramfs_data.S b/usr/initramfs_data.S
+index c2e1ad4..7c6973d 100644
+--- a/usr/initramfs_data.S
++++ b/usr/initramfs_data.S
+@@ -26,5 +26,5 @@ SECTIONS
+ */
+ 
+ .section .init.ramfs,"a"
+-.incbin "usr/initramfs_data.cpio.gz"
++.incbin "usr/initramfs_data.cpio"
+ 
+diff --git a/usr/initramfs_data.bz2.S b/usr/initramfs_data.bz2.S
+new file mode 100644
+index 0000000..bc54d09
+--- /dev/null
++++ b/usr/initramfs_data.bz2.S
+@@ -0,0 +1,29 @@
++/*
++  initramfs_data includes the compressed binary that is the
++  filesystem used for early user space.
++  Note: Older versions of "as" (prior to binutils 2.11.90.0.23
++  released on 2001-07-14) dit not support .incbin.
++  If you are forced to use older binutils than that then the
++  following trick can be applied to create the resulting binary:
++
++
++  ld -m elf_i386  --format binary --oformat elf32-i386 -r \
++  -T initramfs_data.scr initramfs_data.cpio.gz -o initramfs_data.o
++   ld -m elf_i386  -r -o built-in.o initramfs_data.o
++
++  initramfs_data.scr looks like this:
++SECTIONS
++{
++       .init.ramfs : { *(.data) }
++}
++
++  The above example is for i386 - the parameters vary from architectures.
++  Eventually look up LDFLAGS_BLOB in an older version of the
++  arch/$(ARCH)/Makefile to see the flags used before .incbin was introduced.
++
++  Using .incbin has the advantage over ld that the correct flags are set
++  in the ELF header, as required by certain architectures.
++*/
++
++.section .init.ramfs,"a"
++.incbin "usr/initramfs_data.cpio.bz2"
+diff --git a/usr/initramfs_data.gz.S b/usr/initramfs_data.gz.S
+new file mode 100644
+index 0000000..890c8dd
+--- /dev/null
++++ b/usr/initramfs_data.gz.S
+@@ -0,0 +1,29 @@
++/*
++  initramfs_data includes the compressed binary that is the
++  filesystem used for early user space.
++  Note: Older versions of "as" (prior to binutils 2.11.90.0.23
++  released on 2001-07-14) dit not support .incbin.
++  If you are forced to use older binutils than that then the
++  following trick can be applied to create the resulting binary:
++
++
++  ld -m elf_i386  --format binary --oformat elf32-i386 -r \
++  -T initramfs_data.scr initramfs_data.cpio.gz -o initramfs_data.o
++   ld -m elf_i386  -r -o built-in.o initramfs_data.o
++
++  initramfs_data.scr looks like this:
++SECTIONS
++{
++       .init.ramfs : { *(.data) }
++}
++
++  The above example is for i386 - the parameters vary from architectures.
++  Eventually look up LDFLAGS_BLOB in an older version of the
++  arch/$(ARCH)/Makefile to see the flags used before .incbin was introduced.
++
++  Using .incbin has the advantage over ld that the correct flags are set
++  in the ELF header, as required by certain architectures.
++*/
++
++.section .init.ramfs,"a"
++.incbin "usr/initramfs_data.cpio.gz"
+diff --git a/usr/initramfs_data.lzma.S b/usr/initramfs_data.lzma.S
+new file mode 100644
+index 0000000..e11469e
+--- /dev/null
++++ b/usr/initramfs_data.lzma.S
+@@ -0,0 +1,29 @@
++/*
++  initramfs_data includes the compressed binary that is the
++  filesystem used for early user space.
++  Note: Older versions of "as" (prior to binutils 2.11.90.0.23
++  released on 2001-07-14) dit not support .incbin.
++  If you are forced to use older binutils than that then the
++  following trick can be applied to create the resulting binary:
++
++
++  ld -m elf_i386  --format binary --oformat elf32-i386 -r \
++  -T initramfs_data.scr initramfs_data.cpio.gz -o initramfs_data.o
++   ld -m elf_i386  -r -o built-in.o initramfs_data.o
++
++  initramfs_data.scr looks like this:
++SECTIONS
++{
++       .init.ramfs : { *(.data) }
++}
++
++  The above example is for i386 - the parameters vary from architectures.
++  Eventually look up LDFLAGS_BLOB in an older version of the
++  arch/$(ARCH)/Makefile to see the flags used before .incbin was introduced.
++
++  Using .incbin has the advantage over ld that the correct flags are set
++  in the ELF header, as required by certain architectures.
++*/
++
++.section .init.ramfs,"a"
++.incbin "usr/initramfs_data.cpio.lzma"
+--
+To unsubscribe from this list: send the line "unsubscribe linux-kernel" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Please read the FAQ at  http://www.tux.org/lkml/
