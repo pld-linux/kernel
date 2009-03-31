@@ -191,7 +191,7 @@ Source6000:	http://globalbase.dl.sourceforge.jp/tomoyo/30297/ccs-patch-1.6.6-200
 # Source6000-md5:	cceb1731d3720030eac34ed128848b32
 
 # tahoe9xx http://www.tahoe.pl/drivers/tahoe9xx-2.6.24.patch
-Patch2:		tahoe9xx-2.6.24.patch
+Patch2:		kernel-tahoe9xx.patch
 
 # http://dev.gentoo.org/~spock/projects/fbcondecor/archive/fbcondecor-0.9.4-2.6.25-rc6.patch
 Patch3:		kernel-fbcondecor.patch
