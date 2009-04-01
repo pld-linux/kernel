@@ -108,7 +108,7 @@
 
 %define		basever		2.6.28
 %define		postver		.9
-%define		rel		1
+%define		rel		2
 
 %define		_enable_debug_packages			0
 
@@ -366,7 +366,7 @@ BuildRequires:	uboot-mkimage
 AutoReqProv:	no
 BuildRequires:	/sbin/depmod
 BuildRequires:	gcc >= 5:3.2
-%{?with_rescuecd:BuildRequires:	lzma >= 1:4.42.2}
+BuildRequires:	lzma >= 1:4.999.5
 # for hostname command
 BuildRequires:	net-tools
 BuildRequires:	perl-base
@@ -875,8 +875,8 @@ install %{SOURCE5} Makefile.ppclibs
 
 %if %{with rescuecd}
 %patch7000 -p1
-%patch7001 -p1
 %endif
+%patch7001 -p1
 
 # grsecurity & pax stuff
 #
