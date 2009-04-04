@@ -1,11 +1,11 @@
 diff --git a/Documentation/power/tuxonice-internals.txt b/Documentation/power/tuxonice-internals.txt
 new file mode 100644
-index 0000000..cca629a
+index 0000000..7a96186
 --- /dev/null
 +++ b/Documentation/power/tuxonice-internals.txt
-@@ -0,0 +1,474 @@
+@@ -0,0 +1,477 @@
 +		   TuxOnIce 3.0 Internal Documentation.
-+			Updated to 11 March 2008
++			Updated to 26 March 2009
 +
 +1.  Introduction.
 +
@@ -146,12 +146,15 @@ index 0000000..cca629a
 +    circumvented by dividing the memory to be saved into two parts, called
 +    pagesets.
 +
-+    Pageset2 contains the page cache - the pages on the active and inactive
-+    lists. These pages aren't needed or modifed while TuxOnIce is running, so
-+    they can be safely written without an atomic copy. They are therefore
-+    saved first and reloaded last. While saving these pages, TuxOnIce carefully
-+    ensures that the work of writing the pages doesn't make the image
-+    inconsistent.
++    Pageset2 contains most of the page cache - the pages on the active and
++    inactive LRU lists that aren't needed or modified while TuxOnIce is
++    running, so they can be safely written without an atomic copy. They are
++    therefore saved first and reloaded last. While saving these pages,
++    TuxOnIce carefully ensures that the work of writing the pages doesn't make
++    the image inconsistent. With the support for Kernel (Video) Mode Setting
++    going into the kernel at the time of writing, we need to check for pages
++    on the LRU that are used by KMS, and exclude them from pageset2. They are
++    atomically copied as part of pageset 1.
 +
 +    Once pageset2 has been saved, we prepare to do the atomic copy of remaining
 +    memory. As part of the preparation, we power down drivers, thereby providing
@@ -164,7 +167,11 @@ index 0000000..cca629a
 +    'extra_pages_allowance', which is used to seek to ensure sufficient memory
 +    is available for drivers at this point. TuxOnIce also lets the user set this
 +    value to 0. In this case, a test driver suspend is done while preparing the
-+    image, and the difference (plus a margin) used instead.
++    image, and the difference (plus a margin) used instead. TuxOnIce will also
++    automatically restart the hibernation process (twice at most) if it finds
++    that the extra pages allowance is not sufficient. It will then use what was
++    actually needed (plus a margin, again). Failure to hibernate should thus
++    be an extremely rare occurence.
 +
 +    Having suspended the drivers, we save the CPU context before making an
 +    atomic copy of pageset1, resuming the drivers and saving the atomic copy.
@@ -183,7 +190,7 @@ index 0000000..cca629a
 +    and then a sync occurs, the filesystem will be corrupted - at least until
 +    resume time and another sync of the restored data. Since there is a
 +    possibility that the user might not resume or (may it never be!) that
-+    suspend might oops, we do our utmost to avoid syncing filesystems after
++    TuxOnIce might oops, we do our utmost to avoid syncing filesystems after
 +    copying pageset1.
 +
 +    e. Power down.
@@ -205,10 +212,8 @@ index 0000000..cca629a
 +
 +    TuxOnIce records which pages will be in pageset1, pageset2, the destination
 +    of the atomic copy and the source of the atomically restored image using
-+    bitmaps. These bitmaps are created from order zero allocations to maximise
-+    reliability. The individual pages are combined together with pointers to
-+    form per-zone bitmaps, which are in turn combined with another layer of
-+    pointers to construct the overall bitmap.
++    bitmaps. The code used is that written for swsusp, with small improvements
++    to match TuxOnIce's requirements.
 +
 +    The pageset1 bitmap is thus easily stored in the image header for use at
 +    resume time.
@@ -229,13 +234,12 @@ index 0000000..cca629a
 +    the n+1th page, given the location of the nth page. Bitwise optimisations
 +    help here.
 +
-+    The data structure is: unsigned long ***.
-+
 +    b) Extents for block data.
 +
 +    TuxOnIce supports writing the image to multiple block devices. In the case
 +    of swap, multiple partitions and/or files may be in use, and we happily use
-+    them all. This is accomplished as follows:
++    them all (with the exception of compcache pages, which we allocate but do
++    not use). This use of multiple block devices is accomplished as follows:
 +
 +    Whatever the actual source of the allocated storage, the destination of the
 +    image can be viewed in terms of one or more block devices, and on each
@@ -288,8 +292,8 @@ index 0000000..cca629a
 +    utilises LVM for storage, as they will need to dmsetup their partitions in
 +    such a way as to maintain this consistency at resume time.
 +
-+    bmap_shift and blocks_per_page record apply the effects of variations in
-+    blocks per page settings for the filesystem and underlying bdev. For most
++    bmap_shift and blocks_per_page apply the effects of variations in blocks
++    per page settings for the filesystem and underlying bdev. For most
 +    filesystems, these are the same, but for xfs, they can have independant
 +    values.
 +
@@ -401,8 +405,7 @@ index 0000000..cca629a
 +    During the writing of an image, the core code feeds pages one at a time
 +    to the first module. This module performs whatever transformations it
 +    implements on the incoming data, completely consuming the incoming data and
-+    feeding output in a similar manner to the next module. A module may buffer
-+    its output.
++    feeding output in a similar manner to the next module.
 +
 +    All routines are SMP safe, and the final result of the transformations is
 +    written with an index (provided by the core) and size of the output by the
@@ -453,23 +456,23 @@ index 0000000..cca629a
 +
 +    This brings us naturally to support for configuring TuxOnIce. We desired to
 +    provide a way to make TuxOnIce as flexible and configurable as possible.
-+    The user shouldn't have to reboot just because they want to now suspend to
++    The user shouldn't have to reboot just because they want to now hibernate to
 +    a file instead of a partition, for example.
 +
 +    To accomplish this, TuxOnIce implements a very generic means whereby the
 +    core and modules can register new sysfs entries. All TuxOnIce entries use
-+    a single _store and _show routine, both of which are found in sysfs.c in
-+    the kernel/power directory. These routines handle the most common operations
-+    - getting and setting the values of bits, integers, longs, unsigned longs
-+    and strings in one place, and allow overrides for customised get and set
-+    options as well as side-effect routines for all reads and writes.
++    a single _store and _show routine, both of which are found in
++    tuxonice_sysfs.c in the kernel/power directory. These routines handle the
++    most common operations - getting and setting the values of bits, integers,
++    longs, unsigned longs and strings in one place, and allow overrides for
++    customised get and set options as well as side-effect routines for all
++    reads and writes.
 +
 +    When combined with some simple macros, a new sysfs entry can then be defined
 +    in just a couple of lines:
 +
-+    { TOI_ATTR("progress_granularity", SYSFS_RW),
-+      SYSFS_INT(&progress_granularity, 1, 2048)
-+    },
++        SYSFS_INT("progress_granularity", SYSFS_RW, &progress_granularity, 1,
++                        2048, 0, NULL),
 +
 +    This defines a sysfs entry named "progress_granularity" which is rw and
 +    allows the user to access an integer stored at &progress_granularity, giving
@@ -1235,17 +1238,17 @@ index 0000000..49199ff
 +   testing. His efforts have contributed as much to TuxOnIce as any of the
 +   names above.
 diff --git a/MAINTAINERS b/MAINTAINERS
-index 61aeb5a..4132787 100644
+index 5d460c9..a39a4fb 100644
 --- a/MAINTAINERS
 +++ b/MAINTAINERS
-@@ -4336,6 +4336,13 @@ P:	Maciej W. Rozycki
+@@ -4343,6 +4343,13 @@ P:	Maciej W. Rozycki
  M:	macro@linux-mips.org
  S:	Maintained
  
 +TUXONICE (ENHANCED HIBERNATION)
 +P:	Nigel Cunningham
 +M:	nigel@tuxonice.net
-+L:	suspend2-devel@tuxonice.net
++L:	tuxonice-devel@tuxonice.net
 +W:	http://tuxonice.net
 +S:	Maintained
 +
@@ -1725,6 +1728,18 @@ index 0000000..ccaf83a
 +MODULE_LICENSE("GPL");
 +MODULE_DESCRIPTION("LZF Compression Algorithm");
 +MODULE_AUTHOR("Marc Alexander Lehmann & Nigel Cunningham");
+diff --git a/drivers/base/dd.c b/drivers/base/dd.c
+index 1352312..f705dce 100644
+--- a/drivers/base/dd.c
++++ b/drivers/base/dd.c
+@@ -183,6 +183,7 @@ int wait_for_device_probe(void)
+ 	async_synchronize_full();
+ 	return 0;
+ }
++EXPORT_SYMBOL_GPL(wait_for_device_probe);
+ 
+ /**
+  * driver_probe_device - attempt to bind device & driver together
 diff --git a/drivers/base/power/main.c b/drivers/base/power/main.c
 index 2d14f4a..dc9ef3b 100644
 --- a/drivers/base/power/main.c
@@ -1757,6 +1772,20 @@ index 7900bd6..a5a8717 100644
  
  /*
   * For each existing display, we have a pointer to console currently visible
+diff --git a/drivers/gpu/drm/drm_gem.c b/drivers/gpu/drm/drm_gem.c
+index 88d3368..5817513 100644
+--- a/drivers/gpu/drm/drm_gem.c
++++ b/drivers/gpu/drm/drm_gem.c
+@@ -136,7 +136,8 @@ drm_gem_object_alloc(struct drm_device *dev, size_t size)
+ 	obj = kcalloc(1, sizeof(*obj), GFP_KERNEL);
+ 
+ 	obj->dev = dev;
+-	obj->filp = shmem_file_setup("drm mm object", size, VM_NORESERVE);
++	obj->filp = shmem_file_setup("drm mm object", size,
++			VM_NORESERVE | VM_ATOMIC_COPY);
+ 	if (IS_ERR(obj->filp)) {
+ 		kfree(obj);
+ 		return NULL;
 diff --git a/drivers/md/md.c b/drivers/md/md.c
 index a307f87..6eb04ea 100644
 --- a/drivers/md/md.c
@@ -1820,7 +1849,7 @@ index a307f87..6eb04ea 100644
  		if (kthread_should_stop())
  			goto interrupted;
 diff --git a/fs/buffer.c b/fs/buffer.c
-index 9f69741..0c43444 100644
+index 891e1c7..cb8c84a 100644
 --- a/fs/buffer.c
 +++ b/fs/buffer.c
 @@ -310,6 +310,93 @@ int thaw_bdev(struct block_device *bdev, struct super_block *sb)
@@ -2374,7 +2403,7 @@ index 5a361f8..c775cd1 100644
  static inline void freezer_do_not_count(void) {}
  static inline void freezer_count(void) {}
 diff --git a/include/linux/fs.h b/include/linux/fs.h
-index 92734c0..c7e066a 100644
+index 92734c0..249df0f 100644
 --- a/include/linux/fs.h
 +++ b/include/linux/fs.h
 @@ -8,6 +8,7 @@
@@ -2401,7 +2430,16 @@ index 92734c0..c7e066a 100644
  #define MS_ACTIVE	(1<<30)
  #define MS_NOUSER	(1<<31)
  
-@@ -1216,8 +1219,11 @@ enum {
+@@ -167,6 +170,8 @@ struct inodes_stat_t {
+ #define S_NOCMTIME	128	/* Do not update file c/mtime */
+ #define S_SWAPFILE	256	/* Do not truncate: swapon got its bmaps */
+ #define S_PRIVATE	512	/* Inode is fs-internal */
++#define S_ATOMIC_COPY	1024	/* Pages mapped with this inode need to be
++				   atomically copied (gem) */
+ 
+ /*
+  * Note that nosuid etc flags are inode-specific: setting some file-system
+@@ -1216,8 +1221,11 @@ enum {
  	SB_FREEZE_TRANS = 2,
  };
  
@@ -2416,10 +2454,18 @@ index 92734c0..c7e066a 100644
  #define get_fs_excl() atomic_inc(&current->fs_excl)
  #define put_fs_excl() atomic_dec(&current->fs_excl)
 diff --git a/include/linux/mm.h b/include/linux/mm.h
-index 065cdf8..1f4e138 100644
+index 065cdf8..175f46d 100644
 --- a/include/linux/mm.h
 +++ b/include/linux/mm.h
-@@ -1294,6 +1294,7 @@ int drop_caches_sysctl_handler(struct ctl_table *, int, struct file *,
+@@ -104,6 +104,7 @@ extern unsigned int kobjsize(const void *objp);
+ #define VM_CAN_NONLINEAR 0x08000000	/* Has ->fault & does nonlinear pages */
+ #define VM_MIXEDMAP	0x10000000	/* Can contain "struct page" and pure PFN pages */
+ #define VM_SAO		0x20000000	/* Strong Access Ordering (powerpc) */
++#define VM_ATOMIC_COPY	0x40000000	/* This VM should be atomically copied by TuxOnIce */
+ 
+ #ifndef VM_STACK_DEFAULT_FLAGS		/* arch can override this */
+ #define VM_STACK_DEFAULT_FLAGS VM_DATA_DEFAULT_FLAGS
+@@ -1294,6 +1295,7 @@ int drop_caches_sysctl_handler(struct ctl_table *, int, struct file *,
  					void __user *, size_t *, loff_t *);
  unsigned long shrink_slab(unsigned long scanned, gfp_t gfp_mask,
  			unsigned long lru_pages);
@@ -2441,30 +2487,10 @@ index 51b09a1..a35eb65 100644
  #define MAX_LINKS 32		
  
 diff --git a/include/linux/suspend.h b/include/linux/suspend.h
-index c7d9bb1..47441b6 100644
+index c7d9bb1..8e7de98 100644
 --- a/include/linux/suspend.h
 +++ b/include/linux/suspend.h
-@@ -13,6 +13,7 @@
- 
- #if defined(CONFIG_PM_SLEEP) && defined(CONFIG_VT) && defined(CONFIG_VT_CONSOLE)
- extern void pm_set_vt_switch(int);
-+extern int pm_get_vt_switch(void);
- extern int pm_prepare_console(void);
- extern void pm_restore_console(void);
- #else
-@@ -20,6 +21,11 @@ static inline void pm_set_vt_switch(int do_switch)
- {
- }
- 
-+static inline int pm_get_vt_switch(void)
-+{
-+	return 0;
-+}
-+
- static inline int pm_prepare_console(void)
- {
- 	return 0;
-@@ -295,4 +301,70 @@ static inline void register_nosave_region_late(unsigned long b, unsigned long e)
+@@ -295,4 +295,70 @@ static inline void register_nosave_region_late(unsigned long b, unsigned long e)
  
  extern struct mutex pm_mutex;
  
@@ -2657,7 +2683,7 @@ index a27a5f6..8ed006a 100644
  static void helper_lock(void)
  {
 diff --git a/kernel/power/Kconfig b/kernel/power/Kconfig
-index 23bd4da..57bade3 100644
+index 23bd4da..2520b0e 100644
 --- a/kernel/power/Kconfig
 +++ b/kernel/power/Kconfig
 @@ -38,6 +38,13 @@ config CAN_PM_TRACE
@@ -2757,7 +2783,7 @@ index 23bd4da..57bade3 100644
 +
 +	config TOI_USERUI_DEFAULT_PATH
 +		string "Default userui program location"
-+		default "/usr/local/sbin/tuxonice_fbsplash"
++		default "/usr/local/sbin/tuxoniceui_text"
 +		depends on TOI_USERUI
 +		---help---
 +		  This entry allows you to specify a default path to the userui binary.
@@ -2972,37 +2998,6 @@ index 720ea4f..c1681d0 100644
  obj-$(CONFIG_PM)		+= main.o
  obj-$(CONFIG_PM_SLEEP)		+= console.o
  obj-$(CONFIG_FREEZER)		+= process.o
-diff --git a/kernel/power/console.c b/kernel/power/console.c
-index a3961b2..18ffa1c 100644
---- a/kernel/power/console.c
-+++ b/kernel/power/console.c
-@@ -31,6 +31,12 @@ void pm_set_vt_switch(int do_switch)
- }
- EXPORT_SYMBOL(pm_set_vt_switch);
- 
-+int pm_get_vt_switch(void)
-+{
-+	return disable_vt_switch;
-+}
-+EXPORT_SYMBOL(pm_get_vt_switch);
-+
- int pm_prepare_console(void)
- {
- 	acquire_console_sem();
-@@ -68,6 +74,7 @@ int pm_prepare_console(void)
- 	kmsg_redirect = SUSPEND_CONSOLE;
- 	return 0;
- }
-+EXPORT_SYMBOL_GPL(pm_prepare_console);
- 
- void pm_restore_console(void)
- {
-@@ -86,4 +93,5 @@ void pm_restore_console(void)
- 
- 	kmsg_redirect = orig_kmsg;
- }
-+EXPORT_SYMBOL_GPL(pm_restore_console);
- #endif
 diff --git a/kernel/power/disk.c b/kernel/power/disk.c
 index 4a4a206..4b8067e 100644
 --- a/kernel/power/disk.c
@@ -3223,7 +3218,7 @@ index c9632f8..91aa900 100644
  /**
   *	state - control system power state.
 diff --git a/kernel/power/power.h b/kernel/power/power.h
-index 46b5ec7..d9d8196 100644
+index 46b5ec7..f946b3b 100644
 --- a/kernel/power/power.h
 +++ b/kernel/power/power.h
 @@ -1,3 +1,10 @@
@@ -3237,26 +3232,14 @@ index 46b5ec7..d9d8196 100644
  #include <linux/suspend.h>
  #include <linux/suspend_ioctls.h>
  #include <linux/utsname.h>
-@@ -21,18 +28,22 @@ struct swsusp_info {
- extern int arch_hibernation_header_save(void *addr, unsigned int max_size);
- extern int arch_hibernation_header_restore(void *addr);
- 
--static inline int init_header_complete(struct swsusp_info *info)
-+static inline int init_swsusp_header_complete(struct swsusp_info *info)
- {
- 	return arch_hibernation_header_save(info, MAX_ARCH_HEADER_SIZE);
- }
- 
--static inline char *check_image_kernel(struct swsusp_info *info)
-+static inline char *check_swsusp_image_kernel(struct swsusp_info *info)
- {
+@@ -31,8 +38,12 @@ static inline char *check_image_kernel(struct swsusp_info *info)
  	return arch_hibernation_header_restore(info) ?
  			"architecture specific data" : NULL;
  }
 +#else
-+extern char *check_swsusp_image_kernel(struct swsusp_info *info);
++extern char *check_image_kernel(struct swsusp_info *info);
  #endif /* CONFIG_ARCH_HIBERNATION_HEADER */
-+extern int init_swsusp_header(struct swsusp_info *info);
++extern int init_header(struct swsusp_info *info);
  
 +extern char resume_file[256];
  /*
@@ -3473,7 +3456,7 @@ index ca63401..ac19ff7 100644
 + */
 +EXPORT_SYMBOL_GPL(thaw_kernel_threads);
 diff --git a/kernel/power/snapshot.c b/kernel/power/snapshot.c
-index f5fc2d7..e7e781a 100644
+index f5fc2d7..63959e7 100644
 --- a/kernel/power/snapshot.c
 +++ b/kernel/power/snapshot.c
 @@ -34,6 +34,8 @@
@@ -3895,7 +3878,7 @@ index f5fc2d7..e7e781a 100644
  
  #ifndef CONFIG_ARCH_HIBERNATION_HEADER
 -static int init_header_complete(struct swsusp_info *info)
-+int init_swsusp_header_complete(struct swsusp_info *info)
++int init_header_complete(struct swsusp_info *info)
  {
  	memcpy(&info->uts, init_utsname(), sizeof(struct new_utsname));
  	info->version_code = LINUX_VERSION_CODE;
@@ -3903,7 +3886,7 @@ index f5fc2d7..e7e781a 100644
  }
  
 -static char *check_image_kernel(struct swsusp_info *info)
-+char *check_swsusp_image_kernel(struct swsusp_info *info)
++char *check_image_kernel(struct swsusp_info *info)
  {
  	if (info->version_code != LINUX_VERSION_CODE)
  		return "kernel version";
@@ -3911,7 +3894,7 @@ index f5fc2d7..e7e781a 100644
  		return "machine";
  	return NULL;
  }
-+EXPORT_SYMBOL_GPL(check_swsusp_image_kernel);
++EXPORT_SYMBOL_GPL(check_image_kernel);
  #endif /* CONFIG_ARCH_HIBERNATION_HEADER */
  
  unsigned long snapshot_get_image_size(void)
@@ -3920,45 +3903,24 @@ index f5fc2d7..e7e781a 100644
  }
  
 -static int init_header(struct swsusp_info *info)
-+int init_swsusp_header(struct swsusp_info *info)
++int init_header(struct swsusp_info *info)
  {
  	memset(info, 0, sizeof(struct swsusp_info));
  	info->num_physpages = num_physpages;
-@@ -1289,8 +1416,9 @@ static int init_header(struct swsusp_info *info)
- 	info->pages = snapshot_get_image_size();
- 	info->size = info->pages;
+@@ -1291,6 +1418,7 @@ static int init_header(struct swsusp_info *info)
  	info->size <<= PAGE_SHIFT;
--	return init_header_complete(info);
-+	return init_swsusp_header_complete(info);
+ 	return init_header_complete(info);
  }
-+EXPORT_SYMBOL_GPL(init_swsusp_header);
++EXPORT_SYMBOL_GPL(init_header);
  
  /**
   *	pack_pfns - pfns corresponding to the set bits found in the bitmap @bm
-@@ -1345,7 +1473,7 @@ int snapshot_read_next(struct snapshot_handle *handle, size_t count)
- 	if (!handle->offset) {
- 		int error;
- 
--		error = init_header((struct swsusp_info *)buffer);
-+		error = init_swsusp_header((struct swsusp_info *)buffer);
- 		if (error)
- 			return error;
- 		handle->buffer = buffer;
-@@ -1442,7 +1570,7 @@ static int check_header(struct swsusp_info *info)
- {
- 	char *reason;
- 
--	reason = check_image_kernel(info);
-+	reason = check_swsusp_image_kernel(info);
- 	if (!reason && info->num_physpages != num_physpages)
- 		reason = "memory size";
- 	if (reason) {
 diff --git a/kernel/power/tuxonice.h b/kernel/power/tuxonice.h
 new file mode 100644
-index 0000000..7cfba2a
+index 0000000..336049f
 --- /dev/null
 +++ b/kernel/power/tuxonice.h
-@@ -0,0 +1,212 @@
+@@ -0,0 +1,211 @@
 +/*
 + * kernel/power/tuxonice.h
 + *
@@ -3981,7 +3943,7 @@ index 0000000..7cfba2a
 +#include <asm/setup.h>
 +#include "tuxonice_pageflags.h"
 +
-+#define TOI_CORE_VERSION "3.0-rc8-20090313"
++#define TOI_CORE_VERSION "3.0"
 +
 +#define MY_BOOT_KERNEL_DATA_VERSION 1
 +
@@ -4014,7 +3976,6 @@ index 0000000..7cfba2a
 +	TOI_TEST_FILTER_SPEED,
 +	TOI_TEST_BIO,
 +	TOI_NO_PAGESET2,
-+	TOI_PM_PREPARE_CONSOLE,
 +	TOI_IGNORE_ROOTFS,
 +	TOI_REPLACE_SWSUSP,
 +	TOI_PAGESET2_FULL,
@@ -4523,10 +4484,10 @@ index 0000000..a1dd8ff
 +#endif
 diff --git a/kernel/power/tuxonice_atomic_copy.c b/kernel/power/tuxonice_atomic_copy.c
 new file mode 100644
-index 0000000..b891c53
+index 0000000..aff8177
 --- /dev/null
 +++ b/kernel/power/tuxonice_atomic_copy.c
-@@ -0,0 +1,422 @@
+@@ -0,0 +1,420 @@
 +/*
 + * kernel/power/tuxonice_atomic_copy.c
 + *
@@ -4832,8 +4793,6 @@ index 0000000..b891c53
 +#ifdef CONFIG_HIGHMEM
 +	free_pbe_list(&restore_highmem_pblist, 1);
 +#endif
-+	if (test_action_state(TOI_PM_PREPARE_CONSOLE))
-+		pm_restore_console();
 +	toi_running = 0;
 +	return 1;
 +}
@@ -4980,10 +4939,10 @@ index 0000000..e907f50
 +void toi_end_atomic(int stage, int toi_time, int error);
 diff --git a/kernel/power/tuxonice_block_io.c b/kernel/power/tuxonice_block_io.c
 new file mode 100644
-index 0000000..f073a0b
+index 0000000..dfa3448
 --- /dev/null
 +++ b/kernel/power/tuxonice_block_io.c
-@@ -0,0 +1,1325 @@
+@@ -0,0 +1,1305 @@
 +/*
 + * kernel/power/tuxonice_block_io.c
 + *
@@ -5502,8 +5461,35 @@ index 0000000..f073a0b
 +static int go_next_page(int writing)
 +{
 +	int i, max = (toi_writer_posn.current_chain == -1) ? 1 :
-+	  toi_devinfo[toi_writer_posn.current_chain].blocks_per_page;
++	  toi_devinfo[toi_writer_posn.current_chain].blocks_per_page,
++		compare_to = 0;
 +
++	/* Have we already used the last page of the stream? */
++	switch (current_stream) {
++	case 0:
++		compare_to = 2;
++		break;
++	case 1:
++		compare_to = 3;
++		break;
++	case 2:
++		compare_to = 1;
++		break;
++	}
++
++	if (toi_writer_posn.current_chain ==
++			toi_writer_posn_save[compare_to].chain_num &&
++	    toi_writer_posn.current_offset ==
++			toi_writer_posn_save[compare_to].offset) {
++		if (writing)
++		       BUG_ON(!current_stream);
++		else {
++			more_readahead = 0;
++			return -ENODATA;
++		}
++	}
++
++	/* Nope. Go foward a page - or maybe two */
 +	for (i = 0; i < max; i++)
 +		toi_extent_state_next(&toi_writer_posn);
 +
@@ -5551,56 +5537,16 @@ index 0000000..f073a0b
 +		int is_readahead, int free_group)
 +{
 +	struct toi_bdev_info *dev_info;
-+	int result;
 +
-+	if (go_next_page(writing)) {
-+		printk(KERN_INFO "Failed to advance a page in the extent "
-+				"data.\n");
++	if (go_next_page(writing)) 
 +		return -ENODATA;
-+	}
-+
-+	if (current_stream == 0 && writing &&
-+		toi_writer_posn.current_chain ==
-+			toi_writer_posn_save[2].chain_num &&
-+		toi_writer_posn.current_offset ==
-+			toi_writer_posn_save[2].offset) {
-+		dump_block_chains();
-+		BUG();
-+	}
 +
 +	dev_info = &toi_devinfo[toi_writer_posn.current_chain];
 +
-+	result = toi_do_io(writing, dev_info->bdev,
++	return toi_do_io(writing, dev_info->bdev,
 +		toi_writer_posn.current_offset <<
 +			dev_info->bmap_shift,
 +		page, is_readahead, 0, free_group);
-+
-+	if (result)
-+		return result;
-+
-+	if (!writing) {
-+		int compare_to = 0;
-+
-+		switch (current_stream) {
-+		case 0:
-+			compare_to = 2;
-+			break;
-+		case 1:
-+			compare_to = 3;
-+			break;
-+		case 2:
-+			compare_to = 1;
-+			break;
-+		}
-+
-+		if (toi_writer_posn.current_chain ==
-+				toi_writer_posn_save[compare_to].chain_num &&
-+		    toi_writer_posn.current_offset ==
-+				toi_writer_posn_save[compare_to].offset) {
-+			more_readahead = 0;
-+		}
-+	}
-+	return 0;
 +}
 +
 +/**
@@ -5794,19 +5740,12 @@ index 0000000..f073a0b
 +		last_result = toi_start_one_readahead(dedicated_thread);
 +
 +		if (last_result) {
-+			if (last_result == -ENOMEM || last_result == -EIO)
++			if (last_result == -ENOMEM || last_result == -ENODATA)
 +				return 0;
 +
-+			more_readahead = 0;
-+
-+			/*
-+			 * Don't complain about failing to do readahead past
-+			 * the end of storage.
-+			 */
-+			if (last_result != -ENODATA)
-+				printk(KERN_INFO
-+					"Begin read chunk returned %d.\n",
-+					last_result);
++			printk(KERN_INFO
++				"Begin read chunk returned %d.\n",
++				last_result);
 +		} else
 +			num_submitted++;
 +
@@ -5897,7 +5836,7 @@ index 0000000..f073a0b
 +{
 +	unsigned long flags;
 +	int result = 0;
-+	static int busy = 0;
++	static int busy;
 +
 +	if (busy)
 +		return 0;
@@ -6123,7 +6062,7 @@ index 0000000..f073a0b
 +	if (owner) {
 +		owner->header_used += buffer_size;
 +		toi_message(TOI_HEADER, TOI_LOW, 1,
-+			"Header: %s : %d bytes (%d/%d).\n",
++			"Header: %s : %d bytes (%d/%d).",
 +			buffer_size, owner->header_used,
 +			owner->header_requested);
 +		if (owner->header_used > owner->header_requested) {
@@ -6311,10 +6250,10 @@ index 0000000..f073a0b
 +#endif
 diff --git a/kernel/power/tuxonice_block_io.h b/kernel/power/tuxonice_block_io.h
 new file mode 100644
-index 0000000..65b7cbb
+index 0000000..6902e97
 --- /dev/null
 +++ b/kernel/power/tuxonice_block_io.h
-@@ -0,0 +1,58 @@
+@@ -0,0 +1,59 @@
 +/*
 + * kernel/power/tuxonice_block_io.h
 + *
@@ -6335,6 +6274,7 @@ index 0000000..65b7cbb
 +	dev_t dev_t;
 +	int bmap_shift;
 +	int blocks_per_page;
++	int ignored;
 +};
 +
 +/*
@@ -6729,7 +6669,7 @@ index 0000000..49b25b7
 +extern int toi_wait;
 diff --git a/kernel/power/tuxonice_checksum.c b/kernel/power/tuxonice_checksum.c
 new file mode 100644
-index 0000000..3756764
+index 0000000..b0adc17
 --- /dev/null
 +++ b/kernel/power/tuxonice_checksum.c
 @@ -0,0 +1,375 @@
@@ -6966,7 +6906,7 @@ index 0000000..3756764
 +		unsigned long *new_page =
 +		  (unsigned long *) toi_get_zeroed_page(15, TOI_ATOMIC_GFP);
 +		if (!new_page) {
-+			printk("Unable to allocate checksum pages.\n");
++			printk(KERN_ERR "Unable to allocate checksum pages.\n");
 +			return -ENOMEM;
 +		}
 +		SetPageNosave(virt_to_page(new_page));
@@ -7148,7 +7088,7 @@ index 0000000..84a9174
 +
 diff --git a/kernel/power/tuxonice_cluster.c b/kernel/power/tuxonice_cluster.c
 new file mode 100644
-index 0000000..405a1a1
+index 0000000..0fad533
 --- /dev/null
 +++ b/kernel/power/tuxonice_cluster.c
 @@ -0,0 +1,1069 @@
@@ -7332,7 +7272,7 @@ index 0000000..405a1a1
 +	case 256:
 +		return "Running";
 +	default:
-+		printk("Unrecognised message %d.\n", message);
++		printk(KERN_ERR "Unrecognised message %d.\n", message);
 +		return "Unrecognised message (see dmesg)";
 +	}
 +}
@@ -7632,8 +7572,8 @@ index 0000000..405a1a1
 +			new_message = MSG_IMAGE |
 +				((index & 1) ? MSG_NACK : MSG_ACK);
 +			if (new_message != old_message)
-+				printk("Setting whether I can resume to %d.\n",
-+						new_message);
++				printk(KERN_ERR "Setting whether I can resume "
++						"to %d.\n", new_message);
 +			break;
 +		case MSG_IO:
 +			new_message = MSG_IO | MSG_ACK;
@@ -7956,7 +7896,7 @@ index 0000000..405a1a1
 +		p = kthread_create(kTOICluster, (void *) initial_message,
 +				"ktoiclusterd/%d", i);
 +		if (IS_ERR(p)) {
-+			printk("Failed to start ktoiclusterd.\n");
++			printk(KERN_ERR "Failed to start ktoiclusterd.\n");
 +			return;
 +		}
 +
@@ -8692,7 +8632,7 @@ index 0000000..4906526
 +#endif
 diff --git a/kernel/power/tuxonice_extent.c b/kernel/power/tuxonice_extent.c
 new file mode 100644
-index 0000000..cb3ccde
+index 0000000..76877c6
 --- /dev/null
 +++ b/kernel/power/tuxonice_extent.c
 @@ -0,0 +1,314 @@
@@ -8869,7 +8809,7 @@ index 0000000..cb3ccde
 +	ret = toiActiveAllocator->rw_header_chunk_noreadahead(READ, NULL,
 +			(char *) chain, 2 * sizeof(int));
 +	if (ret) {
-+		printk("Failed to read the size of extent chain.\n");
++		printk(KERN_ERR "Failed to read the size of extent chain.\n");
 +		return 1;
 +	}
 +
@@ -9090,10 +9030,10 @@ index 0000000..22ffb9b
 +#endif
 diff --git a/kernel/power/tuxonice_file.c b/kernel/power/tuxonice_file.c
 new file mode 100644
-index 0000000..99803b4
+index 0000000..41e5b3e
 --- /dev/null
 +++ b/kernel/power/tuxonice_file.c
-@@ -0,0 +1,1248 @@
+@@ -0,0 +1,1247 @@
 +/*
 + * kernel/power/tuxonice_file.c
 + *
@@ -9336,10 +9276,10 @@ index 0000000..99803b4
 +
 +	/* Apply header space reservation */
 +	toi_extent_state_goto_start(&toi_writer_posn);
-+	toi_bio_ops.forward_one_page(1); /* To first page */
++	toi_bio_ops.forward_one_page(0); /* To first page */
 +
 +	for (i = 0; i < header_pages_reserved; i++)
-+		if (toi_bio_ops.forward_one_page(1))
++		if (toi_bio_ops.forward_one_page(0))
 +			return -ENOSPC;
 +
 +	/* The end of header pages will be the start of pageset 2 */
@@ -9356,10 +9296,13 @@ index 0000000..99803b4
 +		toi_put_extent_chain(&block_chain);
 +
 +	if (!target_is_normal_file()) {
-+		return (target_storage_available > 0) ?
++		result = (target_storage_available > 0) ?
 +			__populate_block_list(devinfo.blocks_per_page,
 +				(target_storage_available + 1) *
 +				devinfo.blocks_per_page - 1) : 0;
++		if (result)
++			return result;
++		goto out;
 +	}
 +
 +	for (i = 0; i < (target_inode->i_size >> PAGE_SHIFT); i++) {
@@ -9407,6 +9350,7 @@ index 0000000..99803b4
 +			return result;
 +	}
 +
++out:
 +	return apply_header_reservation();
 +}
 +
@@ -9464,7 +9408,7 @@ index 0000000..99803b4
 +	if (!target || !strlen(target))
 +		return;
 +
-+	target_file = filp_open(target, O_RDWR|O_LARGEFILE, 0);
++	target_file = filp_open(target, O_RDONLY|O_LARGEFILE, 0);
 +
 +	if (IS_ERR(target_file) || !target_file) {
 +
@@ -9609,10 +9553,6 @@ index 0000000..99803b4
 + **/
 +static int toi_file_release_storage(void)
 +{
-+	if (test_action_state(TOI_KEEP_IMAGE) &&
-+	    test_toi_state(TOI_NOW_RESUMING))
-+		return 0;
-+
 +	toi_put_extent_chain(&block_chain);
 +
 +	header_pages_reserved = 0;
@@ -9779,8 +9719,8 @@ index 0000000..99803b4
 +			virt_to_page((unsigned long) toi_writer_buffer));
 +
 +	if (result) {
-+		printk("FileAllocator read header init: Failed to initialise "
-+				"reading the first page of data.\n");
++		printk(KERN_ERR "FileAllocator read header init: Failed to "
++				"initialise reading the first page of data.\n");
 +		toi_bio_ops.rw_cleanup(READ);
 +		return result;
 +	}
@@ -9996,8 +9936,8 @@ index 0000000..99803b4
 +			toi_free_page(18, (unsigned long) buffer);
 +		if (buffer2)
 +			toi_free_page(19, (unsigned long) buffer2);
-+		printk("TuxOnIce: Failed to allocate memory while setting "
-+				"resume= parameter.\n");
++		printk(KERN_ERR "TuxOnIce: Failed to allocate memory while "
++				"setting resume= parameter.\n");
 +		return;
 +	}
 +
@@ -10293,7 +10233,6 @@ index 0000000..99803b4
 +	.noresume_reset		= toi_file_noresume_reset,
 +	.storage_available 	= toi_file_storage_available,
 +	.storage_allocated	= toi_file_storage_allocated,
-+	.release_storage	= toi_file_release_storage,
 +	.reserve_header_space	= toi_file_reserve_header_space,
 +	.allocate_storage	= toi_file_allocate_storage,
 +	.image_exists		= toi_file_image_exists,
@@ -10344,10 +10283,10 @@ index 0000000..99803b4
 +#endif
 diff --git a/kernel/power/tuxonice_highlevel.c b/kernel/power/tuxonice_highlevel.c
 new file mode 100644
-index 0000000..55d7e66
+index 0000000..896a4c7
 --- /dev/null
 +++ b/kernel/power/tuxonice_highlevel.c
-@@ -0,0 +1,1329 @@
+@@ -0,0 +1,1334 @@
 +/*
 + * kernel/power/tuxonice_highlevel.c
 + */
@@ -10782,7 +10721,7 @@ index 0000000..55d7e66
 + * Cleanup after attempting to hibernate or resume, possibly getting
 + * debugging info as we do so.
 + **/
-+static void do_cleanup(int get_debug_info)
++static void do_cleanup(int get_debug_info, int restarting)
 +{
 +	int i = 0;
 +	char *buffer = NULL;
@@ -10814,7 +10753,6 @@ index 0000000..55d7e66
 +	clear_toi_state(TOI_BOOT_KERNEL);
 +	thaw_processes();
 +
-+#ifdef CONFIG_TOI_KEEP_IMAGE
 +	if (test_action_state(TOI_KEEP_IMAGE) &&
 +	    !test_result_state(TOI_ABORTED)) {
 +		toi_message(TOI_ANY_SECTION, TOI_LOW, 1,
@@ -10822,7 +10760,6 @@ index 0000000..55d7e66
 +			"to Keep Image being enabled.\n");
 +		set_result_state(TOI_KEPT_IMAGE);
 +	} else
-+#endif
 +		if (toiActiveAllocator)
 +			toiActiveAllocator->remove_image();
 +
@@ -10844,11 +10781,14 @@ index 0000000..55d7e66
 +
 +	if (!test_action_state(TOI_LATE_CPU_HOTPLUG))
 +		enable_nonboot_cpus();
-+	toi_cleanup_console();
++
++	if (!restarting)
++		toi_cleanup_console();
 +
 +	free_attention_list();
 +
-+	toi_deactivate_storage(0);
++	if (!restarting)
++		toi_deactivate_storage(0);
 +
 +	clear_toi_state(TOI_IGNORE_LOGLEVEL);
 +	clear_toi_state(TOI_TRYING_TO_RESUME);
@@ -10870,12 +10810,13 @@ index 0000000..55d7e66
 +static int check_still_keeping_image(void)
 +{
 +	if (test_action_state(TOI_KEEP_IMAGE)) {
-+		printk("Image already stored: powering down immediately.");
++		printk(KERN_INFO "Image already stored: powering down "
++				"immediately.");
 +		do_toi_step(STEP_HIBERNATE_POWERDOWN);
 +		return 1;	/* Just in case we're using S3 */
 +	}
 +
-+	printk("Invalidating previous image.\n");
++	printk(KERN_INFO "Invalidating previous image.\n");
 +	toiActiveAllocator->remove_image();
 +
 +	return 0;
@@ -10887,7 +10828,7 @@ index 0000000..55d7e66
 + * Initialise variables & data structures, in preparation for
 + * hibernating to disk.
 + **/
-+static int toi_init(void)
++static int toi_init(int restarting)
 +{
 +	int result, i, j;
 +
@@ -10907,7 +10848,8 @@ index 0000000..55d7e66
 +
 +	mark_nosave_pages();
 +
-+	toi_prepare_console();
++	if (!restarting)
++		toi_prepare_console();
 +
 +	result = pm_notifier_call_chain(PM_HIBERNATION_PREPARE);
 +	if (result) {
@@ -11142,7 +11084,9 @@ index 0000000..55d7e66
 + **/
 +static int do_prepare_image(void)
 +{
-+	if (toi_activate_storage(0))
++	int restarting = test_result_state(TOI_EXTRA_PAGES_ALLOW_TOO_SMALL);
++
++	if (!restarting && toi_activate_storage(0))
 +		return 1;
 +
 +	/*
@@ -11156,7 +11100,7 @@ index 0000000..55d7e66
 +	     check_still_keeping_image()))
 +		return 1;
 +
-+	if (toi_init() && !toi_prepare_image() &&
++	if (toi_init(restarting) && !toi_prepare_image() &&
 +			!test_result_state(TOI_ABORTED))
 +		return 0;
 +
@@ -11323,10 +11267,10 @@ index 0000000..55d7e66
 +		save_restore_alt_param(RESTORE, NOQUIET);
 +		break;
 +	case STEP_CLEANUP:
-+		do_cleanup(1);
++		do_cleanup(1, 0);
 +		break;
 +	case STEP_QUIET_CLEANUP:
-+		do_cleanup(0);
++		do_cleanup(0, 0);
 +		break;
 +	}
 +
@@ -11353,7 +11297,7 @@ index 0000000..55d7e66
 +			!do_toi_step(STEP_RESUME_LOAD_PS1))
 +		do_toi_step(STEP_RESUME_DO_RESTORE);
 +
-+	do_cleanup(0);
++	do_cleanup(0, 0);
 +
 +	current->flags &= ~PF_MEMALLOC;
 +
@@ -11438,9 +11382,9 @@ index 0000000..55d7e66
 +
 +	if (test_result_state(TOI_EXTRA_PAGES_ALLOW_TOO_SMALL)) {
 +		if (retries < 2) {
-+			do_cleanup(0);
++			do_cleanup(0, 1);
 +			retries++;
-+			toi_result = 0;
++			clear_result_state(TOI_ABORTED);
 +			extra_pd1_pages_allowance = extra_pd1_pages_used + 500;
 +			printk(KERN_INFO "Automatically adjusting the extra"
 +				" pages allowance to %ld and restarting.\n",
@@ -11456,7 +11400,7 @@ index 0000000..55d7e66
 +	if (!result && toi_in_hibernate)
 +		result = do_toi_step(STEP_HIBERNATE_POWERDOWN);
 +out:
-+	do_cleanup(1);
++	do_cleanup(1, 0);
 +	current->flags &= ~PF_MEMALLOC;
 +
 +	if (sys_power_disk)
@@ -11527,8 +11471,8 @@ index 0000000..55d7e66
 +	 * about that here.
 +	 */
 +	if (retval && retval != 256)
-+		printk("Failed to launch userspace program '%s': Error %d\n",
-+				command, retval);
++		printk(KERN_ERR "Failed to launch userspace program '%s': "
++				"Error %d\n", command, retval);
 +
 +	{
 +		int i;
@@ -11679,10 +11623,10 @@ index 0000000..55d7e66
 +#endif
 diff --git a/kernel/power/tuxonice_io.c b/kernel/power/tuxonice_io.c
 new file mode 100644
-index 0000000..48e05a1
+index 0000000..38b7981
 --- /dev/null
 +++ b/kernel/power/tuxonice_io.c
-@@ -0,0 +1,1500 @@
+@@ -0,0 +1,1499 @@
 +/*
 + * kernel/power/tuxonice_io.c
 + *
@@ -11771,7 +11715,7 @@ index 0000000..48e05a1
 +
 +	if (!resume_file[0]) {
 +		if (!quiet)
-+			printk("TuxOnIce: Resume= parameter is empty."
++			printk(KERN_INFO "TuxOnIce: Resume= parameter is empty."
 +				" Hibernating will be disabled.\n");
 +		goto cleanup;
 +	}
@@ -11808,8 +11752,8 @@ index 0000000..48e05a1
 +		}
 +	}
 +	if (!quiet)
-+		printk("TuxOnIce: No matching enabled allocator found. "
-+				"Resuming disabled.\n");
++		printk(KERN_INFO "TuxOnIce: No matching enabled allocator "
++				"found. Resuming disabled.\n");
 +cleanup:
 +	toi_deactivate_storage(0);
 +	return returning;
@@ -11848,7 +11792,7 @@ index 0000000..48e05a1
 +	if (!strlen(alt_resume_param))
 +		return;
 +
-+	printk("=== Trying Poweroff Resume2 ===\n");
++	printk(KERN_INFO "=== Trying Poweroff Resume2 ===\n");
 +	save_restore_alt_param(SAVE, NOQUIET);
 +	if (test_toi_state(TOI_CAN_RESUME))
 +		ok = 1;
@@ -11892,7 +11836,7 @@ index 0000000..48e05a1
 +{
 +	int i, error;
 +
-+	error = init_swsusp_header((struct swsusp_info *) sh);
++	error = init_header((struct swsusp_info *) sh);
 +	if (error)
 +		return error;
 +
@@ -12074,7 +12018,7 @@ index 0000000..48e05a1
 +{
 +	unsigned long data_pfn, write_pfn, next_jiffies = jiffies + HZ / 2,
 +		      jif_index = 1;
-+	int result, my_io_index = 0, temp, last_worker;
++	int result, my_io_index = 0, last_worker;
 +	struct toi_module_ops *first_filter = toi_get_next_filter(NULL);
 +	struct page *buffer = toi_alloc_page(28, TOI_ATOMIC_GFP);
 +
@@ -12110,8 +12054,8 @@ index 0000000..48e05a1
 +			/* Another thread could have beaten us to it. */
 +			if (data_pfn == BM_END_OF_MAP) {
 +				if (atomic_read(&io_count)) {
-+					printk("Ran out of pfns but io_count "
-+						"is still %d.\n",
++					printk(KERN_INFO "Ran out of pfns but "
++						"io_count is still %d.\n",
 +						atomic_read(&io_count));
 +					BUG();
 +				}
@@ -12227,8 +12171,6 @@ index 0000000..48e05a1
 +			}
 +		}
 +
-+		temp = my_io_index + io_base - io_nextupdate;
-+
 +		if (my_io_index + io_base == io_nextupdate)
 +			io_nextupdate = toi_update_status(my_io_index +
 +				io_base, io_barmax, " %d/%d MB ",
@@ -12284,7 +12226,7 @@ index 0000000..48e05a1
 +		p = kthread_create(worker_rw_loop, num_started ? NULL : MONITOR,
 +				"ktoi_io/%d", cpu);
 +		if (IS_ERR(p)) {
-+			printk("ktoi_io for %i failed\n", cpu);
++			printk(KERN_ERR "ktoi_io for %i failed\n", cpu);
 +			continue;
 +		}
 +		kthread_bind(p, cpu);
@@ -12616,7 +12558,7 @@ index 0000000..48e05a1
 +	result = toiActiveAllocator->rw_header_chunk(READ, NULL, (char *) &len,
 +			sizeof(int));
 +	if (result) {
-+		printk("Failed to read the length of the module %s's"
++		printk(KERN_ERR "Failed to read the length of the module %s's"
 +				" configuration data.\n",
 +				header->name);
 +		return -EINVAL;
@@ -12629,8 +12571,8 @@ index 0000000..48e05a1
 +	buffer = (char *) toi_get_zeroed_page(23, TOI_ATOMIC_GFP);
 +
 +	if (!buffer) {
-+		printk("Failed to allocate a buffer for reloading module "
-+				"configuration info.\n");
++		printk(KERN_ERR "Failed to allocate a buffer for reloading "
++				"module configuration info.\n");
 +		return -ENOMEM;
 +	}
 +
@@ -12640,9 +12582,9 @@ index 0000000..48e05a1
 +		goto out;
 +
 +	if (!this_module->save_config_info)
-+		printk("Huh? Module %s appears to have a save_config_info, but"
-+				" not a load_config_info function!\n",
-+				this_module->name);
++		printk(KERN_ERR "Huh? Module %s appears to have a "
++				"save_config_info, but not a load_config_info "
++				"function!\n", this_module->name);
 +	else
 +		this_module->load_config_info(buffer, len);
 +
@@ -12794,7 +12736,7 @@ index 0000000..48e05a1
 + **/
 +static char *sanity_check(struct toi_header *sh)
 +{
-+	char *reason = check_swsusp_image_kernel((struct swsusp_info *) sh);
++	char *reason = check_image_kernel((struct swsusp_info *) sh);
 +
 +	if (reason)
 +		return reason;
@@ -12897,7 +12839,8 @@ index 0000000..48e05a1
 +	result = toiActiveAllocator->rw_header_chunk(READ, NULL,
 +			header_buffer, sizeof(struct toi_header));
 +	if (result < 0) {
-+		printk("TuxOnIce: Failed to read the image signature.\n");
++		printk(KERN_ERR "TuxOnIce: Failed to read the image "
++				"signature.\n");
 +		goto out_remove_image;
 +	}
 +
@@ -13262,7 +13205,7 @@ index 0000000..86e8996
 +extern int toi_bio_queue_flusher_should_finish;
 diff --git a/kernel/power/tuxonice_modules.c b/kernel/power/tuxonice_modules.c
 new file mode 100644
-index 0000000..29d9100
+index 0000000..9b05d90
 --- /dev/null
 +++ b/kernel/power/tuxonice_modules.c
 @@ -0,0 +1,464 @@
@@ -13475,7 +13418,7 @@ index 0000000..29d9100
 +	case MISC_HIDDEN_MODULE:
 +		break;
 +	default:
-+		printk("Hmmm. Module '%s' has an invalid type."
++		printk(KERN_ERR "Hmmm. Module '%s' has an invalid type."
 +			" It has been ignored.\n", module->name);
 +		return -EINVAL;
 +	}
@@ -13495,8 +13438,8 @@ index 0000000..29d9100
 +		struct toi_module_ops *shared =
 +			toi_find_module_given_dir(module->shared_directory);
 +		if (!shared) {
-+			printk("TuxOnIce: Module %s wants to share %s's "
-+					"directory but %s isn't loaded.\n",
++			printk(KERN_ERR "TuxOnIce: Module %s wants to share "
++					"%s's directory but %s isn't loaded.\n",
 +					module->name, module->shared_directory,
 +					module->shared_directory);
 +			toi_unregister_module(module);
@@ -13556,7 +13499,7 @@ index 0000000..29d9100
 +	case MISC_HIDDEN_MODULE:
 +		break;
 +	default:
-+		printk("Hmmm. Module '%s' has an invalid type."
++		printk(KERN_ERR "Module '%s' has an invalid type."
 +			" It has been ignored.\n", module->name);
 +		return;
 +	}
@@ -13585,7 +13528,7 @@ index 0000000..29d9100
 +	case MISC_HIDDEN_MODULE:
 +		break;
 +	default:
-+		printk("Hmmm. Module '%s' has an invalid type."
++		printk(KERN_ERR "Module '%s' has an invalid type."
 +			" It has been ignored.\n", module->name);
 +		return;
 +	}
@@ -13677,7 +13620,7 @@ index 0000000..29d9100
 +	struct toi_module_ops *this_module;
 +	int prev = 0;
 +
-+	printk("TuxOnIce " TOI_CORE_VERSION ", with support for");
++	printk(KERN_INFO "TuxOnIce " TOI_CORE_VERSION ", with support for");
 +
 +	list_for_each_entry(this_module, &toi_modules, module_list) {
 +		if (this_module->type == MISC_HIDDEN_MODULE)
@@ -13732,10 +13675,10 @@ index 0000000..29d9100
 +}
 diff --git a/kernel/power/tuxonice_modules.h b/kernel/power/tuxonice_modules.h
 new file mode 100644
-index 0000000..9dd6546
+index 0000000..a256731
 --- /dev/null
 +++ b/kernel/power/tuxonice_modules.h
-@@ -0,0 +1,182 @@
+@@ -0,0 +1,181 @@
 +/*
 + * kernel/power/tuxonice_modules.h
 + *
@@ -13831,7 +13774,6 @@ index 0000000..9dd6546
 +	void (*reserve_header_space) (int space_requested);
 +	int (*allocate_storage) (int space_requested);
 +	int (*storage_allocated) (void);
-+	int (*release_storage) (void);
 +
 +	/*
 +	 * Routines used in image I/O.
@@ -14337,10 +14279,10 @@ index 0000000..37e174b
 +#endif
 diff --git a/kernel/power/tuxonice_pagedir.c b/kernel/power/tuxonice_pagedir.c
 new file mode 100644
-index 0000000..f41f99e
+index 0000000..0c2f7fc
 --- /dev/null
 +++ b/kernel/power/tuxonice_pagedir.c
-@@ -0,0 +1,367 @@
+@@ -0,0 +1,381 @@
 +/*
 + * kernel/power/tuxonice_pagedir.c
 + *
@@ -14361,6 +14303,7 @@ index 0000000..f41f99e
 +#include <linux/bootmem.h>
 +#include <linux/hardirq.h>
 +#include <linux/sched.h>
++#include <linux/cpu.h>
 +#include <asm/tlbflush.h>
 +
 +#include "tuxonice_pageflags.h"
@@ -14496,14 +14439,23 @@ index 0000000..f41f99e
 +	int low_direct = 0, high_direct = 0;
 +	int high_to_free, low_to_free, result = 0;
 +
++	/* 
++	 * We are about to allocate all available memory, and processes
++	 * might not have finished freezing yet. To avoid potential OOMs,
++	 * disable non boot cpus and do this with IRQs disabled
++	 */
++
++	disable_nonboot_cpus();
++	local_irq_disable();
++
 +	/*
 +	 * We need to duplicate pageset1's map because memory_bm_next_pfn's
 +	 * state gets stomped on by the PagePageset1() test in setup_pbes.
 +	 */
-+	memory_bm_create(&dup_map1, GFP_KERNEL, 0);
++	memory_bm_create(&dup_map1, GFP_ATOMIC, 0);
 +	memory_bm_dup(pageset1_map, &dup_map1);
 +
-+	memory_bm_create(&dup_map2, GFP_KERNEL, 0);
++	memory_bm_create(&dup_map2, GFP_ATOMIC, 0);
 +	memory_bm_dup(pageset1_map, &dup_map2);
 +
 +	memory_bm_position_reset(pageset1_map);
@@ -14689,6 +14641,10 @@ index 0000000..f41f99e
 +out:
 +	memory_bm_free(&dup_map1, 0);
 +	memory_bm_free(&dup_map2, 0);
++
++	local_irq_enable();
++	enable_nonboot_cpus();
++	
 +	return result;
 +}
 +
@@ -14879,10 +14835,10 @@ index 0000000..14dc7c5
 +#endif
 diff --git a/kernel/power/tuxonice_power_off.c b/kernel/power/tuxonice_power_off.c
 new file mode 100644
-index 0000000..d1d5f07
+index 0000000..2edd7fc
 --- /dev/null
 +++ b/kernel/power/tuxonice_power_off.c
-@@ -0,0 +1,281 @@
+@@ -0,0 +1,282 @@
 +/*
 + * kernel/power/tuxonice_power_off.c
 + *
@@ -14949,7 +14905,8 @@ index 0000000..d1d5f07
 +		 * faster.
 +		 */
 +		if (read_pageset2(1))
-+			panic("Attempt to reload pagedir 2 failed. Try rebooting.");
++			panic("Attempt to reload pagedir 2 failed. "
++					"Try rebooting.");
 +
 +		error = pm_notifier_call_chain(PM_SUSPEND_PREPARE);
 +		if (!error) {
@@ -15196,10 +15153,10 @@ index 0000000..a85633a
 +extern void platform_restore_cleanup(int platform_mode);
 diff --git a/kernel/power/tuxonice_prepare_image.c b/kernel/power/tuxonice_prepare_image.c
 new file mode 100644
-index 0000000..f17d449
+index 0000000..d8f4123
 --- /dev/null
 +++ b/kernel/power/tuxonice_prepare_image.c
-@@ -0,0 +1,1044 @@
+@@ -0,0 +1,1065 @@
 +/*
 + * kernel/power/tuxonice_prepare_image.c
 + *
@@ -15327,8 +15284,14 @@ index 0000000..f17d449
 +			if (!zone_page_state(zone, NR_LRU_BASE + i))
 +				continue;
 +
-+			list_for_each_entry(page, &zone->lru[i].list, lru)
-+				SetPagePageset2(page);
++			list_for_each_entry(page, &zone->lru[i].list, lru) {
++				struct address_space *mapping;
++
++				mapping = page_mapping(page);
++				if (!mapping || !mapping->host ||
++				    !(mapping->host->i_flags & S_ATOMIC_COPY))
++					SetPagePageset2(page);
++			}
 +		}
 +		spin_unlock_irqrestore(&zone->lru_lock, flags);
 +	}
@@ -15356,14 +15319,20 @@ index 0000000..f17d449
 +	for (vma = mm->mmap; vma; vma = vma->vm_next) {
 +		unsigned long posn;
 +
-+		if (vma->vm_flags & (VM_PFNMAP | VM_IO | VM_RESERVED) ||
-+		    !vma->vm_start)
++		if (!vma->vm_start || vma->vm_flags & VM_SPECIAL)
 +			continue;
 +
 +		for (posn = vma->vm_start; posn < vma->vm_end;
 +				posn += PAGE_SIZE) {
 +			struct page *page = follow_page(vma, posn, 0);
-+			if (!page)
++			struct address_space *mapping;
++
++			if (!page || !pfn_valid(page_to_pfn(page)))
++				continue;
++
++			mapping = page_mapping(page);
++			if (mapping && mapping->host &&
++			    mapping->host->i_flags & S_ATOMIC_COPY)
 +				continue;
 +
 +			if (pageset2)
@@ -15379,6 +15348,24 @@ index 0000000..f17d449
 +		up_read(&mm->mmap_sem);
 +}
 +
++static void mark_tasks(int pageset)
++{
++	struct task_struct *p;
++
++	read_lock(&tasklist_lock);
++	for_each_process(p) {
++		if (!p->mm)
++			continue;
++
++		if (p->flags & PF_KTHREAD)
++			continue;
++
++		toi_mark_task_as_pageset(p, pageset);
++	}
++	read_unlock(&tasklist_lock);
++
++}
++
 +/* mark_pages_for_pageset2
 + *
 + * Description:	Mark unshared pages in processes not needed for hibernate as
@@ -15389,7 +15376,6 @@ index 0000000..f17d449
 +
 +static void toi_mark_pages_for_pageset2(void)
 +{
-+	struct task_struct *p;
 +	struct attention_list *this = attention_list;
 +
 +	memory_bm_clear(pageset2_map);
@@ -15399,16 +15385,8 @@ index 0000000..f17d449
 +
 +	if (test_action_state(TOI_PAGESET2_FULL))
 +		pageset2_full();
-+	else {
-+		read_lock(&tasklist_lock);
-+		for_each_process(p) {
-+			if (!p->mm || (p->flags & PF_KTHREAD))
-+				continue;
-+
-+			toi_mark_task_as_pageset(p, PAGESET2);
-+		}
-+		read_unlock(&tasklist_lock);
-+	}
++	else
++		mark_tasks(PAGESET2);
 +
 +	/*
 +	 * Because the tasks in attention_list are ones related to hibernating,
@@ -16626,10 +16604,10 @@ index 0000000..24f8e8a
 +};
 diff --git a/kernel/power/tuxonice_swap.c b/kernel/power/tuxonice_swap.c
 new file mode 100644
-index 0000000..52caa59
+index 0000000..3306a81
 --- /dev/null
 +++ b/kernel/power/tuxonice_swap.c
-@@ -0,0 +1,1275 @@
+@@ -0,0 +1,1312 @@
 +/*
 + * kernel/power/tuxonice_swap.c
 + *
@@ -17140,6 +17118,9 @@ index 0000000..52caa59
 +			get_swap_info_struct(swapfilenum);
 +		sector_t new_sector = map_swap_page(sis, offset);
 +
++		if (devinfo[swapfilenum].ignored)
++			continue;
++
 +		if ((new_sector == extent_max + 1) &&
 +		    (last_chain == swapfilenum)) {
 +			extent_max++;
@@ -17179,29 +17160,56 @@ index 0000000..52caa59
 +}
 +
 +/*
++ * Like si_swapinfo, except that we don't include ram backed swap (compcache!)
++ * and don't need to use the spinlocks (userspace is stopped when this
++ * function is called).
++ */
++void si_swapinfo_no_compcache(struct sysinfo *val)
++{
++	unsigned int i;
++
++	si_swapinfo(&swapinfo);
++	val->freeswap = 0;
++	val->totalswap = 0;
++
++	for (i = 0; i < MAX_SWAPFILES; i++) {
++		struct swap_info_struct *si = get_swap_info_struct(i);
++		if ((si->flags & SWP_USED) &&
++		    (si->flags & SWP_WRITEOK) &&
++		    (strncmp(si->bdev->bd_disk->disk_name, "ram", 3))) {
++			val->totalswap += si->inuse_pages;
++			val->freeswap += si->pages - si->inuse_pages;
++		}
++	}
++}
++/*
 + * We can't just remember the value from allocation time, because other
 + * processes might have allocated swap in the mean time.
 + */
 +static int toi_swap_storage_available(void)
 +{
-+	si_swapinfo(&swapinfo);
++	si_swapinfo_no_compcache(&swapinfo);
 +	return (int) raw_to_real((long) swapinfo.freeswap +
 +			swap_pages_allocated - header_pages_reserved);
 +}
 +
 +static int toi_swap_initialise(int starting_cycle)
 +{
++	int result = 0;
++
 +	if (!starting_cycle)
 +		return 0;
 +
 +	enable_swapfile();
 +
-+	if (resume_swap_dev_t && !resume_block_device &&
-+	    IS_ERR(resume_block_device =
-+			open_bdev(MAX_SWAPFILES, resume_swap_dev_t, 1)))
-+		return 1;
++	if (resume_swap_dev_t && !resume_block_device) {
++		resume_block_device = open_bdev(MAX_SWAPFILES,
++				resume_swap_dev_t, 1);
++		if (IS_ERR(resume_block_device))
++			result = 1;
++	}
 +
-+	return 0;
++	return result;
 +}
 +
 +static void toi_swap_cleanup(int ending_cycle)
@@ -17216,10 +17224,6 @@ index 0000000..52caa59
 +
 +static int toi_swap_release_storage(void)
 +{
-+	if (test_action_state(TOI_KEEP_IMAGE) &&
-+	    test_toi_state(TOI_NOW_RESUMING))
-+		return 0;
-+
 +	header_pages_reserved = 0;
 +	swap_pages_allocated = 0;
 +
@@ -17273,13 +17277,18 @@ index 0000000..52caa59
 +		to_add[i] = 0;
 +		if (!si->bdev)
 +			continue;
++		if (!strncmp(si->bdev->bd_disk->disk_name, "ram", 3)) {
++			devinfo[i].ignored = 1;
++			continue;
++		}
++		devinfo[i].ignored = 0;
 +		devinfo[i].bdev = si->bdev;
 +		devinfo[i].dev_t = si->bdev->bd_dev;
 +		devinfo[i].bmap_shift = 3;
 +		devinfo[i].blocks_per_page = 1;
 +	}
 +
-+	for (i = 0; i < pages_to_get; i++) {
++	while (gotten < pages_to_get) {
 +		swp_entry_t entry;
 +		unsigned long new_value;
 +		unsigned swapfilenum;
@@ -17295,13 +17304,15 @@ index 0000000..52caa59
 +			to_add[swapfilenum] = 1;
 +			extent_min[swapfilenum] = new_value;
 +			extent_max[swapfilenum] = new_value;
-+			gotten++;
++			if (!devinfo[swapfilenum].ignored)
++				gotten++;
 +			continue;
 +		}
 +
 +		if (new_value == extent_max[swapfilenum] + 1) {
 +			extent_max[swapfilenum]++;
-+			gotten++;
++			if (!devinfo[swapfilenum].ignored)
++				gotten++;
 +			continue;
 +		}
 +
@@ -17314,7 +17325,8 @@ index 0000000..52caa59
 +			free_swap_range(extent_min[swapfilenum],
 +					extent_max[swapfilenum]);
 +			swap_free(entry);
-+			gotten -= (extent_max[swapfilenum] -
++			if (!devinfo[swapfilenum].ignored)
++				gotten -= (extent_max[swapfilenum] -
 +					extent_min[swapfilenum] + 1);
 +			/* Don't try to add again below */
 +			to_add[swapfilenum] = 0;
@@ -17322,7 +17334,8 @@ index 0000000..52caa59
 +		} else {
 +			extent_min[swapfilenum] = new_value;
 +			extent_max[swapfilenum] = new_value;
-+			gotten++;
++			if (!devinfo[swapfilenum].ignored)
++				gotten++;
 +		}
 +	}
 +
@@ -17332,7 +17345,8 @@ index 0000000..52caa59
 +			continue;
 +
 +		free_swap_range(extent_min[i], extent_max[i]);
-+		gotten -= (extent_max[i] - extent_min[i] + 1);
++		if (!devinfo[i].ignored)
++			gotten -= (extent_max[i] - extent_min[i] + 1);
 +		break;
 +	}
 +
@@ -17485,7 +17499,7 @@ index 0000000..52caa59
 +
 +		devinfo[i].bdev = NULL;
 +
-+		if (!thisdevice)
++		if (!thisdevice || devinfo[i].ignored)
 +			continue;
 +
 +		if (thisdevice == resume_swap_dev_t) {
@@ -17555,7 +17569,7 @@ index 0000000..52caa59
 +			"  Attempting to automatically swapon: %s.\n",
 +			swapfilename);
 +
-+	si_swapinfo(&sysinfo);
++	si_swapinfo_no_compcache(&sysinfo);
 +
 +	len += scnprintf(buffer+len, size-len,
 +			"  Swap available for image: %d pages.\n",
@@ -17605,13 +17619,15 @@ index 0000000..52caa59
 +		return -1;
 +	}
 +
-+	if (!resume_block_device &&
-+	    IS_ERR(resume_block_device =
-+			open_bdev(MAX_SWAPFILES, resume_swap_dev_t, 1))) {
++	if (!resume_block_device) {
++	    resume_block_device = open_bdev(MAX_SWAPFILES, resume_swap_dev_t,
++			    1);
++	    if (IS_ERR(resume_block_device)) {
 +		if (!quiet)
 +			printk(KERN_INFO "Failed to open resume dev_t (%x).\n",
 +				resume_swap_dev_t);
 +		return -1;
++	    }
 +	}
 +
 +	signature_found = parse_signature();
@@ -17856,7 +17872,6 @@ index 0000000..52caa59
 +	.noresume_reset		= toi_swap_noresume_reset,
 +	.storage_available 	= toi_swap_storage_available,
 +	.storage_allocated	= toi_swap_storage_allocated,
-+	.release_storage	= toi_swap_release_storage,
 +	.reserve_header_space	= toi_swap_reserve_header_space,
 +	.allocate_storage	= toi_swap_allocate_storage,
 +	.image_exists		= toi_swap_image_exists,
@@ -18637,10 +18652,10 @@ index 0000000..4da4afd
 +}
 diff --git a/kernel/power/tuxonice_ui.h b/kernel/power/tuxonice_ui.h
 new file mode 100644
-index 0000000..884d0c5
+index 0000000..dc45741
 --- /dev/null
 +++ b/kernel/power/tuxonice_ui.h
-@@ -0,0 +1,105 @@
+@@ -0,0 +1,103 @@
 +/*
 + * kernel/power/tuxonice_ui.h
 + *
@@ -18704,14 +18719,12 @@ index 0000000..884d0c5
 +	} while (0)
 +
 +#define toi_prepare_console(void) \
-+	do { pm_prepare_console(); \
-+	     if (toi_current_ui) \
++	do { if (toi_current_ui) \
 +		(toi_current_ui->prepare)(); \
 +	} while (0)
 +
 +#define toi_cleanup_console(void) \
-+	do { pm_restore_console(); \
-+	     if (toi_current_ui) \
++	do { if (toi_current_ui) \
 +		(toi_current_ui->cleanup)(); \
 +	} while (0)
 +
@@ -18748,7 +18761,7 @@ index 0000000..884d0c5
 +extern void toi_remove_ui_ops(struct ui_ops *this_ui);
 diff --git a/kernel/power/tuxonice_userui.c b/kernel/power/tuxonice_userui.c
 new file mode 100644
-index 0000000..2a46a55
+index 0000000..de685b6
 --- /dev/null
 +++ b/kernel/power/tuxonice_userui.c
 @@ -0,0 +1,663 @@
@@ -19243,7 +19256,7 @@ index 0000000..2a46a55
 +		toi_bkd.toi_default_console_level = (*data);
 +		return 0;
 +	case USERUI_MSG_PRINTK:
-+		printk("%s", (char *) data);
++		printk(KERN_INFO "%s", (char *) data);
 +		return 0;
 +	}
 +
@@ -19297,7 +19310,7 @@ index 0000000..2a46a55
 +	ui_helper_data.pid = -1;
 +
 +	if (!userui_ops.enabled) {
-+		printk("TuxOnIce: Userui disabled.\n");
++		printk(KERN_INFO "TuxOnIce: Userui disabled.\n");
 +		return;
 +	}
 +
@@ -19667,6 +19680,31 @@ index 5c44ed4..e9cddc3 100644
   * Amount of free RAM allocatable within all zones
   */
  unsigned int nr_free_pagecache_pages(void)
+diff --git a/mm/shmem.c b/mm/shmem.c
+index 4103a23..caeba07 100644
+--- a/mm/shmem.c
++++ b/mm/shmem.c
+@@ -1538,6 +1538,8 @@ static struct inode *shmem_get_inode(struct super_block *sb, int mode,
+ 		memset(info, 0, (char *)inode - (char *)info);
+ 		spin_lock_init(&info->lock);
+ 		info->flags = flags & VM_NORESERVE;
++		if (flags & VM_ATOMIC_COPY)
++			inode->i_flags |= S_ATOMIC_COPY;
+ 		INIT_LIST_HEAD(&info->swaplist);
+ 
+ 		switch (mode & S_IFMT) {
+diff --git a/mm/swap_state.c b/mm/swap_state.c
+index 3ecea98..be135e6 100644
+--- a/mm/swap_state.c
++++ b/mm/swap_state.c
+@@ -45,6 +45,7 @@ struct address_space swapper_space = {
+ 	.i_mmap_nonlinear = LIST_HEAD_INIT(swapper_space.i_mmap_nonlinear),
+ 	.backing_dev_info = &swap_backing_dev_info,
+ };
++EXPORT_SYMBOL_GPL(swapper_space);
+ 
+ #define INC_CACHE_INFO(x)	do { swap_cache_info.x++; } while (0)
+ 
 diff --git a/mm/swapfile.c b/mm/swapfile.c
 index 312fafe..894fcb5 100644
 --- a/mm/swapfile.c
@@ -19728,7 +19766,7 @@ index 312fafe..894fcb5 100644
  /*
   * swap_lock prevents swap_map being freed. Don't grab an extra
 diff --git a/mm/vmscan.c b/mm/vmscan.c
-index e895171..02e87f5 100644
+index 56ddf41..f8df64a 100644
 --- a/mm/vmscan.c
 +++ b/mm/vmscan.c
 @@ -2025,6 +2025,9 @@ void wakeup_kswapd(struct zone *zone, int order)
