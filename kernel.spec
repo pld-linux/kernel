@@ -38,7 +38,8 @@
 %bcond_with	nfsroot		# build with root on NFS support
 
 %bcond_with	imq		# imq support
-%bcond_without	wrr		# wrr support
+%bcond_with	wrr		# wrr support (broken on 2.6.29)
+%bcond_with	esfq		# esfq support (broken on 2.6.29)
 %bcond_without	ipv6		# ipv6 support
 
 %bcond_without	vserver		# support for VServer (enabled by default)
@@ -825,9 +826,10 @@ install %{SOURCE5} Makefile.ppclibs
 %patch51 -p1
 %endif
 
-# XXX: 2.6.29 fixme
 # esfq
-# %patch53 -p1
+%if %{with esfq}
+%patch53 -p1
+%endif
 
 %if %{with wrr}
 %patch52 -p1
