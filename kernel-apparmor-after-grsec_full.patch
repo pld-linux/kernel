@@ -672,7 +672,7 @@ diff -uprN a/fs/inotify_user.c b/fs/inotify_user.c
 diff -uprN a/fs/namei.c b/fs/namei.c
 --- a/fs/namei.c	2009-02-08 13:22:56.411597278 +0000
 +++ b/fs/namei.c	2009-02-08 13:26:38.909283473 +0000
-@@ -226,7 +226,7 @@ int generic_permission(struct inode *ino
+@@ -305,7 +305,7 @@ int generic_permission(struct inode *ino
  	return -EACCES;
  }
  
@@ -681,7 +681,7 @@ diff -uprN a/fs/namei.c b/fs/namei.c
  {
  	int retval;
  
-@@ -256,7 +256,12 @@ int inode_permission(struct inode *inode
+@@ -339,7 +339,12 @@ int inode_permission(struct inode *inode
  	if (retval)
  		return retval;
  
@@ -695,7 +695,7 @@ diff -uprN a/fs/namei.c b/fs/namei.c
  	if (retval)
  		return retval;
  
-@@ -264,6 +269,15 @@ int inode_permission(struct inode *inode
+@@ -347,6 +352,15 @@ int inode_permission(struct inode *inode
  			mask & (MAY_READ|MAY_WRITE|MAY_EXEC|MAY_APPEND));
  }
  
@@ -711,7 +711,7 @@ diff -uprN a/fs/namei.c b/fs/namei.c
  /**
   * vfs_permission  -  check for access rights to a given path
   * @nd:		lookup result that describes the path
-@@ -276,7 +290,7 @@ int inode_permission(struct inode *inode
+@@ -359,7 +373,7 @@ int inode_permission(struct inode *inode
   */
  int vfs_permission(struct nameidata *nd, int mask)
  {
@@ -720,7 +720,7 @@ diff -uprN a/fs/namei.c b/fs/namei.c
  }
  
  /**
-@@ -293,7 +307,7 @@ int vfs_permission(struct nameidata *nd,
+@@ -376,7 +390,7 @@ int vfs_permission(struct nameidata *nd,
   */
  int file_permission(struct file *file, int mask)
  {
@@ -729,7 +729,7 @@ diff -uprN a/fs/namei.c b/fs/namei.c
  }
  
  /*
-@@ -434,8 +448,9 @@ static struct dentry * cached_lookup(str
+@@ -518,8 +532,9 @@ static struct dentry * cached_lookup(str
   * short-cut DAC fails, then call permission() to do more
   * complete permission check.
   */
@@ -739,8 +739,8 @@ diff -uprN a/fs/namei.c b/fs/namei.c
 +	struct inode *inode = path->dentry->d_inode;
  	umode_t	mode = inode->i_mode;
  
- 	if (inode->i_op && inode->i_op->permission)
-@@ -460,7 +475,7 @@ static int exec_permission_lite(struct i
+ 	if (dx_barrier(inode))
+@@ -546,7 +561,7 @@ static int exec_permission_lite(struct i
  
  	return -EACCES;
  ok:
@@ -749,7 +749,7 @@ diff -uprN a/fs/namei.c b/fs/namei.c
  }
  
  /*
-@@ -857,7 +872,7 @@ static int __link_path_walk(const char *
+@@ -965,7 +980,7 @@ static int __link_path_walk(const char *
  		unsigned int c;
  
  		nd->flags |= LOOKUP_CONTINUE;
@@ -758,7 +758,7 @@ diff -uprN a/fs/namei.c b/fs/namei.c
  		if (err == -EAGAIN)
  			err = vfs_permission(nd, MAY_EXEC);
   		if (err)
-@@ -1052,24 +1067,21 @@ static int do_path_lookup(int dfd, const
+@@ -1167,24 +1182,21 @@ static int do_path_lookup(int dfd, const
  		path_get(&fs->pwd);
  		read_unlock(&fs->lock);
  	} else {
@@ -785,7 +785,7 @@ diff -uprN a/fs/namei.c b/fs/namei.c
  		path_get(&file->f_path);
  
  		fput_light(file, fput_needed);
-@@ -1216,7 +1228,7 @@ static struct dentry *lookup_hash(struct
+@@ -1331,7 +1343,7 @@ static struct dentry *lookup_hash(struct
  {
  	int err;
  
@@ -794,7 +794,7 @@ diff -uprN a/fs/namei.c b/fs/namei.c
  	if (err)
  		return ERR_PTR(err);
  	return __lookup_hash(&nd->last, nd->path.dentry, nd);
-@@ -1481,7 +1493,7 @@ int vfs_create(struct inode *dir, struct
+@@ -1596,7 +1608,7 @@ int vfs_create(struct inode *dir, struct
  		return -EACCES;	/* shouldn't it be ENOSYS? */
  	mode &= S_IALLUGO;
  	mode |= S_IFREG;
@@ -803,7 +803,7 @@ diff -uprN a/fs/namei.c b/fs/namei.c
  	if (error)
  		return error;
  	DQUOT_INIT(dir);
-@@ -1557,7 +1569,7 @@ int may_open(struct nameidata *nd, int a
+@@ -1680,7 +1692,7 @@ int may_open(struct nameidata *nd, int a
  		if (!error) {
  			DQUOT_INIT(inode);
  
@@ -812,7 +812,7 @@ diff -uprN a/fs/namei.c b/fs/namei.c
  					    ATTR_MTIME|ATTR_CTIME|ATTR_OPEN,
  					    NULL);
  		}
-@@ -1924,7 +1936,8 @@ fail:
+@@ -2111,7 +2123,8 @@ fail:
  }
  EXPORT_SYMBOL_GPL(lookup_create);
  
@@ -822,7 +822,7 @@ diff -uprN a/fs/namei.c b/fs/namei.c
  {
  	int error = may_create(dir, dentry);
  
-@@ -1941,7 +1954,7 @@ int vfs_mknod(struct inode *dir, struct 
+@@ -2136,7 +2149,7 @@ okay:
  	if (error)
  		return error;
  
@@ -831,7 +831,7 @@ diff -uprN a/fs/namei.c b/fs/namei.c
  	if (error)
  		return error;
  
-@@ -2002,11 +2015,12 @@ SYSCALL_DEFINE4(mknodat, int, dfd, const
+@@ -2208,11 +2221,12 @@ SYSCALL_DEFINE4(mknodat, int, dfd, const
  			error = vfs_create(nd.path.dentry->d_inode,dentry,mode,&nd);
  			break;
  		case S_IFCHR: case S_IFBLK:
@@ -847,7 +847,7 @@ diff -uprN a/fs/namei.c b/fs/namei.c
  			break;
  	}
  	mnt_drop_write(nd.path.mnt);
-@@ -2025,7 +2039,8 @@ SYSCALL_DEFINE3(mknod, const char __user
+@@ -2234,7 +2248,8 @@ SYSCALL_DEFINE3(mknod, const char __user
  	return sys_mknodat(AT_FDCWD, filename, mode, dev);
  }
  
@@ -857,7 +857,7 @@ diff -uprN a/fs/namei.c b/fs/namei.c
  {
  	int error = may_create(dir, dentry);
  
-@@ -2036,7 +2051,7 @@ int vfs_mkdir(struct inode *dir, struct 
+@@ -2245,7 +2260,7 @@ int vfs_mkdir(struct inode *dir, struct 
  		return -EPERM;
  
  	mode &= (S_IRWXUGO|S_ISVTX);
@@ -866,7 +866,7 @@ diff -uprN a/fs/namei.c b/fs/namei.c
  	if (error)
  		return error;
  
-@@ -2068,7 +2083,7 @@ SYSCALL_DEFINE3(mkdirat, int, dfd, const
+@@ -2282,7 +2297,7 @@ SYSCALL_DEFINE3(mkdirat, int, dfd, const
  	error = mnt_want_write(nd.path.mnt);
  	if (error)
  		goto out_dput;
@@ -875,7 +875,7 @@ diff -uprN a/fs/namei.c b/fs/namei.c
  	mnt_drop_write(nd.path.mnt);
  
  	if (!error)
-@@ -2112,7 +2127,7 @@ void dentry_unhash(struct dentry *dentry
+@@ -2330,7 +2345,7 @@ void dentry_unhash(struct dentry *dentry
  	spin_unlock(&dcache_lock);
  }
  
@@ -884,7 +884,7 @@ diff -uprN a/fs/namei.c b/fs/namei.c
  {
  	int error = may_delete(dir, dentry, 1);
  
-@@ -2122,6 +2137,10 @@ int vfs_rmdir(struct inode *dir, struct 
+@@ -2340,6 +2355,10 @@ int vfs_rmdir(struct inode *dir, struct 
  	if (!dir->i_op || !dir->i_op->rmdir)
  		return -EPERM;
  
@@ -895,7 +895,7 @@ diff -uprN a/fs/namei.c b/fs/namei.c
  	DQUOT_INIT(dir);
  
  	mutex_lock(&dentry->d_inode->i_mutex);
-@@ -2129,12 +2148,9 @@ int vfs_rmdir(struct inode *dir, struct 
+@@ -2347,12 +2366,9 @@ int vfs_rmdir(struct inode *dir, struct 
  	if (d_mountpoint(dentry))
  		error = -EBUSY;
  	else {
@@ -911,7 +911,7 @@ diff -uprN a/fs/namei.c b/fs/namei.c
  	}
  	mutex_unlock(&dentry->d_inode->i_mutex);
  	if (!error) {
-@@ -2178,7 +2194,7 @@ static long do_rmdir(int dfd, const char
+@@ -2411,7 +2427,7 @@ static long do_rmdir(int dfd, const char
  	error = mnt_want_write(nd.path.mnt);
  	if (error)
  		goto exit3;
@@ -920,7 +920,7 @@ diff -uprN a/fs/namei.c b/fs/namei.c
  	mnt_drop_write(nd.path.mnt);
  	if (!error && (saved_dev || saved_ino))
  		gr_handle_delete(saved_ino, saved_dev);
-@@ -2195,7 +2211,7 @@ SYSCALL_DEFINE1(rmdir, const char __user
+@@ -2430,7 +2446,7 @@ SYSCALL_DEFINE1(rmdir, const char __user
  	return do_rmdir(AT_FDCWD, pathname);
  }
  
@@ -929,7 +929,7 @@ diff -uprN a/fs/namei.c b/fs/namei.c
  {
  	int error = may_delete(dir, dentry, 0);
  
-@@ -2211,7 +2227,7 @@ int vfs_unlink(struct inode *dir, struct
+@@ -2448,7 +2464,7 @@ int vfs_unlink(struct inode *dir, struct
  	if (d_mountpoint(dentry))
  		error = -EBUSY;
  	else {
@@ -938,7 +938,7 @@ diff -uprN a/fs/namei.c b/fs/namei.c
  		if (!error)
  			error = dir->i_op->unlink(dir, dentry);
  	}
-@@ -2263,7 +2279,7 @@ static long do_unlinkat(int dfd, const c
+@@ -2513,7 +2529,7 @@ static long do_unlinkat(int dfd, const c
  		error = mnt_want_write(nd.path.mnt);
  		if (error)
  			goto exit2;
@@ -947,7 +947,7 @@ diff -uprN a/fs/namei.c b/fs/namei.c
  		if (!error && (saved_ino || saved_dev))
  			gr_handle_delete(saved_ino, saved_dev);
  		mnt_drop_write(nd.path.mnt);
-@@ -2298,7 +2314,8 @@ SYSCALL_DEFINE1(unlink, const char __use
+@@ -2550,7 +2566,8 @@ SYSCALL_DEFINE1(unlink, const char __use
  	return do_unlinkat(AT_FDCWD, pathname);
  }
  
@@ -957,7 +957,7 @@ diff -uprN a/fs/namei.c b/fs/namei.c
  {
  	int error = may_create(dir, dentry);
  
-@@ -2308,7 +2325,7 @@ int vfs_symlink(struct inode *dir, struc
+@@ -2560,7 +2577,7 @@ int vfs_symlink(struct inode *dir, struc
  	if (!dir->i_op || !dir->i_op->symlink)
  		return -EPERM;
  
@@ -966,7 +966,7 @@ diff -uprN a/fs/namei.c b/fs/namei.c
  	if (error)
  		return error;
  
-@@ -2344,7 +2361,7 @@ SYSCALL_DEFINE3(symlinkat, const char __
+@@ -2601,7 +2618,7 @@ SYSCALL_DEFINE3(symlinkat, const char __
  	error = mnt_want_write(nd.path.mnt);
  	if (error)
  		goto out_dput;
@@ -975,7 +975,7 @@ diff -uprN a/fs/namei.c b/fs/namei.c
  	if (!error)
  		gr_handle_create(dentry, nd.path.mnt);
  	mnt_drop_write(nd.path.mnt);
-@@ -2362,7 +2379,7 @@ SYSCALL_DEFINE2(symlink, const char __us
+@@ -2621,7 +2638,7 @@ SYSCALL_DEFINE2(symlink, const char __us
  	return sys_symlinkat(oldname, AT_FDCWD, newname);
  }
  
@@ -984,7 +984,7 @@ diff -uprN a/fs/namei.c b/fs/namei.c
  {
  	struct inode *inode = old_dentry->d_inode;
  	int error;
-@@ -2387,7 +2404,8 @@ int vfs_link(struct dentry *old_dentry, 
+@@ -2646,7 +2663,8 @@ int vfs_link(struct dentry *old_dentry, 
  	if (S_ISDIR(inode->i_mode))
  		return -EPERM;
  
@@ -994,7 +994,7 @@ diff -uprN a/fs/namei.c b/fs/namei.c
  	if (error)
  		return error;
  
-@@ -2440,7 +2458,9 @@ SYSCALL_DEFINE5(linkat, int, olddfd, con
+@@ -2713,7 +2731,9 @@ SYSCALL_DEFINE5(linkat, int, olddfd, con
  	error = mnt_want_write(nd.path.mnt);
  	if (error)
  		goto out_dput;
@@ -1005,7 +1005,7 @@ diff -uprN a/fs/namei.c b/fs/namei.c
  	if (!error)
  		gr_handle_create(new_dentry, nd.path.mnt);
  	mnt_drop_write(nd.path.mnt);
-@@ -2493,7 +2513,8 @@ SYSCALL_DEFINE2(link, const char __user 
+@@ -2768,7 +2788,8 @@ SYSCALL_DEFINE2(link, const char __user 
   *	   locking].
   */
  static int vfs_rename_dir(struct inode *old_dir, struct dentry *old_dentry,
@@ -1015,7 +1015,7 @@ diff -uprN a/fs/namei.c b/fs/namei.c
  {
  	int error = 0;
  	struct inode *target;
-@@ -2508,7 +2529,8 @@ static int vfs_rename_dir(struct inode *
+@@ -2783,7 +2804,8 @@ static int vfs_rename_dir(struct inode *
  			return error;
  	}
  
@@ -1025,7 +1025,7 @@ diff -uprN a/fs/namei.c b/fs/namei.c
  	if (error)
  		return error;
  
-@@ -2536,12 +2558,14 @@ static int vfs_rename_dir(struct inode *
+@@ -2811,12 +2833,14 @@ static int vfs_rename_dir(struct inode *
  }
  
  static int vfs_rename_other(struct inode *old_dir, struct dentry *old_dentry,
@@ -1042,7 +1042,7 @@ diff -uprN a/fs/namei.c b/fs/namei.c
  	if (error)
  		return error;
  
-@@ -2564,7 +2588,8 @@ static int vfs_rename_other(struct inode
+@@ -2839,7 +2863,8 @@ static int vfs_rename_other(struct inode
  }
  
  int vfs_rename(struct inode *old_dir, struct dentry *old_dentry,
@@ -1052,21 +1052,19 @@ diff -uprN a/fs/namei.c b/fs/namei.c
  {
  	int error;
  	int is_dir = S_ISDIR(old_dentry->d_inode->i_mode);
-@@ -2593,9 +2618,11 @@ int vfs_rename(struct inode *old_dir, st
+@@ -2868,9 +2893,9 @@ int vfs_rename(struct inode *old_dir, st
  	old_name = fsnotify_oldname_init(old_dentry->d_name.name);
  
  	if (is_dir)
 -		error = vfs_rename_dir(old_dir,old_dentry,new_dir,new_dentry);
-+		error = vfs_rename_dir(old_dir, old_dentry, old_mnt,
-+				       new_dir, new_dentry, new_mnt);
++		error = vfs_rename_dir(old_dir,old_dentry,old_mnt,new_dir,new_dentry,new_mnt);
  	else
 -		error = vfs_rename_other(old_dir,old_dentry,new_dir,new_dentry);
-+		error = vfs_rename_other(old_dir, old_dentry, old_mnt,
-+					 new_dir, new_dentry, new_mnt);
- 
++		error = vfs_rename_other(old_dir,old_dentry,old_mnt,new_dir,new_dentry,new_mnt);
  	if (!error) {
  		const char *new_name = old_dentry->d_name.name;
-@@ -2676,8 +2703,8 @@ SYSCALL_DEFINE4(renameat, int, olddfd, c
+ 		fsnotify_move(old_dir, new_dir, old_name, new_name, is_dir,
+@@ -2957,8 +2982,8 @@ SYSCALL_DEFINE4(renameat, int, olddfd, c
  	error = mnt_want_write(oldnd.path.mnt);
  	if (error)
  		goto exit5;
@@ -1077,7 +1075,7 @@ diff -uprN a/fs/namei.c b/fs/namei.c
  	if (!error)
  		gr_handle_rename(old_dir->d_inode, new_dir->d_inode, old_dentry,
  				 new_dentry, oldnd.path.mnt, new_dentry->d_inode ? 1 : 0);
-@@ -2851,6 +2878,7 @@ EXPORT_SYMBOL(path_lookup);
+@@ -3348,6 +3373,7 @@ EXPORT_SYMBOL(path_lookup);
  EXPORT_SYMBOL(kern_path);
  EXPORT_SYMBOL(vfs_path_lookup);
  EXPORT_SYMBOL(inode_permission);

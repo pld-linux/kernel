@@ -23,20 +23,6 @@
  #include <linux/grinternal.h>
  #include <linux/gracl.h>
 ===
-=== analogous as capable()
-===
---- a/kernel/capability.c~	2007-12-11 00:46:02.000000000 +0100
-+++ a/kernel/capability.c	2007-12-11 01:35:00.244481500 +0100
-@@ -253,6 +253,8 @@ int __capable(struct task_struct *t, int
- }
- int capable_nolog(int cap)
- {
-+	if (vs_check_bit(VXC_CAP_MASK, cap) && !vx_mcaps(1L << cap))
-+		return 0;
- 	if (has_capability(current, cap) && gr_is_capable_nolog(cap)) {
- 		current->flags |= PF_SUPERPRIV;
- 		return 1;
-===
 === vserver netlink protection
 ===
 --- a/security/commoncap.c~	2007-12-10 23:52:36.000000000 +0100
