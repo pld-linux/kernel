@@ -342,7 +342,7 @@ Patch9997:	kernel-pax_selinux_hooks.patch
 # based on http://www.grsecurity.net/~paxguy1/pax-linux-2.6.24.6-test45.patch
 Patch9998:	kernel-pax.patch
 
-# based on http://www.grsecurity.net/~spender/grsecurity-2.1.12-2.6.28-200901161810.patch
+# based on http://www.grsecurity.net/~spender/grsecurity-2.1.14-2.6.29-200903281534.patch
 # NOTE: put raw upstream patches on kernel-grsec_full.patch:GRSECURITY_RAW for reference
 #       (since upstream deletes older patches)
 Patch9999:	kernel-grsec_full.patch
