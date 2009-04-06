@@ -87,7 +87,6 @@ diff -urN linux-2.6.26.2.org/include/linux/pkt_sched.h linux-2.6.26.2/include/li
 +	int	nodes_in_heap;	/* Current number of bands wanting to send something */
 +	int	bands_cur;	/* Current number of bands used (i.e.: MAC/IP addresses seen) */
 +	int	bands_reused;	/* Number of times this band has been reused. */
-+	int	packets_requed;	/* Number of times packets have been requeued. */
 +	__u64	priosum;	/* Sum of priorities in heap where 1 is 2^32 */
 +};
 +
@@ -246,7 +245,7 @@ diff -urN linux-2.6.26.2.org/net/sched/Makefile linux-2.6.26.2/net/sched/Makefil
 diff -urN linux-2.6.26.2.org/net/sched/wrr.c linux-2.6.26.2/net/sched/wrr.c
 --- linux-2.6.26.2.org/net/sched/wrr.c	1970-01-01 01:00:00.000000000 +0100
 +++ linux-2.6.26.2/net/sched/wrr.c	2008-08-20 16:40:09.000000000 +0200
-@@ -0,0 +1,1386 @@
+@@ -0,0 +1,1357 @@
 +/*-----------------------------------------------------------------------------
 +Weighted Round Robin scheduler.
 +  
@@ -906,8 +905,6 @@ diff -urN linux-2.6.26.2.org/net/sched/wrr.c linux-2.6.26.2/net/sched/wrr.c
 +
 +	struct tc_wrr_qdisc_modf qdisc_modf; /* Penalty updating */
 +
-+	int packets_requed;		/* Statistics */
-+
 +	struct mac_head filter;		/* The filter */
 +	int bandc;			/* Number of bands */
 +};
@@ -1074,7 +1071,6 @@ diff -urN linux-2.6.26.2.org/net/sched/wrr.c linux-2.6.26.2/net/sched/wrr.c
 +	/* Initialize values */
 +	q->counter_low_penal = 0;
 +	q->counter_high_penal = penalty_base_t_max >> 1;
-+	q->packets_requed = 0;
 +
 +	/* Initialize empty heap */
 +	heap_init(&q->h, q->bandc, q->poll);
@@ -1118,7 +1114,6 @@ diff -urN linux-2.6.26.2.org/net/sched/wrr.c linux-2.6.26.2/net/sched/wrr.c
 +	/* Reset own values */
 +	q->counter_low_penal = 0;
 +	q->counter_high_penal = penalty_base_t_max >> 1;
-+	q->packets_requed = 0;
 +
 +	/* Reset filter */
 +	mac_reset(&q->filter);
@@ -1254,44 +1249,20 @@ diff -urN linux-2.6.26.2.org/net/sched/wrr.c linux-2.6.26.2/net/sched/wrr.c
 +	return 0;
 +}
 +
-+static int wrr_requeue(struct sk_buff *skb, struct Qdisc *sch)
++static struct sk_buff *wrr_peek(struct Qdisc *sch)
 +{
 +	struct wrr_sched_data *q = qdisc_priv(sch);
-+	struct Qdisc *qdisc;
-+	int ret;
++	int band;
 +
-+	/* Find band we took it from */
-+	int band = mac_classify(&q->filter, skb);
-+	if (band < 0) {
-+		/* Who should now free the pakcet? */
-+		printk(KERN_DEBUG
-+		       "sch_wrr: Oops - packet requeued could never have been queued.\n");
-+		sch->qstats.drops++;
-+		return ENQUEUE_FAIL;
-+	}
++	/* Return if heap is empty */
++	if (heap_empty(&q->h))
++		return NULL;
 +
-+	q->packets_requed++;
++	/* Find root element */
++	band = heap_root(&q->h);
 +
-+	/* Try to requeue it on that machine */
-+	qdisc = q->bands[band].que;
-+
-+	if ((ret = qdisc->ops->requeue(skb, qdisc)) == ENQUEUE_SUCCESS) {
-+		/* On success */
-+		sch->q.qlen++;
-+		sch->qstats.requeues++;
-+
-+		/* We should restore priority information - but we don't
-+		 *
-+		 * p=heap_get_penalty(&q->h,band);
-+		 * ...
-+		 * heap_set_penalty(&q->h,band,p);
-+		 */
-+
-+		return ENQUEUE_SUCCESS;
-+	} else {
-+		sch->qstats.drops++;
-+		return ret;
-+	}
++	/* Dequeue the packet from the root */
++	return q->bands[band].que->peek(q->bands[band].que);
 +}
 +
 +static unsigned int wrr_drop(struct Qdisc *sch)
@@ -1328,7 +1299,6 @@ diff -urN linux-2.6.26.2.org/net/sched/wrr.c linux-2.6.26.2/net/sched/wrr.c
 +	opt.nodes_in_heap = q->h.elements;
 +	opt.bands_cur = q->filter.mac_cur;
 +	opt.bands_reused = q->filter.mac_reused;
-+	opt.packets_requed = q->packets_requed;
 +	opt.priosum = q->priosum;
 +
 +	if (q->proxydict) {
@@ -1608,7 +1578,7 @@ diff -urN linux-2.6.26.2.org/net/sched/wrr.c linux-2.6.26.2/net/sched/wrr.c
 +	.priv_size = sizeof(struct wrr_sched_data),
 +	.enqueue = wrr_enqueue,
 +	.dequeue = wrr_dequeue,
-+	.requeue = wrr_requeue,
++	.peek = wrr_peek,
 +	.drop = wrr_drop,
 +	.init = wrr_init,
 +	.reset = wrr_reset,
