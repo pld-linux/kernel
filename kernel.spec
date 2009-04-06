@@ -279,7 +279,7 @@ Patch85:	kernel-hostap.patch
 # Taken from http://download.opensuse.org/factory/repo/src-oss/suse/src/kernel-source-2.6.27.7-3.1.src.rpm
 Patch90:	kernel-mpt-fusion.patch
 
-# based on http://vserver.13thfloor.at/Experimental/patch-2.6.29-vs2.3.0.36.9-pre2.diff
+# based on http://vserver.13thfloor.at/Experimental/patch-2.6.29-vs2.3.0.36.9-pre3.diff
 Patch100:	kernel-vserver-2.3.patch
 Patch101:	kernel-vserver-fixes.patch
 
@@ -343,6 +343,8 @@ Patch9997:	kernel-pax_selinux_hooks.patch
 Patch9998:	kernel-pax.patch
 
 # based on http://www.grsecurity.net/~spender/grsecurity-2.1.12-2.6.28-200901161810.patch
+# NOTE: put raw upstream patches on kernel-grsec_full.patch:GRSECURITY_RAW for reference
+#       (since upstream deletes older patches)
 Patch9999:	kernel-grsec_full.patch
 Patch10000:	kernel-grsec-caps.patch
 Patch10001:	kernel-grsec-common.patch
