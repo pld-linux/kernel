@@ -38,8 +38,8 @@
 %bcond_with	nfsroot		# build with root on NFS support
 
 %bcond_with	imq		# imq support
-%bcond_with	wrr		# wrr support (broken on 2.6.29)
-%bcond_with	esfq		# esfq support (broken on 2.6.29)
+%bcond_without	wrr		# wrr support
+%bcond_without	esfq		# esfq support
 %bcond_without	ipv6		# ipv6 support
 
 %bcond_without	vserver		# support for VServer (enabled by default)
