@@ -362,7 +362,7 @@ BuildRequires:	uboot-mkimage
 AutoReqProv:	no
 BuildRequires:	/sbin/depmod
 BuildRequires:	gcc >= 5:3.2
-BuildRequires:	lzma >= 1:4.999.5
+BuildRequires:	xz >= 1:4.999.7
 # for hostname command
 BuildRequires:	net-tools
 BuildRequires:	perl-base
