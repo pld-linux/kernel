@@ -4204,7 +4204,7 @@ diff -urNp linux-2.6.29/arch/x86/include/asm/boot.h linux-2.6.29/arch/x86/includ
 --- linux-2.6.29/arch/x86/include/asm/boot.h	2009-03-23 19:12:14.000000000 -0400
 +++ linux-2.6.29/arch/x86/include/asm/boot.h	2009-03-28 14:26:18.000000000 -0400
 @@ -11,10 +11,15 @@
- #ifdef __KERNEL__
+ #define ASK_VGA		0xfffd		/* ask for it at bootup */
  
  /* Physical address where kernel should be loaded. */
 -#define LOAD_PHYSICAL_ADDR ((CONFIG_PHYSICAL_START \
@@ -4217,9 +4217,9 @@ diff -urNp linux-2.6.29/arch/x86/include/asm/boot.h linux-2.6.29/arch/x86/includ
 +#define LOAD_PHYSICAL_ADDR ((unsigned long)__LOAD_PHYSICAL_ADDR)
 +#endif
 +
- #ifdef CONFIG_KERNEL_BZIP2
- define BOOT_HEAP_SIZE             0x400000
- #else /* !CONFIG_KERNEL_BZIP2 */
+ #ifdef CONFIG_X86_64
+ #define BOOT_HEAP_SIZE	0x7000
+ #define BOOT_STACK_SIZE	0x4000
 diff -urNp linux-2.6.29/arch/x86/include/asm/cache.h linux-2.6.29/arch/x86/include/asm/cache.h
 --- linux-2.6.29/arch/x86/include/asm/cache.h	2009-03-23 19:12:14.000000000 -0400
 +++ linux-2.6.29/arch/x86/include/asm/cache.h	2009-03-28 14:26:18.000000000 -0400
@@ -18051,15 +18051,15 @@ diff -urNp linux-2.6.29/fs/ext2/balloc.c linux-2.6.29/fs/ext2/balloc.c
 diff -urNp linux-2.6.29/fs/ext3/balloc.c linux-2.6.29/fs/ext3/balloc.c
 --- linux-2.6.29/fs/ext3/balloc.c	2009-03-23 19:12:14.000000000 -0400
 +++ linux-2.6.29/fs/ext3/balloc.c	2009-03-28 14:26:20.000000000 -0400
-@@ -1435,7 +1435,7 @@
- 	DLIMIT_ADJUST_BLOCK(sb, dx_current_tag(), &free_blocks, &root_blocks);
+@@ -1421,7 +1421,7 @@ static int ext3_has_free_blocks(struct e
  
- 	cond = (free_blocks < root_blocks + 1 &&
--		!capable(CAP_SYS_RESOURCE) &&
-+		!capable_nolog(CAP_SYS_RESOURCE) &&
+ 	free_blocks = percpu_counter_read_positive(&sbi->s_freeblocks_counter);
+ 	root_blocks = le32_to_cpu(sbi->s_es->s_r_blocks_count);
+-	if (free_blocks < root_blocks + 1 && !capable(CAP_SYS_RESOURCE) &&
++	if (free_blocks < root_blocks + 1 && !capable_nolog(CAP_SYS_RESOURCE) &&
  		sbi->s_resuid != current_fsuid() &&
- 		(sbi->s_resgid == 0 || !in_group_p (sbi->s_resgid)));
- 
+ 		(sbi->s_resgid == 0 || !in_group_p (sbi->s_resgid))) {
+ 		return 0;
 diff -urNp linux-2.6.29/fs/ext3/namei.c linux-2.6.29/fs/ext3/namei.c
 --- linux-2.6.29/fs/ext3/namei.c	2009-03-23 19:12:14.000000000 -0400
 +++ linux-2.6.29/fs/ext3/namei.c	2009-03-28 14:26:20.000000000 -0400
@@ -19243,34 +19243,34 @@ diff -urNp linux-2.6.29/fs/open.c linux-2.6.29/fs/open.c
  	newattrs.ia_valid =  ATTR_CTIME;
  	if (user != (uid_t) -1) {
  		newattrs.ia_valid |= ATTR_UID;
-@@ -715,7 +774,7 @@
- 	error = cow_check_and_break(&path);
- 	if (!error)
- #endif
--		error = chown_common(path.dentry, user, group);
-+		error = chown_common(path.dentry, user, group, path.mnt);
+@@ -698,7 +757,7 @@ SYSCALL_DEFINE3(chown, const char __user
+ 	error = mnt_want_write(path.mnt);
+ 	if (error)
+ 		goto out_release;
+-	error = chown_common(path.dentry, user, group);
++	error = chown_common(path.dentry, user, group, path.mnt);
  	mnt_drop_write(path.mnt);
  out_release:
  	path_put(&path);
-@@ -744,7 +803,7 @@
- 	error = cow_check_and_break(&path);
- 	if (!error)
- #endif
--		error = chown_common(path.dentry, user, group);
-+		error = chown_common(path.dentry, user, group, path.mnt);
+@@ -723,7 +782,7 @@ SYSCALL_DEFINE5(fchownat, int, dfd, cons
+ 	error = mnt_want_write(path.mnt);
+ 	if (error)
+ 		goto out_release;
+-	error = chown_common(path.dentry, user, group);
++	error = chown_common(path.dentry, user, group, path.mnt);
  	mnt_drop_write(path.mnt);
  out_release:
  	path_put(&path);
-@@ -767,7 +826,7 @@
- 	error = cow_check_and_break(&path);
- 	if (!error)
- #endif
--		error = chown_common(path.dentry, user, group);
-+		error = chown_common(path.dentry, user, group, path.mnt);
+@@ -742,7 +801,7 @@ SYSCALL_DEFINE3(lchown, const char __use
+ 	error = mnt_want_write(path.mnt);
+ 	if (error)
+ 		goto out_release;
+-	error = chown_common(path.dentry, user, group);
++	error = chown_common(path.dentry, user, group, path.mnt);
  	mnt_drop_write(path.mnt);
  out_release:
  	path_put(&path);
-@@ -790,7 +849,7 @@
+@@ -765,7 +824,7 @@ SYSCALL_DEFINE3(fchown, unsigned int, fd
  		goto out_fput;
  	dentry = file->f_path.dentry;
  	audit_inode(NULL, dentry);
@@ -19387,7 +19387,7 @@ diff -urNp linux-2.6.29/fs/proc/array.c linux-2.6.29/fs/proc/array.c
 diff -urNp linux-2.6.29/fs/proc/base.c linux-2.6.29/fs/proc/base.c
 --- linux-2.6.29/fs/proc/base.c	2009-03-23 19:12:14.000000000 -0400
 +++ linux-2.6.29/fs/proc/base.c	2009-03-28 14:26:20.000000000 -0400
-@@ -225,6 +225,9 @@
+@@ -223,6 +223,9 @@ static int check_mem_permission(struct t
  	if (task == current)
  		return 0;
  
@@ -19397,7 +19397,7 @@ diff -urNp linux-2.6.29/fs/proc/base.c linux-2.6.29/fs/proc/base.c
  	/*
  	 * If current is actively ptrace'ing, and would also be
  	 * permitted to freshly attach with ptrace now, permit it.
-@@ -302,12 +305,26 @@
+@@ -300,12 +303,26 @@ out:
  	return res;
  }
  
@@ -19424,7 +19424,7 @@ diff -urNp linux-2.6.29/fs/proc/base.c linux-2.6.29/fs/proc/base.c
  		do {
  			nwords += 2;
  		} while (mm->saved_auxv[nwords - 2] != 0); /* AT_NULL */
-@@ -533,7 +550,7 @@
+@@ -531,7 +548,7 @@ static int proc_pid_limits(struct task_s
  	return count;
  }
  
@@ -19433,7 +19433,7 @@ diff -urNp linux-2.6.29/fs/proc/base.c linux-2.6.29/fs/proc/base.c
  static int proc_pid_syscall(struct task_struct *task, char *buffer)
  {
  	long nr;
-@@ -1457,7 +1474,11 @@
+@@ -1455,7 +1472,11 @@ static struct inode *proc_pid_make_inode
  		rcu_read_lock();
  		cred = __task_cred(task);
  		inode->i_uid = cred->euid;
@@ -19444,8 +19444,8 @@ diff -urNp linux-2.6.29/fs/proc/base.c linux-2.6.29/fs/proc/base.c
 +#endif
  		rcu_read_unlock();
  	}
- 	/* procfs is xid tagged */
-@@ -1477,6 +1498,9 @@
+ 	security_task_to_inode(task, inode);
+@@ -1473,6 +1494,9 @@ static int pid_getattr(struct vfsmount *
  	struct inode *inode = dentry->d_inode;
  	struct task_struct *task;
  	const struct cred *cred;
@@ -19455,7 +19455,7 @@ diff -urNp linux-2.6.29/fs/proc/base.c linux-2.6.29/fs/proc/base.c
  
  	generic_fillattr(inode, stat);
  
-@@ -1484,12 +1508,34 @@
+@@ -1480,12 +1504,34 @@ static int pid_getattr(struct vfsmount *
  	stat->uid = 0;
  	stat->gid = 0;
  	task = pid_task(proc_pid(inode), PIDTYPE_PID);
@@ -19491,7 +19491,7 @@ diff -urNp linux-2.6.29/fs/proc/base.c linux-2.6.29/fs/proc/base.c
  		}
  	}
  	rcu_read_unlock();
-@@ -1521,11 +1567,20 @@
+@@ -1517,11 +1563,20 @@ static int pid_revalidate(struct dentry 
  
  	if (task) {
  		if ((inode->i_mode == (S_IFDIR|S_IRUGO|S_IXUGO)) ||
@@ -19512,7 +19512,7 @@ diff -urNp linux-2.6.29/fs/proc/base.c linux-2.6.29/fs/proc/base.c
  			rcu_read_unlock();
  		} else {
  			inode->i_uid = 0;
-@@ -1898,12 +1953,22 @@
+@@ -1894,12 +1949,22 @@ static const struct file_operations proc
  static int proc_fd_permission(struct inode *inode, int mask)
  {
  	int rv;
@@ -19537,9 +19537,9 @@ diff -urNp linux-2.6.29/fs/proc/base.c linux-2.6.29/fs/proc/base.c
  	return rv;
  }
  
-@@ -2019,6 +2084,9 @@
- 		!memcmp(dentry->d_name.name, "ninfo", 5)))
- 		goto out;
+@@ -2008,6 +2073,9 @@ static struct dentry *proc_pident_lookup
+ 	if (!task)
+ 		goto out_no_task;
  
 +	if (gr_pid_is_chrooted(task) || gr_check_hidden_task(task))
 +		goto out;
@@ -19547,7 +19547,7 @@ diff -urNp linux-2.6.29/fs/proc/base.c linux-2.6.29/fs/proc/base.c
  	/*
  	 * Yes, it does not scale. And it should not. Don't add
  	 * new entries into /proc/<tgid>/ without very good reasons.
-@@ -2063,6 +2131,9 @@
+@@ -2052,6 +2120,9 @@ static int proc_pident_readdir(struct fi
  	if (!task)
  		goto out_no_task;
  
@@ -19557,7 +19557,7 @@ diff -urNp linux-2.6.29/fs/proc/base.c linux-2.6.29/fs/proc/base.c
  	ret = 0;
  	i = filp->f_pos;
  	switch (i) {
-@@ -2423,6 +2494,9 @@
+@@ -2412,6 +2483,9 @@ static struct dentry *proc_base_lookup(s
  	if (p > last)
  		goto out;
  
@@ -19567,7 +19567,7 @@ diff -urNp linux-2.6.29/fs/proc/base.c linux-2.6.29/fs/proc/base.c
  	error = proc_base_instantiate(dir, dentry, task, p);
  
  out:
-@@ -2512,7 +2586,7 @@
+@@ -2498,7 +2572,7 @@ static const struct pid_entry tgid_base_
  #ifdef CONFIG_SCHED_DEBUG
  	REG("sched",      S_IRUGO|S_IWUSR, proc_pid_sched_operations),
  #endif
@@ -19576,7 +19576,17 @@ diff -urNp linux-2.6.29/fs/proc/base.c linux-2.6.29/fs/proc/base.c
  	INF("syscall",    S_IRUSR, proc_pid_syscall),
  #endif
  	INF("cmdline",    S_IRUGO, proc_pid_cmdline),
-@@ -2702,7 +2776,14 @@
+@@ -2556,6 +2630,9 @@ static const struct pid_entry tgid_base_
+ #ifdef CONFIG_TASK_IO_ACCOUNTING
+ 	INF("io",	S_IRUGO, proc_tgid_io_accounting),
+ #endif
++#ifdef CONFIG_GRKERNSEC_PROC_IPADDR
++	INF("ipaddr",	  S_IRUSR, proc_pid_ipaddr),
++#endif
+ };
+ 
+ static int proc_tgid_base_readdir(struct file * filp,
+@@ -2685,7 +2762,14 @@ static struct dentry *proc_pid_instantia
  	if (!inode)
  		goto out;
  
@@ -19591,22 +19601,22 @@ diff -urNp linux-2.6.29/fs/proc/base.c linux-2.6.29/fs/proc/base.c
  	inode->i_op = &proc_tgid_base_inode_operations;
  	inode->i_fop = &proc_tgid_base_operations;
  	inode->i_flags|=S_IMMUTABLE;
-@@ -2743,8 +2824,11 @@
- 	rcu_read_unlock();
+@@ -2727,7 +2811,11 @@ struct dentry *proc_pid_lookup(struct in
  	if (!task)
  		goto out;
+ 
 +	if (gr_check_hidden_task(task))
 +		goto out_put_task;
- 
++
  	result = proc_pid_instantiate(dir, dentry, task, NULL);
 +out_put_task:
  	put_task_struct(task);
  out:
  	return result;
-@@ -2809,6 +2893,10 @@
+@@ -2792,6 +2880,10 @@ int proc_pid_readdir(struct file * filp,
  {
  	unsigned int nr = filp->f_pos - FIRST_PROCESS_ENTRY;
- 	struct task_struct *reaper = get_proc_task_real(filp->f_path.dentry->d_inode);
+ 	struct task_struct *reaper = get_proc_task(filp->f_path.dentry->d_inode);
 +#if defined(CONFIG_GRKERNSEC_PROC_USER) || defined(CONFIG_GRKERNSEC_PROC_USERGROUP)
 +	const struct cred *tmpcred = current_cred();
 +	const struct cred *itercred;
@@ -19614,7 +19624,7 @@ diff -urNp linux-2.6.29/fs/proc/base.c linux-2.6.29/fs/proc/base.c
  	struct tgid_iter iter;
  	struct pid_namespace *ns;
  
-@@ -2827,6 +2915,20 @@
+@@ -2810,6 +2902,20 @@ int proc_pid_readdir(struct file * filp,
  	for (iter = next_tgid(ns, iter);
  	     iter.task;
  	     iter.tgid += 1, iter = next_tgid(ns, iter)) {
@@ -19623,31 +19633,27 @@ diff -urNp linux-2.6.29/fs/proc/base.c linux-2.6.29/fs/proc/base.c
 +#endif
 +		if (gr_pid_is_chrooted(iter.task) || gr_check_hidden_task(iter.task)
 +#if defined(CONFIG_GRKERNSEC_PROC_USER) || defined(CONFIG_GRKERNSEC_PROC_USERGROUP)
-+				|| (tmpcred->uid && (itercred->uid != tmpcred->uid)
++		    || (tmpcred->uid && (itercred->uid != tmpcred->uid)
 +#ifdef CONFIG_GRKERNSEC_PROC_USERGROUP
-+					&& !in_group_p(CONFIG_GRKERNSEC_PROC_GID)
++			&& !in_group_p(CONFIG_GRKERNSEC_PROC_GID)
 +#endif
-+				   )
++			)
 +#endif
-+		   )
++		)
 +			continue;
 +
  		filp->f_pos = iter.tgid + TGID_OFFSET;
- 		if (!vx_proc_task_visible(iter.task))
- 			continue;
-@@ -2910,6 +3012,12 @@
- #ifdef CONFIG_TASK_IO_ACCOUNTING
- 	INF("io",	S_IRUGO, proc_tid_io_accounting),
+ 		if (proc_pid_fill_cache(filp, dirent, filldir, iter) < 0) {
+ 			put_task_struct(iter.task);
+@@ -2837,7 +2943,7 @@ static const struct pid_entry tid_base_s
+ #ifdef CONFIG_SCHED_DEBUG
+ 	REG("sched",     S_IRUGO|S_IWUSR, proc_pid_sched_operations),
  #endif
-+#ifdef CONFIG_GRKERNSEC_PROC_IPADDR
-+	INF("ipaddr",	  S_IRUSR, proc_pid_ipaddr),
-+#endif
-+#ifdef CONFIG_GRKERNSEC_PROC_IPADDR
-+	INF("ipaddr",	  S_IRUSR, proc_pid_ipaddr),
-+#endif
- };
- 
- static int proc_tid_base_readdir(struct file * filp,
+-#ifdef CONFIG_HAVE_ARCH_TRACEHOOK
++#if defined(CONFIG_HAVE_ARCH_TRACEHOOK) && !defined(CONFIG_GRKERNSEC_PROC_MEMMAP)
+ 	INF("syscall",   S_IRUSR, proc_pid_syscall),
+ #endif
+ 	INF("cmdline",   S_IRUGO, proc_pid_cmdline),
 diff -urNp linux-2.6.29/fs/proc/cmdline.c linux-2.6.29/fs/proc/cmdline.c
 --- linux-2.6.29/fs/proc/cmdline.c	2009-03-23 19:12:14.000000000 -0400
 +++ linux-2.6.29/fs/proc/cmdline.c	2009-03-28 14:26:20.000000000 -0400
@@ -19696,16 +19702,16 @@ diff -urNp linux-2.6.29/fs/proc/inode.c linux-2.6.29/fs/proc/inode.c
 diff -urNp linux-2.6.29/fs/proc/internal.h linux-2.6.29/fs/proc/internal.h
 --- linux-2.6.29/fs/proc/internal.h	2009-03-23 19:12:14.000000000 -0400
 +++ linux-2.6.29/fs/proc/internal.h	2009-03-28 14:26:20.000000000 -0400
-@@ -54,6 +54,9 @@
+@@ -51,6 +51,9 @@ extern int proc_pid_status(struct seq_fi
  				struct pid *pid, struct task_struct *task);
- extern int proc_pid_nsproxy(struct seq_file *m, struct pid_namespace *ns,
+ extern int proc_pid_statm(struct seq_file *m, struct pid_namespace *ns,
  				struct pid *pid, struct task_struct *task);
 +#ifdef CONFIG_GRKERNSEC_PROC_IPADDR
 +extern int proc_pid_ipaddr(struct task_struct *task, char *buffer);
 +#endif
- 
  extern loff_t mem_lseek(struct file *file, loff_t offset, int orig);
  
+ extern const struct file_operations proc_maps_operations;
 diff -urNp linux-2.6.29/fs/proc/Kconfig linux-2.6.29/fs/proc/Kconfig
 --- linux-2.6.29/fs/proc/Kconfig	2009-03-23 19:12:14.000000000 -0400
 +++ linux-2.6.29/fs/proc/Kconfig	2009-03-28 14:26:20.000000000 -0400
@@ -32088,10 +32094,10 @@ diff -urNp linux-2.6.29/kernel/fork.c linux-2.6.29/kernel/fork.c
  	}
  }
  
-@@ -1051,6 +1051,9 @@
+@@ -990,6 +1018,9 @@ static struct task_struct *copy_process(
+ 	DEBUG_LOCKS_WARN_ON(!p->softirqs_enabled);
+ #endif
  	retval = -EAGAIN;
- 	if (!vx_nproc_avail(1))
- 		goto bad_fork_cleanup_vm;
 +
 +	gr_learn_resource(p, RLIMIT_NPROC, atomic_read(&p->real_cred->user->processes), 0);
 +
@@ -33084,13 +33090,14 @@ diff -urNp linux-2.6.29/kernel/sched.c linux-2.6.29/kernel/sched.c
  	return (nice_rlim <= p->signal->rlim[RLIMIT_NICE].rlim_cur ||
  		capable(CAP_SYS_NICE));
  }
-@@ -5194,7 +5194,7 @@
+@@ -5151,7 +5153,8 @@ SYSCALL_DEFINE1(nice, int, increment)
  	if (nice > 19)
  		nice = 19;
  
 -	if (increment < 0 && !can_nice(current, nice))
-+	if (increment < 0 && (!can_nice(current, nice) || gr_handle_chroot_nice()))
- 		return vx_flags(VXF_IGNEG_NICE, 0) ? 0 : -EPERM;
++	if (increment < 0 && (!can_nice(current, nice) ||
++			      gr_handle_chroot_nice()))
+ 		return -EPERM;
  
  	retval = security_task_setnice(current, nice);
 @@ -5293,6 +5296,8 @@ recheck:
@@ -33133,10 +33140,10 @@ diff -urNp linux-2.6.29/kernel/signal.c linux-2.6.29/kernel/signal.c
  	if (override_rlimit ||
  	    atomic_read(&user->sigpending) <=
  			t->signal->rlim[RLIMIT_SIGPENDING].rlim_cur)
-@@ -636,6 +636,9 @@
- 		return error;
+@@ -611,6 +614,9 @@ static int check_kill_permission(int sig
+ 		}
  	}
- skip:
+ 
 +	if (gr_handle_signal(t, sig))
 +		return -EPERM;
 +
@@ -33466,10 +33473,10 @@ diff -urNp linux-2.6.29/kernel/time/tick-broadcast.c linux-2.6.29/kernel/time/ti
 diff -urNp linux-2.6.29/kernel/time.c linux-2.6.29/kernel/time.c
 --- linux-2.6.29/kernel/time.c	2009-03-23 19:12:14.000000000 -0400
 +++ linux-2.6.29/kernel/time.c	2009-03-28 14:26:20.000000000 -0400
-@@ -95,6 +95,9 @@
+@@ -94,6 +94,9 @@ SYSCALL_DEFINE1(stime, time_t __user *, 
  		return err;
  
- 	vx_settimeofday(&tv);
+ 	do_settimeofday(&tv);
 +
 +	gr_log_timechange();
 +
@@ -34281,14 +34288,14 @@ diff -urNp linux-2.6.29/mm/mlock.c linux-2.6.29/mm/mlock.c
  		newflags = vma->vm_flags | VM_LOCKED;
  		if (!(flags & MCL_CURRENT))
  			newflags &= ~VM_LOCKED;
-@@ -598,6 +598,7 @@
+@@ -575,6 +594,7 @@ SYSCALL_DEFINE1(mlockall, int, flags)
  	lock_limit >>= PAGE_SHIFT;
  
  	ret = -ENOMEM;
 +	gr_learn_resource(current, RLIMIT_MEMLOCK, current->mm->total_vm, 1);
- 	if (!vx_vmlocked_avail(current->mm, current->mm->total_vm))
- 		goto out;
  	if (!(flags & MCL_CURRENT) || (current->mm->total_vm <= lock_limit) ||
+ 	    capable(CAP_IPC_LOCK))
+ 		ret = do_mlockall(flags);
 diff -urNp linux-2.6.29/mm/mmap.c linux-2.6.29/mm/mmap.c
 --- linux-2.6.29/mm/mmap.c	2009-03-23 19:12:14.000000000 -0400
 +++ linux-2.6.29/mm/mmap.c	2009-03-28 14:26:20.000000000 -0400
@@ -34309,7 +34316,7 @@ diff -urNp linux-2.6.29/mm/mmap.c linux-2.6.29/mm/mmap.c
  static void unmap_region(struct mm_struct *mm,
  		struct vm_area_struct *vma, struct vm_area_struct *prev,
  		unsigned long start, unsigned long end);
-@@ -68,16 +78,25 @@
+@@ -68,16 +78,25 @@ static void unmap_region(struct mm_struc
   *		x: (no) no	x: (no) yes	x: (no) yes	x: (yes) yes
   *
   */
@@ -34337,7 +34344,7 @@ diff -urNp linux-2.6.29/mm/mmap.c linux-2.6.29/mm/mmap.c
  }
  EXPORT_SYMBOL(vm_get_page_prot);
  
-@@ -233,6 +252,7 @@
+@@ -233,6 +252,7 @@ static struct vm_area_struct *remove_vma
  	struct vm_area_struct *next = vma->vm_next;
  
  	might_sleep();
@@ -34345,7 +34352,7 @@ diff -urNp linux-2.6.29/mm/mmap.c linux-2.6.29/mm/mmap.c
  	if (vma->vm_ops && vma->vm_ops->close)
  		vma->vm_ops->close(vma);
  	if (vma->vm_file) {
-@@ -269,6 +289,7 @@
+@@ -269,6 +289,7 @@ SYSCALL_DEFINE1(brk, unsigned long, brk)
  	 * not page aligned -Ram Gupta
  	 */
  	rlim = current->signal->rlim[RLIMIT_DATA].rlim_cur;
@@ -34353,7 +34360,7 @@ diff -urNp linux-2.6.29/mm/mmap.c linux-2.6.29/mm/mmap.c
  	if (rlim < RLIM_INFINITY && (brk - mm->start_brk) +
  			(mm->end_data - mm->start_data) > rlim)
  		goto out;
-@@ -698,6 +719,12 @@
+@@ -698,6 +719,12 @@ static int
  can_vma_merge_before(struct vm_area_struct *vma, unsigned long vm_flags,
  	struct anon_vma *anon_vma, struct file *file, pgoff_t vm_pgoff)
  {
@@ -34366,7 +34373,7 @@ diff -urNp linux-2.6.29/mm/mmap.c linux-2.6.29/mm/mmap.c
  	if (is_mergeable_vma(vma, file, vm_flags) &&
  	    is_mergeable_anon_vma(anon_vma, vma->anon_vma)) {
  		if (vma->vm_pgoff == vm_pgoff)
-@@ -717,6 +744,12 @@
+@@ -717,6 +744,12 @@ static int
  can_vma_merge_after(struct vm_area_struct *vma, unsigned long vm_flags,
  	struct anon_vma *anon_vma, struct file *file, pgoff_t vm_pgoff)
  {
@@ -34379,7 +34386,7 @@ diff -urNp linux-2.6.29/mm/mmap.c linux-2.6.29/mm/mmap.c
  	if (is_mergeable_vma(vma, file, vm_flags) &&
  	    is_mergeable_anon_vma(anon_vma, vma->anon_vma)) {
  		pgoff_t vm_pglen;
-@@ -759,12 +792,19 @@
+@@ -759,12 +792,19 @@ can_vma_merge_after(struct vm_area_struc
  struct vm_area_struct *vma_merge(struct mm_struct *mm,
  			struct vm_area_struct *prev, unsigned long addr,
  			unsigned long end, unsigned long vm_flags,
@@ -34400,7 +34407,7 @@ diff -urNp linux-2.6.29/mm/mmap.c linux-2.6.29/mm/mmap.c
  	/*
  	 * We later require that vma->vm_flags == vm_flags,
  	 * so this tests vma->vm_flags & VM_SPECIAL, too.
-@@ -780,6 +820,15 @@
+@@ -780,6 +820,15 @@ struct vm_area_struct *vma_merge(struct 
  	if (next && next->vm_end == end)		/* cases 6, 7, 8 */
  		next = next->vm_next;
  
@@ -34416,7 +34423,7 @@ diff -urNp linux-2.6.29/mm/mmap.c linux-2.6.29/mm/mmap.c
  	/*
  	 * Can it merge with the predecessor?
  	 */
-@@ -799,9 +848,24 @@
+@@ -799,9 +848,24 @@ struct vm_area_struct *vma_merge(struct 
  							/* cases 1, 6 */
  			vma_adjust(prev, prev->vm_start,
  				next->vm_end, prev->vm_pgoff, NULL);
@@ -34442,7 +34449,7 @@ diff -urNp linux-2.6.29/mm/mmap.c linux-2.6.29/mm/mmap.c
  		return prev;
  	}
  
-@@ -812,12 +876,27 @@
+@@ -812,12 +876,27 @@ struct vm_area_struct *vma_merge(struct 
   			mpol_equal(policy, vma_policy(next)) &&
  			can_vma_merge_before(next, vm_flags,
  					anon_vma, file, pgoff+pglen)) {
@@ -34472,7 +34479,7 @@ diff -urNp linux-2.6.29/mm/mmap.c linux-2.6.29/mm/mmap.c
  		return area;
  	}
  
-@@ -892,14 +971,11 @@
+@@ -892,14 +971,11 @@ none:
  void vm_stat_account(struct mm_struct *mm, unsigned long flags,
  						struct file *file, long pages)
  {
@@ -34488,7 +34495,7 @@ diff -urNp linux-2.6.29/mm/mmap.c linux-2.6.29/mm/mmap.c
  		mm->stack_vm += pages;
  	if (flags & (VM_RESERVED|VM_IO))
  		mm->reserved_vm += pages;
-@@ -926,7 +1002,7 @@
+@@ -926,7 +1002,7 @@ unsigned long do_mmap_pgoff(struct file 
  	 * (the exception is when the underlying filesystem is noexec
  	 *  mounted, in which case we dont add PROT_EXEC.)
  	 */
@@ -34497,7 +34504,7 @@ diff -urNp linux-2.6.29/mm/mmap.c linux-2.6.29/mm/mmap.c
  		if (!(file && (file->f_path.mnt->mnt_flags & MNT_NOEXEC)))
  			prot |= PROT_EXEC;
  
-@@ -936,15 +1012,15 @@
+@@ -936,15 +1012,15 @@ unsigned long do_mmap_pgoff(struct file 
  	if (!(flags & MAP_FIXED))
  		addr = round_hint_to_min(addr);
  
@@ -34517,7 +34524,7 @@ diff -urNp linux-2.6.29/mm/mmap.c linux-2.6.29/mm/mmap.c
  	/* offset overflow? */
  	if ((pgoff + (len >> PAGE_SHIFT)) < pgoff)
                 return -EOVERFLOW;
-@@ -956,7 +1032,7 @@
+@@ -956,7 +1032,7 @@ unsigned long do_mmap_pgoff(struct file 
  	/* Obtain the address to map to. we verify (or select) it and ensure
  	 * that it represents a valid section of the address space.
  	 */
@@ -34526,7 +34533,7 @@ diff -urNp linux-2.6.29/mm/mmap.c linux-2.6.29/mm/mmap.c
  	if (addr & ~PAGE_MASK)
  		return addr;
  
-@@ -967,6 +1043,26 @@
+@@ -967,6 +1043,26 @@ unsigned long do_mmap_pgoff(struct file 
  	vm_flags = calc_vm_prot_bits(prot) | calc_vm_flag_bits(flags) |
  			mm->def_flags | VM_MAYREAD | VM_MAYWRITE | VM_MAYEXEC;
  
@@ -34553,7 +34560,7 @@ diff -urNp linux-2.6.29/mm/mmap.c linux-2.6.29/mm/mmap.c
  	if (flags & MAP_LOCKED) {
  		if (!can_do_mlock())
  			return -EPERM;
-@@ -980,6 +1076,7 @@
+@@ -980,6 +1076,7 @@ unsigned long do_mmap_pgoff(struct file 
  		locked += mm->locked_vm;
  		lock_limit = current->signal->rlim[RLIMIT_MEMLOCK].rlim_cur;
  		lock_limit >>= PAGE_SHIFT;
@@ -34561,7 +34568,7 @@ diff -urNp linux-2.6.29/mm/mmap.c linux-2.6.29/mm/mmap.c
  		if (locked > lock_limit && !capable(CAP_IPC_LOCK))
  			return -EAGAIN;
  	}
-@@ -1050,6 +1147,9 @@
+@@ -1050,6 +1147,9 @@ unsigned long do_mmap_pgoff(struct file 
  	if (error)
  		return error;
  
@@ -34571,7 +34578,7 @@ diff -urNp linux-2.6.29/mm/mmap.c linux-2.6.29/mm/mmap.c
  	return mmap_region(file, addr, len, flags, vm_flags, pgoff);
  }
  EXPORT_SYMBOL(do_mmap_pgoff);
-@@ -1062,10 +1162,10 @@
+@@ -1062,10 +1162,10 @@ EXPORT_SYMBOL(do_mmap_pgoff);
   */
  int vma_wants_writenotify(struct vm_area_struct *vma)
  {
@@ -34584,7 +34591,7 @@ diff -urNp linux-2.6.29/mm/mmap.c linux-2.6.29/mm/mmap.c
  		return 0;
  
  	/* The backer wishes to know when pages are first written to? */
-@@ -1114,14 +1214,24 @@
+@@ -1114,14 +1214,24 @@ unsigned long mmap_region(struct file *f
  	unsigned long charged = 0;
  	struct inode *inode =  file ? file->f_path.dentry->d_inode : NULL;
  
@@ -34611,7 +34618,7 @@ diff -urNp linux-2.6.29/mm/mmap.c linux-2.6.29/mm/mmap.c
  	}
  
  	/* Check against address space limit. */
-@@ -1170,6 +1280,16 @@
+@@ -1170,6 +1280,16 @@ munmap_back:
  		goto unacct_error;
  	}
  
@@ -34628,7 +34635,7 @@ diff -urNp linux-2.6.29/mm/mmap.c linux-2.6.29/mm/mmap.c
  	vma->vm_mm = mm;
  	vma->vm_start = addr;
  	vma->vm_end = addr + len;
-@@ -1192,6 +1312,19 @@
+@@ -1192,6 +1312,19 @@ munmap_back:
  		error = file->f_op->mmap(file, vma);
  		if (error)
  			goto unmap_and_free_vma;
@@ -34648,7 +34655,7 @@ diff -urNp linux-2.6.29/mm/mmap.c linux-2.6.29/mm/mmap.c
  		if (vm_flags & VM_EXECUTABLE)
  			added_exe_file_vma(mm);
  	} else if (vm_flags & VM_SHARED) {
-@@ -1215,6 +1348,12 @@
+@@ -1215,12 +1348,18 @@ munmap_back:
  	vma_link(mm, vma, prev, rb_link, rb_parent);
  	file = vma->vm_file;
  
@@ -34657,19 +34664,17 @@ diff -urNp linux-2.6.29/mm/mmap.c linux-2.6.29/mm/mmap.c
 +		pax_mirror_vma(vma_m, vma);
 +#endif
 +
-+
  	/* Once vma denies write, undo our temporary denial count */
  	if (correct_wcount)
  		atomic_inc(&inode->i_writecount);
-@@ -1222,6 +1361,7 @@
- 	// mm->total_vm += len >> PAGE_SHIFT;
- 	vx_vmpages_add(mm, len >> PAGE_SHIFT);
+ out:
+ 	mm->total_vm += len >> PAGE_SHIFT;
  	vm_stat_account(mm, vm_flags, file, len >> PAGE_SHIFT);
 +	track_exec_limit(mm, addr, addr + len, vm_flags);
  	if (vm_flags & VM_LOCKED) {
  		/*
  		 * makes pages present; downgrades, drops, reacquires mmap_sem
-@@ -1245,6 +1385,12 @@
+@@ -1243,6 +1382,12 @@ unmap_and_free_vma:
  	unmap_region(mm, vma, prev, vma->vm_start, vma->vm_end);
  	charged = 0;
  free_vma:
@@ -34682,7 +34687,7 @@ diff -urNp linux-2.6.29/mm/mmap.c linux-2.6.29/mm/mmap.c
  	kmem_cache_free(vm_area_cachep, vma);
  unacct_error:
  	if (charged)
-@@ -1278,6 +1424,10 @@
+@@ -1276,6 +1421,10 @@ arch_get_unmapped_area(struct file *filp
  	if (flags & MAP_FIXED)
  		return addr;
  
@@ -34693,7 +34698,7 @@ diff -urNp linux-2.6.29/mm/mmap.c linux-2.6.29/mm/mmap.c
  	if (addr) {
  		addr = PAGE_ALIGN(addr);
  		vma = find_vma(mm, addr);
-@@ -1286,10 +1436,10 @@
+@@ -1284,10 +1433,10 @@ arch_get_unmapped_area(struct file *filp
  			return addr;
  	}
  	if (len > mm->cached_hole_size) {
@@ -34707,7 +34712,7 @@ diff -urNp linux-2.6.29/mm/mmap.c linux-2.6.29/mm/mmap.c
  	}
  
  full_search:
-@@ -1300,9 +1450,8 @@
+@@ -1298,9 +1447,8 @@ full_search:
  			 * Start a new search - just in case we missed
  			 * some holes.
  			 */
@@ -34719,7 +34724,7 @@ diff -urNp linux-2.6.29/mm/mmap.c linux-2.6.29/mm/mmap.c
  				mm->cached_hole_size = 0;
  				goto full_search;
  			}
-@@ -1324,10 +1473,16 @@
+@@ -1322,10 +1470,16 @@ full_search:
  
  void arch_unmap_area(struct mm_struct *mm, unsigned long addr)
  {
@@ -34737,7 +34742,7 @@ diff -urNp linux-2.6.29/mm/mmap.c linux-2.6.29/mm/mmap.c
  		mm->free_area_cache = addr;
  		mm->cached_hole_size = ~0UL;
  	}
-@@ -1345,7 +1500,7 @@
+@@ -1343,7 +1497,7 @@ arch_get_unmapped_area_topdown(struct fi
  {
  	struct vm_area_struct *vma;
  	struct mm_struct *mm = current->mm;
@@ -34746,7 +34751,7 @@ diff -urNp linux-2.6.29/mm/mmap.c linux-2.6.29/mm/mmap.c
  
  	/* requested length too big for entire address space */
  	if (len > TASK_SIZE)
-@@ -1354,6 +1509,10 @@
+@@ -1352,6 +1506,10 @@ arch_get_unmapped_area_topdown(struct fi
  	if (flags & MAP_FIXED)
  		return addr;
  
@@ -34757,7 +34762,7 @@ diff -urNp linux-2.6.29/mm/mmap.c linux-2.6.29/mm/mmap.c
  	/* requesting a specific address */
  	if (addr) {
  		addr = PAGE_ALIGN(addr);
-@@ -1411,13 +1570,21 @@
+@@ -1409,13 +1567,21 @@ bottomup:
  	 * can happen with large stack limits and large mmap()
  	 * allocations.
  	 */
@@ -34781,7 +34786,7 @@ diff -urNp linux-2.6.29/mm/mmap.c linux-2.6.29/mm/mmap.c
  	mm->cached_hole_size = ~0UL;
  
  	return addr;
-@@ -1426,6 +1593,12 @@
+@@ -1424,6 +1590,12 @@ bottomup:
  
  void arch_unmap_area_topdown(struct mm_struct *mm, unsigned long addr)
  {
@@ -34794,7 +34799,7 @@ diff -urNp linux-2.6.29/mm/mmap.c linux-2.6.29/mm/mmap.c
  	/*
  	 * Is this a new hole at the highest possible address?
  	 */
-@@ -1433,8 +1606,10 @@
+@@ -1431,8 +1603,10 @@ void arch_unmap_area_topdown(struct mm_s
  		mm->free_area_cache = addr;
  
  	/* dont allow allocations above current base */
@@ -34806,7 +34811,7 @@ diff -urNp linux-2.6.29/mm/mmap.c linux-2.6.29/mm/mmap.c
  }
  
  unsigned long
-@@ -1534,6 +1709,27 @@
+@@ -1532,6 +1706,27 @@ out:
  	return prev ? prev->vm_next : vma;
  }
  
@@ -34834,7 +34839,7 @@ diff -urNp linux-2.6.29/mm/mmap.c linux-2.6.29/mm/mmap.c
  /*
   * Verify that the stack growth is acceptable and
   * update accounting. This is shared with both the
-@@ -1550,6 +1746,7 @@
+@@ -1548,6 +1743,7 @@ static int acct_stack_growth(struct vm_a
  		return -ENOMEM;
  
  	/* Stack limit test */
@@ -34842,7 +34847,7 @@ diff -urNp linux-2.6.29/mm/mmap.c linux-2.6.29/mm/mmap.c
  	if (size > rlim[RLIMIT_STACK].rlim_cur)
  		return -ENOMEM;
  
-@@ -1559,6 +1756,7 @@
+@@ -1557,6 +1753,7 @@ static int acct_stack_growth(struct vm_a
  		unsigned long limit;
  		locked = mm->locked_vm + grow;
  		limit = rlim[RLIMIT_MEMLOCK].rlim_cur >> PAGE_SHIFT;
@@ -34850,7 +34855,7 @@ diff -urNp linux-2.6.29/mm/mmap.c linux-2.6.29/mm/mmap.c
  		if (locked > limit && !capable(CAP_IPC_LOCK))
  			return -ENOMEM;
  	}
-@@ -1573,7 +1771,7 @@
+@@ -1571,7 +1768,7 @@ static int acct_stack_growth(struct vm_a
  	 * Overcommit..  This must be the final test, as it will
  	 * update security statistics.
  	 */
@@ -34859,7 +34864,7 @@ diff -urNp linux-2.6.29/mm/mmap.c linux-2.6.29/mm/mmap.c
  		return -ENOMEM;
  
  	/* Ok, everything looks good - let it rip */
-@@ -1594,35 +1792,40 @@
+@@ -1592,35 +1789,40 @@ static
  #endif
  int expand_upwards(struct vm_area_struct *vma, unsigned long address)
  {
@@ -34910,7 +34915,7 @@ diff -urNp linux-2.6.29/mm/mmap.c linux-2.6.29/mm/mmap.c
  		unsigned long size, grow;
  
  		size = address - vma->vm_start;
-@@ -1632,6 +1835,8 @@
+@@ -1630,6 +1832,8 @@ int expand_upwards(struct vm_area_struct
  		if (!error)
  			vma->vm_end = address;
  	}
@@ -34919,7 +34924,7 @@ diff -urNp linux-2.6.29/mm/mmap.c linux-2.6.29/mm/mmap.c
  	anon_vma_unlock(vma);
  	return error;
  }
-@@ -1643,7 +1848,8 @@
+@@ -1641,7 +1845,8 @@ int expand_upwards(struct vm_area_struct
  static int expand_downwards(struct vm_area_struct *vma,
  				   unsigned long address)
  {
@@ -34929,7 +34934,7 @@ diff -urNp linux-2.6.29/mm/mmap.c linux-2.6.29/mm/mmap.c
  
  	/*
  	 * We must make sure the anon_vma is allocated
-@@ -1657,6 +1863,15 @@
+@@ -1655,6 +1860,15 @@ static int expand_downwards(struct vm_ar
  	if (error)
  		return error;
  
@@ -34945,7 +34950,7 @@ diff -urNp linux-2.6.29/mm/mmap.c linux-2.6.29/mm/mmap.c
  	anon_vma_lock(vma);
  
  	/*
-@@ -1666,9 +1881,15 @@
+@@ -1664,9 +1878,15 @@ static int expand_downwards(struct vm_ar
  	 */
  
  	/* Somebody else might have raced and expanded it already */
@@ -34962,7 +34967,7 @@ diff -urNp linux-2.6.29/mm/mmap.c linux-2.6.29/mm/mmap.c
  		size = vma->vm_end - address;
  		grow = (vma->vm_start - address) >> PAGE_SHIFT;
  
-@@ -1676,9 +1897,20 @@
+@@ -1674,9 +1894,20 @@ static int expand_downwards(struct vm_ar
  		if (!error) {
  			vma->vm_start = address;
  			vma->vm_pgoff -= grow;
@@ -34983,7 +34988,7 @@ diff -urNp linux-2.6.29/mm/mmap.c linux-2.6.29/mm/mmap.c
  	return error;
  }
  
-@@ -1754,6 +1986,13 @@
+@@ -1752,6 +1983,13 @@ static void remove_vma_list(struct mm_st
  	do {
  		long nrpages = vma_pages(vma);
  
@@ -34994,10 +34999,10 @@ diff -urNp linux-2.6.29/mm/mmap.c linux-2.6.29/mm/mmap.c
 +		}
 +#endif
 +
- 		// mm->total_vm -= nrpages;
- 		vx_vmpages_sub(mm, nrpages);
+ 		mm->total_vm -= nrpages;
  		vm_stat_account(mm, vma->vm_flags, vma->vm_file, -nrpages);
-@@ -1799,6 +2038,16 @@
+ 		vma = remove_vma(vma);
+@@ -1796,6 +2034,16 @@ detach_vmas_to_be_unmapped(struct mm_str
  
  	insertion_point = (prev ? &prev->vm_next : &mm->mmap);
  	do {
@@ -35014,7 +35019,7 @@ diff -urNp linux-2.6.29/mm/mmap.c linux-2.6.29/mm/mmap.c
  		rb_erase(&vma->vm_rb, &mm->mm_rb);
  		mm->map_count--;
  		tail_vma = vma;
-@@ -1818,6 +2067,108 @@
+@@ -1815,6 +2063,108 @@ detach_vmas_to_be_unmapped(struct mm_str
   * Split a vma into two pieces at address 'addr', a new vma is allocated
   * either for the first part or the tail.
   */
@@ -35123,7 +35128,7 @@ diff -urNp linux-2.6.29/mm/mmap.c linux-2.6.29/mm/mmap.c
  int split_vma(struct mm_struct * mm, struct vm_area_struct * vma,
  	      unsigned long addr, int new_below)
  {
-@@ -1869,17 +2220,37 @@
+@@ -1866,17 +2216,37 @@ int split_vma(struct mm_struct * mm, str
  
  	return 0;
  }
@@ -35161,7 +35166,7 @@ diff -urNp linux-2.6.29/mm/mmap.c linux-2.6.29/mm/mmap.c
  	if ((start & ~PAGE_MASK) || start > TASK_SIZE || len > TASK_SIZE-start)
  		return -EINVAL;
  
-@@ -1944,6 +2315,8 @@
+@@ -1940,6 +2310,8 @@ int do_munmap(struct mm_struct *mm, unsi
  	/* Fix up all other VM information */
  	remove_vma_list(mm, vma);
  
@@ -35170,7 +35175,7 @@ diff -urNp linux-2.6.29/mm/mmap.c linux-2.6.29/mm/mmap.c
  	return 0;
  }
  
-@@ -1956,22 +2329,18 @@
+@@ -1952,22 +2324,18 @@ SYSCALL_DEFINE2(munmap, unsigned long, a
  
  	profile_munmap(addr);
  
@@ -35199,7 +35204,7 @@ diff -urNp linux-2.6.29/mm/mmap.c linux-2.6.29/mm/mmap.c
  /*
   *  this is really a simplified "do_mmap".  it only handles
   *  anonymous maps.  eventually we may be able to do some
-@@ -1985,6 +2354,11 @@
+@@ -1981,6 +2349,11 @@ unsigned long do_brk(unsigned long addr,
  	struct rb_node ** rb_link, * rb_parent;
  	pgoff_t pgoff = addr >> PAGE_SHIFT;
  	int error;
@@ -35211,7 +35216,7 @@ diff -urNp linux-2.6.29/mm/mmap.c linux-2.6.29/mm/mmap.c
  
  	len = PAGE_ALIGN(len);
  	if (!len)
-@@ -2002,19 +2376,34 @@
+@@ -1998,19 +2371,34 @@ unsigned long do_brk(unsigned long addr,
  
  	flags = VM_DATA_DEFAULT_FLAGS | VM_ACCOUNT | mm->def_flags;
  
@@ -35246,8 +35251,8 @@ diff -urNp linux-2.6.29/mm/mmap.c linux-2.6.29/mm/mmap.c
 +		gr_learn_resource(current, RLIMIT_MEMLOCK, locked << PAGE_SHIFT, 1);
  		if (locked > lock_limit && !capable(CAP_IPC_LOCK))
  			return -EAGAIN;
- 		if (!vx_vmlocked_avail(mm, len >> PAGE_SHIFT))
-@@ -2030,23 +2419,23 @@
+ 	}
+@@ -2024,22 +2412,22 @@ unsigned long do_brk(unsigned long addr,
  	/*
  	 * Clear old maps.  this also does some error checking for us
  	 */
@@ -35269,14 +35274,12 @@ diff -urNp linux-2.6.29/mm/mmap.c linux-2.6.29/mm/mmap.c
  	if (mm->map_count > sysctl_max_map_count)
  		return -ENOMEM;
  
--	if (security_vm_enough_memory(len >> PAGE_SHIFT) ||
--		!vx_vmpages_avail(mm, len >> PAGE_SHIFT))
-+	if (security_vm_enough_memory(charged) ||
-+		!vx_vmpages_avail(mm, charged))
+-	if (security_vm_enough_memory(len >> PAGE_SHIFT))
++	if (security_vm_enough_memory(charged))
  		return -ENOMEM;
  
  	/* Can we just expand an old private anonymous mapping? */
-@@ -2060,10 +2449,21 @@
+@@ -2053,10 +2441,21 @@ unsigned long do_brk(unsigned long addr,
  	 */
  	vma = kmem_cache_zalloc(vm_area_cachep, GFP_KERNEL);
  	if (!vma) {
@@ -35299,27 +35302,22 @@ diff -urNp linux-2.6.29/mm/mmap.c linux-2.6.29/mm/mmap.c
  	vma->vm_mm = mm;
  	vma->vm_start = addr;
  	vma->vm_end = addr + len;
-@@ -2072,14 +2472,15 @@
+@@ -2065,11 +2464,12 @@ unsigned long do_brk(unsigned long addr,
  	vma->vm_page_prot = vm_get_page_prot(flags);
  	vma_link(mm, vma, prev, rb_link, rb_parent);
  out:
--	// mm->total_vm += len >> PAGE_SHIFT;
--	vx_vmpages_add(mm, len >> PAGE_SHIFT);
-+	// mm->total_vm += charged;
-+	vx_vmpages_add(mm, charged);
- 
+-	mm->total_vm += len >> PAGE_SHIFT;
++	mm->total_vm += charged;
  	if (flags & VM_LOCKED) {
  		if (!mlock_vma_pages_range(vma, addr, addr + len))
--			// mm->locked_vm += (len >> PAGE_SHIFT);
--			vx_vmlocked_add(mm, len >> PAGE_SHIFT);
-+			// mm->locked_vm += (charged);
-+			vx_vmlocked_add(mm, charged);
+-			mm->locked_vm += (len >> PAGE_SHIFT);
++			mm->locked_vm += charged;
  	}
 +	track_exec_limit(mm, addr, addr + len, flags);
  	return addr;
  }
  
-@@ -2130,8 +2531,10 @@
+@@ -2115,8 +2515,10 @@ void exit_mmap(struct mm_struct *mm)
  	 * Walk the list again, actually closing and freeing it,
  	 * with preemption enabled, without holding any MM locks.
  	 */
@@ -35331,7 +35329,7 @@ diff -urNp linux-2.6.29/mm/mmap.c linux-2.6.29/mm/mmap.c
  
  	BUG_ON(mm->nr_ptes > (FIRST_USER_ADDRESS+PMD_SIZE-1)>>PMD_SHIFT);
  }
-@@ -2145,6 +2548,10 @@
+@@ -2130,6 +2532,10 @@ int insert_vm_struct(struct mm_struct * 
  	struct vm_area_struct * __vma, * prev;
  	struct rb_node ** rb_link, * rb_parent;
  
@@ -35342,9 +35340,9 @@ diff -urNp linux-2.6.29/mm/mmap.c linux-2.6.29/mm/mmap.c
  	/*
  	 * The vm_pgoff of a purely anonymous vma should be irrelevant
  	 * until its first write fault, when page's anon_vma and index
-@@ -2168,7 +2575,22 @@
- 		(security_vm_enough_memory_mm(mm, vma_pages(vma)) ||
- 		!vx_vmpages_avail(mm, vma_pages(vma))))
+@@ -2152,7 +2558,22 @@ int insert_vm_struct(struct mm_struct * 
+ 	if ((vma->vm_flags & VM_ACCOUNT) &&
+ 	     security_vm_enough_memory_mm(mm, vma_pages(vma)))
  		return -ENOMEM;
 +
 +#ifdef CONFIG_PAX_SEGMEXEC
@@ -35365,7 +35363,7 @@ diff -urNp linux-2.6.29/mm/mmap.c linux-2.6.29/mm/mmap.c
  	return 0;
  }
  
-@@ -2186,6 +2608,8 @@
+@@ -2170,6 +2591,8 @@ struct vm_area_struct *copy_vma(struct v
  	struct rb_node **rb_link, *rb_parent;
  	struct mempolicy *pol;
  
@@ -35374,7 +35372,7 @@ diff -urNp linux-2.6.29/mm/mmap.c linux-2.6.29/mm/mmap.c
  	/*
  	 * If anonymous vma has not yet been faulted, update new pgoff
  	 * to match new location, to increase its chance of merging.
-@@ -2229,6 +2653,35 @@
+@@ -2213,6 +2636,35 @@ struct vm_area_struct *copy_vma(struct v
  	return new_vma;
  }
  
@@ -35410,7 +35408,7 @@ diff -urNp linux-2.6.29/mm/mmap.c linux-2.6.29/mm/mmap.c
  /*
   * Return true if the calling process may expand its vm space by the passed
   * number of pages
-@@ -2239,7 +2692,7 @@
+@@ -2223,7 +2675,7 @@ int may_expand_vm(struct mm_struct *mm, 
  	unsigned long lim;
  
  	lim = current->signal->rlim[RLIMIT_AS].rlim_cur >> PAGE_SHIFT;
@@ -35418,8 +35416,8 @@ diff -urNp linux-2.6.29/mm/mmap.c linux-2.6.29/mm/mmap.c
 +	gr_learn_resource(current, RLIMIT_AS, (cur + npages) << PAGE_SHIFT, 1);
  	if (cur + npages > lim)
  		return 0;
- 	if (!vx_vmpages_avail(mm, npages))
-@@ -2310,6 +2763,15 @@
+ 	return 1;
+@@ -2292,6 +2744,15 @@ int install_special_mapping(struct mm_st
  	vma->vm_start = addr;
  	vma->vm_end = addr + len;
  
@@ -36178,13 +36176,13 @@ diff -urNp linux-2.6.29/net/ipv4/inet_hashtables.c linux-2.6.29/net/ipv4/inet_ha
 --- linux-2.6.29/net/ipv4/inet_hashtables.c	2009-03-23 19:12:14.000000000 -0400
 +++ linux-2.6.29/net/ipv4/inet_hashtables.c	2009-03-28 14:26:20.000000000 -0400
 @@ -18,11 +18,14 @@
+ #include <linux/sched.h>
  #include <linux/slab.h>
  #include <linux/wait.h>
 +#include <linux/security.h>
  
  #include <net/inet_connection_sock.h>
  #include <net/inet_hashtables.h>
- #include <net/route.h>
  #include <net/ip.h>
  
 +extern void gr_update_task_in_ip_table(struct task_struct *task, const struct inet_sock *inet);
@@ -36736,15 +36734,15 @@ diff -urNp linux-2.6.29/security/commoncap.c linux-2.6.29/security/commoncap.c
 --- linux-2.6.29/security/commoncap.c	2009-03-23 19:12:14.000000000 -0400
 +++ linux-2.6.29/security/commoncap.c	2009-03-28 14:26:20.000000000 -0400
 @@ -28,9 +28,11 @@
+ #include <linux/prctl.h>
  #include <linux/securebits.h>
- #include <linux/vs_context.h>
  
 +extern kernel_cap_t gr_cap_rtnetlink(struct sock *sk);
 +
  int cap_netlink_send(struct sock *sk, struct sk_buff *skb)
  {
--	NETLINK_CB(skb).eff_cap = vx_mbcaps(current_cap());
-+	NETLINK_CB(skb).eff_cap = vx_mbcaps(gr_cap_rtnetlink(sk));
+-	NETLINK_CB(skb).eff_cap = current_cap();
++	NETLINK_CB(skb).eff_cap = gr_cap_rtnetlink(sk);
  	return 0;
  }
  
