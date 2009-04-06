@@ -284,7 +284,7 @@ Patch85:	hostap-kernel-2.6.18.patch
 # Taken from http://download.opensuse.org/factory/repo/src-oss/suse/src/kernel-source-2.6.27.7-3.1.src.rpm
 Patch90:	kernel-mpt-fusion.patch
 
-# based on http://vserver.13thfloor.at/Experimental/patch-2.6.28.7-vs2.3.0.36.7.diff
+# based on http://vserver.13thfloor.at/Experimental/patch-2.6.28.9-vs2.3.0.36.10.diff
 Patch100:	linux-2.6-vs2.3.patch
 Patch101:	kernel-vserver-fixes.patch
 
@@ -348,7 +348,7 @@ Patch9997:	pax_selinux_hooks-2.6.20.patch
 # based on http://www.grsecurity.net/~paxguy1/pax-linux-2.6.24.6-test45.patch
 Patch9998:	kernel-pax.patch
 
-# based on http://www.grsecurity.net/~spender/grsecurity-2.1.12-2.6.28-200901161810.patch
+# based on http://www.grsecurity.net/~spender/grsecurity-2.1.13-2.6.28.8-200903191958.patch
 Patch9999:	linux-2.6-grsec_full.patch
 Patch10000:	linux-2.6-grsec-caps.patch
 Patch10001:	linux-2.6-grsec-common.patch
