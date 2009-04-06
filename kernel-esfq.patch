@@ -465,20 +465,17 @@ diff -Naur linux-2.6.24.orig/net/sched/sch_esfq.c linux-2.6.24/net/sched/sch_esf
 +	return NET_XMIT_CN;
 +}
 +
-+
-+static int esfq_requeue(struct sk_buff *skb, struct Qdisc* sch)
++static struct sk_buff *esfq_peek(struct Qdisc* sch)
 +{
 +	struct esfq_sched_data *q = qdisc_priv(sch);
-+	esfq_q_enqueue(skb, q, ESFQ_HEAD);
-+	sch->qstats.backlog += skb->len;
-+	if (++sch->q.qlen < q->limit - 1) {
-+		sch->qstats.requeues++;
-+		return 0;
-+	}
++	esfq_index a;
 +
-+	sch->qstats.drops++;
-+	esfq_drop(sch);
-+	return NET_XMIT_CN;
++	/* No active slots */
++	if (q->tail == q->depth)
++		return NULL;
++
++	a = q->next[q->tail];
++	return skb_peek(&q->qs[a]);
 +}
 +
 +static struct sk_buff *esfq_q_dequeue(struct esfq_sched_data *q)
@@ -773,7 +770,7 @@ diff -Naur linux-2.6.24.orig/net/sched/sch_esfq.c linux-2.6.24/net/sched/sch_esf
 +	.priv_size	=	sizeof(struct esfq_sched_data),
 +	.enqueue	=	esfq_enqueue,
 +	.dequeue	=	esfq_dequeue,
-+	.requeue	=	esfq_requeue,
++	.peek		=	esfq_peek,
 +	.drop		=	esfq_drop,
 +	.init		=	esfq_init,
 +	.reset		=	esfq_reset,
