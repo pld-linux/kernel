@@ -7090,7 +7090,7 @@ diff -urN linux/fs/aufs/dlgt.c linux-aufs/fs/aufs/dlgt.c
 +static void call_security_inode_permission(void *args)
 +{
 +	struct security_inode_permission_args *a = args;
-+	LKTRTrace("fsuid %d\n", current->fsuid);
++	LKTRTrace("fsuid %d\n", current_fsuid());
 +	*a->errp = vfsub_security_inode_permission(a->h_inode, a->mask,
 +						   a->fake_nd);
 +}
@@ -7511,7 +7511,7 @@ diff -urN linux/fs/aufs/export.c linux-aufs/fs/aufs/export.c
 +	if (nsi_lock)
 +		si_read_unlock(parent->d_sb);
 +	path_get(path);
-+	file = dentry_open(parent, path->mnt, au_dir_roflags, current_cred());
++	file = dentry_open(parent, path->mnt, au_dir_roflags, file->f_cred);
 +	dentry = (void *)file;
 +	if (IS_ERR(file))
 +		goto out;
@@ -8056,7 +8056,7 @@ diff -urN linux/fs/aufs/file.c linux-aufs/fs/aufs/file.c
 +	if (file && au_test_nfs(h_dentry->d_sb))
 +		h_file = au_h_intent(dentry, bindex, file);
 +	if (!h_file)
-+		h_file = dentry_open(dget(h_dentry), mntget(br->br_mnt), flags, current_cred());
++		h_file = dentry_open(dget(h_dentry), mntget(br->br_mnt), flags, file->f_cred);
 +
 +	/*
 +	 * a dirty trick for handling FMODE_EXEC and deny_write_access().
@@ -12765,7 +12765,7 @@ diff -urN linux/fs/aufs/inode.c linux-aufs/fs/aufs/inode.c
 +
 +int au_test_h_perm(struct inode *h_inode, int mask, int dlgt)
 +{
-+	if (!current->fsuid)
++	if (!current_fsuid())
 +		return 0;
 +	/* todo: fake nameidata? */
 +	return vfsub_permission(h_inode, mask, NULL, dlgt);
@@ -26339,7 +26339,7 @@ diff -urN linux/fs/aufs/whout.c linux-aufs/fs/aufs/whout.c
 +	 */
 +	vfsub_args_init(&vargs, &ign, dlgt,
 +			(h_dir->i_mode & S_ISVTX)
-+			&& wh_dentry->d_inode->i_uid != current->fsuid);
++			&& wh_dentry->d_inode->i_uid != current_fsuid());
 +	vfsub_ign_hinode(&vargs, IN_DELETE, hdir);
 +	err = vfsub_unlink(h_dir, wh_dentry, &vargs);
 +	AuTraceErr(err);
@@ -26688,7 +26688,7 @@ diff -urN linux/fs/aufs/whout.c linux-aufs/fs/aufs/whout.c
 +	struct vfsub_args vargs;
 +
 +	AuTraceEnter();
-+	AuDebugOn(current->fsuid);
++	AuDebugOn(current_fsuid());
 +
 +	err = 0;
 +	wbr = a->br->br_wbr;
@@ -27365,7 +27365,7 @@ diff -urN linux/fs/aufs/whout.h linux-aufs/fs/aufs/whout.h
 diff -urN linux/fs/aufs/wkq.c linux-aufs/fs/aufs/wkq.c
 --- linux/fs/aufs/wkq.c	1970-01-01 01:00:00.000000000 +0100
 +++ linux-aufs/fs/aufs/wkq.c	2009-03-12 16:18:04.000000000 +0100
-@@ -0,0 +1,366 @@
+@@ -0,0 +1,343 @@
 +/*
 + * Copyright (C) 2005-2009 Junjiro Okajima
 + *
@@ -27395,27 +27395,14 @@ diff -urN linux/fs/aufs/wkq.c linux-aufs/fs/aufs/wkq.c
 +
 +struct au_wkq *au_wkq;
 +
-+struct au_cred {
-+#ifdef CONFIG_AUFS_DLGT
-+	int umask;
-+	uid_t fsuid;
-+	gid_t fsgid;
-+	kernel_cap_t cap_effective, cap_inheritable, cap_permitted;
-+#if 0 /* reserved for future use */
-+	unsigned keep_capabilities:1;
-+	struct user_struct *user;
-+	struct fs_struct *fs;
-+	struct nsproxy *nsproxy;
-+#endif
-+#endif
-+};
++
 +
 +struct au_wkinfo {
 +	struct work_struct wk;
 +	struct super_block *sb;
 +
 +	unsigned int flags;
-+	struct au_cred cred;
++	struct cred cred;
 +
 +	au_wkq_func_t func;
 +	void *args;
@@ -27427,28 +27414,18 @@ diff -urN linux/fs/aufs/wkq.c linux-aufs/fs/aufs/wkq.c
 +/* ---------------------------------------------------------------------- */
 +
 +#ifdef CONFIG_AUFS_DLGT
-+static void cred_store(struct au_cred *cred)
++static void cred_store(struct cred *cred)
 +{
-+	cred->umask = current->fs->umask;
-+	cred->fsuid = current->fsuid;
-+	cred->fsgid = current->fsgid;
-+	cred->cap_effective = current->cap_effective;
-+	cred->cap_inheritable = current->cap_inheritable;
-+	cred->cap_permitted = current->cap_permitted;
++	cred = get_current_cred();
 +}
 +
-+static void cred_revert(struct au_cred *cred)
++static void cred_revert(struct cred *cred)
 +{
 +	AuDebugOn(!au_test_wkq(current));
-+	current->fs->umask = cred->umask;
-+	current->fsuid = cred->fsuid;
-+	current->fsgid = cred->fsgid;
-+	current->cap_effective = cred->cap_effective;
-+	current->cap_inheritable = cred->cap_inheritable;
-+	current->cap_permitted = cred->cap_permitted;
++	revert_creds(cred);
 +}
 +
-+static void cred_switch(struct au_cred *old, struct au_cred *new)
++static void cred_switch(struct cred *old, struct cred *new)
 +{
 +	cred_store(old);
 +	cred_revert(new);
@@ -27465,7 +27442,7 @@ diff -urN linux/fs/aufs/wkq.c linux-aufs/fs/aufs/wkq.c
 +	if (!au_ftest_wkq(wkinfo->flags, DLGT))
 +		wkinfo->func(wkinfo->args);
 +	else {
-+		struct au_cred cred;
++		struct cred cred;
 +		cred_switch(&cred, &wkinfo->cred);
 +		wkinfo->func(wkinfo->args);
 +		cred_revert(&cred);
@@ -28491,7 +28468,7 @@ diff -urN linux/fs/aufs/xino.c linux-aufs/fs/aufs/xino.c
 +		goto out_dput;
 +	}
 +	file = dentry_open(dget(dentry), mntget(base_file->f_vfsmnt),
-+			   O_RDWR | O_CREAT | O_EXCL | O_LARGEFILE, current_cred());
++			   O_RDWR | O_CREAT | O_EXCL | O_LARGEFILE, base_file->f_cred);
 +	if (IS_ERR(file)) {
 +		AuErr("%.*s open err %ld\n", AuLNPair(name), PTR_ERR(file));
 +		goto out_dput;
