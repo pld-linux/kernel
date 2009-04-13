@@ -1365,369 +1365,6 @@ index 6dd000d..b42e72a 100644
  	return (rdr->magic == RESTORE_MAGIC) ? 0 : -EINVAL;
  }
 +EXPORT_SYMBOL_GPL(arch_hibernation_header_restore);
-diff --git a/crypto/Kconfig b/crypto/Kconfig
-index 8dde4fc..1867a5e 100644
---- a/crypto/Kconfig
-+++ b/crypto/Kconfig
-@@ -286,6 +286,14 @@ config CRYPTO_MD5
- 	help
- 	  MD5 message digest algorithm (RFC1321).
- 
-+config CRYPTO_LZF
-+	tristate "LZF compression algorithm"
-+	default y
-+	select CRYPTO_ALGAPI
-+	help
-+	  This is the LZF algorithm. It is especially useful for TuxOnIce,
-+	  because it achieves good compression quickly.
-+
- config CRYPTO_MICHAEL_MIC
- 	tristate "Michael MIC keyed digest algorithm"
- 	select CRYPTO_HASH
-diff --git a/crypto/Makefile b/crypto/Makefile
-index 46b08bf..0cab903 100644
---- a/crypto/Makefile
-+++ b/crypto/Makefile
-@@ -72,6 +72,7 @@ obj-$(CONFIG_CRYPTO_SALSA20) += salsa20_generic.o
- obj-$(CONFIG_CRYPTO_DEFLATE) += deflate.o
- obj-$(CONFIG_CRYPTO_MICHAEL_MIC) += michael_mic.o
- obj-$(CONFIG_CRYPTO_CRC32C) += crc32c.o
-+obj-$(CONFIG_CRYPTO_LZF) += lzf.o
- obj-$(CONFIG_CRYPTO_AUTHENC) += authenc.o
- obj-$(CONFIG_CRYPTO_LZO) += lzo.o
- obj-$(CONFIG_CRYPTO_RNG2) += rng.o
-diff --git a/crypto/lzf.c b/crypto/lzf.c
-new file mode 100644
-index 0000000..ccaf83a
---- /dev/null
-+++ b/crypto/lzf.c
-@@ -0,0 +1,326 @@
-+/*
-+ * Cryptoapi LZF compression module.
-+ *
-+ * Copyright (c) 2004-2008 Nigel Cunningham <nigel at tuxonice net>
-+ *
-+ * based on the deflate.c file:
-+ *
-+ * Copyright (c) 2003 James Morris <jmorris@intercode.com.au>
-+ *
-+ * and upon the LZF compression module donated to the TuxOnIce project with
-+ * the following copyright:
-+ *
-+ * This program is free software; you can redistribute it and/or modify it
-+ * under the terms of the GNU General Public License as published by the Free
-+ * Software Foundation; either version 2 of the License, or (at your option)
-+ * any later version.
-+ * Copyright (c) 2000-2003 Marc Alexander Lehmann <pcg@goof.com>
-+ *
-+ * Redistribution and use in source and binary forms, with or without modifica-
-+ * tion, are permitted provided that the following conditions are met:
-+ *
-+ *   1.  Redistributions of source code must retain the above copyright notice,
-+ *       this list of conditions and the following disclaimer.
-+ *
-+ *   2.  Redistributions in binary form must reproduce the above copyright
-+ *       notice, this list of conditions and the following disclaimer in the
-+ *       documentation and/or other materials provided with the distribution.
-+ *
-+ *   3.  The name of the author may not be used to endorse or promote products
-+ *       derived from this software without specific prior written permission.
-+ *
-+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR IMPLIED
-+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MER-
-+ * CHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO
-+ * EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPE-
-+ * CIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
-+ * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
-+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTH-
-+ * ERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
-+ * OF THE POSSIBILITY OF SUCH DAMAGE.
-+ *
-+ * Alternatively, the contents of this file may be used under the terms of
-+ * the GNU General Public License version 2 (the "GPL"), in which case the
-+ * provisions of the GPL are applicable instead of the above. If you wish to
-+ * allow the use of your version of this file only under the terms of the
-+ * GPL and not to allow others to use your version of this file under the
-+ * BSD license, indicate your decision by deleting the provisions above and
-+ * replace them with the notice and other provisions required by the GPL. If
-+ * you do not delete the provisions above, a recipient may use your version
-+ * of this file under either the BSD or the GPL.
-+ */
-+
-+#include <linux/kernel.h>
-+#include <linux/module.h>
-+#include <linux/init.h>
-+#include <linux/module.h>
-+#include <linux/crypto.h>
-+#include <linux/err.h>
-+#include <linux/vmalloc.h>
-+#include <linux/string.h>
-+
-+struct lzf_ctx {
-+	void *hbuf;
-+	unsigned int bufofs;
-+};
-+
-+/*
-+ * size of hashtable is (1 << hlog) * sizeof (char *)
-+ * decompression is independent of the hash table size
-+ * the difference between 15 and 14 is very small
-+ * for small blocks (and 14 is also faster).
-+ * For a low-memory configuration, use hlog == 13;
-+ * For best compression, use 15 or 16.
-+ */
-+static const int hlog = 13;
-+
-+/*
-+ * don't play with this unless you benchmark!
-+ * decompression is not dependent on the hash function
-+ * the hashing function might seem strange, just believe me
-+ * it works ;)
-+ */
-+static inline u16 first(const u8 *p)
-+{
-+	return ((p[0]) << 8) + p[1];
-+}
-+
-+static inline u16 next(u8 v, const u8 *p)
-+{
-+	return ((v) << 8) + p[2];
-+}
-+
-+static inline u32 idx(unsigned int h)
-+{
-+	return (((h ^ (h << 5)) >> (3*8 - hlog)) + h*3) & ((1 << hlog) - 1);
-+}
-+
-+/*
-+ * IDX works because it is very similar to a multiplicative hash, e.g.
-+ * (h * 57321 >> (3*8 - hlog))
-+ * the next one is also quite good, albeit slow ;)
-+ * (int)(cos(h & 0xffffff) * 1e6)
-+ */
-+
-+static const int max_lit = (1 <<  5);
-+static const int max_off = (1 << 13);
-+static const int max_ref = ((1 <<  8) + (1 << 3));
-+
-+/*
-+ * compressed format
-+ *
-+ * 000LLLLL <L+1>    ; literal
-+ * LLLOOOOO oooooooo ; backref L
-+ * 111OOOOO LLLLLLLL oooooooo ; backref L+7
-+ *
-+ */
-+
-+static void lzf_compress_exit(struct crypto_tfm *tfm)
-+{
-+	struct lzf_ctx *ctx = crypto_tfm_ctx(tfm);
-+
-+	if (!ctx->hbuf)
-+		return;
-+
-+	vfree(ctx->hbuf);
-+	ctx->hbuf = NULL;
-+}
-+
-+static int lzf_compress_init(struct crypto_tfm *tfm)
-+{
-+	struct lzf_ctx *ctx = crypto_tfm_ctx(tfm);
-+
-+	/* Get LZF ready to go */
-+	ctx->hbuf = vmalloc_32((1 << hlog) * sizeof(char *));
-+	if (ctx->hbuf)
-+		return 0;
-+
-+	printk(KERN_WARNING "Failed to allocate %ld bytes for lzf workspace\n",
-+			(long) ((1 << hlog) * sizeof(char *)));
-+	return -ENOMEM;
-+}
-+
-+static int lzf_compress(struct crypto_tfm *tfm, const u8 *in_data,
-+		unsigned int in_len, u8 *out_data, unsigned int *out_len)
-+{
-+	struct lzf_ctx *ctx = crypto_tfm_ctx(tfm);
-+	const u8 **htab = ctx->hbuf;
-+	const u8 **hslot;
-+	const u8 *ip = in_data;
-+	u8 *op = out_data;
-+	const u8 *in_end = ip + in_len;
-+	u8 *out_end = op + *out_len - 3;
-+	const u8 *ref;
-+
-+	unsigned int hval = first(ip);
-+	unsigned long off;
-+	int lit = 0;
-+
-+	memset(htab, 0, sizeof(htab));
-+
-+	for (;;) {
-+		if (ip < in_end - 2) {
-+			hval = next(hval, ip);
-+			hslot = htab + idx(hval);
-+			ref = *hslot;
-+			*hslot = ip;
-+
-+			off = ip - ref - 1;
-+			if (off < max_off
-+			    && ip + 4 < in_end && ref > in_data
-+			    && *(u16 *) ref == *(u16 *) ip && ref[2] == ip[2]
-+			    ) {
-+				/* match found at *ref++ */
-+				unsigned int len = 2;
-+				unsigned int maxlen = in_end - ip - len;
-+				maxlen = maxlen > max_ref ? max_ref : maxlen;
-+
-+				do {
-+					len++;
-+				} while (len < maxlen && ref[len] == ip[len]);
-+
-+				if (op + lit + 1 + 3 >= out_end) {
-+					*out_len = PAGE_SIZE;
-+					return 0;
-+				}
-+
-+				if (lit) {
-+					*op++ = lit - 1;
-+					lit = -lit;
-+					do {
-+						*op++ = ip[lit];
-+					} while (++lit);
-+				}
-+
-+				len -= 2;
-+				ip++;
-+
-+				if (len < 7) {
-+					*op++ = (off >> 8) + (len << 5);
-+				} else {
-+					*op++ = (off >> 8) + (7 << 5);
-+					*op++ = len - 7;
-+				}
-+
-+				*op++ = off;
-+
-+				ip += len;
-+				hval = first(ip);
-+				hval = next(hval, ip);
-+				htab[idx(hval)] = ip;
-+				ip++;
-+				continue;
-+			}
-+		} else if (ip == in_end)
-+			break;
-+
-+		/* one more literal byte we must copy */
-+		lit++;
-+		ip++;
-+
-+		if (lit == max_lit) {
-+			if (op + 1 + max_lit >= out_end) {
-+				*out_len = PAGE_SIZE;
-+				return 0;
-+			}
-+
-+			*op++ = max_lit - 1;
-+			memcpy(op, ip - max_lit, max_lit);
-+			op += max_lit;
-+			lit = 0;
-+		}
-+	}
-+
-+	if (lit) {
-+		if (op + lit + 1 >= out_end) {
-+			*out_len = PAGE_SIZE;
-+			return 0;
-+		}
-+
-+		*op++ = lit - 1;
-+		lit = -lit;
-+		do {
-+			*op++ = ip[lit];
-+		} while (++lit);
-+	}
-+
-+	*out_len = op - out_data;
-+	return 0;
-+}
-+
-+static int lzf_decompress(struct crypto_tfm *tfm, const u8 *src,
-+		unsigned int slen, u8 *dst, unsigned int *dlen)
-+{
-+	u8 const *ip = src;
-+	u8 *op = dst;
-+	u8 const *const in_end = ip + slen;
-+	u8 *const out_end = op + *dlen;
-+
-+	*dlen = PAGE_SIZE;
-+	do {
-+		unsigned int ctrl = *ip++;
-+
-+		if (ctrl < (1 << 5)) {
-+			/* literal run */
-+			ctrl++;
-+
-+			if (op + ctrl > out_end)
-+				return 0;
-+			memcpy(op, ip, ctrl);
-+			op += ctrl;
-+			ip += ctrl;
-+		} else {	/* back reference */
-+
-+			unsigned int len = ctrl >> 5;
-+
-+			u8 *ref = op - ((ctrl & 0x1f) << 8) - 1;
-+
-+			if (len == 7)
-+				len += *ip++;
-+
-+			ref -= *ip++;
-+			len += 2;
-+
-+			if (op + len > out_end || ref < (u8 *) dst)
-+				return 0;
-+
-+			do {
-+				*op++ = *ref++;
-+			} while (--len);
-+		}
-+	} while (op < out_end && ip < in_end);
-+
-+	*dlen = op - (u8 *) dst;
-+	return 0;
-+}
-+
-+static struct crypto_alg alg = {
-+	.cra_name = "lzf",
-+	.cra_flags = CRYPTO_ALG_TYPE_COMPRESS,
-+	.cra_ctxsize = sizeof(struct lzf_ctx),
-+	.cra_module = THIS_MODULE,
-+	.cra_list = LIST_HEAD_INIT(alg.cra_list),
-+	.cra_init = lzf_compress_init,
-+	.cra_exit = lzf_compress_exit,
-+	.cra_u = { .compress = {
-+	.coa_compress = lzf_compress,
-+	.coa_decompress = lzf_decompress } }
-+};
-+
-+static int __init init(void)
-+{
-+	return crypto_register_alg(&alg);
-+}
-+
-+static void __exit fini(void)
-+{
-+	crypto_unregister_alg(&alg);
-+}
-+
-+module_init(init);
-+module_exit(fini);
-+
-+MODULE_LICENSE("GPL");
-+MODULE_DESCRIPTION("LZF Compression Algorithm");
-+MODULE_AUTHOR("Marc Alexander Lehmann & Nigel Cunningham");
 diff --git a/drivers/base/dd.c b/drivers/base/dd.c
 index 1352312..f705dce 100644
 --- a/drivers/base/dd.c
@@ -2144,7 +1781,7 @@ index fdff346..1fd3cd1 100644
  		return PTR_ERR(req);
  
 diff --git a/fs/fuse/file.c b/fs/fuse/file.c
-index d9fdb7c..57922c4 100644
+index 821d10f..4b8b86f 100644
 --- a/fs/fuse/file.c
 +++ b/fs/fuse/file.c
 @@ -7,11 +7,13 @@
@@ -2454,7 +2091,7 @@ index 92734c0..249df0f 100644
  #define get_fs_excl() atomic_inc(&current->fs_excl)
  #define put_fs_excl() atomic_dec(&current->fs_excl)
 diff --git a/include/linux/mm.h b/include/linux/mm.h
-index 065cdf8..175f46d 100644
+index 3daa05f..8497a33 100644
 --- a/include/linux/mm.h
 +++ b/include/linux/mm.h
 @@ -104,6 +104,7 @@ extern unsigned int kobjsize(const void *objp);
@@ -2465,7 +2102,7 @@ index 065cdf8..175f46d 100644
  
  #ifndef VM_STACK_DEFAULT_FLAGS		/* arch can override this */
  #define VM_STACK_DEFAULT_FLAGS VM_DATA_DEFAULT_FLAGS
-@@ -1294,6 +1295,7 @@ int drop_caches_sysctl_handler(struct ctl_table *, int, struct file *,
+@@ -1305,6 +1306,7 @@ int drop_caches_sysctl_handler(struct ctl_table *, int, struct file *,
  					void __user *, size_t *, loff_t *);
  unsigned long shrink_slab(unsigned long scanned, gfp_t gfp_mask,
  			unsigned long lru_pages);
@@ -3917,10 +3554,10 @@ index f5fc2d7..63959e7 100644
   *	pack_pfns - pfns corresponding to the set bits found in the bitmap @bm
 diff --git a/kernel/power/tuxonice.h b/kernel/power/tuxonice.h
 new file mode 100644
-index 0000000..336049f
+index 0000000..267368d
 --- /dev/null
 +++ b/kernel/power/tuxonice.h
-@@ -0,0 +1,211 @@
+@@ -0,0 +1,212 @@
 +/*
 + * kernel/power/tuxonice.h
 + *
@@ -3943,7 +3580,7 @@ index 0000000..336049f
 +#include <asm/setup.h>
 +#include "tuxonice_pageflags.h"
 +
-+#define TOI_CORE_VERSION "3.0"
++#define TOI_CORE_VERSION "3.0.1"
 +
 +#define MY_BOOT_KERNEL_DATA_VERSION 1
 +
@@ -4021,6 +3658,7 @@ index 0000000..336049f
 +	TOI_PRE_RESTORE_FAILED,
 +	TOI_USERMODE_HELPERS_ERR,
 +	TOI_CANT_USE_ALT_RESUME,
++	TOI_HEADER_TOO_BIG,
 +	TOI_NUM_RESULT_STATES	/* Used in printing debug info only */
 +};
 +
@@ -4939,10 +4577,10 @@ index 0000000..e907f50
 +void toi_end_atomic(int stage, int toi_time, int error);
 diff --git a/kernel/power/tuxonice_block_io.c b/kernel/power/tuxonice_block_io.c
 new file mode 100644
-index 0000000..dfa3448
+index 0000000..7100da0
 --- /dev/null
 +++ b/kernel/power/tuxonice_block_io.c
-@@ -0,0 +1,1305 @@
+@@ -0,0 +1,1336 @@
 +/*
 + * kernel/power/tuxonice_block_io.c
 + *
@@ -5157,10 +4795,11 @@ index 0000000..dfa3448
 + *
 + * Flush any queued but unsubmitted I/O and wait for it all to complete.
 + **/
-+static void toi_finish_all_io(void)
++static int toi_finish_all_io(void)
 +{
-+	toi_bio_queue_flush_pages(0);
++	int result = toi_bio_queue_flush_pages(0);
 +	wait_event(num_in_progress_wait, !TOTAL_OUTSTANDING_IO);
++	return result;
 +}
 +
 +/**
@@ -5248,7 +4887,7 @@ index 0000000..dfa3448
 +	bio->bi_end_io = toi_end_bio;
 +
 +	if (bio_add_page(bio, page, PAGE_SIZE, 0) < PAGE_SIZE) {
-+		printk(KERN_INFO "ERROR: adding page to bio at %lld\n",
++		printk(KERN_DEBUG "ERROR: adding page to bio at %lld\n",
 +				(unsigned long long) first_block);
 +		bio_put(bio);
 +		return -EFAULT;
@@ -5432,7 +5071,7 @@ index 0000000..dfa3448
 +		if (!this)
 +			continue;
 +
-+		printk(KERN_INFO "Chain %d:", i);
++		printk(KERN_DEBUG "Chain %d:", i);
 +
 +		while (this) {
 +			printk(" [%lu-%lu]%s", this->start,
@@ -5444,10 +5083,28 @@ index 0000000..dfa3448
 +	}
 +
 +	for (i = 0; i < 4; i++)
-+		printk(KERN_INFO "Posn %d: Chain %d, extent %d, offset %lu.\n",
++		printk(KERN_DEBUG "Posn %d: Chain %d, extent %d, offset %lu.\n",
 +				i, toi_writer_posn_save[i].chain_num,
 +				toi_writer_posn_save[i].extent_num,
 +				toi_writer_posn_save[i].offset);
++}
++
++static int total_header_bytes;
++static int unowned;
++
++static int debug_broken_header(void)
++{
++	printk(KERN_DEBUG "Image header too big for size allocated!\n");
++	print_toi_header_storage_for_modules();
++	printk(KERN_DEBUG "Page flags : %d.\n", toi_pageflags_space_needed());
++	printk(KERN_DEBUG "toi_header : %ld.\n", sizeof(struct toi_header));
++	printk(KERN_DEBUG "Total unowned : %d.\n", unowned);
++	printk(KERN_DEBUG "Total used : %d (%ld pages).\n", total_header_bytes,
++			DIV_ROUND_UP(total_header_bytes, PAGE_SIZE));
++	printk(KERN_DEBUG "Space needed now : %ld.\n", get_header_storage_needed());
++	dump_block_chains();
++	abort_hibernate(TOI_HEADER_TOO_BIG, "Header reservation too small.");
++	return -EIO;
 +}
 +
 +/**
@@ -5458,7 +5115,7 @@ index 0000000..dfa3448
 + * set at the start of reading the image header, to skip the first page
 + * of the header, which is read without using the extent chains.
 + **/
-+static int go_next_page(int writing)
++static int go_next_page(int writing, int section_barrier)
 +{
 +	int i, max = (toi_writer_posn.current_chain == -1) ? 1 :
 +	  toi_devinfo[toi_writer_posn.current_chain].blocks_per_page,
@@ -5477,13 +5134,14 @@ index 0000000..dfa3448
 +		break;
 +	}
 +
-+	if (toi_writer_posn.current_chain ==
++	if (section_barrier && toi_writer_posn.current_chain ==
 +			toi_writer_posn_save[compare_to].chain_num &&
 +	    toi_writer_posn.current_offset ==
 +			toi_writer_posn_save[compare_to].offset) {
-+		if (writing)
-+		       BUG_ON(!current_stream);
-+		else {
++		if (writing) {
++		       if (!current_stream)
++			       return debug_broken_header();
++		} else {
 +			more_readahead = 0;
 +			return -ENODATA;
 +		}
@@ -5495,8 +5153,8 @@ index 0000000..dfa3448
 +
 +	if (toi_extent_state_eof(&toi_writer_posn)) {
 +		/* Don't complain if readahead falls off the end */
-+		if (writing) {
-+			printk(KERN_INFO "Extent state eof. "
++		if (writing && section_barrier) {
++			printk(KERN_DEBUG "Extent state eof. "
 +				"Expected compression ratio too optimistic?\n");
 +			dump_block_chains();
 +		}
@@ -5505,7 +5163,7 @@ index 0000000..dfa3448
 +
 +	if (extra_page_forward) {
 +		extra_page_forward = 0;
-+		return go_next_page(writing);
++		return go_next_page(writing, section_barrier);
 +	}
 +
 +	return 0;
@@ -5537,9 +5195,10 @@ index 0000000..dfa3448
 +		int is_readahead, int free_group)
 +{
 +	struct toi_bdev_info *dev_info;
++	int result = go_next_page(writing, 1);
 +
-+	if (go_next_page(writing)) 
-+		return -ENODATA;
++	if (result)
++		return result;
 +
 +	dev_info = &toi_devinfo[toi_writer_posn.current_chain];
 +
@@ -5626,7 +5285,7 @@ index 0000000..dfa3448
 + **/
 +static int toi_rw_cleanup(int writing)
 +{
-+	int i;
++	int i, result;
 +
 +	if (writing) {
 +		int result;
@@ -5647,7 +5306,7 @@ index 0000000..dfa3448
 +					&toi_writer_posn_save[3]);
 +	}
 +
-+	toi_finish_all_io();
++	result = toi_finish_all_io();
 +
 +	while (readahead_list_head) {
 +		void *next = (void *) readahead_list_head->private;
@@ -5658,18 +5317,18 @@ index 0000000..dfa3448
 +	readahead_list_tail = NULL;
 +
 +	if (!current_stream)
-+		return 0;
++		return result;
 +
 +	for (i = 0; i < NUM_REASONS; i++) {
 +		if (!atomic_read(&reasons[i]))
 +			continue;
-+		printk(KERN_INFO "Waited for i/o due to %s %d times.\n",
++		printk(KERN_DEBUG "Waited for i/o due to %s %d times.\n",
 +				reason_name[i], atomic_read(&reasons[i]));
 +		atomic_set(&reasons[i], 0);
 +	}
 +
 +	current_stream = 0;
-+	return 0;
++	return result;
 +}
 +
 +/**
@@ -5743,7 +5402,7 @@ index 0000000..dfa3448
 +			if (last_result == -ENOMEM || last_result == -ENODATA)
 +				return 0;
 +
-+			printk(KERN_INFO
++			printk(KERN_DEBUG
 +				"Begin read chunk returned %d.\n",
 +				last_result);
 +		} else
@@ -5761,13 +5420,13 @@ index 0000000..dfa3448
 + * bio_io_flusher - start the dedicated I/O flushing routine
 + * @writing: Whether we're writing the image.
 + **/
-+static void bio_io_flusher(int writing)
++static int bio_io_flusher(int writing)
 +{
 +
 +	if (writing)
-+		toi_bio_queue_flush_pages(1);
++		return toi_bio_queue_flush_pages(1);
 +	else
-+		toi_start_new_readahead(1);
++		return toi_start_new_readahead(1);
 +}
 +
 +/**
@@ -5788,7 +5447,7 @@ index 0000000..dfa3448
 +	 * extents out of the first page.
 +	 */
 +	if (unlikely(no_readahead && toi_start_one_readahead(0))) {
-+		printk(KERN_INFO "No readahead and toi_start_one_readahead "
++		printk(KERN_DEBUG "No readahead and toi_start_one_readahead "
 +				"returned non-zero.\n");
 +		return -EIO;
 +	}
@@ -5796,7 +5455,7 @@ index 0000000..dfa3448
 +	if (unlikely(!readahead_list_head)) {
 +		BUG_ON(!more_readahead);
 +		if (unlikely(toi_start_one_readahead(0))) {
-+			printk(KERN_INFO "No readahead and "
++			printk(KERN_DEBUG "No readahead and "
 +			 "toi_start_one_readahead returned non-zero.\n");
 +			return -EIO;
 +		}
@@ -5830,6 +5489,9 @@ index 0000000..dfa3448
 + * Since that's the case, we must be careful to only have one thread
 + * doing this work at a time. Otherwise we have a race and could save
 + * pages out of order.
++ *
++ * If an error occurs, free all remaining pages without submitting them
++ * for I/O.
 + **/
 +
 +int toi_bio_queue_flush_pages(int dedicated_thread)
@@ -5852,9 +5514,10 @@ index 0000000..dfa3448
 +			bio_queue_tail = NULL;
 +		atomic_dec(&toi_bio_queue_size);
 +		spin_unlock_irqrestore(&bio_queue_lock, flags);
-+		result = toi_bio_rw_page(WRITE, page, 0, 11);
++		if (!result)
++			result = toi_bio_rw_page(WRITE, page, 0, 11);
 +		if (result)
-+			goto out;
++			toi__free_page(11 , page);
 +		spin_lock_irqsave(&bio_queue_lock, flags);
 +	}
 +	spin_unlock_irqrestore(&bio_queue_lock, flags);
@@ -5867,7 +5530,6 @@ index 0000000..dfa3448
 +		toi_bio_queue_flusher_should_finish = 0;
 +	}
 +
-+out:
 +	busy = 0;
 +	return result;
 +}
@@ -5966,7 +5628,7 @@ index 0000000..dfa3448
 +	if (current == toi_queue_flusher) {
 +		int result2 = toi_start_new_readahead(0);
 +		if (result2) {
-+			printk(KERN_INFO "Queue flusher and "
++			printk(KERN_DEBUG "Queue flusher and "
 +			 "toi_start_one_readahead returned non-zero.\n");
 +			result = -EIO;
 +			goto out;
@@ -6028,7 +5690,7 @@ index 0000000..dfa3448
 +	if (toi_rw_buffer(WRITE, (char *) &pfn, sizeof(unsigned long), 0) ||
 +	    toi_rw_buffer(WRITE, (char *) &buf_size, sizeof(int), 0) ||
 +	    toi_rw_buffer(WRITE, buffer_virt, buf_size, 0)) {
-+		printk(KERN_INFO "toi_rw_buffer returned non-zero to "
++		printk(KERN_DEBUG "toi_rw_buffer returned non-zero to "
 +				"toi_bio_write_page.\n");
 +		result = -EIO;
 +	}
@@ -6062,7 +5724,8 @@ index 0000000..dfa3448
 +	if (owner) {
 +		owner->header_used += buffer_size;
 +		toi_message(TOI_HEADER, TOI_LOW, 1,
-+			"Header: %s : %d bytes (%d/%d).",
++			"Header: %s : %d bytes (%d/%d).\n",
++			owner->name,
 +			buffer_size, owner->header_used,
 +			owner->header_requested);
 +		if (owner->header_used > owner->header_requested) {
@@ -6073,9 +5736,12 @@ index 0000000..dfa3448
 +				owner->header_requested);
 +			return buffer_size;
 +		}
-+	} else
++	} else {
++		unowned += buffer_size;
 +		toi_message(TOI_HEADER, TOI_LOW, 1,
-+			"Header: (No owner): %d bytes.\n", buffer_size);
++			"Header: (No owner): %d bytes (%d total so far)\n",
++			buffer_size, unowned);
++	}
 +
 +	if (!writing && !no_readahead)
 +		result = toi_start_new_readahead(0);
@@ -6084,6 +5750,7 @@ index 0000000..dfa3448
 +		result = toi_rw_buffer(writing, buffer, buffer_size,
 +				no_readahead);
 +
++	total_header_bytes += buffer_size;
 +	return result;
 +}
 +
@@ -6109,8 +5776,10 @@ index 0000000..dfa3448
 +	if (toi_writer_buffer_posn)
 +		toi_bio_queue_write(&toi_writer_buffer);
 +
-+	toi_finish_all_io();
++	result = toi_finish_all_io();
 +
++	unowned = 0;
++	total_header_bytes = 0;
 +	return result;
 +}
 +
@@ -6119,7 +5788,7 @@ index 0000000..dfa3448
 + **/
 +static int toi_bio_storage_needed(void)
 +{
-+	return 2 * sizeof(int);
++	return sizeof(int);
 +}
 +
 +/**
@@ -6250,7 +5919,7 @@ index 0000000..dfa3448
 +#endif
 diff --git a/kernel/power/tuxonice_block_io.h b/kernel/power/tuxonice_block_io.h
 new file mode 100644
-index 0000000..6902e97
+index 0000000..b18298c
 --- /dev/null
 +++ b/kernel/power/tuxonice_block_io.h
 @@ -0,0 +1,59 @@
@@ -6287,8 +5956,8 @@ index 0000000..6902e97
 +	void (*check_io_stats) (void);
 +	void (*reset_io_stats) (void);
 +	void (*update_throughput_throttle) (int jif_index);
-+	void (*finish_all_io) (void);
-+	int (*forward_one_page) (int writing);
++	int (*finish_all_io) (void);
++	int (*forward_one_page) (int writing, int section_barrier);
 +	void (*set_extra_page_forward) (void);
 +	void (*set_devinfo) (struct toi_bdev_info *info);
 +	int (*read_page) (unsigned long *index, struct page *buffer_page,
@@ -6304,7 +5973,7 @@ index 0000000..6902e97
 +	int (*write_header_chunk_finish) (void);
 +	int (*rw_init) (int rw, int stream_number);
 +	int (*rw_cleanup) (int rw);
-+	void (*io_flusher) (int rw);
++	int (*io_flusher) (int rw);
 +};
 +
 +extern struct toi_bio_ops toi_bio_ops;
@@ -6315,10 +5984,10 @@ index 0000000..6902e97
 +extern struct toi_extent_iterate_state toi_writer_posn;
 diff --git a/kernel/power/tuxonice_builtin.c b/kernel/power/tuxonice_builtin.c
 new file mode 100644
-index 0000000..570357b
+index 0000000..635e602
 --- /dev/null
 +++ b/kernel/power/tuxonice_builtin.c
-@@ -0,0 +1,315 @@
+@@ -0,0 +1,314 @@
 +/*
 + * Copyright (C) 2004-2008 Nigel Cunningham (nigel at tuxonice net)
 + *
@@ -6341,7 +6010,6 @@ index 0000000..570357b
 +#include "tuxonice_io.h"
 +#include "tuxonice.h"
 +#include "tuxonice_extent.h"
-+#include "tuxonice_block_io.h"
 +#include "tuxonice_netlink.h"
 +#include "tuxonice_prepare_image.h"
 +#include "tuxonice_ui.h"
@@ -8188,10 +7856,10 @@ index 0000000..b0f8918
 +
 diff --git a/kernel/power/tuxonice_compress.c b/kernel/power/tuxonice_compress.c
 new file mode 100644
-index 0000000..4906526
+index 0000000..febb783
 --- /dev/null
 +++ b/kernel/power/tuxonice_compress.c
-@@ -0,0 +1,438 @@
+@@ -0,0 +1,448 @@
 +/*
 + * kernel/power/compression.c
 + *
@@ -8222,7 +7890,7 @@ index 0000000..4906526
 +static struct toi_module_ops toi_compression_ops;
 +static struct toi_module_ops *next_driver;
 +
-+static char toi_compressor_name[32] = "lzf";
++static char toi_compressor_name[32] = "lzo";
 +
 +static DEFINE_MUTEX(stats_lock);
 +
@@ -8231,6 +7899,7 @@ index 0000000..4906526
 +	struct crypto_comp *transform;
 +	unsigned int len;
 +	char *buffer_start;
++	char *output_buffer;
 +};
 +
 +static DEFINE_PER_CPU(struct cpu_context, contexts);
@@ -8260,6 +7929,11 @@ index 0000000..4906526
 +			toi_free_page(16, (unsigned long) this->page_buffer);
 +
 +		this->page_buffer = NULL;
++
++		if (this->output_buffer)
++			vfree(this->output_buffer);
++
++		this->output_buffer = NULL;
 +	}
 +}
 +
@@ -8295,9 +7969,20 @@ index 0000000..4906526
 +		if (!this->page_buffer) {
 +			printk(KERN_ERR
 +			  "Failed to allocate a page buffer for TuxOnIce "
-+			  "encryption driver.\n");
++			  "compression driver.\n");
 +			return -ENOMEM;
 +		}
++
++		this->output_buffer =
++			(char *) vmalloc_32(2 * PAGE_SIZE);
++
++		if (!this->output_buffer) {
++			printk(KERN_ERR
++			  "Failed to allocate a output buffer for TuxOnIce "
++			  "compression driver.\n");
++			return -ENOMEM;
++		}
++
 +	}
 +
 +	return 0;
@@ -8375,29 +8060,22 @@ index 0000000..4906526
 +
 +	ret = crypto_comp_compress(ctx->transform,
 +			ctx->buffer_start, buf_size,
-+			ctx->page_buffer, &ctx->len);
++			ctx->output_buffer, &ctx->len);
 +
 +	kunmap(buffer_page);
-+
-+	if (ret) {
-+		printk(KERN_INFO "Compression failed.\n");
-+		goto failure;
-+	}
 +
 +	mutex_lock(&stats_lock);
 +	toi_compress_bytes_in += buf_size;
 +	toi_compress_bytes_out += ctx->len;
 +	mutex_unlock(&stats_lock);
 +
-+	if (ctx->len < buf_size) /* some compression */
-+		ret = next_driver->write_page(index,
++	if (!ret && ctx->len < buf_size) { /* some compression */
++		memcpy(ctx->page_buffer, ctx->output_buffer, ctx->len);
++		return next_driver->write_page(index,
 +				virt_to_page(ctx->page_buffer),
 +				ctx->len);
-+	else
-+		ret = next_driver->write_page(index, buffer_page, buf_size);
-+
-+failure:
-+	return ret;
++	} else
++		return next_driver->write_page(index, buffer_page, buf_size);
 +}
 +
 +/*
@@ -9030,10 +8708,10 @@ index 0000000..22ffb9b
 +#endif
 diff --git a/kernel/power/tuxonice_file.c b/kernel/power/tuxonice_file.c
 new file mode 100644
-index 0000000..41e5b3e
+index 0000000..4181c47
 --- /dev/null
 +++ b/kernel/power/tuxonice_file.c
-@@ -0,0 +1,1247 @@
+@@ -0,0 +1,1241 @@
 +/*
 + * kernel/power/tuxonice_file.c
 + *
@@ -9276,10 +8954,9 @@ index 0000000..41e5b3e
 +
 +	/* Apply header space reservation */
 +	toi_extent_state_goto_start(&toi_writer_posn);
-+	toi_bio_ops.forward_one_page(0); /* To first page */
 +
 +	for (i = 0; i < header_pages_reserved; i++)
-+		if (toi_bio_ops.forward_one_page(0))
++		if (toi_bio_ops.forward_one_page(1, 0))
 +			return -ENOSPC;
 +
 +	/* The end of header pages will be the start of pageset 2 */
@@ -9311,8 +8988,7 @@ index 0000000..41e5b3e
 +		if (!has_contiguous_blocks(i))
 +			continue;
 +
-+		new_sector = bmap(target_inode,
-+		(i * devinfo.blocks_per_page));
++		new_sector = bmap(target_inode, (i * devinfo.blocks_per_page));
 +
 +		/*
 +		 * Ignore the first block in the file.
@@ -9564,7 +9240,6 @@ index 0000000..41e5b3e
 +static void toi_file_reserve_header_space(int request)
 +{
 +	header_pages_reserved = request;
-+	apply_header_reservation();
 +}
 +
 +static int toi_file_allocate_storage(int main_space_requested)
@@ -9579,7 +9254,7 @@ index 0000000..41e5b3e
 +
 +	/* Only release_storage reduces the size */
 +	if (blocks_to_get < 1)
-+		return 0;
++		return apply_header_reservation();
 +
 +	result = populate_block_list();
 +
@@ -9646,17 +9321,17 @@ index 0000000..41e5b3e
 +static int toi_file_write_header_cleanup(void)
 +{
 +	struct toi_file_header *header;
-+	int result;
++	int result, result2;
 +	unsigned long sig_page = toi_get_zeroed_page(38, TOI_ATOMIC_GFP);
 +
 +	/* Write any unsaved data */
-+	if (toi_writer_buffer_posn)
-+		toi_bio_ops.write_header_chunk_finish();
++	result = toi_bio_ops.write_header_chunk_finish();
 +
-+	toi_bio_ops.finish_all_io();
++	if (result)
++		goto out;
 +
 +	toi_extent_state_goto_start(&toi_writer_posn);
-+	toi_bio_ops.forward_one_page(1);
++	toi_bio_ops.forward_one_page(1, 1);
 +
 +	/* Adjust image header */
 +	result = toi_bio_ops.bdev_page_io(READ, toi_file_target_bdev,
@@ -9676,10 +9351,10 @@ index 0000000..41e5b3e
 +			virt_to_page(sig_page));
 +
 +out:
-+	toi_bio_ops.finish_all_io();
++	result2 = toi_bio_ops.finish_all_io();
 +	toi_free_page(38, sig_page);
 +
-+	return result;
++	return result ? result : result2;
 +}
 +
 +/* HEADER READING */
@@ -9771,7 +9446,7 @@ index 0000000..41e5b3e
 +static int toi_file_signature_op(int op)
 +{
 +	char *cur;
-+	int result = 0, changed = 0;
++	int result = 0, result2, changed = 0;
 +	struct toi_file_header *header;
 +
 +	if (!toi_file_target_bdev || IS_ERR(toi_file_target_bdev))
@@ -9829,9 +9504,9 @@ index 0000000..41e5b3e
 +	}
 +
 +out:
-+	toi_bio_ops.finish_all_io();
++	result2 = toi_bio_ops.finish_all_io();
 +	toi_free_page(17, (unsigned long) cur);
-+	return result;
++	return result ? result : result2;
 +}
 +
 +/**
@@ -9870,10 +9545,10 @@ index 0000000..41e5b3e
 + **/
 +static int toi_file_storage_needed(void)
 +{
-+	return sig_size + strlen(toi_file_target) + 1 +
++	return strlen(toi_file_target) + 1 +
 +		sizeof(toi_writer_posn_save) +
 +		sizeof(devinfo) +
-+		sizeof(struct hibernate_extent_chain) - 2 * sizeof(void *) +
++		2 * sizeof(int) +
 +		(2 * sizeof(unsigned long) * block_chain.num_extents);
 +}
 +
@@ -10179,10 +9854,7 @@ index 0000000..41e5b3e
 + **/
 +static void toi_file_load_config_info(char *buffer, int size)
 +{
-+	if (size != 0)
-+		strlcpy(toi_file_target, buffer, size);
-+	else
-+		strcpy(toi_file_target, buffer);
++	strlcpy(toi_file_target, buffer, size);
 +}
 +
 +static int toi_file_initialise(int starting_cycle)
@@ -10283,10 +9955,10 @@ index 0000000..41e5b3e
 +#endif
 diff --git a/kernel/power/tuxonice_highlevel.c b/kernel/power/tuxonice_highlevel.c
 new file mode 100644
-index 0000000..896a4c7
+index 0000000..e56dbed
 --- /dev/null
 +++ b/kernel/power/tuxonice_highlevel.c
-@@ -0,0 +1,1334 @@
+@@ -0,0 +1,1335 @@
 +/*
 + * kernel/power/tuxonice_highlevel.c
 + */
@@ -10428,6 +10100,7 @@ index 0000000..896a4c7
 +	"Pre-restore preparation failed",
 +	"Failed to disable usermode helpers",
 +	"Can't resume from alternate image",
++	"Header reservation too small",
 +};
 +
 +/**
@@ -11623,7 +11296,7 @@ index 0000000..896a4c7
 +#endif
 diff --git a/kernel/power/tuxonice_io.c b/kernel/power/tuxonice_io.c
 new file mode 100644
-index 0000000..38b7981
+index 0000000..1207ad3
 --- /dev/null
 +++ b/kernel/power/tuxonice_io.c
 @@ -0,0 +1,1499 @@
@@ -12018,7 +11691,7 @@ index 0000000..38b7981
 +{
 +	unsigned long data_pfn, write_pfn, next_jiffies = jiffies + HZ / 2,
 +		      jif_index = 1;
-+	int result, my_io_index = 0, last_worker;
++	int result = 0, my_io_index = 0, last_worker;
 +	struct toi_module_ops *first_filter = toi_get_next_filter(NULL);
 +	struct page *buffer = toi_alloc_page(28, TOI_ATOMIC_GFP);
 +
@@ -12206,12 +11879,12 @@ index 0000000..38b7981
 +	if (last_worker) {
 +		toi_bio_queue_flusher_should_finish = 1;
 +		wake_up(&toi_io_queue_flusher);
-+		toiActiveAllocator->finish_all_io();
++		result = toiActiveAllocator->finish_all_io();
 +	}
 +
 +	toi__free_page(28, buffer);
 +
-+	return 0;
++	return result;
 +}
 +
 +static int start_other_threads(void)
@@ -12246,7 +11919,7 @@ index 0000000..38b7981
 +static int do_rw_loop(int write, int finish_at, struct memory_bitmap *pageflags,
 +		int base, int barmax, int pageset)
 +{
-+	int index = 0, cpu, num_other_threads = 0;
++	int index = 0, cpu, num_other_threads = 0, result = 0;
 +	unsigned long pfn;
 +
 +	if (!finish_at)
@@ -12300,7 +11973,7 @@ index 0000000..38b7981
 +		test_action_state(TOI_NO_FLUSHER_THREAD))
 +		worker_rw_loop(num_other_threads ? NULL : MONITOR);
 +	else
-+		toiActiveAllocator->io_flusher(write);
++		result = toiActiveAllocator->io_flusher(write);
 +
 +	while (atomic_read(&toi_io_workers))
 +		schedule();
@@ -12311,7 +11984,7 @@ index 0000000..38b7981
 +			schedule();
 +	}
 +
-+	if (!io_result && !test_result_state(TOI_ABORTED)) {
++	if (!io_result && !result && !test_result_state(TOI_ABORTED)) {
 +		unsigned long next;
 +
 +		printk("done.\n");
@@ -12332,7 +12005,7 @@ index 0000000..38b7981
 +		}
 +	}
 +
-+	return io_result;
++	return io_result ? io_result : result;
 +}
 +
 +/**
@@ -13205,10 +12878,10 @@ index 0000000..86e8996
 +extern int toi_bio_queue_flusher_should_finish;
 diff --git a/kernel/power/tuxonice_modules.c b/kernel/power/tuxonice_modules.c
 new file mode 100644
-index 0000000..9b05d90
+index 0000000..a0cd9eb
 --- /dev/null
 +++ b/kernel/power/tuxonice_modules.c
-@@ -0,0 +1,464 @@
+@@ -0,0 +1,494 @@
 +/*
 + * kernel/power/tuxonice_modules.c
 + *
@@ -13262,6 +12935,36 @@ index 0000000..9b05d90
 +
 +	/* One more for the empty terminator */
 +	return bytes + sizeof(struct toi_module_header);
++}
++
++void print_toi_header_storage_for_modules(void)
++{
++	struct toi_module_ops *this_module;
++	int bytes = 0;
++
++	printk(KERN_DEBUG "Header storage:\n");
++	list_for_each_entry(this_module, &toi_modules, module_list) {
++		if (!this_module->enabled ||
++		    (this_module->type == WRITER_MODULE &&
++		     toiActiveAllocator != this_module))
++			continue;
++		if (this_module->storage_needed) {
++			int this = this_module->storage_needed() +
++				sizeof(struct toi_module_header) +
++				sizeof(int);
++			this_module->header_requested = this;
++			bytes += this;
++			printk(KERN_DEBUG "+ %16s : %-4d/%d.\n",
++					this_module->name,
++					this_module->header_used, this);
++		}
++	}
++
++	printk(KERN_DEBUG "+ empty terminator : %ld.\n",
++			sizeof(struct toi_module_header));
++	printk(KERN_DEBUG "                     ====\n");
++	printk(KERN_DEBUG "                     %ld\n",
++			bytes + sizeof(struct toi_module_header));
 +}
 +
 +/*
@@ -13675,7 +13378,7 @@ index 0000000..9b05d90
 +}
 diff --git a/kernel/power/tuxonice_modules.h b/kernel/power/tuxonice_modules.h
 new file mode 100644
-index 0000000..a256731
+index 0000000..79494e2
 --- /dev/null
 +++ b/kernel/power/tuxonice_modules.h
 @@ -0,0 +1,181 @@
@@ -13762,12 +13465,11 @@ index 0000000..a256731
 +	/*
 +	 * Calls for allocating storage (allocators only).
 +	 *
-+	 * Header space is allocated separately. Note that allocation
-+	 * of space for the header might result in allocated space
-+	 * being stolen from the main pool if there is no unallocated
-+	 * space. We have to be able to allocate enough space for
-+	 * the header. We can eat memory to ensure there is enough
-+	 * for the main pool.
++	 * Header space is requested separately and cannot fail, but the
++	 * reservation is only applied when main storage is allocated.
++	 * The header space reservation is thus always set prior to
++	 * requesting the allocation of storage - and prior to querying
++	 * how much storage is available.
 +	 */
 +
 +	int (*storage_available) (void);
@@ -13784,7 +13486,7 @@ index 0000000..a256731
 +			unsigned int buf_size);
 +	int (*read_page) (unsigned long *index, struct page *buffer_page,
 +			unsigned int *buf_size);
-+	void (*io_flusher) (int rw);
++	int (*io_flusher) (int rw);
 +
 +	/* Reset module if image exists but reading aborted */
 +	void (*noresume_reset) (void);
@@ -13810,7 +13512,7 @@ index 0000000..a256731
 +	void (*update_throughput_throttle) (int jif_index);
 +
 +	/* Flush outstanding I/O */
-+	void (*finish_all_io) (void);
++	int (*finish_all_io) (void);
 +
 +	/* Determine whether image exists that we can restore */
 +	int (*image_exists) (int quiet);
@@ -13842,6 +13544,7 @@ index 0000000..a256731
 +
 +extern long toi_header_storage_for_modules(void);
 +extern long toi_memory_for_modules(int print_parts);
++extern void print_toi_header_storage_for_modules(void);
 +extern int toi_expected_compression_ratio(void);
 +
 +extern int toi_print_module_debug_info(char *buffer, int buffer_size);
@@ -15153,10 +14856,10 @@ index 0000000..a85633a
 +extern void platform_restore_cleanup(int platform_mode);
 diff --git a/kernel/power/tuxonice_prepare_image.c b/kernel/power/tuxonice_prepare_image.c
 new file mode 100644
-index 0000000..d8f4123
+index 0000000..1ee506a
 --- /dev/null
 +++ b/kernel/power/tuxonice_prepare_image.c
-@@ -0,0 +1,1065 @@
+@@ -0,0 +1,1056 @@
 +/*
 + * kernel/power/tuxonice_prepare_image.c
 + *
@@ -15199,8 +14902,8 @@ index 0000000..d8f4123
 +#include "tuxonice_alloc.h"
 +#include "tuxonice_atomic_copy.h"
 +
-+static long num_nosave, header_space_allocated, main_storage_allocated,
-+	   storage_available;
++static long num_nosave, main_storage_allocated, storage_available,
++	    header_storage_needed;
 +long extra_pd1_pages_allowance = CONFIG_TOI_DEFAULT_EXTRA_PAGES_ALLOWANCE;
 +int image_size_limit;
 +static int no_ps2_needed;
@@ -15574,7 +15277,7 @@ index 0000000..d8f4123
 +/*
 + * Storage needed for the image header, in bytes until the return.
 + */
-+static long header_storage_needed(void)
++long get_header_storage_needed(void)
 +{
 +	long bytes = (int) sizeof(struct toi_header) +
 +			toi_header_storage_for_modules() +
@@ -15618,7 +15321,7 @@ index 0000000..d8f4123
 +
 +static long current_image_size(void)
 +{
-+	return pagedir1.size + pagedir2.size + header_space_allocated;
++	return pagedir1.size + pagedir2.size + header_storage_needed;
 +}
 +
 +static long storage_still_required(void)
@@ -15665,12 +15368,10 @@ index 0000000..d8f4123
 +static long image_not_ready(int use_image_size_limit)
 +{
 +	toi_message(TOI_EAT_MEMORY, TOI_LOW, 1,
-+		"Amount still needed (%ld) > 0:%d. Header: %ld < %ld: %d,"
++		"Amount still needed (%ld) > 0:%d,"
 +		" Storage allocd: %ld < %ld: %d.\n",
 +			amount_needed(use_image_size_limit),
 +			(amount_needed(use_image_size_limit) > 0),
-+			header_space_allocated, header_storage_needed(),
-+			header_space_allocated < header_storage_needed(),
 +			main_storage_allocated,
 +			main_storage_needed(1, 1),
 +			main_storage_allocated < main_storage_needed(1, 1));
@@ -15678,7 +15379,6 @@ index 0000000..d8f4123
 +	toi_cond_pause(0, NULL);
 +
 +	return (amount_needed(use_image_size_limit) > 0) ||
-+		header_space_allocated < header_storage_needed() ||
 +		 main_storage_allocated < main_storage_needed(1, 1);
 +}
 +
@@ -15701,14 +15401,6 @@ index 0000000..d8f4123
 +		printk(KERN_INFO "- The maximum number of iterations was "
 +				"reached without successfully preparing the "
 +				"image.\n");
-+
-+	if (header_space_allocated < header_storage_needed()) {
-+		printk(KERN_INFO "- Insufficient header storage allocated. "
-+				"Need %ld, have %ld.\n",
-+				header_storage_needed(),
-+				header_space_allocated);
-+		set_abort_result(TOI_INSUFFICIENT_STORAGE);
-+	}
 +
 +	if (storage_required) {
 +		printk(KERN_INFO " - We need at least %ld pages of storage "
@@ -15754,7 +15446,7 @@ index 0000000..d8f4123
 +{
 +	char buffer[255];
 +	snprintf(buffer, 254,
-+		"Free:%ld(%ld). Sets:%ld(%ld),%ld(%ld). Header:%ld/%ld. "
++		"Free:%ld(%ld). Sets:%ld(%ld),%ld(%ld). "
 +		"Nosave:%ld-%ld=%ld. Storage:%lu/%lu(%lu=>%lu). "
 +		"Needed:%ld,%ld,%ld(%d,%ld,%ld,%ld) (PS2:%s)\n",
 +
@@ -15765,9 +15457,6 @@ index 0000000..d8f4123
 +		/* Sets */
 +		pagedir1.size, pagedir1.size - get_highmem_size(pagedir1),
 +		pagedir2.size, pagedir2.size - get_highmem_size(pagedir2),
-+
-+		/* Header */
-+		header_space_allocated, header_storage_needed(),
 +
 +		/* Nosave */
 +		num_nosave, extra_pages_allocated,
@@ -15980,7 +15669,7 @@ index 0000000..d8f4123
 + */
 +static void update_image(int ps2_recalc)
 +{
-+	int wanted, got;
++	int wanted, got, old_header_req;
 +	long seek;
 +
 +	toi_recalculate_image_contents(0);
@@ -16014,17 +15703,23 @@ index 0000000..d8f4123
 +	 * don't complain if we can't get the full amount we're after.
 +	 */
 +
-+	storage_available = toiActiveAllocator->storage_available();
++	do {
++		old_header_req = header_storage_needed;
++		toiActiveAllocator->reserve_header_space(header_storage_needed);
 +
-+	header_space_allocated = header_storage_needed();
++		/* How much storage is free with the reservation applied? */
++		storage_available = toiActiveAllocator->storage_available();
++		seek = min(storage_available, main_storage_needed(0, 0));
 +
-+	toiActiveAllocator->reserve_header_space(header_space_allocated);
++		toiActiveAllocator->allocate_storage(seek);
 +
-+	seek = min(storage_available, main_storage_needed(0, 0));
++		main_storage_allocated =
++			toiActiveAllocator->storage_allocated();
 +
-+	toiActiveAllocator->allocate_storage(seek);
++		/* Need more header because more storage allocated? */
++		header_storage_needed = get_header_storage_needed();
 +
-+	main_storage_allocated = toiActiveAllocator->storage_allocated();
++	} while (header_storage_needed > old_header_req);
 +
 +	if (freeze_processes())
 +		set_abort_result(TOI_FREEZING_FAILED);
@@ -16158,7 +15853,6 @@ index 0000000..d8f4123
 +{
 +	int result = 1, tries = 1;
 +
-+	header_space_allocated = 0;
 +	main_storage_allocated = 0;
 +	no_ps2_needed = 0;
 +
@@ -16224,10 +15918,10 @@ index 0000000..d8f4123
 +}
 diff --git a/kernel/power/tuxonice_prepare_image.h b/kernel/power/tuxonice_prepare_image.h
 new file mode 100644
-index 0000000..46eda88
+index 0000000..9a1de79
 --- /dev/null
 +++ b/kernel/power/tuxonice_prepare_image.h
-@@ -0,0 +1,35 @@
+@@ -0,0 +1,36 @@
 +/*
 + * kernel/power/tuxonice_prepare_image.h
 + *
@@ -16263,6 +15957,7 @@ index 0000000..46eda88
 +#define ZONE_HIGHMEM (MAX_NR_ZONES + 1)
 +#endif
 +
++long get_header_storage_needed(void);
 diff --git a/kernel/power/tuxonice_storage.c b/kernel/power/tuxonice_storage.c
 new file mode 100644
 index 0000000..5dafc95
@@ -16604,10 +16299,10 @@ index 0000000..24f8e8a
 +};
 diff --git a/kernel/power/tuxonice_swap.c b/kernel/power/tuxonice_swap.c
 new file mode 100644
-index 0000000..3306a81
+index 0000000..7c0effe
 --- /dev/null
 +++ b/kernel/power/tuxonice_swap.c
-@@ -0,0 +1,1312 @@
+@@ -0,0 +1,1313 @@
 +/*
 + * kernel/power/tuxonice_swap.c
 + *
@@ -17002,7 +16697,7 @@ index 0000000..3306a81
 +
 +		/* Get the details of the header first page. */
 +		toi_extent_state_goto_start(&toi_writer_posn);
-+		toi_bio_ops.forward_one_page(1);
++		toi_bio_ops.forward_one_page(1, 1);
 +
 +		si = get_swap_info_struct(toi_writer_posn.current_chain);
 +
@@ -17048,19 +16743,15 @@ index 0000000..3306a81
 +
 +/*
 + * apply_header_reservation
-+ *
-+ * Use 0 (READ) to forward_one_page so it doesn't complain if we haven't
-+ * allocated storage yet.
 + */
 +static int apply_header_reservation(void)
 +{
 +	int i;
 +
 +	toi_extent_state_goto_start(&toi_writer_posn);
-+	toi_bio_ops.forward_one_page(0); /* To first page */
 +
 +	for (i = 0; i < header_pages_reserved; i++)
-+		if (toi_bio_ops.forward_one_page(0))
++		if (toi_bio_ops.forward_one_page(1, 0))
 +			return -ENOSPC;
 +
 +	/* The end of header pages will be the start of pageset 2;
@@ -17072,9 +16763,6 @@ index 0000000..3306a81
 +static void toi_swap_reserve_header_space(int request)
 +{
 +	header_pages_reserved = (long) request;
-+
-+	/* If we've already allocated storage (hence ignoring return value): */
-+	apply_header_reservation();
 +}
 +
 +static void free_block_chains(void)
@@ -17128,8 +16816,10 @@ index 0000000..3306a81
 +		}
 +
 +		if (extent_min > -1 && add_blocks_to_extent_chain(last_chain,
-+					extent_min, extent_max))
++					extent_min, extent_max)) {
++			printk("Out of memory while making block chains.\n");
 +			return -ENOMEM;
++		}
 +
 +		extent_min = new_sector;
 +		extent_max = new_sector;
@@ -17137,8 +16827,10 @@ index 0000000..3306a81
 +	}
 +
 +	if (extent_min > -1 && add_blocks_to_extent_chain(last_chain,
-+				extent_min, extent_max))
++				extent_min, extent_max)) {
++			printk("Out of memory while making block chains.\n");
 +			return -ENOMEM;
++	}
 +
 +	return apply_header_reservation();
 +}
@@ -17255,22 +16947,20 @@ index 0000000..3306a81
 + * Round robin allocation (where swap storage has the same priority).
 + * could make this very inefficient, so we track extents allocated on
 + * a per-swapfile basis.
-+ *
-+ * We ignore here the fact that some space is for the header and doesn't
-+ * have the overhead. It will only rarely make a 1 page difference.
 + */
 +static int toi_swap_allocate_storage(int request)
 +{
 +	int i, result = 0, to_add[MAX_SWAPFILES], pages_to_get, extra_pages,
-+	    gotten = 0;
++	    gotten = 0, result2;
 +	unsigned long extent_min[MAX_SWAPFILES], extent_max[MAX_SWAPFILES];
 +
 +	extra_pages = DIV_ROUND_UP(request * (sizeof(unsigned long)
 +			       + sizeof(int)), PAGE_SIZE);
-+	pages_to_get = request + extra_pages - swapextents.size;
++	pages_to_get = request + extra_pages - swapextents.size +
++		header_pages_reserved;
 +
 +	if (pages_to_get < 1)
-+		return 0;
++		return apply_header_reservation();
 +
 +	for (i = 0; i < MAX_SWAPFILES; i++) {
 +		struct swap_info_struct *si = get_swap_info_struct(i);
@@ -17350,12 +17040,18 @@ index 0000000..3306a81
 +		break;
 +	}
 +
-+	if (gotten < pages_to_get)
++	if (gotten < pages_to_get) {
++		printk("Got fewer pages than required "
++				"(%d wanted, %d gotten).\n",
++				pages_to_get, gotten);
 +		result = -ENOSPC;
++	}
 +
 +	swap_pages_allocated += (long) gotten;
 +
-+	return result ? result : get_main_pool_phys_params();
++	result2 = get_main_pool_phys_params();
++
++	return result ? result : result2;
 +}
 +
 +static int toi_swap_write_header_init(void)
@@ -17412,14 +17108,13 @@ index 0000000..3306a81
 +
 +static int toi_swap_write_header_cleanup(void)
 +{
-+	/* Write any unsaved data */
-+	if (toi_writer_buffer_posn)
-+		toi_bio_ops.write_header_chunk_finish();
-+
-+	toi_bio_ops.finish_all_io();
++	int result = toi_bio_ops.write_header_chunk_finish();
 +
 +	/* Set signature to save we have an image */
-+	return write_modified_signature(IMAGE_SIGNATURE);
++	if (!result)
++		result = write_modified_signature(IMAGE_SIGNATURE);
++
++	return result;
 +}
 +
 +/* ------------------------- HEADER READING ------------------------- */
@@ -17592,10 +17287,11 @@ index 0000000..3306a81
 +static int toi_swap_storage_needed(void)
 +{
 +	int i, result;
-+	result = sizeof(toi_writer_posn_save) + sizeof(devinfo);
++	result = sizeof(struct sig_data) + sizeof(toi_writer_posn_save) +
++		sizeof(devinfo);
 +
 +	for (i = 0; i < MAX_SWAPFILES; i++) {
-+		result += 3 * sizeof(int);
++		result += 2 * sizeof(int);
 +		result += (2 * sizeof(unsigned long) *
 +			block_chain[i].num_extents);
 +	}
@@ -19582,7 +19278,7 @@ index b36b83b..c46ede9 100644
  static int pkmap_count[LAST_PKMAP];
  static unsigned int last_pkmap_nr;
 diff --git a/mm/memory.c b/mm/memory.c
-index baa999e..a4fa9b0 100644
+index d7df5ba..ef53e66 100644
 --- a/mm/memory.c
 +++ b/mm/memory.c
 @@ -1180,6 +1180,7 @@ no_page_table:
@@ -19787,3 +19483,43 @@ index 56ddf41..f8df64a 100644
  #endif
  
  /* It's optimal to keep kswapds on the same CPUs as their memory, but
+diff -ruNp 950-modular-compilation.patch-old/kernel/power/tuxonice_modules.c 950-modular-compilation.patch-new/kernel/power/tuxonice_modules.c
+--- 950-modular-compilation.patch-old/kernel/power/tuxonice_modules.c	2009-04-11 08:31:27.000000000 +1000
++++ 950-modular-compilation.patch-new/kernel/power/tuxonice_modules.c	2009-04-11 08:31:07.000000000 +1000
+@@ -80,6 +80,7 @@ void print_toi_header_storage_for_module
+ 	printk(KERN_DEBUG "                     %ld\n",
+ 	       bytes + sizeof(struct toi_module_header));
+ }
++EXPORT_SYMBOL_GPL(print_toi_header_storage_for_modules);
+ 
+ /*
+  * toi_memory_for_modules
+diff -ruNp 950-modular-compilation.patch-old/kernel/power/tuxonice_prepare_image.c 950-modular-compilation.patch-new/kernel/power/tuxonice_prepare_image.c
+--- 950-modular-compilation.patch-old/kernel/power/tuxonice_prepare_image.c	2009-04-11 08:31:27.000000000 +1000
++++ 950-modular-compilation.patch-new/kernel/power/tuxonice_prepare_image.c	2009-04-11 08:30:31.000000000 +1000
+@@ -424,6 +424,7 @@ long get_header_storage_needed(void)
+ 
+ 	return DIV_ROUND_UP(bytes, PAGE_SIZE);
+ }
++EXPORT_SYMBOL_GPL(get_header_storage_needed);
+ 
+ /*
+  * When freeing memory, pages from either pageset might be freed.
+diff -ruNp 910.patch-old/kernel/power/tuxonice_pageflags.c 910.patch-new/kernel/power/tuxonice_pageflags.c
+--- 910.patch-old/kernel/power/tuxonice_pageflags.c	2009-04-11 09:39:17.000000000 +1000
++++ 910.patch-new/kernel/power/tuxonice_pageflags.c	2009-04-11 09:39:07.000000000 +1000
+@@ -25,3 +25,4 @@ int toi_pageflags_space_needed(void)
+ 
+ 	return total;
+ }
++EXPORT_SYMBOL_GPL(toi_pageflags_space_needed);
+diff -u linux-2.6.27/kernel/power/tuxonice_pageflags.h{~,}
+--- linux-2.6.27/kernel/power/tuxonice_pageflags.h~     2009-04-11 10:14:55.000000000 +0200
++++ linux-2.6.27/kernel/power/tuxonice_pageflags.h      2009-04-11 14:08:04.000000000 +0200
+@@ -70,5 +70,5 @@
+
+ extern void save_pageflags(struct memory_bitmap *pagemap);
+ extern int load_pageflags(struct memory_bitmap *pagemap);
+-extern int toi_pageflags_space_needed(void);
++int toi_pageflags_space_needed(void);
+ #endif
