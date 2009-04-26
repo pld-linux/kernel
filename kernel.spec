@@ -297,6 +297,8 @@ Patch145:	kernel-aufs.patch
 Patch146:	kernel-aufs-support.patch
 Patch147:	kernel-aufs-apparmor.patch
 
+Patch148:	kernel-aufs2.patch
+
 Patch150:	kernel-ppc-crtsavres.patch
 
 Patch200:	kernel-ppc-ICE-hacks.patch
@@ -870,10 +872,14 @@ install %{SOURCE5} Makefile.ppclibs
 %patch140 -p1
 %{?with_apparmor:%patch141 -p1}
 
+%if %{with rescuecd}
+%patch148 -p1
+%else
 # 2.6.29 FIXME - needs port to creds
 #%patch145 -p1
 #%patch146 -p1
 #%{?with_apparmor:%patch147 -p1}
+%endif
 
 %patch2500 -p1
 
@@ -1054,6 +1060,8 @@ RescueConfig() {
 		# CONFIG_KVM is not set
 		# CONFIG_PHONE is not set
 		CONFIG_AUFS=y
+		CONFIG_AUFS_FS=y
+		CONFIG_AUFS_BR_RAMFS=y
 		CONFIG_BLK_DEV_LOOP=y
 		CONFIG_ISO9660_FS=y
 		CONFIG_NLS_UTF8=y
