@@ -868,9 +868,11 @@ install %{SOURCE5} Makefile.ppclibs
 # forcedeth
 %patch130 -p1
 
-# unionfs
+# unionfs (disabled for rescuecd - problems with aufs2)
+%if %{without rescuecd}
 %patch140 -p1
 %{?with_apparmor:%patch141 -p1}
+%endif
 
 %if %{with rescuecd}
 %patch148 -p1
