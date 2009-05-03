@@ -102,7 +102,7 @@
 %endif
 
 %define		basever		2.6.27
-%define		postver		.21
+%define		postver		.22
 %define		rel		1
 
 %define		_enable_debug_packages			0
@@ -143,7 +143,7 @@ Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{basever}.tar.bz2
 # Source0-md5:	b3e78977aa79d3754cb7f8143d7ddabd
 %if "%{postver}" != "%{nil}"
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
-# Source1-md5:	9297d56c7e47f2977593d92e218228f2
+# Source1-md5:	3f2f55aef3f5555676f15d33f079e6ca
 %endif
 
 Source3:	kernel-autoconf.h
@@ -313,7 +313,7 @@ Patch1000:	linux-2.6-grsec-minimal.patch
 
 Patch2000:	kernel-small_fixes.patch
 Patch2001:	linux-2.6.21.1-pwc-uncompress.patch
-Patch2002:	kernel-netns-inet6-tw.patch
+Patch2002:	kernel-atom-coretemp.patch
 Patch2003:	kernel-regressions.patch
 
 # kill some thousands of warnings
