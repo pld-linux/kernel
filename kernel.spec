@@ -85,6 +85,7 @@
 %define		have_drm	1
 %define		have_oss	1
 %define		have_sound	1
+%define		have_pcmcia	1
 
 %if %{with rescuecd}
 %undefine	with_apparmor
@@ -98,10 +99,11 @@
 %define		have_sound	0
 %endif
 
-%ifarch %{ix86} alpha ppc
-%define		have_isa	1
-%else
-%define		have_isa	0
+%if %{with myown}
+%define		have_drm	0
+%define		have_oss	0
+%define		have_sound	0
+%define		have_pcmcia	0
 %endif
 
 %ifarch sparc sparc64
@@ -110,9 +112,13 @@
 %define		have_oss	0
 %endif
 
+%if %{without pcmcia}
+%define		have_pcmcia	0
+%endif
+
 %define		basever		2.6.29
 %define		postver		.3
-%define		rel		0.1
+%define		rel		0.2
 
 %define		_enable_debug_packages			0
 
@@ -120,14 +126,19 @@
 %define		tuxonice_version	3.0.1
 %define		netfilter_snap		20070806
 
-%if %{without rescuecd}
-%define		__alt_kernel	%{?with_pax:pax}%{!?with_grsec_full:nogrsecurity}%{!?with_apparmor:noaa}%{?with_pae:pae}%{?with_myown:myown}
-%else
-%define		__alt_kernel	rescuecd
+%if %{with myown}
+%if "%{_alt_kernel}" == ""
+%define		alt_kernel	myown
 %endif
-
+%else
+%if %{without rescuecd}
+%define		__alt_kernel	%{?with_pax:pax}%{!?with_grsec_full:nogrsecurity}%{!?with_apparmor:noaa}%{?with_pae:pae}
 %if "%{__alt_kernel}" != ""
 %define		alt_kernel	%{__alt_kernel}
+%endif
+%else
+%define		alt_kernel	rescuecd
+%endif
 %endif
 
 # kernel release (used in filesystem and eventually in uname -r)
@@ -1145,6 +1156,9 @@ EOCONFIG
 
 	# prepare kernel-style config file from multiple config files
 	%{__awk} -v arch="all %{target_arch_dir} %{_target_base_arch} %{_target_cpu}" -f %{SOURCE6} \
+%if %{with myown}
+		$RPM_SOURCE_DIR/kernel-%{alt_kernel}.config \
+%endif
 		important.config \
 %if %{with rescuecd}
 		%{SOURCE58} \
@@ -1199,11 +1213,7 @@ EOCONFIG
 
 cd %{objdir}
 install -d arch/%{target_arch_dir}
-%if %{without myown}
 BuildConfig > %{defconfig}
-%else
-cat $RPM_SOURCE_DIR/kernel-myown.config > %{defconfig}
-%endif
 ln -sf %{defconfig} .config
 cd -
 
@@ -1225,6 +1235,11 @@ rm -rf $RPM_BUILD_ROOT
 	KERNELRELEASE=%{kernel_release}
 
 install -d $RPM_BUILD_ROOT/lib/modules/%{kernel_release}/misc
+
+%if %{with myown}
+# create directories which may be missing, to simplyfy %files
+install -d $RPM_BUILD_ROOT/lib/modules/%{kernel_release}/kernel/sound
+%endif
 
 # rpm obeys filelinkto checks for ghosted symlinks, convert to files
 rm -f $RPM_BUILD_ROOT/lib/modules/%{kernel_release}/{build,source}
@@ -1408,17 +1423,14 @@ fi
 %endif
 /lib/modules/%{kernel_release}/kernel/crypto
 /lib/modules/%{kernel_release}/kernel/drivers
-%if %{have_drm} && %{without myown}
+%if %{have_drm}
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/gpu
 %endif
 /lib/modules/%{kernel_release}/kernel/fs
-
-# this directory will be removed after disabling rcutorture mod. in 2.6.20.
 /lib/modules/%{kernel_release}/kernel/kernel
-
 /lib/modules/%{kernel_release}/kernel/lib
 /lib/modules/%{kernel_release}/kernel/net
-%if %{have_sound} && %{without myown}
+%if %{have_sound}
 %dir /lib/modules/%{kernel_release}/kernel/sound
 /lib/modules/%{kernel_release}/kernel/sound/ac97_bus.ko*
 /lib/modules/%{kernel_release}/kernel/sound/sound*.ko*
@@ -1429,7 +1441,7 @@ fi
 %endif
 %endif
 %dir /lib/modules/%{kernel_release}/misc
-%if %{with pcmcia} && %{without myown}
+%if %{have_pcmcia}
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/pcmcia/[!p]*
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/pcmcia/pd6729.ko*
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/*/pcmcia
@@ -1450,6 +1462,9 @@ fi
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/serial/serial_cs.ko*
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/usb/host/sl811_cs.ko*
 %endif
+%if %{with myown}
+/lib/modules/%{kernel_release}/kernel/sound
+%endif
 %ghost /lib/modules/%{kernel_release}/modules.*
 # symlinks pointing to kernelsrcdir
 %ghost /lib/modules/%{kernel_release}/build
@@ -1466,13 +1481,13 @@ fi
 /boot/vmlinux-%{kernel_release}
 %endif
 
-%if %{have_drm} && %{without myown}
+%if %{have_drm}
 %files drm
 %defattr(644,root,root,755)
 /lib/modules/%{kernel_release}/kernel/drivers/gpu
 %endif
 
-%if %{with pcmcia} && %{without myown}
+%if %{have_pcmcia}
 %files pcmcia
 %defattr(644,root,root,755)
 /lib/modules/%{kernel_release}/kernel/drivers/pcmcia/*ko*
@@ -1512,7 +1527,7 @@ fi
 %endif
 %endif
 
-%if %{have_sound} && %{without myown}
+%if %{have_sound}
 %files sound-alsa
 %defattr(644,root,root,755)
 /lib/modules/%{kernel_release}/kernel/sound
@@ -1529,7 +1544,7 @@ fi
 /lib/modules/%{kernel_release}/kernel/drivers/media/video/saa7134/saa7134-alsa.ko*
 %endif
 
-%if %{have_oss} && %{without myown}
+%if %{have_oss}
 %files sound-oss
 %defattr(644,root,root,755)
 /lib/modules/%{kernel_release}/kernel/sound/oss
