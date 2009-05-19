@@ -15148,14 +15148,6 @@ diff -NurpP --minimal linux-2.6.29.2/kernel/exit.c linux-2.6.29.2-vs2.3.0.36.12/
  		}
  	}
  }
-@@ -571,6 +578,7 @@ void put_fs_struct(struct fs_struct *fs)
- 	if (atomic_dec_and_test(&fs->count)) {
- 		path_put(&fs->root);
- 		path_put(&fs->pwd);
-+		atomic_dec(&vs_global_fs);
- 		kmem_cache_free(fs_cachep, fs);
- 	}
- }
 @@ -1122,10 +1130,15 @@ NORET_TYPE void do_exit(long code)
  	if (tsk->splice_pipe)
  		__free_pipe_info(tsk->splice_pipe);
@@ -15257,14 +15249,6 @@ diff -NurpP --minimal linux-2.6.29.2/kernel/fork.c linux-2.6.29.2-vs2.3.0.36.12/
  	mm_free_pgd(mm);
  	free_mm(mm);
  	return NULL;
-@@ -690,6 +703,7 @@ static struct fs_struct *__copy_fs_struc
- 		fs->pwd = old->pwd;
- 		path_get(&old->pwd);
- 		read_unlock(&old->lock);
-+		atomic_inc(&vs_global_fs);
- 	}
- 	return fs;
- }
 @@ -960,6 +974,8 @@ static struct task_struct *copy_process(
  	int retval;
  	struct task_struct *p;
@@ -28069,3 +28053,21 @@ diff -NurpP --minimal linux-2.6.29.2/security/selinux/hooks.c linux-2.6.29.2-vs2
  #include <linux/parser.h>
  #include <linux/nfs_mount.h>
  #include <net/ipv6.h>
+--- linux-2.6.29/fs/fs_struct.c~	2009-05-19 17:03:43.300249930 +0200
++++ linux-2.6.29/fs/fs_struct.c	2009-05-19 17:20:58.300250042 +0200
+@@ -76,6 +76,7 @@
+ {
+ 	path_put(&fs->root);
+ 	path_put(&fs->pwd);
++	atomic_dec(&vs_global_fs);
+ 	kmem_cache_free(fs_cachep, fs);
+ }
+ 
+@@ -111,6 +112,7 @@
+ 		fs->pwd = old->pwd;
+ 		path_get(&old->pwd);
+ 		read_unlock(&old->lock);
++		atomic_inc(&vs_global_fs);
+ 	}
+ 	return fs;
+ }
