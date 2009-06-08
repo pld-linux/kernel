@@ -14,8 +14,6 @@
 # FUTURE:
 # - pom-ng quake3-conntrack-nat -> nf_conntrack ?
 # - pom-ng talk-conntrack-nat -> nf_conntrack ?
-# - nf-hipac ?
-# - pax hooks for selinux (experimental)
 #
 # Conditional build:
 %bcond_without	source		# don't build kernel-source package
@@ -34,7 +32,7 @@
 %bcond_with	pae		# build PAE (HIGHMEM64G) support on uniprocessor
 %bcond_with	nfsroot		# build with root on NFS support
 
-%bcond_with	imq		# imq support
+%bcond_without	imq		# imq support
 %bcond_without	wrr		# wrr support
 %bcond_without	ipv6		# ipv6 support
 
@@ -108,7 +106,7 @@
 
 %define		basever		2.6.28
 %define		postver		.10
-%define		rel		1
+%define		rel		2
 
 %define		_enable_debug_packages			0
 
