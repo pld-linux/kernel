@@ -458,7 +458,7 @@ BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 	%define	DepMod /sbin/depmod
 	%endif
 
-	%if "%{_target_base_arch}" == ppc || "%{_target_base_arch}" == "ppc64"
+	%if "%{_target_base_arch}" == "ppc" || "%{_target_base_arch}" == "ppc64"
 	%define CrossOpts ARCH=powerpc CROSS_COMPILE=%{_target_cpu}-pld-linux-
 	%endif
 %else
