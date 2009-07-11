@@ -181,6 +181,8 @@ Source57:	kernel-wrr.config
 Source58:	kernel-inittmpfs.config
 Source59:	kernel-bzip2-lzma.config
 
+Patch1:		kernel-md_driver_fix.patch
+
 # tahoe9xx http://www.tahoe.pl/drivers/tahoe9xx-2.6.24.patch
 Patch2:		tahoe9xx-2.6.24.patch
 
@@ -730,6 +732,8 @@ install %{SOURCE5} Makefile.ppclibs
 %if "%{postver}" != "%{nil}"
 %{__bzip2} -dc %{SOURCE1} | patch -p1 -s
 %endif
+
+%patch1 -p1
 
 # tuxonice:
 %if %{with tuxonice}
