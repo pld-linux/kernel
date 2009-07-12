@@ -103,7 +103,7 @@
 
 %define		basever		2.6.27
 %define		postver		.26
-%define		rel		2
+%define		rel		3
 
 %define		_enable_debug_packages			0
 
@@ -313,6 +313,7 @@ Patch300:	kernel-routes.patch
 
 Patch1000:	linux-2.6-grsec-minimal.patch
 
+Patch2000:	kernel-small_fixes.patch
 Patch2001:	linux-2.6.21.1-pwc-uncompress.patch
 Patch2002:	kernel-atom-coretemp.patch
 Patch2003:	kernel-regressions.patch
@@ -934,6 +935,7 @@ install %{SOURCE5} Makefile.ppclibs
 %patch300 -p1
 
 # Small fixes:
+%patch2000 -p1
 %patch2001 -p1
 %patch2002 -p1
 #%patch2003 -p1
