@@ -102,8 +102,8 @@
 %endif
 
 %define		basever		2.6.27
-%define		postver		.26
-%define		rel		3
+%define		postver		.27
+%define		rel		1
 
 %define		_enable_debug_packages			0
 
@@ -143,7 +143,7 @@ Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{basever}.tar.bz2
 # Source0-md5:	b3e78977aa79d3754cb7f8143d7ddabd
 %if "%{postver}" != "%{nil}"
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
-# Source1-md5:	0229a841c4a2f6888420ce23c8ed9b73
+# Source1-md5:	0ab026bb857eddd73980a5e7bafdf451
 %endif
 
 Source3:	kernel-autoconf.h
@@ -180,8 +180,6 @@ Source57:	kernel-wrr.config
 
 Source58:	kernel-inittmpfs.config
 Source59:	kernel-bzip2-lzma.config
-
-Patch1:		kernel-md_driver_fix.patch
 
 # tahoe9xx http://www.tahoe.pl/drivers/tahoe9xx-2.6.24.patch
 Patch2:		tahoe9xx-2.6.24.patch
@@ -733,8 +731,6 @@ install %{SOURCE5} Makefile.ppclibs
 %if "%{postver}" != "%{nil}"
 %{__bzip2} -dc %{SOURCE1} | patch -p1 -s
 %endif
-
-%patch1 -p1
 
 # tuxonice:
 %if %{with tuxonice}
