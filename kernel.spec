@@ -115,9 +115,9 @@
 %define		have_pcmcia	0
 %endif
 
-%define		basever		2.6.29
-%define		postver		.4
-%define		rel		0.2
+%define		basever		2.6.30
+%define		postver		.2
+%define		rel		0.1
 
 %define		_enable_debug_packages			0
 
@@ -158,10 +158,10 @@ Epoch:		3
 License:	GPL v2
 Group:		Base/Kernel
 Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{basever}.tar.bz2
-# Source0-md5:	64921b5ff5cdadbccfcd3820f03be7d8
+# Source0-md5:	7a80058a6382e5108cdb5554d1609615
 %if "%{postver}" != "%{nil}"
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
-# Source1-md5:	03f1a0236cc37d8594d2f3c837d81c9d
+# Source1-md5:	3b566e7d970941846bcbe35cecf04e21
 %endif
 
 Source3:	kernel-autoconf.h
@@ -273,7 +273,7 @@ Patch58:	kernel-PF_RING.patch
 Patch59:	kernel-rndis_host-wm5.patch
 
 # Project suspend2 renamed to tuxonice
-# http://www.tuxonice.net/downloads/all/tuxonice-3.0.1-for-head.patch.bz2
+# http://www.tuxonice.net/downloads/all/current-tuxonice-for-2.6.30.patch-20090620-v1.bz2
 Patch69:	kernel-tuxonice.patch
 Patch70:	kernel-tuxonice-headers.patch
 
@@ -281,10 +281,10 @@ Patch70:	kernel-tuxonice-headers.patch
 # http://patches.aircrack-ng.org/hostap-kernel-2.6.18.patch
 Patch85:	kernel-hostap.patch
 
-# Taken from http://download.opensuse.org/factory/repo/src-oss/suse/src/kernel-source-2.6.27.7-3.1.src.rpm
+# Taken from http://download.opensuse.org/factory/repo/src-oss/suse/src/kernel-source-2.6.30-10.3.src.rpm
 Patch90:	kernel-mpt-fusion.patch
 
-# based on http://vserver.13thfloor.at/Experimental/patch-2.6.29-vs2.3.0.36.9-pre3.diff
+# based on http://vserver.13thfloor.at/Experimental/patch-2.6.30.1-vs2.3.0.36.14-pre4.diff
 Patch100:	kernel-vserver-2.3.patch
 Patch101:	kernel-vserver-fixes.patch
 
@@ -325,12 +325,11 @@ Patch2003:	kernel-regressions.patch
 # (only warnings, so just remove parts of this patch if conflics)
 Patch2500:	kernel-warnings.patch
 
-# based on https://forgesvn1.novell.com/svn/apparmor/trunk/kernel-patches/2.6.27 rev 1303
-# repatched and adapted for vserver/grsec changes in vfs API, experimental
+# git://kernel.ubuntu.com/jj/apparmor-karmic-tree.git
+# git diff 0c9f19b4dd23620fb32116922b0d93e8aca6c911..HEAD
 Patch5000:	kernel-apparmor.patch
 # with grsec_full version
 Patch5001:	kernel-apparmor-after-grsec_full.patch
-Patch5002:	kernel-apparmor-common.patch
 
 # tomoyo based on patch from ccs-patch-1.6.6-20090202 tarball
 Patch6000:	kernel-tomoyo-with-apparmor.patch
@@ -339,9 +338,6 @@ Patch6001:	kernel-tomoyo-without-apparmor.patch
 # for rescuecd
 # based on http://ftp.leg.uct.ac.za/pub/linux/rip/inittmpfs-2.6.14.diff.gz
 Patch7000:	kernel-inittmpfs.patch
-
-# http://lkml.org/lkml/2009/3/26/267
-Patch7001:	kernel-bzip2-lzma.patch
 
 # not ready yet
 Patch9997:	kernel-pax_selinux_hooks.patch
@@ -762,10 +758,8 @@ install %{SOURCE5} Makefile.ppclibs
 
 # tuxonice:
 %if %{with tuxonice}
-##ifarch %{ix86} %{x8664} ia64 ppc alpha
 %patch69 -p1
 %patch70 -p1
-##endif
 %endif
 
 # XXX: 2.6.29 - need update
@@ -856,7 +850,8 @@ install %{SOURCE5} Makefile.ppclibs
 %patch85 -p1
 
 # LSI MPT Fusion driver update (by LSI via SUSE folks)
-%patch90 -p1
+# FIXME!
+#%patch90 -p1
 
 # vserver
 %if %{with vserver}
@@ -887,9 +882,6 @@ install %{SOURCE5} Makefile.ppclibs
 %if %{with rescuecd}
 %patch7000 -p1
 %endif
-
-# merged into 2.6.30 git :)
-%patch7001 -p1
 
 # grsecurity & pax stuff
 #
@@ -936,10 +928,8 @@ install %{SOURCE5} Makefile.ppclibs
 %if %{with apparmor}
 %if %{with grsec_full} || %{with pax_full}
 %patch5001 -p1
-%patch5002 -p1
 %else
 %patch5000 -p1
-%patch5002 -p1
 %endif
 %endif
 
