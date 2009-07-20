@@ -5,7 +5,6 @@
 #   - with_apparmor
 #   - with_grsec_minimal
 #   - with_grsec_full
-#   - with_tomoyo
 #
 # TODO:
 # - benchmark NO_HZ & HZ=1000 vs HZ=300 on i686
@@ -45,7 +44,6 @@
 %bcond_without	vserver		# support for VServer (enabled by default)
 %bcond_without	tuxonice	# support for tuxonice (ex-suspend2) (enabled by default)
 %bcond_without	apparmor	# build kernel with apparmor (exerimental mix)
-%bcond_with	tomoyo		# build kernel with tomoyo support [ disables apparmor ]
 
 %bcond_with	rescuecd	# build kernel for our rescue
 
@@ -197,9 +195,6 @@ Source57:	kernel-wrr.config
 Source58:	kernel-inittmpfs.config
 Source59:	kernel-bzip2-lzma.config
 
-Source6000:	http://globalbase.dl.sourceforge.jp/tomoyo/30297/ccs-patch-1.6.6-20090202.tar.gz
-# Source6000-md5:	cceb1731d3720030eac34ed128848b32
-
 # tahoe9xx http://www.tahoe.pl/drivers/tahoe9xx-2.6.24.patch
 Patch2:		kernel-tahoe9xx.patch
 
@@ -328,12 +323,6 @@ Patch2500:	kernel-warnings.patch
 # git://kernel.ubuntu.com/jj/apparmor-karmic-tree.git
 # git diff 0c9f19b4dd23620fb32116922b0d93e8aca6c911..HEAD
 Patch5000:	kernel-apparmor.patch
-# with grsec_full version
-Patch5001:	kernel-apparmor-after-grsec_full.patch
-
-# tomoyo based on patch from ccs-patch-1.6.6-20090202 tarball
-Patch6000:	kernel-tomoyo-with-apparmor.patch
-Patch6001:	kernel-tomoyo-without-apparmor.patch
 
 # for rescuecd
 # based on http://ftp.leg.uct.ac.za/pub/linux/rip/inittmpfs-2.6.14.diff.gz
@@ -345,7 +334,7 @@ Patch9997:	kernel-pax_selinux_hooks.patch
 # based on http://www.grsecurity.net/~paxguy1/pax-linux-2.6.24.6-test45.patch
 Patch9998:	kernel-pax.patch
 
-# based on http://www.grsecurity.net/~spender/grsecurity-2.1.14-2.6.29-200903281534.patch
+# based on http://www.grsecurity.net/~spender/grsecurity-2.1.14-2.6.29.6-200907122214.patch
 # NOTE: put raw upstream patches on kernel-grsec_full.patch:GRSECURITY_RAW for reference
 #       (since upstream deletes older patches)
 Patch9999:	kernel-grsec_full.patch
@@ -486,7 +475,6 @@ BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 %{?with_fbcondecor:Fbsplash/fbcondecor - enabled }\
 %{?with_nfsroot:Root on NFS - enabled}\
 %{?with_apparmor:apparmor support - enabled}\
-%{?with_tomoyo:tomoyo support - enabled}
 
 %define Features %(echo "%{__features}" | sed '/^$/d')
 
@@ -924,25 +912,6 @@ install %{SOURCE5} Makefile.ppclibs
 #
 # end of grsecurity & pax stuff
 
-# apparmor
-%if %{with apparmor}
-%if %{with grsec_full} || %{with pax_full}
-%patch5001 -p1
-%else
-%patch5000 -p1
-%endif
-%endif
-
-# tomoyo
-%if %{with tomoyo}
-	tar xzf %{SOURCE6000}
-	%if %{with apparmor}
-%patch6000 -p1
-	%else
-%patch6001 -p1
-	%endif
-%endif
-
 %patch150 -p1
 
 %ifarch ppc ppc64
@@ -1175,9 +1144,6 @@ EOCONFIG
 %ifarch %{ix86} %{x8664} ia64 ppc ppc64
 		%{SOURCE42} \
 %endif
-%endif
-%if %{with tomoyo}
-		config.ccs \
 %endif
 		%{SOURCE40} %{?0:netfilter} \
 		%{SOURCE41} %{?0:patches} \
