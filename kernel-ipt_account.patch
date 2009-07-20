@@ -393,9 +393,9 @@ diff -uNrp linux/net/ipv4/netfilter/ipt_account.c linux/net/ipv4/netfilter/ipt_a
 +    /* Yes, account this packet. */
 +#ifdef DEBUG_IPT_ACCOUNT  
 +#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,22)  
-+    if (debug) printk(KERN_DEBUG "ipt_account: [match]: accounting packet src = %u.%u.%u.%u, proto = %u.\n", HIPQUAD(address), ip_hdr(skb)->protocol);
++    if (debug) printk(KERN_DEBUG "ipt_account: [match]: accounting packet src = %pI4, proto = %u.\n", &address, ip_hdr(skb)->protocol);
 +#else
-+    if (debug) printk(KERN_DEBUG "ipt_account: [match]: accounting packet src = %u.%u.%u.%u, proto = %u.\n", HIPQUAD(address), skb->nh.iph->protocol);
++    if (debug) printk(KERN_DEBUG "ipt_account: [match]: accounting packet src = %pI4, proto = %u.\n", &address, skb->nh.iph->protocol);
 +#endif  
 +#endif  
 +    /* Update counters this host. */
@@ -432,9 +432,9 @@ diff -uNrp linux/net/ipv4/netfilter/ipt_account.c linux/net/ipv4/netfilter/ipt_a
 +    write_lock_bh(&table->stats_lock);
 +#ifdef DEBUG_IPT_ACCOUNT 
 +#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,22)  
-+    if (debug) printk(KERN_DEBUG "ipt_account: [match]: accounting packet dst = %u.%u.%u.%u, proto = %u.\n", HIPQUAD(address), ip_hdr(skb)->protocol);
++    if (debug) printk(KERN_DEBUG "ipt_account: [match]: accounting packet dst = %pI4, proto = %u.\n", &address, ip_hdr(skb)->protocol);
 +#else    
-+    if (debug) printk(KERN_DEBUG "ipt_account: [match]: accounting packet dst = %u.%u.%u.%u, proto = %u.\n", HIPQUAD(address), skb->nh.iph->protocol);
++    if (debug) printk(KERN_DEBUG "ipt_account: [match]: accounting packet dst = %pI4, proto = %u.\n", &address, skb->nh.iph->protocol);
 +#endif  
 +#endif    
 +    if (!table->shortlisting) {
@@ -705,8 +705,8 @@ diff -uNrp linux/net/ipv4/netfilter/ipt_account.c linux/net/ipv4/netfilter/ipt_a
 +      return 0;
 +    }
 +    seq_printf(sf,
-+        "ip = %u.%u.%u.%u bytes_src = %llu %llu %llu %llu %llu packets_src = %llu %llu %llu %llu %llu bytes_dst = %llu %llu %llu %llu %llu packets_dst = %llu %llu %llu %llu %llu time = %lu\n",
-+        HIPQUAD(address),
++        "ip = %pI4 bytes_src = %llu %llu %llu %llu %llu packets_src = %llu %llu %llu %llu %llu bytes_dst = %llu %llu %llu %llu %llu packets_dst = %llu %llu %llu %llu %llu time = %lu\n",
++        &address,
 +        l->src.b_all,
 +        l->src.b_tcp,
 +        l->src.b_udp,
@@ -743,8 +743,8 @@ diff -uNrp linux/net/ipv4/netfilter/ipt_account.c linux/net/ipv4/netfilter/ipt_a
 +      return 0;
 +    }
 +    seq_printf(sf,
-+        "ip = %u.%u.%u.%u bytes_src = %llu packets_src = %llu bytes_dst = %llu packets_dst = %llu time = %lu\n",
-+        HIPQUAD(address),
++        "ip = %pI4 bytes_src = %llu packets_src = %llu bytes_dst = %llu packets_dst = %llu time = %lu\n",
++        &address,
 +        s->src.b_all,
 +        s->src.p_all,
 +        s->dst.b_all,
