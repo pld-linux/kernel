@@ -912,6 +912,11 @@ install %{SOURCE5} Makefile.ppclibs
 #
 # end of grsecurity & pax stuff
 
+# apparmor
+%if %{with apparmor}
+%patch5000 -p1
+%endif
+
 %patch150 -p1
 
 %ifarch ppc ppc64
