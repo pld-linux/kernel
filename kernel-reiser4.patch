@@ -42822,7 +42822,7 @@ diff -urN linux-2.6.28.orig/fs/reiser4/plugin/item/cde.c linux-2.6.28/fs/reiser4
 +	data.length = estimate_cde(result ? coord : NULL, &data);
 +
 +	/* NOTE-NIKITA quota plugin? */
-+	if (DQUOT_ALLOC_SPACE_NODIRTY(dir, cde_bytes(result, &data)))
++	if (vfs_dq_alloc_space_nodirty(dir, cde_bytes(result, &data)))
 +		return RETERR(-EDQUOT);
 +
 +	if (result)
@@ -42873,7 +42873,7 @@ diff -urN linux-2.6.28.orig/fs/reiser4/plugin/item/cde.c linux-2.6.28/fs/reiser4
 +	    kill_node_content(coord, &shadow, NULL, NULL, NULL, NULL, NULL, 0);
 +	if (result == 0) {
 +		/* NOTE-NIKITA quota plugin? */
-+		DQUOT_FREE_SPACE_NODIRTY(dir, length);
++		vfs_dq_free_space_nodirty(dir, length);
 +	}
 +	return result;
 +}
@@ -45177,7 +45177,7 @@ diff -urN linux-2.6.28.orig/fs/reiser4/plugin/item/extent_file_ops.c linux-2.6.2
 +
 +	assert("", get_key_offset(key) == (loff_t)index_jnode(jnodes[0]) * PAGE_CACHE_SIZE);
 +
-+	result = DQUOT_ALLOC_BLOCK_NODIRTY(mapping_jnode(jnodes[0])->host,
++	result = vfs_dq_alloc_block_nodirty(mapping_jnode(jnodes[0])->host,
 +					   count);
 +	BUG_ON(result != 0);
 +
@@ -45325,7 +45325,7 @@ diff -urN linux-2.6.28.orig/fs/reiser4/plugin/item/extent_file_ops.c linux-2.6.2
 +	if (count == 0)
 +		return 0;
 +
-+	result = DQUOT_ALLOC_BLOCK_NODIRTY(mapping_jnode(jnodes[0])->host, count);
++	result = vfs_dq_alloc_block_nodirty(mapping_jnode(jnodes[0])->host, count);
 +	BUG_ON(result != 0);
 +
 +	/*
@@ -45539,7 +45539,7 @@ diff -urN linux-2.6.28.orig/fs/reiser4/plugin/item/extent_file_ops.c linux-2.6.2
 +		break;
 +
 +	case HOLE_EXTENT:
-+		result = DQUOT_ALLOC_BLOCK_NODIRTY(mapping_jnode(node)->host, 1);
++		result = vfs_dq_alloc_block_nodirty(mapping_jnode(node)->host, 1);
 +		BUG_ON(result != 0);
 +		result = plug_hole(uf_coord, key, &how);
 +		if (result)
@@ -48107,7 +48107,7 @@ diff -urN linux-2.6.28.orig/fs/reiser4/plugin/item/extent_item_ops.c linux-2.6.2
 +			length = to_off - offset;
 +		}
 +
-+		DQUOT_FREE_BLOCK_NODIRTY(inode, length);
++		vfs_dq_free_block_nodirty(inode, length);
 +
 +		if (state_of_extent(ext) == UNALLOCATED_EXTENT) {
 +			/* some jnodes corresponding to this unallocated extent */
@@ -50268,7 +50268,7 @@ diff -urN linux-2.6.28.orig/fs/reiser4/plugin/item/sde.c linux-2.6.28/fs/reiser4
 +	data.iplug = item_plugin_by_id(SIMPLE_DIR_ENTRY_ID);
 +
 +	/* NOTE-NIKITA quota plugin */
-+	if (DQUOT_ALLOC_SPACE_NODIRTY(dir, data.length))
++	if (vfs_dq_alloc_space_nodirty(dir, data.length))
 +		return -EDQUOT;
 +
 +	result = insert_by_coord(coord, &data, &entry->key, lh, 0 /*flags */ );
@@ -50316,7 +50316,7 @@ diff -urN linux-2.6.28.orig/fs/reiser4/plugin/item/sde.c linux-2.6.28/fs/reiser4
 +	    kill_node_content(coord, &shadow, NULL, NULL, NULL, NULL, NULL, 0);
 +	if (result == 0) {
 +		/* NOTE-NIKITA quota plugin */
-+		DQUOT_FREE_SPACE_NODIRTY(dir, length);
++		vfs_dq_free_space_nodirty(dir, length);
 +	}
 +	return result;
 +}
@@ -52245,11 +52245,11 @@ diff -urN linux-2.6.28.orig/fs/reiser4/plugin/item/tail.c linux-2.6.28/fs/reiser
 +		 * were real data which are all zeros. Therefore we have to
 +		 * allocate quota here as well
 +		 */
-+		if (DQUOT_ALLOC_SPACE_NODIRTY(inode, flow->length))
++		if (vfs_dq_alloc_space_nodirty(inode, flow->length))
 +			return RETERR(-EDQUOT);
 +		result = reiser4_insert_flow(coord, lh, flow);
 +		if (flow->length)
-+			DQUOT_FREE_SPACE_NODIRTY(inode, flow->length);
++			vfs_dq_free_space_nodirty(inode, flow->length);
 +
 +		uf_info = unix_file_inode_data(inode);
 +
@@ -52269,13 +52269,13 @@ diff -urN linux-2.6.28.orig/fs/reiser4/plugin/item/tail.c linux-2.6.28/fs/reiser
 +	}
 +
 +	/* check quota before appending data */
-+	if (DQUOT_ALLOC_SPACE_NODIRTY(inode, flow->length))
++	if (vfs_dq_alloc_space_nodirty(inode, flow->length))
 +		return RETERR(-EDQUOT);
 +
 +	to_write = flow->length;
 +	result = reiser4_insert_flow(coord, lh, flow);
 +	if (flow->length)
-+		DQUOT_FREE_SPACE_NODIRTY(inode, flow->length);
++		vfs_dq_free_space_nodirty(inode, flow->length);
 +	return (to_write - flow->length) ? (to_write - flow->length) : result;
 +}
 +
@@ -52304,22 +52304,22 @@ diff -urN linux-2.6.28.orig/fs/reiser4/plugin/item/tail.c linux-2.6.28/fs/reiser
 +		 * were real data which are all zeros. Therefore we have to
 +		 * allocate quota here as well
 +		 */
-+		if (DQUOT_ALLOC_SPACE_NODIRTY(inode, flow->length))
++		if (vfs_dq_alloc_space_nodirty(inode, flow->length))
 +			return RETERR(-EDQUOT);
 +		result = reiser4_insert_flow(coord, lh, flow);
 +		if (flow->length)
-+			DQUOT_FREE_SPACE_NODIRTY(inode, flow->length);
++			vfs_dq_free_space_nodirty(inode, flow->length);
 +		return result;
 +	}
 +
 +	/* check quota before appending data */
-+	if (DQUOT_ALLOC_SPACE_NODIRTY(inode, flow->length))
++	if (vfs_dq_alloc_space_nodirty(inode, flow->length))
 +		return RETERR(-EDQUOT);
 +
 +	to_write = flow->length;
 +	result = reiser4_insert_flow(coord, lh, flow);
 +	if (flow->length)
-+		DQUOT_FREE_SPACE_NODIRTY(inode, flow->length);
++		vfs_dq_free_space_nodirty(inode, flow->length);
 +	return (to_write - flow->length) ? (to_write - flow->length) : result;
 +}
 +
