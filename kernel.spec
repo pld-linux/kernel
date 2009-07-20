@@ -289,12 +289,10 @@ Patch130:	kernel-forcedeth-WON.patch
 
 # http://download.filesystems.org/unionfs/unionfs-2.x/unionfs-2.5.1_for_2.6.28.1.diff.gz
 Patch140:	kernel-unionfs.patch
-Patch141:	kernel-unionfs-apparmor.patch
 
 # aufs1, http://aufs.sourceforge.net/
 Patch145:	kernel-aufs.patch
 Patch146:	kernel-aufs-support.patch
-Patch147:	kernel-aufs-apparmor.patch
 
 Patch148:	kernel-aufs2.patch
 
@@ -853,7 +851,6 @@ install %{SOURCE5} Makefile.ppclibs
 # unionfs (disabled for rescuecd - problems with aufs2)
 %if %{without rescuecd}
 %patch140 -p1
-%{?with_apparmor:%patch141 -p1}
 %endif
 
 %if %{with rescuecd}
@@ -862,7 +859,6 @@ install %{SOURCE5} Makefile.ppclibs
 # 2.6.29 FIXME - needs port to creds
 #%patch145 -p1
 #%patch146 -p1
-#%{?with_apparmor:%patch147 -p1}
 %endif
 
 %patch2500 -p1
