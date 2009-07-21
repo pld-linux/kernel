@@ -1,3 +1,15 @@
+diff --git a/Documentation/kernel-parameters.txt b/Documentation/kernel-parameters.txt
+index fd5cac0..88e2115 100644
+--- a/Documentation/kernel-parameters.txt
++++ b/Documentation/kernel-parameters.txt
+@@ -90,6 +90,7 @@ parameter is applicable:
+ 			A lot of drivers has their options described inside of
+ 			Documentation/scsi/.
+ 	SECURITY Different security models are enabled.
++	SECURITY_DEFAULT set a default security module
+ 	SELINUX SELinux support is enabled.
+ 	SERIAL	Serial support is enabled.
+ 	SH	SuperH architecture is enabled.
 diff --git a/include/linux/audit.h b/include/linux/audit.h
 index 4fa2810..9f87073 100644
 --- a/include/linux/audit.h
@@ -27,10 +39,26 @@ index 4fa2810..9f87073 100644
  #define AUDIT_LAST_KERN_ANOM_MSG    1799
  #define AUDIT_ANOM_PROMISCUOUS      1700 /* Device changed promiscuous mode */
 diff --git a/security/Kconfig b/security/Kconfig
-index bb24477..f3db74c 100644
+index bb24477..739fbb0 100644
 --- a/security/Kconfig
 +++ b/security/Kconfig
-@@ -136,6 +136,7 @@ config SECURITY_DEFAULT_MMAP_MIN_ADDR
+@@ -60,6 +60,15 @@ config SECURITYFS
+ 
+ 	  If you are unsure how to answer this question, answer N.
+ 
++config SECURITY_DEFAULT
++	string "Default security module"
++	depends on SECURITY
++	default ""
++	help
++          This determines the security module used if the security=
++          boot parmater is not provided.  If a security module is not
++          specified the first module to register will be used.
++
+ config SECURITY_NETWORK
+ 	bool "Socket and Networking Security Hooks"
+ 	depends on SECURITY
+@@ -136,6 +145,7 @@ config SECURITY_DEFAULT_MMAP_MIN_ADDR
  source security/selinux/Kconfig
  source security/smack/Kconfig
  source security/tomoyo/Kconfig
@@ -7367,3 +7395,29 @@ index 0000000..aa41a35
 +	return ERR_PTR(-EINVAL);
 +}
 +
+diff --git a/security/security.c b/security/security.c
+index 2840513..99aaebc 100644
+--- a/security/security.c
++++ b/security/security.c
+@@ -18,7 +18,7 @@
+ #include <linux/security.h>
+ 
+ /* Boot-time LSM user choice */
+-static __initdata char chosen_lsm[SECURITY_NAME_MAX + 1];
++static __initdata char chosen_lsm[SECURITY_NAME_MAX + 1] = CONFIG_SECURITY_DEFAULT;
+ 
+ /* things that live in capability.c */
+ extern struct security_operations default_security_ops;
+@@ -82,8 +82,10 @@ __setup("security=", choose_lsm);
+  *
+  * Return true if:
+  *	-The passed LSM is the one chosen by user at boot time,
+- *	-or user didn't specify a specific LSM and we're the first to ask
+- *	 for registration permission,
++ *	-The passed LSM is configured as the default and the user did not
++ *	 choose an alternate LSM at boot time.
++ *	-or there is no default LSM set and the user didn't specify a
++ *	 specific LSM and we're the first to ask for registration permission,
+  *	-or the passed LSM is currently loaded.
+  * Otherwise, return false.
+  */
