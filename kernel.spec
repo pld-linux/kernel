@@ -316,6 +316,9 @@ Patch2000:	kernel-small_fixes.patch
 Patch2001:	linux-2.6.21.1-pwc-uncompress.patch
 Patch2003:	kernel-regressions.patch
 
+Patch2100:	kernel-mmap_min_addr.patch
+Patch2101:	kernel-CVE-2009-1895.patch
+
 # kill some thousands of warnings
 # (only warnings, so just remove parts of this patch if conflics)
 Patch2500:	linux-2.6-warnings.patch
@@ -949,6 +952,9 @@ install %{SOURCE5} Makefile.ppclibs
 %patch2000 -p1
 %patch2001 -p1
 #%patch2003 -p1
+
+%patch2100 -p1
+%patch2101 -p1
 
 # Fix EXTRAVERSION in main Makefile
 sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{postver}%{?alt_kernel:_%{alt_kernel}}#g' Makefile
