@@ -82,16 +82,16 @@ diff -ur linux-2.6.14.orig/init/initramfs.c linux-2.6.14/init/initramfs.c
  extern char __initramfs_start[], __initramfs_end[];
  #ifdef CONFIG_BLK_DEV_INITRD
  #include <linux/initrd.h>
-@@ -482,6 +526,9 @@
- 			initrd_end - initrd_start, 1);
- 		if (!err) {
- 			printk(" it is\n");
+@@ -619,6 +619,9 @@
+ #ifdef CONFIG_BLK_DEV_RAM
+ 		int fd;
+ 		printk(KERN_INFO "Trying to unpack rootfs image as initramfs...\n");
 +#ifdef CONFIG_EARLYUSERSPACE_ON_TMPFS
-+                        overmount_rootfs();
++		overmount_rootfs();
 +#endif /* CONFIG_EARLYUSERSPACE_ON_TMPFS */
- 			unpack_to_rootfs((char *)initrd_start,
- 				initrd_end - initrd_start, 0);
- 			free_initrd_mem(initrd_start, initrd_end);
+ 		err = unpack_to_rootfs((char *)initrd_start,
+ 			initrd_end - initrd_start);
+ 		if (!err) {
 diff -ur linux-2.6.14.orig/init/main.c linux-2.6.14/init/main.c
 --- linux-2.6.14.orig/init/main.c	2005-09-11 03:19:07.000000000 +0000
 +++ linux-2.6.14/init/main.c	2005-09-11 03:22:43.000000000 +0000
