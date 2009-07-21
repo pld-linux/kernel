@@ -1025,6 +1025,7 @@ RescueConfig() {
 		# CONFIG_GAMEPORT is not set
 		# CONFIG_KVM is not set
 		# CONFIG_PHONE is not set
+		# CONFIG_STRICT_DEVMEM is not set
 		CONFIG_AUFS=y
 		CONFIG_AUFS_FS=y
 		CONFIG_AUFS_BR_RAMFS=y
