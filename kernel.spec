@@ -261,7 +261,8 @@ Patch54:	kernel-toshiba_acpi.patch
 Patch55:	kernel-atm-vbr.patch
 Patch56:	kernel-atmdd.patch
 
-# http://www.ntop.org/PF_RING.html 20070610
+# http://www.ntop.org/PF_RING.html 20090721
+# svn co https://svn.ntop.org/svn/ntop/trunk/PF_RING/ and use mkpatch.sh
 Patch58:	kernel-PF_RING.patch
 
 # http://synce.svn.sourceforge.net/svnroot/synce/trunk/patches/linux-2.6.22-rndis_host-wm5.patch
