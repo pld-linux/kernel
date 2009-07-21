@@ -16,8 +16,12 @@
 # - nf-hipac ?
 # - pax hooks for selinux (experimental)
 #
-# HOWTO:
-# - update main config: ./kernel-config-sort.pl ./BUILD/kernel-*/linux-2.6.29 kernel-multiarch.config
+# HOWTO update configuration files:
+# - run build
+# - add new options to proper config (kernel-multiarch.config, kernel-x86.config, kernel-powerpc.config etc)
+# - sort configuration files using:
+#   ./kernel-config-sort.pl ~/rpm/BUILD/kernel-%{version}/linux-%{version}/ -a x86 kernel-x86_84.config
+#   ./kernel-config-sort.pl ~/rpm/BUILD/kernel-%{version}/linux-%{version} kernel-multiarch.config
 #
 # Conditional build:
 %bcond_without	source		# don't build kernel-source package
