@@ -280,7 +280,7 @@ Patch90:	kernel-mpt-fusion.patch
 
 Patch95:	kernel-touchpad.patch
 
-# http://vserver.13thfloor.at/Experimental/patch-2.6.27.24-vs2.3.0.36.6.diff
+# http://vserver.13thfloor.at/Experimental/patch-2.6.27.27-vs2.3.0.36.6.diff
 Patch100:	linux-2.6-vs2.3.patch
 Patch101:	kernel-vserver-fixes.patch
 
