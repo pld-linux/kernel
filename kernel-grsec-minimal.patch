@@ -1,15 +1,15 @@
 diff -urNp linux-2.6.26.orig/arch/sparc/Makefile linux-2.6.26/arch/sparc/Makefile
 --- linux-2.6.26.orig/arch/sparc/Makefile	2008-09-01 11:44:21.000000000 +0200
 +++ linux-2.6.26/arch/sparc/Makefile	2008-09-02 12:17:21.000000000 +0200
-@@ -36,7 +36,7 @@ drivers-$(CONFIG_OPROFILE)	+= arch/sparc
- # Renaming is done to avoid confusing pattern matching rules in 2.5.45 (multy-)
- INIT_Y		:= $(patsubst %/, %/built-in.o, $(init-y))
- CORE_Y		:= $(core-y)
--CORE_Y		+= kernel/ mm/ fs/ ipc/ security/ crypto/ block/
-+CORE_Y		+= kernel/ mm/ fs/ ipc/ security/ crypto/ block/ grsecurity/
- CORE_Y		:= $(patsubst %/, %/built-in.o, $(CORE_Y))
- DRIVERS_Y	:= $(patsubst %/, %/built-in.o, $(drivers-y))
- NET_Y		:= $(patsubst %/, %/built-in.o, $(net-y))
+@@ -81,7 +81,7 @@
+ # Export what is needed by arch/sparc/boot/Makefile
+ export VMLINUX_INIT VMLINUX_MAIN
+ VMLINUX_INIT := $(head-y) $(init-y)
+-VMLINUX_MAIN := $(core-y) kernel/ mm/ fs/ ipc/ security/ crypto/ block/
++VMLINUX_MAIN := $(core-y) kernel/ mm/ fs/ ipc/ security/ crypto/ block/ grsecurity/
+ VMLINUX_MAIN += $(patsubst %/, %/lib.a, $(libs-y)) $(libs-y)
+ VMLINUX_MAIN += $(drivers-y) $(net-y)
+ 
 diff -urNp linux-2.6.26.orig/drivers/char/keyboard.c linux-2.6.26/drivers/char/keyboard.c
 --- linux-2.6.26.orig/drivers/char/keyboard.c	2008-09-01 11:43:37.000000000 +0200
 +++ linux-2.6.26/drivers/char/keyboard.c	2008-09-02 12:17:21.000000000 +0200
@@ -161,93 +161,80 @@ diff -urNp linux-2.6.26.orig/fs/proc/base.c linux-2.6.26/fs/proc/base.c
  #include "internal.h"
  
  /* NOTE:
-@@ -307,9 +312,9 @@ static int proc_pid_auxv(struct task_str
- 	struct mm_struct *mm = get_task_mm(task);
- 	if (mm) {
- 		unsigned int nwords = 0;
--		do
-+		do {
- 			nwords += 2;
--		while (mm->saved_auxv[nwords - 2] != 0); /* AT_NULL */
-+		} while (mm->saved_auxv[nwords - 2] != 0); /* AT_NULL */
- 		res = nwords * sizeof(mm->saved_auxv[0]);
- 		if (res > PAGE_SIZE)
- 			res = PAGE_SIZE;
-@@ -1412,7 +1417,11 @@ static struct inode *proc_pid_make_inode
- 	inode->i_gid = 0;
- 	if (task_dumpable(task)) {
- 		inode->i_uid = task->euid;
+@@ -1445,7 +1445,11 @@
+ 		rcu_read_lock();
+ 		cred = __task_cred(task);
+ 		inode->i_uid = cred->euid;
 +#ifdef CONFIG_GRKERNSEC_PROC_USERGROUP
 +		inode->i_gid = CONFIG_GRKERNSEC_PROC_GID;
 +#else
- 		inode->i_gid = task->egid;
+ 		inode->i_gid = cred->egid;
 +#endif
+ 		rcu_read_unlock();
  	}
  	/* procfs is xid tagged */
- 	inode->i_tag = (tag_t)vx_task_xid(task);
-@@ -1430,17 +1439,39 @@ static int pid_getattr(struct vfsmount *
- {
+@@ -1469,6 +1469,9 @@
  	struct inode *inode = dentry->d_inode;
  	struct task_struct *task;
+ 	const struct cred *cred;
 +#if defined(CONFIG_GRKERNSEC_PROC_USER) || defined(CONFIG_GRKERNSEC_PROC_USERGROUP)
 +	struct task_struct *tmp = current;
 +#endif
-+
+ 
  	generic_fillattr(inode, stat);
  
- 	rcu_read_lock();
+@@ -1476,12 +1479,29 @@
  	stat->uid = 0;
  	stat->gid = 0;
  	task = pid_task(proc_pid(inode), PIDTYPE_PID);
 -	if (task) {
-+
 +	if (task
 +#if defined(CONFIG_GRKERNSEC_PROC_USER) || defined(CONFIG_GRKERNSEC_PROC_USERGROUP)
-+	    && (!tmp->uid || (tmp->uid == task->uid)
++		&& (!tmp->uid || (tmp->uid == task->uid)
 +#ifdef CONFIG_GRKERNSEC_PROC_USERGROUP
-+	    || in_group_p(CONFIG_GRKERNSEC_PROC_GID)
++			|| in_group_p(CONFIG_GRKERNSEC_PROC_GID)
 +#endif
-+	    )
++		)
 +#endif
-+	) {
++		) {
  		if ((inode->i_mode == (S_IFDIR|S_IRUGO|S_IXUGO)) ||
 +#ifdef CONFIG_GRKERNSEC_PROC_USER
-+		    (inode->i_mode == (S_IFDIR|S_IRUSR|S_IXUSR)) ||
++				(inode->i_mode == (S_IFDIR|S_IRUSR|S_IXUSR)) ||
 +#elif defined(CONFIG_GRKERNSEC_PROC_USERGROUP)
-+		    (inode->i_mode == (S_IFDIR|S_IRUSR|S_IRGRP|S_IXUSR|S_IXGRP)) ||
++				(inode->i_mode == (S_IFDIR|S_IRUSR|S_IRGRP|S_IXUSR|S_IXGRP)) ||
 +#endif
  		    task_dumpable(task)) {
- 			stat->uid = task->euid;
+ 			cred = __task_cred(task);
+ 			stat->uid = cred->euid;
 +#ifdef CONFIG_GRKERNSEC_PROC_USERGROUP
 +			stat->gid = CONFIG_GRKERNSEC_PROC_GID;
 +#else
- 			stat->gid = task->egid;
+ 			stat->gid = cred->egid;
 +#endif
  		}
  	}
  	rcu_read_unlock();
-@@ -1468,11 +1505,21 @@ static int pid_revalidate(struct dentry 
- {
- 	struct inode *inode = dentry->d_inode;
- 	struct task_struct *task = get_proc_task(inode);
-+
+@@ -1533,11 +1533,20 @@
+ 
  	if (task) {
  		if ((inode->i_mode == (S_IFDIR|S_IRUGO|S_IXUGO)) ||
 +#ifdef CONFIG_GRKERNSEC_PROC_USER
-+		    (inode->i_mode == (S_IFDIR|S_IRUSR|S_IXUSR)) ||
++			(inode->i_mode == (S_IFDIR|S_IRUSR|S_IXUSR)) ||
 +#elif defined(CONFIG_GRKERNSEC_PROC_USERGROUP)
-+		    (inode->i_mode == (S_IFDIR|S_IRUSR|S_IRGRP|S_IXUSR|S_IXGRP)) ||
++			(inode->i_mode == (S_IFDIR|S_IRUSR|S_IRGRP|S_IXUSR|S_IXGRP)) ||
 +#endif
  		    task_dumpable(task)) {
- 			inode->i_uid = task->euid;
+ 			rcu_read_lock();
+ 			cred = __task_cred(task);
+ 			inode->i_uid = cred->euid;
 +#ifdef CONFIG_GRKERNSEC_PROC_USERGROUP
 +			inode->i_gid = CONFIG_GRKERNSEC_PROC_GID;
 +#else
- 			inode->i_gid = task->egid;
+ 			inode->i_gid = cred->egid;
 +#endif
+ 			rcu_read_unlock();
  		} else {
  			inode->i_uid = 0;
- 			inode->i_gid = 0;
 @@ -1841,12 +1888,19 @@ static int proc_fd_permission(struct ino
  				struct nameidata *nd)
  {
@@ -1167,14 +1154,15 @@ diff -urNp linux-2.6.26.orig/net/socket.c linux-2.6.26/net/socket.c
  static int sock_no_open(struct inode *irrelevant, struct file *dontcare);
  static ssize_t sock_aio_read(struct kiocb *iocb, const struct iovec *iov,
  			 unsigned long nr_segs, loff_t pos);
-@@ -1502,6 +1505,7 @@ asmlinkage long sys_accept(int fd, struc
+@@ -1577,6 +1577,8 @@
+ 	fd_install(newfd, newfile);
  	err = newfd;
  
- 	security_socket_post_accept(sock, newsock);
 +	gr_attach_curr_ip(newsock->sk);
- 
++
  out_put:
  	fput_light(sock->file, fput_needed);
+ out:
 diff -urNp linux-2.6.26.orig/security/Kconfig linux-2.6.26/security/Kconfig
 --- linux-2.6.26.orig/security/Kconfig	2008-09-01 11:43:58.000000000 +0200
 +++ linux-2.6.26/security/Kconfig	2008-09-02 12:17:21.000000000 +0200
