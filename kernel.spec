@@ -305,6 +305,8 @@ Patch150:	kernel-ppc-crtsavres.patch
 
 Patch200:	kernel-ppc-ICE-hacks.patch
 
+Patch250:	kernel-intel-2009q2-against-2.6.30.1.patch
+
 # The following patch extend the routing functionality in Linux
 # to support static routes (defined by user), new way to use the
 # alternative routes, the reverse path protection (rp_filter),
@@ -923,6 +925,8 @@ install %{SOURCE5} Makefile.ppclibs
 %ifarch ppc ppc64
 #patch200 -p1
 %endif
+
+%patch250 -p1
 
 # routes
 %patch300 -p1
