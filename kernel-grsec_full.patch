@@ -44205,3 +44205,103 @@ diff -urNp linux-2.6.30.4/virt/kvm/kvm_main.c linux-2.6.30.4/virt/kvm/kvm_main.c
  		  struct module *module)
  {
  	int r;
+diff -u linux-2.6.30.4/arch/x86/kernel/head_64.S linux-2.6.30.4/arch/x86/kernel/head_64.S
+--- linux-2.6.30.4/arch/x86/kernel/head_64.S	2009-07-30 09:48:09.947450201 -0400
++++ linux-2.6.30.4/arch/x86/kernel/head_64.S	2009-08-01 08:46:06.399105315 -0400
+@@ -454,7 +454,7 @@
+ 	.section .rodata,"a",@progbits
+ 	.align L1_CACHE_BYTES
+ ENTRY(idt_table)
+-	.fill 256,16,0
++	.fill 512,8,0
+ 
+ 	.section .bss.page_aligned, "aw", @nobits
+ 	.align PAGE_SIZE
+diff -u linux-2.6.30.4/arch/x86/kernel/module_32.c linux-2.6.30.4/arch/x86/kernel/module_32.c
+--- linux-2.6.30.4/arch/x86/kernel/module_32.c	2009-07-30 09:48:09.950015875 -0400
++++ linux-2.6.30.4/arch/x86/kernel/module_32.c	2009-08-01 15:35:35.138919235 -0400
+@@ -107,6 +107,7 @@
+ 		WARN_ON(1);
+ 	}
+ }
++EXPORT_SYMBOL(module_free_exec);
+ #endif
+ 
+ /* We don't need anything special. */
+diff -u linux-2.6.30.4/arch/x86/kernel/module_64.c linux-2.6.30.4/arch/x86/kernel/module_64.c
+--- linux-2.6.30.4/arch/x86/kernel/module_64.c	2009-07-30 09:48:09.950015875 -0400
++++ linux-2.6.30.4/arch/x86/kernel/module_64.c	2009-08-01 15:35:35.161871747 -0400
+@@ -67,10 +67,12 @@
+ {
+ 	module_free(mod, module_region);
+ }
++EXPORT_SYMBOL(module_free_exec);
+ 
+ void *module_alloc_exec(unsigned long size)
+ {
+ 	return __module_alloc(size, PAGE_KERNEL_RX);
++EXPORT_SYMBOL(module_alloc_exec);
+ }
+ #else
+ void *module_alloc(unsigned long size)
+diff -u linux-2.6.30.4/arch/x86/kernel/vmlinux_64.lds.S linux-2.6.30.4/arch/x86/kernel/vmlinux_64.lds.S
+--- linux-2.6.30.4/arch/x86/kernel/vmlinux_64.lds.S	2009-07-30 19:56:23.500027109 -0400
++++ linux-2.6.30.4/arch/x86/kernel/vmlinux_64.lds.S	2009-08-01 08:46:06.438873305 -0400
+@@ -62,8 +62,8 @@
+   . = ALIGN(PAGE_SIZE);		/* Align data segment to page size boundary */
+ #endif
+ 				/* Data */
+-  _data = .;
+   .data : AT(ADDR(.data) - LOAD_OFFSET) {
++	_data = .;
+ 	DATA_DATA
+ 	CONSTRUCTORS
+ 	} :data
+diff -u linux-2.6.30.4/fs/exec.c linux-2.6.30.4/fs/exec.c
+--- linux-2.6.30.4/fs/exec.c	2009-07-30 11:10:49.146300194 -0400
++++ linux-2.6.30.4/fs/exec.c	2009-08-01 14:58:11.881121157 -0400
+@@ -124,7 +124,7 @@
+ 		goto out;
+ 
+ 	file = do_filp_open(AT_FDCWD, tmp,
+-				O_LARGEFILE | O_RDONLY | FMODE_EXEC, 0,
++				O_LARGEFILE | O_RDONLY | FMODE_EXEC | FMODE_GREXEC, 0,
+ 				MAY_READ | MAY_EXEC | MAY_OPEN);
+ 	putname(tmp);
+ 	error = PTR_ERR(file);
+@@ -680,7 +680,7 @@
+ 	int err;
+ 
+ 	file = do_filp_open(AT_FDCWD, name,
+-				O_LARGEFILE | O_RDONLY | FMODE_EXEC, 0,
++				O_LARGEFILE | O_RDONLY | FMODE_EXEC | FMODE_GREXEC, 0,
+ 				MAY_EXEC | MAY_OPEN);
+ 	if (IS_ERR(file))
+ 		goto out;
+diff -u linux-2.6.30.4/grsecurity/gracl_fs.c linux-2.6.30.4/grsecurity/gracl_fs.c
+--- linux-2.6.30.4/grsecurity/gracl_fs.c	2009-07-30 11:10:49.347341041 -0400
++++ linux-2.6.30.4/grsecurity/gracl_fs.c	2009-08-01 15:00:28.098114831 -0400
+@@ -48,7 +48,8 @@
+ 		reqmode |= GR_WRITE;
+ 	if (likely((fmode & FMODE_READ) && !(fmode & O_DIRECTORY)))
+ 		reqmode |= GR_READ;
+-
++	if ((fmode & FMODE_GREXEC) && (fmode & FMODE_EXEC))
++		reqmode &= ~GR_READ;
+ 	mode =
+ 	    gr_search_file(dentry, reqmode | to_gr_audit(reqmode) | GR_SUPPRESS,
+ 			   mnt);
+diff -u linux-2.6.30.4/include/linux/fs.h linux-2.6.30.4/include/linux/fs.h
+--- linux-2.6.30.4/include/linux/fs.h	2009-07-30 09:48:10.109883773 -0400
++++ linux-2.6.30.4/include/linux/fs.h	2009-08-01 14:57:12.341093728 -0400
+@@ -87,6 +87,10 @@
+  */
+ #define FMODE_NOCMTIME		((__force fmode_t)2048)
+ 
++/* Hack for grsec so as not to require read permission simply to execute
++   a binary */
++#define FMODE_GREXEC		((__force fmode_t)8192)
++
+ /*
+  * The below are the various read and write types that we support. Some of
+  * them include behavioral modifiers that send information down to the
