@@ -9,12 +9,7 @@
 # TODO:
 # - benchmark NO_HZ & HZ=1000 vs HZ=300 on i686
 # - add a subpackage (kernel-firmware?) for ~35 firmware files
-#
-# FUTURE:
-# - pom-ng quake3-conntrack-nat -> nf_conntrack ?
-# - pom-ng talk-conntrack-nat -> nf_conntrack ?
-# - nf-hipac ?
-# - pax hooks for selinux (experimental)
+# - cleanup: bcond pax_full -> pax
 #
 # HOWTO update configuration files:
 # - run build
@@ -40,7 +35,7 @@
 %bcond_with	pae		# build PAE (HIGHMEM64G) support on uniprocessor
 %bcond_with	nfsroot		# build with root on NFS support
 
-%bcond_with	imq		# imq support
+%bcond_without	imq		# imq support
 %bcond_without	wrr		# wrr support
 %bcond_without	esfq		# esfq support
 %bcond_without	ipv6		# ipv6 support
@@ -119,7 +114,7 @@
 
 %define		basever		2.6.30
 %define		postver		.4
-%define		rel		0.1
+%define		rel		0.2
 
 %define		_enable_debug_packages			0
 
@@ -243,9 +238,7 @@ Patch41:	kernel-ipvs-nfct.patch
 # http://zph.bratcheda.org/linux-2.6.26.3-zph.patch
 Patch49:	kernel-zph.patch
 
-# based on http://www.linuximq.net/patchs/linux-2.6.24-imq.diff
-# some people report problems when using imq with wrr.
-# try unoficial version: http://kapturkiewicz.name/linux-2.6.25-imq1.diff
+# based on http://www.linuximq.net/patchs/linux-2.6.29.1-imq-test2.diff
 Patch50:	kernel-imq.patch
 
 # http://www.kernel.org/pub/linux/kernel/people/edward/reiser4/reiser4-for-2.6/reiser4-for-2.6.28.patch.bz2
