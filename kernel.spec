@@ -9,7 +9,11 @@
 # TODO:
 # - benchmark NO_HZ & HZ=1000 vs HZ=300 on i686
 # - add a subpackage (kernel-firmware?) for ~35 firmware files
-# - cleanup: bcond pax_full -> pax
+# - aufs1 patches 145, 146 to remove or update (not maintained)
+# - update or remove tahoe9xx patch2 
+# - update or remove mpt-fusion patch90
+# - update grsec_minimal patch1000:
+#   fs/proc/base.c:1484: error: 'struct task_struct' has no member named 'uid'
 #
 # HOWTO update configuration files:
 # - run build
@@ -26,10 +30,9 @@
 %bcond_without	reiser4		# support for reiser4 fs (experimental)
 
 %bcond_without	grsecurity	# don't build grsecurity nor pax at all
-%bcond_without	grsec_minimal	# build only minimal subset (proc,link,fifo,shm)
 %bcond_without	grsec_full	# build full grsecurity
-%bcond_with	pax_full	# build pax and full grsecurity (ie. grsec_full && pax)
-%bcond_with	pax		# build pax support
+%bcond_with	grsec_minimal	# build only minimal subset (proc,link,fifo,shm)
+%bcond_with	pax		# build pax and full grsecurity (ie. grsec_full && pax)
 
 %bcond_with	fbcondecor	# build fbcondecor (disable FB_TILEBLITTING and affected fb modules)
 %bcond_with	pae		# build PAE (HIGHMEM64G) support on uniprocessor
@@ -54,27 +57,23 @@
 %undefine	with_grsec_full
 %undefine	with_grsec_minimal
 %undefine	with_pax
-%undefine	with_pax_full
 %endif
 
-%if %{with pax_full}
+%if %{with pax}
 %undefine	with_grsec_minimal
 %define		with_grsec_full		1
 %define		with_grsecurity		1
 %define		with_pax		1
 %endif
 
-%if %{with grsec_full}
-%undefine	with_grsec_minimal
+%if %{with grsec_minimal}
+%undefine	with_pax
+%undefine	with_grsec_full
 %define		with_grsecurity		1
-%if %{with pax}
-%define		with_pax_full		1
-%endif
 %endif
 
-%if %{with grsec_minimal}
-%undefine	with_grsec_full
-%undefine	with_pax_full
+%if %{with grsec_full}
+%undefine	with_grsec_minimal
 %define		with_grsecurity		1
 %endif
 
@@ -86,10 +85,10 @@
 %if %{with rescuecd}
 %undefine	with_apparmor
 %undefine	with_tuxonice
+%undefine	with_grsecurity
 %undefine	with_grsec_full
 %undefine	with_grsec_minimal
 %undefine	with_pax
-%undefine	with_pax_full
 %undefine	with_vserver
 %define		have_drm	0
 %define		have_sound	0
@@ -114,7 +113,7 @@
 
 %define		basever		2.6.30
 %define		postver		.4
-%define		rel		0.2
+%define		rel		0.3
 
 %define		_enable_debug_packages			0
 
@@ -202,9 +201,8 @@ Patch3:		kernel-fbcondecor.patch
 Patch4:		kernel-fbcon-margins.patch
 
 # netfilter related stuff mostly based on patch-o-matic-ng
-# snapshot 20061213 with some fixes related to changes in
-# netfilter api in 2.6.19 up to 2.6.22. Some modules
-# were ported to nf_conntrack. Some of these are unique.
+# snapshot 20070806 with some fixes. Some modules
+# were ported to nf_conntrack. 
 
 Patch10:	kernel-pom-ng-IPV4OPTSSTRIP.patch
 Patch11:	kernel-pom-ng-ipv4options.patch
@@ -289,6 +287,7 @@ Patch130:	kernel-forcedeth-WON.patch
 Patch140:	kernel-unionfs.patch
 
 # aufs1, http://aufs.sourceforge.net/
+# aufs1 is NOT maintained since Jan 2009.
 Patch145:	kernel-aufs.patch
 Patch146:	kernel-aufs-support.patch
 
@@ -325,12 +324,6 @@ Patch5000:	kernel-apparmor.patch
 # for rescuecd
 # based on http://ftp.leg.uct.ac.za/pub/linux/rip/inittmpfs-2.6.14.diff.gz
 Patch7000:	kernel-inittmpfs.patch
-
-# not ready yet
-Patch9997:	kernel-pax_selinux_hooks.patch
-
-# based on http://www.grsecurity.net/~paxguy1/pax-linux-2.6.24.6-test45.patch
-Patch9998:	kernel-pax.patch
 
 # based on http://www.grsecurity.net/~spender/grsecurity-2.1.14-2.6.29.6-200907122214.patch
 # NOTE: put raw upstream patches on kernel-grsec_full.patch:GRSECURITY_RAW for reference
@@ -468,7 +461,8 @@ BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 %define MakeOpts %{CrossOpts} HOSTCC="%{__cc}"
 
 %define __features Netfilter module dated: %{netfilter_snap}\
-%{?with_grsec_full:Grsecurity full support - enabled}\
+%{?with_grsec_full:Grsecurity support - enabled}\
+%{?with_grsec_minimal:Grsecurity minimal support /proc,link,fifo,shm/ - enabled}\
 %{?with_pax:PaX support - enabled}\
 %{?with_fbcondecor:Fbsplash/fbcondecor - enabled }\
 %{?with_nfsroot:Root on NFS - enabled}\
@@ -748,7 +742,7 @@ install %{SOURCE5} Makefile.ppclibs
 %patch70 -p1
 %endif
 
-# XXX: 2.6.29 - need update
+# tahoe9xx: 2.6.29 - need update
 #%patch2 -p1
 
 %if %{with fbcondecor}
@@ -854,9 +848,10 @@ install %{SOURCE5} Makefile.ppclibs
 %endif
 
 %if %{with rescuecd}
+# aufs2
 %patch148 -p1
 %else
-# 2.6.29 FIXME - needs port to creds
+# aufs1: 2.6.29 FIXME - needs port to creds
 #%patch145 -p1
 #%patch146 -p1
 %endif
@@ -869,42 +864,22 @@ install %{SOURCE5} Makefile.ppclibs
 
 # grsecurity & pax stuff
 #
-%if %{with pax_full}
-%patch9999 -p1
-%{?with_vserver:%patch10000 -p1}
-%{?with_vserver:%patch10001 -p1}
-%{?with_vserver:%patch10002 -p1}
-%{?with_vserver:%patch10003 -p1}
-%else
 
-%if %{with grsec_full}
-%patch9999 -p1
-%{?with_vserver:%patch10000 -p1}
-%{?with_vserver:%patch10001 -p1}
-%{?with_vserver:%patch10002 -p1}
-%{?with_vserver:%patch10003 -p1}
-%else
-%if %{with grsec_minimal}
-%patch1000 -p1
 # remember that we have the same config file for grsec_minimal and
 # grsec_full, but the patches are different.
-%endif
-%endif
 
-%if %{with pax}
-# now we have an separate testing pax-only patch - in the future we
-# could have single grsecurity patch and will have to prepare separate
-# configs for grsec_minimal, grsec_full and pax to support such
-# configurations like pax & grsec_minimal.
-# So, in a future there could be no patch9998, but only config
-# would tell which options should be enabled.
-# The second option is to maintain separate pax-only patch.
-%patch9998 -p1
-#patch9997 -p1 - needs update
+%if %{with grsecurity}
+%if %{with grsec_minimal}
+%patch1000 -p1
+%else
+# grsec_full and/or pax
+%patch9999 -p1
+%{?with_vserver:%patch10000 -p1}
+%{?with_vserver:%patch10001 -p1}
+%{?with_vserver:%patch10002 -p1}
+%{?with_vserver:%patch10003 -p1}
 %endif
-
 %endif
-
 #
 # end of grsecurity & pax stuff
 
@@ -979,7 +954,7 @@ PaXconfig() {
 	# Now we have to check MAC system integration. Grsecurity (full) uses PAX_HAVE_ACL_FLAGS
 	# setting (direct acces). grsec_minimal probably have no idea about PaX so we probably
 	# could use PAX_NO_ACL_FLAGS, but for testing the hooks setting will be used
-	# PAX_HOOK_ACL_FLAGS. SELinux should also be able to make PaX settings via hooks
+	# PAX_HOOK_ACL_FLAGS. 
 
 	%if %{with grsec_full}
 		# Hardening grsec options if with pax
@@ -989,7 +964,6 @@ PaXconfig() {
 
 		# no change needed CONFIG=PAX_HAVE_ACL_FLAGS=y is taken from the kernel-pax.config
 	%else
-		# selinux or other hooks?
 		CONFIG_PAX_HAVE_ACL_FLAGS=n
 		CONFIG_PAX_HOOK_ACL_FLAGS=y
 	%endif
@@ -1099,7 +1073,7 @@ EOCONFIG
 %if %{with rescuecd}
 	RescueConfig rescue.config
 %endif
-%if %{with pax_full} || %{with pax}
+%if %{with pax}
 	PaXconfig pax.config
 %endif
 
@@ -1115,7 +1089,7 @@ EOCONFIG
 		rescue.config \
 %endif
 		\
-%if %{with pax_full}
+%if %{with pax}
 		%{SOURCE45} \
 		%{SOURCE49} \
 		pax.config \
@@ -1127,10 +1101,6 @@ EOCONFIG
 	%if %{with grsec_minimal}
 		%{SOURCE51} \
 	%endif
-  %endif
-  %if %{with pax}
-		%{SOURCE49} \
-		pax.config \
   %endif
 %endif
 		\
