@@ -54,26 +54,26 @@
 %{?debug:%define with_verbose 1}
 
 %if %{without grsecurity}
-%undefine	with_grsec_full
-%undefine	with_grsec_minimal
-%undefine	with_pax
+%unglobal	with_grsec_full
+%unglobal	with_grsec_minimal
+%unglobal	with_pax
 %endif
 
 %if %{with pax}
-%undefine	with_grsec_minimal
+%unglobal	with_grsec_minimal
 %define		with_grsec_full		1
 %define		with_grsecurity		1
 %define		with_pax		1
 %endif
 
 %if %{with grsec_minimal}
-%undefine	with_pax
-%undefine	with_grsec_full
+%unglobal	with_pax
+%unglobal	with_grsec_full
 %define		with_grsecurity		1
 %endif
 
 %if %{with grsec_full}
-%undefine	with_grsec_minimal
+%unglobal	with_grsec_minimal
 %define		with_grsecurity		1
 %endif
 
@@ -83,13 +83,13 @@
 %define		have_pcmcia	1
 
 %if %{with rescuecd}
-%undefine	with_apparmor
-%undefine	with_tuxonice
-%undefine	with_grsecurity
-%undefine	with_grsec_full
-%undefine	with_grsec_minimal
-%undefine	with_pax
-%undefine	with_vserver
+%unglobal	with_apparmor
+%unglobal	with_tuxonice
+%unglobal	with_grsecurity
+%unglobal	with_grsec_full
+%unglobal	with_grsec_minimal
+%unglobal	with_pax
+%unglobal	with_vserver
 %define		have_drm	0
 %define		have_sound	0
 %endif
@@ -102,7 +102,7 @@
 %endif
 
 %ifarch sparc sparc64
-%undefine	with_pcmcia
+%unglobal	with_pcmcia
 %define		have_drm	0
 %define		have_oss	0
 %endif
@@ -349,7 +349,7 @@ BuildRequires:	xz >= 1:4.999.7
 # for hostname command
 BuildRequires:	net-tools
 BuildRequires:	perl-base
-BuildRequires:	rpm-build >= 4.4.9-56
+BuildRequires:	rpm-build >= 4.5-24
 BuildRequires:	rpmbuild(macros) >= 1.217
 Requires(post):	coreutils
 Requires(post):	geninitrd >= 10000-3
