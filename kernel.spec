@@ -318,6 +318,7 @@ Patch2003:	kernel-regressions.patch
 
 Patch2100:	kernel-mmap_min_addr.patch
 Patch2101:	kernel-CVE-2009-1895.patch
+Patch2102:	kernel-sock-sendpage.patch
 
 # kill some thousands of warnings
 # (only warnings, so just remove parts of this patch if conflics)
@@ -955,6 +956,7 @@ install %{SOURCE5} Makefile.ppclibs
 
 %patch2100 -p1
 %patch2101 -p1
+%patch2102 -p1
 
 # Fix EXTRAVERSION in main Makefile
 sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{postver}%{?alt_kernel:_%{alt_kernel}}#g' Makefile
