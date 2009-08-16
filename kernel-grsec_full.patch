@@ -44205,6 +44205,259 @@ diff -urNp linux-2.6.30.4/virt/kvm/kvm_main.c linux-2.6.30.4/virt/kvm/kvm_main.c
  		  struct module *module)
  {
  	int r;
+diff -u linux-2.6.30.4/arch/x86/include/asm/uaccess.h linux-2.6.30.4/arch/x86/include/asm/uaccess.h
+--- linux-2.6.30.4/arch/x86/include/asm/uaccess.h	2009-07-30 20:32:47.926577259 -0400
++++ linux-2.6.30.4/arch/x86/include/asm/uaccess.h	2009-08-09 07:48:47.926451868 -0400
+@@ -190,16 +190,21 @@
+ 	asm volatile("call __put_user_" #size : "=a" (__ret_pu)	\
+ 		     : "0" ((typeof(*(ptr)))(x)), "c" (ptr) : "ebx")
+ 
+-
++#ifdef CONFIG_X86_32
++#define _ASM_LOAD_USER_DS(ds) "movw %w" #ds ",%%ds\n"
++#define _ASM_LOAD_KERNEL_DS "pushl %%ss; popl %%ds\n"
++#else
++#define _ASM_LOAD_USER_DS(ds)
++#define _ASM_LOAD_KERNEL_DS
++#endif
+ 
+ #ifdef CONFIG_X86_32
+ #define __put_user_asm_u64(x, addr, err, errret)			\
+-	asm volatile("		movw %w5,%%ds\n"			\
++	asm volatile(_ASM_LOAD_USER_DS(5)				\
+ 		     "1:	movl %%eax,%%ds:0(%2)\n"		\
+ 		     "2:	movl %%edx,%%ds:4(%2)\n"		\
+ 		     "3:\n"						\
+-		     "		pushl %%ss\n"				\
+-		     "		popl %%ds\n"				\
++		     _ASM_LOAD_KERNEL_DS				\
+ 		     ".section .fixup,\"ax\"\n"				\
+ 		     "4:	movl %3,%0\n"				\
+ 		     "	jmp 3b\n"					\
+@@ -211,12 +216,14 @@
+ 		       "r"(__USER_DS))
+ 
+ #define __put_user_asm_ex_u64(x, addr)					\
+-	asm volatile("1:	movl %%eax,0(%1)\n"			\
+-		     "2:	movl %%edx,4(%1)\n"			\
++	asm volatile(_ASM_LOAD_USER_DS(2)				\
++		     "1:	movl %%eax,%%ds:0(%1)\n"		\
++		     "2:	movl %%edx,%%ds:4(%1)\n"		\
+ 		     "3:\n"						\
++		     _ASM_LOAD_KERNEL_DS				\
+ 		     _ASM_EXTABLE(1b, 2b - 1b)				\
+ 		     _ASM_EXTABLE(2b, 3b - 2b)				\
+-		     : : "A" (x), "r" (addr))
++		     : : "A" (x), "r" (addr), "r"(__USER_DS))
+ 
+ #define __put_user_x8(x, ptr, __ret_pu)				\
+ 	asm volatile("call __put_user_8" : "=a" (__ret_pu)	\
+@@ -384,34 +391,19 @@
+ 	}								\
+ } while (0)
+ 
+-#ifdef CONFIG_X86_32
+ #define __get_user_asm(x, addr, err, itype, rtype, ltype, errret)	\
+-	asm volatile("		movw %w5,%%ds\n"			\
++	asm volatile(_ASM_LOAD_USER_DS(5)				\
+ 		     "1:	mov"itype" %%ds:%2,%"rtype"1\n"		\
+ 		     "2:\n"						\
+-		     "		pushl %%ss\n"				\
+-		     "		popl %%ds\n"				\
++		     _ASM_LOAD_KERNEL_DS				\
+ 		     ".section .fixup,\"ax\"\n"				\
+-		     "3:	movl %3,%0\n"				\
++		     "3:	mov %3,%0\n"				\
+ 		     "	xor"itype" %"rtype"1,%"rtype"1\n"		\
+ 		     "	jmp 2b\n"					\
+ 		     ".previous\n"					\
+ 		     _ASM_EXTABLE(1b, 3b)				\
+ 		     : "=r" (err), ltype (x)				\
+ 		     : "m" (__m(addr)), "i" (errret), "0" (err), "r"(__USER_DS))
+-#else
+-#define __get_user_asm(x, addr, err, itype, rtype, ltype, errret)	\
+-	asm volatile("1:	mov"itype" %2,%"rtype"1\n"		\
+-		     "2:\n"						\
+-		     ".section .fixup,\"ax\"\n"				\
+-		     "3:	mov %3,%0\n"				\
+-		     "	xor"itype" %"rtype"1,%"rtype"1\n"		\
+-		     "	jmp 2b\n"					\
+-		     ".previous\n"					\
+-		     _ASM_EXTABLE(1b, 3b)				\
+-		     : "=r" (err), ltype(x)				\
+-		     : "m" (__m(addr)), "i" (errret), "0" (err))
+-#endif
+ 
+ #define __get_user_size_ex(x, ptr, size)				\
+ do {									\
+@@ -434,22 +426,13 @@
+ 	}								\
+ } while (0)
+ 
+-#ifdef CONFIG_X86_32
+ #define __get_user_asm_ex(x, addr, itype, rtype, ltype)			\
+-	asm volatile("		movw %w2,%%ds\n"			\
++	asm volatile(_ASM_LOAD_USER_DS(2)				\
+ 		     "1:	mov"itype" %%ds:%1,%"rtype"0\n"		\
+ 		     "2:\n"						\
+-		     "		pushl %%ss\n"				\
+-		     "		popl %%ds\n"				\
++		     _ASM_LOAD_KERNEL_DS				\
+ 		     _ASM_EXTABLE(1b, 2b - 1b)				\
+ 		     : ltype(x) : "m" (__m(addr)), "r"(__USER_DS))
+-#else
+-#define __get_user_asm_ex(x, addr, itype, rtype, ltype)			\
+-	asm volatile("1:	mov"itype" %1,%"rtype"0\n"		\
+-		     "2:\n"						\
+-		     _ASM_EXTABLE(1b, 2b - 1b)				\
+-		     : ltype(x) : "m" (__m(addr)))
+-#endif
+ 
+ #define __put_user_nocheck(x, ptr, size)			\
+ ({								\
+@@ -476,50 +459,27 @@
+  * we do not write to any memory gcc knows about, so there are no
+  * aliasing issues.
+  */
+-#ifdef CONFIG_X86_32
+ #define __put_user_asm(x, addr, err, itype, rtype, ltype, errret)	\
+-	asm volatile("		movw %w5,%%ds\n"			\
++	asm volatile(_ASM_LOAD_USER_DS(5)				\
+ 		     "1:	mov"itype" %"rtype"1,%%ds:%2\n"		\
+ 		     "2:\n"						\
+-		     "		pushl %%ss\n"				\
+-		     "		popl %%ds\n"				\
++		     _ASM_LOAD_KERNEL_DS				\
+ 		     ".section .fixup,\"ax\"\n"				\
+-		     "3:	movl %3,%0\n"				\
++		     "3:	mov %3,%0\n"				\
+ 		     "	jmp 2b\n"					\
+ 		     ".previous\n"					\
+ 		     _ASM_EXTABLE(1b, 3b)				\
+ 		     : "=r"(err)					\
+ 		     : ltype (x), "m" (__m(addr)), "i" (errret), "0" (err),\
+ 		       "r"(__USER_DS))
+-#else
+-#define __put_user_asm(x, addr, err, itype, rtype, ltype, errret)	\
+-	asm volatile("1:	mov"itype" %"rtype"1,%2\n"		\
+-		     "2:\n"						\
+-		     ".section .fixup,\"ax\"\n"				\
+-		     "3:	mov %3,%0\n"				\
+-		     "	jmp 2b\n"					\
+-		     ".previous\n"					\
+-		     _ASM_EXTABLE(1b, 3b)				\
+-		     : "=r"(err)					\
+-		     : ltype(x), "m" (__m(addr)), "i" (errret), "0" (err))
+-#endif
+ 
+-#ifdef CONFIG_X86_32
+ #define __put_user_asm_ex(x, addr, itype, rtype, ltype)			\
+-	asm volatile("		movw %w2,%%ds\n"			\
++	asm volatile(_ASM_LOAD_USER_DS(2)				\
+ 		     "1:	mov"itype" %"rtype"0,%%ds:%1\n"		\
+ 		     "2:\n"						\
+-		     "		pushl %%ss\n"				\
+-		     "		popl %%ds\n"				\
++		     _ASM_LOAD_KERNEL_DS				\
+ 		     _ASM_EXTABLE(1b, 2b - 1b)				\
+ 		     : : ltype(x), "m" (__m(addr)), "r"(__USER_DS))
+-#else
+-#define __put_user_asm_ex(x, addr, itype, rtype, ltype)			\
+-	asm volatile("1:	mov"itype" %"rtype"0,%1\n"		\
+-		     "2:\n"						\
+-		     _ASM_EXTABLE(1b, 2b - 1b)				\
+-		     : : ltype(x), "m" (__m(addr)))
+-#endif
+ 
+ /*
+  * uaccess_try and catch
+diff -u linux-2.6.30.4/arch/x86/Kconfig linux-2.6.30.4/arch/x86/Kconfig
+--- linux-2.6.30.4/arch/x86/Kconfig	2009-07-30 12:32:41.330879042 -0400
++++ linux-2.6.30.4/arch/x86/Kconfig	2009-08-04 17:52:34.387861424 -0400
+@@ -1471,8 +1471,7 @@
+ 
+ config PHYSICAL_START
+ 	hex "Physical address where the kernel is loaded" if (EMBEDDED || CRASH_DUMP)
+-	default "0x1000000" if X86_NUMAQ
+-	default "0x200000"
++	default "0x1000000"
+ 	---help---
+ 	  This gives the physical address where the kernel is loaded.
+ 
+@@ -1531,8 +1530,7 @@
+ config PHYSICAL_ALIGN
+ 	hex
+ 	prompt "Alignment value to which kernel should be aligned" if X86_32
+-	default "0x100000" if X86_32
+-	default "0x200000" if X86_64
++	default "0x200000"
+ 	range 0x2000 0x400000
+ 	---help---
+ 	  This value puts the alignment restrictions on physical address
+diff -u linux-2.6.30.4/arch/x86/kernel/entry_32.S linux-2.6.30.4/arch/x86/kernel/entry_32.S
+--- linux-2.6.30.4/arch/x86/kernel/entry_32.S	2009-07-30 09:48:09.945662533 -0400
++++ linux-2.6.30.4/arch/x86/kernel/entry_32.S	2009-08-12 21:15:21.098460043 -0400
+@@ -776,11 +776,11 @@
+ .macro FIXUP_ESPFIX_STACK
+ 	/* since we are on a wrong stack, we cant make it a C code :( */
+ #ifdef CONFIG_SMP
+-	movl PER_CPU_VAR(cpu_number), %ebx;
+-	shll $PAGE_SHIFT_asm, %ebx;
+-	addl $cpu_gdt_table, %ebx;
++	movl PER_CPU_VAR(cpu_number), %ebx
++	shll $PAGE_SHIFT_asm, %ebx
++	addl $cpu_gdt_table, %ebx
+ #else
+-	movl $cpu_gdt_table, %ebx;
++	movl $cpu_gdt_table, %ebx
+ #endif
+ 	GET_DESC_BASE(GDT_ENTRY_ESPFIX_SS, %ebx, %eax, %ax, %al, %ah)
+ 	addl %esp, %eax
+diff -u linux-2.6.30.4/arch/x86/kernel/entry_64.S linux-2.6.30.4/arch/x86/kernel/entry_64.S
+--- linux-2.6.30.4/arch/x86/kernel/entry_64.S	2009-07-30 09:48:09.945662533 -0400
++++ linux-2.6.30.4/arch/x86/kernel/entry_64.S	2009-08-12 21:15:21.099483377 -0400
+@@ -1073,8 +1073,12 @@
+ 	TRACE_IRQS_OFF
+ 	movq %rsp,%rdi		/* pt_regs pointer */
+ 	xorl %esi,%esi		/* no error code */
++#ifdef CONFIG_SMP
+ 	imul $TSS_size, PER_CPU_VAR(cpu_number), %ebp
+ 	lea init_tss(%rbp), %rbp
++#else
++	lea init_tss(%rip), %rbp
++#endif
+ 	subq $EXCEPTION_STKSZ, TSS_ist + (\ist - 1) * 8(%rbp)
+ 	call \do_sym
+ 	addq $EXCEPTION_STKSZ, TSS_ist + (\ist - 1) * 8(%rbp)
+diff -u linux-2.6.30.4/arch/x86/kernel/head_32.S linux-2.6.30.4/arch/x86/kernel/head_32.S
+--- linux-2.6.30.4/arch/x86/kernel/head_32.S	2009-07-30 19:56:23.400350396 -0400
++++ linux-2.6.30.4/arch/x86/kernel/head_32.S	2009-08-05 19:08:00.458589400 -0400
+@@ -110,6 +110,7 @@
+ 	movl %eax,%gs
+ 2:
+ 
++#ifdef CONFIG_SMP
+ 	movl $pa(cpu_gdt_table),%edi
+ 	movl $__per_cpu_load,%eax
+ 	movw %ax,__KERNEL_PERCPU + 2(%edi)
+@@ -119,6 +120,7 @@
+ 	movl $__per_cpu_end - 1,%eax
+ 	subl $__per_cpu_load,%eax
+ 	movw %ax,__KERNEL_PERCPU + 0(%edi)
++#endif
+ 
+ #ifdef CONFIG_PAX_MEMORY_UDEREF
+ 	/* check for VMware */
+@@ -515,7 +517,9 @@
+ 	jne 1f
+ 	movl $cpu_gdt_table,%eax
+ 	movl $per_cpu__stack_canary,%ecx
++#ifdef CONFIG_SMP
+ 	addl $__per_cpu_load,%ecx
++#endif
+ 	subl $20, %ecx
+ 	movw %cx, 8 * GDT_ENTRY_STACK_CANARY + 2(%eax)
+ 	shrl $16, %ecx
 diff -u linux-2.6.30.4/arch/x86/kernel/head_64.S linux-2.6.30.4/arch/x86/kernel/head_64.S
 --- linux-2.6.30.4/arch/x86/kernel/head_64.S	2009-07-30 09:48:09.947450201 -0400
 +++ linux-2.6.30.4/arch/x86/kernel/head_64.S	2009-08-01 08:46:06.399105315 -0400
@@ -44244,6 +44497,46 @@ diff -u linux-2.6.30.4/arch/x86/kernel/module_64.c linux-2.6.30.4/arch/x86/kerne
  }
  #else
  void *module_alloc(unsigned long size)
+diff -u linux-2.6.30.4/arch/x86/kernel/process.c linux-2.6.30.4/arch/x86/kernel/process.c
+--- linux-2.6.30.4/arch/x86/kernel/process.c	2009-07-30 09:48:09.950702241 -0400
++++ linux-2.6.30.4/arch/x86/kernel/process.c	2009-08-05 19:08:00.495411211 -0400
+@@ -105,7 +105,7 @@
+ 
+ 	clear_tsk_thread_flag(tsk, TIF_DEBUG);
+ 
+-#ifndef CONFIG_CC_STACKPROTECTOR
++#if defined(CONFIG_X86_32) && !defined(CONFIG_CC_STACKPROTECTOR)
+ 	loadsegment(gs, 0);
+ #endif
+ 	tsk->thread.debugreg0 = 0;
+diff -u linux-2.6.30.4/arch/x86/kernel/setup_percpu.c linux-2.6.30.4/arch/x86/kernel/setup_percpu.c
+--- linux-2.6.30.4/arch/x86/kernel/setup_percpu.c	2009-07-30 09:48:09.957530438 -0400
++++ linux-2.6.30.4/arch/x86/kernel/setup_percpu.c	2009-08-05 19:08:00.518752374 -0400
+@@ -335,10 +335,9 @@
+ {
+ #ifdef CONFIG_X86_32
+ 	struct desc_struct d, *gdt = get_cpu_gdt_table(cpu);
+-	unsigned long base, limit;
++	unsigned long base = per_cpu_offset(cpu);
++	const unsigned long limit = VMALLOC_END - base - 1;
+ 
+-	base = per_cpu_offset(cpu);
+-	limit = PERCPU_ENOUGH_ROOM - 1;
+ 	if (limit < 64*1024)
+ 		pack_descriptor(&d, base, limit, 0x80 | DESCTYPE_S | 0x3, 0x4);
+ 	else
+diff -u linux-2.6.30.4/arch/x86/kernel/vmi_32.c linux-2.6.30.4/arch/x86/kernel/vmi_32.c
+--- linux-2.6.30.4/arch/x86/kernel/vmi_32.c	2009-07-30 09:48:09.962543704 -0400
++++ linux-2.6.30.4/arch/x86/kernel/vmi_32.c	2009-08-12 21:15:21.104308164 -0400
+@@ -466,7 +466,7 @@
+ 	ap.ds = __KERNEL_DS;
+ 	ap.es = __KERNEL_DS;
+ 	ap.fs = __KERNEL_PERCPU;
+-	ap.gs = 0;
++	ap.gs = __KERNEL_STACK_CANARY;
+ 
+ 	ap.eflags = 0;
+ 
 diff -u linux-2.6.30.4/arch/x86/kernel/vmlinux_64.lds.S linux-2.6.30.4/arch/x86/kernel/vmlinux_64.lds.S
 --- linux-2.6.30.4/arch/x86/kernel/vmlinux_64.lds.S	2009-07-30 19:56:23.500027109 -0400
 +++ linux-2.6.30.4/arch/x86/kernel/vmlinux_64.lds.S	2009-08-01 08:46:06.438873305 -0400
@@ -44257,6 +44550,72 @@ diff -u linux-2.6.30.4/arch/x86/kernel/vmlinux_64.lds.S linux-2.6.30.4/arch/x86/
  	DATA_DATA
  	CONSTRUCTORS
  	} :data
+diff -u linux-2.6.30.4/arch/x86/mm/fault.c linux-2.6.30.4/arch/x86/mm/fault.c
+--- linux-2.6.30.4/arch/x86/mm/fault.c	2009-07-30 11:10:48.941676108 -0400
++++ linux-2.6.30.4/arch/x86/mm/fault.c	2009-08-05 19:15:53.629625442 -0400
+@@ -39,6 +39,7 @@
+ #include <asm/proto.h>
+ #include <asm/traps.h>
+ #include <asm/desc.h>
++#include <asm/vsyscall.h>
+ 
+ /*
+  * Page fault error code bits:
+diff -u linux-2.6.30.4/arch/x86/vdso/vclock_gettime.c linux-2.6.30.4/arch/x86/vdso/vclock_gettime.c
+--- linux-2.6.30.4/arch/x86/vdso/vclock_gettime.c	2009-07-30 09:48:09.978662746 -0400
++++ linux-2.6.30.4/arch/x86/vdso/vclock_gettime.c	2009-08-05 19:15:53.673598242 -0400
+@@ -22,6 +22,7 @@
+ #include <asm/hpet.h>
+ #include <asm/unistd.h>
+ #include <asm/io.h>
++#include <asm/fixmap.h>
+ #include "vextern.h"
+ 
+ #define gtod vdso_vsyscall_gtod_data
+diff -u linux-2.6.30.4/arch/x86/xen/enlighten.c linux-2.6.30.4/arch/x86/xen/enlighten.c
+--- linux-2.6.30.4/arch/x86/xen/enlighten.c	2009-07-30 09:48:09.980662517 -0400
++++ linux-2.6.30.4/arch/x86/xen/enlighten.c	2009-08-04 17:23:47.808223131 -0400
+@@ -67,8 +67,6 @@
+ 
+ struct shared_info xen_dummy_shared_info;
+ 
+-void *xen_initial_gdt;
+-
+ /*
+  * Point at some empty memory to start with. We map the real shared_info
+  * page as soon as fixmap is up and running.
+@@ -962,12 +960,6 @@
+ 	 */
+ 	load_percpu_segment(0);
+ #endif
+-	/*
+-	 * The only reliable way to retain the initial address of the
+-	 * percpu gdt_page is to remember it here, so we can go and
+-	 * mark it RW later, when the initial percpu area is freed.
+-	 */
+-	xen_initial_gdt = &per_cpu(gdt_page, 0);
+ 
+ 	xen_smp_init();
+ 
+diff -u linux-2.6.30.4/Documentation/dontdiff linux-2.6.30.4/Documentation/dontdiff
+--- linux-2.6.30.4/Documentation/dontdiff	2009-07-30 09:48:09.870977266 -0400
++++ linux-2.6.30.4/Documentation/dontdiff	2009-08-04 17:23:49.932547446 -0400
+@@ -113,6 +113,7 @@
+ ihex2fw
+ ikconfig.h*
+ initramfs_data.cpio
++initramfs_data.cpio.bz2
+ initramfs_data.cpio.gz
+ initramfs_list
+ kallsyms
+@@ -196,6 +197,7 @@
+ vmlinux-*
+ vmlinux.aout
+ vmlinux.bin.all
++vmlinux.bin.bz2
+ vmlinux.lds
+ vmlinux.relocs
+ vsyscall.lds
 diff -u linux-2.6.30.4/fs/exec.c linux-2.6.30.4/fs/exec.c
 --- linux-2.6.30.4/fs/exec.c	2009-07-30 11:10:49.146300194 -0400
 +++ linux-2.6.30.4/fs/exec.c	2009-08-01 14:58:11.881121157 -0400
@@ -44291,6 +44650,51 @@ diff -u linux-2.6.30.4/grsecurity/gracl_fs.c linux-2.6.30.4/grsecurity/gracl_fs.
  	mode =
  	    gr_search_file(dentry, reqmode | to_gr_audit(reqmode) | GR_SUPPRESS,
  			   mnt);
+diff -u linux-2.6.30.4/grsecurity/grsec_init.c linux-2.6.30.4/grsecurity/grsec_init.c
+--- linux-2.6.30.4/grsecurity/grsec_init.c	2009-07-30 12:01:03.627768838 -0400
++++ linux-2.6.30.4/grsecurity/grsec_init.c	2009-08-02 09:38:20.116597572 -0400
+@@ -77,7 +77,7 @@
+ #endif
+ 
+ 	for (j = 0; j < 4; j++) {
+-		gr_shared_page[j] = (char *)__alloc_percpu(PAGE_SIZE, 0);
++		gr_shared_page[j] = (char *)__alloc_percpu(PAGE_SIZE, __alignof__(unsigned long long));
+ 		if (gr_shared_page[j] == NULL) {
+ 			panic("Unable to allocate grsecurity shared page");
+ 			return;
+reverted:
+--- linux-2.6.30.4/include/asm-generic/sections.h	2009-07-30 09:48:10.105294791 -0400
++++ linux-2.6.30.4/include/asm-generic/sections.h	2009-07-24 17:47:51.000000000 -0400
+@@ -9,7 +9,7 @@
+ extern char __init_begin[], __init_end[];
+ extern char _sinittext[], _einittext[];
+ extern char _end[];
++extern char __per_cpu_load[], __per_cpu_start[], __per_cpu_end[];
+-extern char per_cpu_load[], __per_cpu_load[], __per_cpu_start[], __per_cpu_end[];
+ extern char __kprobes_text_start[], __kprobes_text_end[];
+ extern char __initdata_begin[], __initdata_end[];
+ extern char __start_rodata[], __end_rodata[];
+diff -u linux-2.6.30.4/include/asm-generic/vmlinux.lds.h linux-2.6.30.4/include/asm-generic/vmlinux.lds.h
+--- linux-2.6.30.4/include/asm-generic/vmlinux.lds.h	2009-07-30 09:48:10.106233963 -0400
++++ linux-2.6.30.4/include/asm-generic/vmlinux.lds.h	2009-08-09 07:48:48.045905474 -0400
+@@ -474,15 +474,15 @@
+  * address, use PERCPU().
+  */
+ #define PERCPU_VADDR(vaddr, phdr)					\
+-	VMLINUX_SYMBOL(per_cpu_load) = .;				\
++	per_cpu_load = .;						\
+ 	.data.percpu vaddr : AT(VMLINUX_SYMBOL(per_cpu_load)		\
+ 				- LOAD_OFFSET) {			\
+ 		VMLINUX_SYMBOL(__per_cpu_load) = . + per_cpu_load;	\
+ 		VMLINUX_SYMBOL(__per_cpu_start) = .;			\
+ 		*(.data.percpu.first)					\
++		*(.data.percpu)						\
+ 		. = ALIGN(PAGE_SIZE);					\
+ 		*(.data.percpu.page_aligned)				\
+-		*(.data.percpu)						\
+ 		*(.data.percpu.shared_aligned)				\
+ 		VMLINUX_SYMBOL(__per_cpu_end) = .;			\
+ 	} phdr								\
 diff -u linux-2.6.30.4/include/linux/fs.h linux-2.6.30.4/include/linux/fs.h
 --- linux-2.6.30.4/include/linux/fs.h	2009-07-30 09:48:10.109883773 -0400
 +++ linux-2.6.30.4/include/linux/fs.h	2009-08-01 14:57:12.341093728 -0400
@@ -44305,3 +44709,369 @@ diff -u linux-2.6.30.4/include/linux/fs.h linux-2.6.30.4/include/linux/fs.h
  /*
   * The below are the various read and write types that we support. Some of
   * them include behavioral modifiers that send information down to the
+diff -u linux-2.6.30.4/kernel/module.c linux-2.6.30.4/kernel/module.c
+--- linux-2.6.30.4/kernel/module.c	2009-07-30 11:10:49.634551667 -0400
++++ linux-2.6.30.4/kernel/module.c	2009-08-04 17:52:34.401055170 -0400
+@@ -369,8 +369,6 @@
+ 
+ #ifdef CONFIG_HAVE_DYNAMIC_PER_CPU_AREA
+ 
+-EXPORT_SYMBOL(__per_cpu_load);
+-
+ static void *percpu_modalloc(unsigned long size, unsigned long align,
+ 			     const char *name)
+ {
+@@ -433,8 +431,6 @@
+ 	return val;
+ }
+ 
+-EXPORT_SYMBOL(__per_cpu_load);
+-
+ static void *percpu_modalloc(unsigned long size, unsigned long align,
+ 			     const char *name)
+ {
+@@ -1646,15 +1642,9 @@
+ 
+ 		default:
+ 			/* Divert to percpu allocation if a percpu var. */
+-			if (sym[i].st_shndx == pcpuindex) {
+-
+-#if defined(CONFIG_X86_32) && defined(CONFIG_SMP)
+-				secbase = (unsigned long)mod->percpu - (unsigned long)__per_cpu_load;
+-#else
++			if (sym[i].st_shndx == pcpuindex)
+ 				secbase = (unsigned long)mod->percpu;
+-#endif
+-
+-			} else
++			else
+ 				secbase = sechdrs[sym[i].st_shndx].sh_addr;
+ 
+ #ifdef CONFIG_PAX_KERNEXEC
+diff -u linux-2.6.30.4/kernel/sysctl.c linux-2.6.30.4/kernel/sysctl.c
+--- linux-2.6.30.4/kernel/sysctl.c	2009-07-30 11:10:49.710420812 -0400
++++ linux-2.6.30.4/kernel/sysctl.c	2009-08-04 17:52:34.402065998 -0400
+@@ -265,6 +265,24 @@
+ #endif
+ 
+ static struct ctl_table kern_table[] = {
++#if defined(CONFIG_GRKERNSEC_SYSCTL) || defined(CONFIG_GRKERNSEC_MODSTOP)
++	{
++		.ctl_name	= CTL_UNNUMBERED,
++		.procname	= "grsecurity",
++		.mode		= 0500,
++		.child		= grsecurity_table,
++	},
++#endif
++
++#ifdef CONFIG_PAX_SOFTMODE
++	{
++		.ctl_name	= CTL_UNNUMBERED,
++		.procname	= "pax",
++		.mode		= 0500,
++		.child		= pax_table,
++	},
++#endif
++
+ #ifdef CONFIG_SCHED_DEBUG
+ 	{
+ 		.ctl_name	= CTL_UNNUMBERED,
+@@ -1303,25 +1321,6 @@
+ 		.proc_handler	= &scan_unevictable_handler,
+ 	},
+ #endif
+-
+-#if defined(CONFIG_GRKERNSEC_SYSCTL) || defined(CONFIG_GRKERNSEC_MODSTOP)
+-	{
+-		.ctl_name	= CTL_UNNUMBERED,
+-		.procname	= "grsecurity",
+-		.mode		= 0500,
+-		.child		= grsecurity_table,
+-	},
+-#endif
+-
+-#ifdef CONFIG_PAX_SOFTMODE
+-	{
+-		.ctl_name	= CTL_UNNUMBERED,
+-		.procname	= "pax",
+-		.mode		= 0500,
+-		.child		= pax_table,
+-	},
+-#endif
+-
+ /*
+  * NOTE: do not add new entries to this table unless you have read
+  * Documentation/sysctl/ctl_unnumbered.txt
+diff -u linux-2.6.30.4/net/socket.c linux-2.6.30.4/net/socket.c
+--- linux-2.6.30.4/net/socket.c	2009-07-30 11:29:24.032618401 -0400
++++ linux-2.6.30.4/net/socket.c	2009-08-13 20:40:32.961482335 -0400
+@@ -752,7 +752,7 @@
+ 	if (more)
+ 		flags |= MSG_MORE;
+ 
+-	return sock->ops->sendpage(sock, page, offset, size, flags);
++	return kernel_sendpage(sock, page, offset, size, flags);
+ }
+ 
+ static ssize_t sock_splice_read(struct file *file, loff_t *ppos,
+only in patch2:
+unchanged:
+--- linux-2.6.30.4/arch/x86/lguest/Kconfig	2009-07-24 17:47:51.000000000 -0400
++++ linux-2.6.30.4/arch/x86/lguest/Kconfig	2009-08-02 09:47:36.165378342 -0400
+@@ -3,6 +3,7 @@ config LGUEST_GUEST
+ 	select PARAVIRT
+ 	depends on X86_32
+ 	depends on !X86_PAE
++	depends on !PAX_KERNEXEC
+ 	select VIRTIO
+ 	select VIRTIO_RING
+ 	select VIRTIO_CONSOLE
+only in patch2:
+unchanged:
+--- linux-2.6.30.4/arch/x86/xen/Kconfig	2009-07-24 17:47:51.000000000 -0400
++++ linux-2.6.30.4/arch/x86/xen/Kconfig	2009-08-02 09:47:15.079210101 -0400
+@@ -8,6 +8,7 @@ config XEN
+ 	select PARAVIRT_CLOCK
+ 	depends on X86_64 || (X86_32 && X86_PAE && !X86_VISWS)
+ 	depends on X86_CMPXCHG && X86_TSC
++	depends on !PAX_KERNEXEC
+ 	help
+ 	  This is the Linux Xen port.  Enabling this will allow the
+ 	  kernel to boot in a paravirtualized environment under the
+only in patch2:
+unchanged:
+--- linux-2.6.30.4/arch/x86/xen/xen-ops.h	2009-07-24 17:47:51.000000000 -0400
++++ linux-2.6.30.4/arch/x86/xen/xen-ops.h	2009-08-04 17:23:47.809460830 -0400
+@@ -10,8 +10,6 @@
+ extern const char xen_hypervisor_callback[];
+ extern const char xen_failsafe_callback[];
+ 
+-extern void *xen_initial_gdt;
+-
+ struct trap_info;
+ void xen_copy_trap_info(struct trap_info *traps);
+ 
+only in patch2:
+unchanged:
+--- linux-2.6.30.4/drivers/media/video/usbvideo/konicawc.c	2009-07-24 17:47:51.000000000 -0400
++++ linux-2.6.30.4/drivers/media/video/usbvideo/konicawc.c	2009-08-09 07:48:48.178565450 -0400
+@@ -225,7 +225,7 @@ static void konicawc_register_input(stru
+ 	int error;
+ 
+ 	usb_make_path(dev, cam->input_physname, sizeof(cam->input_physname));
+-	strncat(cam->input_physname, "/input0", sizeof(cam->input_physname));
++	strlcat(cam->input_physname, "/input0", sizeof(cam->input_physname));
+ 
+ 	cam->input = input_dev = input_allocate_device();
+ 	if (!input_dev) {
+only in patch2:
+unchanged:
+--- linux-2.6.30.4/drivers/media/video/usbvideo/quickcam_messenger.c	2009-07-24 17:47:51.000000000 -0400
++++ linux-2.6.30.4/drivers/media/video/usbvideo/quickcam_messenger.c	2009-08-09 07:48:48.199403940 -0400
+@@ -89,7 +89,7 @@ static void qcm_register_input(struct qc
+ 	int error;
+ 
+ 	usb_make_path(dev, cam->input_physname, sizeof(cam->input_physname));
+-	strncat(cam->input_physname, "/input0", sizeof(cam->input_physname));
++	strlcat(cam->input_physname, "/input0", sizeof(cam->input_physname));
+ 
+ 	cam->input = input_dev = input_allocate_device();
+ 	if (!input_dev) {
+only in patch2:
+unchanged:
+--- linux-2.6.30.4/drivers/message/i2o/i2o_proc.c	2009-07-24 17:47:51.000000000 -0400
++++ linux-2.6.30.4/drivers/message/i2o/i2o_proc.c	2009-08-09 07:48:48.246416282 -0400
+@@ -259,13 +259,6 @@ static char *scsi_devices[] = {
+ 	"Array Controller Device"
+ };
+ 
+-static char *chtostr(u8 * chars, int n)
+-{
+-	char tmp[256];
+-	tmp[0] = 0;
+-	return strncat(tmp, (char *)chars, n);
+-}
+-
+ static int i2o_report_query_status(struct seq_file *seq, int block_status,
+ 				   char *group)
+ {
+@@ -842,8 +835,7 @@ static int i2o_seq_show_ddm_table(struct
+ 
+ 		seq_printf(seq, "%-#7x", ddm_table.i2o_vendor_id);
+ 		seq_printf(seq, "%-#8x", ddm_table.module_id);
+-		seq_printf(seq, "%-29s",
+-			   chtostr(ddm_table.module_name_version, 28));
++		seq_printf(seq, "%-.28s", ddm_table.module_name_version);
+ 		seq_printf(seq, "%9d  ", ddm_table.data_size);
+ 		seq_printf(seq, "%8d", ddm_table.code_size);
+ 
+@@ -944,8 +936,8 @@ static int i2o_seq_show_drivers_stored(s
+ 
+ 		seq_printf(seq, "%-#7x", dst->i2o_vendor_id);
+ 		seq_printf(seq, "%-#8x", dst->module_id);
+-		seq_printf(seq, "%-29s", chtostr(dst->module_name_version, 28));
+-		seq_printf(seq, "%-9s", chtostr(dst->date, 8));
++		seq_printf(seq, "%-.28s", dst->module_name_version);
++		seq_printf(seq, "%-.8s", dst->date);
+ 		seq_printf(seq, "%8d ", dst->module_size);
+ 		seq_printf(seq, "%8d ", dst->mpb_size);
+ 		seq_printf(seq, "0x%04x", dst->module_flags);
+@@ -1276,14 +1268,10 @@ static int i2o_seq_show_dev_identity(str
+ 	seq_printf(seq, "Device Class  : %s\n", i2o_get_class_name(work16[0]));
+ 	seq_printf(seq, "Owner TID     : %0#5x\n", work16[2]);
+ 	seq_printf(seq, "Parent TID    : %0#5x\n", work16[3]);
+-	seq_printf(seq, "Vendor info   : %s\n",
+-		   chtostr((u8 *) (work32 + 2), 16));
+-	seq_printf(seq, "Product info  : %s\n",
+-		   chtostr((u8 *) (work32 + 6), 16));
+-	seq_printf(seq, "Description   : %s\n",
+-		   chtostr((u8 *) (work32 + 10), 16));
+-	seq_printf(seq, "Product rev.  : %s\n",
+-		   chtostr((u8 *) (work32 + 14), 8));
++	seq_printf(seq, "Vendor info   : %.16s\n", (u8 *) (work32 + 2));
++	seq_printf(seq, "Product info  : %.16s\n", (u8 *) (work32 + 6));
++	seq_printf(seq, "Description   : %.16s\n", (u8 *) (work32 + 10));
++	seq_printf(seq, "Product rev.  : %.8s\n", (u8 *) (work32 + 14));
+ 
+ 	seq_printf(seq, "Serial number : ");
+ 	print_serial_number(seq, (u8 *) (work32 + 16),
+@@ -1328,10 +1316,8 @@ static int i2o_seq_show_ddm_identity(str
+ 	}
+ 
+ 	seq_printf(seq, "Registering DDM TID : 0x%03x\n", result.ddm_tid);
+-	seq_printf(seq, "Module name         : %s\n",
+-		   chtostr(result.module_name, 24));
+-	seq_printf(seq, "Module revision     : %s\n",
+-		   chtostr(result.module_rev, 8));
++	seq_printf(seq, "Module name         : %.24s\n", result.module_name);
++	seq_printf(seq, "Module revision     : %.8s\n", result.module_rev);
+ 
+ 	seq_printf(seq, "Serial number       : ");
+ 	print_serial_number(seq, result.serial_number, sizeof(result) - 36);
+@@ -1362,14 +1348,10 @@ static int i2o_seq_show_uinfo(struct seq
+ 		return 0;
+ 	}
+ 
+-	seq_printf(seq, "Device name     : %s\n",
+-		   chtostr(result.device_name, 64));
+-	seq_printf(seq, "Service name    : %s\n",
+-		   chtostr(result.service_name, 64));
+-	seq_printf(seq, "Physical name   : %s\n",
+-		   chtostr(result.physical_location, 64));
+-	seq_printf(seq, "Instance number : %s\n",
+-		   chtostr(result.instance_number, 4));
++	seq_printf(seq, "Device name     : %.64s\n", result.device_name);
++	seq_printf(seq, "Service name    : %.64s\n", result.service_name);
++	seq_printf(seq, "Physical name   : %.64s\n", result.physical_location);
++	seq_printf(seq, "Instance number : %.4s\n", result.instance_number);
+ 
+ 	return 0;
+ }
+only in patch2:
+unchanged:
+--- linux-2.6.30.4/drivers/platform/x86/wmi.c	2009-07-24 17:47:51.000000000 -0400
++++ linux-2.6.30.4/drivers/platform/x86/wmi.c	2009-08-09 07:48:48.278373587 -0400
+@@ -270,7 +270,7 @@ u32 method_id, const struct acpi_buffer 
+ 	acpi_status status;
+ 	struct acpi_object_list input;
+ 	union acpi_object params[3];
+-	char method[4] = "WM";
++	char method[5] = "WM";
+ 
+ 	if (!find_guid(guid_string, &wblock))
+ 		return AE_ERROR;
+@@ -328,8 +328,8 @@ struct acpi_buffer *out)
+ 	acpi_status status, wc_status = AE_ERROR;
+ 	struct acpi_object_list input, wc_input;
+ 	union acpi_object wc_params[1], wq_params[1];
+-	char method[4];
+-	char wc_method[4] = "WC";
++	char method[5];
++	char wc_method[5] = "WC";
+ 
+ 	if (!guid_string || !out)
+ 		return AE_BAD_PARAMETER;
+@@ -410,7 +410,7 @@ const struct acpi_buffer *in)
+ 	acpi_handle handle;
+ 	struct acpi_object_list input;
+ 	union acpi_object params[2];
+-	char method[4] = "WS";
++	char method[5] = "WS";
+ 
+ 	if (!guid_string || !in)
+ 		return AE_BAD_DATA;
+only in patch2:
+unchanged:
+--- linux-2.6.30.4/mm/highmem.c	2009-07-24 17:47:51.000000000 -0400
++++ linux-2.6.30.4/mm/highmem.c	2009-08-02 11:24:41.617453261 -0400
+@@ -95,6 +95,9 @@ static void flush_all_zero_pkmaps(void)
+ 
+ 	for (i = 0; i < LAST_PKMAP; i++) {
+ 		struct page *page;
++#ifdef CONFIG_PAX_KERNEXEC
++		unsigned long cr0;
++#endif
+ 
+ 		/*
+ 		 * zero means we don't have anything to do,
+@@ -117,9 +120,18 @@ static void flush_all_zero_pkmaps(void)
+ 		 * So no dangers, even with speculative execution.
+ 		 */
+ 		page = pte_page(pkmap_page_table[i]);
++
++#ifdef CONFIG_PAX_KERNEXEC
++		pax_open_kernel(cr0);
++#endif
++
+ 		pte_clear(&init_mm, (unsigned long)page_address(page),
+ 			  &pkmap_page_table[i]);
+ 
++#ifdef CONFIG_PAX_KERNEXEC
++		pax_close_kernel(cr0);
++#endif
++
+ 		set_page_address(page, NULL);
+ 		need_flush = 1;
+ 	}
+@@ -141,6 +153,9 @@ static inline unsigned long map_new_virt
+ {
+ 	unsigned long vaddr;
+ 	int count;
++#ifdef CONFIG_PAX_KERNEXEC
++	unsigned long cr0;
++#endif
+ 
+ start:
+ 	count = LAST_PKMAP;
+@@ -178,8 +193,14 @@ start:
+ 		}
+ 	}
+ 	vaddr = PKMAP_ADDR(last_pkmap_nr);
++#ifdef CONFIG_PAX_KERNEXEC
++	pax_open_kernel(cr0);
++#endif
+ 	set_pte_at(&init_mm, vaddr,
+ 		   &(pkmap_page_table[last_pkmap_nr]), mk_pte(page, kmap_prot));
++#ifdef CONFIG_PAX_KERNEXEC
++	pax_close_kernel(cr0);
++#endif
+ 
+ 	pkmap_count[last_pkmap_nr] = 1;
+ 	set_page_address(page, (void *)vaddr);
+only in patch2:
+unchanged:
+--- linux-2.6.30.4/usr/gen_init_cpio.c	2009-07-24 17:47:51.000000000 -0400
++++ linux-2.6.30.4/usr/gen_init_cpio.c	2009-08-09 07:48:48.304466902 -0400
+@@ -383,9 +383,10 @@ static char *cpio_replace_env(char *new_
+                        *env_var = *expanded = '\0';
+                        strncat(env_var, start + 2, end - start - 2);
+                        strncat(expanded, new_location, start - new_location);
+-                       strncat(expanded, getenv(env_var), PATH_MAX);
+-                       strncat(expanded, end + 1, PATH_MAX);
++                       strncat(expanded, getenv(env_var), PATH_MAX - strlen(expanded));
++                       strncat(expanded, end + 1, PATH_MAX - strlen(expanded));
+                        strncpy(new_location, expanded, PATH_MAX);
++                       new_location[PATH_MAX] = 0;
+                } else
+                        break;
+        }
