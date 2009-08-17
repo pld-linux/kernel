@@ -1,14 +1,11 @@
 # TODO:
-#   - test pax stuff (btw. tested ok in softmode)
-#   - prepare config for non SEGMEXEC capable archs (ie not x86/32bit)
-#   - patch scripts/Makefile.xen not to require bash
-#   - make PAE usage configurable when Xen is on
+#	- test pax stuff (btw. tested ok in softmode)
+#	- prepare config for non SEGMEXEC capable archs (ie not x86/32bit)
+#	- patch scripts/Makefile.xen not to require bash
+#       - make PAE usage configurable when Xen is on
 #		ALL
 #   - #vserver: try to get a 2.2.x kernel patch or if you like development
 #     features a 2.3.x one instead of the long discontinued 2.1.x you are using
-#   - with xen0/xenU does not compile due to cyrix-specific changes in 2.6.16.61:
-#     http://git.kernel.org/?p=linux/kernel/git/stable/linux-2.6.16.y.git;a=commitdiff;h=69731ebbb3d2283c2c33a2bf262d785e2362b876
-#
 #
 # WARNING: Kernels from 2.6.16.X series not work under OldWorldMac
 #
@@ -90,8 +87,7 @@
 %endif
 
 %if %{with xen0} || %{with xenU}
-%define		with_pae	1
-%define		with_xen	1
+%define		pae	1
 %endif
 
 ## Programs required by kernel to work.
@@ -121,16 +117,16 @@
 %define		squashfs_version	3.1
 %define		suspend_version		2.2.5
 
-%define		xen_hv_abi			3.0
+%define		xen_version		3.0.2
 
-%define		__alt_kernel	%{?with_pax:pax}%{?with_grsec_full:grsecurity}%{?with_xen0:xen0}%{?with_xenU:xenU}%{!?with_xen:%{?with_pae:pae}}
+%define		__alt_kernel	%{?with_pax:pax}%{?with_grsec_full:grsecurity}%{?with_xen0:xen0}%{?with_xenU:xenU}
 %if "%{__alt_kernel}" != ""
 %define		alt_kernel	%{__alt_kernel}
 %endif
 
 # Our Kernel ABI, increase this when you want the out of source modules being rebuilt
 # Usually same as %{_rel}
-%define		KABI		1
+%define		KABI		6
 
 # kernel release (used in filesystem and eventually in uname -r)
 # modules will be looked from /lib/modules/%{kernel_release}%{?smp}
@@ -139,8 +135,8 @@
 %define		kernel_release %{version}%{?alt_kernel:_%{alt_kernel}}-%{_localversion}
 
 %define		_basever	2.6.16
-%define		_postver	.62
-%define		_rel		2
+%define		_postver	.60
+%define		_rel		14
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de.UTF-8):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(et.UTF-8):	Linuxi kernel (ehk operatsioonisüsteemi tuum)
@@ -157,7 +153,7 @@ Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{_basever}.tar.bz2
 Source1:	kernel-autoconf.h
 Source2:	kernel-config.h
 Source3:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
-# Source3-md5:	65e7b7a48bbef41ea1e3702e139b3411
+# Source3-md5:	be03a1889d7c89f208a18b55870e3a6f
 
 Source5:	kernel-ppclibs.Makefile
 Source7:	kernel-module-build.pl
@@ -309,10 +305,8 @@ Patch101:	linux-2.6-vs2.1-suspend2.patch
 Patch102:	linux-2.6-vs2.1-128IPs.patch
 Patch103:	linux-vcontext-selinux.patch
 Patch104:	kernel-CVE-2008-0163.patch
-Patch105:	kernel-CVE-2009-2692.patch
 
 # from http://www.cl.cam.ac.uk/Research/SRG/netos/xen/downloads/xen-3.0.2-src.tgz
-#Patch120:	kernel-xen.patch
 Patch120:	xen-3.0-2.6.16.patch
 Patch121:	linux-xen-page_alloc.patch
 Patch122:	kernel-xen-sparse-nv.patch
@@ -324,17 +318,15 @@ Patch200:	linux-2.6-ppc-ICE-hacks.patch
 Patch201:	linux-2.6-x86_64-stack-protector.patch
 Patch202:	linux-2.6-unwind-through-signal-frames.patch
 
-# nForce ethernet driver forcedeth and newer nvidia sata drivers from nvidia's website
-Patch250:	linux-nvidia.patch
+# Wake-On-Lan patch for nVidia nForce ethernet driver forcedeth
+Patch250:	linux-2.6.16-forcedeth-WON.patch
+Patch251:	linux-nvidia.patch
 
 # From ALSA 1.0.13 for nVidia
 Patch252:	linux-alsa-hda.patch
 
 # add tty ioctl to figure physical device of the console. used by showconsole.spec (blogd)
 Patch256:	kernel-TIOCGDEV.patch
-
-# HP/Compaq cciss driver
-Patch260:	linux-2.6-cciss-3.6.18.patch
 
 Patch1000:	linux-2.6-grsec-minimal.patch
 Patch1001:	linux-2.6-grsec-wrong-deref.patch
@@ -373,7 +365,8 @@ Provides:	%{name}(netfilter) = %{netfilter_snap}
 Provides:	%{name}(vermagic) = %{kernel_release}
 Provides:	%{name}-up = %{epoch}:%{version}-%{release}
 %if %{with xen0}
-Requires:	xen-hypervisor-abi = %{xen_hv_abi}
+Requires:	xen >= %{xen_version}
+Provides:	kernel(xen0) = %{xen_version}
 %endif
 Obsoletes:	kernel-misc-fuse
 Obsoletes:	kernel-modules
@@ -396,8 +389,8 @@ Conflicts:	reiserfsprogs < %{_reiserfsprogs_ver}
 Conflicts:	udev < %{_udev_ver}
 Conflicts:	util-linux < %{_util_linux_ver}
 Conflicts:	xfsprogs < %{_xfsprogs_ver}
-%if %{with xen} || %{with pae}
-ExclusiveArch:	%{ix86} %{?with_xen:%{x8664}}
+%if %{with xen0} || %{with xenU}
+ExclusiveArch:	%{ix86} %{x8664}
 ExcludeArch:	i386 i486 i586
 %else
 ExclusiveArch:	%{ix86} alpha %{x8664} ia64 ppc ppc64 sparc sparc64
@@ -592,7 +585,8 @@ Requires:	module-init-tools >= 0.9.9
 Provides:	%{name}(netfilter) = %{netfilter_snap}
 Provides:	%{name}-smp(vermagic) = %{kernel_release}
 %if %{with xen0}
-Requires:	xen-hypervisor-abi = %{xen_hv_abi}
+Requires:	xen >= %{xen_version}
+Provides:	kernel(xen0) = %{xen_version}
 %endif
 Obsoletes:	kernel-smp-misc-fuse
 Obsoletes:	kernel-smp-net-hostap
@@ -952,9 +946,8 @@ rm -rf suspend2-%{suspend_version}-for-2.6.16.9
 %patch102 -p1
 %patch103 -p1
 %patch104 -p1
-%patch105 -p1
 
-%if %{with xen}
+%if %{with xen0} || %{with xenU}
 %ifarch %{ix86} %{x8664} ia64
 %patch120 -p1
 %patch121 -p1
@@ -975,11 +968,10 @@ rm -rf suspend2-%{suspend_version}-for-2.6.16.9
 %endif
 
 %patch250 -p1
+%patch251 -p1
 
 %patch252 -p1
 %patch256 -p1
-
-%patch260 -p1
 
 # security patches
 
@@ -1110,7 +1102,7 @@ BuildConfig() {
 	cat %{SOURCE51} >> arch/%{_target_base_arch}/defconfig
 %endif
 
-%if %{with xen}
+%if %{with xen0} || %{with xenU}
 	sed -i "s:CONFIG_X86_PC=y:# CONFIG_X86_PC is not set:" arch/%{_target_base_arch}/defconfig
 	sed -i "s:CONFIG_RIO=[ym]:# CONFIG_RIO is not set:" arch/%{_target_base_arch}/defconfig
 
@@ -1200,7 +1192,7 @@ BuildKernel() {
 %endif
 %else
 	%{__make} %CrossOpts \
-%if %{with xen}
+%if %{with xen0} || %{with xenU}
 		SHELL=/bin/bash \
 %endif
 		%{?with_verbose:V=1}
@@ -1220,7 +1212,7 @@ PreInstallKernel() {
 	mkdir -p $KERNEL_INSTALL_DIR/boot
 	install System.map $KERNEL_INSTALL_DIR/boot/System.map-$KernelVer
 %ifarch %{ix86} %{x8664}
-%if %{with xen}
+%if %{with xen0} || %{with xenU}
 	install vmlinuz $KERNEL_INSTALL_DIR/boot/vmlinuz-$KernelVer
 %else
 	install arch/%{_target_base_arch}/boot/bzImage $KERNEL_INSTALL_DIR/boot/vmlinuz-$KernelVer
@@ -1407,15 +1399,11 @@ ln -sf initrd-%{kernel_release}.gz %{initrd_dir}/initrd
 
 if [ -x /sbin/new-kernel-pkg ]; then
 %if %{with xen0}
-	xenimg=%{initrd_dir}/xen.gz
-	xenver=
-	xen=$(readlink -f $xenimg)
-	if [ "$xen" != "$xenimg" ]; then
-		xenver=${xen#%{initrd_dir}/xen-}
-		xenver=${xenver%.gz}
-	fi
+	xen=$(readlink -f /boot/xen.gz)
+	xenver=${xen#/boot/xen-}
+	xenver=${xenver%.gz}
 
-	title="Xen${xenver:+ $xenver} / PLD Linux (%{pld_release})"
+	title="Xen $xenver / PLD Linux (%{pld_release})"
 	args=--multiboot=$xen
 %else
 	title="PLD Linux (%{pld_release})%{?alt_kernel: / %{alt_kernel}}"
@@ -1491,15 +1479,11 @@ ln -sf initrd-%{kernel_release}smp.gz %{initrd_dir}/initrd
 
 if [ -x /sbin/new-kernel-pkg ]; then
 %if %{with xen0}
-	xenimg=%{initrd_dir}/xen.gz
-	xenver=
-	xen=$(readlink -f $xenimg)
-	if [ "$xen" != "$xenimg" ]; then
-		xenver=${xen#%{initrd_dir}/xen-}
-		xenver=${xenver%.gz}
-	fi
+	xen=$(readlink -f /boot/xen.gz)
+	xenver=${xen#/boot/xen-}
+	xenver=${xenver%.gz}
 
-	title="Xen${xenver:+ $xenver} / PLD Linux (%{pld_release})"
+	title="Xen $xenver / PLD Linux (%{pld_release})"
 	args=--multiboot=$xen
 %else
 	title="PLD Linux (%{pld_release})%{?alt_kernel: / %{alt_kernel}}"
@@ -1595,7 +1579,7 @@ fi
 %if %{have_drm}
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/char/drm
 %endif
-%if %{have_oss} && %{have_isa} && %{without xen}
+%if %{have_oss} && %{have_isa} && %{without xen0} && %{without xenU}
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/media/radio/miropcm20.ko*
 %endif
 %if %{with abi}
@@ -1689,7 +1673,7 @@ fi
 %files sound-oss
 %defattr(644,root,root,755)
 /lib/modules/%{kernel_release}/kernel/sound/oss
-%if %{have_isa} && %{without xen}
+%if %{have_isa} && %{without xen0} && %{without xenU}
 /lib/modules/%{kernel_release}/kernel/drivers/media/radio/miropcm20.ko*
 %endif
 %endif
@@ -1713,7 +1697,7 @@ fi
 %if %{have_drm}
 %exclude /lib/modules/%{kernel_release}smp/kernel/drivers/char/drm
 %endif
-%if %{have_oss} && %{have_isa} && %{without xen}
+%if %{have_oss} && %{have_isa} && %{without xen0} && %{without xenU}
 %exclude /lib/modules/%{kernel_release}smp/kernel/drivers/media/radio/miropcm20.ko*
 %endif
 %if %{with abi}
@@ -1807,7 +1791,7 @@ fi
 %files smp-sound-oss
 %defattr(644,root,root,755)
 /lib/modules/%{kernel_release}smp/kernel/sound/oss
-%if %{have_isa} && %{without xen}
+%if %{have_isa} && %{without xen0} && %{without xenU}
 /lib/modules/%{kernel_release}smp/kernel/drivers/media/radio/miropcm20.ko*
 %endif
 %endif
