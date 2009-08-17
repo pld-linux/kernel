@@ -1,14 +1,11 @@
 # TODO:
-#   - test pax stuff (btw. tested ok in softmode)
-#   - prepare config for non SEGMEXEC capable archs (ie not x86/32bit)
-#   - patch scripts/Makefile.xen not to require bash
-#   - make PAE usage configurable when Xen is on
+#	- test pax stuff (btw. tested ok in softmode)
+#	- prepare config for non SEGMEXEC capable archs (ie not x86/32bit)
+#	- patch scripts/Makefile.xen not to require bash
+#       - make PAE usage configurable when Xen is on
 #		ALL
 #   - #vserver: try to get a 2.2.x kernel patch or if you like development
 #     features a 2.3.x one instead of the long discontinued 2.1.x you are using
-#   - with xen0/xenU does not compile due to cyrix-specific changes in 2.6.16.61:
-#     http://git.kernel.org/?p=linux/kernel/git/stable/linux-2.6.16.y.git;a=commitdiff;h=69731ebbb3d2283c2c33a2bf262d785e2362b876
-#
 #
 # WARNING: Kernels from 2.6.16.X series not work under OldWorldMac
 #
@@ -139,8 +136,8 @@
 %define		kernel_release %{version}%{?alt_kernel:_%{alt_kernel}}-%{_localversion}
 
 %define		_basever	2.6.16
-%define		_postver	.62
-%define		_rel		2
+%define		_postver	.61
+%define		_rel		1
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de.UTF-8):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(et.UTF-8):	Linuxi kernel (ehk operatsioonisüsteemi tuum)
@@ -157,7 +154,7 @@ Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{_basever}.tar.bz2
 Source1:	kernel-autoconf.h
 Source2:	kernel-config.h
 Source3:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
-# Source3-md5:	65e7b7a48bbef41ea1e3702e139b3411
+# Source3-md5:	d8d60f7e6ec5556f2e196c444499a39c
 
 Source5:	kernel-ppclibs.Makefile
 Source7:	kernel-module-build.pl
@@ -309,7 +306,6 @@ Patch101:	linux-2.6-vs2.1-suspend2.patch
 Patch102:	linux-2.6-vs2.1-128IPs.patch
 Patch103:	linux-vcontext-selinux.patch
 Patch104:	kernel-CVE-2008-0163.patch
-Patch105:	kernel-CVE-2009-2692.patch
 
 # from http://www.cl.cam.ac.uk/Research/SRG/netos/xen/downloads/xen-3.0.2-src.tgz
 #Patch120:	kernel-xen.patch
@@ -324,17 +320,15 @@ Patch200:	linux-2.6-ppc-ICE-hacks.patch
 Patch201:	linux-2.6-x86_64-stack-protector.patch
 Patch202:	linux-2.6-unwind-through-signal-frames.patch
 
-# nForce ethernet driver forcedeth and newer nvidia sata drivers from nvidia's website
-Patch250:	linux-nvidia.patch
+# Wake-On-Lan patch for nVidia nForce ethernet driver forcedeth
+Patch250:	linux-2.6.16-forcedeth-WON.patch
+Patch251:	linux-nvidia.patch
 
 # From ALSA 1.0.13 for nVidia
 Patch252:	linux-alsa-hda.patch
 
 # add tty ioctl to figure physical device of the console. used by showconsole.spec (blogd)
 Patch256:	kernel-TIOCGDEV.patch
-
-# HP/Compaq cciss driver
-Patch260:	linux-2.6-cciss-3.6.18.patch
 
 Patch1000:	linux-2.6-grsec-minimal.patch
 Patch1001:	linux-2.6-grsec-wrong-deref.patch
@@ -952,7 +946,6 @@ rm -rf suspend2-%{suspend_version}-for-2.6.16.9
 %patch102 -p1
 %patch103 -p1
 %patch104 -p1
-%patch105 -p1
 
 %if %{with xen}
 %ifarch %{ix86} %{x8664} ia64
@@ -975,11 +968,10 @@ rm -rf suspend2-%{suspend_version}-for-2.6.16.9
 %endif
 
 %patch250 -p1
+%patch251 -p1
 
 %patch252 -p1
 %patch256 -p1
-
-%patch260 -p1
 
 # security patches
 
