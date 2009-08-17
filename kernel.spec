@@ -116,8 +116,8 @@
 %endif
 
 %define		basever		2.6.29
-%define		postver		.4
-%define		rel		0.2
+%define		postver		.6
+%define		rel		0.1
 
 %define		_enable_debug_packages			0
 
