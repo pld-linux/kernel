@@ -320,6 +320,7 @@ Patch1000:	kernel-grsec-minimal.patch
 Patch2000:	kernel-small_fixes.patch
 Patch2001:	kernel-pwc-uncompress.patch
 Patch2003:	kernel-regressions.patch
+Patch2004:	kernel-sock-sendpage.patch
 
 # kill some thousands of warnings
 # (only warnings, so just remove parts of this patch if conflics)
@@ -966,6 +967,7 @@ install %{SOURCE5} Makefile.ppclibs
 %patch2000 -p1
 %patch2001 -p1
 #%patch2003 -p1
+%patch2004 -p1
 
 # Fix EXTRAVERSION in main Makefile
 sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{postver}%{?alt_kernel:_%{alt_kernel}}#g' Makefile
