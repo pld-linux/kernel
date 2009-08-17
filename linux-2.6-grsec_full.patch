@@ -31706,24 +31706,6 @@ diff -urNp linux-2.6.27.10/kernel/fork.c linux-2.6.27.10/kernel/fork.c
  	/* Get rid of any cached register state */
  	deactivate_mm(tsk, mm);
  
-@@ -539,7 +579,7 @@ void mm_release(struct task_struct *tsk,
- 	if (tsk->clear_child_tid
- 	    && !(tsk->flags & PF_SIGNALED)
- 	    && atomic_read(&mm->mm_users) > 1) {
--		u32 __user * tidptr = tsk->clear_child_tid;
-+		pid_t __user * tidptr = tsk->clear_child_tid;
- 		tsk->clear_child_tid = NULL;
- 
- 		/*
-@@ -547,7 +587,7 @@ void mm_release(struct task_struct *tsk,
- 		 * not set up a proper pointer then tough luck.
- 		 */
- 		put_user(0, tidptr);
--		sys_futex(tidptr, FUTEX_WAKE, 1, NULL, NULL, 0);
-+		sys_futex((u32 __user *)tidptr, FUTEX_WAKE, 1, NULL, NULL, 0);
- 	}
- }
- 
 @@ -942,6 +982,9 @@ static struct task_struct *copy_process(
  	DEBUG_LOCKS_WARN_ON(!p->softirqs_enabled);
  #endif

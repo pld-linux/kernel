@@ -102,7 +102,7 @@
 %endif
 
 %define		basever		2.6.27
-%define		postver		.29
+%define		postver		.30
 %define		rel			1
 
 %define		_enable_debug_packages			0
@@ -143,7 +143,7 @@ Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{basever}.tar.bz2
 # Source0-md5:	b3e78977aa79d3754cb7f8143d7ddabd
 %if "%{postver}" != "%{nil}"
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
-# Source1-md5:	ab19d1f101f8711e7963cbe254557f33
+# Source1-md5:	f55adbeb6e3a44e814ce2a192a9ecf8b
 %endif
 
 Source3:	kernel-autoconf.h
@@ -315,7 +315,6 @@ Patch2000:	kernel-small_fixes.patch
 Patch2001:	linux-2.6.21.1-pwc-uncompress.patch
 Patch2002:	kernel-atom-coretemp.patch
 Patch2003:	kernel-regressions.patch
-Patch2004:	kernel-sock-sendpage.patch
 
 # kill some thousands of warnings
 # (only warnings, so just remove parts of this patch if conflics)
@@ -936,7 +935,6 @@ install %{SOURCE5} Makefile.ppclibs
 %patch2001 -p1
 %patch2002 -p1
 #%patch2003 -p1
-%patch2004 -p1
 
 # Fix EXTRAVERSION in main Makefile
 sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{postver}%{?alt_kernel:_%{alt_kernel}}#g' Makefile
