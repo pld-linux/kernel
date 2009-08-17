@@ -140,7 +140,7 @@
 
 %define		_basever	2.6.16
 %define		_postver	.62
-%define		_rel		1
+%define		_rel		2
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de.UTF-8):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(et.UTF-8):	Linuxi kernel (ehk operatsioonisüsteemi tuum)
@@ -309,6 +309,7 @@ Patch101:	linux-2.6-vs2.1-suspend2.patch
 Patch102:	linux-2.6-vs2.1-128IPs.patch
 Patch103:	linux-vcontext-selinux.patch
 Patch104:	kernel-CVE-2008-0163.patch
+Patch105:	kernel-CVE-2009-2692.patch
 
 # from http://www.cl.cam.ac.uk/Research/SRG/netos/xen/downloads/xen-3.0.2-src.tgz
 #Patch120:	kernel-xen.patch
@@ -951,6 +952,7 @@ rm -rf suspend2-%{suspend_version}-for-2.6.16.9
 %patch102 -p1
 %patch103 -p1
 %patch104 -p1
+%patch105 -p1
 
 %if %{with xen}
 %ifarch %{ix86} %{x8664} ia64
