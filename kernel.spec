@@ -140,7 +140,7 @@
 
 %define		_basever	2.6.16
 %define		_postver	.62
-%define		_rel		2
+%define		_rel		3
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de.UTF-8):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(et.UTF-8):	Linuxi kernel (ehk operatsioonisüsteemi tuum)
