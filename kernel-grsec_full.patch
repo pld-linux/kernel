@@ -37741,24 +37741,6 @@ diff -urNp linux-2.6.30.4/kernel/fork.c linux-2.6.30.4/kernel/fork.c
  #endif
  #endif
  
-@@ -571,7 +599,7 @@ void mm_release(struct task_struct *tsk,
- 	if (tsk->clear_child_tid
- 	    && !(tsk->flags & PF_SIGNALED)
- 	    && atomic_read(&mm->mm_users) > 1) {
--		u32 __user * tidptr = tsk->clear_child_tid;
-+		pid_t __user * tidptr = tsk->clear_child_tid;
- 		tsk->clear_child_tid = NULL;
- 
- 		/*
-@@ -579,7 +607,7 @@ void mm_release(struct task_struct *tsk,
- 		 * not set up a proper pointer then tough luck.
- 		 */
- 		put_user(0, tidptr);
--		sys_futex(tidptr, FUTEX_WAKE, 1, NULL, NULL, 0);
-+		sys_futex((u32 __user *)tidptr, FUTEX_WAKE, 1, NULL, NULL, 0);
- 	}
- }
- 
 @@ -695,7 +723,7 @@ static int copy_fs(unsigned long clone_f
  			write_unlock(&fs->lock);
  			return -EAGAIN;
@@ -44525,18 +44507,6 @@ diff -u linux-2.6.30.4/arch/x86/kernel/setup_percpu.c linux-2.6.30.4/arch/x86/ke
  	if (limit < 64*1024)
  		pack_descriptor(&d, base, limit, 0x80 | DESCTYPE_S | 0x3, 0x4);
  	else
-diff -u linux-2.6.30.4/arch/x86/kernel/vmi_32.c linux-2.6.30.4/arch/x86/kernel/vmi_32.c
---- linux-2.6.30.4/arch/x86/kernel/vmi_32.c	2009-07-30 09:48:09.962543704 -0400
-+++ linux-2.6.30.4/arch/x86/kernel/vmi_32.c	2009-08-12 21:15:21.104308164 -0400
-@@ -466,7 +466,7 @@
- 	ap.ds = __KERNEL_DS;
- 	ap.es = __KERNEL_DS;
- 	ap.fs = __KERNEL_PERCPU;
--	ap.gs = 0;
-+	ap.gs = __KERNEL_STACK_CANARY;
- 
- 	ap.eflags = 0;
- 
 diff -u linux-2.6.30.4/arch/x86/kernel/vmlinux_64.lds.S linux-2.6.30.4/arch/x86/kernel/vmlinux_64.lds.S
 --- linux-2.6.30.4/arch/x86/kernel/vmlinux_64.lds.S	2009-07-30 19:56:23.500027109 -0400
 +++ linux-2.6.30.4/arch/x86/kernel/vmlinux_64.lds.S	2009-08-01 08:46:06.438873305 -0400
@@ -44802,20 +44772,6 @@ diff -u linux-2.6.30.4/kernel/sysctl.c linux-2.6.30.4/kernel/sysctl.c
  /*
   * NOTE: do not add new entries to this table unless you have read
   * Documentation/sysctl/ctl_unnumbered.txt
-diff -u linux-2.6.30.4/net/socket.c linux-2.6.30.4/net/socket.c
---- linux-2.6.30.4/net/socket.c	2009-07-30 11:29:24.032618401 -0400
-+++ linux-2.6.30.4/net/socket.c	2009-08-13 20:40:32.961482335 -0400
-@@ -752,7 +752,7 @@
- 	if (more)
- 		flags |= MSG_MORE;
- 
--	return sock->ops->sendpage(sock, page, offset, size, flags);
-+	return kernel_sendpage(sock, page, offset, size, flags);
- }
- 
- static ssize_t sock_splice_read(struct file *file, loff_t *ppos,
-only in patch2:
-unchanged:
 --- linux-2.6.30.4/arch/x86/lguest/Kconfig	2009-07-24 17:47:51.000000000 -0400
 +++ linux-2.6.30.4/arch/x86/lguest/Kconfig	2009-08-02 09:47:36.165378342 -0400
 @@ -3,6 +3,7 @@ config LGUEST_GUEST

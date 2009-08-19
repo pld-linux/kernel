@@ -10710,7 +10710,7 @@ diff -NurpP --minimal linux-2.6.30.2/include/linux/vserver/Kbuild linux-2.6.30.2
 diff -NurpP --minimal linux-2.6.30.2/include/linux/vserver/limit_cmd.h linux-2.6.30.2-vs2.3.0.36.14-pre4/include/linux/vserver/limit_cmd.h
 --- linux-2.6.30.2/include/linux/vserver/limit_cmd.h	1970-01-01 01:00:00.000000000 +0100
 +++ linux-2.6.30.2-vs2.3.0.36.14-pre4/include/linux/vserver/limit_cmd.h	2009-07-04 01:11:39.000000000 +0200
-@@ -0,0 +1,69 @@
+@@ -0,0 +1,71 @@
 +#ifndef _VX_LIMIT_CMD_H
 +#define _VX_LIMIT_CMD_H
 +
@@ -10720,6 +10720,7 @@ diff -NurpP --minimal linux-2.6.30.2/include/linux/vserver/limit_cmd.h linux-2.6
 +#define VCMD_get_rlimit		VC_CMD(RLIMIT, 1, 0)
 +#define VCMD_set_rlimit		VC_CMD(RLIMIT, 2, 0)
 +#define VCMD_get_rlimit_mask	VC_CMD(RLIMIT, 3, 0)
++#define VCMD_reset_hits		VC_CMD(RLIMIT, 7, 0)
 +#define VCMD_reset_minmax	VC_CMD(RLIMIT, 9, 0)
 +
 +struct	vcmd_ctx_rlimit_v0 {
@@ -10767,6 +10768,7 @@ diff -NurpP --minimal linux-2.6.30.2/include/linux/vserver/limit_cmd.h linux-2.6
 +extern int vc_get_rlimit_mask(uint32_t, void __user *);
 +extern int vc_get_rlimit(struct vx_info *, void __user *);
 +extern int vc_set_rlimit(struct vx_info *, void __user *);
++extern int vc_reset_hits(struct vx_info *, void __user *);
 +extern int vc_reset_minmax(struct vx_info *, void __user *);
 +
 +extern int vc_rlimit_stat(struct vx_info *, void __user *);
@@ -20027,7 +20029,7 @@ diff -NurpP --minimal linux-2.6.30.2/kernel/vserver/Kconfig linux-2.6.30.2-vs2.3
 diff -NurpP --minimal linux-2.6.30.2/kernel/vserver/limit.c linux-2.6.30.2-vs2.3.0.36.14-pre4/kernel/vserver/limit.c
 --- linux-2.6.30.2/kernel/vserver/limit.c	1970-01-01 01:00:00.000000000 +0100
 +++ linux-2.6.30.2-vs2.3.0.36.14-pre4/kernel/vserver/limit.c	2009-07-04 01:11:39.000000000 +0200
-@@ -0,0 +1,319 @@
+@@ -0,0 +1,333 @@
 +/*
 + *  linux/kernel/vserver/limit.c
 + *
@@ -20232,6 +20234,21 @@ diff -NurpP --minimal linux-2.6.30.2/kernel/vserver/limit.c linux-2.6.30.2-vs2.3
 +	return 0;
 +}
 +
++
++static inline void vx_reset_hits(struct _vx_limit *limit)
++{
++       int lim;
++
++       for (lim = 0; lim < NUM_LIMITS; lim++) {
++               atomic_set(&__rlim_lhit(limit, lim), 0);
++       }
++}
++
++int vc_reset_hits(struct vx_info *vxi, void __user *data)
++{
++       vx_reset_hits(&vxi->limit);
++       return 0;
++}
 +
 +static inline void vx_reset_minmax(struct _vx_limit *limit)
 +{
@@ -23627,7 +23644,7 @@ diff -NurpP --minimal linux-2.6.30.2/kernel/vserver/space.c linux-2.6.30.2-vs2.3
 diff -NurpP --minimal linux-2.6.30.2/kernel/vserver/switch.c linux-2.6.30.2-vs2.3.0.36.14-pre4/kernel/vserver/switch.c
 --- linux-2.6.30.2/kernel/vserver/switch.c	1970-01-01 01:00:00.000000000 +0100
 +++ linux-2.6.30.2-vs2.3.0.36.14-pre4/kernel/vserver/switch.c	2009-07-04 01:11:39.000000000 +0200
-@@ -0,0 +1,543 @@
+@@ -0,0 +1,546 @@
 +/*
 + *  linux/kernel/vserver/switch.c
 + *
@@ -23752,6 +23769,8 @@ diff -NurpP --minimal linux-2.6.30.2/kernel/vserver/switch.c linux-2.6.30.2-vs2.
 +#endif
 +	case VCMD_get_rlimit_mask:
 +		return vc_get_rlimit_mask(id, data);
++       case VCMD_reset_hits:
++               return vc_reset_hits(vxi, data);
 +	case VCMD_reset_minmax:
 +		return vc_reset_minmax(vxi, data);
 +
@@ -23950,6 +23969,7 @@ diff -NurpP --minimal linux-2.6.30.2/kernel/vserver/switch.c linux-2.6.30.2-vs2.
 +
 +	/* info commands */
 +	__VCMD(task_xid,	 2, VCA_NONE,	0);
++       __VCMD(reset_hits,       2, VCA_VXI,    0);
 +	__VCMD(reset_minmax,	 2, VCA_VXI,	0);
 +	__VCMD(vx_info,		 3, VCA_VXI,	VCF_INFO);
 +	__VCMD(get_bcaps,	 3, VCA_VXI,	VCF_INFO);
@@ -25316,7 +25336,7 @@ diff -NurpP --minimal linux-2.6.30.2/net/core/sock.c linux-2.6.30.2-vs2.3.0.36.1
  		/*
  		 * Increment the counter in the same struct proto as the master
  		 * sock (sk_refcnt_debug_inc uses newsk->sk_prot->socks, that
-@@ -1794,6 +1813,11 @@ void sock_init_data(struct socket *sock,
+@@ -1794,6 +1813,12 @@ void sock_init_data(struct socket *sock,
  
  	sk->sk_stamp = ktime_set(-1L, 0);
  
@@ -25325,9 +25345,10 @@ diff -NurpP --minimal linux-2.6.30.2/net/core/sock.c linux-2.6.30.2-vs2.3.0.36.1
 +	vx_sock_inc(sk);
 +	set_nx_info(&sk->sk_nx_info, current->nx_info);
 +	sk->sk_nid = nx_current_nid();
- 	atomic_set(&sk->sk_refcnt, 1);
- 	atomic_set(&sk->sk_drops, 0);
- }
++
+ 	/*
+ 	 * Before updating sk_refcnt, we must commit prior changes to memory
+ 	 * (Documentation/RCU/rculist_nulls.txt for details)
 diff -NurpP --minimal linux-2.6.30.2/net/ipv4/af_inet.c linux-2.6.30.2-vs2.3.0.36.14-pre4/net/ipv4/af_inet.c
 --- linux-2.6.30.2/net/ipv4/af_inet.c	2009-06-11 17:13:29.000000000 +0200
 +++ linux-2.6.30.2-vs2.3.0.36.14-pre4/net/ipv4/af_inet.c	2009-07-04 01:11:39.000000000 +0200
