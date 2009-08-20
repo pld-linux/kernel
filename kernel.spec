@@ -1129,12 +1129,18 @@ BuildConfig > %{defconfig}
 ln -sf %{defconfig} .config
 cd -
 
-%{__make} TARGETOBJ=%{targetobj} oldconfig
+%{__make} \
+	TARGETOBJ=%{targetobj} \
+	%{?with_verbose:V=1} \
+	oldconfig
 
 %{__awk} %{?debug:-v dieOnError=1} -v infile=%{objdir}/%{defconfig} -f %{SOURCE8} %{objdir}/.config
 
 # build kernel
-%{__make} TARGETOBJ=%{targetobj} all
+%{__make} \
+	TARGETOBJ=%{targetobj} \
+	%{?with_verbose:V=1} \
+	all
 
 %install
 rm -rf $RPM_BUILD_ROOT
