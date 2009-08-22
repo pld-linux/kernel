@@ -26924,3 +26924,83 @@ diff -NurpP --minimal linux-2.6.30.2/security/selinux/hooks.c linux-2.6.30.2-vs2
  #include <linux/parser.h>
  #include <linux/nfs_mount.h>
  #include <net/ipv6.h>
+--- linux-2.6.30.5-vs2.3.0.36.14-pre5.orig/net/ipv6/af_inet6.c	2009-08-22 00:44:21.295614269 +0200
++++ linux-2.6.30.5-vs2.3.0.36.14-pre5/net/ipv6/af_inet6.c	2009-08-22 01:26:24.711662351 +0200
+@@ -306,8 +306,14 @@ int inet6_bind(struct socket *sock, stru
+ 		    v4addr != htonl(INADDR_ANY) &&
+ 		    chk_addr_ret != RTN_LOCAL &&
+ 		    chk_addr_ret != RTN_MULTICAST &&
+-		    chk_addr_ret != RTN_BROADCAST)
++		    chk_addr_ret != RTN_BROADCAST) {
++			err = -EADDRNOTAVAIL;
+ 			goto out;
++		}
++		if (!v4_addr_in_nx_info(sk->sk_nx_info, v4addr, NXA_MASK_BIND)) {
++			err = -EADDRNOTAVAIL;
++			goto out;
++		}
+ 	} else {
+ 		if (addr_type != IPV6_ADDR_ANY) {
+ 			struct net_device *dev = NULL;
+--- linux-2.6.30.5-vs2.3.0.36.14-pre5.orig/net/ipv6/udp.c	2009-08-21 22:38:58.139614225 +0200
++++ linux-2.6.30.5-vs2.3.0.36.14-pre5/net/ipv6/udp.c	2009-08-22 00:39:40.947661415 +0200
+@@ -61,25 +61,44 @@ int ipv6_rcv_saddr_equal(const struct so
+ 	int addr_type = ipv6_addr_type(sk_rcv_saddr6);
+ 	int addr_type2 = sk2_rcv_saddr6 ? ipv6_addr_type(sk2_rcv_saddr6) : IPV6_ADDR_MAPPED;
+ 
+-	/* if both are mapped, treat as IPv4 */
+-	if (addr_type == IPV6_ADDR_MAPPED && addr_type2 == IPV6_ADDR_MAPPED)
+-		return (!sk2_ipv6only &&
+-			(!sk_rcv_saddr || !sk2_rcv_saddr ||
+-			  sk_rcv_saddr == sk2_rcv_saddr));
++	if (sk2_ipv6only && !sk2_rcv_saddr6)
++		addr_type2 = IPV6_ADDR_ANY;
+ 
+-	if (addr_type2 == IPV6_ADDR_ANY &&
+-	    !(sk2_ipv6only && addr_type == IPV6_ADDR_MAPPED))
+-		return 1;
++	/* if both are mapped or any, treat as IPv4 */
++	if ((addr_type == IPV6_ADDR_MAPPED || (addr_type == IPV6_ADDR_ANY && !sk_ipv6only)) &&
++	    (addr_type2 == IPV6_ADDR_MAPPED || (addr_type2 == IPV6_ADDR_ANY && !sk2_ipv6only))) {
++		if (!sk_rcv_saddr && !sk2_rcv_saddr) {
++			if (nx_v4_addr_conflict(sk->sk_nx_info, sk2->sk_nx_info))
++				return 1;
++			else if (addr_type != IPV6_ADDR_ANY && sk2_rcv_saddr6)
++				return 0;
++			/* remaining cases are at least one ANY */
++		} else if (!sk_rcv_saddr)
++			return v4_addr_in_nx_info(sk->sk_nx_info, sk2_rcv_saddr, -1);
++		else if (!sk2_rcv_saddr)
++			return v4_addr_in_nx_info(sk2->sk_nx_info, sk_rcv_saddr, -1);
++		else
++			return (sk_rcv_saddr == sk2_rcv_saddr);
++	}
+ 
+-	if (addr_type == IPV6_ADDR_ANY &&
+-	    !(sk_ipv6only && addr_type2 == IPV6_ADDR_MAPPED))
+-		return 1;
++	if (!sk2_rcv_saddr6)
++		addr_type2 = IPV6_ADDR_ANY;
+ 
+-	if (sk2_rcv_saddr6 &&
+-	    ipv6_addr_equal(sk_rcv_saddr6, sk2_rcv_saddr6))
+-		return 1;
++	/* both are IPv6 */
++	if (addr_type == IPV6_ADDR_ANY && addr_type2 == IPV6_ADDR_ANY)
++		return nx_v6_addr_conflict(sk->sk_nx_info, sk2->sk_nx_info);
+ 
+-	return 0;
++	if (addr_type == IPV6_ADDR_ANY) {
++		const struct in6_addr in6_any = {
++			.s6_addr32 = { 0, 0, 0, 0}
++		};
++		return v6_addr_in_nx_info(sk->sk_nx_info, sk2_rcv_saddr6 ? sk2_rcv_saddr6 : &in6_any, -1);
++	}
++
++	if (addr_type2 == IPV6_ADDR_ANY)
++		return v6_addr_in_nx_info(sk2->sk_nx_info, sk_rcv_saddr6, -1);
++
++	return ipv6_addr_equal(sk_rcv_saddr6, sk2_rcv_saddr6);
+ }
+ 
+ int udp_v6_get_port(struct sock *sk, unsigned short snum)
