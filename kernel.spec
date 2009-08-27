@@ -106,7 +106,7 @@
 
 %define		basever		2.6.28
 %define		postver		.10
-%define		rel		4
+%define		rel		3
 
 %define		_enable_debug_packages			0
 
@@ -281,7 +281,7 @@ Patch85:	hostap-kernel-2.6.18.patch
 # Taken from http://download.opensuse.org/factory/repo/src-oss/suse/src/kernel-source-2.6.27.7-3.1.src.rpm
 Patch90:	kernel-mpt-fusion.patch
 
-# based on http://vserver.13thfloor.at/Experimental/patch-2.6.28.10-vs2.3.0.36.11.diff
+# based on http://vserver.13thfloor.at/Experimental/patch-2.6.28.9-vs2.3.0.36.10.diff
 Patch100:	linux-2.6-vs2.3.patch
 Patch101:	kernel-vserver-fixes.patch
 
@@ -318,7 +318,6 @@ Patch2003:	kernel-regressions.patch
 
 Patch2100:	kernel-mmap_min_addr.patch
 Patch2101:	kernel-CVE-2009-1895.patch
-Patch2102:	kernel-sock-sendpage.patch
 
 # kill some thousands of warnings
 # (only warnings, so just remove parts of this patch if conflics)
@@ -956,7 +955,6 @@ install %{SOURCE5} Makefile.ppclibs
 
 %patch2100 -p1
 %patch2101 -p1
-%patch2102 -p1
 
 # Fix EXTRAVERSION in main Makefile
 sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{postver}%{?alt_kernel:_%{alt_kernel}}#g' Makefile
