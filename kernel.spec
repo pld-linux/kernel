@@ -1040,6 +1040,7 @@ BuildConfig() {
 		CONFIG_HIGHMEM4G=n
 		CONFIG_HIGHMEM64G=y
 		CONFIG_X86_PAE=y
+		CONFIG_NUMA=n
   %endif
 %endif
 
