@@ -24590,18 +24590,6 @@ diff -NurpP --minimal linux-2.6.30.5/kernel/vserver/vci_config.h linux-2.6.30.5-
 +	0;
 +}
 +
-diff -NurpP --minimal linux-2.6.30.5/Makefile linux-2.6.30.5-vs2.3.0.36.14-pre7/Makefile
---- linux-2.6.30.5/Makefile	2009-08-17 16:37:28.000000000 +0200
-+++ linux-2.6.30.5-vs2.3.0.36.14-pre7/Makefile	2009-08-22 18:56:40.000000000 +0200
-@@ -1,7 +1,7 @@
- VERSION = 2
- PATCHLEVEL = 6
- SUBLEVEL = 30
--EXTRAVERSION = .5
-+EXTRAVERSION = .5-vs2.3.0.36.14-pre7
- NAME = Man-Eating Seals of Antiquity
- 
- # *DOCUMENTATION*
 diff -NurpP --minimal linux-2.6.30.5/mm/filemap_xip.c linux-2.6.30.5-vs2.3.0.36.14-pre7/mm/filemap_xip.c
 --- linux-2.6.30.5/mm/filemap_xip.c	2009-06-11 17:13:27.000000000 +0200
 +++ linux-2.6.30.5-vs2.3.0.36.14-pre7/mm/filemap_xip.c	2009-07-04 01:11:39.000000000 +0200
@@ -26281,24 +26269,13 @@ diff -NurpP --minimal linux-2.6.30.5/net/ipv6/af_inet6.c linux-2.6.30.5-vs2.3.0.
  	addr_type = ipv6_addr_type(&addr->sin6_addr);
  	if ((addr_type & IPV6_ADDR_MULTICAST) && sock->type == SOCK_STREAM)
  		return -EINVAL;
-@@ -289,13 +300,20 @@ int inet6_bind(struct socket *sock, stru
- 		/* Reproduce AF_INET checks to make the bindings consitant */
- 		v4addr = addr->sin6_addr.s6_addr32[3];
- 		chk_addr_ret = inet_addr_type(net, v4addr);
-+
- 		if (!sysctl_ip_nonlocal_bind &&
- 		    !(inet->freebind || inet->transparent) &&
- 		    v4addr != htonl(INADDR_ANY) &&
- 		    chk_addr_ret != RTN_LOCAL &&
- 		    chk_addr_ret != RTN_MULTICAST &&
--		    chk_addr_ret != RTN_BROADCAST)
-+		    chk_addr_ret != RTN_BROADCAST) {
-+			err = -EADDRNOTAVAIL;
-+			goto out;
-+		}
+@@ -309,6 +309,10 @@ int inet6_bind(struct socket *sock, stru
+ 			err = -EADDRNOTAVAIL;
+ 			goto out;
+ 		}
 +		if (!v4_addr_in_nx_info(sk->sk_nx_info, v4addr, NXA_MASK_BIND)) {
 +			err = -EADDRNOTAVAIL;
- 			goto out;
++			goto out;
 +		}
  	} else {
  		if (addr_type != IPV6_ADDR_ANY) {
