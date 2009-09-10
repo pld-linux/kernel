@@ -177,8 +177,8 @@ diff -NurpP --minimal linux-2.6.21.a/net/ipv4/netfilter/ipt_ROUTE.c linux-2.6.21
 +	}
 +	
 +	/* Drop old route. */
-+	dst_release(skb->dst);
-+	skb->dst = NULL;
++	skb_dst_drop(skb);
++
 +
 +	/* Success if no oif specified or if the oif correspond to the 
 +	 * one desired */
@@ -334,8 +334,8 @@ diff -NurpP --minimal linux-2.6.21.a/net/ipv4/netfilter/ipt_ROUTE.c linux-2.6.21
 +	}
 +
 +	skb->dev = dev_in;
-+	dst_release(skb->dst);
-+	skb->dst = NULL;
++	skb_dst_drop(skb);
++
 +
 +	netif_rx(skb);
 +	dev_put(dev_in);
@@ -410,8 +410,8 @@ diff -NurpP --minimal linux-2.6.21.a/net/ipv4/netfilter/ipt_ROUTE.c linux-2.6.21
 +
 +			if (skb->dev == rt->u.dst.dev) {
 +				/* Drop old route. */
-+				dst_release(skb->dst);
-+				skb->dst = &rt->u.dst;
++				skb_dst_drop(skb);
++				skb_dst_set(skb, &rt->u.dst);
 +
 +				/* this will traverse normal stack, and 
 +				 * thus call conntrack on the icmp packet */
@@ -668,8 +668,8 @@ diff -NurpP --minimal linux-2.6.21.a/net/ipv6/netfilter/ip6t_ROUTE.c linux-2.6.2
 +	}
 +
 +	/* Drop old route. */
-+	dst_release(skb->dst);
-+	skb->dst = &rt->u.dst;
++	skb_dst_drop(skb);
++	skb_dst_set(skb, &rt->u.dst);
 +	skb->dev = rt->rt6i_dev;
 +	return 1;
 +
