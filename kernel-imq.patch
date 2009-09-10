@@ -1035,16 +1035,16 @@ diff -uNr --exclude='*~' linux-2.6.29.1/net/core/skbuff.c linux-2.6.29.1-imq/net
  #if defined(CONFIG_NF_CONNTRACK) || defined(CONFIG_NF_CONNTRACK_MODULE)
  	nf_conntrack_put(skb->nfct);
  	nf_conntrack_put_reasm(skb->nfct_reasm);
-@@ -493,6 +579,9 @@
+@@ -621,6 +621,9 @@
  	new->sp			= secpath_get(old->sp);
  #endif
  	memcpy(new->cb, old->cb, sizeof(old->cb));
 +#if defined(CONFIG_IMQ) || defined(CONFIG_IMQ_MODULE)
 +	skb_copy_stored_cb(new, old);
 +#endif
- 	new->csum_start		= old->csum_start;
- 	new->csum_offset	= old->csum_offset;
+ 	new->csum		= old->csum;
  	new->local_df		= old->local_df;
+ 	new->pkt_type		= old->pkt_type;
 @@ -2664,6 +2753,13 @@
  						0,
  						SLAB_HWCACHE_ALIGN|SLAB_PANIC,
