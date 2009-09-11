@@ -312,6 +312,7 @@ Patch2001:	kernel-pwc-uncompress.patch
 Patch2003:	kernel-regressions.patch
 
 Patch2100:	kernel-intel-pre-9xx.patch
+Patch2101:	kernel-intel-gpu-fifo.patch
 
 # kill some thousands of warnings
 # (only warnings, so just remove parts of this patch if conflics)
@@ -903,6 +904,7 @@ install %{SOURCE5} Makefile.ppclibs
 #%patch2003 -p1
 
 %patch2100 -p1
+%patch2101 -p1
 
 # Fix EXTRAVERSION in main Makefile
 sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{postver}%{?alt_kernel:_%{alt_kernel}}#g' Makefile
