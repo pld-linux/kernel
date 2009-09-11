@@ -183,8 +183,8 @@ diff -NurpP --minimal linux-2.6.21.a/net/ipv4/netfilter/ipt_ROUTE.c linux-2.6.21
 +	/* Success if no oif specified or if the oif correspond to the 
 +	 * one desired */
 +	if (!ifindex || rt->u.dst.dev->ifindex == ifindex) {
-+		skb->dst = &rt->u.dst;
-+		skb->dev = skb->dst->dev;
++		skb_dst_set(skb, &rt->u.dst);
++		skb->dev = skb_dst(skb)->dev;
 +		skb->protocol = htons(ETH_P_IP);
 +		return 1;
 +	}
@@ -209,7 +209,7 @@ diff -NurpP --minimal linux-2.6.21.a/net/ipv4/netfilter/ipt_ROUTE.c linux-2.6.21
 + */
 +static void ip_direct_send(struct sk_buff *skb)
 +{
-+	struct dst_entry *dst = skb->dst;
++	struct dst_entry *dst = skb_dst(skb);
 +	struct hh_cache *hh = dst->hh;
 +	struct net_device *dev = dst->dev;
 +	int hh_len = LL_RESERVED_SPACE(dev);
