@@ -1,8 +1,7 @@
-diff --git a/Documentation/kernel-parameters.txt b/Documentation/kernel-parameters.txt
-index fd5cac0..88e2115 100644
---- a/Documentation/kernel-parameters.txt
-+++ b/Documentation/kernel-parameters.txt
-@@ -90,6 +90,7 @@ parameter is applicable:
+diff -urN linux-2.6.31.org/Documentation/kernel-parameters.txt linux-2.6.31/Documentation/kernel-parameters.txt
+--- linux-2.6.31.org/Documentation/kernel-parameters.txt	2009-09-10 00:13:59.000000000 +0200
++++ linux-2.6.31/Documentation/kernel-parameters.txt	2009-09-10 22:17:58.000000000 +0200
+@@ -90,6 +90,7 @@
  			A lot of drivers has their options described inside of
  			Documentation/scsi/.
  	SECURITY Different security models are enabled.
@@ -10,10 +9,9 @@ index fd5cac0..88e2115 100644
  	SELINUX SELinux support is enabled.
  	SERIAL	Serial support is enabled.
  	SH	SuperH architecture is enabled.
-diff --git a/include/linux/audit.h b/include/linux/audit.h
-index 4fa2810..9f87073 100644
---- a/include/linux/audit.h
-+++ b/include/linux/audit.h
+diff -urN linux-2.6.31.org/include/linux/audit.h linux-2.6.31/include/linux/audit.h
+--- linux-2.6.31.org/include/linux/audit.h	2009-09-10 00:13:59.000000000 +0200
++++ linux-2.6.31/include/linux/audit.h	2009-09-10 22:18:05.000000000 +0200
 @@ -33,7 +33,7 @@
   * 1200 - 1299 messages internal to the audit daemon
   * 1300 - 1399 audit event messages
@@ -38,149 +36,10 @@ index 4fa2810..9f87073 100644
  #define AUDIT_FIRST_KERN_ANOM_MSG   1700
  #define AUDIT_LAST_KERN_ANOM_MSG    1799
  #define AUDIT_ANOM_PROMISCUOUS      1700 /* Device changed promiscuous mode */
-diff --git a/security/Kconfig b/security/Kconfig
-index bb24477..739fbb0 100644
---- a/security/Kconfig
-+++ b/security/Kconfig
-@@ -60,6 +60,15 @@ config SECURITYFS
- 
- 	  If you are unsure how to answer this question, answer N.
- 
-+config SECURITY_DEFAULT
-+	string "Default security module"
-+	depends on SECURITY
-+	default ""
-+	help
-+          This determines the security module used if the security=
-+          boot parmater is not provided.  If a security module is not
-+          specified the first module to register will be used.
-+
- config SECURITY_NETWORK
- 	bool "Socket and Networking Security Hooks"
- 	depends on SECURITY
-@@ -136,6 +145,7 @@ config SECURITY_DEFAULT_MMAP_MIN_ADDR
- source security/selinux/Kconfig
- source security/smack/Kconfig
- source security/tomoyo/Kconfig
-+source security/apparmor/Kconfig
- 
- source security/integrity/ima/Kconfig
- 
-diff --git a/security/Makefile b/security/Makefile
-index fa77021..60aa7c5 100644
---- a/security/Makefile
-+++ b/security/Makefile
-@@ -6,6 +6,7 @@ obj-$(CONFIG_KEYS)			+= keys/
- subdir-$(CONFIG_SECURITY_SELINUX)	+= selinux
- subdir-$(CONFIG_SECURITY_SMACK)		+= smack
- subdir-$(CONFIG_SECURITY_TOMOYO)        += tomoyo
-+subdir-$(CONFIG_SECURITY_APPARMOR)        += apparmor
- 
- # always enable default capabilities
- obj-y		+= commoncap.o
-@@ -17,6 +18,7 @@ obj-$(CONFIG_SECURITYFS)		+= inode.o
- obj-$(CONFIG_SECURITY_SELINUX)		+= selinux/built-in.o
- obj-$(CONFIG_SECURITY_SMACK)		+= smack/built-in.o
- obj-$(CONFIG_SECURITY_TOMOYO)		+= tomoyo/built-in.o
-+obj-$(CONFIG_SECURITY_APPARMOR)         += apparmor/built-in.o
- obj-$(CONFIG_SECURITY_ROOTPLUG)		+= root_plug.o
- obj-$(CONFIG_CGROUP_DEVICE)		+= device_cgroup.o
- 
-diff --git a/security/apparmor/Kconfig b/security/apparmor/Kconfig
-new file mode 100644
-index 0000000..0f7ba5e
---- /dev/null
-+++ b/security/apparmor/Kconfig
-@@ -0,0 +1,53 @@
-+config SECURITY_APPARMOR
-+	bool "AppArmor support"
-+	depends on SECURITY && SECURITY_NETWORK && NET && INET
-+	select AUDIT
-+	select SECURITY_PATH
-+	select SECURITYFS
-+	default n
-+	help
-+	  This enables the AppArmor security module.
-+	  Required userspace tools (if they are not included in your
-+	  distribution) and further information may be found at
-+	  <http://forge.novell.com/modules/xfmod/project/?apparmor>
-+
-+	  If you are unsure how to answer this question, answer N.
-+
-+config SECURITY_APPARMOR_NETWORK
-+       bool "AppArmor network support"
-+       depends on SECURITY_APPARMOR
-+       default n
-+       help
-+	 This enables AppArmor to mediate applications network use.
-+	 This will enable the SECURITY_NETWORK hooks.
-+
-+config SECURITY_APPARMOR_BOOTPARAM_VALUE
-+	int "AppArmor boot parameter default value"
-+	depends on SECURITY_APPARMOR
-+	range 0 1
-+	default 1
-+	help
-+	  This option sets the default value for the kernel parameter
-+	  'apparmor', which allows AppArmor to be enabled or disabled
-+          at boot.  If this option is set to 0 (zero), the AppArmor
-+	  kernel parameter will default to 0, disabling AppArmor at
-+	  bootup.  If this option is set to 1 (one), the AppArmor
-+	  kernel parameter will default to 1, enabling AppArmor at
-+	  bootup.
-+
-+	  If you are unsure how to answer this question, answer 1.
-+
-+config SECURITY_APPARMOR_DISABLE
-+	bool "AppArmor runtime disable"
-+	depends on SECURITY_APPARMOR
-+	default n
-+	help
-+	  This option enables writing to a apparmorfs node 'disable', which
-+	  allows AppArmor to be disabled at runtime prior to the policy load.
-+	  AppArmor will then remain disabled until the next boot.
-+	  This option is similar to the apparmor.enabled=0 boot parameter,
-+	  but is to support runtime disabling of AppArmor, e.g. from
-+	  /sbin/init, for portability across platforms where boot
-+	  parameters are difficult to employ.
-+
-+	  If you are unsure how to answer this question, answer N.
-diff --git a/security/apparmor/Makefile b/security/apparmor/Makefile
-new file mode 100644
-index 0000000..6e186ce
---- /dev/null
-+++ b/security/apparmor/Makefile
-@@ -0,0 +1,24 @@
-+# Makefile for AppArmor Linux Security Module
-+#
-+obj-$(CONFIG_SECURITY_APPARMOR) += apparmor.o
-+
-+apparmor-y := apparmorfs.o audit.o capability.o context.o ipc.o lib.o match.o \
-+              path.o domain.o policy.o policy_interface.o procattr.o lsm.o \
-+              resource.o sid.o file.o
-+
-+apparmor-$(CONFIG_SECURITY_APPARMOR_NETWORK) += net.o
-+
-+clean-files: capability_names.h af_names.h
-+
-+quiet_cmd_make-caps = GEN     $@
-+cmd_make-caps = echo "static const char *capability_names[] = {" > $@ ; sed -n -e "/CAP_FS_MASK/d" -e "s/^\#define[ \\t]\\+CAP_\\([A-Z0-9_]\\+\\)[ \\t]\\+\\([0-9]\\+\\)\$$/[\\2]  = \"\\1\",/p" $< | tr A-Z a-z >> $@ ; echo "};" >> $@
-+
-+quiet_cmd_make-af = GEN     $@
-+cmd_make-af = echo "static const char *address_family_names[] = {" > $@ ; sed -n -e "/AF_MAX/d" -e "/AF_LOCAL/d" -e "s/^\#define[ \\t]\\+AF_\\([A-Z0-9_]\\+\\)[ \\t]\\+\\([0-9]\\+\\)\\(.*\\)\$$/[\\2]  = \"\\1\",/p" $< | tr A-Z a-z >> $@ ; echo "};" >> $@
-+
-+$(obj)/capability.o : $(obj)/capability_names.h
-+$(obj)/net.o : $(obj)/af_names.h
-+$(obj)/capability_names.h : $(srctree)/include/linux/capability.h
-+	$(call cmd,make-caps)
-+$(obj)/af_names.h : $(srctree)/include/linux/socket.h
-+	$(call cmd,make-af)
-diff --git a/security/apparmor/apparmorfs.c b/security/apparmor/apparmorfs.c
-new file mode 100644
-index 0000000..02ba36f
---- /dev/null
-+++ b/security/apparmor/apparmorfs.c
-@@ -0,0 +1,395 @@
+diff -urN linux-2.6.31.org/security/apparmor/apparmorfs.c linux-2.6.31/security/apparmor/apparmorfs.c
+--- linux-2.6.31.org/security/apparmor/apparmorfs.c	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.31/security/apparmor/apparmorfs.c	2009-09-10 22:18:06.000000000 +0200
+@@ -0,0 +1,391 @@
 +/*
 + * AppArmor security module
 + *
@@ -257,34 +116,30 @@ index 0000000..02ba36f
 +
 +static struct aa_profile *next_profile(struct aa_profile *profile)
 +{
-+	struct aa_profile *next = profile;
-+	struct aa_namespace *ns;
++	struct aa_profile *parent;
++	struct aa_namespace *ns = profile->ns;
 +
-+	if (!list_empty(&profile->base.profiles)) {
-+		list_for_each_entry(next, &profile->base.profiles, base.list)
-+			return next;
-+	}
++	if (!list_empty(&profile->base.profiles))
++		return list_first_entry(&profile->base.profiles,
++					struct aa_profile, base.list);
 +
-+	while (profile->parent) {
-+		next = profile->parent;
-+		list_for_each_entry_continue(next,
-+					     &profile->parent->base.profiles,
++	parent = profile->parent;
++	while (parent) {
++		list_for_each_entry_continue(profile, &parent->base.profiles,
 +					     base.list)
-+			return next;
-+		profile = profile->parent;
++			return profile;
++		profile = parent;
++		parent = parent->parent;
 +	}
 +
-+	next = profile;
-+	list_for_each_entry_continue(next, &profile->ns->base.profiles,
-+				     base.list)
-+		return next;
++	list_for_each_entry_continue(profile, &ns->base.profiles, base.list)
++		return profile;
 +
-+	ns = profile->ns;
 +	read_unlock(&ns->base.lock);
 +	list_for_each_entry_continue(ns, &ns_list, base.list) {
 +		read_lock(&ns->base.lock);
-+		list_for_each_entry(profile, &ns->base.profiles, base.list)
-+			return profile;
++		return list_first_entry(&ns->base.profiles, struct aa_profile,
++					base.list);
 +		read_unlock(&ns->base.lock);
 +	}
 +	return NULL;
@@ -576,12 +431,10 @@ index 0000000..02ba36f
 +
 +fs_initcall(create_apparmorfs);
 +
-diff --git a/security/apparmor/audit.c b/security/apparmor/audit.c
-new file mode 100644
-index 0000000..834a4f5
---- /dev/null
-+++ b/security/apparmor/audit.c
-@@ -0,0 +1,151 @@
+diff -urN linux-2.6.31.org/security/apparmor/audit.c linux-2.6.31/security/apparmor/audit.c
+--- linux-2.6.31.org/security/apparmor/audit.c	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.31/security/apparmor/audit.c	2009-09-10 22:18:06.000000000 +0200
+@@ -0,0 +1,153 @@
 +/*
 + * AppArmor security module
 + *
@@ -698,9 +551,11 @@ index 0000000..834a4f5
 +	audit_cxt = g_apparmor_logsyscall ? current->audit_context : NULL;
 +
 +	if (type == AUDIT_APPARMOR_AUTO) {
-+		if (likely(!sa->error))
++		if (likely(!sa->error)) {
++			if (PROFILE_AUDIT_MODE(profile) != AUDIT_ALL)
++				return 0;
 +			type = AUDIT_APPARMOR_AUDIT;
-+		else if (PROFILE_COMPLAIN(profile))
++		} else if (PROFILE_COMPLAIN(profile))
 +			type = AUDIT_APPARMOR_ALLOWED;
 +		else
 +			type = AUDIT_APPARMOR_DENIED;
@@ -733,12 +588,10 @@ index 0000000..834a4f5
 +	return aa_audit_base(AUDIT_APPARMOR_DENIED, profile, &sa,
 +			     current->audit_context, NULL);
 +}
-diff --git a/security/apparmor/capability.c b/security/apparmor/capability.c
-new file mode 100644
-index 0000000..79097e8
---- /dev/null
-+++ b/security/apparmor/capability.c
-@@ -0,0 +1,121 @@
+diff -urN linux-2.6.31.org/security/apparmor/capability.c linux-2.6.31/security/apparmor/capability.c
+--- linux-2.6.31.org/security/apparmor/capability.c	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.31/security/apparmor/capability.c	2009-09-10 22:18:06.000000000 +0200
+@@ -0,0 +1,122 @@
 +/*
 + * AppArmor security module
 + *
@@ -799,6 +652,7 @@ index 0000000..79097e8
 +		if (likely((PROFILE_AUDIT_MODE(profile) != AUDIT_ALL) &&
 +			   !cap_raised(profile->caps.audit, sa->cap)))
 +			return 0;
++		type = AUDIT_APPARMOR_AUDIT;
 +	} else if (PROFILE_KILL(profile) ||
 +		   cap_raised(profile->caps.kill, sa->cap)) {
 +		type = AUDIT_APPARMOR_KILL;
@@ -860,11 +714,9 @@ index 0000000..79097e8
 +
 +	return aa_audit_caps(profile, &sa);
 +}
-diff --git a/security/apparmor/context.c b/security/apparmor/context.c
-new file mode 100644
-index 0000000..02e0b70
---- /dev/null
-+++ b/security/apparmor/context.c
+diff -urN linux-2.6.31.org/security/apparmor/context.c linux-2.6.31/security/apparmor/context.c
+--- linux-2.6.31.org/security/apparmor/context.c	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.31/security/apparmor/context.c	2009-09-10 22:18:06.000000000 +0200
 @@ -0,0 +1,209 @@
 +/*
 + * AppArmor security module
@@ -1075,12 +927,10 @@ index 0000000..02e0b70
 +	commit_creds(new);
 +	return 0;
 +}
-diff --git a/security/apparmor/domain.c b/security/apparmor/domain.c
-new file mode 100644
-index 0000000..34f337c
---- /dev/null
-+++ b/security/apparmor/domain.c
-@@ -0,0 +1,699 @@
+diff -urN linux-2.6.31.org/security/apparmor/domain.c linux-2.6.31/security/apparmor/domain.c
+--- linux-2.6.31.org/security/apparmor/domain.c	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.31/security/apparmor/domain.c	2009-09-10 22:18:06.000000000 +0200
+@@ -0,0 +1,704 @@
 +/*
 + * AppArmor security module
 + *
@@ -1099,9 +949,9 @@ index 0000000..34f337c
 +#include <linux/fdtable.h>
 +#include <linux/file.h>
 +#include <linux/mount.h>
-+#include <linux/personality.h>
 +#include <linux/syscalls.h>
 +#include <linux/tracehook.h>
++#include <linux/personality.h>
 +
 +#include "include/audit.h"
 +#include "include/apparmorfs.h"
@@ -1173,8 +1023,11 @@ index 0000000..34f337c
 +		perms.allowed = AA_MAY_CHANGE_PROFILE;
 +		perms.xindex = perms.dindex = 0;
 +		perms.audit = perms.quiet = perms.kill = 0;
-+		*rstate = 0;
++		if (rstate)
++			*rstate = 0;
 +		return perms;
++	} else if (!profile->file.dfa) {
++		return nullperms;
 +	} else if ((ns == profile->ns)) {
 +		/* try matching against rules with out namespace prependend */
 +		perms = aa_str_perms(profile->file.dfa, DFA_START, name, &cond,
@@ -1184,9 +1037,6 @@ index 0000000..34f337c
 +	}
 +
 +	/* try matching with namespace name and then profile */
-+	if (!profile->file.dfa)
-+		return nullperms;
-+
 +	state = aa_dfa_match(profile->file.dfa, DFA_START, ns->base.name);
 +	state = aa_dfa_null_transition(profile->file.dfa, state);
 +	return aa_str_perms(profile->file.dfa, state, name, &cond, rstate);
@@ -1240,7 +1090,12 @@ index 0000000..34f337c
 +		/* fail exec unless ix || ux fallback - handled by caller */
 +		return ERR_PTR(-EACCES);
 +	case AA_X_NAME:
-+		break;
++		if (xindex & AA_X_CHILD)
++			new_profile = aa_sys_find_attach(&profile->base, name);
++		else
++			new_profile = aa_sys_find_attach(&ns->base, name);
++
++		goto out;
 +	case AA_X_TABLE:
 +		if (index > profile->file.trans.size) {
 +			AA_ERROR("Invalid named transition\n");
@@ -1286,6 +1141,7 @@ index 0000000..34f337c
 +		aa_put_namespace(new_ns);
 +	}
 +
++out:
 +	if (!new_profile)
 +		return ERR_PTR(-ENOENT);
 +
@@ -1334,7 +1190,7 @@ index 0000000..34f337c
 +
 +	if (!profile) {
 +		/* unconfined task - attach profile if one matches */
-+		new_profile = aa_sys_find_attach(ns, sa.name);
++		new_profile = aa_sys_find_attach(&ns->base, sa.name);
 +		if (!new_profile)
 +			goto cleanup;
 +		goto apply;
@@ -1420,7 +1276,7 @@ index 0000000..34f337c
 +apply:
 +	sa.name2 = new_profile->fqname;
 +	/* When switching namespace ensure its part of audit message */
-+	if (new_profile->ns != profile->ns)
++	if (new_profile->ns != ns)
 +		sa.name3 = new_profile->ns->base.name;
 +
 +	/* when transitioning profiles clear unsafe personality bits */
@@ -1702,12 +1558,12 @@ index 0000000..34f337c
 +	struct aa_profile *profile, *target = NULL;
 +	struct aa_namespace *ns = NULL;
 +	struct aa_audit_file sa;
-+	char *name = NULL;
 +
-+	if (!name && !ns_name)
++	if (!fqname && !ns_name)
 +		return -EINVAL;
 +
 +	memset(&sa, 0, sizeof(sa));
++	sa.request = AA_MAY_CHANGE_PROFILE;
 +	sa.base.gfp_mask = GFP_KERNEL;
 +	if (onexec)
 +		sa.base.operation = "change_onexec";
@@ -1716,11 +1572,9 @@ index 0000000..34f337c
 +
 +	cred = aa_current_policy(&profile);
 +	cxt = cred->security;
-+	ns = aa_get_namespace(cxt->sys.profile->ns);
 +
 +	if (ns_name) {
 +		sa.name2 = ns_name;
-+		aa_put_namespace(ns);
 +		ns = aa_find_namespace(ns_name);
 +		if (!ns) {
 +			/* we don't create new namespace in complain mode */
@@ -1728,8 +1582,10 @@ index 0000000..34f337c
 +			sa.base.error = -ENOENT;
 +			goto audit;
 +		}
-+	} else
++	} else {
++		ns = aa_get_namespace(cxt->sys.profile->ns);
 +		sa.name2 = ns->base.name;
++	}
 +
 +	/* if the name was not specified, use the name of the current profile */
 +	if (!fqname) {
@@ -1741,7 +1597,6 @@ index 0000000..34f337c
 +	sa.name = fqname;
 +
 +	sa.perms = change_profile_perms(profile, ns, fqname, NULL);
-+
 +	if (!(sa.perms.allowed & AA_MAY_CHANGE_PROFILE)) {
 +		sa.base.error = -EACCES;
 +		goto audit;
@@ -1780,12 +1635,10 @@ index 0000000..34f337c
 +
 +	return sa.base.error;
 +}
-diff --git a/security/apparmor/file.c b/security/apparmor/file.c
-new file mode 100644
-index 0000000..fdade01
---- /dev/null
-+++ b/security/apparmor/file.c
-@@ -0,0 +1,425 @@
+diff -urN linux-2.6.31.org/security/apparmor/file.c linux-2.6.31/security/apparmor/file.c
+--- linux-2.6.31.org/security/apparmor/file.c	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.31/security/apparmor/file.c	2009-09-10 22:18:06.000000000 +0200
+@@ -0,0 +1,426 @@
 +/*
 + * AppArmor security module
 + *
@@ -1925,6 +1778,7 @@ index 0000000..fdade01
 +
 +		if (likely(!sa->request))
 +			return 0;
++		type = AUDIT_APPARMOR_AUDIT;
 +	} else {
 +		/* quiet auditing of specific known rejects */
 +		u16 mask = sa->perms.quiet;
@@ -1979,7 +1833,7 @@ index 0000000..fdade01
 +		perms.allowed |= AA_LINK_SUBSET;
 +
 +	/* change_profile wasn't determined by ownership in old mapping */
-+	if (ACCEPT_TABLE2(dfa)[state] & 0x80000000)
++	if (ACCEPT_TABLE(dfa)[state] & 0x80000000)
 +		perms.allowed |= AA_MAY_CHANGE_PROFILE;
 +
 +	return perms;
@@ -2211,11 +2065,37 @@ index 0000000..fdade01
 +	kfree(buffer);
 +	return error;
 +}
-diff --git a/security/apparmor/include/apparmor.h b/security/apparmor/include/apparmor.h
-new file mode 100644
-index 0000000..fbbc961
---- /dev/null
-+++ b/security/apparmor/include/apparmor.h
+diff -urN linux-2.6.31.org/security/apparmor/include/apparmorfs.h linux-2.6.31/security/apparmor/include/apparmorfs.h
+--- linux-2.6.31.org/security/apparmor/include/apparmorfs.h	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.31/security/apparmor/include/apparmorfs.h	2009-09-10 22:18:06.000000000 +0200
+@@ -0,0 +1,24 @@
++/*
++ * AppArmor security module
++ *
++ * This file contains AppArmor filesystem definitions.
++ *
++ * Copyright (C) 1998-2008 Novell/SUSE
++ * Copyright 2009 Canonical Ltd.
++ *
++ * This program is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU General Public License as
++ * published by the Free Software Foundation, version 2 of the
++ * License.
++ */
++
++#ifndef __AA_APPARMORFS_H
++#define __AA_APPARMORFS_H
++
++extern struct dentry *apparmorfs_null;
++extern struct vfsmount *apparmorfs_mnt;
++
++extern int create_apparmorfs(void);
++extern void destroy_apparmorfs(void);
++
++#endif	/* __AA_APPARMORFS_H */
+diff -urN linux-2.6.31.org/security/apparmor/include/apparmor.h linux-2.6.31/security/apparmor/include/apparmor.h
+--- linux-2.6.31.org/security/apparmor/include/apparmor.h	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.31/security/apparmor/include/apparmor.h	2009-09-10 22:18:06.000000000 +0200
 @@ -0,0 +1,65 @@
 +/*
 + * AppArmor security module
@@ -2282,41 +2162,9 @@ index 0000000..fbbc961
 +
 +#endif	/* __APPARMOR_H */
 +
-diff --git a/security/apparmor/include/apparmorfs.h b/security/apparmor/include/apparmorfs.h
-new file mode 100644
-index 0000000..1af7723
---- /dev/null
-+++ b/security/apparmor/include/apparmorfs.h
-@@ -0,0 +1,24 @@
-+/*
-+ * AppArmor security module
-+ *
-+ * This file contains AppArmor filesystem definitions.
-+ *
-+ * Copyright (C) 1998-2008 Novell/SUSE
-+ * Copyright 2009 Canonical Ltd.
-+ *
-+ * This program is free software; you can redistribute it and/or
-+ * modify it under the terms of the GNU General Public License as
-+ * published by the Free Software Foundation, version 2 of the
-+ * License.
-+ */
-+
-+#ifndef __AA_APPARMORFS_H
-+#define __AA_APPARMORFS_H
-+
-+extern struct dentry *apparmorfs_null;
-+extern struct vfsmount *apparmorfs_mnt;
-+
-+extern int create_apparmorfs(void);
-+extern void destroy_apparmorfs(void);
-+
-+#endif	/* __AA_APPARMORFS_H */
-diff --git a/security/apparmor/include/audit.h b/security/apparmor/include/audit.h
-new file mode 100644
-index 0000000..2180dd7
---- /dev/null
-+++ b/security/apparmor/include/audit.h
+diff -urN linux-2.6.31.org/security/apparmor/include/audit.h linux-2.6.31/security/apparmor/include/audit.h
+--- linux-2.6.31.org/security/apparmor/include/audit.h	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.31/security/apparmor/include/audit.h	2009-09-10 22:18:06.000000000 +0200
 @@ -0,0 +1,59 @@
 +/*
 + * AppArmor security module
@@ -2377,11 +2225,9 @@ index 0000000..2180dd7
 +
 +
 +#endif	/* __AA_AUDIT_H */
-diff --git a/security/apparmor/include/capability.h b/security/apparmor/include/capability.h
-new file mode 100644
-index 0000000..43bb7eb
---- /dev/null
-+++ b/security/apparmor/include/capability.h
+diff -urN linux-2.6.31.org/security/apparmor/include/capability.h linux-2.6.31/security/apparmor/include/capability.h
+--- linux-2.6.31.org/security/apparmor/include/capability.h	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.31/security/apparmor/include/capability.h	2009-09-10 22:18:06.000000000 +0200
 @@ -0,0 +1,45 @@
 +/*
 + * AppArmor security module
@@ -2428,11 +2274,9 @@ index 0000000..43bb7eb
 +}
 +
 +#endif	/* __AA_CAPBILITY_H */
-diff --git a/security/apparmor/include/context.h b/security/apparmor/include/context.h
-new file mode 100644
-index 0000000..202a66a
---- /dev/null
-+++ b/security/apparmor/include/context.h
+diff -urN linux-2.6.31.org/security/apparmor/include/context.h linux-2.6.31/security/apparmor/include/context.h
+--- linux-2.6.31.org/security/apparmor/include/context.h	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.31/security/apparmor/include/context.h	2009-09-10 22:18:06.000000000 +0200
 @@ -0,0 +1,153 @@
 +/*
 + * AppArmor security module
@@ -2587,11 +2431,9 @@ index 0000000..202a66a
 +
 +
 +#endif	/* __AA_CONTEXT_H */
-diff --git a/security/apparmor/include/domain.h b/security/apparmor/include/domain.h
-new file mode 100644
-index 0000000..a340e62
---- /dev/null
-+++ b/security/apparmor/include/domain.h
+diff -urN linux-2.6.31.org/security/apparmor/include/domain.h linux-2.6.31/security/apparmor/include/domain.h
+--- linux-2.6.31.org/security/apparmor/include/domain.h	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.31/security/apparmor/include/domain.h	2009-09-10 22:18:06.000000000 +0200
 @@ -0,0 +1,37 @@
 +/*
 + * AppArmor security module
@@ -2630,12 +2472,10 @@ index 0000000..a340e62
 +
 +
 +#endif	/* __AA_DOMAIN_H */
-diff --git a/security/apparmor/include/file.h b/security/apparmor/include/file.h
-new file mode 100644
-index 0000000..e99e6fe
---- /dev/null
-+++ b/security/apparmor/include/file.h
-@@ -0,0 +1,227 @@
+diff -urN linux-2.6.31.org/security/apparmor/include/file.h linux-2.6.31/security/apparmor/include/file.h
+--- linux-2.6.31.org/security/apparmor/include/file.h	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.31/security/apparmor/include/file.h	2009-09-10 22:18:06.000000000 +0200
+@@ -0,0 +1,229 @@
 +/*
 + * AppArmor security module
 + *
@@ -2748,6 +2588,8 @@ index 0000000..e99e6fe
 +		index |= AA_X_UNSAFE;
 +	if (mask & 0x200)
 +		index |= AA_X_INHERIT;
++	if (mask & 0x80)
++		index |= AA_X_UNCONFINED;
 +
 +	if (old_index == 1) {
 +		index |= AA_X_UNCONFINED;
@@ -2863,11 +2705,9 @@ index 0000000..e99e6fe
 +}
 +
 +#endif	/* __AA_FILE_H */
-diff --git a/security/apparmor/include/ipc.h b/security/apparmor/include/ipc.h
-new file mode 100644
-index 0000000..e80a95e
---- /dev/null
-+++ b/security/apparmor/include/ipc.h
+diff -urN linux-2.6.31.org/security/apparmor/include/ipc.h linux-2.6.31/security/apparmor/include/ipc.h
+--- linux-2.6.31.org/security/apparmor/include/ipc.h	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.31/security/apparmor/include/ipc.h	2009-09-10 22:18:06.000000000 +0200
 @@ -0,0 +1,28 @@
 +/*
 + * AppArmor security module
@@ -2897,11 +2737,9 @@ index 0000000..e80a95e
 +	      unsigned int mode);
 +
 +#endif	/* __AA_IPC_H */
-diff --git a/security/apparmor/include/match.h b/security/apparmor/include/match.h
-new file mode 100644
-index 0000000..8a0f59c
---- /dev/null
-+++ b/security/apparmor/include/match.h
+diff -urN linux-2.6.31.org/security/apparmor/include/match.h linux-2.6.31/security/apparmor/include/match.h
+--- linux-2.6.31.org/security/apparmor/include/match.h	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.31/security/apparmor/include/match.h	2009-09-10 22:18:06.000000000 +0200
 @@ -0,0 +1,105 @@
 +/*
 + * AppArmor security module
@@ -3008,11 +2846,9 @@ index 0000000..8a0f59c
 +unsigned int aa_dfa_null_transition(struct aa_dfa *dfa, unsigned int start);
 +
 +#endif /* __AA_MATCH_H */
-diff --git a/security/apparmor/include/net.h b/security/apparmor/include/net.h
-new file mode 100644
-index 0000000..ece94b2
---- /dev/null
-+++ b/security/apparmor/include/net.h
+diff -urN linux-2.6.31.org/security/apparmor/include/net.h linux-2.6.31/security/apparmor/include/net.h
+--- linux-2.6.31.org/security/apparmor/include/net.h	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.31/security/apparmor/include/net.h	2009-09-10 22:18:06.000000000 +0200
 @@ -0,0 +1,40 @@
 +/*
 + * AppArmor security module
@@ -3054,11 +2890,9 @@ index 0000000..ece94b2
 +}
 +
 +#endif	/* __AA_NET_H */
-diff --git a/security/apparmor/include/path.h b/security/apparmor/include/path.h
-new file mode 100644
-index 0000000..d238e42
---- /dev/null
-+++ b/security/apparmor/include/path.h
+diff -urN linux-2.6.31.org/security/apparmor/include/path.h linux-2.6.31/security/apparmor/include/path.h
+--- linux-2.6.31.org/security/apparmor/include/path.h	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.31/security/apparmor/include/path.h	2009-09-10 22:18:06.000000000 +0200
 @@ -0,0 +1,24 @@
 +/*
 + * AppArmor security module
@@ -3084,11 +2918,9 @@ index 0000000..d238e42
 +char *sysctl_pathname(struct ctl_table *table, char *buffer, int buflen);
 +
 +#endif	/* __AA_PATH_H */
-diff --git a/security/apparmor/include/policy.h b/security/apparmor/include/policy.h
-new file mode 100644
-index 0000000..98cd0d9
---- /dev/null
-+++ b/security/apparmor/include/policy.h
+diff -urN linux-2.6.31.org/security/apparmor/include/policy.h linux-2.6.31/security/apparmor/include/policy.h
+--- linux-2.6.31.org/security/apparmor/include/policy.h	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.31/security/apparmor/include/policy.h	2009-09-10 22:18:06.000000000 +0200
 @@ -0,0 +1,301 @@
 +/*
 + * AppArmor security module
@@ -3341,7 +3173,7 @@ index 0000000..98cd0d9
 +					     const char *name);
 +struct aa_profile *aa_match_profile(struct aa_namespace *ns, const char *name);
 +struct aa_profile *aa_profile_newest(struct aa_profile *profile);
-+struct aa_profile *aa_sys_find_attach(struct aa_namespace *ns,
++struct aa_profile *aa_sys_find_attach(struct aa_policy_common *base,
 +				      const char *name);
 +void __aa_add_profile(struct aa_policy_common *common,
 +		      struct aa_profile *profile);
@@ -3391,11 +3223,9 @@ index 0000000..98cd0d9
 +
 +#endif	/* __AA_POLICY_H */
 +
-diff --git a/security/apparmor/include/policy_interface.h b/security/apparmor/include/policy_interface.h
-new file mode 100644
-index 0000000..1440876
---- /dev/null
-+++ b/security/apparmor/include/policy_interface.h
+diff -urN linux-2.6.31.org/security/apparmor/include/policy_interface.h linux-2.6.31/security/apparmor/include/policy_interface.h
+--- linux-2.6.31.org/security/apparmor/include/policy_interface.h	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.31/security/apparmor/include/policy_interface.h	2009-09-10 22:18:06.000000000 +0200
 @@ -0,0 +1,22 @@
 +/*
 + * AppArmor security module
@@ -3419,11 +3249,9 @@ index 0000000..1440876
 +ssize_t aa_interface_remove_profiles(char *name, size_t size);
 +
 +#endif	/* __POLICY_INTERFACE_H */
-diff --git a/security/apparmor/include/procattr.h b/security/apparmor/include/procattr.h
-new file mode 100644
-index 0000000..52e46c5
---- /dev/null
-+++ b/security/apparmor/include/procattr.h
+diff -urN linux-2.6.31.org/security/apparmor/include/procattr.h linux-2.6.31/security/apparmor/include/procattr.h
+--- linux-2.6.31.org/security/apparmor/include/procattr.h	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.31/security/apparmor/include/procattr.h	2009-09-10 22:18:06.000000000 +0200
 @@ -0,0 +1,26 @@
 +/*
 + * AppArmor security module
@@ -3451,11 +3279,9 @@ index 0000000..52e46c5
 +int aa_setprocattr_permipc(char *args);
 +
 +#endif	/* __AA_PROCATTR_H */
-diff --git a/security/apparmor/include/resource.h b/security/apparmor/include/resource.h
-new file mode 100644
-index 0000000..0662c91
---- /dev/null
-+++ b/security/apparmor/include/resource.h
+diff -urN linux-2.6.31.org/security/apparmor/include/resource.h linux-2.6.31/security/apparmor/include/resource.h
+--- linux-2.6.31.org/security/apparmor/include/resource.h	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.31/security/apparmor/include/resource.h	2009-09-10 22:18:06.000000000 +0200
 @@ -0,0 +1,46 @@
 +/*
 + * AppArmor security module
@@ -3503,11 +3329,9 @@ index 0000000..0662c91
 +}
 +
 +#endif	/* __AA_RESOURCE_H */
-diff --git a/security/apparmor/include/sid.h b/security/apparmor/include/sid.h
-new file mode 100644
-index 0000000..83e3590
---- /dev/null
-+++ b/security/apparmor/include/sid.h
+diff -urN linux-2.6.31.org/security/apparmor/include/sid.h linux-2.6.31/security/apparmor/include/sid.h
+--- linux-2.6.31.org/security/apparmor/include/sid.h	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.31/security/apparmor/include/sid.h	2009-09-10 22:18:06.000000000 +0200
 @@ -0,0 +1,46 @@
 +/*
 + * AppArmor security module
@@ -3555,11 +3379,9 @@ index 0000000..83e3590
 +}
 +
 +#endif	/* __AA_SID_H */
-diff --git a/security/apparmor/ipc.c b/security/apparmor/ipc.c
-new file mode 100644
-index 0000000..381c164
---- /dev/null
-+++ b/security/apparmor/ipc.c
+diff -urN linux-2.6.31.org/security/apparmor/ipc.c linux-2.6.31/security/apparmor/ipc.c
+--- linux-2.6.31.org/security/apparmor/ipc.c	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.31/security/apparmor/ipc.c	2009-09-10 22:18:06.000000000 +0200
 @@ -0,0 +1,106 @@
 +/*
 + * AppArmor security module
@@ -3667,11 +3489,66 @@ index 0000000..381c164
 +
 +	return error;
 +}
-diff --git a/security/apparmor/lib.c b/security/apparmor/lib.c
-new file mode 100644
-index 0000000..5dbd16d
---- /dev/null
-+++ b/security/apparmor/lib.c
+diff -urN linux-2.6.31.org/security/apparmor/Kconfig linux-2.6.31/security/apparmor/Kconfig
+--- linux-2.6.31.org/security/apparmor/Kconfig	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.31/security/apparmor/Kconfig	2009-09-10 22:18:06.000000000 +0200
+@@ -0,0 +1,53 @@
++config SECURITY_APPARMOR
++	bool "AppArmor support"
++	depends on SECURITY && SECURITY_NETWORK && NET && INET
++	select AUDIT
++	select SECURITY_PATH
++	select SECURITYFS
++	default n
++	help
++	  This enables the AppArmor security module.
++	  Required userspace tools (if they are not included in your
++	  distribution) and further information may be found at
++	  <http://forge.novell.com/modules/xfmod/project/?apparmor>
++
++	  If you are unsure how to answer this question, answer N.
++
++config SECURITY_APPARMOR_NETWORK
++       bool "AppArmor network support"
++       depends on SECURITY_APPARMOR
++       default n
++       help
++	 This enables AppArmor to mediate applications network use.
++	 This will enable the SECURITY_NETWORK hooks.
++
++config SECURITY_APPARMOR_BOOTPARAM_VALUE
++	int "AppArmor boot parameter default value"
++	depends on SECURITY_APPARMOR
++	range 0 1
++	default 1
++	help
++	  This option sets the default value for the kernel parameter
++	  'apparmor', which allows AppArmor to be enabled or disabled
++          at boot.  If this option is set to 0 (zero), the AppArmor
++	  kernel parameter will default to 0, disabling AppArmor at
++	  bootup.  If this option is set to 1 (one), the AppArmor
++	  kernel parameter will default to 1, enabling AppArmor at
++	  bootup.
++
++	  If you are unsure how to answer this question, answer 1.
++
++config SECURITY_APPARMOR_DISABLE
++	bool "AppArmor runtime disable"
++	depends on SECURITY_APPARMOR
++	default n
++	help
++	  This option enables writing to a apparmorfs node 'disable', which
++	  allows AppArmor to be disabled at runtime prior to the policy load.
++	  AppArmor will then remain disabled until the next boot.
++	  This option is similar to the apparmor.enabled=0 boot parameter,
++	  but is to support runtime disabling of AppArmor, e.g. from
++	  /sbin/init, for portability across platforms where boot
++	  parameters are difficult to employ.
++
++	  If you are unsure how to answer this question, answer N.
+diff -urN linux-2.6.31.org/security/apparmor/lib.c linux-2.6.31/security/apparmor/lib.c
+--- linux-2.6.31.org/security/apparmor/lib.c	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.31/security/apparmor/lib.c	2009-09-10 22:18:06.000000000 +0200
 @@ -0,0 +1,100 @@
 +/*
 + * AppArmor security module
@@ -3773,11 +3650,9 @@ index 0000000..5dbd16d
 +	}
 +	return name;
 +}
-diff --git a/security/apparmor/lsm.c b/security/apparmor/lsm.c
-new file mode 100644
-index 0000000..5becf5e
---- /dev/null
-+++ b/security/apparmor/lsm.c
+diff -urN linux-2.6.31.org/security/apparmor/lsm.c linux-2.6.31/security/apparmor/lsm.c
+--- linux-2.6.31.org/security/apparmor/lsm.c	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.31/security/apparmor/lsm.c	2009-09-10 22:18:06.000000000 +0200
 @@ -0,0 +1,1063 @@
 +/*
 + * AppArmor security module
@@ -4842,11 +4717,37 @@ index 0000000..5becf5e
 +	info_message("AppArmor protection disabled");
 +}
 +
-diff --git a/security/apparmor/match.c b/security/apparmor/match.c
-new file mode 100644
-index 0000000..a22d106
---- /dev/null
-+++ b/security/apparmor/match.c
+diff -urN linux-2.6.31.org/security/apparmor/Makefile linux-2.6.31/security/apparmor/Makefile
+--- linux-2.6.31.org/security/apparmor/Makefile	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.31/security/apparmor/Makefile	2009-09-10 22:18:06.000000000 +0200
+@@ -0,0 +1,24 @@
++# Makefile for AppArmor Linux Security Module
++#
++obj-$(CONFIG_SECURITY_APPARMOR) += apparmor.o
++
++apparmor-y := apparmorfs.o audit.o capability.o context.o ipc.o lib.o match.o \
++              path.o domain.o policy.o policy_interface.o procattr.o lsm.o \
++              resource.o sid.o file.o
++
++apparmor-$(CONFIG_SECURITY_APPARMOR_NETWORK) += net.o
++
++clean-files: capability_names.h af_names.h
++
++quiet_cmd_make-caps = GEN     $@
++cmd_make-caps = echo "static const char *capability_names[] = {" > $@ ; sed -n -e "/CAP_FS_MASK/d" -e "s/^\#define[ \\t]\\+CAP_\\([A-Z0-9_]\\+\\)[ \\t]\\+\\([0-9]\\+\\)\$$/[\\2]  = \"\\1\",/p" $< | tr A-Z a-z >> $@ ; echo "};" >> $@
++
++quiet_cmd_make-af = GEN     $@
++cmd_make-af = echo "static const char *address_family_names[] = {" > $@ ; sed -n -e "/AF_MAX/d" -e "/AF_LOCAL/d" -e "s/^\#define[ \\t]\\+AF_\\([A-Z0-9_]\\+\\)[ \\t]\\+\\([0-9]\\+\\)\\(.*\\)\$$/[\\2]  = \"\\1\",/p" $< | tr A-Z a-z >> $@ ; echo "};" >> $@
++
++$(obj)/capability.o : $(obj)/capability_names.h
++$(obj)/net.o : $(obj)/af_names.h
++$(obj)/capability_names.h : $(srctree)/include/linux/capability.h
++	$(call cmd,make-caps)
++$(obj)/af_names.h : $(srctree)/include/linux/socket.h
++	$(call cmd,make-af)
+diff -urN linux-2.6.31.org/security/apparmor/match.c linux-2.6.31/security/apparmor/match.c
+--- linux-2.6.31.org/security/apparmor/match.c	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.31/security/apparmor/match.c	2009-09-10 22:18:06.000000000 +0200
 @@ -0,0 +1,293 @@
 +/*
 + * AppArmor security module
@@ -5141,12 +5042,10 @@ index 0000000..a22d106
 +	return aa_dfa_match_len(dfa, start, "", 1);
 +}
 +
-diff --git a/security/apparmor/net.c b/security/apparmor/net.c
-new file mode 100644
-index 0000000..beb8715
---- /dev/null
-+++ b/security/apparmor/net.c
-@@ -0,0 +1,146 @@
+diff -urN linux-2.6.31.org/security/apparmor/net.c linux-2.6.31/security/apparmor/net.c
+--- linux-2.6.31.org/security/apparmor/net.c	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.31/security/apparmor/net.c	2009-09-10 22:18:06.000000000 +0200
+@@ -0,0 +1,147 @@
 +/*
 + * AppArmor security module
 + *
@@ -5223,6 +5122,7 @@ index 0000000..beb8715
 +		if (likely((PROFILE_AUDIT_MODE(profile) != AUDIT_ALL) &&
 +			   !(1 << sa->type & audit_mask)))
 +			return 0;
++		type = AUDIT_APPARMOR_AUDIT;
 +	} else {
 +		u16 quiet_mask = profile->net.quiet[sa->family];
 +		u16 kill_mask = 0;
@@ -5293,11 +5193,9 @@ index 0000000..beb8715
 +
 +	return error;
 +}
-diff --git a/security/apparmor/path.c b/security/apparmor/path.c
-new file mode 100644
-index 0000000..21f3e67
---- /dev/null
-+++ b/security/apparmor/path.c
+diff -urN linux-2.6.31.org/security/apparmor/path.c linux-2.6.31/security/apparmor/path.c
+--- linux-2.6.31.org/security/apparmor/path.c	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.31/security/apparmor/path.c	2009-09-10 22:18:06.000000000 +0200
 @@ -0,0 +1,155 @@
 +/*
 + * AppArmor security module
@@ -5454,12 +5352,10 @@ index 0000000..21f3e67
 +
 +	return buffer;
 +}
-diff --git a/security/apparmor/policy.c b/security/apparmor/policy.c
-new file mode 100644
-index 0000000..3ba2642
---- /dev/null
-+++ b/security/apparmor/policy.c
-@@ -0,0 +1,727 @@
+diff -urN linux-2.6.31.org/security/apparmor/policy.c linux-2.6.31/security/apparmor/policy.c
+--- linux-2.6.31.org/security/apparmor/policy.c	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.31/security/apparmor/policy.c	2009-09-10 22:18:06.000000000 +0200
+@@ -0,0 +1,729 @@
 +/*
 + * AppArmor security module
 + *
@@ -6132,8 +6028,9 @@ index 0000000..3ba2642
 +		if (profile->xmatch && profile->xmatch_len > len) {
 +			unsigned int state = aa_dfa_match(profile->xmatch,
 +							  DFA_START, name);
-+			/* any accepting state means a valid match */
-+			if (state > DFA_START) {
++			u16 perm = dfa_user_allow(profile->xmatch, state);
++			/* any accepting state means a valid match. */
++			if (perm & MAY_EXEC) {
 +				candidate = profile;
 +				len = profile->xmatch_len;
 +			}
@@ -6147,16 +6044,17 @@ index 0000000..3ba2642
 +
 +/**
 + * aa_sys_find_attach - do attachment search for sys unconfined processes
-+ * @ns: the namespace to search
++ * @base: the base to search
 + * name: the executable name to match against
 + */
-+struct aa_profile *aa_sys_find_attach(struct aa_namespace *ns, const char *name)
++struct aa_profile *aa_sys_find_attach(struct aa_policy_common *base,
++				      const char *name)
 +{
 +	struct aa_profile *profile;
 +
-+	read_lock(&ns->base.lock);
-+	profile = aa_get_profile(__aa_attach_match(name, &ns->base.profiles));
-+	read_unlock(&ns->base.lock);
++	read_lock(&base->lock);
++	profile = aa_get_profile(__aa_attach_match(name, &base->profiles));
++	read_unlock(&base->lock);
 +
 +	return profile;
 +}
@@ -6187,12 +6085,10 @@ index 0000000..3ba2642
 +	return profile;
 +}
 +
-diff --git a/security/apparmor/policy_interface.c b/security/apparmor/policy_interface.c
-new file mode 100644
-index 0000000..24277dc
---- /dev/null
-+++ b/security/apparmor/policy_interface.c
-@@ -0,0 +1,850 @@
+diff -urN linux-2.6.31.org/security/apparmor/policy_interface.c linux-2.6.31/security/apparmor/policy_interface.c
+--- linux-2.6.31.org/security/apparmor/policy_interface.c	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.31/security/apparmor/policy_interface.c	2009-09-10 22:18:06.000000000 +0200
+@@ -0,0 +1,852 @@
 +/*
 + * AppArmor security module
 + *
@@ -6292,8 +6188,10 @@ index 0000000..24277dc
 +		audit_log_format(ab, " name=%s", sa->name);
 +	if (sa->name2)
 +		audit_log_format(ab, " namespace=%s", sa->name2);
-+	if (sa->base.error && sa->e)
-+		audit_log_format(ab, " offset=%d", sa->e->pos - sa->e->start);
++	if (sa->base.error && sa->e) {
++		long len = sa->e->pos - sa->e->start;
++		audit_log_format(ab, " offset=%ld", len);
++	}
 +}
 +
 +static int aa_audit_iface(struct aa_audit_iface *sa)
@@ -6840,6 +6738,7 @@ index 0000000..24277dc
 +	if (__aa_find_profile(&common->profiles, profile->base.name)) {
 +		/* A profile with this name exists already. */
 +		sa.base.info = "profile already exists";
++		sa.base.error = -EEXIST;
 +		goto fail2;
 +	}
 +	profile->sid = aa_alloc_sid(AA_ALLOC_SYS_SID);
@@ -6855,7 +6754,6 @@ index 0000000..24277dc
 +
 +fail2:
 +	write_unlock(&ns->base.lock);
-+	sa.base.error = -EEXIST;
 +
 +fail:
 +	error = aa_audit_iface(&sa);
@@ -7041,13 +6939,11 @@ index 0000000..24277dc
 +fail_ns_list_lock:
 +	write_unlock(&ns_list_lock);
 +	aa_audit_iface(&sa);
-+	return 0; //-ENOENT;
++	return -ENOENT;
 +}
-diff --git a/security/apparmor/procattr.c b/security/apparmor/procattr.c
-new file mode 100644
-index 0000000..834cfab
---- /dev/null
-+++ b/security/apparmor/procattr.c
+diff -urN linux-2.6.31.org/security/apparmor/procattr.c linux-2.6.31/security/apparmor/procattr.c
+--- linux-2.6.31.org/security/apparmor/procattr.c	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.31/security/apparmor/procattr.c	2009-09-10 22:18:06.000000000 +0200
 @@ -0,0 +1,117 @@
 +/*
 + * AppArmor security module
@@ -7166,11 +7062,9 @@ index 0000000..834cfab
 +	/* TODO: add ipc permission querying */
 +	return -ENOTSUPP;
 +}
-diff --git a/security/apparmor/resource.c b/security/apparmor/resource.c
-new file mode 100644
-index 0000000..f00165b
---- /dev/null
-+++ b/security/apparmor/resource.c
+diff -urN linux-2.6.31.org/security/apparmor/resource.c linux-2.6.31/security/apparmor/resource.c
+--- linux-2.6.31.org/security/apparmor/resource.c	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.31/security/apparmor/resource.c	2009-09-10 22:18:06.000000000 +0200
 @@ -0,0 +1,104 @@
 +/*
 + * AppArmor security module
@@ -7276,11 +7170,9 @@ index 0000000..f00165b
 +		rlim->rlim_cur = min(rlim->rlim_cur, rlim->rlim_max);
 +	}
 +}
-diff --git a/security/apparmor/sid.c b/security/apparmor/sid.c
-new file mode 100644
-index 0000000..aa41a35
---- /dev/null
-+++ b/security/apparmor/sid.c
+diff -urN linux-2.6.31.org/security/apparmor/sid.c linux-2.6.31/security/apparmor/sid.c
+--- linux-2.6.31.org/security/apparmor/sid.c	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.31/security/apparmor/sid.c	2009-09-10 22:18:06.000000000 +0200
 @@ -0,0 +1,113 @@
 +/*
 + * AppArmor security module
@@ -7395,29 +7287,14 @@ index 0000000..aa41a35
 +	return ERR_PTR(-EINVAL);
 +}
 +
-diff --git a/security/security.c b/security/security.c
-index 2840513..99aaebc 100644
---- a/security/security.c
-+++ b/security/security.c
-@@ -18,7 +18,7 @@
- #include <linux/security.h>
+diff -urN linux-2.6.31.org/security/Kconfig linux-2.6.31/security/Kconfig
+--- linux-2.6.31.org/security/Kconfig	2009-09-10 00:13:59.000000000 +0200
++++ linux-2.6.31/security/Kconfig	2009-09-11 08:37:07.888942907 +0200
+@@ -132,6 +132,7 @@
+ source security/selinux/Kconfig
+ source security/smack/Kconfig
+ source security/tomoyo/Kconfig
++source security/apparmor/Kconfig
  
- /* Boot-time LSM user choice */
--static __initdata char chosen_lsm[SECURITY_NAME_MAX + 1];
-+static __initdata char chosen_lsm[SECURITY_NAME_MAX + 1] = CONFIG_SECURITY_DEFAULT;
+ source security/integrity/ima/Kconfig
  
- /* things that live in capability.c */
- extern struct security_operations default_security_ops;
-@@ -82,8 +82,10 @@ __setup("security=", choose_lsm);
-  *
-  * Return true if:
-  *	-The passed LSM is the one chosen by user at boot time,
-- *	-or user didn't specify a specific LSM and we're the first to ask
-- *	 for registration permission,
-+ *	-The passed LSM is configured as the default and the user did not
-+ *	 choose an alternate LSM at boot time.
-+ *	-or there is no default LSM set and the user didn't specify a
-+ *	 specific LSM and we're the first to ask for registration permission,
-  *	-or the passed LSM is currently loaded.
-  * Otherwise, return false.
-  */

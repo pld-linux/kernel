@@ -113,7 +113,7 @@
 
 %define		basever		2.6.31
 %define		postver		%{nil}
-%define		rel		1
+%define		rel		0.1
 
 %define		_enable_debug_packages			0
 
@@ -315,8 +315,8 @@ Patch2003:	kernel-regressions.patch
 # (only warnings, so just remove parts of this patch if conflics)
 Patch2500:	kernel-warnings.patch
 
-# git://kernel.ubuntu.com/jj/apparmor-karmic-tree.git
-# git diff 0c9f19b4dd23620fb32116922b0d93e8aca6c911..HEAD
+# git://kernel.ubuntu.com/ubuntu/ubuntu-karmic.git
+# see ubuntu/apparmor dir
 Patch5000:	kernel-apparmor.patch
 
 # for rescuecd
