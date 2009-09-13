@@ -113,7 +113,11 @@
 %define		xen_version		3.0.2
 
 %if %{without rescuecd}
+%if "%{pld_release}" == "ti"
+%define		__alt_kernel	%{?with_pax:pax}%{!?with_grsec_full:nogrsecurity}%{!?with_apparmor:noaa}%{?with_xen0:xen0}%{?with_xenU:xenU}%{?with_pae:pae}%{?with_myown:myown}
+%else
 %define		__alt_kernel	ltm%{?with_pax:pax}%{!?with_grsec_full:nogrsecurity}%{!?with_apparmor:noaa}%{?with_xen0:xen0}%{?with_xenU:xenU}%{?with_pae:pae}%{?with_myown:myown}
+%endif
 %else
 %define		__alt_kernel	rescuecd
 %endif
