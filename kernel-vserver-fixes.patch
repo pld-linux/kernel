@@ -43,3 +43,42 @@ diff -upr linux-2.6.25/security/selinux/include/av_permissions.h linux-2.6.25/se
  #define __NR_mbind		259
  #define __NR_get_mempolicy	260
 
+--- linux-2.6.31/arch/x86/kernel/process_32.c~	2009-09-16 08:32:03.000000000 +0200
++++ linux-2.6.31/arch/x86/kernel/process_32.c	2009-09-17 21:57:42.546921657 +0200
+@@ -148,8 +148,8 @@
+ 	board = dmi_get_system_info(DMI_PRODUCT_NAME);
+ 	if (!board)
+ 		board = "";
+-	printk("Pid: %d, comm: %s %s (%s %.*s) %s\n",
+-			task_pid_nr(current), current->comm,
++	printk("Pid: %d, comm: %s #%u %s (%s %.*s) %s\n",
++			task_pid_nr(current), current->comm, current->xid,
+ 			print_tainted(), init_utsname()->release,
+ 			(int)strcspn(init_utsname()->version, " "),
+ 			init_utsname()->version, board);
+--- linux-2.6.31/arch/x86/kernel/process_64.c~	2009-09-16 08:32:03.000000000 +0200
++++ linux-2.6.31/arch/x86/kernel/process_64.c	2009-09-17 21:57:55.742127534 +0200
+@@ -172,8 +172,8 @@
+ 	board = dmi_get_system_info(DMI_PRODUCT_NAME);
+ 	if (!board)
+ 		board = "";
+-	printk(KERN_INFO "Pid: %d, comm: %.20s %s %s %.*s %s\n",
+-		task_pid_nr(current), current->comm, print_tainted(),
++	printk(KERN_INFO "Pid: %d, comm: %.20s #%u %s %s %.*s %s\n",
++		task_pid_nr(current), current->comm, current->xid, print_tainted(),
+ 		init_utsname()->release,
+ 		(int)strcspn(init_utsname()->version, " "),
+ 		init_utsname()->version, board);
+--- linux-2.6.31/arch/x86/kernel/dumpstack.c~	2009-09-16 08:32:02.000000000 +0200
++++ linux-2.6.31/arch/x86/kernel/dumpstack.c	2009-09-17 21:58:13.778791960 +0200
+@@ -180,8 +180,8 @@
+ 		get_bp(bp);
+ #endif
+ 
+-	printk("Pid: %d, comm: %.20s %s %s %.*s\n",
+-		task_pid_nr(current), current->comm, print_tainted(),
++	printk("Pid: %d, comm: %.20s #%u %s %s %.*s\n",
++		task_pid_nr(current), current->comm, current->xid, print_tainted(),
+ 		init_utsname()->release,
+ 		(int)strcspn(init_utsname()->version, " "),
+ 		init_utsname()->version);
