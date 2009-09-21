@@ -9,7 +9,6 @@
 # TODO:
 # - benchmark NO_HZ & HZ=1000 vs HZ=300 on i686
 # - add a subpackage (kernel-firmware?) for ~35 firmware files
-# - aufs1 patches 145, 146 to remove or update (not maintained)
 # - update or remove tahoe9xx patch2 
 # - update or remove mpt-fusion patch90
 # - update grsec_minimal patch1000:
@@ -843,7 +842,7 @@ install %{SOURCE5} Makefile.ppclibs
 # forcedeth
 %patch130 -p1
 
-# unionfs (disabled for rescuecd - problems with aufs2)
+# unionfs (problems with aufs2, needed for aufs1 patch)
 %if %{without rescuecd}
 %patch140 -p1
 %endif
@@ -852,9 +851,9 @@ install %{SOURCE5} Makefile.ppclibs
 # aufs2
 %patch148 -p1
 %else
-# aufs1: 2.6.29 FIXME - needs port to creds
-#%patch145 -p1
-#%patch146 -p1
+# aufs1
+#patch145 -p1
+#patch146 -p1
 %endif
 
 %patch2500 -p1
@@ -1003,6 +1002,7 @@ RescueConfig() {
 		CONFIG_AUFS=y
 		CONFIG_AUFS_FS=y
 		CONFIG_AUFS_BR_RAMFS=y
+		CONFIG_AUFS_RDU=y
 		CONFIG_BLK_DEV_LOOP=y
 		CONFIG_ISO9660_FS=y
 		CONFIG_NLS_UTF8=y
