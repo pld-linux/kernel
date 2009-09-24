@@ -46677,3 +46677,412 @@ diff -u linux-2.6.31/arch/sparc/mm/fault_32.c linux-2.6.31/arch/sparc/mm/fault_3
  				regs->u_regs[UREG_G2] = addr;
  				addr += (((call | 0xFFFFE000U) ^ 0x00001000U) + 0x00001000U);
 
+diff -u linux-2.6.31/arch/sparc/mm/fault_64.c linux-2.6.31/arch/sparc/mm/fault_64.c
+--- linux-2.6.31/arch/sparc/mm/fault_64.c	2009-09-10 19:30:54.839077430 -0400
++++ linux-2.6.31/arch/sparc/mm/fault_64.c	2009-09-23 19:35:08.312133590 -0400
+@@ -408,6 +408,10 @@
+ 
+ 			regs->u_regs[UREG_G1] = regs->u_regs[UREG_RETPC];
+ 			addr = regs->tpc + 4 + ((((call | 0xFFFFFFFFC0000000UL) ^ 0x20000000UL) + 0x20000000UL) << 2);
++
++			if (test_thread_flag(TIF_32BIT))
++				addr &= 0xFFFFFFFFUL;
++
+ 			regs->tpc = addr;
+ 			regs->tnpc = addr+4;
+ 			return 2;
+@@ -499,6 +503,10 @@
+ 			addr = (sethi & 0x003FFFFFU) << 10;
+ 			regs->u_regs[UREG_G1] = addr;
+ 			addr = regs->tpc + ((((ba | 0xFFFFFFFFFFF80000UL) ^ 0x00040000UL) + 0x00040000UL) << 2);
++
++			if (test_thread_flag(TIF_32BIT))
++				addr &= 0xFFFFFFFFUL;
++
+ 			regs->tpc = addr;
+ 			regs->tnpc = addr+4;
+ 			return 2;
+diff -u linux-2.6.31/arch/x86/boot/compressed/relocs.c linux-2.6.31/arch/x86/boot/compressed/relocs.c
+--- linux-2.6.31/arch/x86/boot/compressed/relocs.c	2009-09-06 15:29:11.165162482 -0400
++++ linux-2.6.31/arch/x86/boot/compressed/relocs.c	2009-09-23 19:36:44.127930546 -0400
+@@ -551,19 +551,14 @@
+ 			/* Don't relocate actual per-cpu variables, they are absolute indices, not addresses */
+ 			if (!strcmp(sec_name(sym->st_shndx), ".data.percpu") && strcmp(sym_name(sym_strtab, sym), "__per_cpu_load"))
+ 				continue;
++
+ #if defined(CONFIG_PAX_KERNEXEC) && defined(CONFIG_X86_32)
+ 			/* Don't relocate actual code, they are relocated implicitly by the base address of KERNEL_CS */
+-			if (!strcmp(sec_name(sym->st_shndx), ".init.text")) {
+-				if (strcmp(sym_name(sym_strtab, sym), "__init_begin"))
+-					continue;
+-			}
++			if (!strcmp(sec_name(sym->st_shndx), ".init.text"))
++				continue;
+ 			if (!strcmp(sec_name(sym->st_shndx), ".exit.text"))
+ 				continue;
+-			if (!strcmp(sec_name(sym->st_shndx), ".text.head")) {
+-				if (strcmp(sym_name(sym_strtab, sym), "KERNEL_TEXT_OFFSET"))
+-					continue;
+-			}
+-			if (!strcmp(sec_name(sym->st_shndx), ".text"))
++			if (!strcmp(sec_name(sym->st_shndx), ".text") && strcmp(sym_name(sym_strtab, sym), "__LOAD_PHYSICAL_ADDR"))
+ 				continue;
+ #endif
+ 			if (r_type == R_386_NONE || r_type == R_386_PC32) {
+diff -u linux-2.6.31/arch/x86/include/asm/pgtable_32_types.h linux-2.6.31/arch/x86/include/asm/pgtable_32_types.h
+--- linux-2.6.31/arch/x86/include/asm/pgtable_32_types.h	2009-09-06 15:29:11.185669248 -0400
++++ linux-2.6.31/arch/x86/include/asm/pgtable_32_types.h	2009-09-23 19:35:08.323713226 -0400
+@@ -50,10 +50,10 @@
+ #ifndef __ASSEMBLY__
+ extern unsigned char MODULES_EXEC_VADDR[];
+ extern unsigned char MODULES_EXEC_END[];
+-extern unsigned char KERNEL_TEXT_OFFSET[];
+ #endif
+-#define ktla_ktva(addr)		(addr + (unsigned long)KERNEL_TEXT_OFFSET)
+-#define ktva_ktla(addr)		(addr - (unsigned long)KERNEL_TEXT_OFFSET)
++#include <asm/boot.h>
++#define ktla_ktva(addr)		(addr + LOAD_PHYSICAL_ADDR + PAGE_OFFSET)
++#define ktva_ktla(addr)		(addr - LOAD_PHYSICAL_ADDR - PAGE_OFFSET)
+ #else
+ #define ktla_ktva(addr)		(addr)
+ #define ktva_ktla(addr)		(addr)
+diff -u linux-2.6.31/arch/x86/include/asm/pgtable_64.h linux-2.6.31/arch/x86/include/asm/pgtable_64.h
+--- linux-2.6.31/arch/x86/include/asm/pgtable_64.h	2009-09-06 15:30:00.013375877 -0400
++++ linux-2.6.31/arch/x86/include/asm/pgtable_64.h	2009-09-23 19:36:44.127930546 -0400
+@@ -18,6 +18,7 @@
+ extern pud_t level3_ident_pgt[512];
+ extern pud_t level3_vmalloc_pgt[512];
+ extern pud_t level3_vmemmap_pgt[512];
++extern pud_t level2_vmemmap_pgt[512];
+ extern pmd_t level2_kernel_pgt[512];
+ extern pmd_t level2_fixmap_pgt[512];
+ extern pmd_t level2_ident_pgt[512*4];
+diff -u linux-2.6.31/arch/x86/include/asm/pgtable_types.h linux-2.6.31/arch/x86/include/asm/pgtable_types.h
+--- linux-2.6.31/arch/x86/include/asm/pgtable_types.h	2009-09-10 19:30:54.922535723 -0400
++++ linux-2.6.31/arch/x86/include/asm/pgtable_types.h	2009-09-23 19:35:08.324829017 -0400
+@@ -281,8 +281,12 @@
+ 
+ extern pteval_t __supported_pte_mask;
+ #ifdef CONFIG_X86_32
++#ifdef CONFIG_X86_PAE
+ extern int nx_enabled;
+ #else
++#define nx_enabled (0)
++#endif
++#else
+ #define nx_enabled (1)
+ #endif
+ 
+diff -u linux-2.6.31/arch/x86/kernel/head_32.S linux-2.6.31/arch/x86/kernel/head_32.S
+--- linux-2.6.31/arch/x86/kernel/head_32.S	2009-09-10 19:30:54.973203235 -0400
++++ linux-2.6.31/arch/x86/kernel/head_32.S	2009-09-23 19:35:08.345826891 -0400
+@@ -130,7 +130,7 @@
+ 
+ #ifdef CONFIG_PAX_KERNEXEC
+ 	movl $pa(boot_gdt),%edi
+-	movl $KERNEL_TEXT_OFFSET,%eax
++	movl $__LOAD_PHYSICAL_ADDR + __PAGE_OFFSET,%eax
+ 	movw %ax,__BOOT_CS + 2(%edi)
+ 	rorl $16,%eax
+ 	movb %al,__BOOT_CS + 4(%edi)
+@@ -352,6 +352,7 @@
+ 	orl %edx,%eax
+ 	movl %eax,%cr4
+ 
++#ifdef CONFIG_X86_PAE
+ 	btl $5, %eax		# check if PAE is enabled
+ 	jnc 6f
+ 
+@@ -376,7 +377,7 @@
+ 
+ 	btsl $_PAGE_BIT_NX-32,pa(__supported_pte_mask+4)
+ 	movl $1,pa(nx_enabled)
+-
++#endif
+ 6:
+ 
+ /*
+diff -u linux-2.6.31/arch/x86/kernel/head_64.S linux-2.6.31/arch/x86/kernel/head_64.S
+--- linux-2.6.31/arch/x86/kernel/head_64.S	2009-09-06 15:30:00.014344371 -0400
++++ linux-2.6.31/arch/x86/kernel/head_64.S	2009-09-23 19:36:44.127930546 -0400
+@@ -360,10 +360,14 @@
+ 
+ NEXT_PAGE(level3_ident_pgt)
+ 	.quad	level2_ident_pgt - __START_KERNEL_map + _KERNPG_TABLE
++#ifdef CONFIG_XEN
++	.fill	511,8,0
++#else
+ 	.quad	level2_ident_pgt + PAGE_SIZE - __START_KERNEL_map + _KERNPG_TABLE
+ 	.quad	level2_ident_pgt + 2*PAGE_SIZE - __START_KERNEL_map + _KERNPG_TABLE
+ 	.quad	level2_ident_pgt + 3*PAGE_SIZE - __START_KERNEL_map + _KERNPG_TABLE
+ 	.fill	508,8,0
++#endif
+ 
+ NEXT_PAGE(level3_vmalloc_pgt)
+ 	.fill	512,8,0
+diff -u linux-2.6.31/arch/x86/kernel/i386_ksyms_32.c linux-2.6.31/arch/x86/kernel/i386_ksyms_32.c
+--- linux-2.6.31/arch/x86/kernel/i386_ksyms_32.c	2009-09-06 15:29:11.209316692 -0400
++++ linux-2.6.31/arch/x86/kernel/i386_ksyms_32.c	2009-09-23 19:35:08.346801595 -0400
+@@ -34,3 +34,3 @@
+ #ifdef CONFIG_PAX_KERNEXEC
+-EXPORT_SYMBOL(KERNEL_TEXT_OFFSET);
++EXPORT_SYMBOL(__LOAD_PHYSICAL_ADDR);
+ #endif
+diff -u linux-2.6.31/arch/x86/kernel/vmlinux.lds.S linux-2.6.31/arch/x86/kernel/vmlinux.lds.S
+--- linux-2.6.31/arch/x86/kernel/vmlinux.lds.S	2009-09-06 15:29:11.228210710 -0400
++++ linux-2.6.31/arch/x86/kernel/vmlinux.lds.S	2009-09-23 19:36:44.128906916 -0400
+@@ -38,7 +38,7 @@
+ #define PMD_SIZE (1 << PMD_SHIFT)
+ 
+ #if defined(CONFIG_X86_32) && defined(CONFIG_PAX_KERNEXEC)
+-#define __KERNEL_TEXT_OFFSET	(__PAGE_OFFSET + (((____LOAD_PHYSICAL_ADDR + PMD_SIZE - 1) - 1) & ~(PMD_SIZE - 1)))
++#define __KERNEL_TEXT_OFFSET	(LOAD_OFFSET + ____LOAD_PHYSICAL_ADDR)
+ #else
+ #define __KERNEL_TEXT_OFFSET	0
+ #endif
+@@ -64,11 +64,12 @@
+ #ifdef CONFIG_X86_64
+ 	user PT_LOAD FLAGS(5);          /* R_E */
+ #endif
+-	smp PT_LOAD FLAGS(6);           /* RW_ */
++	init.begin PT_LOAD FLAGS(6);    /* RW_ */
+ #ifdef CONFIG_SMP
+ 	percpu PT_LOAD FLAGS(6);        /* RW_ */
+ #endif
+ 	text.init PT_LOAD FLAGS(5);     /* R_E */
++	text.exit PT_LOAD FLAGS(5);     /* R_E */
+ 	init PT_LOAD FLAGS(7);          /* RWE */
+ 	note PT_NOTE FLAGS(0);          /* ___ */
+ }
+@@ -76,32 +77,25 @@
+ SECTIONS
+ {
+ #ifdef CONFIG_X86_32
+-#ifdef CONFIG_PAX_KERNEXEC
+-	. = 0;
+-#else
+ 	. = LOAD_OFFSET + ____LOAD_PHYSICAL_ADDR;
+-#endif
+ #else
+ 	. = __START_KERNEL;
+ #endif
+ 
+ 	/* Text and read-only data */
+ 
+-	/* bootstrapping code */
+-	.text.head : AT(ADDR(.text.head) - LOAD_OFFSET + __KERNEL_TEXT_OFFSET) {
++	.text (. - __KERNEL_TEXT_OFFSET): AT(ADDR(.text) - LOAD_OFFSET + __KERNEL_TEXT_OFFSET) {
++		/* bootstrapping code */
+ #ifdef CONFIG_X86_32
+ 		phys_startup_32 = startup_32 - LOAD_OFFSET + __KERNEL_TEXT_OFFSET;
+ #else
+ 		phys_startup_64 = startup_64 - LOAD_OFFSET + __KERNEL_TEXT_OFFSET;
+ #endif
+ 		__LOAD_PHYSICAL_ADDR = . - LOAD_OFFSET + __KERNEL_TEXT_OFFSET;
+-		KERNEL_TEXT_OFFSET = . + __KERNEL_TEXT_OFFSET;
+ 		_text = .;
+ 		*(.text.head)
+-	} :text = 0x9090
+ 
+-	/* The rest of the text */
+-	.text :  AT(ADDR(.text) - LOAD_OFFSET) {
++		/* The rest of the text */
+ #ifdef CONFIG_X86_32
+ 		/* not really needed, already page aligned */
+ 		. = ALIGN(PAGE_SIZE);
+@@ -260,12 +254,9 @@
+ 
+ #endif /* CONFIG_X86_64 */
+ 
+-	/*
+-	 * smp_locks might be freed after init
+-	 * start/end must be page aligned
+-	 */
+-	. = ALIGN(PAGE_SIZE);
+-	.smp_locks : AT(ADDR(.smp_locks) - LOAD_OFFSET) {
++	/* Init code and data - will be freed after init */
++	.init.begin : AT(ADDR(.init.begin) - LOAD_OFFSET) {
++		BYTE(0)
+ 
+ #ifdef CONFIG_PAX_KERNEXEC
+ 		. = ALIGN(PMD_SIZE);
+@@ -273,16 +264,8 @@
+ 		. = ALIGN(PAGE_SIZE);
+ #endif
+ 
+-		__smp_locks = .;
+-		*(.smp_locks)
+-		__smp_locks_end = .;
+-	} :smp
+-
+-	/* Init code and data - will be freed after init */
+-	. = ALIGN(PAGE_SIZE);
+-	.init.begin : AT(ADDR(.init.begin) - LOAD_OFFSET) {
+ 		__init_begin = .; /* paired with __init_end */
+-	}
++	} :init.begin
+ 
+ #ifdef CONFIG_SMP
+ 	/*
+@@ -306,7 +289,8 @@
+ 	 */
+ 	.exit.text : AT(ADDR(.exit.text) - LOAD_OFFSET) {
+ 		EXIT_TEXT
+-	}
++		. = ALIGN(16);
++	} :text.exit
+ 	. = init_begin + SIZEOF(.init.text) + SIZEOF(.exit.text);
+ 
+ 	.init.data : AT(ADDR(.init.data) - LOAD_OFFSET) {
+@@ -381,6 +365,18 @@
+ 		__init_end = .;
+ 	}
+ 
++	/*
++	 * smp_locks might be freed after init
++	 * start/end must be page aligned
++	 */
++	. = ALIGN(PAGE_SIZE);
++	.smp_locks : AT(ADDR(.smp_locks) - LOAD_OFFSET) {
++		__smp_locks = .;
++		*(.smp_locks)
++		__smp_locks_end = .;
++		. = ALIGN(PAGE_SIZE);
++	}
++
+ 	/* BSS */
+ 	. = ALIGN(PAGE_SIZE);
+ 	.bss : AT(ADDR(.bss) - LOAD_OFFSET) {
+@@ -430,7 +426,7 @@
+ /*
+  * Build-time check on the image size:
+  */
+-. = ASSERT((_end - KERNEL_TEXT_OFFSET <= KERNEL_IMAGE_SIZE),
++. = ASSERT((_end - _text - __KERNEL_TEXT_OFFSET <= KERNEL_IMAGE_SIZE),
+ 	   "kernel image bigger than KERNEL_IMAGE_SIZE");
+ 
+ #ifdef CONFIG_SMP
+diff -u linux-2.6.31/arch/x86/mm/fault.c linux-2.6.31/arch/x86/mm/fault.c
+--- linux-2.6.31/arch/x86/mm/fault.c	2009-09-11 21:07:39.447754963 -0400
++++ linux-2.6.31/arch/x86/mm/fault.c	2009-09-23 19:35:08.370727775 -0400
+@@ -17,8 +17,8 @@
+ #include <asm/traps.h>			/* dotraplinkage, ...		*/
+ #include <asm/pgalloc.h>		/* pgd_*(), ...			*/
+ #include <asm/kmemcheck.h>		/* kmemcheck_*(), ...		*/
+-#include <asm/tlbflush.h>
+ #include <asm/vsyscall.h>
++#include <asm/tlbflush.h>
+ 
+ /*
+  * Page fault error code bits:
+diff -u linux-2.6.31/arch/x86/mm/init.c linux-2.6.31/arch/x86/mm/init.c
+--- linux-2.6.31/arch/x86/mm/init.c	2009-09-12 18:39:06.077137325 -0400
++++ linux-2.6.31/arch/x86/mm/init.c	2009-09-23 19:35:08.372682367 -0400
+@@ -28,11 +28,10 @@
+ #endif
+ ;
+ 
+-#ifdef CONFIG_X86_32
++#if defined(CONFIG_X86_32) && defined(CONFIG_X86_PAE)
+ int nx_enabled;
+-#endif
+ 
+-#if defined(CONFIG_X86_PAE) && !defined(CONFIG_PAX_PAGEEXEC)
++#ifndef CONFIG_PAX_PAGEEXEC
+ /*
+  * noexec = on|off
+  *
+@@ -54,6 +53,7 @@
+ }
+ early_param("noexec", noexec_setup);
+ #endif
++#endif
+ 
+ #ifdef CONFIG_X86_PAE
+ static void __init set_nx(void)
+@@ -460,7 +460,7 @@
+ #endif
+ 	limit = (limit - 1UL) >> PAGE_SHIFT;
+ 
+-	memset(KERNEL_TEXT_OFFSET, POISON_FREE_INITMEM, PAGE_SIZE);
++	memset(__LOAD_PHYSICAL_ADDR + PAGE_OFFSET, POISON_FREE_INITMEM, PAGE_SIZE);
+ 	for (cpu = 0; cpu < NR_CPUS; cpu++) {
+ 		pack_descriptor(&d, get_desc_base(&get_cpu_gdt_table(cpu)[GDT_ENTRY_KERNEL_CS]), limit, 0x9B, 0xC);
+ 		write_gdt_entry(get_cpu_gdt_table(cpu), GDT_ENTRY_KERNEL_CS, &d, DESCTYPE_S);
+diff -u linux-2.6.31/arch/x86/xen/mmu.c linux-2.6.31/arch/x86/xen/mmu.c
+--- linux-2.6.31/arch/x86/xen/mmu.c	2009-09-06 15:30:00.015296947 -0400
++++ linux-2.6.31/arch/x86/xen/mmu.c	2009-09-23 19:36:44.128906916 -0400
+@@ -1730,6 +1730,7 @@
+ 	set_page_prot(level3_vmalloc_pgt, PAGE_KERNEL_RO);
+ 	set_page_prot(level3_vmemmap_pgt, PAGE_KERNEL_RO);
+ 	set_page_prot(level3_user_vsyscall, PAGE_KERNEL_RO);
++	set_page_prot(level2_vmemmap_pgt, PAGE_KERNEL_RO);
+ 	set_page_prot(level2_kernel_pgt, PAGE_KERNEL_RO);
+ 	set_page_prot(level2_fixmap_pgt, PAGE_KERNEL_RO);
+ 
+diff -u linux-2.6.31/mm/slob.c linux-2.6.31/mm/slob.c
+--- linux-2.6.31/mm/slob.c	2009-09-06 15:29:12.204173926 -0400
++++ linux-2.6.31/mm/slob.c	2009-09-23 19:37:56.543267332 -0400
+@@ -150,7 +150,7 @@
+ 
+ static inline struct slob_page *slob_page(const void *addr)
+ {
+-	return (struct slob_page *)virt_to_page(addr);
++	return (struct slob_page *)virt_to_head_page(addr);
+ }
+ 
+ /*
+@@ -507,7 +507,7 @@
+ 		ret = slob_new_pages(gfp | __GFP_COMP, get_order(size), node);
+ 		if (ret) {
+ 			struct slob_page *sp;
+-			sp = (struct slob_page *)virt_to_head_page(ret);
++			sp = slob_page(ret);
+ 			sp->size = size;
+ 		}
+ 
+@@ -568,7 +568,7 @@
+ 	if (!virt_addr_valid(ptr))
+ 		return;
+ 
+-	sp = (struct slob_page *)virt_to_head_page(ptr);
++	sp = slob_page(ptr);
+ 	/* XXX: can get a little tighter with this stack check */
+ 	if (!PageSlobPage((struct page*)sp) && object_is_on_stack(ptr) &&
+ 	    (n > ((unsigned long)task_stack_page(current) + THREAD_SIZE -
+@@ -702,7 +702,7 @@
+ 		struct slob_page *sp;
+ 
+ 		b = slob_new_pages(flags, get_order(c->size), node);
+-		sp = (struct slob_page *)virt_to_head_page(b);
++		sp = slob_page(b);
+ 		sp->size = c->size;
+ 		trace_kmem_cache_alloc_node(_RET_IP_, b, c->size,
+ 					    PAGE_SIZE << get_order(c->size),
+@@ -720,9 +720,9 @@
+ 
+ static void __kmem_cache_free(void *b, int size)
+ {
+-	struct slob_page *sp = (struct slob_page *)virt_to_head_page(b);
++	struct slob_page *sp = slob_page(b);
+ 
+-	if (slob_page(sp))
++	if (is_slob_page(sp))
+ 		slob_free(b, size);
+ 	else {
+ 		clear_slob_page(sp);
+only in patch2:
+unchanged:
+--- linux-2.6.31/arch/x86/kernel/cpu/Makefile	2009-09-09 18:13:59.000000000 -0400
++++ linux-2.6.31/arch/x86/kernel/cpu/Makefile	2009-09-23 19:36:44.129883872 -0400
+@@ -7,10 +7,6 @@ ifdef CONFIG_FUNCTION_TRACER
+ CFLAGS_REMOVE_common.o = -pg
+ endif
+ 
+-# Make sure load_percpu_segment has no stackprotector
+-nostackp := $(call cc-option, -fno-stack-protector)
+-CFLAGS_common.o		:= $(nostackp)
+-
+ obj-y			:= intel_cacheinfo.o addon_cpuid_features.o
+ obj-y			+= proc.o capflags.o powerflags.o common.o
+ obj-y			+= vmware.o hypervisor.o
