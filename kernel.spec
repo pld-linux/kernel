@@ -111,7 +111,7 @@
 %endif
 
 %define		basever		2.6.31
-%define		postver		.1
+%define		postver		.2
 %define		rel		0.1
 
 %define		_enable_debug_packages			0
@@ -156,7 +156,7 @@ Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{basever}.tar.bz2
 # Source0-md5:	84c077a37684e4cbfa67b18154390d8a
 %if "%{postver}" != "%{nil}"
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
-# Source1-md5:	43977a0a264dd7d173b6ef122c62fb20
+# Source1-md5:	04bbd7d8b61e5e7536b978435f370f09
 %endif
 
 Source3:	kernel-autoconf.h
@@ -274,7 +274,7 @@ Patch85:	kernel-hostap.patch
 # Taken from http://download.opensuse.org/factory/repo/src-oss/suse/src/kernel-source-2.6.30-10.3.src.rpm
 Patch90:	kernel-mpt-fusion.patch
 
-# based on http://vserver.13thfloor.at/Experimental/patch-2.6.31-vs2.3.0.36.14-pre8.diff
+# based on http://vserver.13thfloor.at/Experimental/patch-2.6.31.2-vs2.3.0.36.15.diff
 Patch100:	kernel-vserver-2.3.patch
 Patch101:	kernel-vserver-fixes.patch
 
@@ -309,9 +309,6 @@ Patch1000:	kernel-grsec-minimal.patch
 Patch2000:	kernel-small_fixes.patch
 Patch2001:	kernel-pwc-uncompress.patch
 Patch2003:	kernel-regressions.patch
-
-Patch2100:	kernel-intel-pre-9xx.patch
-Patch2101:	kernel-intel-gpu-fifo.patch
 
 # kill some thousands of warnings
 # (only warnings, so just remove parts of this patch if conflics)
@@ -901,9 +898,6 @@ install %{SOURCE5} Makefile.ppclibs
 %patch2000 -p1
 %patch2001 -p1
 #%patch2003 -p1
-
-%patch2100 -p1
-%patch2101 -p1
 
 # Fix EXTRAVERSION in main Makefile
 sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{postver}%{?alt_kernel:_%{alt_kernel}}#g' Makefile

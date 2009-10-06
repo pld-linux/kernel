@@ -15559,7 +15559,7 @@ diff -urNp linux-2.6.31/arch/x86/mm/mmap.c linux-2.6.31/arch/x86/mm/mmap.c
 @@ -36,7 +36,7 @@
   * Leave an at least ~128 MB hole.
   */
- #define MIN_GAP (128*1024*1024)
+ #define MIN_GAP (128*1024*1024UL + stack_maxrandom_size())
 -#define MAX_GAP (TASK_SIZE/6*5)
 +#define MAX_GAP (pax_task_size/6*5)
  
@@ -19530,13 +19530,13 @@ diff -urNp linux-2.6.31/drivers/isdn/gigaset/interface.c linux-2.6.31/drivers/is
  	else if (cs->mstate != MS_LOCKED) {
  		dev_warn(cs->dev, "can't write to unlocked device\n");
 @@ -429,7 +427,7 @@ static int if_chars_in_buffer(struct tty
- 	if (!cs->connected) {
+ 
+ 	if (!cs->connected)
  		gig_dbg(DEBUG_IF, "not connected");
- 		retval = -ENODEV;
--	} else if (!cs->open_count)
-+	} else if (!atomic_read(&cs->open_count))
+-	else if (!cs->open_count)
++	else if (!atomic_read(&cs->open_count))
  		dev_warn(cs->dev, "%s: device not opened\n", __func__);
- 	else if (cs->mstate != MS_LOCKED) {
+ 	else if (cs->mstate != MS_LOCKED)
  		dev_warn(cs->dev, "can't write to unlocked device\n");
 @@ -458,7 +456,7 @@ static void if_throttle(struct tty_struc
  
@@ -40836,102 +40836,102 @@ diff -urNp linux-2.6.31/kernel/sys.c linux-2.6.31/kernel/sys.c
 --- linux-2.6.31/kernel/sys.c	2009-08-27 20:59:04.000000000 -0400
 +++ linux-2.6.31/kernel/sys.c	2009-09-06 15:29:12.167024518 -0400
 @@ -133,6 +133,12 @@ static int set_one_prio(struct task_stru
- 				error = -EACCES;
- 			goto out;
- 		}
+ 			error = -EACCES;
+ 		goto out;
+ 	}
 +
-+		if (gr_handle_chroot_setpriority(p, niceval)) {
-+			error = -EACCES;
-+			goto out;
-+		}
++	if (gr_handle_chroot_setpriority(p, niceval)) {
++		error = -EACCES;
++		goto out;
++	}
 +
- 		no_nice = security_task_setnice(p, niceval);
- 		if (no_nice) {
- 			error = no_nice;
+ 	no_nice = security_task_setnice(p, niceval);
+ 	if (no_nice) {
+ 		error = no_nice;
 @@ -509,6 +515,9 @@ SYSCALL_DEFINE2(setregid, gid_t, rgid, g
- 				goto error;
- 		}
+ 			goto error;
+ 	}
  
 +	if (gr_check_group_change(new->gid, new->egid, -1))
 +		goto error;
 +
- 		if (rgid != (gid_t) -1 ||
- 		    (egid != (gid_t) -1 && egid != old->gid))
- 			new->sgid = new->egid;
+ 	if (rgid != (gid_t) -1 ||
+ 	    (egid != (gid_t) -1 && egid != old->gid))
+ 		new->sgid = new->egid;
 @@ -542,6 +551,10 @@ SYSCALL_DEFINE1(setgid, gid_t, gid)
- 			goto error;
+ 		goto error;
  
- 		retval = -EPERM;
+ 	retval = -EPERM;
 +
-+		if (gr_check_group_change(gid, gid, gid))
-+			goto error;
++	if (gr_check_group_change(gid, gid, gid))
++		goto error;
 +
- 		if (capable(CAP_SETGID))
- 			new->gid = new->egid = new->sgid = new->fsgid = gid;
- 		else if (gid == old->gid || gid == old->sgid)
+ 	if (capable(CAP_SETGID))
+ 		new->gid = new->egid = new->sgid = new->fsgid = gid;
+ 	else if (gid == old->gid || gid == old->sgid)
 @@ -632,6 +645,9 @@ SYSCALL_DEFINE2(setreuid, uid_t, ruid, u
- 				goto error;
- 		}
+ 			goto error;
+ 	}
  
-+		if (gr_check_user_change(new->uid, new->euid, -1))
-+			goto error;
++	if (gr_check_user_change(new->uid, new->euid, -1))
++		goto error;
 +
- 		if (new->uid != old->uid) {
- 			retval = set_user(new);
- 			if (retval < 0)
+ 	if (new->uid != old->uid) {
+ 		retval = set_user(new);
+ 		if (retval < 0)
 @@ -680,6 +696,12 @@ SYSCALL_DEFINE1(setuid, uid_t, uid)
- 			goto error;
+ 		goto error;
  
- 		retval = -EPERM;
+ 	retval = -EPERM;
 +
-+		if (gr_check_crash_uid(uid))
-+			goto error;
-+		if (gr_check_user_change(uid, uid, uid))
-+			goto error;
++	if (gr_check_crash_uid(uid))
++		goto error;
++	if (gr_check_user_change(uid, uid, uid))
++		goto error;
 +
- 		if (capable(CAP_SETUID)) {
- 			new->suid = new->uid = uid;
- 			if (uid != old->uid) {
+ 	if (capable(CAP_SETUID)) {
+ 		new->suid = new->uid = uid;
+ 		if (uid != old->uid) {
 @@ -737,6 +759,9 @@ SYSCALL_DEFINE3(setresuid, uid_t, ruid, 
- 				goto error;
- 		}
- 
-+		if (gr_check_user_change(ruid, euid, -1))
-+			goto error;
-+
- 		if (ruid != (uid_t) -1) {
- 			new->uid = ruid;
- 			if (ruid != old->uid) {
-@@ -805,6 +830,9 @@ SYSCALL_DEFINE3(setresgid, gid_t, rgid, 
- 				goto error;
- 		}
- 
-+		if (gr_check_group_change(rgid, egid, -1))
-+			goto error;
-+
- 		if (rgid != (gid_t) -1)
- 			new->gid = rgid;
- 		if (egid != (gid_t) -1)
-@@ -854,6 +882,9 @@ SYSCALL_DEFINE1(setfsuid, uid_t, uid)
- 		if (security_task_setuid(uid, (uid_t)-1, (uid_t)-1, LSM_SETID_FS) < 0)
  			goto error;
+ 	}
  
-+		if (gr_check_user_change(-1, -1, uid))
++	if (gr_check_user_change(ruid, euid, -1))
++		goto error;
++
+ 	if (ruid != (uid_t) -1) {
+ 		new->uid = ruid;
+ 		if (ruid != old->uid) {
+@@ -805,6 +830,9 @@ SYSCALL_DEFINE3(setresgid, gid_t, rgid, 
+ 			goto error;
+ 	}
+ 
++	if (gr_check_group_change(rgid, egid, -1))
++		goto error;
++
+ 	if (rgid != (gid_t) -1)
+ 		new->gid = rgid;
+ 	if (egid != (gid_t) -1)
+@@ -854,6 +882,9 @@ SYSCALL_DEFINE1(setfsuid, uid_t, uid)
+ 	if (security_task_setuid(uid, (uid_t)-1, (uid_t)-1, LSM_SETID_FS) < 0)
+ 		goto error;
+ 
++	if (gr_check_user_change(-1, -1, uid))
++		goto error;
++
+ 	if (uid == old->uid  || uid == old->euid  ||
+ 	    uid == old->suid || uid == old->fsuid ||
+ 	    capable(CAP_SETUID)) {
+@@ -894,6 +925,9 @@ SYSCALL_DEFINE1(setfsgid, gid_t, gid)
+ 	if (gid == old->gid  || gid == old->egid  ||
+ 	    gid == old->sgid || gid == old->fsgid ||
+ 	    capable(CAP_SETGID)) {
++		if (gr_check_group_change(-1, -1, gid))
 +			goto error;
 +
- 		if (uid == old->uid  || uid == old->euid  ||
- 		    uid == old->suid || uid == old->fsuid ||
- 		    capable(CAP_SETUID)) {
-@@ -894,6 +925,9 @@ SYSCALL_DEFINE1(setfsgid, gid_t, gid)
- 		if (gid == old->gid  || gid == old->egid  ||
- 		    gid == old->sgid || gid == old->fsgid ||
- 		    capable(CAP_SETGID)) {
-+			if (gr_check_group_change(-1, -1, gid))
-+				goto error;
-+
- 			if (gid != old_fsgid) {
- 				new->fsgid = gid;
- 				goto change_okay;
+ 		if (gid != old_fsgid) {
+ 			new->fsgid = gid;
+ 			goto change_okay;
 @@ -1443,7 +1477,7 @@ SYSCALL_DEFINE5(prctl, int, option, unsi
  			error = get_dumpable(me->mm);
  			break;
