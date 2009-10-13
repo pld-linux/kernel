@@ -366,12 +366,12 @@ diff -uprN linux-2.6.27./fs/ecryptfs/inode.c linux-2.6.27/fs/ecryptfs/inode.c
  	rc = ecryptfs_interpose(lower_new_dentry, new_dentry, dir->i_sb, 0);
 @@ -440,11 +445,12 @@ static int ecryptfs_unlink(struct inode 
  {
- 	int rc = 0;
  	struct dentry *lower_dentry = ecryptfs_dentry_to_lower(dentry);
 +	struct vfsmount *lower_mnt = ecryptfs_dentry_to_lower_mnt(dentry);
  	struct inode *lower_dir_inode = ecryptfs_inode_to_lower(dir);
  	struct dentry *lower_dir_dentry;
  
+ 	dget(lower_dentry);
  	lower_dir_dentry = lock_parent(lower_dentry);
 -	rc = vfs_unlink(lower_dir_inode, lower_dentry);
 +	rc = vfs_unlink(lower_dir_inode, lower_dentry, lower_mnt);
