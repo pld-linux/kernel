@@ -6454,25 +6454,25 @@ diff -urNp linux-2.6.31.4/arch/x86/include/asm/iommu.h linux-2.6.31.4/arch/x86/i
  extern int iommu_pass_through;
 diff -urNp linux-2.6.31.4/arch/x86/include/asm/irqflags.h linux-2.6.31.4/arch/x86/include/asm/irqflags.h
 --- linux-2.6.31.4/arch/x86/include/asm/irqflags.h	2009-10-05 13:12:06.000000000 -0400
-+++ linux-2.6.31.4/arch/x86/include/asm/irqflags.h	2009-10-13 00:56:25.210705449 -0400
-@@ -113,6 +113,11 @@ static inline unsigned long __raw_local_
- }
- #else
- 
-+#ifdef CONFIG_X86_32
-+#define PAX_OPEN_KERNEL
-+#define PAX_CLOSE_KERNEL
-+#endif
-+
- #define ENABLE_INTERRUPTS(x)	sti
- #define DISABLE_INTERRUPTS(x)	cli
- 
-@@ -147,6 +152,8 @@ static inline unsigned long __raw_local_
++++ linux-2.6.31.4/arch/x86/include/asm/irqflags.h	2009-10-14 17:18:30.945315132 -0400
+@@ -147,6 +147,20 @@ static inline unsigned long __raw_local_
  #define INTERRUPT_RETURN		iret
  #define ENABLE_INTERRUPTS_SYSEXIT	sti; sysexit
  #define GET_CR0_INTO_EAX		movl %cr0, %eax
-+#define GET_CR0_INTO_EDX		movl %cr0, %edx
-+#define SET_CR0_FROM_EDX		movl %edx, %cr0
++
++/* PaX: special register usage in entry_32.S, beware */
++#define PAX_OPEN_KERNEL		\
++	movl %esi, %cr0
++
++#define PAX_CLOSE_KERNEL	\
++	movl %cr0, %edx;	\
++	testl $X86_CR0_WP, %edx;\
++	jnz 1f;			\
++	movl %edx, %esi;	\
++	orl $X86_CR0_WP, %esi;	\
++	movl %esi, %cr0;	\
++1:
++
  #endif
  
  
@@ -6902,7 +6902,7 @@ diff -urNp linux-2.6.31.4/arch/x86/include/asm/page_64_types.h linux-2.6.31.4/ar
  #define __VIRTUAL_MASK_SHIFT	47
 diff -urNp linux-2.6.31.4/arch/x86/include/asm/paravirt.h linux-2.6.31.4/arch/x86/include/asm/paravirt.h
 --- linux-2.6.31.4/arch/x86/include/asm/paravirt.h	2009-10-05 13:12:06.000000000 -0400
-+++ linux-2.6.31.4/arch/x86/include/asm/paravirt.h	2009-10-13 00:46:39.351164867 -0400
++++ linux-2.6.31.4/arch/x86/include/asm/paravirt.h	2009-10-14 17:18:30.945315132 -0400
 @@ -350,6 +350,12 @@ struct pv_mmu_ops {
  	   an mfn.  We can tell which is which from the index. */
  	void (*set_fixmap)(unsigned /* enum fixed_addresses */ idx,
@@ -6931,8 +6931,8 @@ diff -urNp linux-2.6.31.4/arch/x86/include/asm/paravirt.h linux-2.6.31.4/arch/x8
 +	return pv_mmu_ops.pax_close_kernel();
 +}
 +#else
-+static inline void pax_open_kernel(void) {}
-+static inline void pax_close_kernel(void) {}
++static inline unsigned long pax_open_kernel(void) { return 0; }
++static inline unsigned long pax_close_kernel(void) { return 0; }
 +#endif
 +
  void _paravirt_nop(void);
@@ -7128,15 +7128,18 @@ diff -urNp linux-2.6.31.4/arch/x86/include/asm/pgtable_64.h linux-2.6.31.4/arch/
  static inline void native_pmd_clear(pmd_t *pmd)
 diff -urNp linux-2.6.31.4/arch/x86/include/asm/pgtable.h linux-2.6.31.4/arch/x86/include/asm/pgtable.h
 --- linux-2.6.31.4/arch/x86/include/asm/pgtable.h	2009-10-05 13:12:06.000000000 -0400
-+++ linux-2.6.31.4/arch/x86/include/asm/pgtable.h	2009-10-12 23:12:55.021186264 -0400
-@@ -84,12 +84,48 @@ static inline void __init paravirt_paget
++++ linux-2.6.31.4/arch/x86/include/asm/pgtable.h	2009-10-14 17:20:19.872322390 -0400
+@@ -84,12 +84,51 @@ static inline void __init paravirt_paget
  
  #define arch_end_context_switch(prev)	do {} while(0)
  
 +#define pax_open_kernel()	native_pax_open_kernel()
-+#define pax_close_kernel(x)	native_pax_close_kernel(x)
++#define pax_close_kernel()	native_pax_close_kernel()
  #endif	/* CONFIG_PARAVIRT */
  
++#define  __HAVE_ARCH_PAX_OPEN_KERNEL
++#define  __HAVE_ARCH_PAX_CLOSE_KERNEL
++
 +#ifdef CONFIG_PAX_KERNEXEC
 +static inline unsigned long native_pax_open_kernel(void)
 +{
@@ -7162,8 +7165,8 @@ diff -urNp linux-2.6.31.4/arch/x86/include/asm/pgtable.h linux-2.6.31.4/arch/x86
 +	return cr0;
 +}
 +#else
-+static inline unsigned long __must_check native_pax_open_kernel(void) {}
-+static inline void native_pax_close_kernel(unsigned long cr0) {}
++static inline unsigned long native_pax_open_kernel(void) { return 0; }
++static inline unsigned long native_pax_close_kernel(void) { return 0; }
 +#endif
 +
  /*
@@ -7178,7 +7181,7 @@ diff -urNp linux-2.6.31.4/arch/x86/include/asm/pgtable.h linux-2.6.31.4/arch/x86
  static inline int pte_dirty(pte_t pte)
  {
  	return pte_flags(pte) & _PAGE_DIRTY;
-@@ -172,9 +208,29 @@ static inline pte_t pte_wrprotect(pte_t 
+@@ -172,9 +211,29 @@ static inline pte_t pte_wrprotect(pte_t 
  	return pte_clear_flags(pte, _PAGE_RW);
  }
  
@@ -7209,7 +7212,7 @@ diff -urNp linux-2.6.31.4/arch/x86/include/asm/pgtable.h linux-2.6.31.4/arch/x86
  }
  
  static inline pte_t pte_mkdirty(pte_t pte)
-@@ -482,7 +538,7 @@ static inline pud_t *pud_offset(pgd_t *p
+@@ -482,7 +541,7 @@ static inline pud_t *pud_offset(pgd_t *p
  
  static inline int pgd_bad(pgd_t pgd)
  {
@@ -7218,7 +7221,7 @@ diff -urNp linux-2.6.31.4/arch/x86/include/asm/pgtable.h linux-2.6.31.4/arch/x86
  }
  
  static inline int pgd_none(pgd_t pgd)
-@@ -623,7 +679,9 @@ static inline void ptep_set_wrprotect(st
+@@ -623,7 +682,9 @@ static inline void ptep_set_wrprotect(st
   */
  static inline void clone_pgd_range(pgd_t *dst, pgd_t *src, int count)
  {
@@ -9385,7 +9388,7 @@ diff -urNp linux-2.6.31.4/arch/x86/kernel/efi_stub_32.S linux-2.6.31.4/arch/x86/
  efi_rt_function_ptr:
 diff -urNp linux-2.6.31.4/arch/x86/kernel/entry_32.S linux-2.6.31.4/arch/x86/kernel/entry_32.S
 --- linux-2.6.31.4/arch/x86/kernel/entry_32.S	2009-10-05 13:12:06.000000000 -0400
-+++ linux-2.6.31.4/arch/x86/kernel/entry_32.S	2009-10-12 23:12:55.176917012 -0400
++++ linux-2.6.31.4/arch/x86/kernel/entry_32.S	2009-10-13 19:00:18.378759190 -0400
 @@ -191,7 +191,7 @@
  
  #endif	/* CONFIG_X86_32_LAZY_GS */
@@ -9423,19 +9426,7 @@ diff -urNp linux-2.6.31.4/arch/x86/kernel/entry_32.S linux-2.6.31.4/arch/x86/ker
  .macro RESTORE_INT_REGS
  	popl %ebx
  	CFI_ADJUST_CFA_OFFSET -4
-@@ -329,6 +341,11 @@ ENTRY(ret_from_fork)
- 	CFI_ADJUST_CFA_OFFSET 4
- 	popfl
- 	CFI_ADJUST_CFA_OFFSET -4
-+
-+#ifdef CONFIG_PAX_KERNEXEC
-+	xorl %esi, %esi
-+#endif
-+
- 	jmp syscall_exit
- 	CFI_ENDPROC
- END(ret_from_fork)
-@@ -352,7 +369,17 @@ check_userspace:
+@@ -352,7 +364,17 @@ check_userspace:
  	movb PT_CS(%esp), %al
  	andl $(X86_EFLAGS_VM | SEGMENT_RPL_MASK), %eax
  	cmpl $USER_RPL, %eax
@@ -9453,7 +9444,7 @@ diff -urNp linux-2.6.31.4/arch/x86/kernel/entry_32.S linux-2.6.31.4/arch/x86/ker
  
  ENTRY(resume_userspace)
  	LOCKDEP_SYS_EXIT
-@@ -414,10 +441,9 @@ sysenter_past_esp:
+@@ -414,10 +436,9 @@ sysenter_past_esp:
  	/*CFI_REL_OFFSET cs, 0*/
  	/*
  	 * Push current_thread_info()->sysenter_return to the stack.
@@ -9466,7 +9457,7 @@ diff -urNp linux-2.6.31.4/arch/x86/kernel/entry_32.S linux-2.6.31.4/arch/x86/ker
  	CFI_ADJUST_CFA_OFFSET 4
  	CFI_REL_OFFSET eip, 0
  
-@@ -430,9 +456,19 @@ sysenter_past_esp:
+@@ -430,9 +451,19 @@ sysenter_past_esp:
   * Load the potential sixth argument from user stack.
   * Careful about security.
   */
@@ -9486,7 +9477,7 @@ diff -urNp linux-2.6.31.4/arch/x86/kernel/entry_32.S linux-2.6.31.4/arch/x86/ker
  	movl %ebp,PT_EBP(%esp)
  .section __ex_table,"a"
  	.align 4
-@@ -455,12 +491,23 @@ sysenter_do_call:
+@@ -455,12 +486,23 @@ sysenter_do_call:
  	testl $_TIF_ALLWORK_MASK, %ecx
  	jne sysexit_audit
  sysenter_exit:
@@ -9510,7 +9501,7 @@ diff -urNp linux-2.6.31.4/arch/x86/kernel/entry_32.S linux-2.6.31.4/arch/x86/ker
  	PTGS_TO_GS
  	ENABLE_INTERRUPTS_SYSEXIT
  
-@@ -504,11 +551,17 @@ sysexit_audit:
+@@ -504,11 +546,17 @@ sysexit_audit:
  
  	CFI_ENDPROC
  .pushsection .fixup,"ax"
@@ -9530,7 +9521,7 @@ diff -urNp linux-2.6.31.4/arch/x86/kernel/entry_32.S linux-2.6.31.4/arch/x86/ker
  .popsection
  	PTGS_TO_GS_EX
  ENDPROC(ia32_sysenter_target)
-@@ -538,6 +591,10 @@ syscall_exit:
+@@ -538,6 +586,10 @@ syscall_exit:
  	testl $_TIF_ALLWORK_MASK, %ecx	# current->work
  	jne syscall_exit_work
  
@@ -9541,7 +9532,7 @@ diff -urNp linux-2.6.31.4/arch/x86/kernel/entry_32.S linux-2.6.31.4/arch/x86/ker
  restore_all:
  	TRACE_IRQS_IRET
  restore_all_notrace:
-@@ -602,7 +659,13 @@ ldt_ss:
+@@ -602,7 +654,13 @@ ldt_ss:
  	mov PT_OLDESP(%esp), %eax	/* load userspace esp */
  	mov %dx, %ax			/* eax: new kernel esp */
  	sub %eax, %edx			/* offset (low word is 0) */
@@ -9556,7 +9547,7 @@ diff -urNp linux-2.6.31.4/arch/x86/kernel/entry_32.S linux-2.6.31.4/arch/x86/ker
  	shr $16, %edx
  	mov %dl, GDT_ENTRY_ESPFIX_SS * 8 + 4(%ebx) /* bits 16..23 */
  	mov %dh, GDT_ENTRY_ESPFIX_SS * 8 + 7(%ebx) /* bits 24..31 */
-@@ -642,25 +705,19 @@ work_resched:
+@@ -642,25 +700,19 @@ work_resched:
  
  work_notifysig:				# deal with pending signals and
  					# notify-resume requests
@@ -9585,7 +9576,7 @@ diff -urNp linux-2.6.31.4/arch/x86/kernel/entry_32.S linux-2.6.31.4/arch/x86/ker
  #endif
  	xorl %edx, %edx
  	call do_notify_resume
-@@ -695,6 +752,10 @@ END(syscall_exit_work)
+@@ -695,6 +747,10 @@ END(syscall_exit_work)
  
  	RING0_INT_FRAME			# can't unwind into user space anyway
  syscall_fault:
@@ -9596,7 +9587,7 @@ diff -urNp linux-2.6.31.4/arch/x86/kernel/entry_32.S linux-2.6.31.4/arch/x86/ker
  	GET_THREAD_INFO(%ebp)
  	movl $-EFAULT,PT_EAX(%esp)
  	jmp resume_userspace
-@@ -735,7 +796,13 @@ PTREGSCALL(vm86old)
+@@ -735,7 +791,13 @@ PTREGSCALL(vm86old)
   * normal stack and adjusts ESP with the matching offset.
   */
  	/* fixup the stack */
@@ -9611,7 +9602,7 @@ diff -urNp linux-2.6.31.4/arch/x86/kernel/entry_32.S linux-2.6.31.4/arch/x86/ker
  	mov GDT_ENTRY_ESPFIX_SS * 8 + 4(%ebx), %al /* bits 16..23 */
  	mov GDT_ENTRY_ESPFIX_SS * 8 + 7(%ebx), %ah /* bits 24..31 */
  	shl $16, %eax
-@@ -1198,7 +1265,6 @@ return_to_handler:
+@@ -1198,7 +1260,6 @@ return_to_handler:
  	ret
  #endif
  
@@ -9619,7 +9610,7 @@ diff -urNp linux-2.6.31.4/arch/x86/kernel/entry_32.S linux-2.6.31.4/arch/x86/ker
  #include "syscall_table_32.S"
  
  syscall_table_size=(.-sys_call_table)
-@@ -1250,12 +1316,18 @@ error_code:
+@@ -1250,12 +1311,18 @@ error_code:
  	movl %ecx, %fs
  	UNWIND_ESPFIX_STACK
  	GS_TO_REG %ecx
@@ -9639,7 +9630,7 @@ diff -urNp linux-2.6.31.4/arch/x86/kernel/entry_32.S linux-2.6.31.4/arch/x86/ker
  	movl %ecx, %ds
  	movl %ecx, %es
  	TRACE_IRQS_OFF
-@@ -1351,6 +1423,14 @@ nmi_stack_correct:
+@@ -1351,6 +1418,14 @@ nmi_stack_correct:
  	xorl %edx,%edx		# zero error code
  	movl %esp,%eax		# pt_regs pointer
  	call do_nmi
@@ -9654,7 +9645,7 @@ diff -urNp linux-2.6.31.4/arch/x86/kernel/entry_32.S linux-2.6.31.4/arch/x86/ker
  	jmp restore_all_notrace
  	CFI_ENDPROC
  
-@@ -1391,6 +1471,14 @@ nmi_espfix_stack:
+@@ -1391,6 +1466,14 @@ nmi_espfix_stack:
  	FIXUP_ESPFIX_STACK		# %eax == %esp
  	xorl %edx,%edx			# zero error code
  	call do_nmi
@@ -12183,7 +12174,7 @@ diff -urNp linux-2.6.31.4/arch/x86/kernel/vm86_32.c linux-2.6.31.4/arch/x86/kern
  		tsk->thread.sysenter_cs = 0;
 diff -urNp linux-2.6.31.4/arch/x86/kernel/vmi_32.c linux-2.6.31.4/arch/x86/kernel/vmi_32.c
 --- linux-2.6.31.4/arch/x86/kernel/vmi_32.c	2009-10-05 13:12:06.000000000 -0400
-+++ linux-2.6.31.4/arch/x86/kernel/vmi_32.c	2009-10-12 23:12:55.236969111 -0400
++++ linux-2.6.31.4/arch/x86/kernel/vmi_32.c	2009-10-13 19:00:18.380098626 -0400
 @@ -44,12 +44,17 @@ typedef u32 __attribute__((regparm(1))) 
  typedef u64 __attribute__((regparm(2))) (VROMLONGFUNC)(int);
  
@@ -12262,22 +12253,24 @@ diff -urNp linux-2.6.31.4/arch/x86/kernel/vmi_32.c linux-2.6.31.4/arch/x86/kerne
  	ap.fs = __KERNEL_PERCPU;
  	ap.gs = __KERNEL_STACK_CANARY;
  
-@@ -486,6 +492,14 @@ static void vmi_leave_lazy_mmu(void)
+@@ -486,6 +492,16 @@ static void vmi_leave_lazy_mmu(void)
  	paravirt_leave_lazy_mmu();
  }
  
-+static void vmi_pax_open_kernel(void)
++static unsigned long vmi_pax_open_kernel(void)
 +{
++	return 0;
 +}
 +
-+static void vmi_pax_close_kernel(void)
++static unsigned long vmi_pax_close_kernel(void)
 +{
++	return 0;
 +}
 +
  static inline int __init check_vmi_rom(struct vrom_header *rom)
  {
  	struct pci_header *pci;
-@@ -498,6 +512,10 @@ static inline int __init check_vmi_rom(s
+@@ -498,6 +514,10 @@ static inline int __init check_vmi_rom(s
  		return 0;
  	if (rom->vrom_signature != VMI_SIGNATURE)
  		return 0;
@@ -12288,7 +12281,7 @@ diff -urNp linux-2.6.31.4/arch/x86/kernel/vmi_32.c linux-2.6.31.4/arch/x86/kerne
  	if (rom->api_version_maj != VMI_API_REV_MAJOR ||
  	    rom->api_version_min+1 < VMI_API_REV_MINOR+1) {
  		printk(KERN_WARNING "VMI: Found mismatched rom version %d.%d\n",
-@@ -562,7 +580,7 @@ static inline int __init probe_vmi_rom(v
+@@ -562,7 +582,7 @@ static inline int __init probe_vmi_rom(v
  		struct vrom_header *romstart;
  		romstart = (struct vrom_header *)isa_bus_to_virt(base);
  		if (check_vmi_rom(romstart)) {
@@ -12297,7 +12290,7 @@ diff -urNp linux-2.6.31.4/arch/x86/kernel/vmi_32.c linux-2.6.31.4/arch/x86/kerne
  			return 1;
  		}
  	}
-@@ -836,6 +854,11 @@ static inline int __init activate_vmi(vo
+@@ -836,6 +856,11 @@ static inline int __init activate_vmi(vo
  
  	para_fill(pv_irq_ops.safe_halt, Halt);
  
@@ -12309,7 +12302,7 @@ diff -urNp linux-2.6.31.4/arch/x86/kernel/vmi_32.c linux-2.6.31.4/arch/x86/kerne
  	/*
  	 * Alternative instruction rewriting doesn't happen soon enough
  	 * to convert VMI_IRET to a call instead of a jump; so we have
-@@ -853,16 +876,16 @@ static inline int __init activate_vmi(vo
+@@ -853,16 +878,16 @@ static inline int __init activate_vmi(vo
  
  void __init vmi_init(void)
  {
@@ -12330,7 +12323,7 @@ diff -urNp linux-2.6.31.4/arch/x86/kernel/vmi_32.c linux-2.6.31.4/arch/x86/kerne
  
  #ifdef CONFIG_X86_IO_APIC
  	/* This is virtual hardware; timer routing is wired correctly */
-@@ -874,7 +897,7 @@ void __init vmi_activate(void)
+@@ -874,7 +899,7 @@ void __init vmi_activate(void)
  {
  	unsigned long flags;
  
@@ -12341,7 +12334,7 @@ diff -urNp linux-2.6.31.4/arch/x86/kernel/vmi_32.c linux-2.6.31.4/arch/x86/kerne
  	local_irq_save(flags);
 diff -urNp linux-2.6.31.4/arch/x86/kernel/vmlinux.lds.S linux-2.6.31.4/arch/x86/kernel/vmlinux.lds.S
 --- linux-2.6.31.4/arch/x86/kernel/vmlinux.lds.S	2009-10-05 13:12:06.000000000 -0400
-+++ linux-2.6.31.4/arch/x86/kernel/vmlinux.lds.S	2009-10-11 15:29:56.557366854 -0400
++++ linux-2.6.31.4/arch/x86/kernel/vmlinux.lds.S	2009-10-13 19:00:18.392269554 -0400
 @@ -26,6 +26,22 @@
  #include <asm/page_types.h>
  #include <asm/cache.h>
@@ -12450,7 +12443,7 @@ diff -urNp linux-2.6.31.4/arch/x86/kernel/vmlinux.lds.S linux-2.6.31.4/arch/x86/
  
  	/* Exception table */
  	. = ALIGN(16);
-@@ -100,22 +124,55 @@ SECTIONS
+@@ -100,22 +124,57 @@ SECTIONS
  		__start___ex_table = .;
  		*(__ex_table)
  		__stop___ex_table = .;
@@ -12475,18 +12468,20 @@ diff -urNp linux-2.6.31.4/arch/x86/kernel/vmlinux.lds.S linux-2.6.31.4/arch/x86/
 +		*(.vmi.rom)
 +	} :module
 +
-+#if defined(CONFIG_X86_32) && defined(CONFIG_PAX_KERNEXEC) && defined(CONFIG_MODULES)
 +	. = ALIGN(PAGE_SIZE);
 +	.module.text : AT(ADDR(.module.text) - LOAD_OFFSET) {
++
++#if defined(CONFIG_X86_32) && defined(CONFIG_PAX_KERNEXEC) && defined(CONFIG_MODULES)
 +		MODULES_EXEC_VADDR = .;
 +		BYTE(0)
 +		. += (8 * 1024 * 1024);
 +		. = ALIGN(PMD_SIZE);
 +		MODULES_EXEC_END = . - 1;
++#endif
++
 +		/* End of text section */
 +		_etext = . - __KERNEL_TEXT_OFFSET;
 +	} :module
-+#endif
 +
  	/* Data */
  	.data : AT(ADDR(.data) - LOAD_OFFSET) {
@@ -12510,7 +12505,7 @@ diff -urNp linux-2.6.31.4/arch/x86/kernel/vmlinux.lds.S linux-2.6.31.4/arch/x86/
  
  		PAGE_ALIGNED_DATA(PAGE_SIZE)
  		*(.data.idt)
-@@ -182,12 +239,6 @@ SECTIONS
+@@ -182,12 +241,6 @@ SECTIONS
  	}
  	vgetcpu_mode = VVIRT(.vgetcpu_mode);
  
@@ -12523,7 +12518,7 @@ diff -urNp linux-2.6.31.4/arch/x86/kernel/vmlinux.lds.S linux-2.6.31.4/arch/x86/
  	.vsyscall_3 ADDR(.vsyscall_0) + 3072: AT(VLOAD(.vsyscall_3)) {
  		*(.vsyscall_3)
  	}
-@@ -205,12 +256,19 @@ SECTIONS
+@@ -205,12 +258,19 @@ SECTIONS
  #endif /* CONFIG_X86_64 */
  
  	/* Init code and data - will be freed after init */
@@ -12546,7 +12541,7 @@ diff -urNp linux-2.6.31.4/arch/x86/kernel/vmlinux.lds.S linux-2.6.31.4/arch/x86/
  	/*
  	 * percpu offsets are zero-based on SMP.  PERCPU_VADDR() changes the
  	 * output PHDR, so the next output section - .init.text - should
-@@ -219,18 +277,26 @@ SECTIONS
+@@ -219,18 +279,26 @@ SECTIONS
  	PERCPU_VADDR(0, :percpu)
  #endif
  
@@ -12579,7 +12574,7 @@ diff -urNp linux-2.6.31.4/arch/x86/kernel/vmlinux.lds.S linux-2.6.31.4/arch/x86/
  
  	. = ALIGN(16);
  	.init.setup : AT(ADDR(.init.setup) - LOAD_OFFSET) {
-@@ -276,14 +342,6 @@ SECTIONS
+@@ -276,14 +344,6 @@ SECTIONS
  		*(.altinstr_replacement)
  	}
  
@@ -12594,7 +12589,7 @@ diff -urNp linux-2.6.31.4/arch/x86/kernel/vmlinux.lds.S linux-2.6.31.4/arch/x86/
  	.exit.data : AT(ADDR(.exit.data) - LOAD_OFFSET) {
  		EXIT_DATA
  	}
-@@ -297,7 +355,7 @@ SECTIONS
+@@ -297,7 +357,7 @@ SECTIONS
  	}
  #endif
  
@@ -12603,7 +12598,7 @@ diff -urNp linux-2.6.31.4/arch/x86/kernel/vmlinux.lds.S linux-2.6.31.4/arch/x86/
  	PERCPU(PAGE_SIZE)
  #endif
  
-@@ -320,12 +378,6 @@ SECTIONS
+@@ -320,12 +380,6 @@ SECTIONS
  		. = ALIGN(PAGE_SIZE);
  	}
  
@@ -12616,7 +12611,7 @@ diff -urNp linux-2.6.31.4/arch/x86/kernel/vmlinux.lds.S linux-2.6.31.4/arch/x86/
  	/* BSS */
  	. = ALIGN(PAGE_SIZE);
  	.bss : AT(ADDR(.bss) - LOAD_OFFSET) {
-@@ -341,6 +393,7 @@ SECTIONS
+@@ -341,6 +395,7 @@ SECTIONS
  		__brk_base = .;
  		. += 64 * 1024;		/* 64k alignment slop space */
  		*(.brk_reservation)	/* areas brk users have reserved */
@@ -12624,7 +12619,7 @@ diff -urNp linux-2.6.31.4/arch/x86/kernel/vmlinux.lds.S linux-2.6.31.4/arch/x86/
  		__brk_limit = .;
  	}
  
-@@ -369,13 +422,12 @@ SECTIONS
+@@ -369,13 +424,12 @@ SECTIONS
   * for the boot processor.
   */
  #define INIT_PER_CPU(x) init_per_cpu__##x = per_cpu__##x + __per_cpu_load
@@ -14742,12 +14737,13 @@ diff -urNp linux-2.6.31.4/arch/x86/Makefile linux-2.6.31.4/arch/x86/Makefile
 +	$(if $(LDFLAGS_BUILD_ID),,$(error $(OLD_LD)))
 diff -urNp linux-2.6.31.4/arch/x86/mm/extable.c linux-2.6.31.4/arch/x86/mm/extable.c
 --- linux-2.6.31.4/arch/x86/mm/extable.c	2009-10-05 13:12:06.000000000 -0400
-+++ linux-2.6.31.4/arch/x86/mm/extable.c	2009-10-12 23:12:55.272355613 -0400
-@@ -1,14 +1,70 @@
++++ linux-2.6.31.4/arch/x86/mm/extable.c	2009-10-13 19:00:18.392269554 -0400
+@@ -1,14 +1,71 @@
  #include <linux/module.h>
  #include <linux/spinlock.h>
 +#include <linux/sort.h>
  #include <asm/uaccess.h>
++#include <asm/pgtable.h>
  
 +/*
 + * The exception table needs to be sorted so that the binary
@@ -36954,17 +36950,17 @@ diff -urNp linux-2.6.31.4/include/asm-generic/kmap_types.h linux-2.6.31.4/includ
  #undef D
 diff -urNp linux-2.6.31.4/include/asm-generic/pgtable.h linux-2.6.31.4/include/asm-generic/pgtable.h
 --- linux-2.6.31.4/include/asm-generic/pgtable.h	2009-10-05 13:12:06.000000000 -0400
-+++ linux-2.6.31.4/include/asm-generic/pgtable.h	2009-10-13 00:18:06.210125604 -0400
++++ linux-2.6.31.4/include/asm-generic/pgtable.h	2009-10-14 17:18:22.973363290 -0400
 @@ -344,6 +344,14 @@ extern void untrack_pfn_vma(struct vm_ar
  				unsigned long size);
  #endif
  
-+#ifndef pax_open_kernel
-+#define pax_open_kernel()	do {} while (0)
-+#define pax_open_kernel
++#ifndef __HAVE_ARCH_PAX_OPEN_KERNEL
++static inline unsigned long pax_open_kernel(void) { return 0; }
 +#endif
-+#ifndef pax_close_kernel
-+#define pax_close_kernel()	do {} while (0)
++
++#ifndef __HAVE_ARCH_PAX_CLOSE_KERNEL
++static inline unsigned long pax_close_kernel(void) { return 0; }
 +#endif
 +
  #endif /* !__ASSEMBLY__ */
