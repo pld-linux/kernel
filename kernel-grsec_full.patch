@@ -6454,24 +6454,31 @@ diff -urNp linux-2.6.31.4/arch/x86/include/asm/iommu.h linux-2.6.31.4/arch/x86/i
  extern int iommu_pass_through;
 diff -urNp linux-2.6.31.4/arch/x86/include/asm/irqflags.h linux-2.6.31.4/arch/x86/include/asm/irqflags.h
 --- linux-2.6.31.4/arch/x86/include/asm/irqflags.h	2009-10-05 13:12:06.000000000 -0400
-+++ linux-2.6.31.4/arch/x86/include/asm/irqflags.h	2009-10-14 17:18:30.945315132 -0400
-@@ -147,6 +147,20 @@ static inline unsigned long __raw_local_
++++ linux-2.6.31.4/arch/x86/include/asm/irqflags.h	2009-10-18 10:12:57.682033309 -0400
+@@ -147,6 +147,27 @@ static inline unsigned long __raw_local_
  #define INTERRUPT_RETURN		iret
  #define ENABLE_INTERRUPTS_SYSEXIT	sti; sysexit
  #define GET_CR0_INTO_EAX		movl %cr0, %eax
 +
 +/* PaX: special register usage in entry_32.S, beware */
-+#define PAX_OPEN_KERNEL		\
-+	movl %esi, %cr0
-+
-+#define PAX_CLOSE_KERNEL	\
-+	movl %cr0, %edx;	\
-+	testl $X86_CR0_WP, %edx;\
-+	jnz 1f;			\
-+	movl %edx, %esi;	\
-+	orl $X86_CR0_WP, %esi;	\
++#ifdef CONFIG_PAX_KERNEXEC
++#define PAX_RESTORE_KERNEL	\
++	bt $16, %esi;		\
++	jc 1f;			\
 +	movl %esi, %cr0;	\
 +1:
++
++#define PAX_CLOSE_KERNEL	\
++	movl %cr0, %esi;	\
++	movl %esi, %edx;	\
++	bts $16, %edx;		\
++	jc 1f;			\
++	movl %edx, %cr0;	\
++1:
++#else
++#define PAX_RESTORE_KERNEL
++#define PAX_CLOSE_KERNEL
++#endif
 +
  #endif
  
@@ -6902,7 +6909,7 @@ diff -urNp linux-2.6.31.4/arch/x86/include/asm/page_64_types.h linux-2.6.31.4/ar
  #define __VIRTUAL_MASK_SHIFT	47
 diff -urNp linux-2.6.31.4/arch/x86/include/asm/paravirt.h linux-2.6.31.4/arch/x86/include/asm/paravirt.h
 --- linux-2.6.31.4/arch/x86/include/asm/paravirt.h	2009-10-05 13:12:06.000000000 -0400
-+++ linux-2.6.31.4/arch/x86/include/asm/paravirt.h	2009-10-14 17:18:30.945315132 -0400
++++ linux-2.6.31.4/arch/x86/include/asm/paravirt.h	2009-10-18 10:08:40.907788965 -0400
 @@ -350,6 +350,12 @@ struct pv_mmu_ops {
  	   an mfn.  We can tell which is which from the index. */
  	void (*set_fixmap)(unsigned /* enum fixed_addresses */ idx,
@@ -6916,7 +6923,40 @@ diff -urNp linux-2.6.31.4/arch/x86/include/asm/paravirt.h linux-2.6.31.4/arch/x8
  };
  
  struct raw_spinlock;
-@@ -1437,6 +1443,21 @@ static inline void __set_fixmap(unsigned
+@@ -528,10 +534,11 @@ int paravirt_disable_iospace(void);
+ #define EXTRA_CLOBBERS
+ #define VEXTRA_CLOBBERS
+ #else  /* CONFIG_X86_64 */
++/* [re]ax isn't an arg, but the return val */
+ #define PVOP_VCALL_ARGS					\
+ 	unsigned long __edi = __edi, __esi = __esi,	\
+-		__edx = __edx, __ecx = __ecx
+-#define PVOP_CALL_ARGS		PVOP_VCALL_ARGS, __eax
++		__edx = __edx, __ecx = __ecx, __eax = __eax
++#define PVOP_CALL_ARGS		PVOP_VCALL_ARGS
+ 
+ #define PVOP_CALL_ARG1(x)		"D" ((unsigned long)(x))
+ #define PVOP_CALL_ARG2(x)		"S" ((unsigned long)(x))
+@@ -543,6 +550,7 @@ int paravirt_disable_iospace(void);
+ 				"=c" (__ecx)
+ #define PVOP_CALL_CLOBBERS	PVOP_VCALL_CLOBBERS, "=a" (__eax)
+ 
++/* void functions are still allowed [re]ax for scratch */
+ #define PVOP_VCALLEE_CLOBBERS	"=a" (__eax)
+ #define PVOP_CALLEE_CLOBBERS	PVOP_VCALLEE_CLOBBERS
+ 
+@@ -617,8 +625,8 @@ int paravirt_disable_iospace(void);
+ 		       VEXTRA_CLOBBERS,					\
+ 		       pre, post, ##__VA_ARGS__)
+ 
+-#define __PVOP_VCALLEESAVE(rettype, op, pre, post, ...)			\
+-	____PVOP_CALL(rettype, op.func, CLBR_RET_REG,			\
++#define __PVOP_VCALLEESAVE(op, pre, post, ...)				\
++	____PVOP_VCALL(op.func, CLBR_RET_REG,				\
+ 		      PVOP_VCALLEE_CLOBBERS, ,				\
+ 		      pre, post, ##__VA_ARGS__)
+ 
+@@ -1437,6 +1445,21 @@ static inline void __set_fixmap(unsigned
  	pv_mmu_ops.set_fixmap(idx, phys, flags);
  }
  
@@ -6938,7 +6978,54 @@ diff -urNp linux-2.6.31.4/arch/x86/include/asm/paravirt.h linux-2.6.31.4/arch/x8
  void _paravirt_nop(void);
  u32 _paravirt_ident_32(u32);
  u64 _paravirt_ident_64(u64);
-@@ -1688,7 +1709,7 @@ static inline unsigned long __raw_local_
+@@ -1565,42 +1588,22 @@ extern struct paravirt_patch_site __para
+ 
+ static inline unsigned long __raw_local_save_flags(void)
+ {
+-	unsigned long f;
+-
+-	asm volatile(paravirt_alt(PARAVIRT_CALL)
+-		     : "=a"(f)
+-		     : paravirt_type(pv_irq_ops.save_fl),
+-		       paravirt_clobber(CLBR_EAX)
+-		     : "memory", "cc");
+-	return f;
++	return PVOP_CALLEE0(unsigned long, pv_irq_ops.save_fl);
+ }
+ 
+ static inline void raw_local_irq_restore(unsigned long f)
+ {
+-	asm volatile(paravirt_alt(PARAVIRT_CALL)
+-		     : "=a"(f)
+-		     : PV_FLAGS_ARG(f),
+-		       paravirt_type(pv_irq_ops.restore_fl),
+-		       paravirt_clobber(CLBR_EAX)
+-		     : "memory", "cc");
++	return PVOP_VCALLEE1(pv_irq_ops.restore_fl, f);
+ }
+ 
+ static inline void raw_local_irq_disable(void)
+ {
+-	asm volatile(paravirt_alt(PARAVIRT_CALL)
+-		     :
+-		     : paravirt_type(pv_irq_ops.irq_disable),
+-		       paravirt_clobber(CLBR_EAX)
+-		     : "memory", "eax", "cc");
++	PVOP_VCALLEE0(pv_irq_ops.irq_disable);
+ }
+ 
+ static inline void raw_local_irq_enable(void)
+ {
+-	asm volatile(paravirt_alt(PARAVIRT_CALL)
+-		     :
+-		     : paravirt_type(pv_irq_ops.irq_enable),
+-		       paravirt_clobber(CLBR_EAX)
+-		     : "memory", "eax", "cc");
++	PVOP_VCALLEE0(pv_irq_ops.irq_enable);
+ }
+ 
+ static inline unsigned long __raw_local_irq_save(void)
+@@ -1688,7 +1691,7 @@ static inline unsigned long __raw_local_
  
  #define PARA_PATCH(struct, off)        ((PARAVIRT_PATCH_##struct + (off)) / 4)
  #define PARA_SITE(ptype, clobbers, ops) _PVSITE(ptype, clobbers, ops, .long, 4)
@@ -6947,21 +7034,30 @@ diff -urNp linux-2.6.31.4/arch/x86/include/asm/paravirt.h linux-2.6.31.4/arch/x8
  #endif
  
  #define INTERRUPT_RETURN						\
-@@ -1713,6 +1734,18 @@ static inline unsigned long __raw_local_
+@@ -1713,6 +1716,27 @@ static inline unsigned long __raw_local_
  		  jmp PARA_INDIRECT(pv_cpu_ops+PV_CPU_usergs_sysret32))
  
  #ifdef CONFIG_X86_32
-+#define PAX_OPEN_KERNEL						\
++
++#ifdef CONFIG_PAX_KERNEXEC
++#define PAX_RESTORE_KERNEL					\
++	bt $16, %esi;						\
++	jc 1f;							\
 +	push %eax; push %ecx;					\
-+	call PARA_INDIRECT(pv_mmu_ops+PV_MMU_pax_open_kernel);	\
-+	mov %eax, %edx;						\
-+	pop %ecx; pop %eax
++	movl %esi, %eax;					\
++	call PARA_INDIRECT(pv_cpu_ops+PV_CPU_write_cr0);	\
++	pop %ecx; pop %eax;					\
++1:
 +
 +#define PAX_CLOSE_KERNEL					\
 +	push %eax; push %ecx;					\
-+	mov %edx, %eax;						\
 +	call PARA_INDIRECT(pv_mmu_ops+PV_MMU_pax_close_kernel);	\
++	movl %eax, %esi;					\
 +	pop %ecx; pop %eax
++#else
++#define PAX_RESTORE_KERNEL
++#define PAX_CLOSE_KERNEL
++#endif
 +
  #define GET_CR0_INTO_EAX				\
  	push %ecx; push %edx;				\
@@ -8725,13 +8821,17 @@ diff -urNp linux-2.6.31.4/arch/x86/kernel/apm_32.c linux-2.6.31.4/arch/x86/kerne
  
 diff -urNp linux-2.6.31.4/arch/x86/kernel/asm-offsets_32.c linux-2.6.31.4/arch/x86/kernel/asm-offsets_32.c
 --- linux-2.6.31.4/arch/x86/kernel/asm-offsets_32.c	2009-10-05 13:12:06.000000000 -0400
-+++ linux-2.6.31.4/arch/x86/kernel/asm-offsets_32.c	2009-10-12 23:12:55.159062083 -0400
-@@ -115,6 +115,8 @@ void foo(void)
++++ linux-2.6.31.4/arch/x86/kernel/asm-offsets_32.c	2009-10-18 10:09:07.003389630 -0400
+@@ -115,6 +115,12 @@ void foo(void)
  	OFFSET(PV_CPU_iret, pv_cpu_ops, iret);
  	OFFSET(PV_CPU_irq_enable_sysexit, pv_cpu_ops, irq_enable_sysexit);
  	OFFSET(PV_CPU_read_cr0, pv_cpu_ops, read_cr0);
-+	OFFSET(PV_MMU_pax_open_kernel, pv_mmu_ops, pax_open_kernel);
++
++#ifdef CONFIG_PAX_KERNEXEC
++	OFFSET(PV_CPU_write_cr0, pv_cpu_ops, write_cr0);
 +	OFFSET(PV_MMU_pax_close_kernel, pv_mmu_ops, pax_close_kernel);
++#endif
++
  #endif
  
  #ifdef CONFIG_XEN
@@ -9388,7 +9488,7 @@ diff -urNp linux-2.6.31.4/arch/x86/kernel/efi_stub_32.S linux-2.6.31.4/arch/x86/
  efi_rt_function_ptr:
 diff -urNp linux-2.6.31.4/arch/x86/kernel/entry_32.S linux-2.6.31.4/arch/x86/kernel/entry_32.S
 --- linux-2.6.31.4/arch/x86/kernel/entry_32.S	2009-10-05 13:12:06.000000000 -0400
-+++ linux-2.6.31.4/arch/x86/kernel/entry_32.S	2009-10-13 19:00:18.378759190 -0400
++++ linux-2.6.31.4/arch/x86/kernel/entry_32.S	2009-10-18 10:09:07.029411525 -0400
 @@ -191,7 +191,7 @@
  
  #endif	/* CONFIG_X86_32_LAZY_GS */
@@ -9407,17 +9507,14 @@ diff -urNp linux-2.6.31.4/arch/x86/kernel/entry_32.S linux-2.6.31.4/arch/x86/ker
  	movl %edx, %ds
  	movl %edx, %es
  	movl $(__KERNEL_PERCPU), %edx
-@@ -232,6 +232,18 @@
+@@ -232,6 +232,15 @@
  	SET_KERNEL_GS %edx
  .endm
  
 +.macro SAVE_ALL
-+#ifdef CONFIG_PAX_KERNEXEC
++#if defined(CONFIG_PAX_KERNEXEC) || defined(CONFIG_PAX_PAGEEXEC) || defined(CONFIG_PAX_SEGMEXEC) || defined(CONFIG_PAX_MEMORY_UDEREF)
 +	__SAVE_ALL __KERNEL_DS
-+	PAX_CLOSE_KERNEL;
-+	movl %edx, %esi;
-+#elif defined(CONFIG_PAX_PAGEEXEC) || defined(CONFIG_PAX_SEGMEXEC) || defined(CONFIG_PAX_MEMORY_UDEREF)
-+	__SAVE_ALL __KERNEL_DS
++	PAX_CLOSE_KERNEL
 +#else
 +	__SAVE_ALL __USER_DS
 +#endif
@@ -9426,7 +9523,7 @@ diff -urNp linux-2.6.31.4/arch/x86/kernel/entry_32.S linux-2.6.31.4/arch/x86/ker
  .macro RESTORE_INT_REGS
  	popl %ebx
  	CFI_ADJUST_CFA_OFFSET -4
-@@ -352,7 +364,17 @@ check_userspace:
+@@ -352,7 +361,15 @@ check_userspace:
  	movb PT_CS(%esp), %al
  	andl $(X86_EFLAGS_VM | SEGMENT_RPL_MASK), %eax
  	cmpl $USER_RPL, %eax
@@ -9434,9 +9531,7 @@ diff -urNp linux-2.6.31.4/arch/x86/kernel/entry_32.S linux-2.6.31.4/arch/x86/ker
 +#ifdef CONFIG_PAX_KERNEXEC
 +	jae resume_userspace
 +
-+	testl $X86_CR0_WP, %esi
-+	jnz resume_kernel
-+	PAX_OPEN_KERNEL;
++	PAX_RESTORE_KERNEL
 +	jmp resume_kernel
 +#else
  	jb resume_kernel		# not returning to v8086 or userspace
@@ -9444,7 +9539,7 @@ diff -urNp linux-2.6.31.4/arch/x86/kernel/entry_32.S linux-2.6.31.4/arch/x86/ker
  
  ENTRY(resume_userspace)
  	LOCKDEP_SYS_EXIT
-@@ -414,10 +436,9 @@ sysenter_past_esp:
+@@ -414,10 +431,9 @@ sysenter_past_esp:
  	/*CFI_REL_OFFSET cs, 0*/
  	/*
  	 * Push current_thread_info()->sysenter_return to the stack.
@@ -9457,7 +9552,7 @@ diff -urNp linux-2.6.31.4/arch/x86/kernel/entry_32.S linux-2.6.31.4/arch/x86/ker
  	CFI_ADJUST_CFA_OFFSET 4
  	CFI_REL_OFFSET eip, 0
  
-@@ -430,9 +451,19 @@ sysenter_past_esp:
+@@ -430,9 +446,19 @@ sysenter_past_esp:
   * Load the potential sixth argument from user stack.
   * Careful about security.
   */
@@ -9477,7 +9572,7 @@ diff -urNp linux-2.6.31.4/arch/x86/kernel/entry_32.S linux-2.6.31.4/arch/x86/ker
  	movl %ebp,PT_EBP(%esp)
  .section __ex_table,"a"
  	.align 4
-@@ -455,12 +486,23 @@ sysenter_do_call:
+@@ -455,12 +481,23 @@ sysenter_do_call:
  	testl $_TIF_ALLWORK_MASK, %ecx
  	jne sysexit_audit
  sysenter_exit:
@@ -9501,7 +9596,7 @@ diff -urNp linux-2.6.31.4/arch/x86/kernel/entry_32.S linux-2.6.31.4/arch/x86/ker
  	PTGS_TO_GS
  	ENABLE_INTERRUPTS_SYSEXIT
  
-@@ -504,11 +546,17 @@ sysexit_audit:
+@@ -504,11 +541,17 @@ sysexit_audit:
  
  	CFI_ENDPROC
  .pushsection .fixup,"ax"
@@ -9521,7 +9616,7 @@ diff -urNp linux-2.6.31.4/arch/x86/kernel/entry_32.S linux-2.6.31.4/arch/x86/ker
  .popsection
  	PTGS_TO_GS_EX
  ENDPROC(ia32_sysenter_target)
-@@ -538,6 +586,10 @@ syscall_exit:
+@@ -538,6 +581,10 @@ syscall_exit:
  	testl $_TIF_ALLWORK_MASK, %ecx	# current->work
  	jne syscall_exit_work
  
@@ -9532,7 +9627,7 @@ diff -urNp linux-2.6.31.4/arch/x86/kernel/entry_32.S linux-2.6.31.4/arch/x86/ker
  restore_all:
  	TRACE_IRQS_IRET
  restore_all_notrace:
-@@ -602,7 +654,13 @@ ldt_ss:
+@@ -602,7 +649,13 @@ ldt_ss:
  	mov PT_OLDESP(%esp), %eax	/* load userspace esp */
  	mov %dx, %ax			/* eax: new kernel esp */
  	sub %eax, %edx			/* offset (low word is 0) */
@@ -9547,7 +9642,7 @@ diff -urNp linux-2.6.31.4/arch/x86/kernel/entry_32.S linux-2.6.31.4/arch/x86/ker
  	shr $16, %edx
  	mov %dl, GDT_ENTRY_ESPFIX_SS * 8 + 4(%ebx) /* bits 16..23 */
  	mov %dh, GDT_ENTRY_ESPFIX_SS * 8 + 7(%ebx) /* bits 24..31 */
-@@ -642,25 +700,19 @@ work_resched:
+@@ -642,25 +695,19 @@ work_resched:
  
  work_notifysig:				# deal with pending signals and
  					# notify-resume requests
@@ -9576,7 +9671,7 @@ diff -urNp linux-2.6.31.4/arch/x86/kernel/entry_32.S linux-2.6.31.4/arch/x86/ker
  #endif
  	xorl %edx, %edx
  	call do_notify_resume
-@@ -695,6 +747,10 @@ END(syscall_exit_work)
+@@ -695,6 +742,10 @@ END(syscall_exit_work)
  
  	RING0_INT_FRAME			# can't unwind into user space anyway
  syscall_fault:
@@ -9587,7 +9682,7 @@ diff -urNp linux-2.6.31.4/arch/x86/kernel/entry_32.S linux-2.6.31.4/arch/x86/ker
  	GET_THREAD_INFO(%ebp)
  	movl $-EFAULT,PT_EAX(%esp)
  	jmp resume_userspace
-@@ -735,7 +791,13 @@ PTREGSCALL(vm86old)
+@@ -735,7 +786,13 @@ PTREGSCALL(vm86old)
   * normal stack and adjusts ESP with the matching offset.
   */
  	/* fixup the stack */
@@ -9602,7 +9697,7 @@ diff -urNp linux-2.6.31.4/arch/x86/kernel/entry_32.S linux-2.6.31.4/arch/x86/ker
  	mov GDT_ENTRY_ESPFIX_SS * 8 + 4(%ebx), %al /* bits 16..23 */
  	mov GDT_ENTRY_ESPFIX_SS * 8 + 7(%ebx), %ah /* bits 24..31 */
  	shl $16, %eax
-@@ -1198,7 +1260,6 @@ return_to_handler:
+@@ -1198,7 +1255,6 @@ return_to_handler:
  	ret
  #endif
  
@@ -9610,15 +9705,12 @@ diff -urNp linux-2.6.31.4/arch/x86/kernel/entry_32.S linux-2.6.31.4/arch/x86/ker
  #include "syscall_table_32.S"
  
  syscall_table_size=(.-sys_call_table)
-@@ -1250,12 +1311,18 @@ error_code:
+@@ -1250,12 +1306,15 @@ error_code:
  	movl %ecx, %fs
  	UNWIND_ESPFIX_STACK
  	GS_TO_REG %ecx
 +
-+#ifdef CONFIG_PAX_KERNEXEC
-+	PAX_CLOSE_KERNEL;
-+	movl %edx, %esi
-+#endif
++	PAX_CLOSE_KERNEL
 +
  	movl PT_GS(%esp), %edi		# get the function address
  	movl PT_ORIG_EAX(%esp), %edx	# get the error code
@@ -9630,32 +9722,22 @@ diff -urNp linux-2.6.31.4/arch/x86/kernel/entry_32.S linux-2.6.31.4/arch/x86/ker
  	movl %ecx, %ds
  	movl %ecx, %es
  	TRACE_IRQS_OFF
-@@ -1351,6 +1418,14 @@ nmi_stack_correct:
+@@ -1351,6 +1410,9 @@ nmi_stack_correct:
  	xorl %edx,%edx		# zero error code
  	movl %esp,%eax		# pt_regs pointer
  	call do_nmi
 +
-+#ifdef CONFIG_PAX_KERNEXEC
-+	testl $X86_CR0_WP, %esi
-+	jnz 1f
-+	PAX_OPEN_KERNEL;
-+1:
-+#endif
++	PAX_RESTORE_KERNEL
 +
  	jmp restore_all_notrace
  	CFI_ENDPROC
  
-@@ -1391,6 +1466,14 @@ nmi_espfix_stack:
+@@ -1391,6 +1453,9 @@ nmi_espfix_stack:
  	FIXUP_ESPFIX_STACK		# %eax == %esp
  	xorl %edx,%edx			# zero error code
  	call do_nmi
 +
-+#ifdef CONFIG_PAX_KERNEXEC
-+	testl $X86_CR0_WP, %esi
-+	jnz 1f
-+	PAX_OPEN_KERNEL;
-+1:
-+#endif
++	PAX_RESTORE_KERNEL
 +
  	RESTORE_REGS
  	lss 12+4(%esp), %esp		# back to espfix stack
@@ -9712,7 +9794,7 @@ diff -urNp linux-2.6.31.4/arch/x86/kernel/head32.c linux-2.6.31.4/arch/x86/kerne
  	/* Reserve INITRD */
 diff -urNp linux-2.6.31.4/arch/x86/kernel/head_32.S linux-2.6.31.4/arch/x86/kernel/head_32.S
 --- linux-2.6.31.4/arch/x86/kernel/head_32.S	2009-10-05 13:12:06.000000000 -0400
-+++ linux-2.6.31.4/arch/x86/kernel/head_32.S	2009-10-11 15:29:56.556364216 -0400
++++ linux-2.6.31.4/arch/x86/kernel/head_32.S	2009-10-18 10:15:00.924043933 -0400
 @@ -19,10 +19,17 @@
  #include <asm/setup.h>
  #include <asm/processor-flags.h>
@@ -9783,7 +9865,7 @@ diff -urNp linux-2.6.31.4/arch/x86/kernel/head_32.S linux-2.6.31.4/arch/x86/kern
 +	movb %al,__KERNEL_PERCPU + 4(%edi)
 +	movb %ah,__KERNEL_PERCPU + 7(%edi)
 +	movl $__per_cpu_end - 1,%eax
-+	subl $__per_cpu_load,%eax
++	subl $__per_cpu_start,%eax
 +	movw %ax,__KERNEL_PERCPU + 0(%edi)
 +#endif
 +
@@ -10726,16 +10808,8 @@ diff -urNp linux-2.6.31.4/arch/x86/kernel/microcode_intel.c linux-2.6.31.4/arch/
  }
 diff -urNp linux-2.6.31.4/arch/x86/kernel/module.c linux-2.6.31.4/arch/x86/kernel/module.c
 --- linux-2.6.31.4/arch/x86/kernel/module.c	2009-10-05 13:12:06.000000000 -0400
-+++ linux-2.6.31.4/arch/x86/kernel/module.c	2009-10-12 23:12:55.189930027 -0400
-@@ -27,6 +27,7 @@
- #include <asm/system.h>
- #include <asm/page.h>
- #include <asm/pgtable.h>
-+#include <asm/desc.h>
- 
- #if 0
- #define DEBUGP printk
-@@ -34,7 +35,7 @@
++++ linux-2.6.31.4/arch/x86/kernel/module.c	2009-10-18 10:09:07.037806226 -0400
+@@ -34,7 +34,7 @@
  #define DEBUGP(fmt...)
  #endif
  
@@ -10744,7 +10818,7 @@ diff -urNp linux-2.6.31.4/arch/x86/kernel/module.c linux-2.6.31.4/arch/x86/kerne
  {
  	struct vm_struct *area;
  
-@@ -48,9 +49,90 @@ void *module_alloc(unsigned long size)
+@@ -48,9 +48,90 @@ void *module_alloc(unsigned long size)
  	if (!area)
  		return NULL;
  
@@ -10837,7 +10911,7 @@ diff -urNp linux-2.6.31.4/arch/x86/kernel/module.c linux-2.6.31.4/arch/x86/kerne
  
  /* Free memory returned from module_alloc */
  void module_free(struct module *mod, void *module_region)
-@@ -77,14 +159,16 @@ int apply_relocate(Elf32_Shdr *sechdrs,
+@@ -77,14 +158,16 @@ int apply_relocate(Elf32_Shdr *sechdrs,
  	unsigned int i;
  	Elf32_Rel *rel = (void *)sechdrs[relsec].sh_addr;
  	Elf32_Sym *sym;
@@ -10857,7 +10931,7 @@ diff -urNp linux-2.6.31.4/arch/x86/kernel/module.c linux-2.6.31.4/arch/x86/kerne
  		/* This is the symbol it is referring to.  Note that all
  		   undefined symbols have been resolved.  */
  		sym = (Elf32_Sym *)sechdrs[symindex].sh_addr
-@@ -93,11 +177,15 @@ int apply_relocate(Elf32_Shdr *sechdrs,
+@@ -93,11 +176,15 @@ int apply_relocate(Elf32_Shdr *sechdrs,
  		switch (ELF32_R_TYPE(rel[i].r_info)) {
  		case R_386_32:
  			/* We add the value into the location given */
@@ -10875,7 +10949,7 @@ diff -urNp linux-2.6.31.4/arch/x86/kernel/module.c linux-2.6.31.4/arch/x86/kerne
  			break;
  		default:
  			printk(KERN_ERR "module %s: Unknown relocation: %u\n",
-@@ -153,21 +241,30 @@ int apply_relocate_add(Elf64_Shdr *sechd
+@@ -153,21 +240,30 @@ int apply_relocate_add(Elf64_Shdr *sechd
  		case R_X86_64_NONE:
  			break;
  		case R_X86_64_64:
@@ -12174,7 +12248,7 @@ diff -urNp linux-2.6.31.4/arch/x86/kernel/vm86_32.c linux-2.6.31.4/arch/x86/kern
  		tsk->thread.sysenter_cs = 0;
 diff -urNp linux-2.6.31.4/arch/x86/kernel/vmi_32.c linux-2.6.31.4/arch/x86/kernel/vmi_32.c
 --- linux-2.6.31.4/arch/x86/kernel/vmi_32.c	2009-10-05 13:12:06.000000000 -0400
-+++ linux-2.6.31.4/arch/x86/kernel/vmi_32.c	2009-10-13 19:00:18.380098626 -0400
++++ linux-2.6.31.4/arch/x86/kernel/vmi_32.c	2009-10-18 10:15:00.936767037 -0400
 @@ -44,12 +44,17 @@ typedef u32 __attribute__((regparm(1))) 
  typedef u64 __attribute__((regparm(2))) (VROMLONGFUNC)(int);
  
@@ -12253,10 +12327,11 @@ diff -urNp linux-2.6.31.4/arch/x86/kernel/vmi_32.c linux-2.6.31.4/arch/x86/kerne
  	ap.fs = __KERNEL_PERCPU;
  	ap.gs = __KERNEL_STACK_CANARY;
  
-@@ -486,6 +492,16 @@ static void vmi_leave_lazy_mmu(void)
+@@ -486,6 +492,18 @@ static void vmi_leave_lazy_mmu(void)
  	paravirt_leave_lazy_mmu();
  }
  
++#ifdef CONFIG_PAX_KERNEXEC
 +static unsigned long vmi_pax_open_kernel(void)
 +{
 +	return 0;
@@ -12266,11 +12341,12 @@ diff -urNp linux-2.6.31.4/arch/x86/kernel/vmi_32.c linux-2.6.31.4/arch/x86/kerne
 +{
 +	return 0;
 +}
++#endif
 +
  static inline int __init check_vmi_rom(struct vrom_header *rom)
  {
  	struct pci_header *pci;
-@@ -498,6 +514,10 @@ static inline int __init check_vmi_rom(s
+@@ -498,6 +516,10 @@ static inline int __init check_vmi_rom(s
  		return 0;
  	if (rom->vrom_signature != VMI_SIGNATURE)
  		return 0;
@@ -12281,7 +12357,7 @@ diff -urNp linux-2.6.31.4/arch/x86/kernel/vmi_32.c linux-2.6.31.4/arch/x86/kerne
  	if (rom->api_version_maj != VMI_API_REV_MAJOR ||
  	    rom->api_version_min+1 < VMI_API_REV_MINOR+1) {
  		printk(KERN_WARNING "VMI: Found mismatched rom version %d.%d\n",
-@@ -562,7 +582,7 @@ static inline int __init probe_vmi_rom(v
+@@ -562,7 +584,7 @@ static inline int __init probe_vmi_rom(v
  		struct vrom_header *romstart;
  		romstart = (struct vrom_header *)isa_bus_to_virt(base);
  		if (check_vmi_rom(romstart)) {
@@ -12290,7 +12366,7 @@ diff -urNp linux-2.6.31.4/arch/x86/kernel/vmi_32.c linux-2.6.31.4/arch/x86/kerne
  			return 1;
  		}
  	}
-@@ -836,6 +856,11 @@ static inline int __init activate_vmi(vo
+@@ -836,6 +858,11 @@ static inline int __init activate_vmi(vo
  
  	para_fill(pv_irq_ops.safe_halt, Halt);
  
@@ -12302,7 +12378,7 @@ diff -urNp linux-2.6.31.4/arch/x86/kernel/vmi_32.c linux-2.6.31.4/arch/x86/kerne
  	/*
  	 * Alternative instruction rewriting doesn't happen soon enough
  	 * to convert VMI_IRET to a call instead of a jump; so we have
-@@ -853,16 +878,16 @@ static inline int __init activate_vmi(vo
+@@ -853,16 +880,16 @@ static inline int __init activate_vmi(vo
  
  void __init vmi_init(void)
  {
@@ -12323,7 +12399,7 @@ diff -urNp linux-2.6.31.4/arch/x86/kernel/vmi_32.c linux-2.6.31.4/arch/x86/kerne
  
  #ifdef CONFIG_X86_IO_APIC
  	/* This is virtual hardware; timer routing is wired correctly */
-@@ -874,7 +899,7 @@ void __init vmi_activate(void)
+@@ -874,7 +901,7 @@ void __init vmi_activate(void)
  {
  	unsigned long flags;
  
@@ -15523,16 +15599,8 @@ diff -urNp linux-2.6.31.4/arch/x86/mm/hugetlbpage.c linux-2.6.31.4/arch/x86/mm/h
  	}
 diff -urNp linux-2.6.31.4/arch/x86/mm/init_32.c linux-2.6.31.4/arch/x86/mm/init_32.c
 --- linux-2.6.31.4/arch/x86/mm/init_32.c	2009-10-05 13:12:06.000000000 -0400
-+++ linux-2.6.31.4/arch/x86/mm/init_32.c	2009-10-11 15:29:56.560399027 -0400
-@@ -51,6 +51,7 @@
- #include <asm/cacheflush.h>
- #include <asm/page_types.h>
- #include <asm/init.h>
-+#include <asm/desc.h>
- 
- unsigned long highstart_pfn, highend_pfn;
- 
-@@ -72,36 +73,6 @@ static __init void *alloc_low_page(void)
++++ linux-2.6.31.4/arch/x86/mm/init_32.c	2009-10-18 10:09:07.063636365 -0400
+@@ -72,36 +72,6 @@ static __init void *alloc_low_page(void)
  }
  
  /*
@@ -15569,7 +15637,7 @@ diff -urNp linux-2.6.31.4/arch/x86/mm/init_32.c linux-2.6.31.4/arch/x86/mm/init_
   * Create a page table and place a pointer to it in a middle page
   * directory entry:
   */
-@@ -121,13 +92,28 @@ static pte_t * __init one_page_table_ini
+@@ -121,13 +91,28 @@ static pte_t * __init one_page_table_ini
  			page_table = (pte_t *)alloc_low_page();
  
  		paravirt_alloc_pte(&init_mm, __pa(page_table) >> PAGE_SHIFT);
@@ -15598,7 +15666,7 @@ diff -urNp linux-2.6.31.4/arch/x86/mm/init_32.c linux-2.6.31.4/arch/x86/mm/init_
  pmd_t * __init populate_extra_pmd(unsigned long vaddr)
  {
  	int pgd_idx = pgd_index(vaddr);
-@@ -201,6 +187,7 @@ page_table_range_init(unsigned long star
+@@ -201,6 +186,7 @@ page_table_range_init(unsigned long star
  	int pgd_idx, pmd_idx;
  	unsigned long vaddr;
  	pgd_t *pgd;
@@ -15606,7 +15674,7 @@ diff -urNp linux-2.6.31.4/arch/x86/mm/init_32.c linux-2.6.31.4/arch/x86/mm/init_
  	pmd_t *pmd;
  	pte_t *pte = NULL;
  
-@@ -210,8 +197,13 @@ page_table_range_init(unsigned long star
+@@ -210,8 +196,13 @@ page_table_range_init(unsigned long star
  	pgd = pgd_base + pgd_idx;
  
  	for ( ; (pgd_idx < PTRS_PER_PGD) && (vaddr != end); pgd++, pgd_idx++) {
@@ -15622,7 +15690,7 @@ diff -urNp linux-2.6.31.4/arch/x86/mm/init_32.c linux-2.6.31.4/arch/x86/mm/init_
  		for (; (pmd_idx < PTRS_PER_PMD) && (vaddr != end);
  							pmd++, pmd_idx++) {
  			pte = page_table_kmap_check(one_page_table_init(pmd),
-@@ -223,11 +215,20 @@ page_table_range_init(unsigned long star
+@@ -223,11 +214,20 @@ page_table_range_init(unsigned long star
  	}
  }
  
@@ -15647,7 +15715,7 @@ diff -urNp linux-2.6.31.4/arch/x86/mm/init_32.c linux-2.6.31.4/arch/x86/mm/init_
  }
  
  /*
-@@ -243,9 +244,10 @@ kernel_physical_mapping_init(unsigned lo
+@@ -243,9 +243,10 @@ kernel_physical_mapping_init(unsigned lo
  	int use_pse = page_size_mask == (1<<PG_LEVEL_2M);
  	unsigned long start_pfn, end_pfn;
  	pgd_t *pgd_base = swapper_pg_dir;
@@ -15659,7 +15727,7 @@ diff -urNp linux-2.6.31.4/arch/x86/mm/init_32.c linux-2.6.31.4/arch/x86/mm/init_
  	pmd_t *pmd;
  	pte_t *pte;
  	unsigned pages_2m, pages_4k;
-@@ -278,8 +280,13 @@ repeat:
+@@ -278,8 +279,13 @@ repeat:
  	pfn = start_pfn;
  	pgd_idx = pgd_index((pfn<<PAGE_SHIFT) + PAGE_OFFSET);
  	pgd = pgd_base + pgd_idx;
@@ -15675,7 +15743,7 @@ diff -urNp linux-2.6.31.4/arch/x86/mm/init_32.c linux-2.6.31.4/arch/x86/mm/init_
  
  		if (pfn >= end_pfn)
  			continue;
-@@ -291,14 +298,13 @@ repeat:
+@@ -291,14 +297,13 @@ repeat:
  #endif
  		for (; pmd_idx < PTRS_PER_PMD && pfn < end_pfn;
  		     pmd++, pmd_idx++) {
@@ -15691,7 +15759,7 @@ diff -urNp linux-2.6.31.4/arch/x86/mm/init_32.c linux-2.6.31.4/arch/x86/mm/init_
  				pgprot_t prot = PAGE_KERNEL_LARGE;
  				/*
  				 * first pass will use the same initial
-@@ -308,11 +314,7 @@ repeat:
+@@ -308,11 +313,7 @@ repeat:
  					__pgprot(PTE_IDENT_ATTR |
  						 _PAGE_PSE);
  
@@ -15704,7 +15772,7 @@ diff -urNp linux-2.6.31.4/arch/x86/mm/init_32.c linux-2.6.31.4/arch/x86/mm/init_
  					prot = PAGE_KERNEL_LARGE_EXEC;
  
  				pages_2m++;
-@@ -329,7 +331,7 @@ repeat:
+@@ -329,7 +330,7 @@ repeat:
  			pte_ofs = pte_index((pfn<<PAGE_SHIFT) + PAGE_OFFSET);
  			pte += pte_ofs;
  			for (; pte_ofs < PTRS_PER_PTE && pfn < end_pfn;
@@ -15713,7 +15781,7 @@ diff -urNp linux-2.6.31.4/arch/x86/mm/init_32.c linux-2.6.31.4/arch/x86/mm/init_
  				pgprot_t prot = PAGE_KERNEL;
  				/*
  				 * first pass will use the same initial
-@@ -337,7 +339,7 @@ repeat:
+@@ -337,7 +338,7 @@ repeat:
  				 */
  				pgprot_t init_prot = __pgprot(PTE_IDENT_ATTR);
  
@@ -15722,7 +15790,7 @@ diff -urNp linux-2.6.31.4/arch/x86/mm/init_32.c linux-2.6.31.4/arch/x86/mm/init_
  					prot = PAGE_KERNEL_EXEC;
  
  				pages_4k++;
-@@ -489,7 +491,7 @@ void __init native_pagetable_setup_start
+@@ -489,7 +490,7 @@ void __init native_pagetable_setup_start
  
  		pud = pud_offset(pgd, va);
  		pmd = pmd_offset(pud, va);
@@ -15731,7 +15799,7 @@ diff -urNp linux-2.6.31.4/arch/x86/mm/init_32.c linux-2.6.31.4/arch/x86/mm/init_
  			break;
  
  		pte = pte_offset_kernel(pmd, va);
-@@ -541,9 +543,7 @@ void __init early_ioremap_page_table_ran
+@@ -541,9 +542,7 @@ void __init early_ioremap_page_table_ran
  
  static void __init pagetable_init(void)
  {
@@ -15742,7 +15810,7 @@ diff -urNp linux-2.6.31.4/arch/x86/mm/init_32.c linux-2.6.31.4/arch/x86/mm/init_
  }
  
  #ifdef CONFIG_ACPI_SLEEP
-@@ -551,12 +551,12 @@ static void __init pagetable_init(void)
+@@ -551,12 +550,12 @@ static void __init pagetable_init(void)
   * ACPI suspend needs this for resume, because things like the intel-agp
   * driver might have split up a kernel 4MB mapping.
   */
@@ -15757,7 +15825,7 @@ diff -urNp linux-2.6.31.4/arch/x86/mm/init_32.c linux-2.6.31.4/arch/x86/mm/init_
  }
  #else /* !CONFIG_ACPI_SLEEP */
  static inline void save_pg_dir(void)
-@@ -588,7 +588,7 @@ void zap_low_mappings(bool early)
+@@ -588,7 +587,7 @@ void zap_low_mappings(bool early)
  		flush_tlb_all();
  }
  
@@ -15766,7 +15834,7 @@ diff -urNp linux-2.6.31.4/arch/x86/mm/init_32.c linux-2.6.31.4/arch/x86/mm/init_
  EXPORT_SYMBOL_GPL(__supported_pte_mask);
  
  /* user-defined highmem size */
-@@ -883,7 +883,7 @@ void __init mem_init(void)
+@@ -883,7 +882,7 @@ void __init mem_init(void)
  	set_highmem_pages_init();
  
  	codesize =  (unsigned long) &_etext - (unsigned long) &_text;
@@ -15775,7 +15843,7 @@ diff -urNp linux-2.6.31.4/arch/x86/mm/init_32.c linux-2.6.31.4/arch/x86/mm/init_
  	initsize =  (unsigned long) &__init_end - (unsigned long) &__init_begin;
  
  	kclist_add(&kcore_mem, __va(0), max_low_pfn << PAGE_SHIFT);
-@@ -929,10 +929,10 @@ void __init mem_init(void)
+@@ -929,10 +928,10 @@ void __init mem_init(void)
  		((unsigned long)&__init_end -
  		 (unsigned long)&__init_begin) >> 10,
  
@@ -16162,16 +16230,8 @@ diff -urNp linux-2.6.31.4/arch/x86/mm/numa_32.c linux-2.6.31.4/arch/x86/mm/numa_
  #define LARGE_PAGE_BYTES (PTRS_PER_PTE * PAGE_SIZE)
 diff -urNp linux-2.6.31.4/arch/x86/mm/pageattr.c linux-2.6.31.4/arch/x86/mm/pageattr.c
 --- linux-2.6.31.4/arch/x86/mm/pageattr.c	2009-10-05 13:12:06.000000000 -0400
-+++ linux-2.6.31.4/arch/x86/mm/pageattr.c	2009-10-12 23:12:55.287156226 -0400
-@@ -22,6 +22,7 @@
- #include <asm/pgalloc.h>
- #include <asm/proto.h>
- #include <asm/pat.h>
-+#include <asm/desc.h>
- 
- /*
-  * The current flushing context - we pass it instead of 5 arguments:
-@@ -267,9 +268,10 @@ static inline pgprot_t static_protection
++++ linux-2.6.31.4/arch/x86/mm/pageattr.c	2009-10-18 10:09:07.072973187 -0400
+@@ -267,9 +267,10 @@ static inline pgprot_t static_protection
  	 * Does not cover __inittext since that is gone later on. On
  	 * 64bit we do not enforce !NX on the low mapping
  	 */
@@ -16183,7 +16243,7 @@ diff -urNp linux-2.6.31.4/arch/x86/mm/pageattr.c linux-2.6.31.4/arch/x86/mm/page
  	/*
  	 * The .rodata section needs to be read-only. Using the pfn
  	 * catches all aliases.
-@@ -277,6 +279,7 @@ static inline pgprot_t static_protection
+@@ -277,6 +278,7 @@ static inline pgprot_t static_protection
  	if (within(pfn, __pa((unsigned long)__start_rodata) >> PAGE_SHIFT,
  		   __pa((unsigned long)__end_rodata) >> PAGE_SHIFT))
  		pgprot_val(forbidden) |= _PAGE_RW;
@@ -16191,7 +16251,7 @@ diff -urNp linux-2.6.31.4/arch/x86/mm/pageattr.c linux-2.6.31.4/arch/x86/mm/page
  
  	prot = __pgprot(pgprot_val(prot) & ~pgprot_val(forbidden));
  
-@@ -330,7 +333,10 @@ EXPORT_SYMBOL_GPL(lookup_address);
+@@ -330,7 +332,10 @@ EXPORT_SYMBOL_GPL(lookup_address);
  static void __set_pmd_pte(pte_t *kpte, unsigned long address, pte_t pte)
  {
  	/* change init_mm */
@@ -19345,8 +19405,36 @@ diff -urNp linux-2.6.31.4/drivers/char/sonypi.c linux-2.6.31.4/drivers/char/sony
  	return 0;
 diff -urNp linux-2.6.31.4/drivers/char/tpm/tpm_bios.c linux-2.6.31.4/drivers/char/tpm/tpm_bios.c
 --- linux-2.6.31.4/drivers/char/tpm/tpm_bios.c	2009-10-05 13:12:06.000000000 -0400
-+++ linux-2.6.31.4/drivers/char/tpm/tpm_bios.c	2009-10-11 15:29:42.295596930 -0400
-@@ -343,14 +343,14 @@ static int tpm_ascii_bios_measurements_s
++++ linux-2.6.31.4/drivers/char/tpm/tpm_bios.c	2009-10-18 10:15:00.940967436 -0400
+@@ -172,7 +172,7 @@ static void *tpm_bios_measurements_start
+ 	event = addr;
+ 
+ 	if ((event->event_type == 0 && event->event_size == 0) ||
+-	    ((addr + sizeof(struct tcpa_event) + event->event_size) >= limit))
++	    (event->event_size >= limit - addr - sizeof(struct tcpa_event)))
+ 		return NULL;
+ 
+ 	return addr;
+@@ -197,7 +197,7 @@ static void *tpm_bios_measurements_next(
+ 		return NULL;
+ 
+ 	if ((event->event_type == 0 && event->event_size == 0) ||
+-	    ((v + sizeof(struct tcpa_event) + event->event_size) >= limit))
++	    (event->event_size >= limit - v - sizeof(struct tcpa_event)))
+ 		return NULL;
+ 
+ 	(*pos)++;
+@@ -290,7 +290,8 @@ static int tpm_binary_bios_measurements_
+ 	int i;
+ 
+ 	for (i = 0; i < sizeof(struct tcpa_event) + event->event_size; i++)
+-		seq_putc(m, data[i]);
++		if (!seq_putc(m, data[i]))
++			return -EFAULT;
+ 
+ 	return 0;
+ }
+@@ -343,14 +344,14 @@ static int tpm_ascii_bios_measurements_s
  	return 0;
  }
  
@@ -19363,6 +19451,18 @@ diff -urNp linux-2.6.31.4/drivers/char/tpm/tpm_bios.c linux-2.6.31.4/drivers/cha
  	.start = tpm_bios_measurements_start,
  	.next = tpm_bios_measurements_next,
  	.stop = tpm_bios_measurements_stop,
+@@ -409,6 +410,11 @@ static int read_log(struct tpm_bios_log 
+ 	log->bios_event_log_end = log->bios_event_log + len;
+ 
+ 	virt = acpi_os_map_memory(start, len);
++	if (!virt) {
++		kfree(log->bios_event_log);
++		log->bios_event_log = NULL;
++		return -EFAULT;
++	}
+ 
+ 	memcpy(log->bios_event_log, virt, len);
+ 
 diff -urNp linux-2.6.31.4/drivers/char/tty_ldisc.c linux-2.6.31.4/drivers/char/tty_ldisc.c
 --- linux-2.6.31.4/drivers/char/tty_ldisc.c	2009-10-12 23:26:17.710631970 -0400
 +++ linux-2.6.31.4/drivers/char/tty_ldisc.c	2009-10-12 23:26:38.914481208 -0400
@@ -19788,6 +19888,66 @@ diff -urNp linux-2.6.31.4/drivers/gpu/drm/ttm/ttm_bo_vm.c linux-2.6.31.4/drivers
  	.fault = ttm_bo_vm_fault,
  	.open = ttm_bo_vm_open,
  	.close = ttm_bo_vm_close
+diff -urNp linux-2.6.31.4/drivers/gpu/drm/ttm/ttm_global.c linux-2.6.31.4/drivers/gpu/drm/ttm/ttm_global.c
+--- linux-2.6.31.4/drivers/gpu/drm/ttm/ttm_global.c	2009-10-05 13:12:06.000000000 -0400
++++ linux-2.6.31.4/drivers/gpu/drm/ttm/ttm_global.c	2009-10-18 10:09:07.093644495 -0400
+@@ -36,7 +36,7 @@
+ struct ttm_global_item {
+ 	struct mutex mutex;
+ 	void *object;
+-	int refcount;
++	atomic_t refcount;
+ };
+ 
+ static struct ttm_global_item glob[TTM_GLOBAL_NUM];
+@@ -49,7 +49,7 @@ void ttm_global_init(void)
+ 		struct ttm_global_item *item = &glob[i];
+ 		mutex_init(&item->mutex);
+ 		item->object = NULL;
+-		item->refcount = 0;
++		atomic_set(&item->refcount, 0);
+ 	}
+ }
+ 
+@@ -59,7 +59,7 @@ void ttm_global_release(void)
+ 	for (i = 0; i < TTM_GLOBAL_NUM; ++i) {
+ 		struct ttm_global_item *item = &glob[i];
+ 		BUG_ON(item->object != NULL);
+-		BUG_ON(item->refcount != 0);
++		BUG_ON(atomic_read(&item->refcount) != 0);
+ 	}
+ }
+ 
+@@ -70,7 +70,7 @@ int ttm_global_item_ref(struct ttm_globa
+ 	void *object;
+ 
+ 	mutex_lock(&item->mutex);
+-	if (item->refcount == 0) {
++	if (atomic_read(&item->refcount) == 0) {
+ 		item->object = kmalloc(ref->size, GFP_KERNEL);
+ 		if (unlikely(item->object == NULL)) {
+ 			ret = -ENOMEM;
+@@ -82,7 +82,7 @@ int ttm_global_item_ref(struct ttm_globa
+ 		if (unlikely(ret != 0))
+ 			goto out_err;
+ 
+-		++item->refcount;
++		atomic_inc(&item->refcount);
+ 	}
+ 	ref->object = item->object;
+ 	object = item->object;
+@@ -101,9 +101,9 @@ void ttm_global_item_unref(struct ttm_gl
+ 	struct ttm_global_item *item = &glob[ref->global_type];
+ 
+ 	mutex_lock(&item->mutex);
+-	BUG_ON(item->refcount == 0);
++	BUG_ON(atomic_read(&item->refcount) == 0);
+ 	BUG_ON(ref->object != item->object);
+-	if (--item->refcount == 0) {
++	if (atomic_dec_and_test(&item->refcount)) {
+ 		ref->release(ref);
+ 		kfree(item->object);
+ 		item->object = NULL;
 diff -urNp linux-2.6.31.4/drivers/hwmon/fschmd.c linux-2.6.31.4/drivers/hwmon/fschmd.c
 --- linux-2.6.31.4/drivers/hwmon/fschmd.c	2009-10-05 13:12:06.000000000 -0400
 +++ linux-2.6.31.4/drivers/hwmon/fschmd.c	2009-10-11 15:29:42.745523075 -0400
@@ -22925,19 +23085,8 @@ diff -urNp linux-2.6.31.4/fs/binfmt_aout.c linux-2.6.31.4/fs/binfmt_aout.c
  		up_write(&current->mm->mmap_sem);
 diff -urNp linux-2.6.31.4/fs/binfmt_elf.c linux-2.6.31.4/fs/binfmt_elf.c
 --- linux-2.6.31.4/fs/binfmt_elf.c	2009-10-05 13:12:06.000000000 -0400
-+++ linux-2.6.31.4/fs/binfmt_elf.c	2009-10-11 15:29:45.593483917 -0400
-@@ -35,6 +35,10 @@
- #include <asm/param.h>
- #include <asm/page.h>
- 
-+#ifdef CONFIG_PAX_SEGMEXEC
-+#include <asm/desc.h>
-+#endif
-+
- static int load_elf_binary(struct linux_binprm *bprm, struct pt_regs *regs);
- static int load_elf_library(struct file *);
- static unsigned long elf_map(struct file *, unsigned long, struct elf_phdr *,
-@@ -50,6 +54,10 @@ static int elf_core_dump(long signr, str
++++ linux-2.6.31.4/fs/binfmt_elf.c	2009-10-18 10:09:07.073630739 -0400
+@@ -50,6 +50,10 @@ static int elf_core_dump(long signr, str
  #define elf_core_dump	NULL
  #endif
  
@@ -22948,7 +23097,7 @@ diff -urNp linux-2.6.31.4/fs/binfmt_elf.c linux-2.6.31.4/fs/binfmt_elf.c
  #if ELF_EXEC_PAGESIZE > PAGE_SIZE
  #define ELF_MIN_ALIGN	ELF_EXEC_PAGESIZE
  #else
-@@ -69,6 +77,11 @@ static struct linux_binfmt elf_format = 
+@@ -69,6 +73,11 @@ static struct linux_binfmt elf_format = 
  		.load_binary	= load_elf_binary,
  		.load_shlib	= load_elf_library,
  		.core_dump	= elf_core_dump,
@@ -22960,7 +23109,7 @@ diff -urNp linux-2.6.31.4/fs/binfmt_elf.c linux-2.6.31.4/fs/binfmt_elf.c
  		.min_coredump	= ELF_EXEC_PAGESIZE,
  		.hasvdso	= 1
  };
-@@ -77,6 +90,8 @@ static struct linux_binfmt elf_format = 
+@@ -77,6 +86,8 @@ static struct linux_binfmt elf_format = 
  
  static int set_brk(unsigned long start, unsigned long end)
  {
@@ -22969,7 +23118,7 @@ diff -urNp linux-2.6.31.4/fs/binfmt_elf.c linux-2.6.31.4/fs/binfmt_elf.c
  	start = ELF_PAGEALIGN(start);
  	end = ELF_PAGEALIGN(end);
  	if (end > start) {
-@@ -87,7 +102,7 @@ static int set_brk(unsigned long start, 
+@@ -87,7 +98,7 @@ static int set_brk(unsigned long start, 
  		if (BAD_ADDR(addr))
  			return addr;
  	}
@@ -22978,7 +23127,7 @@ diff -urNp linux-2.6.31.4/fs/binfmt_elf.c linux-2.6.31.4/fs/binfmt_elf.c
  	return 0;
  }
  
-@@ -148,7 +163,7 @@ create_elf_tables(struct linux_binprm *b
+@@ -148,7 +159,7 @@ create_elf_tables(struct linux_binprm *b
  	elf_addr_t __user *u_rand_bytes;
  	const char *k_platform = ELF_PLATFORM;
  	const char *k_base_platform = ELF_BASE_PLATFORM;
@@ -22987,7 +23136,7 @@ diff -urNp linux-2.6.31.4/fs/binfmt_elf.c linux-2.6.31.4/fs/binfmt_elf.c
  	int items;
  	elf_addr_t *elf_info;
  	int ei_index = 0;
-@@ -195,6 +210,10 @@ create_elf_tables(struct linux_binprm *b
+@@ -195,6 +206,10 @@ create_elf_tables(struct linux_binprm *b
  	 * Generate 16 random bytes for userspace PRNG seeding.
  	 */
  	get_random_bytes(k_rand_bytes, sizeof(k_rand_bytes));
@@ -22998,7 +23147,7 @@ diff -urNp linux-2.6.31.4/fs/binfmt_elf.c linux-2.6.31.4/fs/binfmt_elf.c
  	u_rand_bytes = (elf_addr_t __user *)
  		       STACK_ALLOC(p, sizeof(k_rand_bytes));
  	if (__copy_to_user(u_rand_bytes, k_rand_bytes, sizeof(k_rand_bytes)))
-@@ -385,10 +404,10 @@ static unsigned long load_elf_interp(str
+@@ -385,10 +400,10 @@ static unsigned long load_elf_interp(str
  {
  	struct elf_phdr *elf_phdata;
  	struct elf_phdr *eppnt;
@@ -23011,7 +23160,7 @@ diff -urNp linux-2.6.31.4/fs/binfmt_elf.c linux-2.6.31.4/fs/binfmt_elf.c
  	unsigned long total_size;
  	int retval, i, size;
  
-@@ -434,6 +453,11 @@ static unsigned long load_elf_interp(str
+@@ -434,6 +449,11 @@ static unsigned long load_elf_interp(str
  		goto out_close;
  	}
  
@@ -23023,7 +23172,7 @@ diff -urNp linux-2.6.31.4/fs/binfmt_elf.c linux-2.6.31.4/fs/binfmt_elf.c
  	eppnt = elf_phdata;
  	for (i = 0; i < interp_elf_ex->e_phnum; i++, eppnt++) {
  		if (eppnt->p_type == PT_LOAD) {
-@@ -477,8 +501,8 @@ static unsigned long load_elf_interp(str
+@@ -477,8 +497,8 @@ static unsigned long load_elf_interp(str
  			k = load_addr + eppnt->p_vaddr;
  			if (BAD_ADDR(k) ||
  			    eppnt->p_filesz > eppnt->p_memsz ||
@@ -23034,7 +23183,7 @@ diff -urNp linux-2.6.31.4/fs/binfmt_elf.c linux-2.6.31.4/fs/binfmt_elf.c
  				error = -ENOMEM;
  				goto out_close;
  			}
-@@ -532,6 +556,177 @@ out:
+@@ -532,6 +552,177 @@ out:
  	return error;
  }
  
@@ -23212,7 +23361,7 @@ diff -urNp linux-2.6.31.4/fs/binfmt_elf.c linux-2.6.31.4/fs/binfmt_elf.c
  /*
   * These are the functions used to load ELF style executables and shared
   * libraries.  There is no binary dependent code anywhere else.
-@@ -548,6 +743,11 @@ static unsigned long randomize_stack_top
+@@ -548,6 +739,11 @@ static unsigned long randomize_stack_top
  {
  	unsigned int random_variable = 0;
  
@@ -23224,7 +23373,7 @@ diff -urNp linux-2.6.31.4/fs/binfmt_elf.c linux-2.6.31.4/fs/binfmt_elf.c
  	if ((current->flags & PF_RANDOMIZE) &&
  		!(current->personality & ADDR_NO_RANDOMIZE)) {
  		random_variable = get_random_int() & STACK_RND_MASK;
-@@ -566,7 +766,7 @@ static int load_elf_binary(struct linux_
+@@ -566,7 +762,7 @@ static int load_elf_binary(struct linux_
   	unsigned long load_addr = 0, load_bias = 0;
  	int load_addr_set = 0;
  	char * elf_interpreter = NULL;
@@ -23233,7 +23382,7 @@ diff -urNp linux-2.6.31.4/fs/binfmt_elf.c linux-2.6.31.4/fs/binfmt_elf.c
  	struct elf_phdr *elf_ppnt, *elf_phdata;
  	unsigned long elf_bss, elf_brk;
  	int retval, i;
-@@ -576,11 +776,11 @@ static int load_elf_binary(struct linux_
+@@ -576,11 +772,11 @@ static int load_elf_binary(struct linux_
  	unsigned long start_code, end_code, start_data, end_data;
  	unsigned long reloc_func_desc = 0;
  	int executable_stack = EXSTACK_DEFAULT;
@@ -23246,7 +23395,7 @@ diff -urNp linux-2.6.31.4/fs/binfmt_elf.c linux-2.6.31.4/fs/binfmt_elf.c
  
  	loc = kmalloc(sizeof(*loc), GFP_KERNEL);
  	if (!loc) {
-@@ -742,11 +942,80 @@ static int load_elf_binary(struct linux_
+@@ -742,11 +938,80 @@ static int load_elf_binary(struct linux_
  
  	/* OK, This is the point of no return */
  	current->flags &= ~PF_FORKNOEXEC;
@@ -23328,7 +23477,7 @@ diff -urNp linux-2.6.31.4/fs/binfmt_elf.c linux-2.6.31.4/fs/binfmt_elf.c
  	if (elf_read_implies_exec(loc->elf_ex, executable_stack))
  		current->personality |= READ_IMPLIES_EXEC;
  
-@@ -827,6 +1096,20 @@ static int load_elf_binary(struct linux_
+@@ -827,6 +1092,20 @@ static int load_elf_binary(struct linux_
  #else
  			load_bias = ELF_PAGESTART(ELF_ET_DYN_BASE - vaddr);
  #endif
@@ -23349,7 +23498,7 @@ diff -urNp linux-2.6.31.4/fs/binfmt_elf.c linux-2.6.31.4/fs/binfmt_elf.c
  		}
  
  		error = elf_map(bprm->file, load_bias + vaddr, elf_ppnt,
-@@ -859,9 +1142,9 @@ static int load_elf_binary(struct linux_
+@@ -859,9 +1138,9 @@ static int load_elf_binary(struct linux_
  		 * allowed task size. Note that p_filesz must always be
  		 * <= p_memsz so it is only necessary to check p_memsz.
  		 */
@@ -23362,7 +23511,7 @@ diff -urNp linux-2.6.31.4/fs/binfmt_elf.c linux-2.6.31.4/fs/binfmt_elf.c
  			/* set_brk can never work. Avoid overflows. */
  			send_sig(SIGKILL, current, 0);
  			retval = -EINVAL;
-@@ -889,6 +1172,11 @@ static int load_elf_binary(struct linux_
+@@ -889,6 +1168,11 @@ static int load_elf_binary(struct linux_
  	start_data += load_bias;
  	end_data += load_bias;
  
@@ -23374,7 +23523,7 @@ diff -urNp linux-2.6.31.4/fs/binfmt_elf.c linux-2.6.31.4/fs/binfmt_elf.c
  	/* Calling set_brk effectively mmaps the pages that we need
  	 * for the bss and break sections.  We must do this before
  	 * mapping in the interpreter, to make sure it doesn't wind
-@@ -900,9 +1188,11 @@ static int load_elf_binary(struct linux_
+@@ -900,9 +1184,11 @@ static int load_elf_binary(struct linux_
  		goto out_free_dentry;
  	}
  	if (likely(elf_bss != elf_brk) && unlikely(padzero(elf_bss))) {
@@ -23389,7 +23538,7 @@ diff -urNp linux-2.6.31.4/fs/binfmt_elf.c linux-2.6.31.4/fs/binfmt_elf.c
  	}
  
  	if (elf_interpreter) {
-@@ -1135,8 +1425,10 @@ static int dump_seek(struct file *file, 
+@@ -1135,8 +1421,10 @@ static int dump_seek(struct file *file, 
  			unsigned long n = off;
  			if (n > PAGE_SIZE)
  				n = PAGE_SIZE;
@@ -23401,7 +23550,7 @@ diff -urNp linux-2.6.31.4/fs/binfmt_elf.c linux-2.6.31.4/fs/binfmt_elf.c
  			off -= n;
  		}
  		free_page((unsigned long)buf);
-@@ -1148,7 +1440,7 @@ static int dump_seek(struct file *file, 
+@@ -1148,7 +1436,7 @@ static int dump_seek(struct file *file, 
   * Decide what to dump of a segment, part, all or none.
   */
  static unsigned long vma_dump_size(struct vm_area_struct *vma,
@@ -23410,7 +23559,7 @@ diff -urNp linux-2.6.31.4/fs/binfmt_elf.c linux-2.6.31.4/fs/binfmt_elf.c
  {
  #define FILTER(type)	(mm_flags & (1UL << MMF_DUMP_##type))
  
-@@ -1182,7 +1474,7 @@ static unsigned long vma_dump_size(struc
+@@ -1182,7 +1470,7 @@ static unsigned long vma_dump_size(struc
  	if (vma->vm_file == NULL)
  		return 0;
  
@@ -23419,7 +23568,7 @@ diff -urNp linux-2.6.31.4/fs/binfmt_elf.c linux-2.6.31.4/fs/binfmt_elf.c
  		goto whole;
  
  	/*
-@@ -1278,8 +1570,11 @@ static int writenote(struct memelfnote *
+@@ -1278,8 +1566,11 @@ static int writenote(struct memelfnote *
  #undef DUMP_WRITE
  
  #define DUMP_WRITE(addr, nr)	\
@@ -23432,7 +23581,7 @@ diff -urNp linux-2.6.31.4/fs/binfmt_elf.c linux-2.6.31.4/fs/binfmt_elf.c
  #define DUMP_SEEK(off)	\
  	if (!dump_seek(file, (off))) \
  		goto end_coredump;
-@@ -1991,7 +2286,7 @@ static int elf_core_dump(long signr, str
+@@ -1991,7 +2282,7 @@ static int elf_core_dump(long signr, str
  		phdr.p_offset = offset;
  		phdr.p_vaddr = vma->vm_start;
  		phdr.p_paddr = 0;
@@ -23441,7 +23590,7 @@ diff -urNp linux-2.6.31.4/fs/binfmt_elf.c linux-2.6.31.4/fs/binfmt_elf.c
  		phdr.p_memsz = vma->vm_end - vma->vm_start;
  		offset += phdr.p_filesz;
  		phdr.p_flags = vma->vm_flags & VM_READ ? PF_R : 0;
-@@ -2023,7 +2318,7 @@ static int elf_core_dump(long signr, str
+@@ -2023,7 +2314,7 @@ static int elf_core_dump(long signr, str
  		unsigned long addr;
  		unsigned long end;
  
@@ -23450,7 +23599,7 @@ diff -urNp linux-2.6.31.4/fs/binfmt_elf.c linux-2.6.31.4/fs/binfmt_elf.c
  
  		for (addr = vma->vm_start; addr < end; addr += PAGE_SIZE) {
  			struct page *page;
-@@ -2043,6 +2338,7 @@ static int elf_core_dump(long signr, str
+@@ -2043,6 +2334,7 @@ static int elf_core_dump(long signr, str
  					flush_cache_page(tmp_vma, addr,
  							 page_to_pfn(page));
  					kaddr = kmap(page);
@@ -23458,7 +23607,7 @@ diff -urNp linux-2.6.31.4/fs/binfmt_elf.c linux-2.6.31.4/fs/binfmt_elf.c
  					if ((size += PAGE_SIZE) > limit ||
  					    !dump_write(file, kaddr,
  					    PAGE_SIZE)) {
-@@ -2073,6 +2369,97 @@ out:
+@@ -2073,6 +2365,97 @@ out:
  
  #endif		/* USE_ELF_CORE_DUMP */
  
@@ -40744,7 +40893,7 @@ diff -urNp linux-2.6.31.4/kernel/kprobes.c linux-2.6.31.4/kernel/kprobes.c
  };
 diff -urNp linux-2.6.31.4/kernel/lockdep.c linux-2.6.31.4/kernel/lockdep.c
 --- linux-2.6.31.4/kernel/lockdep.c	2009-10-05 13:12:06.000000000 -0400
-+++ linux-2.6.31.4/kernel/lockdep.c	2009-10-11 15:29:48.970376150 -0400
++++ linux-2.6.31.4/kernel/lockdep.c	2009-10-18 10:09:07.074626502 -0400
 @@ -630,6 +630,10 @@ static int static_obj(void *obj)
  	int i;
  #endif
@@ -40756,17 +40905,12 @@ diff -urNp linux-2.6.31.4/kernel/lockdep.c linux-2.6.31.4/kernel/lockdep.c
  	/*
  	 * static variable?
  	 */
-@@ -641,9 +645,12 @@ static int static_obj(void *obj)
- 	 * percpu var?
+@@ -642,8 +646,7 @@ static int static_obj(void *obj)
  	 */
  	for_each_possible_cpu(i) {
-+#ifdef CONFIG_X86_32
-+		start = per_cpu_offset(i);
-+#else
  		start = (unsigned long) &__per_cpu_start + per_cpu_offset(i);
 -		end   = (unsigned long) &__per_cpu_start + PERCPU_ENOUGH_ROOM
 -					+ per_cpu_offset(i);
-+#endif
 +		end   = start + PERCPU_ENOUGH_ROOM;
  
  		if ((addr >= start) && (addr < end))
@@ -40785,20 +40929,8 @@ diff -urNp linux-2.6.31.4/kernel/lockdep_proc.c linux-2.6.31.4/kernel/lockdep_pr
  	.stop	= ls_stop,
 diff -urNp linux-2.6.31.4/kernel/module.c linux-2.6.31.4/kernel/module.c
 --- linux-2.6.31.4/kernel/module.c	2009-10-05 13:12:06.000000000 -0400
-+++ linux-2.6.31.4/kernel/module.c	2009-10-12 23:12:55.569927026 -0400
-@@ -47,6 +47,11 @@
- #include <linux/rculist.h>
- #include <asm/uaccess.h>
- #include <asm/cacheflush.h>
-+
-+#ifdef CONFIG_PAX_KERNEXEC
-+#include <asm/desc.h>
-+#endif
-+
- #include <linux/license.h>
- #include <asm/sections.h>
- #include <linux/tracepoint.h>
-@@ -83,7 +88,8 @@ static DECLARE_WAIT_QUEUE_HEAD(module_wq
++++ linux-2.6.31.4/kernel/module.c	2009-10-18 10:09:07.075622427 -0400
+@@ -83,7 +83,8 @@ static DECLARE_WAIT_QUEUE_HEAD(module_wq
  static BLOCKING_NOTIFIER_HEAD(module_notify_list);
  
  /* Bounds of module allocation, for speeding __module_address */
@@ -40808,7 +40940,7 @@ diff -urNp linux-2.6.31.4/kernel/module.c linux-2.6.31.4/kernel/module.c
  
  int register_module_notifier(struct notifier_block * nb)
  {
-@@ -239,7 +245,7 @@ bool each_symbol(bool (*fn)(const struct
+@@ -239,7 +240,7 @@ bool each_symbol(bool (*fn)(const struct
  		return true;
  
  	list_for_each_entry_rcu(mod, &modules, list) {
@@ -40817,7 +40949,7 @@ diff -urNp linux-2.6.31.4/kernel/module.c linux-2.6.31.4/kernel/module.c
  			{ mod->syms, mod->syms + mod->num_syms, mod->crcs,
  			  NOT_GPL_ONLY, false },
  			{ mod->gpl_syms, mod->gpl_syms + mod->num_gpl_syms,
-@@ -261,7 +267,7 @@ bool each_symbol(bool (*fn)(const struct
+@@ -261,7 +262,7 @@ bool each_symbol(bool (*fn)(const struct
  #endif
  		};
  
@@ -40826,7 +40958,7 @@ diff -urNp linux-2.6.31.4/kernel/module.c linux-2.6.31.4/kernel/module.c
  			return true;
  	}
  	return false;
-@@ -436,7 +442,7 @@ static void *percpu_modalloc(unsigned lo
+@@ -436,7 +437,7 @@ static void *percpu_modalloc(unsigned lo
  	void *ptr;
  	int cpu;
  
@@ -40835,7 +40967,7 @@ diff -urNp linux-2.6.31.4/kernel/module.c linux-2.6.31.4/kernel/module.c
  		printk(KERN_WARNING "%s: per-cpu alignment %li > %li\n",
  		       name, align, PAGE_SIZE);
  		align = PAGE_SIZE;
-@@ -549,7 +555,11 @@ static void percpu_modcopy(void *pcpudes
+@@ -549,7 +550,11 @@ static void percpu_modcopy(void *pcpudes
  	int cpu;
  
  	for_each_possible_cpu(cpu)
@@ -40847,7 +40979,7 @@ diff -urNp linux-2.6.31.4/kernel/module.c linux-2.6.31.4/kernel/module.c
  }
  
  #else /* ... !CONFIG_SMP */
-@@ -1513,7 +1523,8 @@ static void free_module(struct module *m
+@@ -1513,7 +1518,8 @@ static void free_module(struct module *m
  	destroy_params(mod->kp, mod->num_kp);
  
  	/* This may be NULL, but that's OK */
@@ -40857,7 +40989,7 @@ diff -urNp linux-2.6.31.4/kernel/module.c linux-2.6.31.4/kernel/module.c
  	kfree(mod->args);
  	if (mod->percpu)
  		percpu_modfree(mod->percpu);
-@@ -1522,10 +1533,12 @@ static void free_module(struct module *m
+@@ -1522,10 +1528,12 @@ static void free_module(struct module *m
  		percpu_modfree(mod->refptr);
  #endif
  	/* Free lock-classes: */
@@ -40872,7 +41004,7 @@ diff -urNp linux-2.6.31.4/kernel/module.c linux-2.6.31.4/kernel/module.c
  }
  
  void *__symbol_get(const char *symbol)
-@@ -1615,7 +1628,9 @@ static int simplify_symbols(Elf_Shdr *se
+@@ -1615,7 +1623,9 @@ static int simplify_symbols(Elf_Shdr *se
  					      strtab + sym[i].st_name, mod);
  			/* Ok if resolved.  */
  			if (ksym) {
@@ -40882,7 +41014,7 @@ diff -urNp linux-2.6.31.4/kernel/module.c linux-2.6.31.4/kernel/module.c
  				break;
  			}
  
-@@ -1634,7 +1649,9 @@ static int simplify_symbols(Elf_Shdr *se
+@@ -1634,7 +1644,9 @@ static int simplify_symbols(Elf_Shdr *se
  				secbase = (unsigned long)mod->percpu;
  			else
  				secbase = sechdrs[sym[i].st_shndx].sh_addr;
@@ -40892,7 +41024,7 @@ diff -urNp linux-2.6.31.4/kernel/module.c linux-2.6.31.4/kernel/module.c
  			break;
  		}
  	}
-@@ -1695,11 +1712,12 @@ static void layout_sections(struct modul
+@@ -1695,11 +1707,12 @@ static void layout_sections(struct modul
  			    || s->sh_entsize != ~0UL
  			    || strstarts(secstrings + s->sh_name, ".init"))
  				continue;
@@ -40908,7 +41040,7 @@ diff -urNp linux-2.6.31.4/kernel/module.c linux-2.6.31.4/kernel/module.c
  	}
  
  	DEBUGP("Init section allocation order:\n");
-@@ -1712,12 +1730,13 @@ static void layout_sections(struct modul
+@@ -1712,12 +1725,13 @@ static void layout_sections(struct modul
  			    || s->sh_entsize != ~0UL
  			    || !strstarts(secstrings + s->sh_name, ".init"))
  				continue;
@@ -40926,7 +41058,7 @@ diff -urNp linux-2.6.31.4/kernel/module.c linux-2.6.31.4/kernel/module.c
  	}
  }
  
-@@ -1861,9 +1880,14 @@ static void add_kallsyms(struct module *
+@@ -1861,9 +1875,14 @@ static void add_kallsyms(struct module *
  	mod->strtab = (void *)sechdrs[strindex].sh_addr;
  
  	/* Set types up while we still have access to sections. */
@@ -40944,7 +41076,7 @@ diff -urNp linux-2.6.31.4/kernel/module.c linux-2.6.31.4/kernel/module.c
  }
  #else
  static inline void add_kallsyms(struct module *mod,
-@@ -1884,16 +1908,30 @@ static void dynamic_debug_setup(struct _
+@@ -1884,16 +1903,30 @@ static void dynamic_debug_setup(struct _
  #endif
  }
  
@@ -40980,7 +41112,7 @@ diff -urNp linux-2.6.31.4/kernel/module.c linux-2.6.31.4/kernel/module.c
  	}
  	return ret;
  }
-@@ -1905,8 +1943,8 @@ static void kmemleak_load_module(struct 
+@@ -1905,8 +1938,8 @@ static void kmemleak_load_module(struct 
  	unsigned int i;
  
  	/* only scan the sections containing data */
@@ -40991,7 +41123,7 @@ diff -urNp linux-2.6.31.4/kernel/module.c linux-2.6.31.4/kernel/module.c
  			   sizeof(struct module), GFP_KERNEL);
  
  	for (i = 1; i < hdr->e_shnum; i++) {
-@@ -1916,8 +1954,8 @@ static void kmemleak_load_module(struct 
+@@ -1916,8 +1949,8 @@ static void kmemleak_load_module(struct 
  		    && strncmp(secstrings + sechdrs[i].sh_name, ".bss", 4) != 0)
  			continue;
  
@@ -41002,7 +41134,7 @@ diff -urNp linux-2.6.31.4/kernel/module.c linux-2.6.31.4/kernel/module.c
  				   sechdrs[i].sh_size, GFP_KERNEL);
  	}
  }
-@@ -2097,7 +2135,7 @@ static noinline struct module *load_modu
+@@ -2097,7 +2130,7 @@ static noinline struct module *load_modu
  	layout_sections(mod, hdr, sechdrs, secstrings);
  
  	/* Do the allocs. */
@@ -41011,7 +41143,7 @@ diff -urNp linux-2.6.31.4/kernel/module.c linux-2.6.31.4/kernel/module.c
  	/*
  	 * The pointer to this block is stored in the module structure
  	 * which is inside the block. Just mark it as not being a
-@@ -2108,23 +2146,47 @@ static noinline struct module *load_modu
+@@ -2108,23 +2141,47 @@ static noinline struct module *load_modu
  		err = -ENOMEM;
  		goto free_percpu;
  	}
@@ -41032,9 +41164,12 @@ diff -urNp linux-2.6.31.4/kernel/module.c linux-2.6.31.4/kernel/module.c
 -	if (!ptr && mod->init_size) {
 +	kmemleak_not_leak(ptr);
 +	if (!ptr && mod->init_size_rw) {
-+		err = -ENOMEM;
+ 		err = -ENOMEM;
+-		goto free_core;
 +		goto free_core_rw;
-+	}
+ 	}
+-	memset(ptr, 0, mod->init_size);
+-	mod->module_init = ptr;
 +	memset(ptr, 0, mod->init_size_rw);
 +	mod->module_init_rw = ptr;
 +
@@ -41053,12 +41188,9 @@ diff -urNp linux-2.6.31.4/kernel/module.c linux-2.6.31.4/kernel/module.c
 +	ptr = module_alloc_update_bounds_rx(mod->init_size_rx);
 +	kmemleak_not_leak(ptr);
 +	if (!ptr && mod->init_size_rx) {
- 		err = -ENOMEM;
--		goto free_core;
++		err = -ENOMEM;
 +		goto free_core_rx;
- 	}
--	memset(ptr, 0, mod->init_size);
--	mod->module_init = ptr;
++	}
 +
 +	pax_open_kernel();
 +	memset(ptr, 0, mod->init_size_rx);
@@ -41067,7 +41199,7 @@ diff -urNp linux-2.6.31.4/kernel/module.c linux-2.6.31.4/kernel/module.c
  
  	/* Transfer each section which specifies SHF_ALLOC */
  	DEBUGP("final section addresses:\n");
-@@ -2134,17 +2196,41 @@ static noinline struct module *load_modu
+@@ -2134,17 +2191,41 @@ static noinline struct module *load_modu
  		if (!(sechdrs[i].sh_flags & SHF_ALLOC))
  			continue;
  
@@ -41091,7 +41223,10 @@ diff -urNp linux-2.6.31.4/kernel/module.c linux-2.6.31.4/kernel/module.c
 +		}
 +
 +		if (sechdrs[i].sh_type != SHT_NOBITS) {
-+
+ 
+-		if (sechdrs[i].sh_type != SHT_NOBITS)
+-			memcpy(dest, (void *)sechdrs[i].sh_addr,
+-			       sechdrs[i].sh_size);
 +#ifdef CONFIG_PAX_KERNEXEC
 +			if (!(sechdrs[i].sh_flags & SHF_WRITE) && (sechdrs[i].sh_flags & SHF_ALLOC)) {
 +				pax_open_kernel();
@@ -41099,10 +41234,7 @@ diff -urNp linux-2.6.31.4/kernel/module.c linux-2.6.31.4/kernel/module.c
 +				pax_close_kernel();
 +			} else
 +#endif
- 
--		if (sechdrs[i].sh_type != SHT_NOBITS)
--			memcpy(dest, (void *)sechdrs[i].sh_addr,
--			       sechdrs[i].sh_size);
++
 +			memcpy(dest, (void *)sechdrs[i].sh_addr, sechdrs[i].sh_size);
 +		}
  		/* Update sh_addr to point to copy in image. */
@@ -41118,7 +41250,7 @@ diff -urNp linux-2.6.31.4/kernel/module.c linux-2.6.31.4/kernel/module.c
  		DEBUGP("\t0x%lx %s\n", sechdrs[i].sh_addr, secstrings + sechdrs[i].sh_name);
  	}
  	/* Module has been moved. */
-@@ -2156,7 +2242,7 @@ static noinline struct module *load_modu
+@@ -2156,7 +2237,7 @@ static noinline struct module *load_modu
  				      mod->name);
  	if (!mod->refptr) {
  		err = -ENOMEM;
@@ -41127,7 +41259,7 @@ diff -urNp linux-2.6.31.4/kernel/module.c linux-2.6.31.4/kernel/module.c
  	}
  #endif
  	/* Now we've moved module, initialize linked lists, etc. */
-@@ -2269,8 +2355,8 @@ static noinline struct module *load_modu
+@@ -2269,8 +2350,8 @@ static noinline struct module *load_modu
  
  	/* Now do relocations. */
  	for (i = 1; i < hdr->e_shnum; i++) {
@@ -41137,7 +41269,7 @@ diff -urNp linux-2.6.31.4/kernel/module.c linux-2.6.31.4/kernel/module.c
  
  		/* Not a valid relocation section? */
  		if (info >= hdr->e_shnum)
-@@ -2328,12 +2414,12 @@ static noinline struct module *load_modu
+@@ -2328,12 +2409,12 @@ static noinline struct module *load_modu
  	 * Do it before processing of module parameters, so the module
  	 * can provide parameter accessor functions of its own.
  	 */
@@ -41156,7 +41288,7 @@ diff -urNp linux-2.6.31.4/kernel/module.c linux-2.6.31.4/kernel/module.c
  
  	set_fs(old_fs);
  
-@@ -2378,12 +2464,16 @@ static noinline struct module *load_modu
+@@ -2378,12 +2459,16 @@ static noinline struct module *load_modu
   free_unload:
  	module_unload_free(mod);
  #if defined(CONFIG_MODULE_UNLOAD) && defined(CONFIG_SMP)
@@ -41177,7 +41309,7 @@ diff -urNp linux-2.6.31.4/kernel/module.c linux-2.6.31.4/kernel/module.c
  	/* mod will be freed with core. Don't access it beyond this line! */
   free_percpu:
  	if (percpu)
-@@ -2479,10 +2569,12 @@ SYSCALL_DEFINE3(init_module, void __user
+@@ -2479,10 +2564,12 @@ SYSCALL_DEFINE3(init_module, void __user
  	/* Drop initial reference. */
  	module_put(mod);
  	trim_init_extable(mod);
@@ -41194,7 +41326,7 @@ diff -urNp linux-2.6.31.4/kernel/module.c linux-2.6.31.4/kernel/module.c
  	mutex_unlock(&module_mutex);
  
  	return 0;
-@@ -2513,10 +2605,16 @@ static const char *get_ksymbol(struct mo
+@@ -2513,10 +2600,16 @@ static const char *get_ksymbol(struct mo
  	unsigned long nextval;
  
  	/* At worse, next value is at end of module */
@@ -41214,7 +41346,7 @@ diff -urNp linux-2.6.31.4/kernel/module.c linux-2.6.31.4/kernel/module.c
  
  	/* Scan for closest preceeding symbol, and next symbol. (ELF
  	   starts real symbols at 1). */
-@@ -2762,7 +2860,7 @@ static int m_show(struct seq_file *m, vo
+@@ -2762,7 +2855,7 @@ static int m_show(struct seq_file *m, vo
  	char buf[8];
  
  	seq_printf(m, "%s %u",
@@ -41223,7 +41355,7 @@ diff -urNp linux-2.6.31.4/kernel/module.c linux-2.6.31.4/kernel/module.c
  	print_unload_info(m, mod);
  
  	/* Informative for users. */
-@@ -2771,7 +2869,7 @@ static int m_show(struct seq_file *m, vo
+@@ -2771,7 +2864,7 @@ static int m_show(struct seq_file *m, vo
  		   mod->state == MODULE_STATE_COMING ? "Loading":
  		   "Live");
  	/* Used by oprofile and other similar tools. */
@@ -41232,7 +41364,7 @@ diff -urNp linux-2.6.31.4/kernel/module.c linux-2.6.31.4/kernel/module.c
  
  	/* Taints info */
  	if (mod->taints)
-@@ -2807,7 +2905,17 @@ static const struct file_operations proc
+@@ -2807,7 +2900,17 @@ static const struct file_operations proc
  
  static int __init proc_modules_init(void)
  {
@@ -41250,7 +41382,7 @@ diff -urNp linux-2.6.31.4/kernel/module.c linux-2.6.31.4/kernel/module.c
  	return 0;
  }
  module_init(proc_modules_init);
-@@ -2866,12 +2974,12 @@ struct module *__module_address(unsigned
+@@ -2866,12 +2969,12 @@ struct module *__module_address(unsigned
  {
  	struct module *mod;
  
@@ -41266,7 +41398,7 @@ diff -urNp linux-2.6.31.4/kernel/module.c linux-2.6.31.4/kernel/module.c
  			return mod;
  	return NULL;
  }
-@@ -2905,11 +3013,20 @@ bool is_module_text_address(unsigned lon
+@@ -2905,11 +3008,20 @@ bool is_module_text_address(unsigned lon
   */
  struct module *__module_text_address(unsigned long addr)
  {
