@@ -513,19 +513,6 @@ vmlinux - dekompressiertes Kernel Bild.
 %description vmlinux -l pl.UTF-8
 vmlinux - rozpakowany obraz jądra.
 
-%package dirs
-Summary:	common dirs for kernel packages
-Summary(pl.UTF-8):	Katalogi wspólne dla pakietów kernela
-Group:		Base/Kernel
-
-%description dirs
-This package provides common dirs shared between various kernel
-packages.
-
-%description dirs -l pl.UTF-8
-Katalog ten udostepnia katalogi współdzielone pomiędzy różnymi
-pakietami kernela.
-
 %package drm
 Summary:	DRM kernel modules
 Summary(de.UTF-8):	DRM Kernel Treiber
@@ -1230,6 +1217,10 @@ cd $RPM_BUILD_ROOT%{_kernelsrcdir}
 %{__perl} %{topdir}/kernel-module-build.pl %{_kernelsrcdir} $fileoutdir
 cd -
 
+# move to %{_docdir} so we wouldn't depend on any kernel package for dirs
+install -d $RPM_BUILD_ROOT%{_docdir}
+mv $RPM_BUILD_ROOT{%{_kernelsrcdir}/Documentation,%{_docdir}/%{name}-%{version}}
+
 %clean
 rm -rf $RPM_BUILD_ROOT
 
@@ -1390,10 +1381,6 @@ fi
 %ghost /lib/modules/%{kernel_release}/source
 %dir %{_sysconfdir}/modprobe.d/%{kernel_release}
 
-%files dirs
-%defattr(644,root,root,755)
-%dir %{_kernelsrcdir}
-
 %ifarch alpha %{ix86} %{x8664} ppc ppc64 sparc sparc64
 %files vmlinux
 %defattr(644,root,root,755)
@@ -1472,6 +1459,7 @@ fi
 
 %files headers
 %defattr(644,root,root,755)
+%dir %{_kernelsrcdir}
 %{_kernelsrcdir}/include
 %dir %{_kernelsrcdir}/arch
 %dir %{_kernelsrcdir}/arch/[!K]*
