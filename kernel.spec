@@ -1341,6 +1341,10 @@ touch $RPM_BUILD_ROOT/lib/modules/%{kernel_release}/{build,source}
 # remove unnecessary dir with dead symlink
 rm -rf $RPM_BUILD_ROOT/arch/i386
 
+# move to %{_docdir} so we wouldn't depend on any kernel package for dirs
+install -d $RPM_BUILD_ROOT%{_docdir}
+mv $RPM_BUILD_ROOT{%{_kernelsrcdir}/Documentation,%{_docdir}/%{name}-%{version}}
+
 %clean
 rm -rf $RPM_BUILD_ROOT
 
@@ -1613,8 +1617,7 @@ fi
 
 %files doc
 %defattr(644,root,root,755)
-%dir %{_kernelsrcdir}
-%{_kernelsrcdir}/Documentation
+%doc %{_docdir}/%{name}-%{version}
 
 %if %{with source}
 %files source -f aux_files_exc
