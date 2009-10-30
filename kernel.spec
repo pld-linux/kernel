@@ -550,7 +550,7 @@ Group:		Base/Kernel
 Requires(postun):	%{name} = %{epoch}:%{version}-%{release}
 Requires:	%{name} = %{epoch}:%{version}-%{release}
 Obsoletes:	kernel-smp-drm
-Autoreqprov:	no
+AutoReqProv:	no
 
 %description drm
 DRM kernel modules.
@@ -571,7 +571,7 @@ Requires:	%{name} = %{epoch}:%{version}-%{release}
 Obsoletes:	kernel-smp-pcmcia
 Conflicts:	pcmcia-cs < 3.1.21
 Conflicts:	pcmciautils < 004
-Autoreqprov:	no
+AutoReqProv:	no
 
 %description pcmcia
 PCMCIA modules.
@@ -589,7 +589,7 @@ Group:		Base/Kernel
 Requires:	%{name} = %{epoch}:%{version}-%{release}
 Requires:	mkvmlinuz >= 1.3
 Obsoletes:	kernel-smp-libs
-Autoreqprov:	no
+AutoReqProv:	no
 
 %description libs
 Libraries for preparing bootable kernel on PowerPCs. Script called
@@ -607,7 +607,7 @@ Group:		Base/Kernel
 Requires(postun):	%{name} = %{epoch}:%{version}-%{release}
 Requires:	%{name} = %{epoch}:%{version}-%{release}
 Obsoletes:	kernel-smp-sound-alsa
-Autoreqprov:	no
+AutoReqProv:	no
 
 %description sound-alsa
 ALSA (Advanced Linux Sound Architecture) sound drivers.
@@ -626,7 +626,7 @@ Group:		Base/Kernel
 Requires(postun):	%{name} = %{epoch}:%{version}-%{release}
 Requires:	%{name} = %{epoch}:%{version}-%{release}
 Obsoletes:	kernel-smp-sound-oss
-Autoreqprov:	no
+AutoReqProv:	no
 
 %description sound-oss
 OSS (Open Sound System) drivers.
@@ -643,7 +643,7 @@ Summary(de.UTF-8):	Header Dateien für den Linux-Kernel
 Summary(pl.UTF-8):	Pliki nagłówkowe jądra Linuksa
 Group:		Development/Building
 Provides:	%{name}-headers(netfilter) = %{netfilter_snap}
-Autoreqprov:	no
+AutoReqProv:	no
 
 %description headers
 These are the C header files for the Linux kernel, which define
@@ -666,7 +666,7 @@ Summary(pl.UTF-8):	Pliki służące do budowania modułów jądra
 Group:		Development/Building
 Requires:	%{name}-headers = %{epoch}:%{version}-%{release}
 Conflicts:	rpmbuild(macros) < 1.321
-Autoreqprov:	no
+AutoReqProv:	no
 
 %description module-build
 Development files from kernel source tree needed to build Linux kernel
@@ -686,7 +686,7 @@ Summary(de.UTF-8):	Der Kernel Quelltext
 Summary(pl.UTF-8):	Kod źródłowy jądra Linuksa
 Group:		Development/Building
 Requires:	%{name}-module-build = %{epoch}:%{version}-%{release}
-Autoreqprov:	no
+AutoReqProv:	no
 
 %description source
 This is the source code for the Linux kernel. You can build a custom
@@ -716,7 +716,7 @@ Summary:	Kernel documentation
 Summary(de.UTF-8):	Kernel Dokumentation
 Summary(pl.UTF-8):	Dokumentacja do jądra Linuksa
 Group:		Documentation
-Autoreqprov:	no
+AutoReqProv:	no
 
 %description doc
 This is the documentation for the Linux kernel, as found in
