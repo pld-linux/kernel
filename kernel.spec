@@ -112,7 +112,7 @@
 
 %define		basever		2.6.31
 %define		postver		.5
-%define		rel		0.3
+%define		rel		1
 
 %define		_enable_debug_packages			0
 
@@ -277,6 +277,8 @@ Patch90:	kernel-mpt-fusion.patch
 # based on http://vserver.13thfloor.at/Experimental/patch-2.6.31.5-vs2.3.0.36.21.diff
 Patch100:	kernel-vserver-2.3.patch
 Patch101:	kernel-vserver-fixes.patch
+# http://people.linux-vserver.org/~bonbons/patches/vserver-2.6.31.5-vs2.3.0.36.21-ipv6-fix02.diff
+Patch102:	vserver-2.6.31.5-vs2.3.0.36.21-ipv6-fix02.diff
 
 # Wake-On-Lan fix for nForce drivers; using http://atlas.et.tudelft.nl/verwei90/nforce2/wol.html
 # Fix verified for that kernel version.
@@ -821,6 +823,7 @@ install %{SOURCE5} Makefile.ppclibs
 %if %{with vserver}
 %patch100 -p1
 %patch101 -p1
+%patch102 -p4
 %endif
 
 # forcedeth
@@ -1499,7 +1502,7 @@ fi
 
 %files doc
 %defattr(644,root,root,755)
-%{_kernelsrcdir}/Documentation
+%{_docdir}/%{name}-%{version}
 
 %if %{with source}
 %files source -f aux_files_exc
