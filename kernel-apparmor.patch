@@ -36,9 +36,20 @@ diff -urN linux-2.6.31.org/include/linux/audit.h linux-2.6.31/include/linux/audi
  #define AUDIT_FIRST_KERN_ANOM_MSG   1700
  #define AUDIT_LAST_KERN_ANOM_MSG    1799
  #define AUDIT_ANOM_PROMISCUOUS      1700 /* Device changed promiscuous mode */
-diff -urN linux-2.6.31.org/security/apparmor/apparmorfs.c linux-2.6.31/security/apparmor/apparmorfs.c
---- linux-2.6.31.org/security/apparmor/apparmorfs.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux-2.6.31/security/apparmor/apparmorfs.c	2009-09-10 22:18:06.000000000 +0200
+diff -urN linux-2.6.31.org/security/Kconfig linux-2.6.31/security/Kconfig
+--- linux-2.6.31.org/security/Kconfig	2009-09-10 00:13:59.000000000 +0200
++++ linux-2.6.31/security/Kconfig	2009-09-11 08:37:07.888942907 +0200
+@@ -132,6 +132,7 @@
+ source security/selinux/Kconfig
+ source security/smack/Kconfig
+ source security/tomoyo/Kconfig
++source security/apparmor/Kconfig
+ 
+ source security/integrity/ima/Kconfig
+ 
+diff -urN kernel.org/security/apparmor/apparmorfs.c kernel/security/apparmor/apparmorfs.c
+--- kernel.org/security/apparmor/apparmorfs.c	1970-01-01 01:00:00.000000000 +0100
++++ kernel/security/apparmor/apparmorfs.c	2009-09-10 22:18:06.000000000 +0200
 @@ -0,0 +1,391 @@
 +/*
 + * AppArmor security module
@@ -431,9 +442,9 @@ diff -urN linux-2.6.31.org/security/apparmor/apparmorfs.c linux-2.6.31/security/
 +
 +fs_initcall(create_apparmorfs);
 +
-diff -urN linux-2.6.31.org/security/apparmor/audit.c linux-2.6.31/security/apparmor/audit.c
---- linux-2.6.31.org/security/apparmor/audit.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux-2.6.31/security/apparmor/audit.c	2009-09-10 22:18:06.000000000 +0200
+diff -urN kernel.org/security/apparmor/audit.c kernel/security/apparmor/audit.c
+--- kernel.org/security/apparmor/audit.c	1970-01-01 01:00:00.000000000 +0100
++++ kernel/security/apparmor/audit.c	2009-09-10 22:18:06.000000000 +0200
 @@ -0,0 +1,153 @@
 +/*
 + * AppArmor security module
@@ -588,9 +599,9 @@ diff -urN linux-2.6.31.org/security/apparmor/audit.c linux-2.6.31/security/appar
 +	return aa_audit_base(AUDIT_APPARMOR_DENIED, profile, &sa,
 +			     current->audit_context, NULL);
 +}
-diff -urN linux-2.6.31.org/security/apparmor/capability.c linux-2.6.31/security/apparmor/capability.c
---- linux-2.6.31.org/security/apparmor/capability.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux-2.6.31/security/apparmor/capability.c	2009-09-10 22:18:06.000000000 +0200
+diff -urN kernel.org/security/apparmor/capability.c kernel/security/apparmor/capability.c
+--- kernel.org/security/apparmor/capability.c	1970-01-01 01:00:00.000000000 +0100
++++ kernel/security/apparmor/capability.c	2009-09-10 22:18:06.000000000 +0200
 @@ -0,0 +1,122 @@
 +/*
 + * AppArmor security module
@@ -714,9 +725,9 @@ diff -urN linux-2.6.31.org/security/apparmor/capability.c linux-2.6.31/security/
 +
 +	return aa_audit_caps(profile, &sa);
 +}
-diff -urN linux-2.6.31.org/security/apparmor/context.c linux-2.6.31/security/apparmor/context.c
---- linux-2.6.31.org/security/apparmor/context.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux-2.6.31/security/apparmor/context.c	2009-09-10 22:18:06.000000000 +0200
+diff -urN kernel.org/security/apparmor/context.c kernel/security/apparmor/context.c
+--- kernel.org/security/apparmor/context.c	1970-01-01 01:00:00.000000000 +0100
++++ kernel/security/apparmor/context.c	2009-09-10 22:18:06.000000000 +0200
 @@ -0,0 +1,209 @@
 +/*
 + * AppArmor security module
@@ -927,10 +938,10 @@ diff -urN linux-2.6.31.org/security/apparmor/context.c linux-2.6.31/security/app
 +	commit_creds(new);
 +	return 0;
 +}
-diff -urN linux-2.6.31.org/security/apparmor/domain.c linux-2.6.31/security/apparmor/domain.c
---- linux-2.6.31.org/security/apparmor/domain.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux-2.6.31/security/apparmor/domain.c	2009-09-10 22:18:06.000000000 +0200
-@@ -0,0 +1,704 @@
+diff -urN kernel.org/security/apparmor/domain.c kernel/security/apparmor/domain.c
+--- kernel.org/security/apparmor/domain.c	1970-01-01 01:00:00.000000000 +0100
++++ kernel/security/apparmor/domain.c	2009-11-03 20:34:45.000000000 +0100
+@@ -0,0 +1,719 @@
 +/*
 + * AppArmor security module
 + *
@@ -1458,15 +1469,16 @@ diff -urN linux-2.6.31.org/security/apparmor/domain.c linux-2.6.31/security/appa
 +	struct aa_task_context *cxt;
 +	struct aa_profile *profile, *previous_profile, *hat = NULL;
 +	struct aa_audit_file sa;
++	char *name = NULL;
 +
 +	memset(&sa, 0, sizeof(sa));
 +	sa.base.gfp_mask = GFP_KERNEL;
 +	sa.base.operation = "change_hat";
++	sa.request = AA_MAY_CHANGEHAT;
 +
 +	cred = aa_current_policy(&profile);
 +	cxt = cred->security;
 +	previous_profile = cxt->sys.previous;
-+	token = cxt->sys.token;
 +
 +	if (!profile) {
 +		sa.base.info = "unconfined";
@@ -1475,11 +1487,6 @@ diff -urN linux-2.6.31.org/security/apparmor/domain.c linux-2.6.31/security/appa
 +	}
 +
 +	if (hat_name) {
-+		if (previous_profile)
-+			sa.name = previous_profile->fqname;
-+		else
-+			sa.name = profile->fqname;
-+
 +		sa.name2 = profile->ns->base.name;
 +
 +		if (PROFILE_IS_HAT(profile))
@@ -1487,20 +1494,33 @@ diff -urN linux-2.6.31.org/security/apparmor/domain.c linux-2.6.31/security/appa
 +		else
 +			hat = aa_find_child(profile, hat_name);
 +		if (!hat) {
++			if (PROFILE_IS_HAT(profile))
++				name = new_compound_name(profile->parent->fqname,
++							 hat_name);
++			else
++				name = new_compound_name(profile->fqname,
++							 hat_name);
++			sa.name = name;
 +			sa.base.info = "hat not found";
 +			sa.base.error = -ENOENT;
 +			if (permtest || !PROFILE_COMPLAIN(profile))
-+				goto audit;
++				/* probing is an expected unfortunate behavior
++				 * of the change_hat api is traditionally quiet
++				 */
++				goto out;
 +			hat = aa_alloc_null_profile(profile, 1);
 +			if (!hat) {
 +				sa.base.info = "failed null profile create";
 +				sa.base.error = -ENOMEM;
 +				goto audit;
 +			}
-+		} else if (!PROFILE_IS_HAT(hat)) {
-+			sa.base.info = "target not hat";
-+			sa.base.error = -EPERM;
-+			goto audit;
++		} else {
++			sa.name = hat->fqname;
++			if (!PROFILE_IS_HAT(hat)) {
++				sa.base.info = "target not hat";
++				sa.base.error = -EPERM;
++				goto audit;
++			}
 +		}
 +
 +		sa.base.error = aa_may_change_ptraced_domain(current, hat);
@@ -1518,10 +1538,15 @@ diff -urN linux-2.6.31.org/security/apparmor/domain.c linux-2.6.31/security/appa
 +							 profile, &sa.base,
 +							 file_audit_cb);
 +				goto out;
-+			}
++			} else if (name && !sa.base.error)
++				/* reset error for learning of new hats */
++				sa.base.error = -ENOENT;
 +		}
-+	} else if (previous_profile)
++	} else if (previous_profile) {
++		sa.name = previous_profile->fqname;
 +		sa.base.error = aa_restore_previous_profile(token);
++		sa.perms.kill = AA_MAY_CHANGEHAT;
++	}
 +	/* else
 +		 ignore restores when there is no saved profile
 +	*/
@@ -1533,6 +1558,7 @@ diff -urN linux-2.6.31.org/security/apparmor/domain.c linux-2.6.31/security/appa
 +
 +out:
 +	aa_put_profile(hat);
++	kfree(name);
 +
 +	return sa.base.error;
 +}
@@ -1635,9 +1661,9 @@ diff -urN linux-2.6.31.org/security/apparmor/domain.c linux-2.6.31/security/appa
 +
 +	return sa.base.error;
 +}
-diff -urN linux-2.6.31.org/security/apparmor/file.c linux-2.6.31/security/apparmor/file.c
---- linux-2.6.31.org/security/apparmor/file.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux-2.6.31/security/apparmor/file.c	2009-09-10 22:18:06.000000000 +0200
+diff -urN kernel.org/security/apparmor/file.c kernel/security/apparmor/file.c
+--- kernel.org/security/apparmor/file.c	1970-01-01 01:00:00.000000000 +0100
++++ kernel/security/apparmor/file.c	2009-11-03 20:34:45.000000000 +0100
 @@ -0,0 +1,426 @@
 +/*
 + * AppArmor security module
@@ -1791,9 +1817,9 @@ diff -urN linux-2.6.31.org/security/apparmor/file.c linux-2.6.31/security/apparm
 +		if ((denied & mask) &&
 +		    PROFILE_AUDIT_MODE(profile) != AUDIT_NOQUIET &&
 +		    PROFILE_AUDIT_MODE(profile) != AUDIT_ALL)
-+			sa->request &= ~mask;
++			denied &= ~mask;
 +
-+		if (!sa->request)
++		if (!denied)
 +			return PROFILE_COMPLAIN(profile) ? 0 : sa->base.error;
 +	}
 +	return aa_audit(type, profile, (struct aa_audit *)sa, file_audit_cb);
@@ -2004,7 +2030,7 @@ diff -urN linux-2.6.31.org/security/apparmor/file.c linux-2.6.31/security/apparm
 +
 +static inline int aa_is_deleted_file(struct dentry *dentry)
 +{
-+	if (d_unhashed(dentry) && dentry->d_inode->i_nlink == 0)
++	if (d_unhashed(dentry))
 +		return 1;
 +	return 0;
 +}
@@ -2065,9 +2091,18 @@ diff -urN linux-2.6.31.org/security/apparmor/file.c linux-2.6.31/security/apparm
 +	kfree(buffer);
 +	return error;
 +}
-diff -urN linux-2.6.31.org/security/apparmor/include/apparmorfs.h linux-2.6.31/security/apparmor/include/apparmorfs.h
---- linux-2.6.31.org/security/apparmor/include/apparmorfs.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux-2.6.31/security/apparmor/include/apparmorfs.h	2009-09-10 22:18:06.000000000 +0200
+diff -urN kernel.org/security/apparmor/.gitignore kernel/security/apparmor/.gitignore
+--- kernel.org/security/apparmor/.gitignore	1970-01-01 01:00:00.000000000 +0100
++++ kernel/security/apparmor/.gitignore	2009-09-10 22:18:06.000000000 +0200
+@@ -0,0 +1,5 @@
++#
++# Generated include files
++#
++af_names.h
++capability_names.h
+diff -urN kernel.org/security/apparmor/include/apparmorfs.h kernel/security/apparmor/include/apparmorfs.h
+--- kernel.org/security/apparmor/include/apparmorfs.h	1970-01-01 01:00:00.000000000 +0100
++++ kernel/security/apparmor/include/apparmorfs.h	2009-09-10 22:18:06.000000000 +0200
 @@ -0,0 +1,24 @@
 +/*
 + * AppArmor security module
@@ -2093,9 +2128,9 @@ diff -urN linux-2.6.31.org/security/apparmor/include/apparmorfs.h linux-2.6.31/s
 +extern void destroy_apparmorfs(void);
 +
 +#endif	/* __AA_APPARMORFS_H */
-diff -urN linux-2.6.31.org/security/apparmor/include/apparmor.h linux-2.6.31/security/apparmor/include/apparmor.h
---- linux-2.6.31.org/security/apparmor/include/apparmor.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux-2.6.31/security/apparmor/include/apparmor.h	2009-09-10 22:18:06.000000000 +0200
+diff -urN kernel.org/security/apparmor/include/apparmor.h kernel/security/apparmor/include/apparmor.h
+--- kernel.org/security/apparmor/include/apparmor.h	1970-01-01 01:00:00.000000000 +0100
++++ kernel/security/apparmor/include/apparmor.h	2009-09-10 22:18:06.000000000 +0200
 @@ -0,0 +1,65 @@
 +/*
 + * AppArmor security module
@@ -2162,9 +2197,9 @@ diff -urN linux-2.6.31.org/security/apparmor/include/apparmor.h linux-2.6.31/sec
 +
 +#endif	/* __APPARMOR_H */
 +
-diff -urN linux-2.6.31.org/security/apparmor/include/audit.h linux-2.6.31/security/apparmor/include/audit.h
---- linux-2.6.31.org/security/apparmor/include/audit.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux-2.6.31/security/apparmor/include/audit.h	2009-09-10 22:18:06.000000000 +0200
+diff -urN kernel.org/security/apparmor/include/audit.h kernel/security/apparmor/include/audit.h
+--- kernel.org/security/apparmor/include/audit.h	1970-01-01 01:00:00.000000000 +0100
++++ kernel/security/apparmor/include/audit.h	2009-09-10 22:18:06.000000000 +0200
 @@ -0,0 +1,59 @@
 +/*
 + * AppArmor security module
@@ -2225,9 +2260,9 @@ diff -urN linux-2.6.31.org/security/apparmor/include/audit.h linux-2.6.31/securi
 +
 +
 +#endif	/* __AA_AUDIT_H */
-diff -urN linux-2.6.31.org/security/apparmor/include/capability.h linux-2.6.31/security/apparmor/include/capability.h
---- linux-2.6.31.org/security/apparmor/include/capability.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux-2.6.31/security/apparmor/include/capability.h	2009-09-10 22:18:06.000000000 +0200
+diff -urN kernel.org/security/apparmor/include/capability.h kernel/security/apparmor/include/capability.h
+--- kernel.org/security/apparmor/include/capability.h	1970-01-01 01:00:00.000000000 +0100
++++ kernel/security/apparmor/include/capability.h	2009-09-10 22:18:06.000000000 +0200
 @@ -0,0 +1,45 @@
 +/*
 + * AppArmor security module
@@ -2274,9 +2309,9 @@ diff -urN linux-2.6.31.org/security/apparmor/include/capability.h linux-2.6.31/s
 +}
 +
 +#endif	/* __AA_CAPBILITY_H */
-diff -urN linux-2.6.31.org/security/apparmor/include/context.h linux-2.6.31/security/apparmor/include/context.h
---- linux-2.6.31.org/security/apparmor/include/context.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux-2.6.31/security/apparmor/include/context.h	2009-09-10 22:18:06.000000000 +0200
+diff -urN kernel.org/security/apparmor/include/context.h kernel/security/apparmor/include/context.h
+--- kernel.org/security/apparmor/include/context.h	1970-01-01 01:00:00.000000000 +0100
++++ kernel/security/apparmor/include/context.h	2009-09-10 22:18:06.000000000 +0200
 @@ -0,0 +1,153 @@
 +/*
 + * AppArmor security module
@@ -2431,9 +2466,9 @@ diff -urN linux-2.6.31.org/security/apparmor/include/context.h linux-2.6.31/secu
 +
 +
 +#endif	/* __AA_CONTEXT_H */
-diff -urN linux-2.6.31.org/security/apparmor/include/domain.h linux-2.6.31/security/apparmor/include/domain.h
---- linux-2.6.31.org/security/apparmor/include/domain.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux-2.6.31/security/apparmor/include/domain.h	2009-09-10 22:18:06.000000000 +0200
+diff -urN kernel.org/security/apparmor/include/domain.h kernel/security/apparmor/include/domain.h
+--- kernel.org/security/apparmor/include/domain.h	1970-01-01 01:00:00.000000000 +0100
++++ kernel/security/apparmor/include/domain.h	2009-09-10 22:18:06.000000000 +0200
 @@ -0,0 +1,37 @@
 +/*
 + * AppArmor security module
@@ -2472,9 +2507,9 @@ diff -urN linux-2.6.31.org/security/apparmor/include/domain.h linux-2.6.31/secur
 +
 +
 +#endif	/* __AA_DOMAIN_H */
-diff -urN linux-2.6.31.org/security/apparmor/include/file.h linux-2.6.31/security/apparmor/include/file.h
---- linux-2.6.31.org/security/apparmor/include/file.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux-2.6.31/security/apparmor/include/file.h	2009-09-10 22:18:06.000000000 +0200
+diff -urN kernel.org/security/apparmor/include/file.h kernel/security/apparmor/include/file.h
+--- kernel.org/security/apparmor/include/file.h	1970-01-01 01:00:00.000000000 +0100
++++ kernel/security/apparmor/include/file.h	2009-09-10 22:18:06.000000000 +0200
 @@ -0,0 +1,229 @@
 +/*
 + * AppArmor security module
@@ -2705,9 +2740,9 @@ diff -urN linux-2.6.31.org/security/apparmor/include/file.h linux-2.6.31/securit
 +}
 +
 +#endif	/* __AA_FILE_H */
-diff -urN linux-2.6.31.org/security/apparmor/include/ipc.h linux-2.6.31/security/apparmor/include/ipc.h
---- linux-2.6.31.org/security/apparmor/include/ipc.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux-2.6.31/security/apparmor/include/ipc.h	2009-09-10 22:18:06.000000000 +0200
+diff -urN kernel.org/security/apparmor/include/ipc.h kernel/security/apparmor/include/ipc.h
+--- kernel.org/security/apparmor/include/ipc.h	1970-01-01 01:00:00.000000000 +0100
++++ kernel/security/apparmor/include/ipc.h	2009-09-10 22:18:06.000000000 +0200
 @@ -0,0 +1,28 @@
 +/*
 + * AppArmor security module
@@ -2737,9 +2772,9 @@ diff -urN linux-2.6.31.org/security/apparmor/include/ipc.h linux-2.6.31/security
 +	      unsigned int mode);
 +
 +#endif	/* __AA_IPC_H */
-diff -urN linux-2.6.31.org/security/apparmor/include/match.h linux-2.6.31/security/apparmor/include/match.h
---- linux-2.6.31.org/security/apparmor/include/match.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux-2.6.31/security/apparmor/include/match.h	2009-09-10 22:18:06.000000000 +0200
+diff -urN kernel.org/security/apparmor/include/match.h kernel/security/apparmor/include/match.h
+--- kernel.org/security/apparmor/include/match.h	1970-01-01 01:00:00.000000000 +0100
++++ kernel/security/apparmor/include/match.h	2009-09-10 22:18:06.000000000 +0200
 @@ -0,0 +1,105 @@
 +/*
 + * AppArmor security module
@@ -2846,9 +2881,9 @@ diff -urN linux-2.6.31.org/security/apparmor/include/match.h linux-2.6.31/securi
 +unsigned int aa_dfa_null_transition(struct aa_dfa *dfa, unsigned int start);
 +
 +#endif /* __AA_MATCH_H */
-diff -urN linux-2.6.31.org/security/apparmor/include/net.h linux-2.6.31/security/apparmor/include/net.h
---- linux-2.6.31.org/security/apparmor/include/net.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux-2.6.31/security/apparmor/include/net.h	2009-09-10 22:18:06.000000000 +0200
+diff -urN kernel.org/security/apparmor/include/net.h kernel/security/apparmor/include/net.h
+--- kernel.org/security/apparmor/include/net.h	1970-01-01 01:00:00.000000000 +0100
++++ kernel/security/apparmor/include/net.h	2009-09-10 22:18:06.000000000 +0200
 @@ -0,0 +1,40 @@
 +/*
 + * AppArmor security module
@@ -2890,9 +2925,9 @@ diff -urN linux-2.6.31.org/security/apparmor/include/net.h linux-2.6.31/security
 +}
 +
 +#endif	/* __AA_NET_H */
-diff -urN linux-2.6.31.org/security/apparmor/include/path.h linux-2.6.31/security/apparmor/include/path.h
---- linux-2.6.31.org/security/apparmor/include/path.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux-2.6.31/security/apparmor/include/path.h	2009-09-10 22:18:06.000000000 +0200
+diff -urN kernel.org/security/apparmor/include/path.h kernel/security/apparmor/include/path.h
+--- kernel.org/security/apparmor/include/path.h	1970-01-01 01:00:00.000000000 +0100
++++ kernel/security/apparmor/include/path.h	2009-09-10 22:18:06.000000000 +0200
 @@ -0,0 +1,24 @@
 +/*
 + * AppArmor security module
@@ -2918,9 +2953,9 @@ diff -urN linux-2.6.31.org/security/apparmor/include/path.h linux-2.6.31/securit
 +char *sysctl_pathname(struct ctl_table *table, char *buffer, int buflen);
 +
 +#endif	/* __AA_PATH_H */
-diff -urN linux-2.6.31.org/security/apparmor/include/policy.h linux-2.6.31/security/apparmor/include/policy.h
---- linux-2.6.31.org/security/apparmor/include/policy.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux-2.6.31/security/apparmor/include/policy.h	2009-09-10 22:18:06.000000000 +0200
+diff -urN kernel.org/security/apparmor/include/policy.h kernel/security/apparmor/include/policy.h
+--- kernel.org/security/apparmor/include/policy.h	1970-01-01 01:00:00.000000000 +0100
++++ kernel/security/apparmor/include/policy.h	2009-09-10 22:18:06.000000000 +0200
 @@ -0,0 +1,301 @@
 +/*
 + * AppArmor security module
@@ -3223,9 +3258,9 @@ diff -urN linux-2.6.31.org/security/apparmor/include/policy.h linux-2.6.31/secur
 +
 +#endif	/* __AA_POLICY_H */
 +
-diff -urN linux-2.6.31.org/security/apparmor/include/policy_interface.h linux-2.6.31/security/apparmor/include/policy_interface.h
---- linux-2.6.31.org/security/apparmor/include/policy_interface.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux-2.6.31/security/apparmor/include/policy_interface.h	2009-09-10 22:18:06.000000000 +0200
+diff -urN kernel.org/security/apparmor/include/policy_interface.h kernel/security/apparmor/include/policy_interface.h
+--- kernel.org/security/apparmor/include/policy_interface.h	1970-01-01 01:00:00.000000000 +0100
++++ kernel/security/apparmor/include/policy_interface.h	2009-09-10 22:18:06.000000000 +0200
 @@ -0,0 +1,22 @@
 +/*
 + * AppArmor security module
@@ -3249,9 +3284,9 @@ diff -urN linux-2.6.31.org/security/apparmor/include/policy_interface.h linux-2.
 +ssize_t aa_interface_remove_profiles(char *name, size_t size);
 +
 +#endif	/* __POLICY_INTERFACE_H */
-diff -urN linux-2.6.31.org/security/apparmor/include/procattr.h linux-2.6.31/security/apparmor/include/procattr.h
---- linux-2.6.31.org/security/apparmor/include/procattr.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux-2.6.31/security/apparmor/include/procattr.h	2009-09-10 22:18:06.000000000 +0200
+diff -urN kernel.org/security/apparmor/include/procattr.h kernel/security/apparmor/include/procattr.h
+--- kernel.org/security/apparmor/include/procattr.h	1970-01-01 01:00:00.000000000 +0100
++++ kernel/security/apparmor/include/procattr.h	2009-09-10 22:18:06.000000000 +0200
 @@ -0,0 +1,26 @@
 +/*
 + * AppArmor security module
@@ -3279,9 +3314,9 @@ diff -urN linux-2.6.31.org/security/apparmor/include/procattr.h linux-2.6.31/sec
 +int aa_setprocattr_permipc(char *args);
 +
 +#endif	/* __AA_PROCATTR_H */
-diff -urN linux-2.6.31.org/security/apparmor/include/resource.h linux-2.6.31/security/apparmor/include/resource.h
---- linux-2.6.31.org/security/apparmor/include/resource.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux-2.6.31/security/apparmor/include/resource.h	2009-09-10 22:18:06.000000000 +0200
+diff -urN kernel.org/security/apparmor/include/resource.h kernel/security/apparmor/include/resource.h
+--- kernel.org/security/apparmor/include/resource.h	1970-01-01 01:00:00.000000000 +0100
++++ kernel/security/apparmor/include/resource.h	2009-09-10 22:18:06.000000000 +0200
 @@ -0,0 +1,46 @@
 +/*
 + * AppArmor security module
@@ -3329,9 +3364,9 @@ diff -urN linux-2.6.31.org/security/apparmor/include/resource.h linux-2.6.31/sec
 +}
 +
 +#endif	/* __AA_RESOURCE_H */
-diff -urN linux-2.6.31.org/security/apparmor/include/sid.h linux-2.6.31/security/apparmor/include/sid.h
---- linux-2.6.31.org/security/apparmor/include/sid.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux-2.6.31/security/apparmor/include/sid.h	2009-09-10 22:18:06.000000000 +0200
+diff -urN kernel.org/security/apparmor/include/sid.h kernel/security/apparmor/include/sid.h
+--- kernel.org/security/apparmor/include/sid.h	1970-01-01 01:00:00.000000000 +0100
++++ kernel/security/apparmor/include/sid.h	2009-09-10 22:18:06.000000000 +0200
 @@ -0,0 +1,46 @@
 +/*
 + * AppArmor security module
@@ -3379,9 +3414,9 @@ diff -urN linux-2.6.31.org/security/apparmor/include/sid.h linux-2.6.31/security
 +}
 +
 +#endif	/* __AA_SID_H */
-diff -urN linux-2.6.31.org/security/apparmor/ipc.c linux-2.6.31/security/apparmor/ipc.c
---- linux-2.6.31.org/security/apparmor/ipc.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux-2.6.31/security/apparmor/ipc.c	2009-09-10 22:18:06.000000000 +0200
+diff -urN kernel.org/security/apparmor/ipc.c kernel/security/apparmor/ipc.c
+--- kernel.org/security/apparmor/ipc.c	1970-01-01 01:00:00.000000000 +0100
++++ kernel/security/apparmor/ipc.c	2009-09-10 22:18:06.000000000 +0200
 @@ -0,0 +1,106 @@
 +/*
 + * AppArmor security module
@@ -3489,9 +3524,9 @@ diff -urN linux-2.6.31.org/security/apparmor/ipc.c linux-2.6.31/security/apparmo
 +
 +	return error;
 +}
-diff -urN linux-2.6.31.org/security/apparmor/Kconfig linux-2.6.31/security/apparmor/Kconfig
---- linux-2.6.31.org/security/apparmor/Kconfig	1970-01-01 01:00:00.000000000 +0100
-+++ linux-2.6.31/security/apparmor/Kconfig	2009-09-10 22:18:06.000000000 +0200
+diff -urN kernel.org/security/apparmor/Kconfig kernel/security/apparmor/Kconfig
+--- kernel.org/security/apparmor/Kconfig	1970-01-01 01:00:00.000000000 +0100
++++ kernel/security/apparmor/Kconfig	2009-09-10 22:18:06.000000000 +0200
 @@ -0,0 +1,53 @@
 +config SECURITY_APPARMOR
 +	bool "AppArmor support"
@@ -3546,9 +3581,9 @@ diff -urN linux-2.6.31.org/security/apparmor/Kconfig linux-2.6.31/security/appar
 +	  parameters are difficult to employ.
 +
 +	  If you are unsure how to answer this question, answer N.
-diff -urN linux-2.6.31.org/security/apparmor/lib.c linux-2.6.31/security/apparmor/lib.c
---- linux-2.6.31.org/security/apparmor/lib.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux-2.6.31/security/apparmor/lib.c	2009-09-10 22:18:06.000000000 +0200
+diff -urN kernel.org/security/apparmor/lib.c kernel/security/apparmor/lib.c
+--- kernel.org/security/apparmor/lib.c	1970-01-01 01:00:00.000000000 +0100
++++ kernel/security/apparmor/lib.c	2009-09-10 22:18:06.000000000 +0200
 @@ -0,0 +1,100 @@
 +/*
 + * AppArmor security module
@@ -3650,9 +3685,9 @@ diff -urN linux-2.6.31.org/security/apparmor/lib.c linux-2.6.31/security/apparmo
 +	}
 +	return name;
 +}
-diff -urN linux-2.6.31.org/security/apparmor/lsm.c linux-2.6.31/security/apparmor/lsm.c
---- linux-2.6.31.org/security/apparmor/lsm.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux-2.6.31/security/apparmor/lsm.c	2009-09-10 22:18:06.000000000 +0200
+diff -urN kernel.org/security/apparmor/lsm.c kernel/security/apparmor/lsm.c
+--- kernel.org/security/apparmor/lsm.c	1970-01-01 01:00:00.000000000 +0100
++++ kernel/security/apparmor/lsm.c	2009-09-10 22:18:06.000000000 +0200
 @@ -0,0 +1,1063 @@
 +/*
 + * AppArmor security module
@@ -4717,9 +4752,9 @@ diff -urN linux-2.6.31.org/security/apparmor/lsm.c linux-2.6.31/security/apparmo
 +	info_message("AppArmor protection disabled");
 +}
 +
-diff -urN linux-2.6.31.org/security/apparmor/Makefile linux-2.6.31/security/apparmor/Makefile
---- linux-2.6.31.org/security/apparmor/Makefile	1970-01-01 01:00:00.000000000 +0100
-+++ linux-2.6.31/security/apparmor/Makefile	2009-09-10 22:18:06.000000000 +0200
+diff -urN kernel.org/security/apparmor/Makefile kernel/security/apparmor/Makefile
+--- kernel.org/security/apparmor/Makefile	1970-01-01 01:00:00.000000000 +0100
++++ kernel/security/apparmor/Makefile	2009-09-10 22:18:06.000000000 +0200
 @@ -0,0 +1,24 @@
 +# Makefile for AppArmor Linux Security Module
 +#
@@ -4745,10 +4780,10 @@ diff -urN linux-2.6.31.org/security/apparmor/Makefile linux-2.6.31/security/appa
 +	$(call cmd,make-caps)
 +$(obj)/af_names.h : $(srctree)/include/linux/socket.h
 +	$(call cmd,make-af)
-diff -urN linux-2.6.31.org/security/apparmor/match.c linux-2.6.31/security/apparmor/match.c
---- linux-2.6.31.org/security/apparmor/match.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux-2.6.31/security/apparmor/match.c	2009-09-10 22:18:06.000000000 +0200
-@@ -0,0 +1,293 @@
+diff -urN kernel.org/security/apparmor/match.c kernel/security/apparmor/match.c
+--- kernel.org/security/apparmor/match.c	1970-01-01 01:00:00.000000000 +0100
++++ kernel/security/apparmor/match.c	2009-11-03 20:34:45.000000000 +0100
+@@ -0,0 +1,305 @@
 +/*
 + * AppArmor security module
 + *
@@ -4766,6 +4801,8 @@ diff -urN linux-2.6.31.org/security/apparmor/match.c linux-2.6.31/security/appar
 +#include <linux/kernel.h>
 +#include <linux/slab.h>
 +#include <linux/errno.h>
++#include <linux/mm.h>
++#include <linux/vmalloc.h>
 +
 +/* TODO: remove !!!! */
 +// #include <linux/fs.h>
@@ -4773,6 +4810,14 @@ diff -urN linux-2.6.31.org/security/apparmor/match.c linux-2.6.31/security/appar
 +#include "include/apparmor.h"
 +#include "include/match.h"
 +#include "include/file.h"
++
++static void free_table(struct table_header *table)
++{
++	if (is_vmalloc_addr(table))
++		vfree(table);
++	else
++		kfree(table);
++}
 +
 +static struct table_header *unpack_table(void *blob, size_t bsize)
 +{
@@ -4797,6 +4842,8 @@ diff -urN linux-2.6.31.org/security/apparmor/match.c linux-2.6.31/security/appar
 +		goto out;
 +
 +	table = kmalloc(tsize, GFP_KERNEL);
++	if (!table)
++		table = vmalloc(tsize);
 +	if (table) {
 +		*table = th;
 +		if (th.td_flags == YYTD_DATA8)
@@ -4861,7 +4908,7 @@ diff -urN linux-2.6.31.org/security/apparmor/match.c linux-2.6.31/security/appar
 +				goto fail;
 +			break;
 +		default:
-+			kfree(table);
++			free_table(table);
 +			goto fail;
 +		}
 +
@@ -4873,7 +4920,7 @@ diff -urN linux-2.6.31.org/security/apparmor/match.c linux-2.6.31/security/appar
 +
 +fail:
 +	for (i = 0; i < ARRAY_SIZE(dfa->tables); i++) {
-+		kfree(dfa->tables[i]);
++		free_table(dfa->tables[i]);
 +		dfa->tables[i] = NULL;
 +	}
 +	return error;
@@ -4958,7 +5005,7 @@ diff -urN linux-2.6.31.org/security/apparmor/match.c linux-2.6.31/security/appar
 +		int i;
 +
 +		for (i = 0; i < ARRAY_SIZE(dfa->tables); i++)
-+			kfree(dfa->tables[i]);
++			free_table(dfa->tables[i]);
 +	}
 +	kfree(dfa);
 +}
@@ -5042,10 +5089,10 @@ diff -urN linux-2.6.31.org/security/apparmor/match.c linux-2.6.31/security/appar
 +	return aa_dfa_match_len(dfa, start, "", 1);
 +}
 +
-diff -urN linux-2.6.31.org/security/apparmor/net.c linux-2.6.31/security/apparmor/net.c
---- linux-2.6.31.org/security/apparmor/net.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux-2.6.31/security/apparmor/net.c	2009-09-10 22:18:06.000000000 +0200
-@@ -0,0 +1,147 @@
+diff -urN kernel.org/security/apparmor/net.c kernel/security/apparmor/net.c
+--- kernel.org/security/apparmor/net.c	1970-01-01 01:00:00.000000000 +0100
++++ kernel/security/apparmor/net.c	2009-11-03 20:34:45.000000000 +0100
+@@ -0,0 +1,146 @@
 +/*
 + * AppArmor security module
 + *
@@ -5158,9 +5205,8 @@ diff -urN linux-2.6.31.org/security/apparmor/net.c linux-2.6.31/security/apparmo
 +
 +	family_mask = profile->net.allowed[family];
 +
-+	sa.base.error = (family_mask & (1 << type)) ? 0 : -EACCES;
-+
 +	memset(&sa, 0, sizeof(sa));
++	sa.base.error = (family_mask & (1 << type)) ? 0 : -EACCES;
 +	sa.base.operation = operation;
 +	sa.base.gfp_mask = GFP_KERNEL;
 +	sa.family = family;
@@ -5193,10 +5239,10 @@ diff -urN linux-2.6.31.org/security/apparmor/net.c linux-2.6.31/security/apparmo
 +
 +	return error;
 +}
-diff -urN linux-2.6.31.org/security/apparmor/path.c linux-2.6.31/security/apparmor/path.c
---- linux-2.6.31.org/security/apparmor/path.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux-2.6.31/security/apparmor/path.c	2009-09-10 22:18:06.000000000 +0200
-@@ -0,0 +1,155 @@
+diff -urN kernel.org/security/apparmor/path.c kernel/security/apparmor/path.c
+--- kernel.org/security/apparmor/path.c	1970-01-01 01:00:00.000000000 +0100
++++ kernel/security/apparmor/path.c	2009-11-03 20:34:45.000000000 +0100
+@@ -0,0 +1,170 @@
 +/*
 + * AppArmor security module
 + *
@@ -5309,6 +5355,21 @@ diff -urN linux-2.6.31.org/security/apparmor/path.c linux-2.6.31/security/apparm
 +	if (IS_ERR(res)) {
 +		error = PTR_ERR(res);
 +		*name = buf;
++	} else if (d_unhashed(path->dentry) && !path->dentry->d_inode) {
++		/* On some filesystems, newly allocated dentries appear
++		 * to the security_path hooks as a deleted
++		 * dentry except without an inode allocated.
++		 *
++		 * Remove the appended deleted text and return as a
++		 * string for normal mediation.  The (deleted) string
++		 * is guarenteed to be added in this case, so just
++		 * strip it.
++		 */
++		buf[buflen - 11] = 0;	/* - (len(" (deleted)") +\0) */
++	} else if (d_unhashed(path->dentry) && (buf + buflen) - res > 11 &&
++		   strcmp(buf + buflen - 11, " (deleted)") == 0) {
++		/* For now allow mediation of deleted paths */
++		buf[buflen - 11] = 0;	/* - (len(" (deleted)") +\0) */
 +	} else if (!IS_ROOT(path->dentry) && d_unhashed(path->dentry)) {
 +		error = -ENOENT;
 +#if 0
@@ -5352,9 +5413,9 @@ diff -urN linux-2.6.31.org/security/apparmor/path.c linux-2.6.31/security/apparm
 +
 +	return buffer;
 +}
-diff -urN linux-2.6.31.org/security/apparmor/policy.c linux-2.6.31/security/apparmor/policy.c
---- linux-2.6.31.org/security/apparmor/policy.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux-2.6.31/security/apparmor/policy.c	2009-09-10 22:18:06.000000000 +0200
+diff -urN kernel.org/security/apparmor/policy.c kernel/security/apparmor/policy.c
+--- kernel.org/security/apparmor/policy.c	1970-01-01 01:00:00.000000000 +0100
++++ kernel/security/apparmor/policy.c	2009-09-10 22:18:06.000000000 +0200
 @@ -0,0 +1,729 @@
 +/*
 + * AppArmor security module
@@ -6085,9 +6146,9 @@ diff -urN linux-2.6.31.org/security/apparmor/policy.c linux-2.6.31/security/appa
 +	return profile;
 +}
 +
-diff -urN linux-2.6.31.org/security/apparmor/policy_interface.c linux-2.6.31/security/apparmor/policy_interface.c
---- linux-2.6.31.org/security/apparmor/policy_interface.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux-2.6.31/security/apparmor/policy_interface.c	2009-09-10 22:18:06.000000000 +0200
+diff -urN kernel.org/security/apparmor/policy_interface.c kernel/security/apparmor/policy_interface.c
+--- kernel.org/security/apparmor/policy_interface.c	1970-01-01 01:00:00.000000000 +0100
++++ kernel/security/apparmor/policy_interface.c	2009-09-10 22:18:06.000000000 +0200
 @@ -0,0 +1,852 @@
 +/*
 + * AppArmor security module
@@ -6941,9 +7002,9 @@ diff -urN linux-2.6.31.org/security/apparmor/policy_interface.c linux-2.6.31/sec
 +	aa_audit_iface(&sa);
 +	return -ENOENT;
 +}
-diff -urN linux-2.6.31.org/security/apparmor/procattr.c linux-2.6.31/security/apparmor/procattr.c
---- linux-2.6.31.org/security/apparmor/procattr.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux-2.6.31/security/apparmor/procattr.c	2009-09-10 22:18:06.000000000 +0200
+diff -urN kernel.org/security/apparmor/procattr.c kernel/security/apparmor/procattr.c
+--- kernel.org/security/apparmor/procattr.c	1970-01-01 01:00:00.000000000 +0100
++++ kernel/security/apparmor/procattr.c	2009-11-03 20:34:45.000000000 +0100
 @@ -0,0 +1,117 @@
 +/*
 + * AppArmor security module
@@ -6996,7 +7057,7 @@ diff -urN linux-2.6.31.org/security/apparmor/procattr.c linux-2.6.31/security/ap
 +
 +		len = strlen(unconfined_str);
 +		if (ns != default_namespace)
-+			len += strlen(ns->base.name) + 1;
++			len += strlen(ns->base.name) + 3;	/* :// */
 +
 +		str = kmalloc(len + 1, GFP_ATOMIC);
 +		if (!str)
@@ -7062,9 +7123,9 @@ diff -urN linux-2.6.31.org/security/apparmor/procattr.c linux-2.6.31/security/ap
 +	/* TODO: add ipc permission querying */
 +	return -ENOTSUPP;
 +}
-diff -urN linux-2.6.31.org/security/apparmor/resource.c linux-2.6.31/security/apparmor/resource.c
---- linux-2.6.31.org/security/apparmor/resource.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux-2.6.31/security/apparmor/resource.c	2009-09-10 22:18:06.000000000 +0200
+diff -urN kernel.org/security/apparmor/resource.c kernel/security/apparmor/resource.c
+--- kernel.org/security/apparmor/resource.c	1970-01-01 01:00:00.000000000 +0100
++++ kernel/security/apparmor/resource.c	2009-09-10 22:18:06.000000000 +0200
 @@ -0,0 +1,104 @@
 +/*
 + * AppArmor security module
@@ -7170,9 +7231,9 @@ diff -urN linux-2.6.31.org/security/apparmor/resource.c linux-2.6.31/security/ap
 +		rlim->rlim_cur = min(rlim->rlim_cur, rlim->rlim_max);
 +	}
 +}
-diff -urN linux-2.6.31.org/security/apparmor/sid.c linux-2.6.31/security/apparmor/sid.c
---- linux-2.6.31.org/security/apparmor/sid.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux-2.6.31/security/apparmor/sid.c	2009-09-10 22:18:06.000000000 +0200
+diff -urN kernel.org/security/apparmor/sid.c kernel/security/apparmor/sid.c
+--- kernel.org/security/apparmor/sid.c	1970-01-01 01:00:00.000000000 +0100
++++ kernel/security/apparmor/sid.c	2009-09-10 22:18:06.000000000 +0200
 @@ -0,0 +1,113 @@
 +/*
 + * AppArmor security module
@@ -7287,14 +7348,3 @@ diff -urN linux-2.6.31.org/security/apparmor/sid.c linux-2.6.31/security/apparmo
 +	return ERR_PTR(-EINVAL);
 +}
 +
-diff -urN linux-2.6.31.org/security/Kconfig linux-2.6.31/security/Kconfig
---- linux-2.6.31.org/security/Kconfig	2009-09-10 00:13:59.000000000 +0200
-+++ linux-2.6.31/security/Kconfig	2009-09-11 08:37:07.888942907 +0200
-@@ -132,6 +132,7 @@
- source security/selinux/Kconfig
- source security/smack/Kconfig
- source security/tomoyo/Kconfig
-+source security/apparmor/Kconfig
- 
- source security/integrity/ima/Kconfig
- 
