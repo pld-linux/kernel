@@ -309,7 +309,7 @@ Patch1000:	kernel-grsec-minimal.patch
 Patch2000:	kernel-small_fixes.patch
 Patch2001:	kernel-pwc-uncompress.patch
 Patch2003:	kernel-regressions.patch
-# attempt at fixing log recovery problems on fs with quota
+# fix regression in XFS with log recovery problems on fs with quota
 Patch2004:	kernel-xfs-recover-quota.patch
 
 # kill some thousands of warnings
