@@ -1224,6 +1224,11 @@ cd -
 install -d $RPM_BUILD_ROOT%{_docdir}
 mv $RPM_BUILD_ROOT{%{_kernelsrcdir}/Documentation,%{_docdir}/%{name}-%{version}}
 
+rm -f $RPM_BUILD_ROOT%{_docdir}/%{name}-%{version}/dontdiff
+rm -f $RPM_BUILD_ROOT%{_docdir}/%{name}-%{version}/Makefile
+rm -f $RPM_BUILD_ROOT%{_docdir}/%{name}-%{version}/*/Makefile
+rm -f $RPM_BUILD_ROOT%{_docdir}/%{name}-%{version}/*/*/Makefile
+
 %clean
 rm -rf $RPM_BUILD_ROOT
 
@@ -1502,7 +1507,15 @@ fi
 
 %files doc
 %defattr(644,root,root,755)
-%{_docdir}/%{name}-%{version}
+%dir %{_docdir}/%{name}-%{version}
+
+%{_docdir}/%{name}-%{version}/[!jkz]*
+%{_docdir}/%{name}-%{version}/[jkz]*.txt
+%{_docdir}/%{name}-%{version}/kbuild
+%{_docdir}/%{name}-%{version}/kdump
+%lang(ja) %{_docdir}/%{name}-%{version}/ja_JP
+%lang(ko) %{_docdir}/%{name}-%{version}/ko_KR
+%lang(zh_CN) %{_docdir}/%{name}-%{version}/zh_CN
 
 %if %{with source}
 %files source -f aux_files_exc
