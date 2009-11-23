@@ -1,8 +1,8 @@
 diff --git a/Documentation/filesystems/00-INDEX b/Documentation/filesystems/00-INDEX
-index 52cd611..bc6b437 100644
+index f15621e..55e2f07 100644
 --- a/Documentation/filesystems/00-INDEX
 +++ b/Documentation/filesystems/00-INDEX
-@@ -106,6 +106,8 @@ udf.txt
+@@ -112,6 +112,8 @@ udf.txt
  	- info and mount options for the UDF filesystem.
  ufs.txt
  	- info on the ufs filesystem.
@@ -532,12 +532,12 @@ index 0000000..1adde69
 +
 +For more information, see <http://unionfs.filesystems.org/>.
 diff --git a/MAINTAINERS b/MAINTAINERS
-index 3fe4dc2..168cc4d 100644
+index 8dca9d8..4421543 100644
 --- a/MAINTAINERS
 +++ b/MAINTAINERS
-@@ -4370,6 +4370,14 @@ L:	linux-kernel@vger.kernel.org
- W:	http://www.kernel.dk
- S:	Maintained
+@@ -5095,6 +5095,14 @@ F:	Documentation/cdrom/
+ F:	drivers/cdrom/cdrom.c
+ F:	include/linux/cdrom.h
  
 +UNIONFS
 +P:	Erez Zadok
@@ -548,39 +548,13 @@ index 3fe4dc2..168cc4d 100644
 +S:	Maintained
 +
  UNSORTED BLOCK IMAGES (UBI)
- P:	Artem Bityutskiy
- M:	dedekind@infradead.org
---- /dev/null	2007-02-13 17:29:53.000000000 +0100
-+++ linux-2.6.29/fs/unionfs/Kconfig	2009-03-24 13:07:49.116382161 +0100
-@@ -0,0 +1,25 @@
-+config UNION_FS
-+       tristate "Union file system (EXPERIMENTAL)"
-+       depends on EXPERIMENTAL
-+       help
-+         Unionfs is a stackable unification file system, which appears to
-+         merge the contents of several directories (branches), while keeping
-+         their physical content separate.
-+
-+         See <http://unionfs.filesystems.org> for details
-+
-+config UNION_FS_XATTR
-+       bool "Unionfs extended attributes"
-+       depends on UNION_FS
-+       help
-+         Extended attributes are name:value pairs associated with inodes by
-+         the kernel or by users (see the attr(5) manual page).
-+
-+         If unsure, say N.
-+
-+config UNION_FS_DEBUG
-+       bool "Debug Unionfs"
-+       depends on UNION_FS
-+       help
-+         If you say Y here, you can turn on debugging output from Unionfs.
-+
---- linux-2.6.29/fs/Kconfig~	2009-03-24 13:06:08.609715416 +0100
-+++ linux-2.6.29/fs/Kconfig	2009-03-24 13:08:40.063033558 +0100
-@@ -246,6 +246,7 @@
+ M:	Artem Bityutskiy <dedekind@infradead.org>
+ W:	http://www.linux-mtd.infradead.org/
+diff --git a/fs/Kconfig b/fs/Kconfig
+index 0e7da7b..b69b6bd 100644
+--- a/fs/Kconfig
++++ b/fs/Kconfig
+@@ -167,6 +167,7 @@ if MISC_FILESYSTEMS
  source "fs/adfs/Kconfig"
  source "fs/affs/Kconfig"
  source "fs/ecryptfs/Kconfig"
@@ -589,11 +563,10 @@ index 3fe4dc2..168cc4d 100644
  source "fs/hfsplus/Kconfig"
  source "fs/befs/Kconfig"
 diff --git a/fs/Makefile b/fs/Makefile
-diff --git a/fs/Makefile b/fs/Makefile
-index 38bc735..a1b3bda 100644
+index af6d047..6c254d5 100644
 --- a/fs/Makefile
 +++ b/fs/Makefile
-@@ -85,6 +85,7 @@ obj-$(CONFIG_ISO9660_FS)	+= isofs/
+@@ -84,6 +84,7 @@ obj-$(CONFIG_ISO9660_FS)	+= isofs/
  obj-$(CONFIG_HFSPLUS_FS)	+= hfsplus/ # Before hfs to find wrapped HFS+
  obj-$(CONFIG_HFS_FS)		+= hfs/
  obj-$(CONFIG_ECRYPT_FS)		+= ecryptfs/
@@ -602,7 +575,7 @@ index 38bc735..a1b3bda 100644
  obj-$(CONFIG_NFS_FS)		+= nfs/
  obj-$(CONFIG_EXPORTFS)		+= exportfs/
 diff --git a/fs/ecryptfs/dentry.c b/fs/ecryptfs/dentry.c
-index 5e59658..4621f89 100644
+index 2dda5ad..8f006a0 100644
 --- a/fs/ecryptfs/dentry.c
 +++ b/fs/ecryptfs/dentry.c
 @@ -62,7 +62,7 @@ static int ecryptfs_d_revalidate(struct dentry *dentry, struct nameidata *nd)
@@ -615,10 +588,10 @@ index 5e59658..4621f89 100644
  out:
  	return rc;
 diff --git a/fs/ecryptfs/inode.c b/fs/ecryptfs/inode.c
-index 5697899..8a370a1 100644
+index 2f0945d..e884c3b 100644
 --- a/fs/ecryptfs/inode.c
 +++ b/fs/ecryptfs/inode.c
-@@ -628,9 +628,9 @@ ecryptfs_rename(struct inode *old_dir, struct dentry *old_dentry,
+@@ -624,9 +624,9 @@ ecryptfs_rename(struct inode *old_dir, struct dentry *old_dentry,
  			lower_new_dir_dentry->d_inode, lower_new_dentry);
  	if (rc)
  		goto out_lock;
@@ -630,7 +603,7 @@ index 5697899..8a370a1 100644
  out_lock:
  	unlock_rename(lower_old_dir_dentry, lower_new_dir_dentry);
  	dput(lower_new_dentry->d_parent);
-@@ -952,7 +952,7 @@ static int ecryptfs_setattr(struct dentry *dentry, struct iattr *ia)
+@@ -965,7 +965,7 @@ static int ecryptfs_setattr(struct dentry *dentry, struct iattr *ia)
  	rc = notify_change(lower_dentry, ia);
  	mutex_unlock(&lower_dentry->d_inode->i_mutex);
  out:
@@ -640,10 +613,10 @@ index 5697899..8a370a1 100644
  }
  
 diff --git a/fs/ecryptfs/main.c b/fs/ecryptfs/main.c
-index 789cf2e..7f82ed3 100644
+index 9f0aa98..3d94155 100644
 --- a/fs/ecryptfs/main.c
 +++ b/fs/ecryptfs/main.c
-@@ -190,7 +190,7 @@ int ecryptfs_interpose(struct dentry *lo
+@@ -190,7 +190,7 @@ int ecryptfs_interpose(struct dentry *lower_dentry, struct dentry *dentry,
  		init_special_inode(inode, lower_inode->i_mode,
  				   lower_inode->i_rdev);
  	dentry->d_op = &ecryptfs_dops;
@@ -653,10 +626,10 @@ index 789cf2e..7f82ed3 100644
  	 * other metadata */
  	fsstack_copy_inode_size(inode, lower_inode);
 diff --git a/fs/namei.c b/fs/namei.c
-index bbc15c2..7983d41 100644
+index 1f13751..88584c4 100644
 --- a/fs/namei.c
 +++ b/fs/namei.c
-@@ -373,6 +373,7 @@ void release_open_intent(struct nameidata *nd)
+@@ -375,6 +375,7 @@ void release_open_intent(struct nameidata *nd)
  	else
  		fput(nd->intent.open.file);
  }
@@ -665,10 +638,10 @@ index bbc15c2..7983d41 100644
  static inline struct dentry *
  do_revalidate(struct dentry *dentry, struct nameidata *nd)
 diff --git a/fs/splice.c b/fs/splice.c
-index 4ed0ba4..6637e35 100644
+index 73766d2..3753029 100644
 --- a/fs/splice.c
 +++ b/fs/splice.c
-@@ -888,8 +888,8 @@ EXPORT_SYMBOL(generic_splice_sendpage);
+@@ -1057,8 +1057,8 @@ EXPORT_SYMBOL(generic_splice_sendpage);
  /*
   * Attempt to initiate a splice from pipe to file.
   */
@@ -677,11 +650,11 @@ index 4ed0ba4..6637e35 100644
 +long vfs_splice_from(struct pipe_inode_info *pipe, struct file *out,
 +		     loff_t *ppos, size_t len, unsigned int flags)
  {
- 	int ret;
+ 	ssize_t (*splice_write)(struct pipe_inode_info *, struct file *,
+ 				loff_t *, size_t, unsigned int);
+@@ -1080,13 +1080,14 @@ static long do_splice_from(struct pipe_inode_info *pipe, struct file *out,
  
-@@ -908,13 +908,14 @@ static long do_splice_from(struct pipe_inode_info *pipe, struct file *out,
- 
- 	return out->f_op->splice_write(pipe, out, ppos, len, flags);
+ 	return splice_write(pipe, out, ppos, len, flags);
  }
 +EXPORT_SYMBOL_GPL(vfs_splice_from);
  
@@ -695,17 +668,17 @@ index 4ed0ba4..6637e35 100644
 +		   struct pipe_inode_info *pipe, size_t len,
 +		   unsigned int flags)
  {
- 	int ret;
+ 	ssize_t (*splice_read)(struct file *, loff_t *,
+ 			       struct pipe_inode_info *, size_t, unsigned int);
+@@ -1105,6 +1106,7 @@ static long do_splice_to(struct file *in, loff_t *ppos,
  
-@@ -930,6 +931,7 @@ static long do_splice_to(struct file *in, loff_t *ppos,
- 
- 	return in->f_op->splice_read(in, ppos, pipe, len, flags);
+ 	return splice_read(in, ppos, pipe, len, flags);
  }
 +EXPORT_SYMBOL_GPL(vfs_splice_to);
  
  /**
   * splice_direct_to_actor - splices data directly between two non-pipes
-@@ -999,7 +1001,7 @@ ssize_t splice_direct_to_actor(struct file *in, struct splice_desc *sd,
+@@ -1174,7 +1176,7 @@ ssize_t splice_direct_to_actor(struct file *in, struct splice_desc *sd,
  		size_t read_len;
  		loff_t pos = sd->pos, prev_pos = pos;
  
@@ -714,7 +687,7 @@ index 4ed0ba4..6637e35 100644
  		if (unlikely(ret <= 0))
  			goto out_release;
  
-@@ -1058,7 +1060,7 @@ static int direct_splice_actor(struct pipe_inode_info *pipe,
+@@ -1233,7 +1235,7 @@ static int direct_splice_actor(struct pipe_inode_info *pipe,
  {
  	struct file *file = sd->u.file;
  
@@ -723,7 +696,7 @@ index 4ed0ba4..6637e35 100644
  }
  
  /**
-@@ -1132,7 +1134,7 @@ static long do_splice(struct file *in, loff_t __user *off_in,
+@@ -1330,7 +1332,7 @@ static long do_splice(struct file *in, loff_t __user *off_in,
  		} else
  			off = &out->f_pos;
  
@@ -732,7 +705,7 @@ index 4ed0ba4..6637e35 100644
  
  		if (off_out && copy_to_user(off_out, off, sizeof(loff_t)))
  			ret = -EFAULT;
-@@ -1153,7 +1155,7 @@ static long do_splice(struct file *in, loff_t __user *off_in,
+@@ -1350,7 +1352,7 @@ static long do_splice(struct file *in, loff_t __user *off_in,
  		} else
  			off = &in->f_pos;
  
@@ -851,13 +824,43 @@ index 67716f6..cc1443d 100644
 +	dest->i_nlink = src->i_nlink;
  }
  EXPORT_SYMBOL_GPL(fsstack_copy_attr_all);
+diff --git a/fs/unionfs/Kconfig b/fs/unionfs/Kconfig
+new file mode 100644
+index 0000000..f3c1ac4
+--- /dev/null
++++ b/fs/unionfs/Kconfig
+@@ -0,0 +1,24 @@
++config UNION_FS
++	tristate "Union file system (EXPERIMENTAL)"
++	depends on EXPERIMENTAL
++	help
++	  Unionfs is a stackable unification file system, which appears to
++	  merge the contents of several directories (branches), while keeping
++	  their physical content separate.
++
++	  See <http://unionfs.filesystems.org> for details
++
++config UNION_FS_XATTR
++	bool "Unionfs extended attributes"
++	depends on UNION_FS
++	help
++	  Extended attributes are name:value pairs associated with inodes by
++	  the kernel or by users (see the attr(5) manual page).
++
++	  If unsure, say N.
++
++config UNION_FS_DEBUG
++	bool "Debug Unionfs"
++	depends on UNION_FS
++	help
++	  If you say Y here, you can turn on debugging output from Unionfs.
 diff --git a/fs/unionfs/Makefile b/fs/unionfs/Makefile
 new file mode 100644
-index 0000000..27a4781
+index 0000000..9c466a5
 --- /dev/null
 +++ b/fs/unionfs/Makefile
 @@ -0,0 +1,17 @@
-+UNIONFS_VERSION="2.5.1 (for 2.6.29-rc2)"
++UNIONFS_VERSION="2.5.3 (for 2.6.31)"
 +
 +EXTRA_CFLAGS += -DUNIONFS_VERSION=\"$(UNIONFS_VERSION)\"
 +
@@ -876,10 +879,10 @@ index 0000000..27a4781
 +endif
 diff --git a/fs/unionfs/commonfops.c b/fs/unionfs/commonfops.c
 new file mode 100644
-index 0000000..e9dc23c
+index 0000000..587f984
 --- /dev/null
 +++ b/fs/unionfs/commonfops.c
-@@ -0,0 +1,880 @@
+@@ -0,0 +1,896 @@
 +/*
 + * Copyright (c) 2003-2009 Erez Zadok
 + * Copyright (c) 2003-2006 Charles P. Wright
@@ -944,7 +947,7 @@ index 0000000..e9dc23c
 +		pr_debug("unionfs: trying to rename %s to %s\n",
 +			 dentry->d_name.name, name);
 +
-+		tmp_dentry = lookup_one_len(name, lower_dentry->d_parent,
++		tmp_dentry = lookup_lck_len(name, lower_dentry->d_parent,
 +					    nlen);
 +		if (IS_ERR(tmp_dentry)) {
 +			err = PTR_ERR(tmp_dentry);
@@ -1532,6 +1535,21 @@ index 0000000..e9dc23c
 +	int bindex, bstart, bend;
 +	int fgen, err = 0;
 +
++	/*
++	 * Since mm/memory.c:might_fault() (under PROVE_LOCKING) was
++	 * modified in 2.6.29-rc1 to call might_lock_read on mmap_sem, this
++	 * has been causing false positives in file system stacking layers.
++	 * In particular, our ->mmap is called after sys_mmap2 already holds
++	 * mmap_sem, then we lock our own mutexes; but earlier, it's
++	 * possible for lockdep to have locked our mutexes first, and then
++	 * we call a lower ->readdir which could call might_fault.  The
++	 * different ordering of the locks is what lockdep complains about
++	 * -- unnecessarily.  Therefore, we have no choice but to tell
++	 * lockdep to temporarily turn off lockdep here.  Note: the comments
++	 * inside might_sleep also suggest that it would have been
++	 * nicer to only annotate paths that needs that might_lock_read.
++	 */
++	lockdep_off();
 +	unionfs_read_lock(sb, UNIONFS_SMUTEX_PARENT);
 +	parent = unionfs_lock_parent(dentry, UNIONFS_DMUTEX_PARENT);
 +	unionfs_lock_dentry(dentry, UNIONFS_DMUTEX_CHILD);
@@ -1589,6 +1607,7 @@ index 0000000..e9dc23c
 +	unionfs_unlock_dentry(dentry);
 +	unionfs_unlock_parent(dentry, parent);
 +	unionfs_read_unlock(sb);
++	lockdep_on();
 +	return err;
 +}
 +
@@ -1762,7 +1781,7 @@ index 0000000..e9dc23c
 +}
 diff --git a/fs/unionfs/copyup.c b/fs/unionfs/copyup.c
 new file mode 100644
-index 0000000..3d0c0ca
+index 0000000..c43cc7f
 --- /dev/null
 +++ b/fs/unionfs/copyup.c
 @@ -0,0 +1,897 @@
@@ -2546,7 +2565,7 @@ index 0000000..3d0c0ca
 +
 +	if (child_dentry != dentry) {
 +		/* lookup child in the underlying file system */
-+		lower_dentry = lookup_one_len(childname, lower_parent_dentry,
++		lower_dentry = lookup_lck_len(childname, lower_parent_dentry,
 +					      childnamelen);
 +		if (IS_ERR(lower_dentry))
 +			goto out;
@@ -2555,7 +2574,7 @@ index 0000000..3d0c0ca
 +		 * Is the name a whiteout of the child name ?  lookup the
 +		 * whiteout child in the underlying file system
 +		 */
-+		lower_dentry = lookup_one_len(name, lower_parent_dentry,
++		lower_dentry = lookup_lck_len(name, lower_parent_dentry,
 +					      strlen(name));
 +		if (IS_ERR(lower_dentry))
 +			goto out;
@@ -4878,10 +4897,10 @@ index 0000000..281169e
 +};
 diff --git a/fs/unionfs/inode.c b/fs/unionfs/inode.c
 new file mode 100644
-index 0000000..7c17093
+index 0000000..bd5a3b3
 --- /dev/null
 +++ b/fs/unionfs/inode.c
-@@ -0,0 +1,1035 @@
+@@ -0,0 +1,1055 @@
 +/*
 + * Copyright (c) 2003-2009 Erez Zadok
 + * Copyright (c) 2003-2006 Charles P. Wright
@@ -5719,12 +5738,26 @@ index 0000000..7c17093
 +		if (err && err != -EACCES && err != EPERM && bindex > 0) {
 +			umode_t mode = lower_inode->i_mode;
 +			if ((is_robranch_super(inode->i_sb, bindex) ||
-+			     IS_RDONLY(lower_inode)) &&
++			     __is_rdonly(lower_inode)) &&
 +			    (S_ISREG(mode) || S_ISDIR(mode) || S_ISLNK(mode)))
 +				err = 0;
 +			if (IS_COPYUP_ERR(err))
 +				err = 0;
 +		}
++
++		/*
++		 * NFS HACK: NFSv2/3 return EACCES on readonly-exported,
++		 * locally readonly-mounted file systems, instead of EROFS
++		 * like other file systems do.  So we have no choice here
++		 * but to intercept this and ignore it for NFS branches
++		 * marked readonly.  Specifically, we avoid using NFS's own
++		 * "broken" ->permission method, and rely on
++		 * generic_permission() to do basic checking for us.
++		 */
++		if (err && err == -EACCES &&
++		    is_robranch_super(inode->i_sb, bindex) &&
++		    lower_inode->i_sb->s_magic == NFS_SUPER_MAGIC)
++			err = generic_permission(lower_inode, mask, NULL);
 +
 +		/*
 +		 * The permissions are an intersection of the overall directory
@@ -5800,7 +5833,7 @@ index 0000000..7c17093
 +
 +	/* copyup if the file is on a read only branch */
 +	if (is_robranch_super(dentry->d_sb, bstart)
-+	    || IS_RDONLY(lower_inode)) {
++	    || __is_rdonly(lower_inode)) {
 +		/* check if we have a branch to copy up to */
 +		if (bstart <= 0) {
 +			err = -EACCES;
@@ -5847,14 +5880,20 @@ index 0000000..7c17093
 +	}
 +
 +	/* notify the (possibly copied-up) lower inode */
-+	mutex_lock(&lower_inode->i_mutex);
++	/*
++	 * Note: we use lower_dentry->d_inode, because lower_inode may be
++	 * unlinked (no inode->i_sb and i_ino==0.  This happens if someone
++	 * tries to open(), unlink(), then ftruncate() a file.
++	 */
++	mutex_lock(&lower_dentry->d_inode->i_mutex);
 +	err = notify_change(lower_dentry, ia);
-+	mutex_unlock(&lower_inode->i_mutex);
++	mutex_unlock(&lower_dentry->d_inode->i_mutex);
 +	if (err)
 +		goto out;
 +
 +	/* get attributes from the first lower inode */
-+	unionfs_copy_attr_all(inode, lower_inode);
++	if (ibstart(inode) >= 0)
++		unionfs_copy_attr_all(inode, lower_inode);
 +	/*
 +	 * unionfs_copy_attr_all will copy the lower times to our inode if
 +	 * the lower ones are newer (useful for cache coherency).  However,
@@ -5919,7 +5958,7 @@ index 0000000..7c17093
 +};
 diff --git a/fs/unionfs/lookup.c b/fs/unionfs/lookup.c
 new file mode 100644
-index 0000000..9d887ac
+index 0000000..6361541
 --- /dev/null
 +++ b/fs/unionfs/lookup.c
 @@ -0,0 +1,569 @@
@@ -5975,7 +6014,7 @@ index 0000000..9d887ac
 +		  * it's safe to call lookup_one_len (which doesn't take a
 +		  * vfsmount).
 +		  */
-+		dentry = lookup_one_len(name, base, strlen(name));
++		dentry = lookup_lck_len(name, base, strlen(name));
 +		if (new_mnt)
 +			*new_mnt = mntget(lower_nd.path.mnt);
 +		break;
@@ -6394,7 +6433,7 @@ index 0000000..9d887ac
 +		if (!S_ISDIR(lower_dir_dentry->d_inode->i_mode))
 +			goto out; /* XXX: should be BUG_ON */
 +		/* XXX: do we need to cross bind mounts here? */
-+		lower_dentry = lookup_one_len(name, lower_dir_dentry, namelen);
++		lower_dentry = lookup_lck_len(name, lower_dir_dentry, namelen);
 +		if (IS_ERR(lower_dentry)) {
 +			err = PTR_ERR(lower_dentry);
 +			goto out;
@@ -9528,10 +9567,10 @@ index 0000000..ded7b84
 +};
 diff --git a/fs/unionfs/union.h b/fs/unionfs/union.h
 new file mode 100644
-index 0000000..1b2b86f
+index 0000000..17a0056
 --- /dev/null
 +++ b/fs/unionfs/union.h
-@@ -0,0 +1,650 @@
+@@ -0,0 +1,670 @@
 +/*
 + * Copyright (c) 2003-2009 Erez Zadok
 + * Copyright (c) 2003-2006 Charles P. Wright
@@ -10019,6 +10058,15 @@ index 0000000..1b2b86f
 +	return perms;
 +}
 +
++/* check if readonly lower inode, but possibly unlinked (no inode->i_sb) */
++static inline int __is_rdonly(const struct inode *inode)
++{
++	/* if unlinked, can't be readonly (?) */
++	if (!inode->i_sb)
++		return 0;
++	return IS_RDONLY(inode);
++
++}
 +/* Is this file on a read-only branch? */
 +static inline int is_robranch_super(const struct super_block *sb, int index)
 +{
@@ -10085,6 +10133,17 @@ index 0000000..1b2b86f
 +{
 +	mutex_unlock(&dir->d_inode->i_mutex);
 +	dput(dir);
++}
++
++/* lock base inode mutex before calling lookup_one_len */
++static inline struct dentry *lookup_lck_len(const char *name,
++					    struct dentry *base, int len)
++{
++	struct dentry *d;
++	mutex_lock(&base->d_inode->i_mutex);
++	d = lookup_one_len(name, base, len);
++	mutex_unlock(&base->d_inode->i_mutex);
++	return d;
 +}
 +
 +static inline struct vfsmount *unionfs_mntget(struct dentry *dentry,
@@ -10472,7 +10531,7 @@ index 0000000..b6d8e10
 +}
 diff --git a/fs/unionfs/whiteout.c b/fs/unionfs/whiteout.c
 new file mode 100644
-index 0000000..a55684d
+index 0000000..626006a
 --- /dev/null
 +++ b/fs/unionfs/whiteout.c
 @@ -0,0 +1,584 @@
@@ -10579,7 +10638,7 @@ index 0000000..a55684d
 +	}
 +
 +	/* check if whiteout exists in this branch: lookup .wh.foo */
-+	wh_dentry = lookup_one_len(whname, lower_parent, strlen(whname));
++	wh_dentry = lookup_lck_len(whname, lower_parent, strlen(whname));
 +	if (IS_ERR(wh_dentry)) {
 +		err = PTR_ERR(wh_dentry);
 +		goto out;
@@ -10789,7 +10848,7 @@ index 0000000..a55684d
 +		}
 +
 +		lower_wh_dentry =
-+			lookup_one_len(name, lower_dentry->d_parent,
++			lookup_lck_len(name, lower_dentry->d_parent,
 +				       dentry->d_name.len + UNIONFS_WHLEN);
 +		if (IS_ERR(lower_wh_dentry))
 +			continue;
@@ -10812,7 +10871,7 @@ index 0000000..a55684d
 +		if (!err)
 +			err = vfs_create(lower_dir_dentry->d_inode,
 +					 lower_wh_dentry,
-+					 ~current_umask() & S_IRUGO,
++					 current_umask() & S_IRUGO,
 +					 &nd);
 +		unlock_dir(lower_dir_dentry);
 +		dput(lower_wh_dentry);
@@ -10875,7 +10934,7 @@ index 0000000..a55684d
 +
 +			strlcpy(p, cursor->name, PATH_MAX - UNIONFS_WHLEN);
 +			lower_dentry =
-+				lookup_one_len(name, lower_dir_dentry,
++				lookup_lck_len(name, lower_dir_dentry,
 +					       cursor->namelen +
 +					       UNIONFS_WHLEN);
 +			if (IS_ERR(lower_dentry)) {
@@ -11277,10 +11336,10 @@ index bb516ce..64f1ced 100644
  /* inlines */
  static inline void fsstack_copy_attr_atime(struct inode *dest,
 diff --git a/include/linux/magic.h b/include/linux/magic.h
-index 0b4df7e..2170b8a 100644
+index 1923327..c3fc308 100644
 --- a/include/linux/magic.h
 +++ b/include/linux/magic.h
-@@ -42,6 +42,8 @@
+@@ -45,6 +45,8 @@
  #define REISER2FS_SUPER_MAGIC_STRING	"ReIsEr2Fs"
  #define REISER2FS_JR_SUPER_MAGIC_STRING	"ReIsEr3Fs"
  
@@ -11290,10 +11349,10 @@ index 0b4df7e..2170b8a 100644
  #define USBDEVICE_SUPER_MAGIC	0x9fa2
  #define CGROUP_SUPER_MAGIC	0x27e0eb
 diff --git a/include/linux/splice.h b/include/linux/splice.h
-index 528dcb9..4b5727c 100644
+index 18e7c7c..af56841 100644
 --- a/include/linux/splice.h
 +++ b/include/linux/splice.h
-@@ -70,5 +70,10 @@ extern ssize_t splice_to_pipe(struct pipe_inode_info *,
+@@ -81,5 +81,10 @@ extern ssize_t splice_to_pipe(struct pipe_inode_info *,
  			      struct splice_pipe_desc *);
  extern ssize_t splice_direct_to_actor(struct file *, struct splice_desc *,
  				      splice_direct_actor *);
@@ -11333,10 +11392,10 @@ index 0000000..c84d97e
 +#endif /* _LINUX_UNIONFS_H */
 +
 diff --git a/security/security.c b/security/security.c
-index c3586c0..17c2cdf 100644
+index dc7674f..aa3f061 100644
 --- a/security/security.c
 +++ b/security/security.c
-@@ -520,6 +520,7 @@ int security_inode_permission(struct inode *inode, int mask)
+@@ -519,6 +519,7 @@ int security_inode_permission(struct inode *inode, int mask)
  		return 0;
  	return security_ops->inode_permission(inode, mask);
  }
