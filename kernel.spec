@@ -917,6 +917,7 @@ PaXconfig() {
 		# performance impact on CPUs without NX bit
 		CONFIG_PAX_PAGEEXEC=n
 		# Testing KERNEXEC
+		CONFIG_PHYSICAL_ALIGN=0x1000000
 
 		CONFIG_HOTPLUG_PCI_COMPAQ_NVRAM=n
 		CONFIG_PCI_BIOS=n
