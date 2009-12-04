@@ -263,7 +263,7 @@ Patch58:	kernel-PF_RING.patch
 Patch59:	kernel-rndis_host-wm5.patch
 
 # Project suspend2 renamed to tuxonice
-# http://www.tuxonice.net/downloads/all/current-tuxonice-for-2.6.31.patch-20090911-v1.bz2
+# http://www.tuxonice.net/downloads/all/tuxonice-3.0.99.32-for-2.6.32.patch.bz2
 Patch69:	kernel-tuxonice.patch
 Patch70:	kernel-tuxonice-headers.patch
 
@@ -274,7 +274,7 @@ Patch85:	kernel-hostap.patch
 # Taken from http://download.opensuse.org/factory/repo/src-oss/suse/src/kernel-source-2.6.30-10.3.src.rpm
 Patch90:	kernel-mpt-fusion.patch
 
-# based on http://vserver.13thfloor.at/Experimental/patch-2.6.31.5-vs2.3.0.36.23.diff
+# based on http://vserver.13thfloor.at/Experimental/patch-2.6.32-vs2.3.0.36.26.diff
 Patch100:	kernel-vserver-2.3.patch
 Patch101:	kernel-vserver-fixes.patch
 
@@ -309,8 +309,6 @@ Patch1000:	kernel-grsec-minimal.patch
 Patch2000:	kernel-small_fixes.patch
 Patch2001:	kernel-pwc-uncompress.patch
 Patch2003:	kernel-regressions.patch
-# fix regression in XFS with log recovery problems on fs with quota
-Patch2004:	kernel-xfs-recover-quota.patch
 
 # kill some thousands of warnings
 # (only warnings, so just remove parts of this patch if conflics)
@@ -807,7 +805,8 @@ install %{SOURCE5} Makefile.ppclibs
 %patch55 -p1
 %patch56 -p1
 
-%patch58 -p1
+# FIXME
+#%patch58 -p1
 
 # kernel-rndis_host-wm5.patch
 %patch59 -p1
@@ -874,7 +873,8 @@ install %{SOURCE5} Makefile.ppclibs
 %patch5000 -p1
 %endif
 
-%patch150 -p1
+# FIXME
+#%patch150 -p1
 
 %ifarch ppc ppc64
 #patch200 -p1
@@ -887,7 +887,6 @@ install %{SOURCE5} Makefile.ppclibs
 %patch2000 -p1
 %patch2001 -p1
 #%patch2003 -p1
-%patch2004 -p1
 
 # Fix EXTRAVERSION in main Makefile
 sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{postver}%{?alt_kernel:_%{alt_kernel}}#g' Makefile

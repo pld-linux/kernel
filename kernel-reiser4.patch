@@ -113,21 +113,6 @@ diff -urN linux-2.6.28.orig/Documentation/filesystems/reiser4.txt linux-2.6.28/D
 +dont_load_bitmap
 +	Don't load all bitmap blocks at mount time, it is useful for
 +	machines with tiny RAM and large disks.
-diff -urN linux-2.6.28.orig/fs/fs-writeback.c linux-2.6.28/fs/fs-writeback.c
---- linux-2.6.28.orig/fs/fs-writeback.c	2008-12-26 14:35:40.000000000 +0300
-+++ linux-2.6.28/fs/fs-writeback.c	2008-12-26 15:03:53.000000000 +0300
-@@ -531,7 +531,10 @@
- static void sync_sb_inodes(struct super_block *sb,
- 				struct writeback_control *wbc)
- {
--	generic_sync_sb_inodes(sb, wbc);
-+       if (sb->s_op->sync_inodes)
-+               sb->s_op->sync_inodes(sb, wbc);
-+       else
-+               generic_sync_sb_inodes(sb, wbc);
- }
- 
- /*
 diff -urN linux-2.6.28.orig/fs/Kconfig linux-2.6.28/fs/Kconfig
 --- linux-2.6.28.orig/fs/Kconfig	2008-12-26 14:35:40.000000000 +0300
 +++ linux-2.6.28/fs/Kconfig	2008-12-26 15:03:53.000000000 +0300
