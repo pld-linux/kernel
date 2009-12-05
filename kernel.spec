@@ -1487,17 +1487,17 @@ fi
 %{_kernelsrcdir}/drivers/lguest/lg.h
 %{_kernelsrcdir}/kernel/bounds.c
 %dir %{_kernelsrcdir}/scripts
-%dir %{_kernelsrcdir}/scripts/kconfig
 %{_kernelsrcdir}/scripts/Kbuild.include
 %{_kernelsrcdir}/scripts/Makefile*
 %{_kernelsrcdir}/scripts/basic
+%{_kernelsrcdir}/scripts/kconfig
+%{_kernelsrcdir}/scripts/mkcompile_h
 %{_kernelsrcdir}/scripts/mkmakefile
 %{_kernelsrcdir}/scripts/mod
+%{_kernelsrcdir}/scripts/module-common.lds
 %{_kernelsrcdir}/scripts/setlocalversion
 %{_kernelsrcdir}/scripts/*.c
 %{_kernelsrcdir}/scripts/*.sh
-%{_kernelsrcdir}/scripts/kconfig/*
-%{_kernelsrcdir}/scripts/mkcompile_h
 %dir %{_kernelsrcdir}/scripts/selinux
 %{_kernelsrcdir}/scripts/selinux/Makefile
 %dir %{_kernelsrcdir}/scripts/selinux/mdp
@@ -1559,11 +1559,18 @@ fi
 %exclude %{_kernelsrcdir}/scripts/Makefile*
 %exclude %{_kernelsrcdir}/scripts/basic
 %exclude %{_kernelsrcdir}/scripts/kconfig
+%exclude %{_kernelsrcdir}/scripts/mkcompile_h
 %exclude %{_kernelsrcdir}/scripts/mkmakefile
 %exclude %{_kernelsrcdir}/scripts/mod
+%exclude %{_kernelsrcdir}/scripts/module-common.lds
 %exclude %{_kernelsrcdir}/scripts/setlocalversion
 %exclude %{_kernelsrcdir}/scripts/*.c
 %exclude %{_kernelsrcdir}/scripts/*.sh
+%exclude %dir %{_kernelsrcdir}/scripts/selinux
+%exclude %{_kernelsrcdir}/scripts/selinux/Makefile
+%exclude %dir %{_kernelsrcdir}/scripts/selinux/mdp
+%exclude %{_kernelsrcdir}/scripts/selinux/mdp/Makefile
+%exclude %{_kernelsrcdir}/scripts/selinux/mdp/*.c
 %{_kernelsrcdir}/sound
 %{_kernelsrcdir}/security
 %exclude %{_kernelsrcdir}/security/selinux/include
