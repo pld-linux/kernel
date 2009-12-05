@@ -1347,6 +1347,7 @@ fi
 /lib/modules/%{kernel_release}/kernel/kernel
 /lib/modules/%{kernel_release}/kernel/lib
 /lib/modules/%{kernel_release}/kernel/net
+/lib/modules/%{kernel_release}/kernel/mm
 %if %{have_sound}
 %dir /lib/modules/%{kernel_release}/kernel/sound
 /lib/modules/%{kernel_release}/kernel/sound/ac97_bus.ko*
@@ -1464,7 +1465,7 @@ fi
 %endif
 %endif
 
-%files headers
+%files headers -f files.headers_exclude_kbuild
 %defattr(644,root,root,755)
 %dir %{_kernelsrcdir}
 %{_kernelsrcdir}/include
@@ -1477,11 +1478,13 @@ fi
 %{_kernelsrcdir}/config-dist
 %{_kernelsrcdir}/Module.symvers-dist
 
-%files module-build -f aux_files
+%files module-build -f files.mb_include_modulebuild_and_dirs
 %defattr(644,root,root,755)
 %ifarch ppc ppc64
 %{_kernelsrcdir}/arch/powerpc/lib/crtsavres.*
 %endif
+%exclude %dir %{_kernelsrcdir}/arch/m68knommu
+%exclude %dir %{_kernelsrcdir}/arch/um
 %{_kernelsrcdir}/arch/*/kernel/asm-offsets*
 %{_kernelsrcdir}/arch/*/kernel/sigframe*.h
 %{_kernelsrcdir}/drivers/lguest/lg.h
@@ -1503,6 +1506,8 @@ fi
 %dir %{_kernelsrcdir}/scripts/selinux/mdp
 %{_kernelsrcdir}/scripts/selinux/mdp/Makefile
 %{_kernelsrcdir}/scripts/selinux/mdp/*.c
+%exclude %dir %{_kernelsrcdir}/security
+%exclude %dir %{_kernelsrcdir}/security/selinux
 
 %files doc
 %defattr(644,root,root,755)
@@ -1517,7 +1522,7 @@ fi
 %lang(zh_CN) %{_docdir}/%{name}-%{version}/zh_CN
 
 %if %{with source}
-%files source -f aux_files_exc
+%files source -f files.source_exclude_modulebuild_and_dirs
 %defattr(644,root,root,755)
 %{_kernelsrcdir}/arch/*/[!Mik]*
 %{_kernelsrcdir}/arch/*/kernel/[!M]*
@@ -1525,6 +1530,7 @@ fi
 %{_kernelsrcdir}/arch/ia64/install.sh
 %{_kernelsrcdir}/arch/m68k/ifpsp060/[!M]*
 %{_kernelsrcdir}/arch/m68k/ifpsp060/MISC
+%{_kernelsrcdir}/arch/m68k/install.sh
 %{_kernelsrcdir}/arch/parisc/install.sh
 %{_kernelsrcdir}/arch/x86/ia32/[!M]*
 %{_kernelsrcdir}/arch/ia64/kvm
@@ -1574,6 +1580,7 @@ fi
 %{_kernelsrcdir}/sound
 %{_kernelsrcdir}/security
 %exclude %{_kernelsrcdir}/security/selinux/include
+%{_kernelsrcdir}/tools
 %{_kernelsrcdir}/usr
 %{_kernelsrcdir}/COPYING
 %{_kernelsrcdir}/CREDITS
