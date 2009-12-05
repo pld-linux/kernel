@@ -112,7 +112,7 @@
 
 %define		basever		2.6.31
 %define		postver		.6
-%define		rel		3
+%define		rel		4
 
 %define		_enable_debug_packages			0
 
@@ -324,7 +324,7 @@ Patch5000:	kernel-apparmor.patch
 # based on http://ftp.leg.uct.ac.za/pub/linux/rip/inittmpfs-2.6.14.diff.gz
 Patch7000:	kernel-inittmpfs.patch
 
-# based on http://www.grsecurity.net/~spender/grsecurity-2.1.14-2.6.31.6-200911151724.patch" kernel-grsec_full.patch
+# based on http://www.grsecurity.net/~spender/grsecurity-2.1.14-2.6.31.6-200912040944.patch" kernel-grsec_full.patch
 # NOTE: put raw upstream patches on kernel-grsec_full.patch:GRSECURITY_RAW for reference
 #       (since upstream deletes older patches)
 Patch9999:	kernel-grsec_full.patch
