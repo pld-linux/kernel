@@ -1340,7 +1340,9 @@ fi
 /lib/modules/%{kernel_release}/kernel/kernel
 /lib/modules/%{kernel_release}/kernel/lib
 /lib/modules/%{kernel_release}/kernel/net
+%ifarch %{x8664}
 /lib/modules/%{kernel_release}/kernel/mm
+%endif
 %if %{have_sound}
 %dir /lib/modules/%{kernel_release}/kernel/sound
 /lib/modules/%{kernel_release}/kernel/sound/ac97_bus.ko*
