@@ -52759,7 +52759,7 @@ diff -urNp linux-2.6.31.6/security/integrity/ima/ima_fs.c linux-2.6.31.6/securit
  	.release = ima_release_policy
 diff -urNp linux-2.6.31.6/security/min_addr.c linux-2.6.31.6/security/min_addr.c
 --- linux-2.6.31.6/security/min_addr.c	2009-11-09 19:32:31.000000000 -0500
-+++ linux-2.6.31.6/security/min_addr.c	2009-12-04 09:42:36.000000000 -0500
++++ linux-2.6.31.6/security/min_addr.c	2009-12-05 14:43:31.000000000 -0500
 @@ -14,6 +14,7 @@ unsigned long dac_mmap_min_addr = CONFIG
   */
  static void update_mmap_min_addr(void)
@@ -52776,6 +52776,16 @@ diff -urNp linux-2.6.31.6/security/min_addr.c linux-2.6.31.6/security/min_addr.c
  }
  
  /*
+@@ -33,6 +35,9 @@ int mmap_min_addr_handler(struct ctl_tab
+ {
+ 	int ret;
+ 
++	if (!capable(CAP_SYS_RAWIO))
++		return -EPERM;
++
+ 	ret = proc_doulongvec_minmax(table, write, filp, buffer, lenp, ppos);
+ 
+ 	update_mmap_min_addr();
 diff -urNp linux-2.6.31.6/security/smack/smackfs.c linux-2.6.31.6/security/smack/smackfs.c
 --- linux-2.6.31.6/security/smack/smackfs.c	2009-11-09 19:32:31.000000000 -0500
 +++ linux-2.6.31.6/security/smack/smackfs.c	2009-12-04 09:42:36.000000000 -0500
