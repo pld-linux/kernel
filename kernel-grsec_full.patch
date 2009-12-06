@@ -47167,7 +47167,7 @@ diff -urNp linux-2.6.31.6/kernel/sysctl.c linux-2.6.31.6/kernel/sysctl.c
  #endif
  
  static struct ctl_table kern_table[] = {
-+#if defined(CONFIG_GRKERNSEC_SYSCTL) || defined(CONFIG_GRKERNSEC_MODSTOP)
++#if defined(CONFIG_GRKERNSEC_SYSCTL) || defined(CONFIG_GRKERNSEC_ROFS)
 +	{
 +		.ctl_name	= CTL_UNNUMBERED,
 +		.procname	= "grsecurity",
@@ -50170,7 +50170,7 @@ diff -urNp linux-2.6.31.6/mm/slab.c linux-2.6.31.6/mm/slab.c
 +	    (n > ((unsigned long)task_stack_page(current) + THREAD_SIZE -
 +	     (unsigned long)ptr)))
 +		goto report;
-+	else
++	else if (!PageSlab(page))
 +		return;
 +
 +	cachep = page_get_cache(page);
@@ -50383,7 +50383,7 @@ diff -urNp linux-2.6.31.6/mm/slob.c linux-2.6.31.6/mm/slob.c
 +	    (n > ((unsigned long)task_stack_page(current) + THREAD_SIZE -
 +	     (unsigned long)ptr)))
 +		goto report;
-+	else
++	else if (!PageSlobPage((struct page*)sp))
 +		return;
 +
 +	if (sp->size) {
@@ -50578,7 +50578,7 @@ diff -urNp linux-2.6.31.6/mm/slub.c linux-2.6.31.6/mm/slub.c
 +	    (n > ((unsigned long)task_stack_page(current) + THREAD_SIZE -
 +	     (unsigned long)ptr)))
 +		goto report;
-+	else
++	else if (!page)
 +		return;
 +
 +	s = page->slab;
@@ -52782,6 +52782,16 @@ diff -urNp linux-2.6.31.6/security/min_addr.c linux-2.6.31.6/security/min_addr.c
  }
  
  /*
+@@ -35,6 +35,9 @@
+ {
+ 	int ret;
+ 
++	if (!capable(CAP_SYS_RAWIO))
++		return -EPERM;
++
+ 	ret = proc_doulongvec_minmax(table, write, filp, buffer, lenp, ppos);
+ 
+ 	update_mmap_min_addr();
 diff -urNp linux-2.6.31.6/security/smack/smackfs.c linux-2.6.31.6/security/smack/smackfs.c
 --- linux-2.6.31.6/security/smack/smackfs.c	2009-11-10 18:45:25.000000000 -0500
 +++ linux-2.6.31.6/security/smack/smackfs.c	2009-11-12 17:18:17.000000000 -0500
