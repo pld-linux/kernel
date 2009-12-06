@@ -161,7 +161,6 @@ Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
 
 Source3:	kernel-autoconf.h
 Source4:	kernel-config.h
-Source5:	kernel-ppclibs.Makefile
 Source6:	kernel-config.awk
 Source7:	kernel-module-build.pl
 Source8:	kernel-track-config-change.awk
@@ -549,23 +548,6 @@ PCMCIA Module.
 %description pcmcia -l pl.UTF-8
 Moduły PCMCIA.
 
-%package libs
-Summary:	Libraries for preparing bootable kernel on PowerPCs
-Summary(pl.UTF-8):	Biblioteki do przygotowania bootowalnego jądra dla PowerPC
-Group:		Base/Kernel
-Requires:	%{name} = %{epoch}:%{version}-%{release}
-Requires:	mkvmlinuz >= 1.3
-Obsoletes:	kernel-smp-libs
-AutoReqProv:	no
-
-%description libs
-Libraries for preparing bootable kernel on PowerPCs. Script called
-mkvmlinuz may be useful for this.
-
-%description libs -l pl.UTF-8
-Biblioteki do przygotowania bootowalnego jądra dla PowerPC. Skrypt
-mkvmlinuz może być do tego przydatny.
-
 %package sound-alsa
 Summary:	ALSA kernel modules
 Summary(de.UTF-8):	ALSA Kernel Module
@@ -705,10 +687,6 @@ cd linux-%{basever}
 
 # hack against warning in pax/grsec
 sed -i 's/-Werror//' arch/alpha/kernel/Makefile
-
-%ifarch ppc
-install %{SOURCE5} Makefile.ppclibs
-%endif
 
 %if "%{postver}" != "%{nil}"
 %{__bzip2} -dc %{SOURCE1} | patch -p1 -s
@@ -1261,9 +1239,6 @@ mv -f /boot/vmlinux{,.old} 2> /dev/null
 ln -sf vmlinux-%{kernel_release} /boot/vmlinux
 %{?alt_kernel:ln -sf vmlinux-%{kernel_release} /boot/vmlinux-%{alt_kernel}}
 
-%post libs
-%{_sbindir}/mkvmlinuz /boot/zImage-%{kernel_release} %{kernel_release}
-
 %post drm
 %depmod %{kernel_release}
 
@@ -1411,23 +1386,6 @@ fi
 /lib/modules/%{kernel_release}/kernel/drivers/usb/host/sl811_cs.ko*
 %endif
 
-%ifarch ppc-broken
-%if "%{_arch}" == "ppc"
-%files libs
-%defattr(644,root,root,755)
-%dir /boot/libs-%{kernel_release}
-/boot/libs-%{kernel_release}/common
-/boot/libs-%{kernel_release}/kernel
-/boot/libs-%{kernel_release}/lib
-/boot/libs-%{kernel_release}/of1275
-/boot/libs-%{kernel_release}/openfirmware
-/boot/libs-%{kernel_release}/simple
-%dir /boot/libs-%{kernel_release}/utils
-%attr(755,root,root) /boot/libs-%{kernel_release}/utils/*
-/boot/libs-%{kernel_release}/ld.script
-%endif
-%endif
-
 %if %{have_sound}
 %files sound-alsa
 %defattr(644,root,root,755)
@@ -1504,6 +1462,7 @@ fi
 %{_docdir}/%{name}-%{version}/[jkz]*.txt
 %{_docdir}/%{name}-%{version}/kbuild
 %{_docdir}/%{name}-%{version}/kdump
+%{_docdir}/%{name}-%{version}/kvm
 %lang(ja) %{_docdir}/%{name}-%{version}/ja_JP
 %lang(ko) %{_docdir}/%{name}-%{version}/ko_KR
 %lang(zh_CN) %{_docdir}/%{name}-%{version}/zh_CN
