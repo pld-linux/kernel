@@ -704,9 +704,7 @@ ln -s %{SOURCE10} Makefile
 cd linux-%{basever}
 
 # hack against warning in pax/grsec
-%ifarch alpha
 sed -i 's/-Werror//' arch/alpha/kernel/Makefile
-%endif
 
 %ifarch ppc
 install %{SOURCE5} Makefile.ppclibs
@@ -1137,10 +1135,8 @@ rm -rf $RPM_BUILD_ROOT
 
 install -d $RPM_BUILD_ROOT/lib/modules/%{kernel_release}/misc
 
-%if %{with myown}
 # create directories which may be missing, to simplyfy %files
-install -d $RPM_BUILD_ROOT/lib/modules/%{kernel_release}/kernel/sound
-%endif
+install -d $RPM_BUILD_ROOT/lib/modules/%{kernel_release}/kernel/{arch,sound,mm}
 
 # rpm obeys filelinkto checks for ghosted symlinks, convert to files
 rm -f $RPM_BUILD_ROOT/lib/modules/%{kernel_release}/{build,source}
@@ -1328,9 +1324,7 @@ fi
 
 %dir /lib/modules/%{kernel_release}
 %dir /lib/modules/%{kernel_release}/kernel
-%ifnarch sparc
 /lib/modules/%{kernel_release}/kernel/arch
-%endif
 /lib/modules/%{kernel_release}/kernel/crypto
 /lib/modules/%{kernel_release}/kernel/drivers
 %if %{have_drm}
@@ -1340,9 +1334,7 @@ fi
 /lib/modules/%{kernel_release}/kernel/kernel
 /lib/modules/%{kernel_release}/kernel/lib
 /lib/modules/%{kernel_release}/kernel/net
-%ifarch %{x8664}
 /lib/modules/%{kernel_release}/kernel/mm
-%endif
 %if %{have_sound}
 %dir /lib/modules/%{kernel_release}/kernel/sound
 /lib/modules/%{kernel_release}/kernel/sound/ac97_bus.ko*
