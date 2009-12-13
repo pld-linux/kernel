@@ -116,7 +116,6 @@
 
 %define		_enable_debug_packages			0
 
-%define		squashfs_version	3.4
 %define		tuxonice_version	3.0.1
 %define		netfilter_snap		20070806
 
@@ -288,6 +287,9 @@ Patch146:	kernel-aufs-support.patch
 Patch148:	kernel-aufs2.patch
 
 Patch150:	kernel-ppc-crtsavres.patch
+
+# git://git.kernel.org/pub/scm/linux/kernel/git/pkl/squashfs-devel.git
+Patch160:	kernel-squashfs-lzma.patch
 
 Patch200:	kernel-ppc-ICE-hacks.patch
 
@@ -844,6 +846,8 @@ sed -i 's/-Werror//' arch/alpha/kernel/Makefile
 
 # FIXME
 #%patch150 -p1
+
+%patch160 -p1
 
 %ifarch ppc ppc64
 #patch200 -p1
