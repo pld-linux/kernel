@@ -1,133 +1,148 @@
-diff -ur linux-2.6.14.orig/fs/Kconfig linux-2.6.14/fs/Kconfig
---- linux-2.6.14.orig/fs/Kconfig	2005-09-11 03:19:07.000000000 +0000
-+++ linux-2.6.14/fs/Kconfig	2005-09-11 03:19:42.000000000 +0000
-@@ -805,6 +805,18 @@
+diff -ruw linux-2.6.30.orig/fs/Kconfig linux-2.6.30/fs/Kconfig
+--- linux-2.6.30.orig/fs/Kconfig	2009-02-12 17:51:15.000000000 +0000
++++ linux-2.6.30/fs/Kconfig	2009-02-13 12:01:55.000000000 +0000
+@@ -724,6 +724,25 @@
  
- 	  See <file:Documentation/filesystems/tmpfs.txt> for details.
+ 	  If you don't know what Access Control Lists are, say N.
  
-+config EARLYUSERSPACE_ON_TMPFS
-+	bool "Unpack the early userspace onto tmpfs"
-+	depends on TMPFS
++config TMPFS_ROOT
++	bool "Use tmpfs instrad of ramfs for initramfs"
++	depends on TMPFS && SHMEM
 +	default y
 +	help
-+	  Use this to have your early userspace placed (decompressed)
-+	  onto tmpfs as opposed ramfs. This will allow you to
-+	  restrict the size of your root-filesystem and it will also
-+	  be swappable.
-+   
-+	  If unsure, say Y.
++	  This replaces the ramfs used for unpacking the cpio images
++	  with tmpfs.
++
++config RAMFS
++	  bool "Ramfs file system support" if TMPFS_ROOT
++	  default n
++	---help---
++	  Ramfs is a file system which keeps all files in RAM. Unlike tmpfs,
++	  it cannot be swapped to disk, and it has the risk of deadlocking
++	  the system by using all memory.
++
++	  Ramfs is used for booting the system and unpacking the cpio if
++	  TMPFS_ROOT is not set.
 +
  config HUGETLBFS
  	bool "HugeTLB file system support"
- 	depends X86 || IA64 || PPC64 || SPARC64 || SUPERH || X86_64 || BROKEN
-Only in linux-2.6.14/fs: Kconfig.orig
-diff -ur linux-2.6.14.orig/init/initramfs.c linux-2.6.14/init/initramfs.c
---- linux-2.6.14.orig/init/initramfs.c	2005-08-28 23:41:01.000000000 +0000
-+++ linux-2.6.14/init/initramfs.c	2005-09-11 03:19:42.000000000 +0000
-@@ -7,6 +7,7 @@
- #include <linux/string.h>
- #include <linux/syscalls.h>
- #include <linux/utime.h>
-+#include <asm/uaccess.h>
- 
- static __initdata char *message;
- static void __init error(char *x)
-@@ -463,6 +464,49 @@
- 	return message;
+ 	depends on X86 || IA64 || PPC64 || SPARC64 || (SUPERH && MMU) || \
+diff -ruw linux-2.6.30.orig/fs/ramfs/inode.c linux-2.6.30/fs/ramfs/inode.c
+--- linux-2.6.30.orig/fs/ramfs/inode.c	2009-02-12 17:51:15.000000000 +0000
++++ linux-2.6.30/fs/ramfs/inode.c	2009-02-13 11:30:30.000000000 +0000
+@@ -265,6 +265,13 @@
+ 	return get_sb_nodev(fs_type, flags, data, ramfs_fill_super, mnt);
  }
  
-+/* If we want the rootfs on initramfs so we mount initramfs over the
-+ * rootfs before we unpack it. The little dance we do by creating a
-+ * pivot point and moving the root to that is in fact necessary
-+ * because lookups of "." don't resolve mountpoints.
-+ */
-+static inline void __init overmount_rootfs(void)
-+   {
-+#ifdef CONFIG_EARLYUSERSPACE_ON_TMPFS
-+    int init_tmpfs(void);
-+    int (*initfunc)(void) = init_tmpfs;
-+    mm_segment_t oldfs;
-+    char pivot[] = "/pivot";
-+   
-+    /* Explicitly go and init the overmount fs early (long-term
-+     * the need for this will probably go away. */
-+   
-+    if (initfunc())
-+    goto err;
-+   
-+    oldfs = get_fs();
-+    set_fs(KERNEL_DS);
-+   
-+    if (sys_mkdir(pivot, 0700) < 0)
-+    goto err;
-+    if (sys_mount("tmpfs", pivot, "tmpfs", 0, "size=95%"))
-+    goto err;
-+   
-+    /* Below here errors are unlikely and icky to deal with. */
-+    sys_chdir(pivot);
-+    sys_mount(".", "/", NULL, MS_MOVE, NULL);
-+    sys_chdir(".");
-+    sys_chroot(".");
-+    printk(KERN_INFO "Overmounted tmpfs\n");
-+    goto out;
-+   
-+    err:
-+    printk(KERN_ERR "Overmount error\n");
-+   
-+    out:
-+    set_fs(oldfs);
-+#endif /* CONFIG_EARLYUSERSPACE_ON_TMPFS */
-+}
++static struct file_system_type ramfs_fs_type = {
++ .name = "ramfs",
++ .get_sb = ramfs_get_sb,
++ .kill_sb = kill_litter_super,
++};
 +
- extern char __initramfs_start[], __initramfs_end[];
- #ifdef CONFIG_BLK_DEV_INITRD
- #include <linux/initrd.h>
-@@ -619,6 +619,9 @@
- #ifdef CONFIG_BLK_DEV_RAM
- 		int fd;
- 		printk(KERN_INFO "Trying to unpack rootfs image as initramfs...\n");
-+#ifdef CONFIG_EARLYUSERSPACE_ON_TMPFS
-+		overmount_rootfs();
-+#endif /* CONFIG_EARLYUSERSPACE_ON_TMPFS */
- 		err = unpack_to_rootfs((char *)initrd_start,
- 			initrd_end - initrd_start);
- 		if (!err) {
-diff -ur linux-2.6.14.orig/init/main.c linux-2.6.14/init/main.c
---- linux-2.6.14.orig/init/main.c	2005-09-11 03:19:07.000000000 +0000
-+++ linux-2.6.14/init/main.c	2005-09-11 03:22:43.000000000 +0000
-@@ -701,6 +701,11 @@
- 	if (sys_access((const char __user *) ramdisk_execute_command, 0) != 0) {
- 		ramdisk_execute_command = NULL;
- 		prepare_namespace();
-+#ifdef CONFIG_EARLYUSERSPACE_ON_TMPFS
-+                int init_tmpfs(void);
-+                int (*initfunc)(void) = init_tmpfs;
-+                initfunc();
-+#endif /* CONFIG_EARLYUSERSPACE_ON_TMPFS */
- 	}
++#ifndef CONFIG_TMPFS_ROOT
+ static int rootfs_get_sb(struct file_system_type *fs_type,
+ 	int flags, const char *dev_name, void *data, struct vfsmount *mnt)
+ {
+@@ -278,30 +285,12 @@
+ 	kill_litter_super(sb);
+ }
  
- 	/*
-diff -ur linux-2.6.14.orig/mm/shmem.c linux-2.6.14/mm/shmem.c
---- linux-2.6.14.orig/mm/shmem.c	2005-09-11 03:19:07.000000000 +0000
-+++ linux-2.6.14/mm/shmem.c	2005-09-11 03:19:42.000000000 +0000
-@@ -2504,7 +2504,7 @@
+-static struct file_system_type ramfs_fs_type = {
+-	.name		= "ramfs",
+-	.get_sb		= ramfs_get_sb,
+-	.kill_sb	= ramfs_kill_sb,
+-};
+ static struct file_system_type rootfs_fs_type = {
+ 	.name		= "rootfs",
+ 	.get_sb		= rootfs_get_sb,
  	.kill_sb	= kill_litter_super,
  };
  
--static int __init init_tmpfs(void)
-+int __init init_tmpfs(void)
+-static int __init init_ramfs_fs(void)
+-{
+-	return register_filesystem(&ramfs_fs_type);
+-}
+-
+-static void __exit exit_ramfs_fs(void)
+-{
+-	unregister_filesystem(&ramfs_fs_type);
+-}
+-
+-module_init(init_ramfs_fs)
+-module_exit(exit_ramfs_fs)
+-
+ int __init init_rootfs(void)
  {
- 	int error;
+ 	int err;
+@@ -316,5 +305,19 @@
  
-@@ -2672,4 +2672,9 @@
- 	return 0;
+ 	return err;
+ }
++#endif
++
++static int __init init_ramfs_fs(void)
++{
++ return register_filesystem(&ramfs_fs_type);
++}
++
++static void __exit exit_ramfs_fs(void)
++{
++ unregister_filesystem(&ramfs_fs_type);
++}
++
++module_init(init_ramfs_fs)
++module_exit(exit_ramfs_fs)
+ 
+ MODULE_LICENSE("GPL");
+diff -ruw linux-2.6.30.orig/mm/shmem.c linux-2.6.30/mm/shmem.c
+--- linux-2.6.30.orig/mm/shmem.c	2009-02-12 17:51:15.000000000 +0000
++++ linux-2.6.30/mm/shmem.c	2009-02-13 11:42:02.000000000 +0000
+@@ -86,7 +86,7 @@
+ #ifdef CONFIG_TMPFS
+ static unsigned long shmem_default_max_blocks(void)
+ {
+-	return totalram_pages / 2;
++	return totalram_pages / 10 * 9;
  }
  
--module_init(init_tmpfs)
-+/* Don't do this if we are calling it early explicity */
-+#ifndef CONFIG_EARLYUSERSPACE_ON_TMPFS
-+/* If CONFIG_EARLYUSERSPACE_ON_TMPFS is set then we will interpose
-+ * ramfs so this will get called explicitly and early */
-+ module_init(init_tmpfs)
-+#endif /* !CONFIG_EARLYUSERSPACE_ON_TMPFS */
-
+ static unsigned long shmem_default_max_inodes(void)
+@@ -2369,6 +2369,10 @@
+ 
+ static int init_inodecache(void)
+ {
++#ifdef CONFIG_TMPFS_ROOT
++ if (shmem_inode_cachep)
++ return 0;
++#endif
+ 	shmem_inode_cachep = kmem_cache_create("shmem_inode_cache",
+ 				sizeof(struct shmem_inode_info),
+ 				0, SLAB_PANIC, init_once);
+@@ -2587,6 +2591,27 @@
+ }
+ EXPORT_SYMBOL_GPL(shmem_file_setup);
+ 
++#ifdef CONFIG_TMPFS_ROOT
++static int rootfs_get_sb(struct file_system_type *fs_type,
++ int flags, const char *dev_name, void *data, struct vfsmount *mnt)
++{
++ return get_sb_nodev(fs_type, flags, data, shmem_fill_super, mnt);
++}
++
++static struct file_system_type rootfs_fs_type = {
++ .name = "rootfs",
++ .get_sb = rootfs_get_sb,
++ .kill_sb = kill_litter_super,
++};
++
++int __init init_rootfs(void)
++{
++ if (init_inodecache())
++ panic("Can't initialize shm inode cache");
++ return register_filesystem(&rootfs_fs_type);
++}
++#endif
++
+ /**
+  * shmem_zero_setup - setup a shared anonymous mapping
+  * @vma: the vma to be mmapped is prepared by do_mmap_pgoff
