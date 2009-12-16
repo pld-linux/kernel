@@ -41482,60 +41482,6 @@ diff -urNp linux-2.6.32.1/include/linux/fs.h linux-2.6.32.1/include/linux/fs.h
  						 * array */
  };
  int fiemap_fill_next_extent(struct fiemap_extent_info *info, u64 logical,
-@@ -1607,32 +1607,32 @@
- ssize_t vfs_sendfile(struct file *, struct file *, loff_t *, size_t, loff_t);
- 
- struct super_operations {
--   	struct inode *(*alloc_inode)(struct super_block *sb);
--	void (*destroy_inode)(struct inode *);
-+   	struct inode *(* const alloc_inode)(struct super_block *sb);
-+	void (* const destroy_inode)(struct inode *);
- 
--   	void (*dirty_inode) (struct inode *);
--	int (*write_inode) (struct inode *, int);
--	void (*drop_inode) (struct inode *);
--	void (*delete_inode) (struct inode *);
--	void (*put_super) (struct super_block *);
--	void (*write_super) (struct super_block *);
--	int (*sync_fs)(struct super_block *sb, int wait);
--	int (*freeze_fs) (struct super_block *);
--	int (*unfreeze_fs) (struct super_block *);
--	int (*statfs) (struct dentry *, struct kstatfs *);
--	int (*remount_fs) (struct super_block *, int *, char *);
--	void (*clear_inode) (struct inode *);
--	void (*umount_begin) (struct super_block *);
-+   	void (* const dirty_inode) (struct inode *);
-+	int (* const write_inode) (struct inode *, int);
-+	void (* const drop_inode) (struct inode *);
-+	void (* const delete_inode) (struct inode *);
-+	void (* const put_super) (struct super_block *);
-+	void (* const write_super) (struct super_block *);
-+	int (* const sync_fs)(struct super_block *sb, int wait);
-+	int (* const freeze_fs) (struct super_block *);
-+	int (* const unfreeze_fs) (struct super_block *);
-+	int (* const statfs) (struct dentry *, struct kstatfs *);
-+	int (* const remount_fs) (struct super_block *, int *, char *);
-+	void (* const clear_inode) (struct inode *);
-+	void (* const umount_begin) (struct super_block *);
- 
--	void (*sync_inodes)(struct super_block *sb,
-+	void (* const sync_inodes)(struct super_block *sb,
- 				struct writeback_control *wbc);
--	int (*show_options)(struct seq_file *, struct vfsmount *);
--	int (*show_stats)(struct seq_file *, struct vfsmount *);
-+	int (* const show_options)(struct seq_file *, struct vfsmount *);
-+	int (* const show_stats)(struct seq_file *, struct vfsmount *);
- #ifdef CONFIG_QUOTA
--	ssize_t (*quota_read)(struct super_block *, int, char *, size_t, loff_t);
--	ssize_t (*quota_write)(struct super_block *, int, const char *, size_t, loff_t);
-+	ssize_t (* const quota_read)(struct super_block *, int, char *, size_t, loff_t);
-+	ssize_t (* const quota_write)(struct super_block *, int, const char *, size_t, loff_t);
- #endif
--	int (*bdev_try_to_free_page)(struct super_block*, struct page*, gfp_t);
-+	int (* const bdev_try_to_free_page)(struct super_block*, struct page*, gfp_t);
- };
- 
- /*
 diff -urNp linux-2.6.32.1/include/linux/fs_struct.h linux-2.6.32.1/include/linux/fs_struct.h
 --- linux-2.6.32.1/include/linux/fs_struct.h	2009-12-02 22:51:21.000000000 -0500
 +++ linux-2.6.32.1/include/linux/fs_struct.h	2009-12-14 18:33:59.059779887 -0500
@@ -51222,8 +51168,12 @@ diff -urNp linux-2.6.32.1/security/commoncap.c linux-2.6.32.1/security/commoncap
  /*
   * If a non-root user executes a setuid-root binary in
   * !secure(SECURE_NOROOT) mode, then we raise capabilities.
-@@ -53,7 +55,7 @@ static void warn_setuid_and_fcaps_mixed(
+@@ -50,9 +50,11 @@ static void warn_setuid_and_fcaps_mixed(
+ 	}
+ }
  
++extern kernel_cap_t gr_cap_rtnetlink(struct sock *sk);
++
  int cap_netlink_send(struct sock *sk, struct sk_buff *skb)
  {
 -	NETLINK_CB(skb).eff_cap = vx_mbcaps(current_cap());
@@ -51231,6 +51181,7 @@ diff -urNp linux-2.6.32.1/security/commoncap.c linux-2.6.32.1/security/commoncap
  	return 0;
  }
  
+
 diff -urNp linux-2.6.32.1/security/Kconfig linux-2.6.32.1/security/Kconfig
 --- linux-2.6.32.1/security/Kconfig	2009-12-02 22:51:21.000000000 -0500
 +++ linux-2.6.32.1/security/Kconfig	2009-12-14 18:33:59.911723002 -0500
