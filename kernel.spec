@@ -326,7 +326,6 @@ Patch9999:	kernel-grsec_full.patch
 Patch10000:	kernel-grsec-caps.patch
 Patch10001:	kernel-grsec-common.patch
 Patch10002:	kernel-grsec_fixes.patch
-Patch10003:	kernel-grsec-no-stupid-SbO.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 3:2.18
@@ -833,7 +832,6 @@ sed -i 's/-Werror//' arch/alpha/kernel/Makefile
 %{?with_vserver:%patch10000 -p1}
 %{?with_vserver:%patch10001 -p1}
 %{?with_vserver:%patch10002 -p1}
-%{?with_vserver:%patch10003 -p1}
 %endif
 %endif
 #
