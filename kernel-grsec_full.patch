@@ -29972,24 +29972,44 @@ diff -urNp linux-2.6.32.1/fs/open.c linux-2.6.32.1/fs/open.c
  	newattrs.ia_valid =  ATTR_CTIME;
  	if (user != (uid_t) -1) {
  		newattrs.ia_valid |= ATTR_UID;
-@@ -775,7 +775,7 @@ SYSCALL_DEFINE3(chown, const char __user
+@@ -770,17 +770,17 @@ SYSCALL_DEFINE3(chown, const char __user
+ 		goto out;
+ 	error = mnt_want_write(path.mnt);
+ 	if (error)
+ 		goto out_release;
+ #ifdef CONFIG_VSERVER_COWBL
  	error = cow_check_and_break(&path);
  	if (!error)
  #endif
 -		error = chown_common(path.dentry, user, group);
-+		error = chown_common(path.dentry, user, group, path.nmt);
++		error = chown_common(path.dentry, user, group, path.mnt);
  	mnt_drop_write(path.mnt);
  out_release:
  	path_put(&path);
-@@ -804,7 +804,7 @@ SYSCALL_DEFINE5(fchownat, int, dfd, cons
+ out:
+ 	return error;
+ }
+ 
+ SYSCALL_DEFINE5(fchownat, int, dfd, const char __user *, filename, uid_t, user,
+@@ -799,17 +799,17 @@ SYSCALL_DEFINE5(fchownat, int, dfd, cons
+ 		goto out;
+ 	error = mnt_want_write(path.mnt);
+ 	if (error)
+ 		goto out_release;
+ #ifdef CONFIG_VSERVER_COWBL
  	error = cow_check_and_break(&path);
  	if (!error)
  #endif
 -		error = chown_common(path.dentry, user, group);
-+		error = chown_common(path.dentry, user, group, path.nmt);
++		error = chown_common(path.dentry, user, group, path.mnt);
  	mnt_drop_write(path.mnt);
  out_release:
  	path_put(&path);
+ out:
+ 	return error;
+ }
+ 
+ SYSCALL_DEFINE3(lchown, const char __user *, filename, uid_t, user, gid_t, group)
 @@ -827,7 +827,7 @@ SYSCALL_DEFINE3(lchown, const char __use
  	error = cow_check_and_break(&path);
  	if (!error)
@@ -30477,7 +30497,12 @@ diff -urNp linux-2.6.32.1/fs/proc/base.c linux-2.6.32.1/fs/proc/base.c
  };
  
  static int proc_tgid_base_readdir(struct file * filp,
-@@ -2686,7 +2770,14 @@ static struct dentry *proc_pid_instantia
+@@ -2784,17 +2784,24 @@ static struct dentry *proc_pid_instantia
+ {
+ 	struct dentry *error = ERR_PTR(-ENOENT);
+ 	struct inode *inode;
+ 
+ 	inode = proc_pid_make_inode(dir->i_sb, task);
  	if (!inode)
  		goto out;
  
@@ -30492,7 +30517,18 @@ diff -urNp linux-2.6.32.1/fs/proc/base.c linux-2.6.32.1/fs/proc/base.c
  	inode->i_op = &proc_tgid_base_inode_operations;
  	inode->i_fop = &proc_tgid_base_operations;
  	inode->i_flags|=S_IMMUTABLE;
-@@ -2728,7 +2819,11 @@ struct dentry *proc_pid_lookup(struct in
+ 
+ 	inode->i_nlink = 2 + pid_entry_count_dirs(tgid_base_stuff,
+ 		ARRAY_SIZE(tgid_base_stuff));
+ 
+ 	dentry->d_op = &pid_dentry_operations;
+
+@@ -2826,17 +2826,21 @@ struct dentry *proc_pid_lookup(struct in
+ 	rcu_read_lock();
+ 	task = find_task_by_pid_ns(tgid, ns);
+ 	if (task)
+ 		get_task_struct(task);
+ 	rcu_read_unlock();
  	if (!task)
  		goto out;
  
@@ -30504,6 +30540,11 @@ diff -urNp linux-2.6.32.1/fs/proc/base.c linux-2.6.32.1/fs/proc/base.c
  	put_task_struct(task);
  out:
  	return result;
+ }
+ 
+ /*
+  * Find the first task with tgid >= tgid
+  *
 @@ -2793,6 +2888,10 @@ int proc_pid_readdir(struct file * filp,
  {
  	unsigned int nr = filp->f_pos - FIRST_PROCESS_ENTRY;
@@ -45964,7 +46005,18 @@ diff -urNp linux-2.6.32.1/kernel/ptrace.c linux-2.6.32.1/kernel/ptrace.c
  	if (request == PTRACE_ATTACH) {
  		ret = ptrace_attach(child);
  		/*
-@@ -663,7 +663,7 @@ int generic_ptrace_peekdata(struct task_
+--- l/kernel/ptrace.c~	2009-12-16 10:30:10.024443147 +0100
++++ l/kernel/ptrace.c	2009-12-16 10:31:34.308392396 +0100
+@@ -654,25 +654,25 @@ SYSCALL_DEFINE4(ptrace, long, request, l
+ 	unlock_kernel();
+ 	return ret;
+ }
+ 
+ int generic_ptrace_peekdata(struct task_struct *tsk, long addr, long data)
+ {
+ 	unsigned long tmp;
+ 	int copied;
+ 
  	copied = access_process_vm(tsk, addr, &tmp, sizeof(tmp), 0);
  	if (copied != sizeof(tmp))
  		return -EIO;
@@ -45973,6 +46025,15 @@ diff -urNp linux-2.6.32.1/kernel/ptrace.c linux-2.6.32.1/kernel/ptrace.c
  }
  
  int generic_ptrace_pokedata(struct task_struct *tsk, long addr, long data)
+ {
+ 	int copied;
+ 
+ 	copied = access_process_vm(tsk, addr, &data, sizeof(data), 1);
+ 	return (copied == sizeof(data)) ? 0 : -EIO;
+ }
+ 
+ #if defined CONFIG_COMPAT
+ #include <linux/compat.h>
 diff -urNp linux-2.6.32.1/kernel/relay.c linux-2.6.32.1/kernel/relay.c
 --- linux-2.6.32.1/kernel/relay.c	2009-12-02 22:51:21.000000000 -0500
 +++ linux-2.6.32.1/kernel/relay.c	2009-12-14 18:33:59.442723685 -0500
@@ -48303,7 +48364,7 @@ diff -urNp linux-2.6.32.1/mm/mmap.c linux-2.6.32.1/mm/mmap.c
  	return error;
  }
  
-@@ -1769,6 +2000,13 @@ static void remove_vma_list(struct mm_st
+@@ -2002,6 +2002,13 @@ static void remove_vma_list(struct mm_st
  	do {
  		long nrpages = vma_pages(vma);
  
@@ -48314,9 +48375,9 @@ diff -urNp linux-2.6.32.1/mm/mmap.c linux-2.6.32.1/mm/mmap.c
 +		}
 +#endif
 +
- 		mm->total_vm -= nrpages;
+ 		// mm->total_vm -= nrpages;
+ 		vx_vmpages_sub(mm, nrpages);
  		vm_stat_account(mm, vma->vm_flags, vma->vm_file, -nrpages);
- 		vma = remove_vma(vma);
 @@ -1813,6 +2051,16 @@ detach_vmas_to_be_unmapped(struct mm_str
  
  	insertion_point = (prev ? &prev->vm_next : &mm->mmap);
@@ -48567,7 +48628,7 @@ diff -urNp linux-2.6.32.1/mm/mmap.c linux-2.6.32.1/mm/mmap.c
  		if (locked > lock_limit && !capable(CAP_IPC_LOCK))
  			return -EAGAIN;
  	}
-@@ -2041,22 +2429,22 @@ unsigned long do_brk(unsigned long addr,
+@@ -2435,23 +2435,23 @@ unsigned long do_brk(unsigned long addr,
  	/*
  	 * Clear old maps.  this also does some error checking for us
  	 */
@@ -48589,8 +48650,10 @@ diff -urNp linux-2.6.32.1/mm/mmap.c linux-2.6.32.1/mm/mmap.c
  	if (mm->map_count > sysctl_max_map_count)
  		return -ENOMEM;
  
--	if (security_vm_enough_memory(len >> PAGE_SHIFT))
-+	if (security_vm_enough_memory(charged))
+-	if (security_vm_enough_memory(len >> PAGE_SHIFT) ||
+-		!vx_vmpages_avail(mm, len >> PAGE_SHIFT))
++	if (security_vm_enough_memory(charged) ||
++		!vx_vmpages_avail(mm, charged))
  		return -ENOMEM;
  
  	/* Can we just expand an old private anonymous mapping? */
@@ -48617,16 +48680,21 @@ diff -urNp linux-2.6.32.1/mm/mmap.c linux-2.6.32.1/mm/mmap.c
  	vma->vm_mm = mm;
  	vma->vm_start = addr;
  	vma->vm_end = addr + len;
-@@ -2082,11 +2481,12 @@ unsigned long do_brk(unsigned long addr,
+@@ -2488,14 +2488,15 @@ unsigned long do_brk(unsigned long addr,
  	vma->vm_page_prot = vm_get_page_prot(flags);
  	vma_link(mm, vma, prev, rb_link, rb_parent);
  out:
--	mm->total_vm += len >> PAGE_SHIFT;
-+	mm->total_vm += charged;
+-	// mm->total_vm += len >> PAGE_SHIFT;
+-	vx_vmpages_add(mm, len >> PAGE_SHIFT);
++	// mm->total_vm += charged;
++	vx_vmpages_add(mm, charged);
+ 
  	if (flags & VM_LOCKED) {
  		if (!mlock_vma_pages_range(vma, addr, addr + len))
--			mm->locked_vm += (len >> PAGE_SHIFT);
-+			mm->locked_vm += charged;
+-			// mm->locked_vm += (len >> PAGE_SHIFT);
+-			vx_vmlocked_add(mm, len >> PAGE_SHIFT);
++			// mm->locked_vm += (charged);
++			vx_vmlocked_add(mm, charged);
  	}
 +	track_exec_limit(mm, addr, addr + len, flags);
  	return addr;
