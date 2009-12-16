@@ -6562,6 +6562,20 @@ diff -urNp linux-2.6.32.1/arch/x86/include/asm/boot.h linux-2.6.32.1/arch/x86/in
  /* Minimum kernel alignment, as a power of two */
  #ifdef CONFIG_X86_64
  #define MIN_KERNEL_ALIGN_LG2	PMD_SHIFT
+diff -urNp linux-2.6.32.1/arch/x86/include/asm/cacheflush.h linux-2.6.32.1/arch/x86/include/asm/cacheflush.h
+--- linux-2.6.32.1/arch/x86/include/asm/cacheflush.h	2009-12-02 22:51:21.000000000 -0500
++++ linux-2.6.32.1/arch/x86/include/asm/cacheflush.h	2009-12-15 17:05:40.612643960 -0500
+@@ -179,8 +179,8 @@ extern const int rodata_test_data;
+ void set_kernel_text_rw(void);
+ void set_kernel_text_ro(void);
+ #else
+-static inline void set_kernel_text_rw(void) { }
+-static inline void set_kernel_text_ro(void) { }
++static inline void set_kernel_text_rw(void) { pax_open_kernel(); }
++static inline void set_kernel_text_ro(void) { pax_close_kernel(); }
+ #endif
+ 
+ #ifdef CONFIG_DEBUG_RODATA_TEST
 diff -urNp linux-2.6.32.1/arch/x86/include/asm/cache.h linux-2.6.32.1/arch/x86/include/asm/cache.h
 --- linux-2.6.32.1/arch/x86/include/asm/cache.h	2009-12-02 22:51:21.000000000 -0500
 +++ linux-2.6.32.1/arch/x86/include/asm/cache.h	2009-12-14 18:33:51.599707107 -0500
@@ -10453,19 +10467,53 @@ diff -urNp linux-2.6.32.1/arch/x86/kernel/entry_64.S linux-2.6.32.1/arch/x86/ker
  	addq $EXCEPTION_STKSZ, TSS_ist + (\ist - 1) * 8(%rbp)
 diff -urNp linux-2.6.32.1/arch/x86/kernel/ftrace.c linux-2.6.32.1/arch/x86/kernel/ftrace.c
 --- linux-2.6.32.1/arch/x86/kernel/ftrace.c	2009-12-02 22:51:21.000000000 -0500
-+++ linux-2.6.32.1/arch/x86/kernel/ftrace.c	2009-12-14 18:33:51.665756688 -0500
-@@ -284,9 +284,9 @@ int ftrace_update_ftrace_func(ftrace_fun
++++ linux-2.6.32.1/arch/x86/kernel/ftrace.c	2009-12-15 17:05:40.572633226 -0500
+@@ -215,7 +215,7 @@ do_ftrace_mod_code(unsigned long ip, voi
+ 
+ 
+ 
+-static unsigned char ftrace_nop[MCOUNT_INSN_SIZE];
++static unsigned char ftrace_nop[MCOUNT_INSN_SIZE] __read_only;
+ 
+ static unsigned char *ftrace_nop_replace(void)
+ {
+@@ -228,6 +228,8 @@ ftrace_modify_code(unsigned long ip, uns
+ {
+ 	unsigned char replaced[MCOUNT_INSN_SIZE];
+ 
++	ip = ktla_ktva(ip);
++
+ 	/*
+ 	 * Note: Due to modules and __init, code can
+ 	 *  disappear and change, we need to protect against faulting
+@@ -284,7 +286,7 @@ int ftrace_update_ftrace_func(ftrace_fun
  	unsigned char old[MCOUNT_INSN_SIZE], *new;
  	int ret;
  
 -	memcpy(old, &ftrace_call, MCOUNT_INSN_SIZE);
 +	memcpy(old, (void *)ktla_ktva((unsigned long)ftrace_call), MCOUNT_INSN_SIZE);
  	new = ftrace_call_replace(ip, (unsigned long)func);
--	ret = ftrace_modify_code(ip, old, new);
-+	ret = ftrace_modify_code(ktla_ktva(ip), old, new);
+ 	ret = ftrace_modify_code(ip, old, new);
  
- 	return ret;
- }
+@@ -337,15 +339,15 @@ int __init ftrace_dyn_arch_init(void *da
+ 	switch (faulted) {
+ 	case 0:
+ 		pr_info("ftrace: converting mcount calls to 0f 1f 44 00 00\n");
+-		memcpy(ftrace_nop, ftrace_test_p6nop, MCOUNT_INSN_SIZE);
++		memcpy(ftrace_nop, ktla_ktva(ftrace_test_p6nop), MCOUNT_INSN_SIZE);
+ 		break;
+ 	case 1:
+ 		pr_info("ftrace: converting mcount calls to 66 66 66 66 90\n");
+-		memcpy(ftrace_nop, ftrace_test_nop5, MCOUNT_INSN_SIZE);
++		memcpy(ftrace_nop, ktla_ktva(ftrace_test_nop5), MCOUNT_INSN_SIZE);
+ 		break;
+ 	case 2:
+ 		pr_info("ftrace: converting mcount calls to jmp . + 5\n");
+-		memcpy(ftrace_nop, ftrace_test_jmp, MCOUNT_INSN_SIZE);
++		memcpy(ftrace_nop, ktla_ktva(ftrace_test_jmp), MCOUNT_INSN_SIZE);
+ 		break;
+ 	}
+ 
 diff -urNp linux-2.6.32.1/arch/x86/kernel/head32.c linux-2.6.32.1/arch/x86/kernel/head32.c
 --- linux-2.6.32.1/arch/x86/kernel/head32.c	2009-12-02 22:51:21.000000000 -0500
 +++ linux-2.6.32.1/arch/x86/kernel/head32.c	2009-12-14 18:33:51.665756688 -0500
@@ -16464,7 +16512,7 @@ diff -urNp linux-2.6.32.1/arch/x86/mm/hugetlbpage.c linux-2.6.32.1/arch/x86/mm/h
  	}
 diff -urNp linux-2.6.32.1/arch/x86/mm/init_32.c linux-2.6.32.1/arch/x86/mm/init_32.c
 --- linux-2.6.32.1/arch/x86/mm/init_32.c	2009-12-02 22:51:21.000000000 -0500
-+++ linux-2.6.32.1/arch/x86/mm/init_32.c	2009-12-14 18:33:51.854715995 -0500
++++ linux-2.6.32.1/arch/x86/mm/init_32.c	2009-12-15 17:05:40.583629988 -0500
 @@ -72,36 +72,6 @@ static __init void *alloc_low_page(void)
  }
  
@@ -16722,6 +16770,30 @@ diff -urNp linux-2.6.32.1/arch/x86/mm/init_32.c linux-2.6.32.1/arch/x86/mm/init_
  		((unsigned long)&_etext - (unsigned long)&_text) >> 10);
  
  	/*
+@@ -1007,6 +1006,7 @@ void set_kernel_text_rw(void)
+ 	if (!kernel_set_to_readonly)
+ 		return;
+ 
++	start = ktla_ktva(start);
+ 	pr_debug("Set kernel text: %lx - %lx for read write\n",
+ 		 start, start+size);
+ 
+@@ -1021,6 +1021,7 @@ void set_kernel_text_ro(void)
+ 	if (!kernel_set_to_readonly)
+ 		return;
+ 
++	start = ktla_ktva(start);
+ 	pr_debug("Set kernel text: %lx - %lx for read only\n",
+ 		 start, start+size);
+ 
+@@ -1032,6 +1033,7 @@ void mark_rodata_ro(void)
+ 	unsigned long start = PFN_ALIGN(_text);
+ 	unsigned long size = PFN_ALIGN(_etext) - start;
+ 
++	start = ktla_ktva(start);
+ 	set_pages_ro(virt_to_page(start), size >> PAGE_SHIFT);
+ 	printk(KERN_INFO "Write protecting the kernel text: %luk\n",
+ 		size >> 10);
 diff -urNp linux-2.6.32.1/arch/x86/mm/init_64.c linux-2.6.32.1/arch/x86/mm/init_64.c
 --- linux-2.6.32.1/arch/x86/mm/init_64.c	2009-12-02 22:51:21.000000000 -0500
 +++ linux-2.6.32.1/arch/x86/mm/init_64.c	2009-12-14 18:33:51.855716926 -0500
