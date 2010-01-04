@@ -23,6 +23,7 @@
 #
 # Conditional build:
 %bcond_without	source		# don't build kernel-source package
+%bcond_without	doc			# don't build kernel-doc package
 %bcond_without	pcmcia		# don't build pcmcia
 
 %bcond_with	verbose		# verbose build (V=1)
@@ -1506,6 +1507,7 @@ fi
 %{_kernelsrcdir}/scripts/selinux/mdp/Makefile
 %{_kernelsrcdir}/scripts/selinux/mdp/*.c
 
+%if %{with doc}
 %files doc
 %defattr(644,root,root,755)
 %dir %{_docdir}/%{name}-%{version}
@@ -1517,6 +1519,7 @@ fi
 %lang(ja) %{_docdir}/%{name}-%{version}/ja_JP
 %lang(ko) %{_docdir}/%{name}-%{version}/ko_KR
 %lang(zh_CN) %{_docdir}/%{name}-%{version}/zh_CN
+%endif
 
 %if %{with source}
 %files source -f aux_files_exc
