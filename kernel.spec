@@ -412,7 +412,7 @@ BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 %define		defconfig	arch/%{target_arch_dir}/defconfig
 
 # No ELF objects there to strip (skips processing 27k files)
-%define		_noautostrip	'(.*%{_kernelsrcdir}/.*|.*/vmlinux.*)'
+%define		_noautostrip	\\(.*%{_kernelsrcdir}/.*\\|.*/vmlinux.*\\)
 %define		_noautochrpath	.*%{_kernelsrcdir}/.*
 
 %ifarch ia64
