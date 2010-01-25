@@ -32795,17 +32795,6 @@ diff -urNp linux-2.6.27.10/kernel/signal.c linux-2.6.27.10/kernel/signal.c
  	return security_task_kill(t, info, sig, 0);
  }
  
-@@ -884,8 +888,8 @@ static void print_fatal_signal(struct pt
- 		for (i = 0; i < 16; i++) {
- 			unsigned char insn;
- 
--			__get_user(insn, (unsigned char *)(regs->ip + i));
--			printk("%02x ", insn);
-+			if (!get_user(insn, (unsigned char __user *)(regs->ip + i)))
-+				printk("%02x ", insn);
- 		}
- 	}
- #endif
 @@ -908,7 +912,7 @@ __group_send_sig_info(int sig, struct si
  	return send_signal(sig, info, p, 1);
  }
