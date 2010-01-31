@@ -8,8 +8,7 @@
 #
 # TODO:
 # - benchmark NO_HZ & HZ=1000 vs HZ=300 on i686
-# - add a subpackage (kernel-firmware?) for ~35 firmware files
-# - update or remove tahoe9xx patch2 
+# - update or remove tahoe9xx patch2
 # - update or remove mpt-fusion patch90
 # - update grsec_minimal patch1000:
 #   fs/proc/base.c:1484: error: 'struct task_struct' has no member named 'uid'
@@ -200,7 +199,7 @@ Patch4:		kernel-fbcon-margins.patch
 
 # netfilter related stuff mostly based on patch-o-matic-ng
 # snapshot 20070806 with some fixes. Some modules
-# were ported to nf_conntrack. 
+# were ported to nf_conntrack.
 
 Patch10:	kernel-pom-ng-IPV4OPTSSTRIP.patch
 Patch11:	kernel-pom-ng-ipv4options.patch
@@ -336,10 +335,10 @@ BuildRequires:	elftoaout
 %ifarch ppc
 BuildRequires:	uboot-mkimage
 %endif
-AutoReqProv:	no
 BuildRequires:	/sbin/depmod
 BuildRequires:	gcc >= 5:3.2
 BuildRequires:	xz >= 1:4.999.7
+AutoReqProv:	no
 # for hostname command
 BuildRequires:	net-tools
 BuildRequires:	perl-base
@@ -352,6 +351,7 @@ Requires:	/sbin/depmod
 Requires:	coreutils
 Requires:	geninitrd >= 10000-3
 Requires:	module-init-tools >= 0.9.9
+Suggests:	%{name}-firmware = %{kernel_release}
 Provides:	%{name}(netfilter) = %{netfilter_snap}
 Provides:	%{name}(vermagic) = %{kernel_release}
 Obsoletes:	kernel%{_alt_kernel}-isdn-mISDN
@@ -549,6 +549,17 @@ PCMCIA Module.
 
 %description pcmcia -l pl.UTF-8
 Moduły PCMCIA.
+
+%package firmware
+Summary:	Firmware files used by the Linux kernel
+Group:		Base/Kernel
+# This is... complicated.
+# Look at the WHENCE file.
+License:	GPL+ and GPLv2+ and MIT and Redistributable, no modification permitted
+
+%description firmware
+Kernel-firmware includes firmware files required for some devices to
+operate.
 
 %package sound-alsa
 Summary:	ALSA kernel modules
@@ -910,7 +921,7 @@ PaXconfig() {
 	# Now we have to check MAC system integration. Grsecurity (full) uses PAX_HAVE_ACL_FLAGS
 	# setting (direct acces). grsec_minimal probably have no idea about PaX so we probably
 	# could use PAX_NO_ACL_FLAGS, but for testing the hooks setting will be used
-	# PAX_HOOK_ACL_FLAGS. 
+	# PAX_HOOK_ACL_FLAGS.
 
 	%if %{with grsec_full}
 		# Hardening grsec options if with pax
@@ -1308,7 +1319,6 @@ fi
 /boot/vmlinuz-%{kernel_release}
 /boot/System.map-%{kernel_release}
 %ghost %{initrd_dir}/initrd-%{kernel_release}.gz
-/lib/firmware/%{kernel_release}
 
 %dir /lib/modules/%{kernel_release}
 %dir /lib/modules/%{kernel_release}/kernel
@@ -1389,6 +1399,11 @@ fi
 %defattr(644,root,root,755)
 /boot/vmlinux-%{kernel_release}
 %endif
+
+%files firmware
+%defattr(644,root,root,755)
+#%doc Documentation/WHENCE
+/lib/firmware/%{kernel_release}
 
 %if %{have_drm}
 %files drm
