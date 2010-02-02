@@ -112,7 +112,7 @@
 
 %define		basever		2.6.32
 %define		postver		.7
-%define		rel		1
+%define		rel		2
 
 %define		_enable_debug_packages			0
 
@@ -233,7 +233,7 @@ Patch41:	kernel-ipvs-nfct.patch
 # http://zph.bratcheda.org/linux-2.6.26.3-zph.patch
 Patch49:	kernel-zph.patch
 
-# based on http://www.linuximq.net/patchs/linux-2.6.29.1-imq-test2.diff
+# http://www.linuximq.net/patchs/linux-2.6.32-imq-test2.diff
 Patch50:	kernel-imq.patch
 
 # http://www.kernel.org/pub/linux/kernel/people/edward/reiser4/reiser4-for-2.6/reiser4-for-2.6.28.patch.bz2
