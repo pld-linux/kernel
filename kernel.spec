@@ -111,7 +111,7 @@
 %endif
 
 %define		basever		2.6.32
-%define		postver		.3
+%define		postver		.7
 %define		rel		1
 
 %define		_enable_debug_packages			0
@@ -155,7 +155,7 @@ Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{basever}.tar.bz2
 # Source0-md5:	260551284ac224c3a43c4adac7df4879
 %if "%{postver}" != "%{nil}"
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
-# Source1-md5:	6bd3c5fea1e88bb4d0948ec3688bd8f6
+# Source1-md5:	a68305d3e77dddc9555ba58f678a1ce2
 %endif
 
 Source3:	kernel-autoconf.h
@@ -268,7 +268,7 @@ Patch85:	kernel-hostap.patch
 # Taken from http://download.opensuse.org/factory/repo/src-oss/suse/src/kernel-source-2.6.30-10.3.src.rpm
 Patch90:	kernel-mpt-fusion.patch
 
-# based on http://vserver.13thfloor.at/Experimental/patch-2.6.32.2-vs2.3.0.36.28.diff
+# based on http://vserver.13thfloor.at/Experimental/patch-2.6.32.6-vs2.3.0.36.28.diff
 Patch100:	kernel-vserver-2.3.patch
 Patch101:	kernel-vserver-fixes.patch
 
@@ -319,7 +319,7 @@ Patch5000:	kernel-apparmor.patch
 # based on http://ftp.leg.uct.ac.za/pub/linux/rip/inittmpfs-2.6.14.diff.gz
 Patch7000:	kernel-inittmpfs.patch
 
-# based on http://www.grsecurity.net/~spender/grsecurity-2.1.14-2.6.32.1-200912151746.patch kernel-grsec_full.patch
+# based on http://www.grsecurity.net/~spender/grsecurity-2.1.14-2.6.32.7-201001291848.patch kernel-grsec_full.patch
 # NOTE: put raw upstream patches on kernel-grsec_full.patch:GRSECURITY_RAW for reference
 #       (since upstream deletes older patches)
 Patch9999:	kernel-grsec_full.patch
