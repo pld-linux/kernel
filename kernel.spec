@@ -6,6 +6,9 @@
 #   - with_grsec_minimal
 #   - with_grsec_full
 #
+# LATEST VERSION CHECKER:
+# # curl -s http://www.kernel.org/kdist/finger_banner
+#
 # TODO:
 # - benchmark NO_HZ & HZ=1000 vs HZ=300 on i686
 # - update or remove tahoe9xx patch2
