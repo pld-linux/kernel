@@ -115,7 +115,7 @@
 
 %define		basever		2.6.32
 %define		postver		.8
-%define		rel		1
+%define		rel		2
 
 %define		_enable_debug_packages			0
 
@@ -354,7 +354,7 @@ Requires:	/sbin/depmod
 Requires:	coreutils
 Requires:	geninitrd >= 10000-3
 Requires:	module-init-tools >= 0.9.9
-Suggests:	%{name}-firmware = %{kernel_release}
+Suggests:	%{name}-firmware = %{epoch}:%{kernel_release}
 Provides:	%{name}(netfilter) = %{netfilter_snap}
 Provides:	%{name}(vermagic) = %{kernel_release}
 Obsoletes:	kernel%{_alt_kernel}-isdn-mISDN
