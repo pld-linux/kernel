@@ -17925,15 +17925,15 @@ diff -urNp linux-2.6.32.7/drivers/acpi/processor_core.c linux-2.6.32.7/drivers/a
 diff -urNp linux-2.6.32.7/drivers/acpi/processor_idle.c linux-2.6.32.7/drivers/acpi/processor_idle.c
 --- linux-2.6.32.7/drivers/acpi/processor_idle.c	2010-01-25 20:04:14.673608010 -0500
 +++ linux-2.6.32.7/drivers/acpi/processor_idle.c	2010-01-25 20:04:24.410241670 -0500
-@@ -110,7 +110,7 @@ static struct dmi_system_id __cpuinitdat
- 	  DMI_MATCH(DMI_BIOS_VENDOR,"Phoenix Technologies LTD"),
- 	  DMI_MATCH(DMI_BIOS_VERSION,"SHE845M0.86C.0013.D.0302131307")},
- 	 (void *)2},
+@@ -118,7 +118,7 @@ static struct dmi_system_id __cpuinitdat
+ 	  DMI_MATCH(DMI_SYS_VENDOR, "ASUSTeK Computer Inc."),
+ 	  DMI_MATCH(DMI_PRODUCT_NAME,"L8400B series Notebook PC")},
+ 	 (void *)1},
 -	{},
 +	{ NULL, NULL, {DMI_MATCH(DMI_NONE, {0})}, NULL},
  };
  
- 
+
 diff -urNp linux-2.6.32.7/drivers/acpi/sleep.c linux-2.6.32.7/drivers/acpi/sleep.c
 --- linux-2.6.32.7/drivers/acpi/sleep.c	2010-01-25 13:50:10.000000000 -0500
 +++ linux-2.6.32.7/drivers/acpi/sleep.c	2010-01-25 17:39:40.370403762 -0500
@@ -27919,9 +27919,9 @@ diff -urNp linux-2.6.32.7/fs/exec.c linux-2.6.32.7/fs/exec.c
 -			goto out_unlock;
 -	}
 -
- #ifdef CONFIG_STACK_GROWSUP
- 	stack_base = vma->vm_end + EXTRA_STACK_VM_PAGES * PAGE_SIZE;
- #else
+ 	stack_expand = EXTRA_STACK_VM_PAGES * PAGE_SIZE;
+ 	stack_size = vma->vm_end - vma->vm_start;
+ 	/*
 @@ -651,7 +684,7 @@ struct file *open_exec(const char *name)
  	int err;
  
