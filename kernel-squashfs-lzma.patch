@@ -977,24 +977,6 @@ diff --git a/include/linux/decompress/mm.h b/include/linux/decompress/mm.h
 index 12ff8c3..44f6e14 100644
 --- a/include/linux/decompress/mm.h
 +++ b/include/linux/decompress/mm.h
-@@ -25,7 +25,7 @@ static void *malloc(int size)
- 	void *p;
- 
- 	if (size < 0)
--		error("Malloc error");
-+		return NULL;
- 	if (!malloc_ptr)
- 		malloc_ptr = free_mem_ptr;
- 
-@@ -35,7 +35,7 @@ static void *malloc(int size)
- 	malloc_ptr += size;
- 
- 	if (free_mem_end_ptr && malloc_ptr >= free_mem_end_ptr)
--		error("Out of memory");
-+		return NULL;
- 
- 	malloc_count++;
- 	return p;
 @@ -53,8 +53,6 @@ static void free(void *where)
  
  #define set_error_fn(x)
@@ -1055,68 +1037,6 @@ index bb1326d..25e7f28 100644
  #
  # Generic allocator support is selected if needed
  #
-diff --git a/lib/decompress_bunzip2.c b/lib/decompress_bunzip2.c
-index 600f473..7db58b9 100644
---- a/lib/decompress_bunzip2.c
-+++ b/lib/decompress_bunzip2.c
-@@ -52,6 +52,7 @@
- #include <linux/slab.h>
- #endif /* STATIC */
- 
-+#include <linux/decompress/bunzip2_mm.h>
- #include <linux/decompress/mm.h>
- 
- #ifndef INT_MAX
-@@ -637,6 +638,8 @@ static int INIT start_bunzip(struct bunzip_data **bdp, void *inbuf, int len,
- 
- 	/* Allocate bunzip_data.  Most fields initialize to zero. */
- 	bd = *bdp = malloc(i);
-+	if (!bd)
-+		return RETVAL_OUT_OF_MEMORY;
- 	memset(bd, 0, sizeof(struct bunzip_data));
- 	/* Setup input buffer */
- 	bd->inbuf = inbuf;
-@@ -664,6 +667,8 @@ static int INIT start_bunzip(struct bunzip_data **bdp, void *inbuf, int len,
- 	bd->dbufSize = 100000*(i-BZh0);
- 
- 	bd->dbuf = large_malloc(bd->dbufSize * sizeof(int));
-+	if (!bd->dbuf)
-+		return RETVAL_OUT_OF_MEMORY;
- 	return RETVAL_OK;
- }
- 
-@@ -686,7 +691,7 @@ STATIC int INIT bunzip2(unsigned char *buf, int len,
- 
- 	if (!outbuf) {
- 		error("Could not allocate output bufer");
--		return -1;
-+		return RETVAL_OUT_OF_MEMORY;
- 	}
- 	if (buf)
- 		inbuf = buf;
-@@ -694,6 +699,7 @@ STATIC int INIT bunzip2(unsigned char *buf, int len,
- 		inbuf = malloc(BZIP2_IOBUF_SIZE);
- 	if (!inbuf) {
- 		error("Could not allocate input bufer");
-+		i = RETVAL_OUT_OF_MEMORY;
- 		goto exit_0;
- 	}
- 	i = start_bunzip(&bd, inbuf, len, fill);
-@@ -720,11 +726,14 @@ STATIC int INIT bunzip2(unsigned char *buf, int len,
- 	} else if (i == RETVAL_UNEXPECTED_OUTPUT_EOF) {
- 		error("Compressed file ends unexpectedly");
- 	}
-+	if (!bd)
-+		goto exit_1;
- 	if (bd->dbuf)
- 		large_free(bd->dbuf);
- 	if (pos)
- 		*pos = bd->inbufPos;
- 	free(bd);
-+exit_1:
- 	if (!buf)
- 		free(inbuf);
- exit_0:
 diff --git a/lib/decompress_inflate.c b/lib/decompress_inflate.c
 index fc686c7..cb6bcab 100644
 --- a/lib/decompress_inflate.c

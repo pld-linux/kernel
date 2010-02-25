@@ -301,7 +301,7 @@ Patch200:	kernel-ppc-ICE-hacks.patch
 # alternative routes, the reverse path protection (rp_filter),
 # the NAT processing to use correctly the routing when multiple
 # gateways are used.
-# http://www.ssi.bg/~ja/routes-2.6.28-16.diff
+# http://www.ssi.bg/~ja/routes-2.6.33-16.diff
 Patch300:	kernel-routes.patch
 
 Patch1000:	kernel-grsec-minimal.patch
