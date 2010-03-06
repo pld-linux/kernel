@@ -357,6 +357,7 @@ Requires:	module-init-tools >= 0.9.9
 Provides:	%{name}(netfilter) = %{netfilter_snap}
 Provides:	%{name}(vermagic) = %{kernel_release}
 Obsoletes:	kernel%{_alt_kernel}-isdn-mISDN
+Obsoletes:	kernel-firmware
 Obsoletes:	kernel-misc-acer_acpi
 Obsoletes:	kernel-misc-fuse
 Obsoletes:	kernel-misc-uvc
