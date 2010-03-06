@@ -815,9 +815,9 @@ diff -U 5 -Nr linux-2.6.32/include/linux/netdevice.h linux-2.6.32-imq/include/li
 +extern struct netdev_queue *dev_pick_tx(struct net_device *dev, struct sk_buff *skb);
  extern int		dev_queue_xmit(struct sk_buff *skb);
  extern int		register_netdevice(struct net_device *dev);
- extern void		unregister_netdevice(struct net_device *dev);
- extern void		free_netdev(struct net_device *dev);
- extern void		synchronize_net(void);
+ extern void		unregister_netdevice_queue(struct net_device *dev,
+ 						   struct list_head *head);
+ extern void		unregister_netdevice_many(struct list_head *head);
 diff -U 5 -Nr linux-2.6.32/include/linux/netfilter/xt_IMQ.h linux-2.6.32-imq/include/linux/netfilter/xt_IMQ.h
 --- linux-2.6.32/include/linux/netfilter/xt_IMQ.h	1970-01-01 02:00:00.000000000 +0200
 +++ linux-2.6.32-imq/include/linux/netfilter/xt_IMQ.h	2009-12-11 14:16:42.679730960 +0200
@@ -1005,7 +1005,7 @@ diff -U 5 -Nr linux-2.6.32/net/core/dev.c linux-2.6.32-imq/net/core/dev.c
 @@ -1702,11 +1705,15 @@
  {
  	const struct net_device_ops *ops = dev->netdev_ops;
- 	int rc;
+ 	int rc = NETDEV_TX_OK;
  
  	if (likely(!skb->next)) {
 -		if (!list_empty(&ptype_all))
@@ -1019,20 +1019,15 @@ diff -U 5 -Nr linux-2.6.32/net/core/dev.c linux-2.6.32-imq/net/core/dev.c
  		if (netif_needs_gso(dev, skb)) {
  			if (unlikely(dev_gso_segment(skb)))
  				goto out_kfree_skb;
-@@ -1787,12 +1794,11 @@
- 
- 	return (u16) (((u64) hash * dev->real_num_tx_queues) >> 32);
+@@ -1787,7 +1794,7 @@
+ 	return queue_index;
  }
- EXPORT_SYMBOL(skb_tx_hash);
  
 -static struct netdev_queue *dev_pick_tx(struct net_device *dev,
--					struct sk_buff *skb)
-+struct netdev_queue *dev_pick_tx(struct net_device *dev, struct sk_buff *skb)
++struct netdev_queue *dev_pick_tx(struct net_device *dev,
+ 					struct sk_buff *skb)
  {
- 	const struct net_device_ops *ops = dev->netdev_ops;
- 	u16 queue_index = 0;
- 
- 	if (ops->ndo_select_queue)
+ 	u16 queue_index;
 @@ -1801,10 +1807,11 @@
  		queue_index = skb_tx_hash(dev, skb);
  
@@ -1147,7 +1142,7 @@ diff -U 5 -Nr linux-2.6.32/net/core/skbuff.c linux-2.6.32-imq/net/core/skbuff.c
 +#endif
  
  /* Pipe buffer operations for a socket. */
- static struct pipe_buf_operations sock_pipe_buf_ops = {
+ static const struct pipe_buf_operations sock_pipe_buf_ops = {
  	.can_merge = 0,
  	.map = generic_pipe_buf_map,
 @@ -396,10 +476,30 @@
