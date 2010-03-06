@@ -115,7 +115,7 @@
 
 %define		basever		2.6.32
 %define		postver		.9
-%define		rel		2
+%define		rel		3
 
 %define		_enable_debug_packages			0
 
@@ -354,7 +354,6 @@ Requires:	/sbin/depmod
 Requires:	coreutils
 Requires:	geninitrd >= 10000-3
 Requires:	module-init-tools >= 0.9.9
-Suggests:	%{name}-firmware = %{epoch}:%{version}-%{release}
 Provides:	%{name}(netfilter) = %{netfilter_snap}
 Provides:	%{name}(vermagic) = %{kernel_release}
 Obsoletes:	kernel%{_alt_kernel}-isdn-mISDN
@@ -552,17 +551,6 @@ PCMCIA Module.
 
 %description pcmcia -l pl.UTF-8
 Moduły PCMCIA.
-
-%package firmware
-Summary:	Firmware files used by the Linux kernel
-Group:		Base/Kernel
-# This is... complicated.
-# Look at the WHENCE file.
-License:	GPL+ and GPLv2+ and MIT and Redistributable, no modification permitted
-
-%description firmware
-Kernel-firmware includes firmware files required for some devices to
-operate.
 
 %package sound-alsa
 Summary:	ALSA kernel modules
@@ -1326,6 +1314,7 @@ fi
 /boot/vmlinuz-%{kernel_release}
 /boot/System.map-%{kernel_release}
 %ghost %{initrd_dir}/initrd-%{kernel_release}.gz
+/lib/firmware/%{kernel_release}
 
 %dir /lib/modules/%{kernel_release}
 %dir /lib/modules/%{kernel_release}/kernel
@@ -1406,11 +1395,6 @@ fi
 %defattr(644,root,root,755)
 /boot/vmlinux-%{kernel_release}
 %endif
-
-%files firmware
-%defattr(644,root,root,755)
-#%doc Documentation/WHENCE
-/lib/firmware/%{kernel_release}
 
 %if %{have_drm}
 %files drm
