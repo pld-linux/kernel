@@ -115,7 +115,7 @@
 
 %define		basever		2.6.32
 %define		postver		.9
-%define		rel		3
+%define		rel		4
 
 %define		_enable_debug_packages			0
 
@@ -356,6 +356,7 @@ Requires:	geninitrd >= 10000-3
 Requires:	module-init-tools >= 0.9.9
 Provides:	%{name}(netfilter) = %{netfilter_snap}
 Provides:	%{name}(vermagic) = %{kernel_release}
+Obsoletes:	kernel-firmware
 Obsoletes:	kernel%{_alt_kernel}-isdn-mISDN
 Obsoletes:	kernel-misc-acer_acpi
 Obsoletes:	kernel-misc-fuse
