@@ -20,7 +20,7 @@
 # - run build
 # - add new options to proper config (kernel-multiarch.config, kernel-x86.config, kernel-powerpc.config etc)
 # - sort configuration files using:
-#   ./kernel-config-sort.pl ~/rpm/BUILD/kernel-%{version}/linux-%{version}/ -a x86 kernel-x86_84.config
+#   ./kernel-config-sort.pl ~/rpm/BUILD/kernel-%{version}/linux-%{version}/ -a x86 kernel-x86.config
 #   ./kernel-config-sort.pl ~/rpm/BUILD/kernel-%{version}/linux-%{version} kernel-multiarch.config
 #
 # Conditional build:
@@ -279,7 +279,7 @@ Patch101:	kernel-vserver-fixes.patch
 # Fix verified for that kernel version.
 Patch130:	kernel-forcedeth-WON.patch
 
-# http://download.filesystems.org/unionfs/unionfs-2.x/unionfs-2.5.3_for_2.6.31.diff.gz
+# http://download.filesystems.org/unionfs/unionfs-2.x/unionfs-2.5.4_for_2.6.33.diff.gz
 Patch140:	kernel-unionfs.patch
 
 # aufs1, http://aufs.sourceforge.net/
@@ -291,7 +291,7 @@ Patch148:	kernel-aufs2.patch
 
 Patch150:	kernel-ppc-crtsavres.patch
 
-# git://git.kernel.org/pub/scm/linux/kernel/git/pkl/squashfs-devel.git
+# was submitted at lkml
 Patch160:	kernel-squashfs-lzma.patch
 
 Patch200:	kernel-ppc-ICE-hacks.patch
