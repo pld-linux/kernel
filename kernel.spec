@@ -293,6 +293,7 @@ Patch150:	kernel-ppc-crtsavres.patch
 
 # was submitted at lkml
 Patch160:	kernel-squashfs-lzma.patch
+Patch161:	kernel-squashfs-lzma-fixes.patch
 
 Patch200:	kernel-ppc-ICE-hacks.patch
 
@@ -850,6 +851,7 @@ sed -i 's/-Werror//' arch/alpha/kernel/Makefile
 #%patch150 -p1
 
 %patch160 -p1
+%patch161 -p1
 
 %ifarch ppc ppc64
 #patch200 -p1
