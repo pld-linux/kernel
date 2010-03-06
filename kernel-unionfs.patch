@@ -1,8 +1,8 @@
 diff --git a/Documentation/filesystems/00-INDEX b/Documentation/filesystems/00-INDEX
-index f15621e..55e2f07 100644
+index 875d496..0a9acac 100644
 --- a/Documentation/filesystems/00-INDEX
 +++ b/Documentation/filesystems/00-INDEX
-@@ -112,6 +112,8 @@ udf.txt
+@@ -106,6 +106,8 @@ udf.txt
  	- info and mount options for the UDF filesystem.
  ufs.txt
  	- info on the ufs filesystem.
@@ -532,10 +532,10 @@ index 0000000..1adde69
 +
 +For more information, see <http://unionfs.filesystems.org/>.
 diff --git a/MAINTAINERS b/MAINTAINERS
-index 8dca9d8..4421543 100644
+index 2533fc4..23bc981 100644
 --- a/MAINTAINERS
 +++ b/MAINTAINERS
-@@ -5095,6 +5095,14 @@ F:	Documentation/cdrom/
+@@ -5446,6 +5446,14 @@ F:	Documentation/cdrom/
  F:	drivers/cdrom/cdrom.c
  F:	include/linux/cdrom.h
  
@@ -548,13 +548,13 @@ index 8dca9d8..4421543 100644
 +S:	Maintained
 +
  UNSORTED BLOCK IMAGES (UBI)
- M:	Artem Bityutskiy <dedekind@infradead.org>
+ M:	Artem Bityutskiy <dedekind1@gmail.com>
  W:	http://www.linux-mtd.infradead.org/
 diff --git a/fs/Kconfig b/fs/Kconfig
-index 0e7da7b..b69b6bd 100644
+index 64d44ef..b69e2f2 100644
 --- a/fs/Kconfig
 +++ b/fs/Kconfig
-@@ -167,6 +167,7 @@ if MISC_FILESYSTEMS
+@@ -169,6 +169,7 @@ if MISC_FILESYSTEMS
  source "fs/adfs/Kconfig"
  source "fs/affs/Kconfig"
  source "fs/ecryptfs/Kconfig"
@@ -575,10 +575,10 @@ index af6d047..6c254d5 100644
  obj-$(CONFIG_NFS_FS)		+= nfs/
  obj-$(CONFIG_EXPORTFS)		+= exportfs/
 diff --git a/fs/namei.c b/fs/namei.c
-index 1f13751..88584c4 100644
+index a4855af..948c5e5 100644
 --- a/fs/namei.c
 +++ b/fs/namei.c
-@@ -375,6 +375,7 @@ void release_open_intent(struct nameidata *nd)
+@@ -387,6 +387,7 @@ void release_open_intent(struct nameidata *nd)
  	else
  		fput(nd->intent.open.file);
  }
@@ -587,10 +587,10 @@ index 1f13751..88584c4 100644
  static inline struct dentry *
  do_revalidate(struct dentry *dentry, struct nameidata *nd)
 diff --git a/fs/splice.c b/fs/splice.c
-index 73766d2..3753029 100644
+index 3920866..488e3ba 100644
 --- a/fs/splice.c
 +++ b/fs/splice.c
-@@ -1057,8 +1057,8 @@ EXPORT_SYMBOL(generic_splice_sendpage);
+@@ -1053,8 +1053,8 @@ EXPORT_SYMBOL(generic_splice_sendpage);
  /*
   * Attempt to initiate a splice from pipe to file.
   */
@@ -601,7 +601,7 @@ index 73766d2..3753029 100644
  {
  	ssize_t (*splice_write)(struct pipe_inode_info *, struct file *,
  				loff_t *, size_t, unsigned int);
-@@ -1080,13 +1080,14 @@ static long do_splice_from(struct pipe_inode_info *pipe, struct file *out,
+@@ -1077,13 +1077,14 @@ static long do_splice_from(struct pipe_inode_info *pipe, struct file *out,
  
  	return splice_write(pipe, out, ppos, len, flags);
  }
@@ -619,7 +619,7 @@ index 73766d2..3753029 100644
  {
  	ssize_t (*splice_read)(struct file *, loff_t *,
  			       struct pipe_inode_info *, size_t, unsigned int);
-@@ -1105,6 +1106,7 @@ static long do_splice_to(struct file *in, loff_t *ppos,
+@@ -1103,6 +1104,7 @@ static long do_splice_to(struct file *in, loff_t *ppos,
  
  	return splice_read(in, ppos, pipe, len, flags);
  }
@@ -627,7 +627,7 @@ index 73766d2..3753029 100644
  
  /**
   * splice_direct_to_actor - splices data directly between two non-pipes
-@@ -1174,7 +1176,7 @@ ssize_t splice_direct_to_actor(struct file *in, struct splice_desc *sd,
+@@ -1172,7 +1174,7 @@ ssize_t splice_direct_to_actor(struct file *in, struct splice_desc *sd,
  		size_t read_len;
  		loff_t pos = sd->pos, prev_pos = pos;
  
@@ -636,7 +636,7 @@ index 73766d2..3753029 100644
  		if (unlikely(ret <= 0))
  			goto out_release;
  
-@@ -1233,7 +1235,7 @@ static int direct_splice_actor(struct pipe_inode_info *pipe,
+@@ -1231,7 +1233,7 @@ static int direct_splice_actor(struct pipe_inode_info *pipe,
  {
  	struct file *file = sd->u.file;
  
@@ -645,7 +645,7 @@ index 73766d2..3753029 100644
  }
  
  /**
-@@ -1330,7 +1332,7 @@ static long do_splice(struct file *in, loff_t __user *off_in,
+@@ -1329,7 +1331,7 @@ static long do_splice(struct file *in, loff_t __user *off_in,
  		} else
  			off = &out->f_pos;
  
@@ -663,6 +663,44 @@ index 73766d2..3753029 100644
  
  		if (off_in && copy_to_user(off_in, off, sizeof(loff_t)))
  			ret = -EFAULT;
+diff --git a/fs/stack.c b/fs/stack.c
+index 4a6f7f4..7eeef12 100644
+--- a/fs/stack.c
++++ b/fs/stack.c
+@@ -1,8 +1,20 @@
++/*
++ * Copyright (c) 2006-2009 Erez Zadok
++ * Copyright (c) 2006-2007 Josef 'Jeff' Sipek
++ * Copyright (c) 2006-2009 Stony Brook University
++ * Copyright (c) 2006-2009 The Research Foundation of SUNY
++ *
++ * This program is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License version 2 as
++ * published by the Free Software Foundation.
++ */
++
+ #include <linux/module.h>
+ #include <linux/fs.h>
+ #include <linux/fs_stack.h>
+ 
+-/* does _NOT_ require i_mutex to be held.
++/*
++ * does _NOT_ require i_mutex to be held.
+  *
+  * This function cannot be inlined since i_size_{read,write} is rather
+  * heavy-weight on 32-bit systems
+diff --git a/fs/super.c b/fs/super.c
+index aff046b..ad6dc74 100644
+--- a/fs/super.c
++++ b/fs/super.c
+@@ -95,6 +95,7 @@ static struct super_block *alloc_super(struct file_system_type *type)
+ 		s->s_count = S_BIAS;
+ 		atomic_set(&s->s_active, 1);
+ 		mutex_init(&s->s_vfs_rename_mutex);
++		lockdep_set_class(&s->s_vfs_rename_mutex, &type->s_vfs_rename_key);
+ 		mutex_init(&s->s_dquot.dqio_mutex);
+ 		mutex_init(&s->s_dquot.dqonoff_mutex);
+ 		init_rwsem(&s->s_dquot.dqptr_sem);
 diff --git a/fs/unionfs/Kconfig b/fs/unionfs/Kconfig
 new file mode 100644
 index 0000000..f3c1ac4
@@ -695,11 +733,11 @@ index 0000000..f3c1ac4
 +	  If you say Y here, you can turn on debugging output from Unionfs.
 diff --git a/fs/unionfs/Makefile b/fs/unionfs/Makefile
 new file mode 100644
-index 0000000..9c466a5
+index 0000000..1ef873e
 --- /dev/null
 +++ b/fs/unionfs/Makefile
 @@ -0,0 +1,17 @@
-+UNIONFS_VERSION="2.5.3 (for 2.6.31)"
++UNIONFS_VERSION="2.5.4 (for 2.6.33)"
 +
 +EXTRA_CFLAGS += -DUNIONFS_VERSION=\"$(UNIONFS_VERSION)\"
 +
@@ -718,12 +756,12 @@ index 0000000..9c466a5
 +endif
 diff --git a/fs/unionfs/commonfops.c b/fs/unionfs/commonfops.c
 new file mode 100644
-index 0000000..587f984
+index 0000000..740c4ad
 --- /dev/null
 +++ b/fs/unionfs/commonfops.c
 @@ -0,0 +1,896 @@
 +/*
-+ * Copyright (c) 2003-2009 Erez Zadok
++ * Copyright (c) 2003-2010 Erez Zadok
 + * Copyright (c) 2003-2006 Charles P. Wright
 + * Copyright (c) 2005-2007 Josef 'Jeff' Sipek
 + * Copyright (c) 2005-2006 Junjiro Okajima
@@ -732,8 +770,8 @@ index 0000000..587f984
 + * Copyright (c) 2003-2004 Mohammad Nayyer Zubair
 + * Copyright (c) 2003      Puja Gupta
 + * Copyright (c) 2003      Harikesavan Krishnan
-+ * Copyright (c) 2003-2009 Stony Brook University
-+ * Copyright (c) 2003-2009 The Research Foundation of SUNY
++ * Copyright (c) 2003-2010 Stony Brook University
++ * Copyright (c) 2003-2010 The Research Foundation of SUNY
 + *
 + * This program is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License version 2 as
@@ -1620,12 +1658,12 @@ index 0000000..587f984
 +}
 diff --git a/fs/unionfs/copyup.c b/fs/unionfs/copyup.c
 new file mode 100644
-index 0000000..c43cc7f
+index 0000000..9c7b2ac
 --- /dev/null
 +++ b/fs/unionfs/copyup.c
 @@ -0,0 +1,897 @@
 +/*
-+ * Copyright (c) 2003-2009 Erez Zadok
++ * Copyright (c) 2003-2010 Erez Zadok
 + * Copyright (c) 2003-2006 Charles P. Wright
 + * Copyright (c) 2005-2007 Josef 'Jeff' Sipek
 + * Copyright (c) 2005-2006 Junjiro Okajima
@@ -1634,8 +1672,8 @@ index 0000000..c43cc7f
 + * Copyright (c) 2003-2004 Mohammad Nayyer Zubair
 + * Copyright (c) 2003      Puja Gupta
 + * Copyright (c) 2003      Harikesavan Krishnan
-+ * Copyright (c) 2003-2009 Stony Brook University
-+ * Copyright (c) 2003-2009 The Research Foundation of SUNY
++ * Copyright (c) 2003-2010 Stony Brook University
++ * Copyright (c) 2003-2010 The Research Foundation of SUNY
 + *
 + * This program is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License version 2 as
@@ -2523,15 +2561,15 @@ index 0000000..c43cc7f
 +}
 diff --git a/fs/unionfs/debug.c b/fs/unionfs/debug.c
 new file mode 100644
-index 0000000..3fd641a
+index 0000000..acc44bd
 --- /dev/null
 +++ b/fs/unionfs/debug.c
 @@ -0,0 +1,533 @@
 +/*
-+ * Copyright (c) 2003-2009 Erez Zadok
++ * Copyright (c) 2003-2010 Erez Zadok
 + * Copyright (c) 2005-2007 Josef 'Jeff' Sipek
-+ * Copyright (c) 2003-2009 Stony Brook University
-+ * Copyright (c) 2003-2009 The Research Foundation of SUNY
++ * Copyright (c) 2003-2010 Stony Brook University
++ * Copyright (c) 2003-2010 The Research Foundation of SUNY
 + *
 + * This program is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License version 2 as
@@ -3062,12 +3100,12 @@ index 0000000..3fd641a
 +}
 diff --git a/fs/unionfs/dentry.c b/fs/unionfs/dentry.c
 new file mode 100644
-index 0000000..85b5d3c
+index 0000000..a0c3bba
 --- /dev/null
 +++ b/fs/unionfs/dentry.c
 @@ -0,0 +1,397 @@
 +/*
-+ * Copyright (c) 2003-2009 Erez Zadok
++ * Copyright (c) 2003-2010 Erez Zadok
 + * Copyright (c) 2003-2006 Charles P. Wright
 + * Copyright (c) 2005-2007 Josef 'Jeff' Sipek
 + * Copyright (c) 2005-2006 Junjiro Okajima
@@ -3076,8 +3114,8 @@ index 0000000..85b5d3c
 + * Copyright (c) 2003-2004 Mohammad Nayyer Zubair
 + * Copyright (c) 2003      Puja Gupta
 + * Copyright (c) 2003      Harikesavan Krishnan
-+ * Copyright (c) 2003-2009 Stony Brook University
-+ * Copyright (c) 2003-2009 The Research Foundation of SUNY
++ * Copyright (c) 2003-2010 Stony Brook University
++ * Copyright (c) 2003-2010 The Research Foundation of SUNY
 + *
 + * This program is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License version 2 as
@@ -3465,12 +3503,12 @@ index 0000000..85b5d3c
 +};
 diff --git a/fs/unionfs/dirfops.c b/fs/unionfs/dirfops.c
 new file mode 100644
-index 0000000..eccb9ae
+index 0000000..7da0ff0
 --- /dev/null
 +++ b/fs/unionfs/dirfops.c
 @@ -0,0 +1,302 @@
 +/*
-+ * Copyright (c) 2003-2009 Erez Zadok
++ * Copyright (c) 2003-2010 Erez Zadok
 + * Copyright (c) 2003-2006 Charles P. Wright
 + * Copyright (c) 2005-2007 Josef 'Jeff' Sipek
 + * Copyright (c) 2005-2006 Junjiro Okajima
@@ -3479,8 +3517,8 @@ index 0000000..eccb9ae
 + * Copyright (c) 2003-2004 Mohammad Nayyer Zubair
 + * Copyright (c) 2003      Puja Gupta
 + * Copyright (c) 2003      Harikesavan Krishnan
-+ * Copyright (c) 2003-2009 Stony Brook University
-+ * Copyright (c) 2003-2009 The Research Foundation of SUNY
++ * Copyright (c) 2003-2010 Stony Brook University
++ * Copyright (c) 2003-2010 The Research Foundation of SUNY
 + *
 + * This program is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License version 2 as
@@ -3773,12 +3811,12 @@ index 0000000..eccb9ae
 +};
 diff --git a/fs/unionfs/dirhelper.c b/fs/unionfs/dirhelper.c
 new file mode 100644
-index 0000000..2ecaafa
+index 0000000..033343b
 --- /dev/null
 +++ b/fs/unionfs/dirhelper.c
 @@ -0,0 +1,158 @@
 +/*
-+ * Copyright (c) 2003-2009 Erez Zadok
++ * Copyright (c) 2003-2010 Erez Zadok
 + * Copyright (c) 2003-2006 Charles P. Wright
 + * Copyright (c) 2005-2007 Josef 'Jeff' Sipek
 + * Copyright (c) 2005-2006 Junjiro Okajima
@@ -3787,8 +3825,8 @@ index 0000000..2ecaafa
 + * Copyright (c) 2003-2004 Mohammad Nayyer Zubair
 + * Copyright (c) 2003      Puja Gupta
 + * Copyright (c) 2003      Harikesavan Krishnan
-+ * Copyright (c) 2003-2009 Stony Brook University
-+ * Copyright (c) 2003-2009 The Research Foundation of SUNY
++ * Copyright (c) 2003-2010 Stony Brook University
++ * Copyright (c) 2003-2010 The Research Foundation of SUNY
 + *
 + * This program is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License version 2 as
@@ -3937,12 +3975,12 @@ index 0000000..2ecaafa
 +}
 diff --git a/fs/unionfs/fanout.h b/fs/unionfs/fanout.h
 new file mode 100644
-index 0000000..04ffa85
+index 0000000..5b77eac
 --- /dev/null
 +++ b/fs/unionfs/fanout.h
 @@ -0,0 +1,407 @@
 +/*
-+ * Copyright (c) 2003-2009 Erez Zadok
++ * Copyright (c) 2003-2010 Erez Zadok
 + * Copyright (c) 2003-2006 Charles P. Wright
 + * Copyright (c) 2005-2007 Josef 'Jeff' Sipek
 + * Copyright (c) 2005      Arun M. Krishnakumar
@@ -3950,8 +3988,8 @@ index 0000000..04ffa85
 + * Copyright (c) 2003-2004 Mohammad Nayyer Zubair
 + * Copyright (c) 2003      Puja Gupta
 + * Copyright (c) 2003      Harikesavan Krishnan
-+ * Copyright (c) 2003-2009 Stony Brook University
-+ * Copyright (c) 2003-2009 The Research Foundation of SUNY
++ * Copyright (c) 2003-2010 Stony Brook University
++ * Copyright (c) 2003-2010 The Research Foundation of SUNY
 + *
 + * This program is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License version 2 as
@@ -4350,12 +4388,12 @@ index 0000000..04ffa85
 +#endif	/* not _FANOUT_H */
 diff --git a/fs/unionfs/file.c b/fs/unionfs/file.c
 new file mode 100644
-index 0000000..281169e
+index 0000000..46eaa90
 --- /dev/null
 +++ b/fs/unionfs/file.c
 @@ -0,0 +1,380 @@
 +/*
-+ * Copyright (c) 2003-2009 Erez Zadok
++ * Copyright (c) 2003-2010 Erez Zadok
 + * Copyright (c) 2003-2006 Charles P. Wright
 + * Copyright (c) 2005-2007 Josef 'Jeff' Sipek
 + * Copyright (c) 2005-2006 Junjiro Okajima
@@ -4364,8 +4402,8 @@ index 0000000..281169e
 + * Copyright (c) 2003-2004 Mohammad Nayyer Zubair
 + * Copyright (c) 2003      Puja Gupta
 + * Copyright (c) 2003      Harikesavan Krishnan
-+ * Copyright (c) 2003-2009 Stony Brook University
-+ * Copyright (c) 2003-2009 The Research Foundation of SUNY
++ * Copyright (c) 2003-2010 Stony Brook University
++ * Copyright (c) 2003-2010 The Research Foundation of SUNY
 + *
 + * This program is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License version 2 as
@@ -4454,7 +4492,7 @@ index 0000000..281169e
 +	struct file *lower_file;
 +	struct dentry *dentry = file->f_path.dentry;
 +	struct dentry *parent;
-+	struct vm_operations_struct *saved_vm_ops = NULL;
++	const struct vm_operations_struct *saved_vm_ops = NULL;
 +
 +	/*
 +	 * Since mm/memory.c:might_fault() (under PROVE_LOCKING) was
@@ -4736,12 +4774,12 @@ index 0000000..281169e
 +};
 diff --git a/fs/unionfs/inode.c b/fs/unionfs/inode.c
 new file mode 100644
-index 0000000..bd5a3b3
+index 0000000..062163a
 --- /dev/null
 +++ b/fs/unionfs/inode.c
 @@ -0,0 +1,1055 @@
 +/*
-+ * Copyright (c) 2003-2009 Erez Zadok
++ * Copyright (c) 2003-2010 Erez Zadok
 + * Copyright (c) 2003-2006 Charles P. Wright
 + * Copyright (c) 2005-2007 Josef 'Jeff' Sipek
 + * Copyright (c) 2005-2006 Junjiro Okajima
@@ -4750,8 +4788,8 @@ index 0000000..bd5a3b3
 + * Copyright (c) 2003-2004 Mohammad Nayyer Zubair
 + * Copyright (c) 2003      Puja Gupta
 + * Copyright (c) 2003      Harikesavan Krishnan
-+ * Copyright (c) 2003-2009 Stony Brook University
-+ * Copyright (c) 2003-2009 The Research Foundation of SUNY
++ * Copyright (c) 2003-2010 Stony Brook University
++ * Copyright (c) 2003-2010 The Research Foundation of SUNY
 + *
 + * This program is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License version 2 as
@@ -4867,12 +4905,12 @@ index 0000000..bd5a3b3
 +	lower_parent_dentry = lock_parent(lower_dentry);
 +	if (IS_ERR(lower_parent_dentry)) {
 +		err = PTR_ERR(lower_parent_dentry);
-+		goto out;
++		goto out_unlock;
 +	}
 +
 +	err = init_lower_nd(&lower_nd, LOOKUP_CREATE);
 +	if (unlikely(err < 0))
-+		goto out;
++		goto out_unlock;
 +	err = vfs_create(lower_parent_dentry->d_inode, lower_dentry, mode,
 +			 &lower_nd);
 +	release_lower_nd(&lower_nd, err);
@@ -4888,8 +4926,8 @@ index 0000000..bd5a3b3
 +		}
 +	}
 +
++out_unlock:
 +	unlock_dir(lower_parent_dentry);
-+
 +out:
 +	if (!err) {
 +		unionfs_postcopyup_setmnt(dentry);
@@ -5132,7 +5170,7 @@ index 0000000..bd5a3b3
 +	lower_parent_dentry = lock_parent(lower_dentry);
 +	if (IS_ERR(lower_parent_dentry)) {
 +		err = PTR_ERR(lower_parent_dentry);
-+		goto out;
++		goto out_unlock;
 +	}
 +
 +	mode = S_IALLUGO;
@@ -5148,8 +5186,8 @@ index 0000000..bd5a3b3
 +		}
 +	}
 +
++out_unlock:
 +	unlock_dir(lower_parent_dentry);
-+
 +out:
 +	dput(wh_dentry);
 +	kfree(name);
@@ -5325,7 +5363,7 @@ index 0000000..bd5a3b3
 +	lower_parent_dentry = lock_parent(lower_dentry);
 +	if (IS_ERR(lower_parent_dentry)) {
 +		err = PTR_ERR(lower_parent_dentry);
-+		goto out;
++		goto out_unlock;
 +	}
 +
 +	err = vfs_mknod(lower_parent_dentry->d_inode, lower_dentry, mode, dev);
@@ -5340,8 +5378,8 @@ index 0000000..bd5a3b3
 +		}
 +	}
 +
++out_unlock:
 +	unlock_dir(lower_parent_dentry);
-+
 +out:
 +	dput(wh_dentry);
 +	kfree(name);
@@ -5797,12 +5835,12 @@ index 0000000..bd5a3b3
 +};
 diff --git a/fs/unionfs/lookup.c b/fs/unionfs/lookup.c
 new file mode 100644
-index 0000000..6361541
+index 0000000..b63c17e
 --- /dev/null
 +++ b/fs/unionfs/lookup.c
 @@ -0,0 +1,569 @@
 +/*
-+ * Copyright (c) 2003-2009 Erez Zadok
++ * Copyright (c) 2003-2010 Erez Zadok
 + * Copyright (c) 2003-2006 Charles P. Wright
 + * Copyright (c) 2005-2007 Josef 'Jeff' Sipek
 + * Copyright (c) 2005-2006 Junjiro Okajima
@@ -5811,8 +5849,8 @@ index 0000000..6361541
 + * Copyright (c) 2003-2004 Mohammad Nayyer Zubair
 + * Copyright (c) 2003      Puja Gupta
 + * Copyright (c) 2003      Harikesavan Krishnan
-+ * Copyright (c) 2003-2009 Stony Brook University
-+ * Copyright (c) 2003-2009 The Research Foundation of SUNY
++ * Copyright (c) 2003-2010 Stony Brook University
++ * Copyright (c) 2003-2010 The Research Foundation of SUNY
 + *
 + * This program is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License version 2 as
@@ -6372,12 +6410,12 @@ index 0000000..6361541
 +}
 diff --git a/fs/unionfs/main.c b/fs/unionfs/main.c
 new file mode 100644
-index 0000000..c58405c
+index 0000000..258386e
 --- /dev/null
 +++ b/fs/unionfs/main.c
 @@ -0,0 +1,758 @@
 +/*
-+ * Copyright (c) 2003-2009 Erez Zadok
++ * Copyright (c) 2003-2010 Erez Zadok
 + * Copyright (c) 2003-2006 Charles P. Wright
 + * Copyright (c) 2005-2007 Josef 'Jeff' Sipek
 + * Copyright (c) 2005-2006 Junjiro Okajima
@@ -6386,8 +6424,8 @@ index 0000000..c58405c
 + * Copyright (c) 2003-2004 Mohammad Nayyer Zubair
 + * Copyright (c) 2003      Puja Gupta
 + * Copyright (c) 2003      Harikesavan Krishnan
-+ * Copyright (c) 2003-2009 Stony Brook University
-+ * Copyright (c) 2003-2009 The Research Foundation of SUNY
++ * Copyright (c) 2003-2010 Stony Brook University
++ * Copyright (c) 2003-2010 The Research Foundation of SUNY
 + *
 + * This program is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License version 2 as
@@ -7136,12 +7174,12 @@ index 0000000..c58405c
 +module_exit(exit_unionfs_fs);
 diff --git a/fs/unionfs/mmap.c b/fs/unionfs/mmap.c
 new file mode 100644
-index 0000000..18b05d5
+index 0000000..1f70535
 --- /dev/null
 +++ b/fs/unionfs/mmap.c
 @@ -0,0 +1,89 @@
 +/*
-+ * Copyright (c) 2003-2009 Erez Zadok
++ * Copyright (c) 2003-2010 Erez Zadok
 + * Copyright (c) 2003-2006 Charles P. Wright
 + * Copyright (c) 2005-2007 Josef 'Jeff' Sipek
 + * Copyright (c) 2005-2006 Junjiro Okajima
@@ -7151,8 +7189,8 @@ index 0000000..18b05d5
 + * Copyright (c) 2003-2004 Mohammad Nayyer Zubair
 + * Copyright (c) 2003      Puja Gupta
 + * Copyright (c) 2003      Harikesavan Krishnan
-+ * Copyright (c) 2003-2009 Stony Brook University
-+ * Copyright (c) 2003-2009 The Research Foundation of SUNY
++ * Copyright (c) 2003-2010 Stony Brook University
++ * Copyright (c) 2003-2010 The Research Foundation of SUNY
 + *
 + * This program is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License version 2 as
@@ -7181,7 +7219,7 @@ index 0000000..18b05d5
 +{
 +	int err;
 +	struct file *file, *lower_file;
-+	struct vm_operations_struct *lower_vm_ops;
++	const struct vm_operations_struct *lower_vm_ops;
 +	struct vm_area_struct lower_vma;
 +
 +	BUG_ON(!vma);
@@ -7231,12 +7269,12 @@ index 0000000..18b05d5
 +};
 diff --git a/fs/unionfs/rdstate.c b/fs/unionfs/rdstate.c
 new file mode 100644
-index 0000000..485464b
+index 0000000..f745fbc
 --- /dev/null
 +++ b/fs/unionfs/rdstate.c
 @@ -0,0 +1,285 @@
 +/*
-+ * Copyright (c) 2003-2009 Erez Zadok
++ * Copyright (c) 2003-2010 Erez Zadok
 + * Copyright (c) 2003-2006 Charles P. Wright
 + * Copyright (c) 2005-2007 Josef 'Jeff' Sipek
 + * Copyright (c) 2005-2006 Junjiro Okajima
@@ -7245,8 +7283,8 @@ index 0000000..485464b
 + * Copyright (c) 2003-2004 Mohammad Nayyer Zubair
 + * Copyright (c) 2003      Puja Gupta
 + * Copyright (c) 2003      Harikesavan Krishnan
-+ * Copyright (c) 2003-2009 Stony Brook University
-+ * Copyright (c) 2003-2009 The Research Foundation of SUNY
++ * Copyright (c) 2003-2010 Stony Brook University
++ * Copyright (c) 2003-2010 The Research Foundation of SUNY
 + *
 + * This program is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License version 2 as
@@ -7522,12 +7560,12 @@ index 0000000..485464b
 +}
 diff --git a/fs/unionfs/rename.c b/fs/unionfs/rename.c
 new file mode 100644
-index 0000000..ed13260
+index 0000000..936700e
 --- /dev/null
 +++ b/fs/unionfs/rename.c
-@@ -0,0 +1,520 @@
+@@ -0,0 +1,517 @@
 +/*
-+ * Copyright (c) 2003-2009 Erez Zadok
++ * Copyright (c) 2003-2010 Erez Zadok
 + * Copyright (c) 2003-2006 Charles P. Wright
 + * Copyright (c) 2005-2007 Josef 'Jeff' Sipek
 + * Copyright (c) 2005-2006 Junjiro Okajima
@@ -7536,8 +7574,8 @@ index 0000000..ed13260
 + * Copyright (c) 2003-2004 Mohammad Nayyer Zubair
 + * Copyright (c) 2003      Puja Gupta
 + * Copyright (c) 2003      Harikesavan Krishnan
-+ * Copyright (c) 2003-2009 Stony Brook University
-+ * Copyright (c) 2003-2009 The Research Foundation of SUNY
++ * Copyright (c) 2003-2010 Stony Brook University
++ * Copyright (c) 2003-2010 The Research Foundation of SUNY
 + *
 + * This program is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License version 2 as
@@ -7636,8 +7674,6 @@ index 0000000..ed13260
 +	lower_old_dir_dentry = dget_parent(lower_old_dentry);
 +	lower_new_dir_dentry = dget_parent(lower_new_dentry);
 +
-+	/* see Documentation/filesystems/unionfs/issues.txt */
-+	lockdep_off();
 +	trap = lock_rename(lower_old_dir_dentry, lower_new_dir_dentry);
 +	/* source should not be ancenstor of target */
 +	if (trap == lower_old_dentry) {
@@ -7658,7 +7694,6 @@ index 0000000..ed13260
 +		fsstack_copy_attr_times(new_dir, lower_new_dir_dentry->d_inode);
 +	}
 +	unlock_rename(lower_old_dir_dentry, lower_new_dir_dentry);
-+	lockdep_on();
 +
 +	dput(lower_old_dir_dentry);
 +	dput(lower_new_dir_dentry);
@@ -8048,18 +8083,18 @@ index 0000000..ed13260
 +}
 diff --git a/fs/unionfs/sioq.c b/fs/unionfs/sioq.c
 new file mode 100644
-index 0000000..5dd487a
+index 0000000..760c580
 --- /dev/null
 +++ b/fs/unionfs/sioq.c
 @@ -0,0 +1,101 @@
 +/*
-+ * Copyright (c) 2006-2009 Erez Zadok
++ * Copyright (c) 2006-2010 Erez Zadok
 + * Copyright (c) 2006      Charles P. Wright
 + * Copyright (c) 2006-2007 Josef 'Jeff' Sipek
 + * Copyright (c) 2006      Junjiro Okajima
 + * Copyright (c) 2006      David P. Quigley
-+ * Copyright (c) 2006-2009 Stony Brook University
-+ * Copyright (c) 2006-2009 The Research Foundation of SUNY
++ * Copyright (c) 2006-2010 Stony Brook University
++ * Copyright (c) 2006-2010 The Research Foundation of SUNY
 + *
 + * This program is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License version 2 as
@@ -8155,18 +8190,18 @@ index 0000000..5dd487a
 +}
 diff --git a/fs/unionfs/sioq.h b/fs/unionfs/sioq.h
 new file mode 100644
-index 0000000..3d7869a
+index 0000000..b26d248
 --- /dev/null
 +++ b/fs/unionfs/sioq.h
 @@ -0,0 +1,91 @@
 +/*
-+ * Copyright (c) 2006-2009 Erez Zadok
++ * Copyright (c) 2006-2010 Erez Zadok
 + * Copyright (c) 2006      Charles P. Wright
 + * Copyright (c) 2006-2007 Josef 'Jeff' Sipek
 + * Copyright (c) 2006      Junjiro Okajima
 + * Copyright (c) 2006      David P. Quigley
-+ * Copyright (c) 2006-2009 Stony Brook University
-+ * Copyright (c) 2006-2009 The Research Foundation of SUNY
++ * Copyright (c) 2006-2010 Stony Brook University
++ * Copyright (c) 2006-2010 The Research Foundation of SUNY
 + *
 + * This program is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License version 2 as
@@ -8252,12 +8287,12 @@ index 0000000..3d7869a
 +#endif /* not _SIOQ_H */
 diff --git a/fs/unionfs/subr.c b/fs/unionfs/subr.c
 new file mode 100644
-index 0000000..018b4fd
+index 0000000..570a344
 --- /dev/null
 +++ b/fs/unionfs/subr.c
 @@ -0,0 +1,95 @@
 +/*
-+ * Copyright (c) 2003-2009 Erez Zadok
++ * Copyright (c) 2003-2010 Erez Zadok
 + * Copyright (c) 2003-2006 Charles P. Wright
 + * Copyright (c) 2005-2007 Josef 'Jeff' Sipek
 + * Copyright (c) 2005-2006 Junjiro Okajima
@@ -8266,8 +8301,8 @@ index 0000000..018b4fd
 + * Copyright (c) 2003-2004 Mohammad Nayyer Zubair
 + * Copyright (c) 2003      Puja Gupta
 + * Copyright (c) 2003      Harikesavan Krishnan
-+ * Copyright (c) 2003-2009 Stony Brook University
-+ * Copyright (c) 2003-2009 The Research Foundation of SUNY
++ * Copyright (c) 2003-2010 Stony Brook University
++ * Copyright (c) 2003-2010 The Research Foundation of SUNY
 + *
 + * This program is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License version 2 as
@@ -8353,12 +8388,12 @@ index 0000000..018b4fd
 +}
 diff --git a/fs/unionfs/super.c b/fs/unionfs/super.c
 new file mode 100644
-index 0000000..ded7b84
+index 0000000..bd058fe
 --- /dev/null
 +++ b/fs/unionfs/super.c
 @@ -0,0 +1,1047 @@
 +/*
-+ * Copyright (c) 2003-2009 Erez Zadok
++ * Copyright (c) 2003-2010 Erez Zadok
 + * Copyright (c) 2003-2006 Charles P. Wright
 + * Copyright (c) 2005-2007 Josef 'Jeff' Sipek
 + * Copyright (c) 2005-2006 Junjiro Okajima
@@ -8367,8 +8402,8 @@ index 0000000..ded7b84
 + * Copyright (c) 2003-2004 Mohammad Nayyer Zubair
 + * Copyright (c) 2003      Puja Gupta
 + * Copyright (c) 2003      Harikesavan Krishnan
-+ * Copyright (c) 2003-2009 Stony Brook University
-+ * Copyright (c) 2003-2009 The Research Foundation of SUNY
++ * Copyright (c) 2003-2010 Stony Brook University
++ * Copyright (c) 2003-2010 The Research Foundation of SUNY
 + *
 + * This program is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License version 2 as
@@ -9406,12 +9441,12 @@ index 0000000..ded7b84
 +};
 diff --git a/fs/unionfs/union.h b/fs/unionfs/union.h
 new file mode 100644
-index 0000000..17a0056
+index 0000000..99335a3
 --- /dev/null
 +++ b/fs/unionfs/union.h
 @@ -0,0 +1,670 @@
 +/*
-+ * Copyright (c) 2003-2009 Erez Zadok
++ * Copyright (c) 2003-2010 Erez Zadok
 + * Copyright (c) 2003-2006 Charles P. Wright
 + * Copyright (c) 2005-2007 Josef 'Jeff' Sipek
 + * Copyright (c) 2005      Arun M. Krishnakumar
@@ -9419,8 +9454,8 @@ index 0000000..17a0056
 + * Copyright (c) 2003-2004 Mohammad Nayyer Zubair
 + * Copyright (c) 2003      Puja Gupta
 + * Copyright (c) 2003      Harikesavan Krishnan
-+ * Copyright (c) 2003-2009 Stony Brook University
-+ * Copyright (c) 2003-2009 The Research Foundation of SUNY
++ * Copyright (c) 2003-2010 Stony Brook University
++ * Copyright (c) 2003-2010 The Research Foundation of SUNY
 + *
 + * This program is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License version 2 as
@@ -9509,7 +9544,7 @@ index 0000000..17a0056
 +	struct unionfs_dir_state *rdstate;
 +	struct file **lower_files;
 +	int *saved_branch_ids; /* IDs of branches when file was opened */
-+	struct vm_operations_struct *lower_vm_ops;
++	const struct vm_operations_struct *lower_vm_ops;
 +	bool wrote_to_file;	/* for delayed copyup */
 +};
 +
@@ -10082,12 +10117,12 @@ index 0000000..17a0056
 +#endif	/* not _UNION_H_ */
 diff --git a/fs/unionfs/unlink.c b/fs/unionfs/unlink.c
 new file mode 100644
-index 0000000..b6d8e10
+index 0000000..542c513
 --- /dev/null
 +++ b/fs/unionfs/unlink.c
-@@ -0,0 +1,282 @@
+@@ -0,0 +1,278 @@
 +/*
-+ * Copyright (c) 2003-2009 Erez Zadok
++ * Copyright (c) 2003-2010 Erez Zadok
 + * Copyright (c) 2003-2006 Charles P. Wright
 + * Copyright (c) 2005-2007 Josef 'Jeff' Sipek
 + * Copyright (c) 2005-2006 Junjiro Okajima
@@ -10096,8 +10131,8 @@ index 0000000..b6d8e10
 + * Copyright (c) 2003-2004 Mohammad Nayyer Zubair
 + * Copyright (c) 2003      Puja Gupta
 + * Copyright (c) 2003      Harikesavan Krishnan
-+ * Copyright (c) 2003-2009 Stony Brook University
-+ * Copyright (c) 2003-2009 The Research Foundation of SUNY
++ * Copyright (c) 2003-2010 Stony Brook University
++ * Copyright (c) 2003-2010 The Research Foundation of SUNY
 + *
 + * This program is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License version 2 as
@@ -10272,12 +10307,8 @@ index 0000000..b6d8e10
 +	/* avoid destroying the lower inode if the file is in use */
 +	dget(lower_dentry);
 +	err = is_robranch(dentry);
-+	if (!err) {
-+		/* see Documentation/filesystems/unionfs/issues.txt */
-+		lockdep_off();
++	if (!err)
 +		err = vfs_rmdir(lower_dir_dentry->d_inode, lower_dentry);
-+		lockdep_on();
-+	}
 +	dput(lower_dentry);
 +
 +	fsstack_copy_attr_times(dir, lower_dir_dentry->d_inode);
@@ -10370,12 +10401,12 @@ index 0000000..b6d8e10
 +}
 diff --git a/fs/unionfs/whiteout.c b/fs/unionfs/whiteout.c
 new file mode 100644
-index 0000000..626006a
+index 0000000..405073a
 --- /dev/null
 +++ b/fs/unionfs/whiteout.c
 @@ -0,0 +1,584 @@
 +/*
-+ * Copyright (c) 2003-2009 Erez Zadok
++ * Copyright (c) 2003-2010 Erez Zadok
 + * Copyright (c) 2003-2006 Charles P. Wright
 + * Copyright (c) 2005-2007 Josef 'Jeff' Sipek
 + * Copyright (c) 2005-2006 Junjiro Okajima
@@ -10384,8 +10415,8 @@ index 0000000..626006a
 + * Copyright (c) 2003-2004 Mohammad Nayyer Zubair
 + * Copyright (c) 2003      Puja Gupta
 + * Copyright (c) 2003      Harikesavan Krishnan
-+ * Copyright (c) 2003-2009 Stony Brook University
-+ * Copyright (c) 2003-2009 The Research Foundation of SUNY
++ * Copyright (c) 2003-2010 Stony Brook University
++ * Copyright (c) 2003-2010 The Research Foundation of SUNY
 + *
 + * This program is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License version 2 as
@@ -10960,12 +10991,12 @@ index 0000000..626006a
 +}
 diff --git a/fs/unionfs/xattr.c b/fs/unionfs/xattr.c
 new file mode 100644
-index 0000000..af72cca
+index 0000000..9002e06
 --- /dev/null
 +++ b/fs/unionfs/xattr.c
 @@ -0,0 +1,173 @@
 +/*
-+ * Copyright (c) 2003-2009 Erez Zadok
++ * Copyright (c) 2003-2010 Erez Zadok
 + * Copyright (c) 2003-2006 Charles P. Wright
 + * Copyright (c) 2005-2007 Josef 'Jeff' Sipek
 + * Copyright (c) 2005-2006 Junjiro Okajima
@@ -10974,8 +11005,8 @@ index 0000000..af72cca
 + * Copyright (c) 2003-2004 Mohammad Nayyer Zubair
 + * Copyright (c) 2003      Puja Gupta
 + * Copyright (c) 2003      Harikesavan Krishnan
-+ * Copyright (c) 2003-2009 Stony Brook University
-+ * Copyright (c) 2003-2009 The Research Foundation of SUNY
++ * Copyright (c) 2003-2010 Stony Brook University
++ * Copyright (c) 2003-2010 The Research Foundation of SUNY
 + *
 + * This program is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License version 2 as
@@ -11137,11 +11168,48 @@ index 0000000..af72cca
 +	unionfs_read_unlock(dentry->d_sb);
 +	return err;
 +}
+diff --git a/include/linux/fs.h b/include/linux/fs.h
+index ebb1cd5..b03df2d 100644
+--- a/include/linux/fs.h
++++ b/include/linux/fs.h
+@@ -1739,6 +1739,7 @@ struct file_system_type {
+ 
+ 	struct lock_class_key s_lock_key;
+ 	struct lock_class_key s_umount_key;
++	struct lock_class_key s_vfs_rename_key;
+ 
+ 	struct lock_class_key i_lock_key;
+ 	struct lock_class_key i_mutex_key;
+diff --git a/include/linux/fs_stack.h b/include/linux/fs_stack.h
+index da317c7..64f1ced 100644
+--- a/include/linux/fs_stack.h
++++ b/include/linux/fs_stack.h
+@@ -1,7 +1,19 @@
++/*
++ * Copyright (c) 2006-2009 Erez Zadok
++ * Copyright (c) 2006-2007 Josef 'Jeff' Sipek
++ * Copyright (c) 2006-2009 Stony Brook University
++ * Copyright (c) 2006-2009 The Research Foundation of SUNY
++ *
++ * This program is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License version 2 as
++ * published by the Free Software Foundation.
++ */
++
+ #ifndef _LINUX_FS_STACK_H
+ #define _LINUX_FS_STACK_H
+ 
+-/* This file defines generic functions used primarily by stackable
++/*
++ * This file defines generic functions used primarily by stackable
+  * filesystems; none of these functions require i_mutex to be held.
+  */
+ 
 diff --git a/include/linux/magic.h b/include/linux/magic.h
-index 1923327..c3fc308 100644
+index 76285e0..ff4f649 100644
 --- a/include/linux/magic.h
 +++ b/include/linux/magic.h
-@@ -45,6 +45,8 @@
+@@ -47,6 +47,8 @@
  #define REISER2FS_SUPER_MAGIC_STRING	"ReIsEr2Fs"
  #define REISER2FS_JR_SUPER_MAGIC_STRING	"ReIsEr3Fs"
  
@@ -11150,6 +11218,18 @@ index 1923327..c3fc308 100644
  #define SMB_SUPER_MAGIC		0x517B
  #define USBDEVICE_SUPER_MAGIC	0x9fa2
  #define CGROUP_SUPER_MAGIC	0x27e0eb
+diff --git a/include/linux/namei.h b/include/linux/namei.h
+index 05b441d..dca6f9a 100644
+--- a/include/linux/namei.h
++++ b/include/linux/namei.h
+@@ -72,6 +72,7 @@ extern int vfs_path_lookup(struct dentry *, struct vfsmount *,
+ 
+ extern struct file *lookup_instantiate_filp(struct nameidata *nd, struct dentry *dentry,
+ 		int (*open)(struct inode *, struct file *));
++extern void release_open_intent(struct nameidata *);
+ 
+ extern struct dentry *lookup_one_len(const char *, struct dentry *, int);
+ 
 diff --git a/include/linux/splice.h b/include/linux/splice.h
 index 18e7c7c..af56841 100644
 --- a/include/linux/splice.h
@@ -11194,10 +11274,10 @@ index 0000000..c84d97e
 +#endif /* _LINUX_UNIONFS_H */
 +
 diff --git a/security/security.c b/security/security.c
-index dc7674f..aa3f061 100644
+index 122b748..a02aece 100644
 --- a/security/security.c
 +++ b/security/security.c
-@@ -519,6 +519,7 @@ int security_inode_permission(struct inode *inode, int mask)
+@@ -557,6 +557,7 @@ int security_inode_permission(struct inode *inode, int mask)
  		return 0;
  	return security_ops->inode_permission(inode, mask);
  }
@@ -11205,21 +11285,3 @@ index dc7674f..aa3f061 100644
  
  int security_inode_setattr(struct dentry *dentry, struct iattr *attr)
  {
-
---- linux-2.6.33/include/linux/namei.h	2010-02-26 09:23:55.450349051 +0100
-+++ linux-2.6.33/include/linux/namei.h	2010-02-26 09:23:46.603683390 +0100
-@@ -72,6 +72,7 @@
- 
- extern struct file *lookup_instantiate_filp(struct nameidata *nd, struct dentry *dentry,
- 		int (*open)(struct inode *, struct file *));
-+extern void release_open_intent(struct nameidata *);
- 
- extern struct dentry *lookup_one_len(const char *, struct dentry *, int);
- 
---- linux-2.6.33/fs/internal.h	2010-02-26 09:23:55.450349051 +0100
-+++ linux-2.6.33/fs/internal.h	2010-02-26 09:23:51.287016217 +0100
-@@ -91,4 +91,3 @@
-  */
- struct nameidata;
- extern struct file *nameidata_to_filp(struct nameidata *);
--extern void release_open_intent(struct nameidata *);
