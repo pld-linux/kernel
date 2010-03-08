@@ -47018,7 +47018,7 @@ diff -urNp linux-2.6.33/kernel/ptrace.c linux-2.6.33/kernel/ptrace.c
  		goto out_put_task_struct;
  	}
  
-@@ -661,11 +661,11 @@ int generic_ptrace_peekdata(struct task_
+@@ -661,11 +668,11 @@ int generic_ptrace_peekdata(struct task_
  	int copied;
  
  	copied = access_process_vm(tsk, addr, &tmp, sizeof(tmp), 0);
@@ -48663,7 +48663,7 @@ diff -urNp linux-2.6.33/mm/mlock.c linux-2.6.33/mm/mlock.c
  	if (!(flags & MCL_CURRENT) || (current->mm->total_vm <= lock_limit) ||
  	    capable(CAP_IPC_LOCK))
  		ret = do_mlockall(flags);
-@@ -512,10 +525,10 @@ SYSCALL_DEFINE2(munlock, unsigned long, 
+@@ -528,10 +541,10 @@ SYSCALL_DEFINE2(munlock, unsigned long,
  static int do_mlockall(int flags)
  {
  	struct vm_area_struct * vma, * prev = NULL;
@@ -48676,7 +48676,7 @@ diff -urNp linux-2.6.33/mm/mlock.c linux-2.6.33/mm/mlock.c
  	current->mm->def_flags = def_flags;
  	if (flags == MCL_FUTURE)
  		goto out;
-@@ -523,6 +536,12 @@ static int do_mlockall(int flags)
+@@ -539,6 +552,13 @@ static int do_mlockall(int flags)
  	for (vma = current->mm->mmap; vma ; vma = prev->vm_next) {
  		unsigned int newflags;
  
@@ -48686,10 +48686,11 @@ diff -urNp linux-2.6.33/mm/mlock.c linux-2.6.33/mm/mlock.c
 +#endif
 +
 +		BUG_ON(vma->vm_end > TASK_SIZE);
++
  		newflags = vma->vm_flags | VM_LOCKED;
  		if (!(flags & MCL_CURRENT))
  			newflags &= ~VM_LOCKED;
-@@ -554,6 +573,7 @@ SYSCALL_DEFINE1(mlockall, int, flags)
+@@ -554,6 +574,7 @@ SYSCALL_DEFINE1(mlockall, int, flags)
  	lock_limit >>= PAGE_SHIFT;
  
  	ret = -ENOMEM;
@@ -49372,7 +49373,8 @@ diff -urNp linux-2.6.33/mm/mmap.c linux-2.6.33/mm/mmap.c
 +		}
 +#endif
 +
- 		mm->total_vm -= nrpages;
+ 		// mm->total_vm -= nrpages;
+ 		vx_vmpages_sub(mm, nrpages);
  		vm_stat_account(mm, vma->vm_flags, vma->vm_file, -nrpages);
  		vma = remove_vma(vma);
 @@ -1847,6 +2085,16 @@ detach_vmas_to_be_unmapped(struct mm_str
@@ -49614,7 +49616,7 @@ diff -urNp linux-2.6.33/mm/mmap.c linux-2.6.33/mm/mmap.c
  		locked += mm->locked_vm;
  		lock_limit = current->signal->rlim[RLIMIT_MEMLOCK].rlim_cur;
  		lock_limit >>= PAGE_SHIFT;
-@@ -2089,22 +2444,22 @@ unsigned long do_brk(unsigned long addr,
+@@ -2443,23 +2443,23 @@ unsigned long do_brk(unsigned long addr,
  	/*
  	 * Clear old maps.  this also does some error checking for us
  	 */
@@ -49636,8 +49638,10 @@ diff -urNp linux-2.6.33/mm/mmap.c linux-2.6.33/mm/mmap.c
  	if (mm->map_count > sysctl_max_map_count)
  		return -ENOMEM;
  
--	if (security_vm_enough_memory(len >> PAGE_SHIFT))
-+	if (security_vm_enough_memory(charged))
+-	if (security_vm_enough_memory(len >> PAGE_SHIFT) ||
+-		!vx_vmpages_avail(mm, len >> PAGE_SHIFT))
++	if (security_vm_enough_memory(charged) ||
++		!vx_vmpages_avail(mm, charged))
  		return -ENOMEM;
  
  	/* Can we just expand an old private anonymous mapping? */
@@ -52268,15 +52272,15 @@ diff -urNp linux-2.6.33/security/commoncap.c linux-2.6.33/security/commoncap.c
 --- linux-2.6.33/security/commoncap.c	2010-02-24 13:52:17.000000000 -0500
 +++ linux-2.6.33/security/commoncap.c	2010-03-07 12:23:36.177657977 -0500
 @@ -27,7 +27,7 @@
- #include <linux/sched.h>
  #include <linux/prctl.h>
  #include <linux/securebits.h>
+ #include <linux/vs_context.h>
 -
 +#include <net/sock.h>
  /*
   * If a non-root user executes a setuid-root binary in
   * !secure(SECURE_NOROOT) mode, then we raise capabilities.
-@@ -50,9 +50,11 @@ static void warn_setuid_and_fcaps_mixed(
+@@ -51,9 +51,11 @@
  	}
  }
  
@@ -52284,8 +52288,8 @@ diff -urNp linux-2.6.33/security/commoncap.c linux-2.6.33/security/commoncap.c
 +
  int cap_netlink_send(struct sock *sk, struct sk_buff *skb)
  {
--	NETLINK_CB(skb).eff_cap = current_cap();
-+	NETLINK_CB(skb).eff_cap = gr_cap_rtnetlink(sk);
+-	NETLINK_CB(skb).eff_cap = vx_mbcaps(current_cap());
++	NETLINK_CB(skb).eff_cap = vx_mbcaps(gr_cap_rtnetlink(sk));
  	return 0;
  }
  
