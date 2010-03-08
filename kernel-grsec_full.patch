@@ -47017,8 +47017,15 @@ diff -urNp linux-2.6.33/kernel/ptrace.c linux-2.6.33/kernel/ptrace.c
 +		}
  		goto out_put_task_struct;
  	}
+
+--- a/kernel/ptrace.c~	2010-03-08 09:26:25.319192059 +0100
++++ b/kernel/ptrace.c	2010-03-08 09:27:37.812101426 +0100
+@@ -656,21 +656,21 @@ SYSCALL_DEFINE4(ptrace, long, request, l
+ }
  
-@@ -661,11 +668,11 @@ int generic_ptrace_peekdata(struct task_
+ int generic_ptrace_peekdata(struct task_struct *tsk, long addr, long data)
+ {
+ 	unsigned long tmp;
  	int copied;
  
  	copied = access_process_vm(tsk, addr, &tmp, sizeof(tmp), 0);
@@ -47031,6 +47038,11 @@ diff -urNp linux-2.6.33/kernel/ptrace.c linux-2.6.33/kernel/ptrace.c
  int generic_ptrace_pokedata(struct task_struct *tsk, long addr, long data)
  {
  	int copied;
+ 
+ 	copied = access_process_vm(tsk, addr, &data, sizeof(data), 1);
+ 	return (copied == sizeof(data)) ? 0 : -EIO;
+ }
+ 
 diff -urNp linux-2.6.33/kernel/rcutree.c linux-2.6.33/kernel/rcutree.c
 --- linux-2.6.33/kernel/rcutree.c	2010-02-24 13:52:17.000000000 -0500
 +++ linux-2.6.33/kernel/rcutree.c	2010-03-07 12:23:36.141632987 -0500
@@ -48655,14 +48667,17 @@ diff -urNp linux-2.6.33/mm/mlock.c linux-2.6.33/mm/mlock.c
  	vma = find_vma_prev(current->mm, start, &prev);
  	if (!vma || vma->vm_start > start)
  		return -ENOMEM;
-@@ -491,6 +503,7 @@ SYSCALL_DEFINE2(mlock, unsigned long, st
- 	ret = -ENOMEM;
- 	if (!vx_vmlocked_avail(current->mm, current->mm->total_vm))
- 		goto out;
+@@ -506,6 +506,7 @@ SYSCALL_DEFINE2(mlock, unsigned long, st
+ 	lock_limit >>= PAGE_SHIFT;
+ 
+ 	/* check against resource limits */
 +	gr_learn_resource(current, RLIMIT_MEMLOCK, (current->mm->locked_vm << PAGE_SHIFT) + len, 1);
- 	if (!(flags & MCL_CURRENT) || (current->mm->total_vm <= lock_limit) ||
- 	    capable(CAP_IPC_LOCK))
- 		ret = do_mlockall(flags);
+ 	if ((locked <= lock_limit) || capable(CAP_IPC_LOCK))
+ 		error = do_mlock(start, len, 1);
+ out:
+diff -urNp linux-2.6.33/mm/mlock.c linux-2.6.33/mm/mlock.c
+--- linux-2.6.33/mm/mlock.c	2010-02-24 13:52:17.000000000 -0500
++++ linux-2.6.33/mm/mlock.c	2010-03-07 12:23:36.157715101 -0500
 @@ -528,10 +541,10 @@ SYSCALL_DEFINE2(munlock, unsigned long,
  static int do_mlockall(int flags)
  {
@@ -48690,10 +48705,13 @@ diff -urNp linux-2.6.33/mm/mlock.c linux-2.6.33/mm/mlock.c
  		newflags = vma->vm_flags | VM_LOCKED;
  		if (!(flags & MCL_CURRENT))
  			newflags &= ~VM_LOCKED;
-@@ -554,6 +574,7 @@ SYSCALL_DEFINE1(mlockall, int, flags)
- 	lock_limit >>= PAGE_SHIFT;
- 
+diff -urNp linux-2.6.33/mm/mlock.c linux-2.6.33/mm/mlock.c
+--- linux-2.6.33/mm/mlock.c	2010-02-24 13:52:17.000000000 -0500
++++ linux-2.6.33/mm/mlock.c	2010-03-07 12:23:36.157715101 -0500
+@@ -580,6 +580,7 @@ SYSCALL_DEFINE1(mlockall, int, flags)
  	ret = -ENOMEM;
+ 	if (!vx_vmlocked_avail(current->mm, current->mm->total_vm))
+ 		goto out;
 +	gr_learn_resource(current, RLIMIT_MEMLOCK, current->mm->total_vm, 1);
  	if (!(flags & MCL_CURRENT) || (current->mm->total_vm <= lock_limit) ||
  	    capable(CAP_IPC_LOCK))
