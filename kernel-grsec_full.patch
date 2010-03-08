@@ -42159,7 +42159,9 @@ diff -urNp linux-2.6.33/include/linux/fs.h linux-2.6.33/include/linux/fs.h
  /*
   * The below are the various read and write types that we support. Some of
   * them include behavioral modifiers that send information down to the
-@@ -567,36 +571,38 @@ typedef int (*read_actor_t)(read_descrip
+@@ -567,38 +571,38 @@ typedef int (*read_actor_t)(read_descrip
+-	int (*writepage)(struct page *page, struct writeback_control *wbc);
+-	int (*readpage)(struct file *, struct page *);
 -	void (*sync_page)(struct page *);
 +	int (* const writepage)(struct page *page, struct writeback_control *wbc);
 +	int (* const readpage)(struct file *, struct page *);
@@ -42213,7 +42215,7 @@ diff -urNp linux-2.6.33/include/linux/fs.h linux-2.6.33/include/linux/fs.h
  };
  
  /*
-@@ -1029,19 +1035,19 @@ static inline int file_check_writeable(s
+@@ -1029,19 +1033,19 @@ static inline int file_check_writeable(s
  typedef struct files_struct *fl_owner_t;
  
  struct file_lock_operations {
@@ -42243,7 +42245,7 @@ diff -urNp linux-2.6.33/include/linux/fs.h linux-2.6.33/include/linux/fs.h
  };
  
  struct lock_manager {
-@@ -1434,7 +1440,7 @@ struct fiemap_extent_info {
+@@ -1434,7 +1438,7 @@ struct fiemap_extent_info {
  	unsigned int fi_flags;		/* Flags as passed from user */
  	unsigned int fi_extents_mapped;	/* Number of mapped extents */
  	unsigned int fi_extents_max;	/* Size of fiemap_extent array */
@@ -42252,7 +42254,7 @@ diff -urNp linux-2.6.33/include/linux/fs.h linux-2.6.33/include/linux/fs.h
  						 * array */
  };
  int fiemap_fill_next_extent(struct fiemap_extent_info *info, u64 logical,
-@@ -1551,32 +1557,32 @@ extern ssize_t vfs_writev(struct file *,
+@@ -1551,32 +1555,32 @@ extern ssize_t vfs_writev(struct file *,
  ssize_t vfs_sendfile(struct file *, struct file *, loff_t *, size_t, loff_t);
  
  struct super_operations {
@@ -49694,7 +49696,7 @@ diff -urNp linux-2.6.33/mm/mmap.c linux-2.6.33/mm/mmap.c
  	vma->vm_mm = mm;
  	vma->vm_start = addr;
  	vma->vm_end = addr + len;
-@@ -2181,8 +2550,10 @@ void exit_mmap(struct mm_struct *mm)
+@@ -2181,8 +2547,10 @@ void exit_mmap(struct mm_struct *mm)
  	 * Walk the list again, actually closing and freeing it,
  	 * with preemption enabled, without holding any MM locks.
  	 */
@@ -49706,7 +49708,7 @@ diff -urNp linux-2.6.33/mm/mmap.c linux-2.6.33/mm/mmap.c
  
  	BUG_ON(mm->nr_ptes > (FIRST_USER_ADDRESS+PMD_SIZE-1)>>PMD_SHIFT);
  }
-@@ -2196,6 +2567,10 @@ int insert_vm_struct(struct mm_struct * 
+@@ -2196,6 +2564,10 @@ int insert_vm_struct(struct mm_struct * 
  	struct vm_area_struct * __vma, * prev;
  	struct rb_node ** rb_link, * rb_parent;
  
@@ -49717,7 +49719,7 @@ diff -urNp linux-2.6.33/mm/mmap.c linux-2.6.33/mm/mmap.c
  	/*
  	 * The vm_pgoff of a purely anonymous vma should be irrelevant
  	 * until its first write fault, when page's anon_vma and index
-@@ -2218,7 +2593,22 @@ int insert_vm_struct(struct mm_struct * 
+@@ -2218,7 +2590,22 @@ int insert_vm_struct(struct mm_struct * 
  	if ((vma->vm_flags & VM_ACCOUNT) &&
  	     security_vm_enough_memory_mm(mm, vma_pages(vma)))
  		return -ENOMEM;
@@ -49740,7 +49742,7 @@ diff -urNp linux-2.6.33/mm/mmap.c linux-2.6.33/mm/mmap.c
  	return 0;
  }
  
-@@ -2236,6 +2626,8 @@ struct vm_area_struct *copy_vma(struct v
+@@ -2236,6 +2623,8 @@ struct vm_area_struct *copy_vma(struct v
  	struct rb_node **rb_link, *rb_parent;
  	struct mempolicy *pol;
  
@@ -49749,7 +49751,7 @@ diff -urNp linux-2.6.33/mm/mmap.c linux-2.6.33/mm/mmap.c
  	/*
  	 * If anonymous vma has not yet been faulted, update new pgoff
  	 * to match new location, to increase its chance of merging.
-@@ -2279,6 +2671,35 @@ struct vm_area_struct *copy_vma(struct v
+@@ -2279,6 +2668,35 @@ struct vm_area_struct *copy_vma(struct v
  	return new_vma;
  }
  
@@ -49785,7 +49787,7 @@ diff -urNp linux-2.6.33/mm/mmap.c linux-2.6.33/mm/mmap.c
  /*
   * Return true if the calling process may expand its vm space by the passed
   * number of pages
-@@ -2289,7 +2710,7 @@ int may_expand_vm(struct mm_struct *mm, 
+@@ -2289,7 +2707,7 @@ int may_expand_vm(struct mm_struct *mm, 
  	unsigned long lim;
  
  	lim = current->signal->rlim[RLIMIT_AS].rlim_cur >> PAGE_SHIFT;
@@ -49794,7 +49796,7 @@ diff -urNp linux-2.6.33/mm/mmap.c linux-2.6.33/mm/mmap.c
  	if (cur + npages > lim)
  		return 0;
  	return 1;
-@@ -2358,6 +2779,15 @@ int install_special_mapping(struct mm_st
+@@ -2358,5 +2776,14 @@ int install_special_mapping(struct mm_st
  	vma->vm_start = addr;
  	vma->vm_end = addr + len;
  
