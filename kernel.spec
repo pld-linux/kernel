@@ -1135,6 +1135,7 @@ for a in \
 	symbols{,.bin} \
 	{pci,usb,ccw,isapnp,input,ieee1394,serio,of}map \
 ; do
+	test -f $RPM_BUILD_ROOT/lib/modules/%{kernel_release}/modules.$a
 	> $RPM_BUILD_ROOT/lib/modules/%{kernel_release}/modules.$a
 done
 
