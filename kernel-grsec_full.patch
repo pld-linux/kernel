@@ -31120,7 +31120,10 @@ diff -urNp linux-2.6.33/fs/proc/base.c linux-2.6.33/fs/proc/base.c
  };
  
  static int proc_tgid_base_readdir(struct file * filp,
-@@ -2766,7 +2866,14 @@ static struct dentry *proc_pid_instantia
+diff -urNp linux-2.6.33/fs/proc/base.c linux-2.6.33/fs/proc/base.c
+--- linux-2.6.33/fs/proc/base.c	2010-02-24 13:52:17.000000000 -0500
++++ linux-2.6.33/fs/proc/base.c	2010-03-07 12:23:36.097602735 -0500
+@@ -2766,7 +2766,14 @@ static struct dentry *proc_pid_instantia
  	if (!inode)
  		goto out;
  
@@ -31135,7 +31138,7 @@ diff -urNp linux-2.6.33/fs/proc/base.c linux-2.6.33/fs/proc/base.c
  	inode->i_op = &proc_tgid_base_inode_operations;
  	inode->i_fop = &proc_tgid_base_operations;
  	inode->i_flags|=S_IMMUTABLE;
-@@ -2808,7 +2915,11 @@ struct dentry *proc_pid_lookup(struct in
+@@ -2808,7 +2815,11 @@ struct dentry *proc_pid_lookup(struct in
  	if (!task)
  		goto out;
  
@@ -31147,10 +31150,13 @@ diff -urNp linux-2.6.33/fs/proc/base.c linux-2.6.33/fs/proc/base.c
  	put_task_struct(task);
  out:
  	return result;
-@@ -2873,6 +2984,11 @@ int proc_pid_readdir(struct file * filp,
+diff -urNp linux-2.6.33/fs/proc/base.c linux-2.6.33/fs/proc/base.c
+--- linux-2.6.33/fs/proc/base.c	2010-02-24 13:52:17.000000000 -0500
++++ linux-2.6.33/fs/proc/base.c	2010-03-07 12:23:36.097602735 -0500
+@@ -2873,6 +2873,11 @@ int proc_pid_readdir(struct file * filp,
  {
  	unsigned int nr = filp->f_pos - FIRST_PROCESS_ENTRY;
- 	struct task_struct *reaper = get_proc_task(filp->f_path.dentry->d_inode);
+ 	struct task_struct *reaper = get_proc_task_real(filp->f_path.dentry->d_inode);
 +#if defined(CONFIG_GRKERNSEC_PROC_USER) || defined(CONFIG_GRKERNSEC_PROC_USERGROUP)
 +	const struct cred *tmpcred = current_cred();
 +	const struct cred *itercred;
@@ -31159,7 +31165,7 @@ diff -urNp linux-2.6.33/fs/proc/base.c linux-2.6.33/fs/proc/base.c
  	struct tgid_iter iter;
  	struct pid_namespace *ns;
  
-@@ -2891,8 +3007,27 @@ int proc_pid_readdir(struct file * filp,
+@@ -2891,10 +2896,29 @@ int proc_pid_readdir(struct file * filp,
  	for (iter = next_tgid(ns, iter);
  	     iter.task;
  	     iter.tgid += 1, iter = next_tgid(ns, iter)) {
@@ -31183,12 +31189,14 @@ diff -urNp linux-2.6.33/fs/proc/base.c linux-2.6.33/fs/proc/base.c
 +	rcu_read_unlock();
 +#endif
  		filp->f_pos = iter.tgid + TGID_OFFSET;
+ 		if (!vx_proc_task_visible(iter.task))
+ 			continue;
 -		if (proc_pid_fill_cache(filp, dirent, filldir, iter) < 0) {
 +		if (proc_pid_fill_cache(filp, dirent, __filldir, iter) < 0) {
  			put_task_struct(iter.task);
  			goto out;
  		}
-@@ -2919,7 +3054,7 @@ static const struct pid_entry tid_base_s
+@@ -2919,7 +2943,7 @@ static const struct pid_entry tid_base_s
  	REG("sched",     S_IRUGO|S_IWUSR, proc_pid_sched_operations),
  #endif
  	REG("comm",      S_IRUGO|S_IWUSR, proc_pid_set_comm_operations),
@@ -31197,7 +31205,7 @@ diff -urNp linux-2.6.33/fs/proc/base.c linux-2.6.33/fs/proc/base.c
  	INF("syscall",   S_IRUSR, proc_pid_syscall),
  #endif
  	INF("cmdline",   S_IRUGO, proc_pid_cmdline),
-@@ -2946,7 +3081,7 @@ static const struct pid_entry tid_base_s
+@@ -2946,7 +2970,7 @@ static const struct pid_entry tid_base_s
  #ifdef CONFIG_KALLSYMS
  	INF("wchan",     S_IRUGO, proc_pid_wchan),
  #endif
@@ -46995,7 +47003,7 @@ diff -urNp linux-2.6.33/kernel/ptrace.c linux-2.6.33/kernel/ptrace.c
  				   sizeof siginfo))
  			ret = -EFAULT;
  		else
-@@ -621,14 +621,21 @@ SYSCALL_DEFINE4(ptrace, long, request, l
+@@ -621,13 +621,20 @@ SYSCALL_DEFINE4(ptrace, long, request, l
  		goto out;
  	}
  
@@ -48667,7 +48675,7 @@ diff -urNp linux-2.6.33/mm/mlock.c linux-2.6.33/mm/mlock.c
  	vma = find_vma_prev(current->mm, start, &prev);
  	if (!vma || vma->vm_start > start)
  		return -ENOMEM;
-@@ -506,6 +506,7 @@ SYSCALL_DEFINE2(mlock, unsigned long, st
+@@ -506,6 +518,7 @@ SYSCALL_DEFINE2(mlock, unsigned long, st
  	lock_limit >>= PAGE_SHIFT;
  
  	/* check against resource limits */
@@ -48678,7 +48686,7 @@ diff -urNp linux-2.6.33/mm/mlock.c linux-2.6.33/mm/mlock.c
 diff -urNp linux-2.6.33/mm/mlock.c linux-2.6.33/mm/mlock.c
 --- linux-2.6.33/mm/mlock.c	2010-02-24 13:52:17.000000000 -0500
 +++ linux-2.6.33/mm/mlock.c	2010-03-07 12:23:36.157715101 -0500
-@@ -528,10 +541,10 @@ SYSCALL_DEFINE2(munlock, unsigned long,
+@@ -528,10 +528,10 @@ SYSCALL_DEFINE2(munlock, unsigned long,
  static int do_mlockall(int flags)
  {
  	struct vm_area_struct * vma, * prev = NULL;
@@ -48691,7 +48699,7 @@ diff -urNp linux-2.6.33/mm/mlock.c linux-2.6.33/mm/mlock.c
  	current->mm->def_flags = def_flags;
  	if (flags == MCL_FUTURE)
  		goto out;
-@@ -539,6 +552,13 @@ static int do_mlockall(int flags)
+@@ -539,6 +539,13 @@ static int do_mlockall(int flags)
  	for (vma = current->mm->mmap; vma ; vma = prev->vm_next) {
  		unsigned int newflags;
  
@@ -49380,7 +49388,7 @@ diff -urNp linux-2.6.33/mm/mmap.c linux-2.6.33/mm/mmap.c
  	return error;
  }
  
-@@ -1803,6 +2034,13 @@ static void remove_vma_list(struct mm_st
+@@ -1803,7 +2034,14 @@ static void remove_vma_list(struct mm_st
  	do {
  		long nrpages = vma_pages(vma);
  
@@ -49634,7 +49642,7 @@ diff -urNp linux-2.6.33/mm/mmap.c linux-2.6.33/mm/mmap.c
  		locked += mm->locked_vm;
  		lock_limit = current->signal->rlim[RLIMIT_MEMLOCK].rlim_cur;
  		lock_limit >>= PAGE_SHIFT;
-@@ -2443,23 +2443,23 @@ unsigned long do_brk(unsigned long addr,
+@@ -2443,23 +2798,23 @@ unsigned long do_brk(unsigned long addr,
  	/*
  	 * Clear old maps.  this also does some error checking for us
  	 */
@@ -49686,22 +49694,7 @@ diff -urNp linux-2.6.33/mm/mmap.c linux-2.6.33/mm/mmap.c
  	vma->vm_mm = mm;
  	vma->vm_start = addr;
  	vma->vm_end = addr + len;
-@@ -2130,11 +2496,12 @@ unsigned long do_brk(unsigned long addr,
- 	vma->vm_page_prot = vm_get_page_prot(flags);
- 	vma_link(mm, vma, prev, rb_link, rb_parent);
- out:
--	mm->total_vm += len >> PAGE_SHIFT;
-+	mm->total_vm += charged;
- 	if (flags & VM_LOCKED) {
- 		if (!mlock_vma_pages_range(vma, addr, addr + len))
--			mm->locked_vm += (len >> PAGE_SHIFT);
-+			mm->locked_vm += charged;
- 	}
-+	track_exec_limit(mm, addr, addr + len, flags);
- 	return addr;
- }
- 
-@@ -2181,8 +2548,10 @@ void exit_mmap(struct mm_struct *mm)
+@@ -2181,8 +2550,10 @@ void exit_mmap(struct mm_struct *mm)
  	 * Walk the list again, actually closing and freeing it,
  	 * with preemption enabled, without holding any MM locks.
  	 */
@@ -49713,7 +49706,7 @@ diff -urNp linux-2.6.33/mm/mmap.c linux-2.6.33/mm/mmap.c
  
  	BUG_ON(mm->nr_ptes > (FIRST_USER_ADDRESS+PMD_SIZE-1)>>PMD_SHIFT);
  }
-@@ -2196,6 +2565,10 @@ int insert_vm_struct(struct mm_struct * 
+@@ -2196,6 +2567,10 @@ int insert_vm_struct(struct mm_struct * 
  	struct vm_area_struct * __vma, * prev;
  	struct rb_node ** rb_link, * rb_parent;
  
@@ -49724,7 +49717,7 @@ diff -urNp linux-2.6.33/mm/mmap.c linux-2.6.33/mm/mmap.c
  	/*
  	 * The vm_pgoff of a purely anonymous vma should be irrelevant
  	 * until its first write fault, when page's anon_vma and index
-@@ -2218,7 +2591,22 @@ int insert_vm_struct(struct mm_struct * 
+@@ -2218,7 +2593,22 @@ int insert_vm_struct(struct mm_struct * 
  	if ((vma->vm_flags & VM_ACCOUNT) &&
  	     security_vm_enough_memory_mm(mm, vma_pages(vma)))
  		return -ENOMEM;
@@ -49747,7 +49740,7 @@ diff -urNp linux-2.6.33/mm/mmap.c linux-2.6.33/mm/mmap.c
  	return 0;
  }
  
-@@ -2236,6 +2624,8 @@ struct vm_area_struct *copy_vma(struct v
+@@ -2236,6 +2626,8 @@ struct vm_area_struct *copy_vma(struct v
  	struct rb_node **rb_link, *rb_parent;
  	struct mempolicy *pol;
  
@@ -49756,7 +49749,7 @@ diff -urNp linux-2.6.33/mm/mmap.c linux-2.6.33/mm/mmap.c
  	/*
  	 * If anonymous vma has not yet been faulted, update new pgoff
  	 * to match new location, to increase its chance of merging.
-@@ -2279,6 +2669,35 @@ struct vm_area_struct *copy_vma(struct v
+@@ -2279,6 +2671,35 @@ struct vm_area_struct *copy_vma(struct v
  	return new_vma;
  }
  
@@ -49792,7 +49785,7 @@ diff -urNp linux-2.6.33/mm/mmap.c linux-2.6.33/mm/mmap.c
  /*
   * Return true if the calling process may expand its vm space by the passed
   * number of pages
-@@ -2289,7 +2708,7 @@ int may_expand_vm(struct mm_struct *mm, 
+@@ -2289,7 +2710,7 @@ int may_expand_vm(struct mm_struct *mm, 
  	unsigned long lim;
  
  	lim = current->signal->rlim[RLIMIT_AS].rlim_cur >> PAGE_SHIFT;
@@ -49801,7 +49794,7 @@ diff -urNp linux-2.6.33/mm/mmap.c linux-2.6.33/mm/mmap.c
  	if (cur + npages > lim)
  		return 0;
  	return 1;
-@@ -2358,6 +2777,15 @@ int install_special_mapping(struct mm_st
+@@ -2358,6 +2779,15 @@ int install_special_mapping(struct mm_st
  	vma->vm_start = addr;
  	vma->vm_end = addr + len;
  
@@ -49816,6 +49809,29 @@ diff -urNp linux-2.6.33/mm/mmap.c linux-2.6.33/mm/mmap.c
 +
  	vma->vm_flags = vm_flags | mm->def_flags | VM_DONTEXPAND;
  	vma->vm_page_prot = vm_get_page_prot(vma->vm_flags);
+
+--- a/mm/mmap.c~	2010-03-08 09:52:23.802000093 +0100
++++ b/mm/mmap.c	2010-03-08 09:53:10.178415334 +0100
+@@ -2502,17 +2502,18 @@ unsigned long do_brk(unsigned long addr,
+ 	vma->vm_flags = flags;
+ 	vma->vm_page_prot = vm_get_page_prot(flags);
+ 	vma_link(mm, vma, prev, rb_link, rb_parent);
+ out:
+ 	// mm->total_vm += len >> PAGE_SHIFT;
+-	vx_vmpages_add(mm, len >> PAGE_SHIFT);
++	vx_vmpages_add(mm, charged);
+ 
+ 	if (flags & VM_LOCKED) {
+ 		if (!mlock_vma_pages_range(vma, addr, addr + len))
+ 			// mm->locked_vm += (len >> PAGE_SHIFT);
+-			vx_vmlocked_add(mm, len >> PAGE_SHIFT);
++			vx_vmlocked_add(mm, charged);
+ 	}
++	track_exec_limit(mm, addr, addr + len, flags);
+ 	return addr;
+ }
+ 
+ EXPORT_SYMBOL(do_brk);
  
 diff -urNp linux-2.6.33/mm/mprotect.c linux-2.6.33/mm/mprotect.c
 --- linux-2.6.33/mm/mprotect.c	2010-02-24 13:52:17.000000000 -0500
