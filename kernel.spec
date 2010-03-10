@@ -115,7 +115,7 @@
 
 %define		basever		2.6.33
 %define		postver		%{nil}
-%define		rel		0.1
+%define		rel			0.2
 
 %define		_enable_debug_packages			0
 
@@ -378,10 +378,9 @@ Conflicts:	oprofile < 0.9
 Conflicts:	ppp < 1:2.4.0
 Conflicts:	procps < 3.2.0
 Conflicts:	quota-tools < 3.09
-%if %{with reiserfs4}
-Conflicts:	reiser4progs < 1.0.0
-%endif
+%{?with_reiserfs4:Conflicts:	reiser4progs < 1.0.0}
 Conflicts:	reiserfsprogs < 3.6.3
+Conflicts:	rpm < 4.4.2-0.2
 Conflicts:	udev < 1:081
 Conflicts:	util-linux < 2.10o
 Conflicts:	util-vserver < 0.30.216
@@ -1241,19 +1240,20 @@ ln -sf System.map-%{kernel_release} /boot/System.map
 
 %depmod %{kernel_release}
 
+%posttrans
+# generate initrd after all dependant modules are installed
 /sbin/geninitrd -f --initrdfs=rom %{initrd_dir}/initrd-%{kernel_release}.gz %{kernel_release}
 mv -f %{initrd_dir}/initrd{,.old} 2> /dev/null
 %{?alt_kernel:mv -f %{initrd_dir}/initrd%{_alt_kernel}{,.old} 2> /dev/null}
 ln -sf initrd-%{kernel_release}.gz %{initrd_dir}/initrd
 %{?alt_kernel:ln -sf initrd-%{kernel_release}.gz %{initrd_dir}/initrd%{_alt_kernel}}
 
+# update boot loaders when old package files are gone from filesystem
 if [ -x /sbin/update-grub -a -f /etc/sysconfig/grub ]; then
-	. /etc/sysconfig/grub
-	if [ "$UPDATE_GRUB" = "yes" ]; then
-		/sbin/update-grub >/dev/null 2>&1
+	if [ "$(. /etc/sysconfig/grub; echo ${UPDATE_GRUB:-no})" = "yes" ]; then
+		/sbin/update-grub >/dev/null
 	fi
 fi
-
 if [ -x /sbin/new-kernel-pkg ]; then
 	/sbin/new-kernel-pkg --initrdfile=%{initrd_dir}/initrd-%{kernel_release}.gz --install %{kernel_release} --banner "PLD Linux (%{pld_release})%{?alt_kernel: / %{alt_kernel}}"
 fi
