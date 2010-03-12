@@ -115,7 +115,7 @@
 
 %define		basever		2.6.33
 %define		postver		%{nil}
-%define		rel			0.2
+%define		rel			0.3
 
 %define		_enable_debug_packages			0
 
@@ -271,7 +271,7 @@ Patch85:	kernel-hostap.patch
 # Taken from http://download.opensuse.org/factory/repo/src-oss/suse/src/kernel-source-2.6.30-10.3.src.rpm
 Patch90:	kernel-mpt-fusion.patch
 
-# based on http://vserver.13thfloor.at/Experimental/patch-2.6.33-vs2.3.0.36.30.1.diff
+# based on http://vserver.13thfloor.at/Experimental/patch-2.6.33-vs2.3.0.36.30.3.diff
 Patch100:	kernel-vserver-2.3.patch
 Patch101:	kernel-vserver-fixes.patch
 
@@ -323,7 +323,7 @@ Patch5000:	kernel-apparmor.patch
 # based on http://ftp.leg.uct.ac.za/pub/linux/rip/inittmpfs-2.6.14.diff.gz
 Patch7000:	kernel-inittmpfs.patch
 
-# based on http://www.grsecurity.net/~spender/grsecurity-2.1.14-2.6.33-201003071645.patch kernel-grsec_full.patch
+# based on http://www.grsecurity.net/~spender/grsecurity-2.1.14-2.6.33-201003112028.patch
 # NOTE: put raw upstream patches on kernel-grsec_full.patch:GRSECURITY_RAW for reference
 #       (since upstream deletes older patches)
 Patch9999:	kernel-grsec_full.patch

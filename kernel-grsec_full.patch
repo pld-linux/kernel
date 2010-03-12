@@ -47151,17 +47151,16 @@ diff -urNp linux-2.6.33/kernel/signal.c linux-2.6.33/kernel/signal.c
  	if (override_rlimit ||
  	    atomic_read(&user->sigpending) <=
  			t->signal->rlim[RLIMIT_SIGPENDING].rlim_cur) {
-@@ -659,6 +662,10 @@ static int check_kill_permission(int sig
- 			sig, info, t, vx_task_xid(t), t->pid, current->xid);
+@@ -687,6 +687,9 @@ static int check_kill_permission(int sig
  		return error;
  	}
-+
+ /* skip: */
 +	if (gr_handle_signal(t, sig))
 +		return -EPERM;
 +
- skip:
  	return security_task_kill(t, info, sig, 0);
  }
+ 
 @@ -1006,7 +1013,7 @@ __group_send_sig_info(int sig, struct si
  	return send_signal(sig, info, p, 1);
  }
@@ -53489,3 +53488,326 @@ diff -urNp linux-2.6.33/virt/kvm/kvm_main.c linux-2.6.33/virt/kvm/kvm_main.c
  		  struct module *module)
  {
  	int r;
+diff -u linux-2.6.33/arch/x86/include/asm/paravirt.h linux-2.6.33/arch/x86/include/asm/paravirt.h
+--- linux-2.6.33/arch/x86/include/asm/paravirt.h	2010-03-07 12:23:55.597717555 -0500
++++ linux-2.6.33/arch/x86/include/asm/paravirt.h	2010-03-11 20:27:00.890138882 -0500
+@@ -1076,28 +1076,30 @@
+ 	.endm
+ 
+ #define PAX_EXIT_KERNEL					\
+-	push %rax; push %rcx;				\
++	PV_SAVE_REGS(CLBR_NONE);			\
+ 	mov %cs, %rax;					\
+ 	cmp $__KERNEXEC_KERNEL_CS, %eax;		\
+ 	jnz 2f;						\
+ 	call PARA_INDIRECT(pv_cpu_ops+PV_CPU_read_cr0);	\
+ 	btc $16, %rax;					\
++	mov %rax, %rdi;					\
+ 	ljmpq __KERNEL_CS, 1f;				\
+ 1:	call PARA_INDIRECT(pv_cpu_ops+PV_CPU_write_cr0);\
+-2:	pop %rcx; pop %rax;				\
++2:	PV_RESTORE_REGS(CLBR_NONE);
+ 
+ #define PAX_ENTER_KERNEL				\
+-	push %rax; push %rcx;				\
++	PV_SAVE_REGS(CLBR_NONE);			\
+ 	call PARA_INDIRECT(pv_cpu_ops+PV_CPU_read_cr0);	\
+ 	bts $16, %rax;					\
+ 	jnc 1f;						\
+-	mov %cs, %rcx;					\
+-	cmp $__KERNEL_CS, %ecx;				\
++	mov %cs, %rax;					\
++	cmp $__KERNEL_CS, %eax;				\
+ 	jz 3f;						\
+ 	ljmpq __KERNEL_CS, 3f;				\
+-1:	ljmpq __KERNEXEC_KERNEL_CS, 2f;			\
++1:	mov %rax, %rdi;					\
++	ljmpq __KERNEXEC_KERNEL_CS, 2f;			\
+ 2:	call PARA_INDIRECT(pv_cpu_ops+PV_CPU_write_cr0);\
+-3:	pop %rcx; pop %rax;
++3:	PV_RESTORE_REGS(CLBR_NONE);
+ #else
+ #define PAX_EXIT_KERNEL
+ #define PAX_ENTER_KERNEL
+diff -u linux-2.6.33/arch/x86/include/asm/uaccess.h linux-2.6.33/arch/x86/include/asm/uaccess.h
+--- linux-2.6.33/arch/x86/include/asm/uaccess.h	2010-03-07 12:23:35.925702533 -0500
++++ linux-2.6.33/arch/x86/include/asm/uaccess.h	2010-03-11 20:27:00.910802934 -0500
+@@ -94,16 +94,20 @@
+ 	unsigned long __end_ao = __addr + __size - 1;			\
+ 	bool __ret_ao = __range_not_ok(__addr, __size) == 0;		\
+ 	if (__ret_ao && unlikely((__end_ao ^ __addr_ao) & PAGE_MASK)) {	\
+-		for (; __addr_ao <= __end_ao; __addr_ao += PAGE_SIZE) {	\
++		while(__addr_ao <= __end_ao) {				\
+ 			char __c_ao;					\
++			__addr_ao += PAGE_SIZE;				\
+ 			if (__size > PAGE_SIZE)				\
+ 				cond_resched();				\
+-			if (__get_user(__c_ao, (char __user *)__addr_ao))\
++			if (__get_user(__c_ao, (char __user *)__addr))	\
+ 				break;					\
+-			if (type != VERIFY_WRITE)			\
++			if (type != VERIFY_WRITE) {			\
++				__addr = __addr_ao;			\
+ 				continue;				\
+-			if (__put_user(__c_ao, (char __user *)__addr_ao))\
++			}						\
++			if (__put_user(__c_ao, (char __user *)__addr))	\
+ 				break;					\
++			__addr = __addr_ao;				\
+ 		}							\
+ 	}								\
+ 	__ret_ao;							\
+diff -u linux-2.6.33/arch/x86/kernel/e820.c linux-2.6.33/arch/x86/kernel/e820.c
+--- linux-2.6.33/arch/x86/kernel/e820.c	2010-03-07 12:23:35.933601961 -0500
++++ linux-2.6.33/arch/x86/kernel/e820.c	2010-03-11 20:27:00.913600776 -0500
+@@ -743,18 +743,6 @@
+ 	 */
+ 	{ PAGE_SIZE, PAGE_SIZE + PAGE_SIZE, "EX TRAMPOLINE", 1 },
+ #endif
+-#ifdef CONFIG_VM86
+-#ifdef CONFIG_ACPI_SLEEP
+-#define ACPI_EXTRA WAKEUP_SIZE
+-#else
+-#define ACPI_EXTRA 0
+-#endif
+-#if defined(CONFIG_X86_32) && defined(CONFIG_X86_TRAMPOLINE)
+-	{ 3*PAGE_SIZE + ACPI_EXTRA, ISA_START_ADDRESS, "V86 mode memory", 1 },
+-#else
+-	{ 2*PAGE_SIZE + ACPI_EXTRA, ISA_START_ADDRESS, "V86 mode memory", 1 },
+-#endif
+-#endif
+ 	{ 0, 0, {0}, 0 }
+ };
+ 
+diff -u linux-2.6.33/arch/x86/kernel/head_32.S linux-2.6.33/arch/x86/kernel/head_32.S
+--- linux-2.6.33/arch/x86/kernel/head_32.S	2010-03-07 12:23:35.937701195 -0500
++++ linux-2.6.33/arch/x86/kernel/head_32.S	2010-03-11 20:27:00.913600776 -0500
+@@ -850,7 +850,7 @@
+ 
+ 	.quad 0x00c0930000000000	/* 0xd0 - ESPFIX SS */
+ 	.quad 0x0040930000000000	/* 0xd8 - PERCPU */
+-	.quad 0x0040930000000018	/* 0xe0 - STACK_CANARY */
++	.quad 0x0040910000000018	/* 0xe0 - STACK_CANARY */
+ 	.quad 0x0000000000000000	/* 0xe8 - PCIBIOS_CS */
+ 	.quad 0x0000000000000000	/* 0xf0 - PCIBIOS_DS */
+ 	.quad 0x0000000000000000	/* 0xf8 - GDT entry 31: double-fault TSS */
+diff -u linux-2.6.33/arch/x86/kernel/head_64.S linux-2.6.33/arch/x86/kernel/head_64.S
+--- linux-2.6.33/arch/x86/kernel/head_64.S	2010-03-07 16:45:32.258187459 -0500
++++ linux-2.6.33/arch/x86/kernel/head_64.S	2010-03-11 20:28:25.245605911 -0500
+@@ -19,6 +19,7 @@
+ #include <asm/cache.h>
+ #include <asm/processor-flags.h>
+ #include <asm/percpu.h>
++#include <asm/cpufeature.h>
+ 
+ #ifdef CONFIG_PARAVIRT
+ #include <asm/asm-offsets.h>
+@@ -175,14 +176,14 @@
+ 	movl	$MSR_EFER, %ecx
+ 	rdmsr
+ 	btsl	$_EFER_SCE, %eax	/* Enable System Call */
+-	btl	$20,%edi		/* No Execute supported? */
++	btl	$(X86_FEATURE_NX & 31),%edi	/* No Execute supported? */
+ 	jnc     1f
+ 	btsl	$_EFER_NX, %eax
+ 	leaq	init_level4_pgt(%rip), %rdi
+ 	btsq	$_PAGE_BIT_NX, 8*L4_PAGE_OFFSET(%rdi)
+ 	btsq	$_PAGE_BIT_NX, 8*L4_VMALLOC_START(%rdi)
+ 	btsq	$_PAGE_BIT_NX, 8*L4_VMEMMAP_START(%rdi)
+-	btsq	$_PAGE_BIT_NX, (__supported_pte_mask)
++	btsq	$_PAGE_BIT_NX, __supported_pte_mask(%rip)
+ 1:	wrmsr				/* Make changes effective */
+ 
+ 	/* Setup cr0 */
+diff -u linux-2.6.33/arch/x86/kernel/setup_percpu.c linux-2.6.33/arch/x86/kernel/setup_percpu.c
+--- linux-2.6.33/arch/x86/kernel/setup_percpu.c	2010-03-07 12:23:35.941628368 -0500
++++ linux-2.6.33/arch/x86/kernel/setup_percpu.c	2010-03-11 20:27:00.921810331 -0500
+@@ -158,15 +158,13 @@
+ static inline void setup_percpu_segment(int cpu)
+ {
+ #ifdef CONFIG_X86_32
+-	struct desc_struct d, *gdt = get_cpu_gdt_table(cpu);
++	struct desc_struct gdt;
+ 	unsigned long base = per_cpu_offset(cpu);
+-	const unsigned long limit = VMALLOC_END - base - 1;
+ 
+-	if (limit < 64*1024)
+-		pack_descriptor(&d, base, limit, 0x80 | DESCTYPE_S | 0x3, 0x4);
+-	else
+-		pack_descriptor(&d, base, limit >> PAGE_SHIFT, 0x80 | DESCTYPE_S | 0x3, 0xC);
+-	write_gdt_entry(gdt, GDT_ENTRY_PERCPU, &d, DESCTYPE_S);
++	pack_descriptor(&gdt, base, (VMALLOC_END - base - 1) >> PAGE_SHIFT,
++			0x83 | DESCTYPE_S, 0xC);
++	write_gdt_entry(get_cpu_gdt_table(cpu),
++			GDT_ENTRY_PERCPU, &gdt, DESCTYPE_S);
+ #endif
+ }
+ 
+diff -u linux-2.6.33/arch/x86/lib/putuser.S linux-2.6.33/arch/x86/lib/putuser.S
+--- linux-2.6.33/arch/x86/lib/putuser.S	2010-03-07 12:23:35.949701331 -0500
++++ linux-2.6.33/arch/x86/lib/putuser.S	2010-03-11 20:27:03.470423501 -0500
+@@ -30,25 +30,26 @@
+  * as they get called from within inline assembly.
+  */
+ 
+-#define ENTER	CFI_STARTPROC ; \
+-		GET_THREAD_INFO(%_ASM_BX)
++#define ENTER	CFI_STARTPROC
+ #define EXIT	ret ; \
+ 		CFI_ENDPROC
+ 
+ .text
+ ENTRY(__put_user_1)
+ 	ENTER
+-	cmp TI_addr_limit(%_ASM_BX),%_ASM_CX
+-	jae bad_put_user
+ 
+-#ifdef CONFIG_X86_32
++#if defined(CONFIG_X86_32) && defined(CONFIG_PAX_MEMORY_UDEREF)
+ 	pushl $(__USER_DS)
+ 	popl %ds
++#else
++	GET_THREAD_INFO(%_ASM_BX)
++	cmp TI_addr_limit(%_ASM_BX),%_ASM_CX
++	jae bad_put_user
+ #endif
+ 
+ 1:	movb %al,(%_ASM_CX)
+ 
+-#ifdef CONFIG_X86_32
++#if defined(CONFIG_X86_32) && defined(CONFIG_PAX_MEMORY_UDEREF)
+ 	pushl %ss
+ 	popl %ds
+ #endif
+@@ -59,19 +60,21 @@
+ 
+ ENTRY(__put_user_2)
+ 	ENTER
++
++#if defined(CONFIG_X86_32) && defined(CONFIG_PAX_MEMORY_UDEREF)
++	pushl $(__USER_DS)
++	popl %ds
++#else
++	GET_THREAD_INFO(%_ASM_BX)
+ 	mov TI_addr_limit(%_ASM_BX),%_ASM_BX
+ 	sub $1,%_ASM_BX
+ 	cmp %_ASM_BX,%_ASM_CX
+ 	jae bad_put_user
+-
+-#ifdef CONFIG_X86_32
+-	pushl $(__USER_DS)
+-	popl %ds
+ #endif
+ 
+ 2:	movw %ax,(%_ASM_CX)
+ 
+-#ifdef CONFIG_X86_32
++#if defined(CONFIG_X86_32) && defined(CONFIG_PAX_MEMORY_UDEREF)
+ 	pushl %ss
+ 	popl %ds
+ #endif
+@@ -82,19 +85,21 @@
+ 
+ ENTRY(__put_user_4)
+ 	ENTER
++
++#if defined(CONFIG_X86_32) && defined(CONFIG_PAX_MEMORY_UDEREF)
++	pushl $(__USER_DS)
++	popl %ds
++#else
++	GET_THREAD_INFO(%_ASM_BX)
+ 	mov TI_addr_limit(%_ASM_BX),%_ASM_BX
+ 	sub $3,%_ASM_BX
+ 	cmp %_ASM_BX,%_ASM_CX
+ 	jae bad_put_user
+-
+-#ifdef CONFIG_X86_32
+-	pushl $(__USER_DS)
+-	popl %ds
+ #endif
+ 
+ 3:	movl %eax,(%_ASM_CX)
+ 
+-#ifdef CONFIG_X86_32
++#if defined(CONFIG_X86_32) && defined(CONFIG_PAX_MEMORY_UDEREF)
+ 	pushl %ss
+ 	popl %ds
+ #endif
+@@ -105,14 +110,16 @@
+ 
+ ENTRY(__put_user_8)
+ 	ENTER
++
++#if defined(CONFIG_X86_32) && defined(CONFIG_PAX_MEMORY_UDEREF)
++	pushl $(__USER_DS)
++	popl %ds
++#else
++	GET_THREAD_INFO(%_ASM_BX)
+ 	mov TI_addr_limit(%_ASM_BX),%_ASM_BX
+ 	sub $7,%_ASM_BX
+ 	cmp %_ASM_BX,%_ASM_CX
+ 	jae bad_put_user
+-
+-#ifdef CONFIG_X86_32
+-	pushl $(__USER_DS)
+-	popl %ds
+ #endif
+ 
+ 4:	mov %_ASM_AX,(%_ASM_CX)
+@@ -120,7 +127,7 @@
+ 5:	movl %edx,4(%_ASM_CX)
+ #endif
+ 
+-#ifdef CONFIG_X86_32
++#if defined(CONFIG_X86_32) && defined(CONFIG_PAX_MEMORY_UDEREF)
+ 	pushl %ss
+ 	popl %ds
+ #endif
+@@ -132,7 +139,7 @@
+ bad_put_user:
+ 	CFI_STARTPROC
+ 
+-#ifdef CONFIG_X86_32
++#if defined(CONFIG_X86_32) && defined(CONFIG_PAX_MEMORY_UDEREF)
+ 	pushl %ss
+ 	popl %ds
+ #endif
+diff -u linux-2.6.33/arch/x86/mm/init_32.c linux-2.6.33/arch/x86/mm/init_32.c
+--- linux-2.6.33/arch/x86/mm/init_32.c	2010-03-07 12:23:35.953604355 -0500
++++ linux-2.6.33/arch/x86/mm/init_32.c	2010-03-11 20:27:03.478424672 -0500
+@@ -776,7 +776,7 @@
+ 	 * Initialize the boot-time allocator (with low memory only):
+ 	 */
+ 	bootmap_size = bootmem_bootmap_pages(max_low_pfn)<<PAGE_SHIFT;
+-	bootmap = find_e820_area(0, max_pfn_mapped<<PAGE_SHIFT, bootmap_size,
++	bootmap = find_e820_area(0x100000, max_pfn_mapped<<PAGE_SHIFT, bootmap_size,
+ 				 PAGE_SIZE);
+ 	if (bootmap == -1L)
+ 		panic("Cannot find bootmem map of size %ld\n", bootmap_size);
+diff -u linux-2.6.33/arch/x86/mm/init.c linux-2.6.33/arch/x86/mm/init.c
+--- linux-2.6.33/arch/x86/mm/init.c	2010-03-07 12:23:35.953604355 -0500
++++ linux-2.6.33/arch/x86/mm/init.c	2010-03-11 20:27:03.478424672 -0500
+@@ -69,11 +69,7 @@
+ 	 * cause a hotspot and fill up ZONE_DMA. The page tables
+ 	 * need roughly 0.5KB per GB.
+ 	 */
+-#ifdef CONFIG_X86_32
+-	start = 0x7000;
+-#else
+-	start = 0x8000;
+-#endif
++	start = 0x100000;
+ 	e820_table_start = find_e820_area(start, max_pfn_mapped<<PAGE_SHIFT,
+ 					tables, PAGE_SIZE);
+ 	if (e820_table_start == -1UL)
+diff -u linux-2.6.33/Documentation/dontdiff linux-2.6.33/Documentation/dontdiff
+--- linux-2.6.33/Documentation/dontdiff	2010-03-07 12:23:35.961598666 -0500
++++ linux-2.6.33/Documentation/dontdiff	2010-03-11 20:27:00.849752306 -0500
+@@ -119,6 +119,7 @@
+ hash
+ ihex2fw
+ ikconfig.h*
++inat-tables.c
+ initramfs_data.cpio
+ initramfs_data.cpio.bz2
+ initramfs_data.cpio.gz
