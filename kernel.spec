@@ -619,7 +619,7 @@ Summary(de.UTF-8):	Development Dateien die beim Kernel Modul kompilationen gebra
 Summary(pl.UTF-8):	Pliki służące do budowania modułów jądra
 Group:		Development/Building
 Requires:	%{name}-headers = %{epoch}:%{version}-%{release}
-Conflicts:	rpmbuild(macros) < 1.547
+Conflicts:	rpmbuild(macros) < 1.549
 AutoReqProv:	no
 
 %description module-build
