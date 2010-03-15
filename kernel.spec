@@ -299,8 +299,8 @@ Patch85:	linux-2.6-i2ci801_ich9.patch
 Patch86:	linux-2.6-sata-ich9.patch
 
 # IPSEC KLIPS
-Patch90:	http://www.openswan.org/download/openswan-2.4.9.kernel-2.6-klips.patch.gz
-Patch91:	http://www.openswan.org/download/openswan-2.4.9.kernel-2.6-natt.patch.gz
+Patch90:	http://www.openswan.org/download/openswan-2.4.15.kernel-2.6-klips.patch.gz
+Patch91:	http://www.openswan.org/download/openswan-2.4.15.kernel-2.6-natt.patch.gz
 Patch92:	linux-asm_segment_h.patch
 
 # vserver from: http://vserver.13thfloor.at/Experimental/patch-2.6.16-vs2.1.1-rc15.diff
@@ -335,6 +335,10 @@ Patch256:	kernel-TIOCGDEV.patch
 
 # HP/Compaq cciss driver
 Patch260:	linux-2.6-cciss-3.6.18.patch
+
+# Adaptec AIC-94XX driver
+# http://download.adaptec.com/sas/linux/adp94xx-1.0.8-12.src.tgz
+Patch270:	linux-2.6-adp94xx.patch
 
 Patch1000:	linux-2.6-grsec-minimal.patch
 Patch1001:	linux-2.6-grsec-wrong-deref.patch
@@ -980,6 +984,8 @@ rm -rf suspend2-%{suspend_version}-for-2.6.16.9
 %patch256 -p1
 
 %patch260 -p1
+
+%patch270 -p1
 
 # security patches
 
