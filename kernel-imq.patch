@@ -876,20 +876,16 @@ diff -U 5 -Nr linux-2.6.32/include/linux/skbuff.h linux-2.6.32-imq/include/linux
  #define CHECKSUM_NONE 0
  #define CHECKSUM_UNNECESSARY 1
  #define CHECKSUM_COMPLETE 2
-@@ -328,10 +331,13 @@
- 	 * layer. Please put your private variables there. If you
- 	 * want to keep them across layers you have to do a skb_clone()
+@@ -330,6 +330,9 @@
  	 * first. This is owned by whoever has the skb queued ATM.
  	 */
- 	char			cb[48];
+ 	char			cb[48] __aligned(8);
 +#if defined(CONFIG_IMQ) || defined(CONFIG_IMQ_MODULE)
 +	void			*cb_next;
 +#endif
  
- 	unsigned int		len,
- 				data_len;
- 	__u16			mac_len,
- 				hdr_len;
+ 	unsigned long		_skb_dst;
+ #ifdef CONFIG_XFRM
 @@ -360,10 +366,13 @@
  	void			(*destructor)(struct sk_buff *skb);
  #if defined(CONFIG_NF_CONNTRACK) || defined(CONFIG_NF_CONNTRACK_MODULE)
