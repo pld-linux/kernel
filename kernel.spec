@@ -315,8 +315,7 @@ Patch2003:	kernel-regressions.patch
 # (only warnings, so just remove parts of this patch if conflics)
 Patch2500:	kernel-warnings.patch
 
-# git://kernel.ubuntu.com/ubuntu/ubuntu-karmic.git
-# see ubuntu/apparmor dir
+# http://kernel.org/pub/linux/security/apparmor/AppArmor-2.5/apparmor-2.5-2.6.33.patch.tgz
 Patch5000:	kernel-apparmor.patch
 
 # for rescuecd
@@ -994,6 +993,8 @@ BuildConfig() {
 		CONFIG_SECURITY_APPARMOR_BOOTPARAM_VALUE=1
 		CONFIG_SECURITY_APPARMOR_DISABLE=n
 		CONFIG_SECURITY_APPARMOR_NETWORK=y
+		CONFIG_SECURITY_APPARMOR_COMPAT_24=y
+		CONFIG_DEFAULT_SECURITY_APPARMOR=n
 %endif
 
 %if %{without ipv6}
