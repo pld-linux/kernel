@@ -115,7 +115,7 @@
 
 %define		basever		2.6.33
 %define		postver		.1
-%define		rel			2
+%define		rel			3
 
 %define		_enable_debug_packages			0
 
@@ -1498,12 +1498,12 @@ fi
 %{_kernelsrcdir}/scripts/*.sh
 %dir %{_kernelsrcdir}/scripts/selinux
 %{_kernelsrcdir}/scripts/selinux/Makefile
-%dir %{_kernelsrcdir}/scripts/selinux/mdp
-%{_kernelsrcdir}/scripts/selinux/mdp/Makefile
-%{_kernelsrcdir}/scripts/selinux/mdp/*.c
 %dir %{_kernelsrcdir}/scripts/selinux/genheaders
 %{_kernelsrcdir}/scripts/selinux/genheaders/Makefile
 %{_kernelsrcdir}/scripts/selinux/genheaders/*.c
+%dir %{_kernelsrcdir}/scripts/selinux/mdp
+%{_kernelsrcdir}/scripts/selinux/mdp/Makefile
+%{_kernelsrcdir}/scripts/selinux/mdp/*.c
 %exclude %dir %{_kernelsrcdir}/security
 %exclude %dir %{_kernelsrcdir}/security/selinux
 
@@ -1575,6 +1575,9 @@ fi
 %exclude %{_kernelsrcdir}/scripts/*.sh
 %exclude %dir %{_kernelsrcdir}/scripts/selinux
 %exclude %{_kernelsrcdir}/scripts/selinux/Makefile
+%exclude %dir %{_kernelsrcdir}/scripts/selinux/genheaders
+%exclude %{_kernelsrcdir}/scripts/selinux/genheaders/Makefile
+%exclude %{_kernelsrcdir}/scripts/selinux/genheaders/*.c
 %exclude %dir %{_kernelsrcdir}/scripts/selinux/mdp
 %exclude %{_kernelsrcdir}/scripts/selinux/mdp/Makefile
 %exclude %{_kernelsrcdir}/scripts/selinux/mdp/*.c
