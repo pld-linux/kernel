@@ -1501,6 +1501,9 @@ fi
 %dir %{_kernelsrcdir}/scripts/selinux/mdp
 %{_kernelsrcdir}/scripts/selinux/mdp/Makefile
 %{_kernelsrcdir}/scripts/selinux/mdp/*.c
+%dir %{_kernelsrcdir}/scripts/selinux/genheaders
+%{_kernelsrcdir}/scripts/selinux/genheaders/Makefile
+%{_kernelsrcdir}/scripts/selinux/genheaders/*.c
 %exclude %dir %{_kernelsrcdir}/security
 %exclude %dir %{_kernelsrcdir}/security/selinux
 
