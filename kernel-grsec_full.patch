@@ -7991,7 +7991,7 @@ diff -urNp linux-2.6.33/arch/x86/include/asm/rwsem.h linux-2.6.33/arch/x86/inclu
 @@ -106,10 +106,26 @@ static inline void __down_read(struct rw
  {
  	asm volatile("# beginning down_read\n\t"
- 		     LOCK_PREFIX "  incl      (%%eax)\n\t"
+ 		     LOCK_PREFIX _ASM_INC "(%1)\n\t"
 +
 +#ifdef CONFIG_PAX_REFCOUNT
 +#ifdef CONFIG_X86_32
@@ -8020,11 +8020,11 @@ diff -urNp linux-2.6.33/arch/x86/include/asm/rwsem.h linux-2.6.33/arch/x86/inclu
 @@ -124,13 +140,29 @@ static inline int __down_read_trylock(st
  	__s32 result, tmp;
  	asm volatile("# beginning __down_read_trylock\n\t"
- 		     "  movl      %0,%1\n\t"
+ 		     "  mov          %0,%1\n\t"
 -		     "1:\n\t"
 +		     "2:\n\t"
- 		     "  movl	     %1,%2\n\t"
- 		     "  addl      %3,%2\n\t"
+ 		     "  mov          %1,%2\n\t"
+ 		     "  add          %3,%2\n\t"
 -		     "  jle	     2f\n\t"
 +
 +#ifdef CONFIG_PAX_REFCOUNT
@@ -8043,7 +8043,7 @@ diff -urNp linux-2.6.33/arch/x86/include/asm/rwsem.h linux-2.6.33/arch/x86/inclu
 +#endif
 +
 +		     "  jle	     3f\n\t"
- 		     LOCK_PREFIX "  cmpxchgl  %2,%0\n\t"
+ 		     LOCK_PREFIX "  cmpxchg  %2,%0\n\t"
 -		     "  jnz	     1b\n\t"
 -		     "2:\n\t"
 +		     "  jnz	     2b\n\t"
@@ -8054,7 +8054,7 @@ diff -urNp linux-2.6.33/arch/x86/include/asm/rwsem.h linux-2.6.33/arch/x86/inclu
 @@ -148,12 +180,28 @@ static inline void __down_write_nested(s
  	tmp = RWSEM_ACTIVE_WRITE_BIAS;
  	asm volatile("# beginning down_write\n\t"
- 		     LOCK_PREFIX "  xadd      %%edx,(%%eax)\n\t"
+ 		     LOCK_PREFIX "  xadd      %1,(%2)\n\t"
 +
 +#ifdef CONFIG_PAX_REFCOUNT
 +#ifdef CONFIG_X86_32
@@ -8072,7 +8072,7 @@ diff -urNp linux-2.6.33/arch/x86/include/asm/rwsem.h linux-2.6.33/arch/x86/inclu
 +#endif
 +
  		     /* subtract 0x0000ffff, returns the old value */
- 		     "  testl     %%edx,%%edx\n\t"
+ 		     "  test      %1,%1\n\t"
  		     /* was the count 0 before? */
 -		     "  jz        1f\n"
 +		     "  jz        2f\n"
@@ -8083,9 +8083,9 @@ diff -urNp linux-2.6.33/arch/x86/include/asm/rwsem.h linux-2.6.33/arch/x86/inclu
  		     : "+m" (sem->count), "=d" (tmp)
  		     : "a" (sem), "1" (tmp)
 @@ -186,10 +234,26 @@ static inline void __up_read(struct rw_s
- 	__s32 tmp = -RWSEM_ACTIVE_READ_BIAS;
+ 	rwsem_count_t tmp = -RWSEM_ACTIVE_READ_BIAS;
  	asm volatile("# beginning __up_read\n\t"
- 		     LOCK_PREFIX "  xadd      %%edx,(%%eax)\n\t"
+ 		     LOCK_PREFIX "  xadd      %1,(%2)\n\t"
 +
 +#ifdef CONFIG_PAX_REFCOUNT
 +#ifdef CONFIG_X86_32
@@ -8111,10 +8111,9 @@ diff -urNp linux-2.6.33/arch/x86/include/asm/rwsem.h linux-2.6.33/arch/x86/inclu
  		     "# ending __up_read\n"
  		     : "+m" (sem->count), "=d" (tmp)
  		     : "a" (sem), "1" (tmp)
-@@ -204,11 +268,27 @@ static inline void __up_write(struct rw_
+@@ -204,10 +268,26 @@ static inline void __up_write(struct rw_
  	asm volatile("# beginning __up_write\n\t"
- 		     "  movl      %2,%%edx\n\t"
- 		     LOCK_PREFIX "  xaddl     %%edx,(%%eax)\n\t"
+ 		     LOCK_PREFIX "  xadd      %1,(%2)\n\t"
 +
 +#ifdef CONFIG_PAX_REFCOUNT
 +#ifdef CONFIG_X86_32
@@ -8139,29 +8138,31 @@ diff -urNp linux-2.6.33/arch/x86/include/asm/rwsem.h linux-2.6.33/arch/x86/inclu
 -		     "1:\n\t"
 +		     "2:\n\t"
  		     "# ending __up_write\n"
- 		     : "+m" (sem->count)
- 		     : "a" (sem), "i" (-RWSEM_ACTIVE_WRITE_BIAS)
-@@ -222,10 +302,26 @@ static inline void __downgrade_write(str
+ 		     : "+m" (sem->count), "=d" (tmp)
+ 		     : "a" (sem), "1" (-RWSEM_ACTIVE_WRITE_BIAS)
+@@ -222,13 +302,28 @@ static inline void __downgrade_write(str
  {
  	asm volatile("# beginning __downgrade_write\n\t"
- 		     LOCK_PREFIX "  addl      %2,(%%eax)\n\t"
+ 		     LOCK_PREFIX _ASM_ADD "%2,(%1)\n\t"
 +
 +#ifdef CONFIG_PAX_REFCOUNT
 +#ifdef CONFIG_X86_32
-+		     "into\n0:\n"
++		    "into\n0:\n"
 +#else
-+		     "jno 0f\n"
-+		     "int $4\n0:\n"
++		    "jno 0f\n"
++		    "int $4\n0:\n"
 +#endif
-+		     ".pushsection .fixup,\"ax\"\n"
-+		     "1:\n"
-+		     LOCK_PREFIX "subl %2,(%%eax)\n"
-+		     "jmp 0b\n"
-+		     ".popsection\n"
-+		     _ASM_EXTABLE(0b, 1b)
-+#endif
-+
- 		     /* transitions 0xZZZZ0001 -> 0xYYYY0001 */
++		    ".pushsection .fixup,\"ax\"\n"
++		    "1:\n"
++		    LOCK_PREFIX "subl %2,(%%eax)\n"
++		    "jmp 0b\n"
++		    ".popsection\n"
++		    _ASM_EXTABLE(0b, 1b)
++#endif 
+ 		     /*
+ 		      * transitions 0xZZZZ0001 -> 0xYYYY0001 (i386)
+ 		      *     0xZZZZZZZZ00000001 -> 0xYYYYYYYY00000001 (x86_64)
+ 		      */
 -		     "  jns       1f\n\t"
 +		     "  jns       2f\n\t"
  		     "  call call_rwsem_downgrade_wake\n"
@@ -8169,33 +8170,8 @@ diff -urNp linux-2.6.33/arch/x86/include/asm/rwsem.h linux-2.6.33/arch/x86/inclu
 +		     "2:\n\t"
  		     "# ending __downgrade_write\n"
  		     : "+m" (sem->count)
- 		     : "a" (sem), "i" (-RWSEM_WAITING_BIAS)
-@@ -237,7 +333,23 @@ static inline void __downgrade_write(str
-  */
- static inline void rwsem_atomic_add(int delta, struct rw_semaphore *sem)
- {
--	asm volatile(LOCK_PREFIX "addl %1,%0"
-+	asm volatile(LOCK_PREFIX "addl %1,%0\n"
-+
-+#ifdef CONFIG_PAX_REFCOUNT
-+#ifdef CONFIG_X86_32
-+		     "into\n0:\n"
-+#else
-+		     "jno 0f\n"
-+		     "int $4\n0:\n"
-+#endif
-+		     ".pushsection .fixup,\"ax\"\n"
-+		     "1:\n"
-+		     LOCK_PREFIX "subl %1,%0\n"
-+		     "jmp 0b\n"
-+		     ".popsection\n"
-+		     _ASM_EXTABLE(0b, 1b)
-+#endif
-+
- 		     : "+m" (sem->count)
- 		     : "ir" (delta));
- }
-@@ -249,7 +361,23 @@ static inline int rwsem_atomic_update(in
+ 		     : "a" (sem), "er" (-RWSEM_WAITING_BIAS)
+@@ -249,7 +344,23 @@ static inline int rwsem_atomic_update(in
  {
  	int tmp = delta;
  
@@ -18743,12 +18719,12 @@ diff -urNp linux-2.6.33/drivers/ata/ata_generic.c linux-2.6.33/drivers/ata/ata_g
 diff -urNp linux-2.6.33/drivers/ata/ata_piix.c linux-2.6.33/drivers/ata/ata_piix.c
 --- linux-2.6.33/drivers/ata/ata_piix.c	2010-02-24 13:52:17.000000000 -0500
 +++ linux-2.6.33/drivers/ata/ata_piix.c	2010-03-07 12:23:35.969642115 -0500
-@@ -291,7 +291,7 @@ static const struct pci_device_id piix_p
- 	{ 0x8086, 0x3b2d, PCI_ANY_ID, PCI_ANY_ID, 0, 0, ich8_2port_sata },
- 	/* SATA Controller IDE (PCH) */
- 	{ 0x8086, 0x3b2e, PCI_ANY_ID, PCI_ANY_ID, 0, 0, ich8_sata },
+@@ -299,7 +299,7 @@ static const struct pci_device_id piix_p
+ 	{ 0x8086, 0x1c08, PCI_ANY_ID, PCI_ANY_ID, 0, 0, ich8_2port_sata },
+ 	/* SATA Controller IDE (CPT) */
+ 	{ 0x8086, 0x1c09, PCI_ANY_ID, PCI_ANY_ID, 0, 0, ich8_2port_sata },
 -	{ }	/* terminate list */
-+	{ 0, 0, 0, 0, 0, 0, 0 }	/* terminate list */
++	{ 0, 0, 0, 0, 0, 0, 0 } /* terminate list */
  };
  
  static struct pci_driver piix_pci_driver = {
@@ -23141,9 +23117,9 @@ diff -urNp linux-2.6.33/drivers/i2c/busses/i2c-i801.c linux-2.6.33/drivers/i2c/b
 --- linux-2.6.33/drivers/i2c/busses/i2c-i801.c	2010-02-24 13:52:17.000000000 -0500
 +++ linux-2.6.33/drivers/i2c/busses/i2c-i801.c	2010-03-07 12:23:36.013715915 -0500
 @@ -578,7 +578,7 @@ static struct pci_device_id i801_ids[] =
- 	{ PCI_DEVICE(PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_ICH10_4) },
  	{ PCI_DEVICE(PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_ICH10_5) },
  	{ PCI_DEVICE(PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_PCH_SMBUS) },
+ 	{ PCI_DEVICE(PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_CPT_SMBUS) },
 -	{ 0, }
 +	{ 0, 0, 0, 0, 0, 0, 0 }
  };
@@ -41716,9 +41692,9 @@ diff -urNp linux-2.6.33/include/drm/drm_pciids.h linux-2.6.33/include/drm/drm_pc
 --- linux-2.6.33/include/drm/drm_pciids.h	2010-02-24 13:52:17.000000000 -0500
 +++ linux-2.6.33/include/drm/drm_pciids.h	2010-03-07 12:23:36.113714966 -0500
 @@ -375,7 +375,7 @@
- 	{0x1002, 0x9712, PCI_ANY_ID, PCI_ANY_ID, 0, 0, CHIP_RS880|RADEON_IS_MOBILITY|RADEON_NEW_MEMMAP|RADEON_IS_IGP}, \
  	{0x1002, 0x9713, PCI_ANY_ID, PCI_ANY_ID, 0, 0, CHIP_RS880|RADEON_IS_MOBILITY|RADEON_NEW_MEMMAP|RADEON_IS_IGP}, \
  	{0x1002, 0x9714, PCI_ANY_ID, PCI_ANY_ID, 0, 0, CHIP_RS880|RADEON_NEW_MEMMAP|RADEON_IS_IGP}, \
+ 	{0x1002, 0x9715, PCI_ANY_ID, PCI_ANY_ID, 0, 0, CHIP_RS880|RADEON_NEW_MEMMAP|RADEON_IS_IGP}, \
 -	{0, 0, 0}
 +	{0, 0, 0, 0, 0, 0}
  
@@ -46204,13 +46180,13 @@ diff -urNp linux-2.6.33/kernel/lockdep.c linux-2.6.33/kernel/lockdep.c
  	/*
  	 * static variable?
  	 */
-@@ -601,8 +605,7 @@ static int static_obj(void *obj)
+@@ -605,8 +605,7 @@ static int static_obj(void *obj)
  	 */
  	for_each_possible_cpu(i) {
- 		start = (unsigned long) &__per_cpu_start + per_cpu_offset(i);
--		end   = (unsigned long) &__per_cpu_start + PERCPU_ENOUGH_ROOM
--					+ per_cpu_offset(i);
-+		end   = start + PERCPU_ENOUGH_ROOM;
+ 		start = (unsigned long) per_cpu_ptr(&__per_cpu_start, i);
+-		end   = (unsigned long) per_cpu_ptr(&__per_cpu_start, i)
+-					+ PERCPU_ENOUGH_ROOM;
++		end = start + PERCPU_ENOUGH_ROOM;
  
  		if ((addr >= start) && (addr < end))
  			return 1;
@@ -47151,7 +47127,7 @@ diff -urNp linux-2.6.33/kernel/signal.c linux-2.6.33/kernel/signal.c
  	if (override_rlimit ||
  	    atomic_read(&user->sigpending) <=
  			t->signal->rlim[RLIMIT_SIGPENDING].rlim_cur) {
-@@ -687,6 +687,9 @@ static int check_kill_permission(int sig
+@@ -687,6 +690,9 @@ static int check_kill_permission(int sig
  		return error;
  	}
  /* skip: */
@@ -47161,7 +47137,7 @@ diff -urNp linux-2.6.33/kernel/signal.c linux-2.6.33/kernel/signal.c
  	return security_task_kill(t, info, sig, 0);
  }
  
-@@ -1006,7 +1013,7 @@ __group_send_sig_info(int sig, struct si
+@@ -1006,7 +1012,7 @@ __group_send_sig_info(int sig, struct si
  	return send_signal(sig, info, p, 1);
  }
  
@@ -47170,7 +47146,7 @@ diff -urNp linux-2.6.33/kernel/signal.c linux-2.6.33/kernel/signal.c
  specific_send_sig_info(int sig, struct siginfo *info, struct task_struct *t)
  {
  	return send_signal(sig, info, t, 0);
-@@ -1060,6 +1067,9 @@ force_sig_info(int sig, struct siginfo *
+@@ -1060,6 +1066,9 @@ force_sig_info(int sig, struct siginfo *
  	ret = specific_send_sig_info(sig, info, t);
  	spin_unlock_irqrestore(&t->sighand->siglock, flags);
  
@@ -47180,7 +47156,7 @@ diff -urNp linux-2.6.33/kernel/signal.c linux-2.6.33/kernel/signal.c
  	return ret;
  }
  
-@@ -1113,8 +1123,11 @@ int group_send_sig_info(int sig, struct 
+@@ -1113,8 +1122,11 @@ int group_send_sig_info(int sig, struct 
  {
  	int ret = check_kill_permission(sig, info, p);
  
