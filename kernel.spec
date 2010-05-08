@@ -4,6 +4,9 @@
 # - apparmor (needs testing)
 # - add a subpackage (kernel-firmware?) for ~35 firmware files
 #
+# LATEST VERSION CHECKER:
+# curl -s http://www.kernel.org/kdist/finger_banner | grep 2.6.27
+#
 # FUTURE:
 # - update xen patch
 # - pom-ng quake3-conntrack-nat -> nf_conntrack ?
@@ -1371,17 +1374,24 @@ ln -sf System.map-%{kernel_release} /boot/System.map
 
 %depmod %{kernel_release}
 
+%posttrans
+# generate initrd after all dependant modules are installed
 /sbin/geninitrd -f --initrdfs=rom %{initrd_dir}/initrd-%{kernel_release}.gz %{kernel_release}
 mv -f %{initrd_dir}/initrd{,.old} 2> /dev/null
 %{?alt_kernel:mv -f %{initrd_dir}/initrd%{_alt_kernel}{,.old} 2> /dev/null}
 ln -sf initrd-%{kernel_release}.gz %{initrd_dir}/initrd
 %{?alt_kernel:ln -sf initrd-%{kernel_release}.gz %{initrd_dir}/initrd%{_alt_kernel}}
 
+# update boot loaders when old package files are gone from filesystem
+if [ -x /sbin/update-grub -a -f /etc/sysconfig/grub ]; then
+	if [ "$(. /etc/sysconfig/grub; echo ${UPDATE_GRUB:-no})" = "yes" ]; then
+		/sbin/update-grub >/dev/null
+	fi
+fi
 if [ -x /sbin/new-kernel-pkg ]; then
-	title="PLD Linux (%{pld_release})%{?alt_kernel: / %{alt_kernel}}"
-
-	/sbin/new-kernel-pkg --initrdfile=%{initrd_dir}/initrd-%{kernel_release}.gz --install %{kernel_release} --banner "$title"
-elif [ -x /sbin/rc-boot ]; then
+	/sbin/new-kernel-pkg --initrdfile=%{initrd_dir}/initrd-%{kernel_release}.gz --install %{kernel_release} --banner "PLD Linux (%{pld_release})%{?alt_kernel: / %{alt_kernel}}"
+fi
+if [ -x /sbin/rc-boot ]; then
 	/sbin/rc-boot 1>&2 || :
 fi
 
