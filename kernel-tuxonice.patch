@@ -3172,9 +3172,9 @@ index a4855af..3d57581 100644
  
 +	vfs_check_frozen(dir->i_sb, SB_FREEZE_WRITE);
 +
- 	vfs_dq_init(dir);
- 
  	mutex_lock(&dentry->d_inode->i_mutex);
+ 	if (d_mountpoint(dentry))
+ 		error = -EBUSY;
 diff --git a/fs/super.c b/fs/super.c
 index aff046b..affb662 100644
 --- a/fs/super.c
@@ -4255,16 +4255,6 @@ index 5ade1bd..e24a702 100644
  
  /* 
   * Timeout for stopping processes
-@@ -93,7 +100,8 @@ static int try_to_freeze_tasks(bool sig_only)
- 		do_each_thread(g, p) {
- 			task_lock(p);
- 			if (freezing(p) && !freezer_should_skip(p))
--				printk(KERN_ERR " %s\n", p->comm);
-+				printk(KERN_ERR " %s (%d) failed to freeze.\n",
-+						p->comm, p->pid);
- 			cancel_freezing(p);
- 			task_unlock(p);
- 		} while_each_thread(g, p);
 @@ -113,17 +121,26 @@ int freeze_processes(void)
  {
  	int error;
@@ -4754,7 +4744,7 @@ index 36cb168..7f6da8f 100644
 +	if (toi_running)
 +		return toi_post_context_save();
 +
- 	printk(KERN_INFO "PM: Creating hibernation image: \n");
+ 	printk(KERN_INFO "PM: Creating hibernation image:\n");
  
  	drain_local_pages(NULL);
 @@ -1540,14 +1664,14 @@ asmlinkage int swsusp_save(void)
