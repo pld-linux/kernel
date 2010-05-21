@@ -271,6 +271,9 @@ Patch85:	kernel-hostap.patch
 # Taken from http://download.opensuse.org/factory/repo/src-oss/suse/src/kernel-source-2.6.30-10.3.src.rpm
 Patch90:	kernel-mpt-fusion.patch
 
+# http://blog.xff.lt/2009/12/28/canyon-cnp-wf518n2-usb-wireless-linux/
+Patch94:	http://xff.lt/stuff/canyon-wifi/rtl8192su.xff.patch
+
 # based on http://vserver.13thfloor.at/Experimental/patch-2.6.33.2-vs2.3.0.36.30.4.diff
 Patch100:	kernel-vserver-2.3.patch
 Patch101:	kernel-vserver-fixes.patch
@@ -787,9 +790,13 @@ sed -i 's/-Werror//' arch/alpha/kernel/Makefile
 # hostap enhancements from/for aircrack-ng
 %patch85 -p1
 
+
 # LSI MPT Fusion driver update (by LSI via SUSE folks)
 # FIXME!
 #%patch90 -p1
+
+# Realtek USB WiFi
+%patch94 -p0
 
 # vserver
 %if %{with vserver}
