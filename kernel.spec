@@ -745,7 +745,8 @@ sed -i 's/-Werror//' arch/alpha/kernel/Makefile
 %patch40 -p1
 
 # ipvs-nfct
-%patch41 -p1
+# FIXME: zone support missing
+#%patch41 -p1
 
 ##
 # end of netfilter
@@ -1520,7 +1521,6 @@ fi
 %defattr(644,root,root,755)
 %{_kernelsrcdir}/arch/*/[!Mik]*
 %{_kernelsrcdir}/arch/*/kernel/[!M]*
-%{_kernelsrcdir}/arch/ia64/ia32/[!M]*
 %{_kernelsrcdir}/arch/ia64/install.sh
 %{_kernelsrcdir}/arch/m68k/ifpsp060/[!M]*
 %{_kernelsrcdir}/arch/m68k/ifpsp060/MISC
