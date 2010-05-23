@@ -291,10 +291,6 @@ Patch148:	kernel-aufs2.patch
 
 Patch150:	kernel-ppc-crtsavres.patch
 
-# was submitted at lkml
-Patch160:	kernel-squashfs-lzma.patch
-Patch161:	kernel-squashfs-lzma-fixes.patch
-
 Patch200:	kernel-ppc-ICE-hacks.patch
 
 # The following patch extend the routing functionality in Linux
@@ -302,7 +298,7 @@ Patch200:	kernel-ppc-ICE-hacks.patch
 # alternative routes, the reverse path protection (rp_filter),
 # the NAT processing to use correctly the routing when multiple
 # gateways are used.
-# http://www.ssi.bg/~ja/routes-2.6.33-16.diff
+# http://www.ssi.bg/~ja/routes-2.6.34-16.diff
 Patch300:	kernel-routes.patch
 
 Patch1000:	kernel-grsec-minimal.patch
@@ -847,9 +843,6 @@ sed -i 's/-Werror//' arch/alpha/kernel/Makefile
 
 # FIXME
 #%patch150 -p1
-
-%patch160 -p1
-%patch161 -p1
 
 %ifarch ppc ppc64
 #patch200 -p1
