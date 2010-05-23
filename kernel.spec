@@ -239,7 +239,7 @@ Patch49:	kernel-zph.patch
 # based on http://www.linuximq.net/patchs/linux-2.6.32-imq-test2.diff
 Patch50:	kernel-imq.patch
 
-# http://www.kernel.org/pub/linux/kernel/people/edward/reiser4/reiser4-for-2.6/reiser4-for-2.6.28.patch.bz2
+# http://www.kernel.org/pub/linux/kernel/people/edward/reiser4/reiser4-for-2.6/reiser4-for-2.6.33.patch.bz2
 Patch51:	kernel-reiser4.patch
 
 # http://www.zz9.dk/patches/wrr-linux-071203-2.6.25.patch.gz
