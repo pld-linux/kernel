@@ -228,7 +228,7 @@ Patch39:	kernel-ipt_ACCOUNT.patch
 # http://switch.dl.sourceforge.net/sourceforge/l7-filter/netfilter-layer7-v2.20.tar.gz
 Patch40:	kernel-layer7.patch
 
-# http://www.ssi.bg/~ja/nfct/ipvs-nfct-2.6.28-1.diff
+# http://www.ssi.bg/~ja/nfct/ipvs-nfct-2.6.34-1.diff
 Patch41:	kernel-ipvs-nfct.patch
 
 ### End netfilter
@@ -745,8 +745,7 @@ sed -i 's/-Werror//' arch/alpha/kernel/Makefile
 %patch40 -p1
 
 # ipvs-nfct
-# FIXME: zone support missing
-#%patch41 -p1
+%patch41 -p1
 
 ##
 # end of netfilter

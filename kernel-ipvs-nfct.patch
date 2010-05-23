@@ -1,7 +1,7 @@
-diff -urNp v2.6.28/linux/include/net/ip_vs.h linux/include/net/ip_vs.h
---- v2.6.28/linux/include/net/ip_vs.h	2008-12-25 10:12:24.000000000 +0200
-+++ linux/include/net/ip_vs.h	2008-12-26 12:32:55.000000000 +0200
-@@ -25,6 +25,14 @@
+diff -urNp v2.6.34/linux/include/net/ip_vs.h linux/include/net/ip_vs.h
+--- v2.6.34/linux/include/net/ip_vs.h	2010-05-17 10:49:00.000000000 +0300
++++ linux/include/net/ip_vs.h	2010-05-19 11:27:25.000000000 +0300
+@@ -25,6 +25,15 @@
  #include <linux/ip.h>
  #include <linux/ipv6.h>			/* for struct ipv6hdr */
  #include <net/ipv6.h>			/* for ipv6_addr_copy */
@@ -12,11 +12,12 @@ diff -urNp v2.6.28/linux/include/net/ip_vs.h linux/include/net/ip_vs.h
 +#include <net/netfilter/nf_conntrack_core.h>
 +#include <net/netfilter/nf_conntrack_expect.h>
 +#include <net/netfilter/nf_conntrack_helper.h>
++#include <net/netfilter/nf_conntrack_zones.h>
 +#endif
  
- struct ip_vs_iphdr {
- 	int len;
-@@ -595,6 +603,16 @@ extern void ip_vs_init_hash_table(struct
+ 
+ /* Connections' size value needed by ip_vs_ctl.c */
+@@ -613,6 +622,16 @@ extern void ip_vs_init_hash_table(struct
  #define IP_VS_APP_TYPE_FTP	1
  
  /*
@@ -33,7 +34,7 @@ diff -urNp v2.6.28/linux/include/net/ip_vs.h linux/include/net/ip_vs.h
   *     ip_vs_conn handling functions
   *     (from ip_vs_conn.c)
   */
-@@ -780,9 +798,42 @@ extern int sysctl_ip_vs_expire_nodest_co
+@@ -788,9 +807,42 @@ extern int sysctl_ip_vs_expire_nodest_co
  extern int sysctl_ip_vs_expire_quiescent_template;
  extern int sysctl_ip_vs_sync_threshold[2];
  extern int sysctl_ip_vs_nat_icmp_send;
@@ -76,10 +77,10 @@ diff -urNp v2.6.28/linux/include/net/ip_vs.h linux/include/net/ip_vs.h
  extern struct ip_vs_service *
  ip_vs_service_get(int af, __u32 fwmark, __u16 protocol,
  		  const union nf_inet_addr *vaddr, __be16 vport);
-diff -urNp v2.6.28/linux/net/netfilter/ipvs/Kconfig linux/net/netfilter/ipvs/Kconfig
---- v2.6.28/linux/net/netfilter/ipvs/Kconfig	2008-12-25 10:12:26.000000000 +0200
-+++ linux/net/netfilter/ipvs/Kconfig	2008-12-26 12:35:37.000000000 +0200
-@@ -238,4 +238,12 @@ config	IP_VS_FTP
+diff -urNp v2.6.34/linux/net/netfilter/ipvs/Kconfig linux/net/netfilter/ipvs/Kconfig
+--- v2.6.34/linux/net/netfilter/ipvs/Kconfig	2010-05-17 10:49:01.000000000 +0300
++++ linux/net/netfilter/ipvs/Kconfig	2010-05-19 10:51:31.000000000 +0300
+@@ -250,4 +250,12 @@ config	IP_VS_FTP
  	  If you want to compile it in kernel, say Y. To compile it as a
  	  module, choose M here. If unsure, say N.
  
@@ -92,12 +93,12 @@ diff -urNp v2.6.28/linux/net/netfilter/ipvs/Kconfig linux/net/netfilter/ipvs/Kco
 +	  for filtering purposes.
 +
  endif # IP_VS
-diff -urNp v2.6.28/linux/net/netfilter/ipvs/Makefile linux/net/netfilter/ipvs/Makefile
---- v2.6.28/linux/net/netfilter/ipvs/Makefile	2008-12-25 10:12:26.000000000 +0200
-+++ linux/net/netfilter/ipvs/Makefile	2008-12-26 12:36:38.000000000 +0200
-@@ -8,10 +8,13 @@ ip_vs_proto-objs-$(CONFIG_IP_VS_PROTO_TC
- ip_vs_proto-objs-$(CONFIG_IP_VS_PROTO_UDP) += ip_vs_proto_udp.o
+diff -urNp v2.6.34/linux/net/netfilter/ipvs/Makefile linux/net/netfilter/ipvs/Makefile
+--- v2.6.34/linux/net/netfilter/ipvs/Makefile	2010-05-17 10:49:01.000000000 +0300
++++ linux/net/netfilter/ipvs/Makefile	2010-05-19 10:51:31.000000000 +0300
+@@ -9,10 +9,13 @@ ip_vs_proto-objs-$(CONFIG_IP_VS_PROTO_UD
  ip_vs_proto-objs-$(CONFIG_IP_VS_PROTO_AH_ESP) += ip_vs_proto_ah_esp.o
+ ip_vs_proto-objs-$(CONFIG_IP_VS_PROTO_SCTP) += ip_vs_proto_sctp.o
  
 +ip_vs-extra_objs-y :=
 +ip_vs-extra_objs-$(CONFIG_IP_VS_NFCT) += ip_vs_nfct.o
@@ -110,10 +111,10 @@ diff -urNp v2.6.28/linux/net/netfilter/ipvs/Makefile linux/net/netfilter/ipvs/Ma
  
  
  # IPVS core
-diff -urNp v2.6.28/linux/net/netfilter/ipvs/ip_vs_conn.c linux/net/netfilter/ipvs/ip_vs_conn.c
---- v2.6.28/linux/net/netfilter/ipvs/ip_vs_conn.c	2008-12-25 10:12:26.000000000 +0200
-+++ linux/net/netfilter/ipvs/ip_vs_conn.c	2008-12-26 12:38:15.000000000 +0200
-@@ -642,6 +642,11 @@ static void ip_vs_conn_expire(unsigned l
+diff -urNp v2.6.34/linux/net/netfilter/ipvs/ip_vs_conn.c linux/net/netfilter/ipvs/ip_vs_conn.c
+--- v2.6.34/linux/net/netfilter/ipvs/ip_vs_conn.c	2010-05-17 10:49:01.000000000 +0300
++++ linux/net/netfilter/ipvs/ip_vs_conn.c	2010-05-19 10:51:31.000000000 +0300
+@@ -664,6 +664,11 @@ static void ip_vs_conn_expire(unsigned l
  		if (cp->control)
  			ip_vs_control_del(cp);
  
@@ -125,10 +126,10 @@ diff -urNp v2.6.28/linux/net/netfilter/ipvs/ip_vs_conn.c linux/net/netfilter/ipv
  		if (unlikely(cp->app != NULL))
  			ip_vs_unbind_app(cp);
  		ip_vs_unbind_dest(cp);
-diff -urNp v2.6.28/linux/net/netfilter/ipvs/ip_vs_core.c linux/net/netfilter/ipvs/ip_vs_core.c
---- v2.6.28/linux/net/netfilter/ipvs/ip_vs_core.c	2008-12-25 10:12:26.000000000 +0200
-+++ linux/net/netfilter/ipvs/ip_vs_core.c	2008-12-26 18:21:56.000000000 +0200
-@@ -869,13 +869,16 @@ static inline int is_tcp_reset(const str
+diff -urNp v2.6.34/linux/net/netfilter/ipvs/ip_vs_core.c linux/net/netfilter/ipvs/ip_vs_core.c
+--- v2.6.34/linux/net/netfilter/ipvs/ip_vs_core.c	2010-05-17 10:49:01.000000000 +0300
++++ linux/net/netfilter/ipvs/ip_vs_core.c	2010-05-19 10:51:31.000000000 +0300
+@@ -893,13 +893,16 @@ static inline int is_tcp_reset(const str
   */
  static unsigned int
  handle_response(int af, struct sk_buff *skb, struct ip_vs_protocol *pp,
@@ -146,7 +147,7 @@ diff -urNp v2.6.28/linux/net/netfilter/ipvs/ip_vs_core.c linux/net/netfilter/ipv
  	/* mangle the packet */
  	if (pp->snat_handler && !pp->snat_handler(skb, pp, cp))
  		goto drop;
-@@ -890,6 +893,15 @@ handle_response(int af, struct sk_buff *
+@@ -914,6 +917,15 @@ handle_response(int af, struct sk_buff *
  		ip_send_check(ip_hdr(skb));
  	}
  
@@ -162,7 +163,7 @@ diff -urNp v2.6.28/linux/net/netfilter/ipvs/ip_vs_core.c linux/net/netfilter/ipv
  	/* For policy routing, packets originating from this
  	 * machine itself may be routed differently to packets
  	 * passing through.  We want this packet to be routed as
-@@ -902,7 +914,8 @@ handle_response(int af, struct sk_buff *
+@@ -926,7 +938,8 @@ handle_response(int af, struct sk_buff *
  			goto drop;
  	} else
  #endif
@@ -172,7 +173,7 @@ diff -urNp v2.6.28/linux/net/netfilter/ipvs/ip_vs_core.c linux/net/netfilter/ipv
  			goto drop;
  
  	IP_VS_DBG_PKT(10, pp, skb, 0, "After SNAT");
-@@ -917,8 +930,11 @@ handle_response(int af, struct sk_buff *
+@@ -941,8 +954,11 @@ handle_response(int af, struct sk_buff *
  	return NF_ACCEPT;
  
  drop:
@@ -185,7 +186,7 @@ diff -urNp v2.6.28/linux/net/netfilter/ipvs/ip_vs_core.c linux/net/netfilter/ipv
  	return NF_STOLEN;
  }
  
-@@ -958,8 +974,13 @@ ip_vs_out(unsigned int hooknum, struct s
+@@ -982,8 +998,13 @@ ip_vs_out(unsigned int hooknum, struct s
  		if (unlikely(iph.protocol == IPPROTO_ICMP)) {
  			int related, verdict = ip_vs_out_icmp(skb, &related);
  
@@ -200,7 +201,7 @@ diff -urNp v2.6.28/linux/net/netfilter/ipvs/ip_vs_core.c linux/net/netfilter/ipv
  			ip_vs_fill_iphdr(af, skb_network_header(skb), &iph);
  		}
  
-@@ -1033,7 +1054,7 @@ ip_vs_out(unsigned int hooknum, struct s
+@@ -1063,7 +1084,7 @@ ip_vs_out(unsigned int hooknum, struct s
  		return NF_ACCEPT;
  	}
  
@@ -209,7 +210,7 @@ diff -urNp v2.6.28/linux/net/netfilter/ipvs/ip_vs_core.c linux/net/netfilter/ipv
  }
  
  
-@@ -1298,7 +1319,7 @@ ip_vs_in(unsigned int hooknum, struct sk
+@@ -1340,7 +1361,7 @@ ip_vs_in(unsigned int hooknum, struct sk
  		/* For local client packets, it could be a response */
  		cp = pp->conn_out_get(af, skb, pp, &iph, iph.len, 0);
  		if (cp)
@@ -218,10 +219,10 @@ diff -urNp v2.6.28/linux/net/netfilter/ipvs/ip_vs_core.c linux/net/netfilter/ipv
  
  		if (!pp->conn_schedule(af, skb, pp, &v, &cp))
  			return v;
-diff -urNp v2.6.28/linux/net/netfilter/ipvs/ip_vs_ctl.c linux/net/netfilter/ipvs/ip_vs_ctl.c
---- v2.6.28/linux/net/netfilter/ipvs/ip_vs_ctl.c	2008-12-25 10:12:26.000000000 +0200
-+++ linux/net/netfilter/ipvs/ip_vs_ctl.c	2008-12-26 17:18:35.000000000 +0200
-@@ -84,6 +84,10 @@ int sysctl_ip_vs_expire_nodest_conn = 0;
+diff -urNp v2.6.34/linux/net/netfilter/ipvs/ip_vs_ctl.c linux/net/netfilter/ipvs/ip_vs_ctl.c
+--- v2.6.34/linux/net/netfilter/ipvs/ip_vs_ctl.c	2010-05-17 10:49:01.000000000 +0300
++++ linux/net/netfilter/ipvs/ip_vs_ctl.c	2010-05-19 10:51:31.000000000 +0300
+@@ -88,6 +88,10 @@ int sysctl_ip_vs_expire_nodest_conn = 0;
  int sysctl_ip_vs_expire_quiescent_template = 0;
  int sysctl_ip_vs_sync_threshold[2] = { 3, 50 };
  int sysctl_ip_vs_nat_icmp_send = 0;
@@ -232,9 +233,9 @@ diff -urNp v2.6.28/linux/net/netfilter/ipvs/ip_vs_ctl.c linux/net/netfilter/ipvs
  
  
  #ifdef CONFIG_IP_VS_DEBUG
-@@ -1575,6 +1579,15 @@ static struct ctl_table vs_vars[] = {
+@@ -1579,6 +1583,15 @@ static struct ctl_table vs_vars[] = {
  		.mode		= 0644,
- 		.proc_handler	= &proc_dointvec,
+ 		.proc_handler	= proc_do_defense_mode,
  	},
 +#ifdef CONFIG_IP_VS_NFCT
 +	{
@@ -246,11 +247,11 @@ diff -urNp v2.6.28/linux/net/netfilter/ipvs/ip_vs_ctl.c linux/net/netfilter/ipvs
 +	},
 +#endif
  	{
- 		.procname	= "drop_entry",
- 		.data		= &sysctl_ip_vs_drop_entry,
-@@ -1596,6 +1609,13 @@ static struct ctl_table vs_vars[] = {
+ 		.procname	= "secure_tcp",
+ 		.data		= &sysctl_ip_vs_secure_tcp,
+@@ -1586,6 +1599,13 @@ static struct ctl_table vs_vars[] = {
  		.mode		= 0644,
- 		.proc_handler	= &proc_do_defense_mode,
+ 		.proc_handler	= proc_do_defense_mode,
  	},
 +	{
 +		.procname	= "snat_reroute",
@@ -262,10 +263,10 @@ diff -urNp v2.6.28/linux/net/netfilter/ipvs/ip_vs_ctl.c linux/net/netfilter/ipvs
  #if 0
  	{
  		.procname	= "timeout_established",
-diff -urNp v2.6.28/linux/net/netfilter/ipvs/ip_vs_ftp.c linux/net/netfilter/ipvs/ip_vs_ftp.c
---- v2.6.28/linux/net/netfilter/ipvs/ip_vs_ftp.c	2008-12-25 10:12:26.000000000 +0200
-+++ linux/net/netfilter/ipvs/ip_vs_ftp.c	2008-12-26 17:21:25.000000000 +0200
-@@ -202,6 +202,11 @@ static int ip_vs_ftp_out(struct ip_vs_ap
+diff -urNp v2.6.34/linux/net/netfilter/ipvs/ip_vs_ftp.c linux/net/netfilter/ipvs/ip_vs_ftp.c
+--- v2.6.34/linux/net/netfilter/ipvs/ip_vs_ftp.c	2010-05-17 10:49:01.000000000 +0300
++++ linux/net/netfilter/ipvs/ip_vs_ftp.c	2010-05-19 10:51:31.000000000 +0300
+@@ -204,6 +204,11 @@ static int ip_vs_ftp_out(struct ip_vs_ap
  			ip_vs_control_add(n_cp, cp);
  		}
  
@@ -277,7 +278,7 @@ diff -urNp v2.6.28/linux/net/netfilter/ipvs/ip_vs_ftp.c linux/net/netfilter/ipvs
  		/*
  		 * Replace the old passive address with the new one
  		 */
-@@ -342,6 +347,11 @@ static int ip_vs_ftp_in(struct ip_vs_app
+@@ -343,6 +348,11 @@ static int ip_vs_ftp_in(struct ip_vs_app
  		ip_vs_control_add(n_cp, cp);
  	}
  
@@ -289,10 +290,10 @@ diff -urNp v2.6.28/linux/net/netfilter/ipvs/ip_vs_ftp.c linux/net/netfilter/ipvs
  	/*
  	 *	Move tunnel to listen state
  	 */
-diff -urNp v2.6.28/linux/net/netfilter/ipvs/ip_vs_nfct.c linux/net/netfilter/ipvs/ip_vs_nfct.c
---- v2.6.28/linux/net/netfilter/ipvs/ip_vs_nfct.c	1970-01-01 02:00:00.000000000 +0200
-+++ linux/net/netfilter/ipvs/ip_vs_nfct.c	2008-12-26 18:35:40.000000000 +0200
-@@ -0,0 +1,386 @@
+diff -urNp v2.6.34/linux/net/netfilter/ipvs/ip_vs_nfct.c linux/net/netfilter/ipvs/ip_vs_nfct.c
+--- v2.6.34/linux/net/netfilter/ipvs/ip_vs_nfct.c	1970-01-01 02:00:00.000000000 +0200
++++ linux/net/netfilter/ipvs/ip_vs_nfct.c	2010-05-19 11:18:37.000000000 +0300
+@@ -0,0 +1,376 @@
 +/*
 + * ip_vs_nfct.c:	Netfilter connection tracking support for IPVS
 + *
@@ -334,6 +335,9 @@ diff -urNp v2.6.28/linux/net/netfilter/ipvs/ip_vs_nfct.c linux/net/netfilter/ipv
 + * nf_conntrack_ftp for the same ports
 + *
 + */
++
++#define KMSG_COMPONENT "IPVS"
++#define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 +
 +#include <linux/module.h>
 +#include <linux/types.h>
@@ -391,7 +395,7 @@ diff -urNp v2.6.28/linux/net/netfilter/ipvs/ip_vs_nfct.c linux/net/netfilter/ipv
 +
 +	IP_VS_DBG(7, "%s: ct=%p, init=%d, tuples=" FMT_TUPLE ", " FMT_TUPLE
 +		", cp=" FMT_CONN "\n",
-+		__FUNCTION__, ct, initialized,
++		__func__, ct, initialized,
 +		ARG_TUPLE(orig_tup), ARG_TUPLE(orig_rep), ARG_CONN(cp));
 +
 +#ifdef CONFIG_NF_NAT_NEEDED
@@ -402,7 +406,7 @@ diff -urNp v2.6.28/linux/net/netfilter/ipvs/ip_vs_nfct.c linux/net/netfilter/ipv
 +	if (initialized && ct->status & IPS_NAT_MASK) {
 +#ifdef CONFIG_IP_VS_DEBUG
 +		IP_VS_DBG(7, "%s: ct=%p, status=0x%lX, init=%d\n",
-+			__FUNCTION__, ct, ct->status, initialized);
++			__func__, ct, ct->status, initialized);
 +#endif
 +		return 1;
 +	}
@@ -435,7 +439,7 @@ diff -urNp v2.6.28/linux/net/netfilter/ipvs/ip_vs_nfct.c linux/net/netfilter/ipv
 +
 +	IP_VS_DBG(7, "%s: ct=%p, init=%d, orig=" FMT_TUPLE
 +		", new_reply=" FMT_TUPLE " => alter_reply\n",
-+		__FUNCTION__, ct, initialized,
++		__func__, ct, initialized,
 +		ARG_TUPLE(orig_tup), ARG_TUPLE(&new_reply));
 +
 +	/*
@@ -449,7 +453,7 @@ diff -urNp v2.6.28/linux/net/netfilter/ipvs/ip_vs_nfct.c linux/net/netfilter/ipv
 +
 +	if (ret != NF_STOLEN) {
 +		IP_VS_DBG(7, "%s: ct=%p, init=%d, orig=" FMT_TUPLE " => confirm ret=%d\n",
-+			__FUNCTION__, ct, initialized, ARG_TUPLE(orig_tup), ret);
++			__func__, ct, initialized, ARG_TUPLE(orig_tup), ret);
 +	}
 +
 +	if (ret != NF_ACCEPT)
@@ -536,14 +540,14 @@ diff -urNp v2.6.28/linux/net/netfilter/ipvs/ip_vs_nfct.c linux/net/netfilter/ipv
 +		new_reply = ct->tuplehash[IP_CT_DIR_REPLY].tuple;
 +		IP_VS_DBG(7, "%s: ct=%p, status=0x%lX, tuples=" FMT_TUPLE ", " FMT_TUPLE
 +			", found inout cp=" FMT_CONN "\n",
-+			__FUNCTION__, ct, ct->status,
++			__func__, ct, ct->status,
 +			ARG_TUPLE(orig), ARG_TUPLE(&new_reply),
 +			ARG_CONN(cp));
 +		new_reply.dst.u3 = cp->vaddr;
 +		new_reply.dst.u.tcp.port = cp->vport;
 +		IP_VS_DBG(7, "%s: ct=%p, new tuples=" FMT_TUPLE ", " FMT_TUPLE
 +			", inout cp=" FMT_CONN "\n",
-+			__FUNCTION__, ct,
++			__func__, ct,
 +			ARG_TUPLE(orig), ARG_TUPLE(&new_reply),
 +			ARG_CONN(cp));
 +		goto alter;
@@ -558,20 +562,20 @@ diff -urNp v2.6.28/linux/net/netfilter/ipvs/ip_vs_nfct.c linux/net/netfilter/ipv
 +		new_reply = ct->tuplehash[IP_CT_DIR_REPLY].tuple;
 +		IP_VS_DBG(7, "%s: ct=%p, status=0x%lX, tuples=" FMT_TUPLE ", " FMT_TUPLE
 +			", found outin cp=" FMT_CONN "\n",
-+			__FUNCTION__, ct, ct->status,
++			__func__, ct, ct->status,
 +			ARG_TUPLE(orig), ARG_TUPLE(&new_reply),
 +			ARG_CONN(cp));
 +		new_reply.src.u3 = cp->daddr;
 +		new_reply.src.u.tcp.port = cp->dport;
 +		IP_VS_DBG(7, "%s: ct=%p, new tuples=" FMT_TUPLE ", " FMT_TUPLE
 +			", outin cp=" FMT_CONN "\n",
-+			__FUNCTION__, ct,
++			__func__, ct,
 +			ARG_TUPLE(orig), ARG_TUPLE(&new_reply),
 +			ARG_CONN(cp));
 +		goto alter;
 +	}
 +	IP_VS_DBG(7, "%s: ct=%p, status=0x%lX, tuple=" FMT_TUPLE " - unknown expect\n",
-+		__FUNCTION__, ct, ct->status, ARG_TUPLE(orig));
++		__func__, ct, ct->status, ARG_TUPLE(orig));
 +	return;
 +
 +alter:
@@ -599,37 +603,23 @@ diff -urNp v2.6.28/linux/net/netfilter/ipvs/ip_vs_nfct.c linux/net/netfilter/ipv
 +
 +	if (!ct) {
 +		IP_VS_DBG(7, "%s: ct=%p for cp=" FMT_CONN "\n",
-+			__FUNCTION__, ct, ARG_CONN(cp));
++			__func__, ct, ARG_CONN(cp));
 +		return;
 +	}
 +
 +	if (!(e = nf_ct_expect_alloc(ct)))
 +		return;
 +
-+	e->expectfn			= ip_vs_nfct_expect_callback;
-+	e->helper			= NULL;
-+	e->flags			= 0;
-+	e->class			= NF_CT_EXPECT_CLASS_DEFAULT;
-+	memset(&e->tuple, 0, sizeof(e->tuple));
-+	e->tuple.src.u.tcp.port		= port;
-+	e->tuple.src.l3num		= PF_INET;
-+	e->tuple.dst.protonum		= proto;
-+	memset(&e->mask, 0, sizeof(e->mask));
-+	e->mask.src.u3.ip		= 0xffffffff;
-+	e->mask.src.u.all		= port? 0xffff : 0;
++	nf_ct_expect_init(e, NF_CT_EXPECT_CLASS_DEFAULT, nf_ct_l3num(ct),
++			from_rs ? &cp->daddr : &cp->caddr,
++			from_rs ? &cp->caddr : &cp->vaddr,
++			proto, port ? &port : NULL,
++			from_rs ? &cp->cport : &cp->vport);
 +
-+	if (from_rs) {
-+		e->tuple.src.u3 = cp->daddr;
-+		e->tuple.dst.u3 = cp->caddr;
-+		e->tuple.dst.u.tcp.port = cp->cport;
-+	} else {
-+		e->tuple.src.u3 = cp->caddr;
-+		e->tuple.dst.u3 = cp->vaddr;
-+		e->tuple.dst.u.tcp.port = cp->vport;
-+	}
++	e->expectfn = ip_vs_nfct_expect_callback;
 +
 +	IP_VS_DBG(7, "%s: ct=%p, expect tuple=" FMT_TUPLE "\n",
-+		__FUNCTION__, ct, ARG_TUPLE(&e->tuple));
++		__func__, ct, ARG_TUPLE(&e->tuple));
 +	nf_ct_expect_related(e);
 +	nf_ct_expect_put(e);
 +}
@@ -656,35 +646,36 @@ diff -urNp v2.6.28/linux/net/netfilter/ipvs/ip_vs_nfct.c linux/net/netfilter/ipv
 +
 +	IP_VS_DBG(7, "%s: dropping conntrack with tuple=" FMT_TUPLE
 +		" for conn " FMT_CONN "\n",
-+		__FUNCTION__, ARG_TUPLE(&tuple), ARG_CONN(cp));
++		__func__, ARG_TUPLE(&tuple), ARG_CONN(cp));
 +
-+	h = nf_conntrack_find_get(&init_net, &tuple);
++	h = nf_conntrack_find_get(&init_net, NF_CT_DEFAULT_ZONE, &tuple);
 +	if (h) {
 +		ct = nf_ct_tuplehash_to_ctrack(h);
++		/* Show what happens instead of calling nf_ct_kill() */
 +		if (del_timer(&ct->timeout)) {
 +			IP_VS_DBG(7, "%s: ct=%p, deleted conntrack timer for tuple="
 +				FMT_TUPLE "\n",
-+				__FUNCTION__, ct, ARG_TUPLE(&tuple));
++				__func__, ct, ARG_TUPLE(&tuple));
 +			if (ct->timeout.function)
 +				ct->timeout.function(ct->timeout.data);
 +		} else {
 +			IP_VS_DBG(7, "%s: ct=%p, no conntrack timer for tuple="
 +				FMT_TUPLE "\n",
-+				__FUNCTION__, ct, ARG_TUPLE(&tuple));
++				__func__, ct, ARG_TUPLE(&tuple));
 +		}
 +		nf_ct_put(ct);
 +	} else {
 +		IP_VS_DBG(7, "%s: no conntrack for tuple=" FMT_TUPLE "\n",
-+			__FUNCTION__, ARG_TUPLE(&tuple));
++			__func__, ARG_TUPLE(&tuple));
 +	}
 +}
 +
-diff -urNp v2.6.28/linux/net/netfilter/ipvs/ip_vs_xmit.c linux/net/netfilter/ipvs/ip_vs_xmit.c
---- v2.6.28/linux/net/netfilter/ipvs/ip_vs_xmit.c	2008-12-25 10:12:26.000000000 +0200
-+++ linux/net/netfilter/ipvs/ip_vs_xmit.c	2008-12-26 17:31:51.000000000 +0200
-@@ -265,6 +265,9 @@ ip_vs_bypass_xmit(struct sk_buff *skb, s
- 	dst_release(skb->dst);
- 	skb->dst = &rt->u.dst;
+diff -urNp v2.6.34/linux/net/netfilter/ipvs/ip_vs_xmit.c linux/net/netfilter/ipvs/ip_vs_xmit.c
+--- v2.6.34/linux/net/netfilter/ipvs/ip_vs_xmit.c	2010-05-17 10:49:02.000000000 +0300
++++ linux/net/netfilter/ipvs/ip_vs_xmit.c	2010-05-19 10:51:31.000000000 +0300
+@@ -267,6 +267,9 @@ ip_vs_bypass_xmit(struct sk_buff *skb, s
+ 	skb_dst_drop(skb);
+ 	skb_dst_set(skb, &rt->u.dst);
  
 +	if (!ip_vs_confirm_conntrack(skb, cp, NF_INET_LOCAL_IN))
 +		goto tx_error_out;
@@ -692,7 +683,7 @@ diff -urNp v2.6.28/linux/net/netfilter/ipvs/ip_vs_xmit.c linux/net/netfilter/ipv
  	/* Another hack: avoid icmp_send in ip_fragment */
  	skb->local_df = 1;
  
-@@ -277,6 +280,7 @@ ip_vs_bypass_xmit(struct sk_buff *skb, s
+@@ -279,6 +282,7 @@ ip_vs_bypass_xmit(struct sk_buff *skb, s
  	dst_link_failure(skb);
   tx_error:
  	kfree_skb(skb);
@@ -700,9 +691,9 @@ diff -urNp v2.6.28/linux/net/netfilter/ipvs/ip_vs_xmit.c linux/net/netfilter/ipv
  	LeaveFunction(10);
  	return NF_STOLEN;
  }
-@@ -393,6 +397,9 @@ ip_vs_nat_xmit(struct sk_buff *skb, stru
- 	dst_release(skb->dst);
- 	skb->dst = &rt->u.dst;
+@@ -395,6 +399,9 @@ ip_vs_nat_xmit(struct sk_buff *skb, stru
+ 	skb_dst_drop(skb);
+ 	skb_dst_set(skb, &rt->u.dst);
  
 +	if (!ip_vs_confirm_conntrack(skb, cp, NF_INET_LOCAL_IN))
 +		goto tx_error_out;
@@ -710,7 +701,7 @@ diff -urNp v2.6.28/linux/net/netfilter/ipvs/ip_vs_xmit.c linux/net/netfilter/ipv
  	/* mangle the packet */
  	if (pp->dnat_handler && !pp->dnat_handler(skb, pp, cp))
  		goto tx_error;
-@@ -416,8 +423,9 @@ ip_vs_nat_xmit(struct sk_buff *skb, stru
+@@ -418,8 +425,9 @@ ip_vs_nat_xmit(struct sk_buff *skb, stru
    tx_error_icmp:
  	dst_link_failure(skb);
    tx_error:
@@ -721,7 +712,7 @@ diff -urNp v2.6.28/linux/net/netfilter/ipvs/ip_vs_xmit.c linux/net/netfilter/ipv
  	return NF_STOLEN;
    tx_error_put:
  	ip_rt_put(rt);
-@@ -593,14 +601,17 @@ ip_vs_tunnel_xmit(struct sk_buff *skb, s
+@@ -595,14 +603,17 @@ ip_vs_tunnel_xmit(struct sk_buff *skb, s
  	/* fix old IP header checksum */
  	ip_send_check(old_iph);
  
@@ -743,7 +734,7 @@ diff -urNp v2.6.28/linux/net/netfilter/ipvs/ip_vs_xmit.c linux/net/netfilter/ipv
  	/*
  	 *	Push down and install the IPIP header.
  	 */
-@@ -628,6 +639,7 @@ ip_vs_tunnel_xmit(struct sk_buff *skb, s
+@@ -630,6 +641,7 @@ ip_vs_tunnel_xmit(struct sk_buff *skb, s
  	dst_link_failure(skb);
    tx_error:
  	kfree_skb(skb);
@@ -751,9 +742,9 @@ diff -urNp v2.6.28/linux/net/netfilter/ipvs/ip_vs_xmit.c linux/net/netfilter/ipv
  	LeaveFunction(10);
  	return NF_STOLEN;
  }
-@@ -780,6 +792,9 @@ ip_vs_dr_xmit(struct sk_buff *skb, struc
- 	dst_release(skb->dst);
- 	skb->dst = &rt->u.dst;
+@@ -782,6 +794,9 @@ ip_vs_dr_xmit(struct sk_buff *skb, struc
+ 	skb_dst_drop(skb);
+ 	skb_dst_set(skb, &rt->u.dst);
  
 +	if (!ip_vs_confirm_conntrack(skb, cp, NF_INET_LOCAL_IN))
 +		goto tx_error_out;
@@ -761,7 +752,7 @@ diff -urNp v2.6.28/linux/net/netfilter/ipvs/ip_vs_xmit.c linux/net/netfilter/ipv
  	/* Another hack: avoid icmp_send in ip_fragment */
  	skb->local_df = 1;
  
-@@ -792,6 +807,7 @@ ip_vs_dr_xmit(struct sk_buff *skb, struc
+@@ -794,6 +809,7 @@ ip_vs_dr_xmit(struct sk_buff *skb, struc
  	dst_link_failure(skb);
    tx_error:
  	kfree_skb(skb);
@@ -769,9 +760,9 @@ diff -urNp v2.6.28/linux/net/netfilter/ipvs/ip_vs_xmit.c linux/net/netfilter/ipv
  	LeaveFunction(10);
  	return NF_STOLEN;
  }
-@@ -905,6 +921,8 @@ ip_vs_icmp_xmit(struct sk_buff *skb, str
- 	dst_release(skb->dst);
- 	skb->dst = &rt->u.dst;
+@@ -907,6 +923,8 @@ ip_vs_icmp_xmit(struct sk_buff *skb, str
+ 	skb_dst_drop(skb);
+ 	skb_dst_set(skb, &rt->u.dst);
  
 +	/* TODO: properly alter reply for NFCT */
 +
