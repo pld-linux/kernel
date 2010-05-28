@@ -114,7 +114,7 @@
 %endif
 
 %define		basever		2.6.33
-%define		postver		.4
+%define		postver		.5
 %define		rel		1
 
 %define		_enable_debug_packages			0
@@ -158,7 +158,7 @@ Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{basever}.tar.bz2
 # Source0-md5:	c3883760b18d50e8d78819c54d579b00
 %if "%{postver}" != "%{nil}"
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
-# Source1-md5:	27ea162c4a508d368fad9c6e4530ee43
+# Source1-md5:	9711dce3141d9fd38e15bceadc20f9f4
 %endif
 
 Source3:	kernel-autoconf.h
@@ -274,7 +274,7 @@ Patch90:	kernel-mpt-fusion.patch
 # http://blog.xff.lt/2009/12/28/canyon-cnp-wf518n2-usb-wireless-linux/
 Patch94:	http://xff.lt/stuff/canyon-wifi/rtl8192su.xff.patch
 
-# based on http://vserver.13thfloor.at/Experimental/patch-2.6.33.2-vs2.3.0.36.30.4.diff
+# based on http://vserver.13thfloor.at/Experimental/patch-2.6.33.4-vs2.3.0.36.30.4.diff
 Patch100:	kernel-vserver-2.3.patch
 Patch101:	kernel-vserver-fixes.patch
 
