@@ -287,6 +287,7 @@ Patch140:	kernel-unionfs.patch
 Patch145:	kernel-aufs.patch
 Patch146:	kernel-aufs-support.patch
 
+# http://git.c3sl.ufpr.br/pub/scm/aufs/aufs2-standalone.git, read README
 Patch148:	kernel-aufs2.patch
 
 Patch150:	kernel-ppc-crtsavres.patch
