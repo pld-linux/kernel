@@ -119,7 +119,7 @@
 
 %define		_enable_debug_packages			0
 
-%define		tuxonice_version	3.1
+%define		tuxonice_version	3.1.1.1
 %define		netfilter_snap		20070806
 
 %if %{with myown}
@@ -263,7 +263,7 @@ Patch57:	kernel-squashfs-lzma.patch
 Patch59:	kernel-rndis_host-wm5.patch
 
 # Project suspend2 renamed to tuxonice
-# http://www.tuxonice.net/downloads/all/tuxonice-3.1-for-2.6.33.patch.bz2
+# http://www.tuxonice.net/downloads/all/tuxonice-3.1.1.1-for-2.6.34.patch.bz2
 Patch69:	kernel-tuxonice.patch
 Patch70:	kernel-tuxonice-headers.patch
 
