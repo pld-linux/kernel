@@ -172,3 +172,24 @@ diff -upr a/security/commoncap.c c/security/commoncap.c
  	spin_unlock(&dev->count_lock);
  	return can_switch;
  }
+--- linux-2.6.34/net/socket.c~	2010-07-06 13:40:05.892545375 +0200
++++ linux-2.6.34/net/socket.c	2010-07-06 14:53:01.074608654 +0200
+@@ -1573,18 +1573,6 @@
+ 	newsock->type = sock->type;
+ 	newsock->ops = sock->ops;
+ 
+-	if (gr_handle_sock_server_other(sock->sk)) {
+-		err = -EPERM;
+-		sock_release(newsock);
+-		goto out_put;
+-	}
+-
+-	err = gr_search_accept(sock);
+-	if (err) {
+-		sock_release(newsock);
+-		goto out_put;
+-	}
+-
+ 	/*
+ 	 * We don't need try_module_get here, as the listening socket (sock)
+ 	 * has the protocol module (sock->ops->owner) held.
