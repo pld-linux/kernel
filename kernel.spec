@@ -236,10 +236,10 @@ Patch41:	kernel-ipvs-nfct.patch
 # http://zph.bratcheda.org/linux-2.6.26.3-zph.patch
 Patch49:	kernel-zph.patch
 
-# based on http://www.linuximq.net/patchs/linux-2.6.32-imq-test2.diff
+# based on http://www.linuximq.net/patchs/linux-2.6.34-imq-test1.diff
 Patch50:	kernel-imq.patch
 
-# http://www.kernel.org/pub/linux/kernel/people/edward/reiser4/reiser4-for-2.6/reiser4-for-2.6.34.patch.bz2
+# http://www.kernel.org/pub/linux/kernel/people/edward/reiser4/reiser4-for-2.6/reiser4-for-2.6.35.patch.bz2
 Patch51:	kernel-reiser4.patch
 
 # http://www.zz9.dk/patches/wrr-linux-071203-2.6.25.patch.gz
@@ -274,7 +274,7 @@ Patch85:	kernel-hostap.patch
 # Taken from http://download.opensuse.org/factory/repo/src-oss/suse/src/kernel-source-2.6.30-10.3.src.rpm
 Patch90:	kernel-mpt-fusion.patch
 
-# based on http://vserver.13thfloor.at/Experimental/patch-2.6.34-vs2.3.0.36.30.4.pre6.diff
+# based on http://vserver.13thfloor.at/Experimental/patch-2.6.35-vs2.3.0.36.31.diff
 Patch100:	kernel-vserver-2.3.patch
 Patch101:	kernel-vserver-fixes.patch
 
@@ -282,7 +282,8 @@ Patch101:	kernel-vserver-fixes.patch
 # Fix verified for that kernel version.
 Patch130:	kernel-forcedeth-WON.patch
 
-# http://download.filesystems.org/unionfs/unionfs-2.x/unionfs-2.5.4_for_2.6.33.diff.gz
+# http://download.filesystems.org/unionfs/unionfs-2.x/unionfs-2.5.4_for_2.6.34-rc0.diff.gz
+# based on mandriva kernel src.rpm patches
 Patch140:	kernel-unionfs.patch
 
 # aufs1, http://aufs.sourceforge.net/
@@ -302,7 +303,7 @@ Patch200:	kernel-ppc-ICE-hacks.patch
 # alternative routes, the reverse path protection (rp_filter),
 # the NAT processing to use correctly the routing when multiple
 # gateways are used.
-# http://www.ssi.bg/~ja/routes-2.6.34-16.diff
+# http://www.ssi.bg/~ja/routes-2.6.35-16.diff
 Patch300:	kernel-routes.patch
 
 Patch1000:	kernel-grsec-minimal.patch
@@ -315,7 +316,7 @@ Patch2003:	kernel-regressions.patch
 # (only warnings, so just remove parts of this patch if conflics)
 Patch2500:	kernel-warnings.patch
 
-# http://kernel.org/pub/linux/security/apparmor/AppArmor-2.5/apparmor-2.5-2.6.33.patch.tgz
+# http://kernel.org/pub/linux/security/apparmor/AppArmor-2.6/apparmor-v2.6+v2.4-compat-for-2.6.35.patch
 Patch5000:	kernel-apparmor.patch
 
 # for rescuecd

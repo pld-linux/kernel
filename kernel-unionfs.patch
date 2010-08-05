@@ -1,8 +1,56 @@
-diff --git a/Documentation/filesystems/00-INDEX b/Documentation/filesystems/00-INDEX
-index 875d496..0a9acac 100644
---- a/Documentation/filesystems/00-INDEX
-+++ b/Documentation/filesystems/00-INDEX
-@@ -106,6 +106,8 @@ udf.txt
+
+This is a rebase to 2.6.35 of the upstream unionfs-2.5.4_for_2.6.34-rc0.diff.gz
+
+Signed-off-by: Thomas Backlund <tmb@mandriva.org>
+
+ Documentation/filesystems/00-INDEX             |    2 
+ Documentation/filesystems/unionfs/00-INDEX     |   10 
+ Documentation/filesystems/unionfs/concepts.txt |  287 ++++++
+ Documentation/filesystems/unionfs/issues.txt   |   28 
+ Documentation/filesystems/unionfs/rename.txt   |   31 
+ Documentation/filesystems/unionfs/usage.txt    |  134 +++
+ MAINTAINERS                                    |    8 
+ fs/Kconfig                                     |    1 
+ fs/Makefile                                    |    1 
+ fs/namei.c                                     |    1 
+ fs/splice.c                                    |   20 
+ fs/stack.c                                     |   14 
+ fs/unionfs/Kconfig                             |   24 
+ fs/unionfs/Makefile                            |   17 
+ fs/unionfs/commonfops.c                        |  896 +++++++++++++++++++++
+ fs/unionfs/copyup.c                            |  897 +++++++++++++++++++++
+ fs/unionfs/debug.c                             |  533 ++++++++++++
+ fs/unionfs/dentry.c                            |  397 +++++++++
+ fs/unionfs/dirfops.c                           |  302 +++++++
+ fs/unionfs/dirhelper.c                         |  158 +++
+ fs/unionfs/fanout.h                            |  407 +++++++++
+ fs/unionfs/file.c                              |  380 +++++++++
+ fs/unionfs/inode.c                             | 1055 +++++++++++++++++++++++++
+ fs/unionfs/lookup.c                            |  569 +++++++++++++
+ fs/unionfs/main.c                              |  758 +++++++++++++++++
+ fs/unionfs/mmap.c                              |   89 ++
+ fs/unionfs/rdstate.c                           |  285 ++++++
+ fs/unionfs/rename.c                            |  517 ++++++++++++
+ fs/unionfs/sioq.c                              |  101 ++
+ fs/unionfs/sioq.h                              |   91 ++
+ fs/unionfs/subr.c                              |   95 ++
+ fs/unionfs/super.c                             | 1047 ++++++++++++++++++++++++
+ fs/unionfs/union.h                             |  670 +++++++++++++++
+ fs/unionfs/unlink.c                            |  278 ++++++
+ fs/unionfs/whiteout.c                          |  584 +++++++++++++
+ fs/unionfs/xattr.c                             |  173 ++++
+ include/linux/fs_stack.h                       |   14 
+ include/linux/magic.h                          |    2 
+ include/linux/namei.h                          |    1 
+ include/linux/splice.h                         |    5 
+ include/linux/union_fs.h                       |   22 
+ security/security.c                            |    1 
+ 42 files changed, 10894 insertions(+), 11 deletions(-)
+
+diff -Nurp linux-2.6.35-rc6-git//Documentation/filesystems/00-INDEX linux-2.6.35-rc6-git-unionfs//Documentation/filesystems/00-INDEX
+--- linux-2.6.35-rc6-git//Documentation/filesystems/00-INDEX	2010-05-17 00:17:36.000000000 +0300
++++ linux-2.6.35-rc6-git-unionfs//Documentation/filesystems/00-INDEX	2010-07-30 15:50:42.994235028 +0300
+@@ -112,6 +112,8 @@ udf.txt
  	- info and mount options for the UDF filesystem.
  ufs.txt
  	- info on the ufs filesystem.
@@ -11,11 +59,9 @@ index 875d496..0a9acac 100644
  vfat.txt
  	- info on using the VFAT filesystem used in Windows NT and Windows 95
  vfs.txt
-diff --git a/Documentation/filesystems/unionfs/00-INDEX b/Documentation/filesystems/unionfs/00-INDEX
-new file mode 100644
-index 0000000..96fdf67
---- /dev/null
-+++ b/Documentation/filesystems/unionfs/00-INDEX
+diff -Nurp linux-2.6.35-rc6-git//Documentation/filesystems/unionfs/00-INDEX linux-2.6.35-rc6-git-unionfs//Documentation/filesystems/unionfs/00-INDEX
+--- linux-2.6.35-rc6-git//Documentation/filesystems/unionfs/00-INDEX	1970-01-01 02:00:00.000000000 +0200
++++ linux-2.6.35-rc6-git-unionfs//Documentation/filesystems/unionfs/00-INDEX	2010-07-30 15:50:42.994235028 +0300
 @@ -0,0 +1,10 @@
 +00-INDEX
 +	- this file.
@@ -27,11 +73,9 @@ index 0000000..96fdf67
 +	- Information regarding rename operations.
 +usage.txt
 +	- Usage information and examples.
-diff --git a/Documentation/filesystems/unionfs/concepts.txt b/Documentation/filesystems/unionfs/concepts.txt
-new file mode 100644
-index 0000000..b853788
---- /dev/null
-+++ b/Documentation/filesystems/unionfs/concepts.txt
+diff -Nurp linux-2.6.35-rc6-git//Documentation/filesystems/unionfs/concepts.txt linux-2.6.35-rc6-git-unionfs//Documentation/filesystems/unionfs/concepts.txt
+--- linux-2.6.35-rc6-git//Documentation/filesystems/unionfs/concepts.txt	1970-01-01 02:00:00.000000000 +0200
++++ linux-2.6.35-rc6-git-unionfs//Documentation/filesystems/unionfs/concepts.txt	2010-07-30 15:50:42.994947708 +0300
 @@ -0,0 +1,287 @@
 +Unionfs 2.x CONCEPTS:
 +=====================
@@ -320,11 +364,9 @@ index 0000000..b853788
 +branch is marked read-only by unionfs, then a copyup will take place.)
 +
 +For more information, see <http://unionfs.filesystems.org/>.
-diff --git a/Documentation/filesystems/unionfs/issues.txt b/Documentation/filesystems/unionfs/issues.txt
-new file mode 100644
-index 0000000..f4b7e7e
---- /dev/null
-+++ b/Documentation/filesystems/unionfs/issues.txt
+diff -Nurp linux-2.6.35-rc6-git//Documentation/filesystems/unionfs/issues.txt linux-2.6.35-rc6-git-unionfs//Documentation/filesystems/unionfs/issues.txt
+--- linux-2.6.35-rc6-git//Documentation/filesystems/unionfs/issues.txt	1970-01-01 02:00:00.000000000 +0200
++++ linux-2.6.35-rc6-git-unionfs//Documentation/filesystems/unionfs/issues.txt	2010-07-30 15:50:42.994947708 +0300
 @@ -0,0 +1,28 @@
 +KNOWN Unionfs 2.x ISSUES:
 +=========================
@@ -354,11 +396,9 @@ index 0000000..f4b7e7e
 +   from Lockdep, please report them to the Unionfs maintainers.
 +
 +For more information, see <http://unionfs.filesystems.org/>.
-diff --git a/Documentation/filesystems/unionfs/rename.txt b/Documentation/filesystems/unionfs/rename.txt
-new file mode 100644
-index 0000000..e20bb82
---- /dev/null
-+++ b/Documentation/filesystems/unionfs/rename.txt
+diff -Nurp linux-2.6.35-rc6-git//Documentation/filesystems/unionfs/rename.txt linux-2.6.35-rc6-git-unionfs//Documentation/filesystems/unionfs/rename.txt
+--- linux-2.6.35-rc6-git//Documentation/filesystems/unionfs/rename.txt	1970-01-01 02:00:00.000000000 +0200
++++ linux-2.6.35-rc6-git-unionfs//Documentation/filesystems/unionfs/rename.txt	2010-07-30 15:50:42.994947708 +0300
 @@ -0,0 +1,31 @@
 +Rename is a complex beast. The following table shows which rename(2) operations
 +should succeed and which should fail.
@@ -391,11 +431,9 @@ index 0000000..e20bb82
 +2) Rename source to destination
 +3) Make destination opaque to prevent anything under it from showing up
 +
-diff --git a/Documentation/filesystems/unionfs/usage.txt b/Documentation/filesystems/unionfs/usage.txt
-new file mode 100644
-index 0000000..1adde69
---- /dev/null
-+++ b/Documentation/filesystems/unionfs/usage.txt
+diff -Nurp linux-2.6.35-rc6-git//Documentation/filesystems/unionfs/usage.txt linux-2.6.35-rc6-git-unionfs//Documentation/filesystems/unionfs/usage.txt
+--- linux-2.6.35-rc6-git//Documentation/filesystems/unionfs/usage.txt	1970-01-01 02:00:00.000000000 +0200
++++ linux-2.6.35-rc6-git-unionfs//Documentation/filesystems/unionfs/usage.txt	2010-07-30 15:50:42.994947708 +0300
 @@ -0,0 +1,134 @@
 +Unionfs is a stackable unification file system, which can appear to merge
 +the contents of several directories (branches), while keeping their physical
@@ -531,29 +569,9 @@ index 0000000..1adde69
 +
 +
 +For more information, see <http://unionfs.filesystems.org/>.
-diff --git a/MAINTAINERS b/MAINTAINERS
-index 2533fc4..23bc981 100644
---- a/MAINTAINERS
-+++ b/MAINTAINERS
-@@ -5446,6 +5446,14 @@ F:	Documentation/cdrom/
- F:	drivers/cdrom/cdrom.c
- F:	include/linux/cdrom.h
- 
-+UNIONFS
-+P:	Erez Zadok
-+M:	ezk@cs.sunysb.edu
-+L:	unionfs@filesystems.org
-+W:	http://unionfs.filesystems.org/
-+T:	git git.kernel.org/pub/scm/linux/kernel/git/ezk/unionfs.git
-+S:	Maintained
-+
- UNSORTED BLOCK IMAGES (UBI)
- M:	Artem Bityutskiy <dedekind1@gmail.com>
- W:	http://www.linux-mtd.infradead.org/
-diff --git a/fs/Kconfig b/fs/Kconfig
-index 64d44ef..b69e2f2 100644
---- a/fs/Kconfig
-+++ b/fs/Kconfig
+diff -Nurp linux-2.6.35-rc6-git//fs/Kconfig linux-2.6.35-rc6-git-unionfs//fs/Kconfig
+--- linux-2.6.35-rc6-git//fs/Kconfig	2010-05-17 00:17:36.000000000 +0300
++++ linux-2.6.35-rc6-git-unionfs//fs/Kconfig	2010-07-30 15:50:42.995947739 +0300
 @@ -169,6 +169,7 @@ if MISC_FILESYSTEMS
  source "fs/adfs/Kconfig"
  source "fs/affs/Kconfig"
@@ -562,10 +580,9 @@ index 64d44ef..b69e2f2 100644
  source "fs/hfs/Kconfig"
  source "fs/hfsplus/Kconfig"
  source "fs/befs/Kconfig"
-diff --git a/fs/Makefile b/fs/Makefile
-index af6d047..6c254d5 100644
---- a/fs/Makefile
-+++ b/fs/Makefile
+diff -Nurp linux-2.6.35-rc6-git//fs/Makefile linux-2.6.35-rc6-git-unionfs//fs/Makefile
+--- linux-2.6.35-rc6-git//fs/Makefile	2010-07-30 14:05:39.182947749 +0300
++++ linux-2.6.35-rc6-git-unionfs//fs/Makefile	2010-07-30 15:50:42.995947739 +0300
 @@ -84,6 +84,7 @@ obj-$(CONFIG_ISO9660_FS)	+= isofs/
  obj-$(CONFIG_HFSPLUS_FS)	+= hfsplus/ # Before hfs to find wrapped HFS+
  obj-$(CONFIG_HFS_FS)		+= hfs/
@@ -574,11 +591,10 @@ index af6d047..6c254d5 100644
  obj-$(CONFIG_VXFS_FS)		+= freevxfs/
  obj-$(CONFIG_NFS_FS)		+= nfs/
  obj-$(CONFIG_EXPORTFS)		+= exportfs/
-diff --git a/fs/namei.c b/fs/namei.c
-index a4855af..948c5e5 100644
---- a/fs/namei.c
-+++ b/fs/namei.c
-@@ -387,6 +387,7 @@ void release_open_intent(struct nameidata *nd)
+diff -Nurp linux-2.6.35-rc6-git//fs/namei.c linux-2.6.35-rc6-git-unionfs//fs/namei.c
+--- linux-2.6.35-rc6-git//fs/namei.c	2010-07-30 14:05:39.270978942 +0300
++++ linux-2.6.35-rc6-git-unionfs//fs/namei.c	2010-07-30 15:50:42.995947739 +0300
+@@ -386,6 +386,7 @@ void release_open_intent(struct nameidat
  	else
  		fput(nd->intent.open.file);
  }
@@ -586,11 +602,10 @@ index a4855af..948c5e5 100644
  
  static inline struct dentry *
  do_revalidate(struct dentry *dentry, struct nameidata *nd)
-diff --git a/fs/splice.c b/fs/splice.c
-index 3920866..488e3ba 100644
---- a/fs/splice.c
-+++ b/fs/splice.c
-@@ -1053,8 +1053,8 @@ EXPORT_SYMBOL(generic_splice_sendpage);
+diff -Nurp linux-2.6.35-rc6-git//fs/splice.c linux-2.6.35-rc6-git-unionfs//fs/splice.c
+--- linux-2.6.35-rc6-git//fs/splice.c	2010-07-30 14:05:39.323970675 +0300
++++ linux-2.6.35-rc6-git-unionfs//fs/splice.c	2010-07-30 16:16:25.730042698 +0300
+@@ -1104,8 +1104,8 @@ EXPORT_SYMBOL(generic_splice_sendpage);
  /*
   * Attempt to initiate a splice from pipe to file.
   */
@@ -601,7 +616,7 @@ index 3920866..488e3ba 100644
  {
  	ssize_t (*splice_write)(struct pipe_inode_info *, struct file *,
  				loff_t *, size_t, unsigned int);
-@@ -1077,13 +1077,14 @@ static long do_splice_from(struct pipe_inode_info *pipe, struct file *out,
+@@ -1128,13 +1128,14 @@ static long do_splice_from(struct pipe_i
  
  	return splice_write(pipe, out, ppos, len, flags);
  }
@@ -619,7 +634,7 @@ index 3920866..488e3ba 100644
  {
  	ssize_t (*splice_read)(struct file *, loff_t *,
  			       struct pipe_inode_info *, size_t, unsigned int);
-@@ -1103,6 +1104,7 @@ static long do_splice_to(struct file *in, loff_t *ppos,
+@@ -1154,6 +1155,7 @@ static long do_splice_to(struct file *in
  
  	return splice_read(in, ppos, pipe, len, flags);
  }
@@ -627,7 +642,7 @@ index 3920866..488e3ba 100644
  
  /**
   * splice_direct_to_actor - splices data directly between two non-pipes
-@@ -1172,7 +1174,7 @@ ssize_t splice_direct_to_actor(struct file *in, struct splice_desc *sd,
+@@ -1223,7 +1225,7 @@ ssize_t splice_direct_to_actor(struct fi
  		size_t read_len;
  		loff_t pos = sd->pos, prev_pos = pos;
  
@@ -636,16 +651,16 @@ index 3920866..488e3ba 100644
  		if (unlikely(ret <= 0))
  			goto out_release;
  
-@@ -1231,7 +1233,7 @@ static int direct_splice_actor(struct pipe_inode_info *pipe,
+@@ -1282,7 +1284,7 @@ static int direct_splice_actor(struct pi
  {
  	struct file *file = sd->u.file;
  
--	return do_splice_from(pipe, file, &sd->pos, sd->total_len, sd->flags);
-+	return vfs_splice_from(pipe, file, &sd->pos, sd->total_len, sd->flags);
+-	return do_splice_from(pipe, file, &file->f_pos, sd->total_len,
++	return vfs_splice_from(pipe, file, &file->f_pos, sd->total_len,
+ 			      sd->flags);
  }
  
- /**
-@@ -1329,7 +1331,7 @@ static long do_splice(struct file *in, loff_t __user *off_in,
+@@ -1380,7 +1382,7 @@ static long do_splice(struct file *in, l
  		} else
  			off = &out->f_pos;
  
@@ -654,7 +669,7 @@ index 3920866..488e3ba 100644
  
  		if (off_out && copy_to_user(off_out, off, sizeof(loff_t)))
  			ret = -EFAULT;
-@@ -1350,7 +1352,7 @@ static long do_splice(struct file *in, loff_t __user *off_in,
+@@ -1400,7 +1402,7 @@ static long do_splice(struct file *in, l
  		} else
  			off = &in->f_pos;
  
@@ -663,10 +678,9 @@ index 3920866..488e3ba 100644
  
  		if (off_in && copy_to_user(off_in, off, sizeof(loff_t)))
  			ret = -EFAULT;
-diff --git a/fs/stack.c b/fs/stack.c
-index 4a6f7f4..7eeef12 100644
---- a/fs/stack.c
-+++ b/fs/stack.c
+diff -Nurp linux-2.6.35-rc6-git//fs/stack.c linux-2.6.35-rc6-git-unionfs//fs/stack.c
+--- linux-2.6.35-rc6-git//fs/stack.c	2010-05-17 00:17:36.000000000 +0300
++++ linux-2.6.35-rc6-git-unionfs//fs/stack.c	2010-07-30 15:50:42.996947572 +0300
 @@ -1,8 +1,20 @@
 +/*
 + * Copyright (c) 2006-2009 Erez Zadok
@@ -689,76 +703,9 @@ index 4a6f7f4..7eeef12 100644
   *
   * This function cannot be inlined since i_size_{read,write} is rather
   * heavy-weight on 32-bit systems
-diff --git a/fs/super.c b/fs/super.c
-index aff046b..ad6dc74 100644
---- a/fs/super.c
-+++ b/fs/super.c
-@@ -95,6 +95,7 @@ static struct super_block *alloc_super(struct file_system_type *type)
- 		s->s_count = S_BIAS;
- 		atomic_set(&s->s_active, 1);
- 		mutex_init(&s->s_vfs_rename_mutex);
-+		lockdep_set_class(&s->s_vfs_rename_mutex, &type->s_vfs_rename_key);
- 		mutex_init(&s->s_dquot.dqio_mutex);
- 		mutex_init(&s->s_dquot.dqonoff_mutex);
- 		init_rwsem(&s->s_dquot.dqptr_sem);
-diff --git a/fs/unionfs/Kconfig b/fs/unionfs/Kconfig
-new file mode 100644
-index 0000000..f3c1ac4
---- /dev/null
-+++ b/fs/unionfs/Kconfig
-@@ -0,0 +1,24 @@
-+config UNION_FS
-+	tristate "Union file system (EXPERIMENTAL)"
-+	depends on EXPERIMENTAL
-+	help
-+	  Unionfs is a stackable unification file system, which appears to
-+	  merge the contents of several directories (branches), while keeping
-+	  their physical content separate.
-+
-+	  See <http://unionfs.filesystems.org> for details
-+
-+config UNION_FS_XATTR
-+	bool "Unionfs extended attributes"
-+	depends on UNION_FS
-+	help
-+	  Extended attributes are name:value pairs associated with inodes by
-+	  the kernel or by users (see the attr(5) manual page).
-+
-+	  If unsure, say N.
-+
-+config UNION_FS_DEBUG
-+	bool "Debug Unionfs"
-+	depends on UNION_FS
-+	help
-+	  If you say Y here, you can turn on debugging output from Unionfs.
-diff --git a/fs/unionfs/Makefile b/fs/unionfs/Makefile
-new file mode 100644
-index 0000000..1ef873e
---- /dev/null
-+++ b/fs/unionfs/Makefile
-@@ -0,0 +1,17 @@
-+UNIONFS_VERSION="2.5.4 (for 2.6.33)"
-+
-+EXTRA_CFLAGS += -DUNIONFS_VERSION=\"$(UNIONFS_VERSION)\"
-+
-+obj-$(CONFIG_UNION_FS) += unionfs.o
-+
-+unionfs-y := subr.o dentry.o file.o inode.o main.o super.o \
-+	rdstate.o copyup.o dirhelper.o rename.o unlink.o \
-+	lookup.o commonfops.o dirfops.o sioq.o mmap.o whiteout.o
-+
-+unionfs-$(CONFIG_UNION_FS_XATTR) += xattr.o
-+
-+unionfs-$(CONFIG_UNION_FS_DEBUG) += debug.o
-+
-+ifeq ($(CONFIG_UNION_FS_DEBUG),y)
-+EXTRA_CFLAGS += -DDEBUG
-+endif
-diff --git a/fs/unionfs/commonfops.c b/fs/unionfs/commonfops.c
-new file mode 100644
-index 0000000..740c4ad
---- /dev/null
-+++ b/fs/unionfs/commonfops.c
+diff -Nurp linux-2.6.35-rc6-git//fs/unionfs/commonfops.c linux-2.6.35-rc6-git-unionfs//fs/unionfs/commonfops.c
+--- linux-2.6.35-rc6-git//fs/unionfs/commonfops.c	1970-01-01 02:00:00.000000000 +0200
++++ linux-2.6.35-rc6-git-unionfs//fs/unionfs/commonfops.c	2010-07-30 15:50:50.557108046 +0300
 @@ -0,0 +1,896 @@
 +/*
 + * Copyright (c) 2003-2010 Erez Zadok
@@ -1656,11 +1603,9 @@ index 0000000..740c4ad
 +	unionfs_read_unlock(dentry->d_sb);
 +	return err;
 +}
-diff --git a/fs/unionfs/copyup.c b/fs/unionfs/copyup.c
-new file mode 100644
-index 0000000..9c7b2ac
---- /dev/null
-+++ b/fs/unionfs/copyup.c
+diff -Nurp linux-2.6.35-rc6-git//fs/unionfs/copyup.c linux-2.6.35-rc6-git-unionfs//fs/unionfs/copyup.c
+--- linux-2.6.35-rc6-git//fs/unionfs/copyup.c	1970-01-01 02:00:00.000000000 +0200
++++ linux-2.6.35-rc6-git-unionfs//fs/unionfs/copyup.c	2010-07-30 15:50:50.558010270 +0300
 @@ -0,0 +1,897 @@
 +/*
 + * Copyright (c) 2003-2010 Erez Zadok
@@ -2559,11 +2504,9 @@ index 0000000..9c7b2ac
 +	dbend(dentry) = bstart;
 +	ibend(dentry->d_inode) = ibstart(dentry->d_inode) = bstart;
 +}
-diff --git a/fs/unionfs/debug.c b/fs/unionfs/debug.c
-new file mode 100644
-index 0000000..acc44bd
---- /dev/null
-+++ b/fs/unionfs/debug.c
+diff -Nurp linux-2.6.35-rc6-git//fs/unionfs/debug.c linux-2.6.35-rc6-git-unionfs//fs/unionfs/debug.c
+--- linux-2.6.35-rc6-git//fs/unionfs/debug.c	1970-01-01 02:00:00.000000000 +0200
++++ linux-2.6.35-rc6-git-unionfs//fs/unionfs/debug.c	2010-07-30 15:50:50.558010270 +0300
 @@ -0,0 +1,533 @@
 +/*
 + * Copyright (c) 2003-2010 Erez Zadok
@@ -3098,11 +3041,9 @@ index 0000000..acc44bd
 +			 file, fxn, line);
 +	}
 +}
-diff --git a/fs/unionfs/dentry.c b/fs/unionfs/dentry.c
-new file mode 100644
-index 0000000..a0c3bba
---- /dev/null
-+++ b/fs/unionfs/dentry.c
+diff -Nurp linux-2.6.35-rc6-git//fs/unionfs/dentry.c linux-2.6.35-rc6-git-unionfs//fs/unionfs/dentry.c
+--- linux-2.6.35-rc6-git//fs/unionfs/dentry.c	1970-01-01 02:00:00.000000000 +0200
++++ linux-2.6.35-rc6-git-unionfs//fs/unionfs/dentry.c	2010-07-30 15:50:50.558010270 +0300
 @@ -0,0 +1,397 @@
 +/*
 + * Copyright (c) 2003-2010 Erez Zadok
@@ -3501,11 +3442,9 @@ index 0000000..a0c3bba
 +	.d_release	= unionfs_d_release,
 +	.d_iput		= unionfs_d_iput,
 +};
-diff --git a/fs/unionfs/dirfops.c b/fs/unionfs/dirfops.c
-new file mode 100644
-index 0000000..7da0ff0
---- /dev/null
-+++ b/fs/unionfs/dirfops.c
+diff -Nurp linux-2.6.35-rc6-git//fs/unionfs/dirfops.c linux-2.6.35-rc6-git-unionfs//fs/unionfs/dirfops.c
+--- linux-2.6.35-rc6-git//fs/unionfs/dirfops.c	1970-01-01 02:00:00.000000000 +0200
++++ linux-2.6.35-rc6-git-unionfs//fs/unionfs/dirfops.c	2010-07-30 15:50:50.559010056 +0300
 @@ -0,0 +1,302 @@
 +/*
 + * Copyright (c) 2003-2010 Erez Zadok
@@ -3809,11 +3748,9 @@ index 0000000..7da0ff0
 +	.fsync		= unionfs_fsync,
 +	.fasync		= unionfs_fasync,
 +};
-diff --git a/fs/unionfs/dirhelper.c b/fs/unionfs/dirhelper.c
-new file mode 100644
-index 0000000..033343b
---- /dev/null
-+++ b/fs/unionfs/dirhelper.c
+diff -Nurp linux-2.6.35-rc6-git//fs/unionfs/dirhelper.c linux-2.6.35-rc6-git-unionfs//fs/unionfs/dirhelper.c
+--- linux-2.6.35-rc6-git//fs/unionfs/dirhelper.c	1970-01-01 02:00:00.000000000 +0200
++++ linux-2.6.35-rc6-git-unionfs//fs/unionfs/dirhelper.c	2010-07-30 15:50:50.559010056 +0300
 @@ -0,0 +1,158 @@
 +/*
 + * Copyright (c) 2003-2010 Erez Zadok
@@ -3973,11 +3910,9 @@ index 0000000..033343b
 +
 +	return err;
 +}
-diff --git a/fs/unionfs/fanout.h b/fs/unionfs/fanout.h
-new file mode 100644
-index 0000000..5b77eac
---- /dev/null
-+++ b/fs/unionfs/fanout.h
+diff -Nurp linux-2.6.35-rc6-git//fs/unionfs/fanout.h linux-2.6.35-rc6-git-unionfs//fs/unionfs/fanout.h
+--- linux-2.6.35-rc6-git//fs/unionfs/fanout.h	1970-01-01 02:00:00.000000000 +0200
++++ linux-2.6.35-rc6-git-unionfs//fs/unionfs/fanout.h	2010-07-30 15:50:50.559010056 +0300
 @@ -0,0 +1,407 @@
 +/*
 + * Copyright (c) 2003-2010 Erez Zadok
@@ -4386,11 +4321,9 @@ index 0000000..5b77eac
 +}
 +
 +#endif	/* not _FANOUT_H */
-diff --git a/fs/unionfs/file.c b/fs/unionfs/file.c
-new file mode 100644
-index 0000000..46eaa90
---- /dev/null
-+++ b/fs/unionfs/file.c
+diff -Nurp linux-2.6.35-rc6-git//fs/unionfs/file.c linux-2.6.35-rc6-git-unionfs//fs/unionfs/file.c
+--- linux-2.6.35-rc6-git//fs/unionfs/file.c	1970-01-01 02:00:00.000000000 +0200
++++ linux-2.6.35-rc6-git-unionfs//fs/unionfs/file.c	2010-07-30 15:50:50.559010056 +0300
 @@ -0,0 +1,380 @@
 +/*
 + * Copyright (c) 2003-2010 Erez Zadok
@@ -4772,11 +4705,9 @@ index 0000000..46eaa90
 +	.splice_read	= unionfs_splice_read,
 +	.splice_write	= unionfs_splice_write,
 +};
-diff --git a/fs/unionfs/inode.c b/fs/unionfs/inode.c
-new file mode 100644
-index 0000000..062163a
---- /dev/null
-+++ b/fs/unionfs/inode.c
+diff -Nurp linux-2.6.35-rc6-git//fs/unionfs/inode.c linux-2.6.35-rc6-git-unionfs//fs/unionfs/inode.c
+--- linux-2.6.35-rc6-git//fs/unionfs/inode.c	1970-01-01 02:00:00.000000000 +0200
++++ linux-2.6.35-rc6-git-unionfs//fs/unionfs/inode.c	2010-07-30 15:50:50.560010144 +0300
 @@ -0,0 +1,1055 @@
 +/*
 + * Copyright (c) 2003-2010 Erez Zadok
@@ -5833,11 +5764,37 @@ index 0000000..062163a
 +	.listxattr	= unionfs_listxattr,
 +#endif /* CONFIG_UNION_FS_XATTR */
 +};
-diff --git a/fs/unionfs/lookup.c b/fs/unionfs/lookup.c
-new file mode 100644
-index 0000000..b63c17e
---- /dev/null
-+++ b/fs/unionfs/lookup.c
+diff -Nurp linux-2.6.35-rc6-git//fs/unionfs/Kconfig linux-2.6.35-rc6-git-unionfs//fs/unionfs/Kconfig
+--- linux-2.6.35-rc6-git//fs/unionfs/Kconfig	1970-01-01 02:00:00.000000000 +0200
++++ linux-2.6.35-rc6-git-unionfs//fs/unionfs/Kconfig	2010-07-30 15:50:50.557108046 +0300
+@@ -0,0 +1,24 @@
++config UNION_FS
++	tristate "Union file system (EXPERIMENTAL)"
++	depends on EXPERIMENTAL
++	help
++	  Unionfs is a stackable unification file system, which appears to
++	  merge the contents of several directories (branches), while keeping
++	  their physical content separate.
++
++	  See <http://unionfs.filesystems.org> for details
++
++config UNION_FS_XATTR
++	bool "Unionfs extended attributes"
++	depends on UNION_FS
++	help
++	  Extended attributes are name:value pairs associated with inodes by
++	  the kernel or by users (see the attr(5) manual page).
++
++	  If unsure, say N.
++
++config UNION_FS_DEBUG
++	bool "Debug Unionfs"
++	depends on UNION_FS
++	help
++	  If you say Y here, you can turn on debugging output from Unionfs.
+diff -Nurp linux-2.6.35-rc6-git//fs/unionfs/lookup.c linux-2.6.35-rc6-git-unionfs//fs/unionfs/lookup.c
+--- linux-2.6.35-rc6-git//fs/unionfs/lookup.c	1970-01-01 02:00:00.000000000 +0200
++++ linux-2.6.35-rc6-git-unionfs//fs/unionfs/lookup.c	2010-07-30 15:50:50.560010144 +0300
 @@ -0,0 +1,569 @@
 +/*
 + * Copyright (c) 2003-2010 Erez Zadok
@@ -6408,11 +6365,9 @@ index 0000000..b63c17e
 +		return d_interposed;
 +	return ERR_PTR(err);
 +}
-diff --git a/fs/unionfs/main.c b/fs/unionfs/main.c
-new file mode 100644
-index 0000000..258386e
---- /dev/null
-+++ b/fs/unionfs/main.c
+diff -Nurp linux-2.6.35-rc6-git//fs/unionfs/main.c linux-2.6.35-rc6-git-unionfs//fs/unionfs/main.c
+--- linux-2.6.35-rc6-git//fs/unionfs/main.c	1970-01-01 02:00:00.000000000 +0200
++++ linux-2.6.35-rc6-git-unionfs//fs/unionfs/main.c	2010-07-30 15:50:50.561010133 +0300
 @@ -0,0 +1,758 @@
 +/*
 + * Copyright (c) 2003-2010 Erez Zadok
@@ -7172,11 +7127,30 @@ index 0000000..258386e
 +
 +module_init(init_unionfs_fs);
 +module_exit(exit_unionfs_fs);
-diff --git a/fs/unionfs/mmap.c b/fs/unionfs/mmap.c
-new file mode 100644
-index 0000000..1f70535
---- /dev/null
-+++ b/fs/unionfs/mmap.c
+diff -Nurp linux-2.6.35-rc6-git//fs/unionfs/Makefile linux-2.6.35-rc6-git-unionfs//fs/unionfs/Makefile
+--- linux-2.6.35-rc6-git//fs/unionfs/Makefile	1970-01-01 02:00:00.000000000 +0200
++++ linux-2.6.35-rc6-git-unionfs//fs/unionfs/Makefile	2010-07-30 15:50:50.557108046 +0300
+@@ -0,0 +1,17 @@
++UNIONFS_VERSION="2.5.4 (for 2.6.34-rc0)"
++
++EXTRA_CFLAGS += -DUNIONFS_VERSION=\"$(UNIONFS_VERSION)\"
++
++obj-$(CONFIG_UNION_FS) += unionfs.o
++
++unionfs-y := subr.o dentry.o file.o inode.o main.o super.o \
++	rdstate.o copyup.o dirhelper.o rename.o unlink.o \
++	lookup.o commonfops.o dirfops.o sioq.o mmap.o whiteout.o
++
++unionfs-$(CONFIG_UNION_FS_XATTR) += xattr.o
++
++unionfs-$(CONFIG_UNION_FS_DEBUG) += debug.o
++
++ifeq ($(CONFIG_UNION_FS_DEBUG),y)
++EXTRA_CFLAGS += -DDEBUG
++endif
+diff -Nurp linux-2.6.35-rc6-git//fs/unionfs/mmap.c linux-2.6.35-rc6-git-unionfs//fs/unionfs/mmap.c
+--- linux-2.6.35-rc6-git//fs/unionfs/mmap.c	1970-01-01 02:00:00.000000000 +0200
++++ linux-2.6.35-rc6-git-unionfs//fs/unionfs/mmap.c	2010-07-30 15:50:50.561010133 +0300
 @@ -0,0 +1,89 @@
 +/*
 + * Copyright (c) 2003-2010 Erez Zadok
@@ -7267,11 +7241,9 @@ index 0000000..1f70535
 +struct vm_operations_struct unionfs_vm_ops = {
 +	.fault		= unionfs_fault,
 +};
-diff --git a/fs/unionfs/rdstate.c b/fs/unionfs/rdstate.c
-new file mode 100644
-index 0000000..f745fbc
---- /dev/null
-+++ b/fs/unionfs/rdstate.c
+diff -Nurp linux-2.6.35-rc6-git//fs/unionfs/rdstate.c linux-2.6.35-rc6-git-unionfs//fs/unionfs/rdstate.c
+--- linux-2.6.35-rc6-git//fs/unionfs/rdstate.c	1970-01-01 02:00:00.000000000 +0200
++++ linux-2.6.35-rc6-git-unionfs//fs/unionfs/rdstate.c	2010-07-30 15:50:50.561010133 +0300
 @@ -0,0 +1,285 @@
 +/*
 + * Copyright (c) 2003-2010 Erez Zadok
@@ -7558,11 +7530,9 @@ index 0000000..f745fbc
 +out:
 +	return err;
 +}
-diff --git a/fs/unionfs/rename.c b/fs/unionfs/rename.c
-new file mode 100644
-index 0000000..936700e
---- /dev/null
-+++ b/fs/unionfs/rename.c
+diff -Nurp linux-2.6.35-rc6-git//fs/unionfs/rename.c linux-2.6.35-rc6-git-unionfs//fs/unionfs/rename.c
+--- linux-2.6.35-rc6-git//fs/unionfs/rename.c	1970-01-01 02:00:00.000000000 +0200
++++ linux-2.6.35-rc6-git-unionfs//fs/unionfs/rename.c	2010-07-30 15:50:50.561010133 +0300
 @@ -0,0 +1,517 @@
 +/*
 + * Copyright (c) 2003-2010 Erez Zadok
@@ -8081,11 +8051,9 @@ index 0000000..936700e
 +
 +	return err;
 +}
-diff --git a/fs/unionfs/sioq.c b/fs/unionfs/sioq.c
-new file mode 100644
-index 0000000..760c580
---- /dev/null
-+++ b/fs/unionfs/sioq.c
+diff -Nurp linux-2.6.35-rc6-git//fs/unionfs/sioq.c linux-2.6.35-rc6-git-unionfs//fs/unionfs/sioq.c
+--- linux-2.6.35-rc6-git//fs/unionfs/sioq.c	1970-01-01 02:00:00.000000000 +0200
++++ linux-2.6.35-rc6-git-unionfs//fs/unionfs/sioq.c	2010-07-30 15:50:50.561010133 +0300
 @@ -0,0 +1,101 @@
 +/*
 + * Copyright (c) 2006-2010 Erez Zadok
@@ -8188,11 +8156,9 @@ index 0000000..760c580
 +	args->err = vfs_unlink(u->parent, u->dentry);
 +	complete(&args->comp);
 +}
-diff --git a/fs/unionfs/sioq.h b/fs/unionfs/sioq.h
-new file mode 100644
-index 0000000..b26d248
---- /dev/null
-+++ b/fs/unionfs/sioq.h
+diff -Nurp linux-2.6.35-rc6-git//fs/unionfs/sioq.h linux-2.6.35-rc6-git-unionfs//fs/unionfs/sioq.h
+--- linux-2.6.35-rc6-git//fs/unionfs/sioq.h	1970-01-01 02:00:00.000000000 +0200
++++ linux-2.6.35-rc6-git-unionfs//fs/unionfs/sioq.h	2010-07-30 15:50:50.561010133 +0300
 @@ -0,0 +1,91 @@
 +/*
 + * Copyright (c) 2006-2010 Erez Zadok
@@ -8285,11 +8251,9 @@ index 0000000..b26d248
 +extern void __is_opaque_dir(struct work_struct *work);
 +
 +#endif /* not _SIOQ_H */
-diff --git a/fs/unionfs/subr.c b/fs/unionfs/subr.c
-new file mode 100644
-index 0000000..570a344
---- /dev/null
-+++ b/fs/unionfs/subr.c
+diff -Nurp linux-2.6.35-rc6-git//fs/unionfs/subr.c linux-2.6.35-rc6-git-unionfs//fs/unionfs/subr.c
+--- linux-2.6.35-rc6-git//fs/unionfs/subr.c	1970-01-01 02:00:00.000000000 +0200
++++ linux-2.6.35-rc6-git-unionfs//fs/unionfs/subr.c	2010-07-30 15:50:50.561010133 +0300
 @@ -0,0 +1,95 @@
 +/*
 + * Copyright (c) 2003-2010 Erez Zadok
@@ -8386,11 +8350,9 @@ index 0000000..570a344
 +	 */
 +	dest->i_nlink = unionfs_get_nlinks(dest);
 +}
-diff --git a/fs/unionfs/super.c b/fs/unionfs/super.c
-new file mode 100644
-index 0000000..bd058fe
---- /dev/null
-+++ b/fs/unionfs/super.c
+diff -Nurp linux-2.6.35-rc6-git//fs/unionfs/super.c linux-2.6.35-rc6-git-unionfs//fs/unionfs/super.c
+--- linux-2.6.35-rc6-git//fs/unionfs/super.c	1970-01-01 02:00:00.000000000 +0200
++++ linux-2.6.35-rc6-git-unionfs//fs/unionfs/super.c	2010-07-30 15:50:50.562010141 +0300
 @@ -0,0 +1,1047 @@
 +/*
 + * Copyright (c) 2003-2010 Erez Zadok
@@ -9439,11 +9401,9 @@ index 0000000..bd058fe
 +	.alloc_inode	= unionfs_alloc_inode,
 +	.destroy_inode	= unionfs_destroy_inode,
 +};
-diff --git a/fs/unionfs/union.h b/fs/unionfs/union.h
-new file mode 100644
-index 0000000..99335a3
---- /dev/null
-+++ b/fs/unionfs/union.h
+diff -Nurp linux-2.6.35-rc6-git//fs/unionfs/union.h linux-2.6.35-rc6-git-unionfs//fs/unionfs/union.h
+--- linux-2.6.35-rc6-git//fs/unionfs/union.h	1970-01-01 02:00:00.000000000 +0200
++++ linux-2.6.35-rc6-git-unionfs//fs/unionfs/union.h	2010-07-30 15:50:50.563010175 +0300
 @@ -0,0 +1,670 @@
 +/*
 + * Copyright (c) 2003-2010 Erez Zadok
@@ -10115,11 +10075,9 @@ index 0000000..99335a3
 +#endif /* not CONFIG_UNION_FS_DEBUG */
 +
 +#endif	/* not _UNION_H_ */
-diff --git a/fs/unionfs/unlink.c b/fs/unionfs/unlink.c
-new file mode 100644
-index 0000000..542c513
---- /dev/null
-+++ b/fs/unionfs/unlink.c
+diff -Nurp linux-2.6.35-rc6-git//fs/unionfs/unlink.c linux-2.6.35-rc6-git-unionfs//fs/unionfs/unlink.c
+--- linux-2.6.35-rc6-git//fs/unionfs/unlink.c	1970-01-01 02:00:00.000000000 +0200
++++ linux-2.6.35-rc6-git-unionfs//fs/unionfs/unlink.c	2010-07-30 15:50:50.563010175 +0300
 @@ -0,0 +1,278 @@
 +/*
 + * Copyright (c) 2003-2010 Erez Zadok
@@ -10399,11 +10357,9 @@ index 0000000..542c513
 +	unionfs_read_unlock(dentry->d_sb);
 +	return err;
 +}
-diff --git a/fs/unionfs/whiteout.c b/fs/unionfs/whiteout.c
-new file mode 100644
-index 0000000..405073a
---- /dev/null
-+++ b/fs/unionfs/whiteout.c
+diff -Nurp linux-2.6.35-rc6-git//fs/unionfs/whiteout.c linux-2.6.35-rc6-git-unionfs//fs/unionfs/whiteout.c
+--- linux-2.6.35-rc6-git//fs/unionfs/whiteout.c	1970-01-01 02:00:00.000000000 +0200
++++ linux-2.6.35-rc6-git-unionfs//fs/unionfs/whiteout.c	2010-07-30 15:50:50.563010175 +0300
 @@ -0,0 +1,584 @@
 +/*
 + * Copyright (c) 2003-2010 Erez Zadok
@@ -10989,11 +10945,9 @@ index 0000000..405073a
 +out_err:
 +	return err;
 +}
-diff --git a/fs/unionfs/xattr.c b/fs/unionfs/xattr.c
-new file mode 100644
-index 0000000..9002e06
---- /dev/null
-+++ b/fs/unionfs/xattr.c
+diff -Nurp linux-2.6.35-rc6-git//fs/unionfs/xattr.c linux-2.6.35-rc6-git-unionfs//fs/unionfs/xattr.c
+--- linux-2.6.35-rc6-git//fs/unionfs/xattr.c	1970-01-01 02:00:00.000000000 +0200
++++ linux-2.6.35-rc6-git-unionfs//fs/unionfs/xattr.c	2010-07-30 15:50:50.563010175 +0300
 @@ -0,0 +1,173 @@
 +/*
 + * Copyright (c) 2003-2010 Erez Zadok
@@ -11168,22 +11122,9 @@ index 0000000..9002e06
 +	unionfs_read_unlock(dentry->d_sb);
 +	return err;
 +}
-diff --git a/include/linux/fs.h b/include/linux/fs.h
-index ebb1cd5..b03df2d 100644
---- a/include/linux/fs.h
-+++ b/include/linux/fs.h
-@@ -1739,6 +1739,7 @@ struct file_system_type {
- 
- 	struct lock_class_key s_lock_key;
- 	struct lock_class_key s_umount_key;
-+	struct lock_class_key s_vfs_rename_key;
- 
- 	struct lock_class_key i_lock_key;
- 	struct lock_class_key i_mutex_key;
-diff --git a/include/linux/fs_stack.h b/include/linux/fs_stack.h
-index da317c7..64f1ced 100644
---- a/include/linux/fs_stack.h
-+++ b/include/linux/fs_stack.h
+diff -Nurp linux-2.6.35-rc6-git//include/linux/fs_stack.h linux-2.6.35-rc6-git-unionfs//include/linux/fs_stack.h
+--- linux-2.6.35-rc6-git//include/linux/fs_stack.h	2010-05-17 00:17:36.000000000 +0300
++++ linux-2.6.35-rc6-git-unionfs//include/linux/fs_stack.h	2010-07-30 15:50:52.713110440 +0300
 @@ -1,7 +1,19 @@
 +/*
 + * Copyright (c) 2006-2009 Erez Zadok
@@ -11205,10 +11146,9 @@ index da317c7..64f1ced 100644
   * filesystems; none of these functions require i_mutex to be held.
   */
  
-diff --git a/include/linux/magic.h b/include/linux/magic.h
-index 76285e0..ff4f649 100644
---- a/include/linux/magic.h
-+++ b/include/linux/magic.h
+diff -Nurp linux-2.6.35-rc6-git//include/linux/magic.h linux-2.6.35-rc6-git-unionfs//include/linux/magic.h
+--- linux-2.6.35-rc6-git//include/linux/magic.h	2010-05-17 00:17:36.000000000 +0300
++++ linux-2.6.35-rc6-git-unionfs//include/linux/magic.h	2010-07-30 15:50:52.713110440 +0300
 @@ -47,6 +47,8 @@
  #define REISER2FS_SUPER_MAGIC_STRING	"ReIsEr2Fs"
  #define REISER2FS_JR_SUPER_MAGIC_STRING	"ReIsEr3Fs"
@@ -11218,11 +11158,10 @@ index 76285e0..ff4f649 100644
  #define SMB_SUPER_MAGIC		0x517B
  #define USBDEVICE_SUPER_MAGIC	0x9fa2
  #define CGROUP_SUPER_MAGIC	0x27e0eb
-diff --git a/include/linux/namei.h b/include/linux/namei.h
-index 05b441d..dca6f9a 100644
---- a/include/linux/namei.h
-+++ b/include/linux/namei.h
-@@ -72,6 +72,7 @@ extern int vfs_path_lookup(struct dentry *, struct vfsmount *,
+diff -Nurp linux-2.6.35-rc6-git//include/linux/namei.h linux-2.6.35-rc6-git-unionfs//include/linux/namei.h
+--- linux-2.6.35-rc6-git//include/linux/namei.h	2010-05-17 00:17:36.000000000 +0300
++++ linux-2.6.35-rc6-git-unionfs//include/linux/namei.h	2010-07-30 15:50:52.713110440 +0300
+@@ -72,6 +72,7 @@ extern int vfs_path_lookup(struct dentry
  
  extern struct file *lookup_instantiate_filp(struct nameidata *nd, struct dentry *dentry,
  		int (*open)(struct inode *, struct file *));
@@ -11230,11 +11169,10 @@ index 05b441d..dca6f9a 100644
  
  extern struct dentry *lookup_one_len(const char *, struct dentry *, int);
  
-diff --git a/include/linux/splice.h b/include/linux/splice.h
-index 18e7c7c..af56841 100644
---- a/include/linux/splice.h
-+++ b/include/linux/splice.h
-@@ -81,5 +81,10 @@ extern ssize_t splice_to_pipe(struct pipe_inode_info *,
+diff -Nurp linux-2.6.35-rc6-git//include/linux/splice.h linux-2.6.35-rc6-git-unionfs//include/linux/splice.h
+--- linux-2.6.35-rc6-git//include/linux/splice.h	2010-07-30 14:05:39.412885409 +0300
++++ linux-2.6.35-rc6-git-unionfs//include/linux/splice.h	2010-07-30 15:50:52.713110440 +0300
+@@ -81,6 +81,11 @@ extern ssize_t splice_to_pipe(struct pip
  			      struct splice_pipe_desc *);
  extern ssize_t splice_direct_to_actor(struct file *, struct splice_desc *,
  				      splice_direct_actor *);
@@ -11244,12 +11182,11 @@ index 18e7c7c..af56841 100644
 +			  struct pipe_inode_info *pipe, size_t len,
 +			  unsigned int flags);
  
- #endif
-diff --git a/include/linux/union_fs.h b/include/linux/union_fs.h
-new file mode 100644
-index 0000000..c84d97e
---- /dev/null
-+++ b/include/linux/union_fs.h
+ /*
+  * for dynamic pipe sizing
+diff -Nurp linux-2.6.35-rc6-git//include/linux/union_fs.h linux-2.6.35-rc6-git-unionfs//include/linux/union_fs.h
+--- linux-2.6.35-rc6-git//include/linux/union_fs.h	1970-01-01 02:00:00.000000000 +0200
++++ linux-2.6.35-rc6-git-unionfs//include/linux/union_fs.h	2010-07-30 15:50:52.714010579 +0300
 @@ -0,0 +1,22 @@
 +/*
 + * Copyright (c) 2003-2009 Erez Zadok
@@ -11273,11 +11210,28 @@ index 0000000..c84d97e
 +
 +#endif /* _LINUX_UNIONFS_H */
 +
-diff --git a/security/security.c b/security/security.c
-index 122b748..a02aece 100644
---- a/security/security.c
-+++ b/security/security.c
-@@ -557,6 +557,7 @@ int security_inode_permission(struct inode *inode, int mask)
+diff -Nurp linux-2.6.35-rc6-git//MAINTAINERS linux-2.6.35-rc6-git-unionfs//MAINTAINERS
+--- linux-2.6.35-rc6-git//MAINTAINERS	2010-07-30 14:05:44.879978886 +0300
++++ linux-2.6.35-rc6-git-unionfs//MAINTAINERS	2010-07-30 15:50:42.995947739 +0300
+@@ -5766,6 +5766,14 @@ F:	Documentation/cdrom/
+ F:	drivers/cdrom/cdrom.c
+ F:	include/linux/cdrom.h
+ 
++UNIONFS
++P:	Erez Zadok
++M:	ezk@cs.sunysb.edu
++L:	unionfs@filesystems.org
++W:	http://unionfs.filesystems.org/
++T:	git git.kernel.org/pub/scm/linux/kernel/git/ezk/unionfs.git
++S:	Maintained
++
+ UNSORTED BLOCK IMAGES (UBI)
+ M:	Artem Bityutskiy <dedekind1@gmail.com>
+ W:	http://www.linux-mtd.infradead.org/
+diff -Nurp linux-2.6.35-rc6-git//security/security.c linux-2.6.35-rc6-git-unionfs//security/security.c
+--- linux-2.6.35-rc6-git//security/security.c	2010-07-30 14:05:39.660952393 +0300
++++ linux-2.6.35-rc6-git-unionfs//security/security.c	2010-07-30 15:50:52.714010579 +0300
+@@ -529,6 +529,7 @@ int security_inode_permission(struct ino
  		return 0;
  	return security_ops->inode_permission(inode, mask);
  }
@@ -11285,3 +11239,149 @@ index 122b748..a02aece 100644
  
  int security_inode_setattr(struct dentry *dentry, struct iattr *attr)
  {
+
+This adapts unionfs to vfs changes in 2.6.35
+
+Signed-off-by: Thomas Backlund <tmb@mandriva.org>
+
+ fs/copyup.c |    3 +--
+ fs/file.c   |    7 +++----
+ fs/super.c  |    2 +-
+ fs/union.h  |    3 +--
+ 4 files changed, 6 insertions(+), 9 deletions(-)
+
+diff -Nurp linux-2.6.35-rc6-git-unionfs//fs/unionfs/copyup.c linux-2.6.35-rc6-git-unionfs-buildfix//fs/unionfs/copyup.c
+--- linux-2.6.35-rc6-git-unionfs//fs/unionfs/copyup.c	2010-07-30 15:50:50.558010270 +0300
++++ linux-2.6.35-rc6-git-unionfs-buildfix//fs/unionfs/copyup.c	2010-07-30 16:40:07.224979088 +0300
+@@ -326,8 +326,7 @@ static int __copyup_reg_data(struct dent
+ 	kfree(buf);
+ 
+ 	if (!err)
+-		err = output_file->f_op->fsync(output_file,
+-					       new_lower_dentry, 0);
++		err = output_file->f_op->fsync(output_file, 0);
+ 
+ 	if (err)
+ 		goto out_close_out;
+diff -Nurp linux-2.6.35-rc6-git-unionfs//fs/unionfs/file.c linux-2.6.35-rc6-git-unionfs-buildfix//fs/unionfs/file.c
+--- linux-2.6.35-rc6-git-unionfs//fs/unionfs/file.c	2010-07-30 15:50:50.559010056 +0300
++++ linux-2.6.35-rc6-git-unionfs-buildfix//fs/unionfs/file.c	2010-07-30 17:13:17.648885524 +0300
+@@ -188,8 +188,9 @@ out:
+ 	return err;
+ }
+ 
+-int unionfs_fsync(struct file *file, struct dentry *dentry, int datasync)
++int unionfs_fsync(struct file *file, int datasync)
+ {
++	struct dentry *dentry = file->f_path.dentry;
+ 	int bindex, bstart, bend;
+ 	struct file *lower_file;
+ 	struct dentry *lower_dentry;
+@@ -224,9 +225,7 @@ int unionfs_fsync(struct file *file, str
+ 		lower_file = unionfs_lower_file_idx(file, bindex);
+ 		lower_dentry = unionfs_lower_dentry_idx(dentry, bindex);
+ 		mutex_lock(&lower_inode->i_mutex);
+-		err = lower_inode->i_fop->fsync(lower_file,
+-						lower_dentry,
+-						datasync);
++		err = lower_inode->i_fop->fsync(lower_file, datasync);
+ 		if (!err && bindex == bstart)
+ 			fsstack_copy_attr_times(inode, lower_inode);
+ 		mutex_unlock(&lower_inode->i_mutex);
+diff -Nurp linux-2.6.35-rc6-git-unionfs//fs/unionfs/super.c linux-2.6.35-rc6-git-unionfs-buildfix//fs/unionfs/super.c
+--- linux-2.6.35-rc6-git-unionfs//fs/unionfs/super.c	2010-07-30 15:50:50.562010141 +0300
++++ linux-2.6.35-rc6-git-unionfs-buildfix//fs/unionfs/super.c	2010-07-30 17:32:08.119042569 +0300
+@@ -938,7 +938,7 @@ void unionfs_destroy_inode_cache(void)
+  *
+  * No need to grab sb info's rwsem.
+  */
+-static int unionfs_write_inode(struct inode *inode, int sync)
++static int unionfs_write_inode(struct inode *inode, struct writeback_control *wbc)
+ {
+ 	struct list_head *pos, *n;
+ 	struct unionfs_dir_state *rdstate;
+diff -Nurp linux-2.6.35-rc6-git-unionfs//fs/unionfs/union.h linux-2.6.35-rc6-git-unionfs-buildfix//fs/unionfs/union.h
+--- linux-2.6.35-rc6-git-unionfs//fs/unionfs/union.h	2010-07-30 15:50:50.563010175 +0300
++++ linux-2.6.35-rc6-git-unionfs-buildfix//fs/unionfs/union.h	2010-07-30 16:32:43.455947876 +0300
+@@ -416,8 +416,7 @@ extern int unionfs_file_release(struct i
+ extern int unionfs_flush(struct file *file, fl_owner_t id);
+ extern long unionfs_ioctl(struct file *file, unsigned int cmd,
+ 			  unsigned long arg);
+-extern int unionfs_fsync(struct file *file, struct dentry *dentry,
+-			 int datasync);
++extern int unionfs_fsync(struct file *file, int datasync);
+ extern int unionfs_fasync(int fd, struct file *file, int flag);
+ 
+ /* Inode operations */
+From 2eac19af5c9a275a78fb98c9e8f232bf88f4a040 Mon Sep 17 00:00:00 2001
+From: Pascal Terjan <pterjan@mandriva.com>
+Date: Wed, 23 Dec 2009 15:07:41 +0100
+Subject: [PATCH] Fix a oops on rpm -e openoffice.org-voikko
+
+Signed-off-by: Pascal Terjan <pterjan@mandriva.com>
+
+diff --git a/fs/unionfs/unlink.c b/fs/unionfs/unlink.c
+index bd5a3b3..6b2f16f 100644
+--- a/fs/unionfs/unlink.c
++++ b/fs/unionfs/unlink.c
+@@ -144,8 +144,6 @@
+ 	if (!err) {
+ 		unionfs_postcopyup_release(dentry);
+ 		unionfs_postcopyup_setmnt(parent);
+-		if (inode->i_nlink == 0) /* drop lower inodes */
+-			iput_lowers_all(inode, false);
+ 		d_drop(dentry);
+ 		/*
+ 		 * if unlink/whiteout succeeded, parent dir mtime has
+-- 
+1.6.2.5
+Ok. Here's a temporary patch that makes everything except looking at
+the Smack label work properly. I haven't signed it off because I
+don't think it's ready for prime-time, but if the problem is holding
+anyone up it will allow them to proceed.
+
+Casey Schaufler
+
+---
+ security/smack/smack_lsm.c |   23 +++++++++++++++++++++++
+ 1 file changed, 23 insertions(+)
+
+--- a/security/smack/smack_lsm.c
++++ b/security/smack/smack_lsm.c
+@@ -2016,6 +2016,17 @@ static void smack_d_instantiate(struct d
+ 
+ 	sbp = inode->i_sb;
+ 	sbsp = sbp->s_security;
++
++	/*
++	 * If the superblock isn't initialized someone
++	 * has cobbled together a filesystem that never
++	 * got mounted.
++	 */
++	if (sbsp->smk_initialized == 0) {
++		isp->smk_inode = smack_known_star.smk_known;
++		isp->smk_flags |= SMK_INODE_INSTANT;
++		goto unlockandout;
++	}
+ 	/*
+ 	 * We're going to use the superblock default label
+ 	 * if there's no label on the file.
+@@ -2055,6 +2066,18 @@ static void smack_d_instantiate(struct d
+ 		 */
+ 		final = smack_known_star.smk_known;
+ 		break;
++	case 0:
++	case UNIONFS_SUPER_MAGIC:
++		/*
++		 * It seems that unionfs uses a fake superblock
++		 * and doesn't set the magic number therein.
++		 * Assume that an unset magic number is unionfs.
++		 *
++		 * Let the real filesystem inodes provide the
++		 * Smack label on access checks.
++		 */
++		final = smack_known_star.smk_known;
++		break;
+ 	case DEVPTS_SUPER_MAGIC:
+ 		/*
+ 		 * devpts seems content with the label of the task.
