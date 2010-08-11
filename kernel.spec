@@ -114,7 +114,7 @@
 %endif
 
 %define		basever		2.6.35
-%define		postver		%{nil}
+%define		postver		.1
 %define		rel		0.1
 
 %define		_enable_debug_packages			0
@@ -158,7 +158,7 @@ Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{basever}.tar.bz2
 # Source0-md5:	091abeb4684ce03d1d936851618687b6
 %if "%{postver}" != "%{nil}"
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
-# Source1-md5:	6606bcddb89228bd4c7a5b82de384aa5
+# Source1-md5:	3b9d79bebb2e022c0906ca1cd54bd970
 %endif
 
 Source3:	kernel-autoconf.h
