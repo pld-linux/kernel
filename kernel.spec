@@ -12,7 +12,6 @@
 # TODO:
 # - benchmark NO_HZ & HZ=1000 vs HZ=300 on i686
 # - update or remove tahoe9xx patch2
-# - update or remove mpt-fusion patch90
 # - update grsec_minimal patch1000:
 #   fs/proc/base.c:1484: error: 'struct task_struct' has no member named 'uid'
 #
@@ -270,9 +269,6 @@ Patch70:	kernel-tuxonice-headers.patch
 # adds some ids for hostap suported cards and monitor_enable from/for aircrack-ng
 # http://patches.aircrack-ng.org/hostap-kernel-2.6.18.patch
 Patch85:	kernel-hostap.patch
-
-# Taken from http://download.opensuse.org/factory/repo/src-oss/suse/src/kernel-source-2.6.30-10.3.src.rpm
-Patch90:	kernel-mpt-fusion.patch
 
 # based on http://vserver.13thfloor.at/Experimental/patch-2.6.35-vs2.3.0.36.31.diff
 Patch100:	kernel-vserver-2.3.patch
@@ -790,10 +786,6 @@ sed -i 's/-Werror//' arch/alpha/kernel/Makefile
 
 # hostap enhancements from/for aircrack-ng
 %patch85 -p1
-
-# LSI MPT Fusion driver update (by LSI via SUSE folks)
-# FIXME!
-#%patch90 -p1
 
 # vserver
 %if %{with vserver}
