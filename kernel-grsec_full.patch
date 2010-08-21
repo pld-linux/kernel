@@ -32371,14 +32371,14 @@ diff -urNp linux-2.6.34/fs/proc/task_mmu.c linux-2.6.34/fs/proc/task_mmu.c
  {
  	struct mm_struct *mm = vma->vm_mm;
 @@ -221,13 +238,22 @@ static void show_map_vma(struct seq_file
- 	}
+ 		start += PAGE_SIZE;
  
  	seq_printf(m, "%08lx-%08lx %c%c%c%c %08llx %02x:%02x %lu %n",
 +#ifdef CONFIG_GRKERNSEC_PROC_MEMMAP
-+			PAX_RAND_FLAGS(mm) ? 0UL : vma->vm_start,
++			PAX_RAND_FLAGS(mm) ? 0UL : start,
 +			PAX_RAND_FLAGS(mm) ? 0UL : vma->vm_end,
 +#else
- 			vma->vm_start,
+ 			start,
  			vma->vm_end,
 +#endif
  			flags & VM_READ ? 'r' : '-',
