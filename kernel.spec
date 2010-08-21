@@ -288,6 +288,15 @@ Patch145:	kernel-aufs.patch
 Patch146:	kernel-aufs-support.patch
 
 # http://git.c3sl.ufpr.br/pub/scm/aufs/aufs2-standalone.git, read README
+# Patch creation:
+# git clone http://git.c3sl.ufpr.br/pub/scm/aufs/aufs2-standalone.git
+# cd aufs2-standalone.git
+# git checkout -b aufs2-35 origin/aufs2-35
+# cat aufs2-kbuild.patch aufs2-base.patch aufs2-standalone.patch > ~/rpm/packages/kernel/kernel-aufs2.patch
+# mkdir linux
+# cp -a Documentation fs include linux
+# diff -urN /usr/share/empty linux >> ~/rpm/packages/kernel/kernel-aufs2.patch 
+
 Patch148:	kernel-aufs2.patch
 
 Patch150:	kernel-ppc-crtsavres.patch
