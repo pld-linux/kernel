@@ -343,6 +343,7 @@ BuildRequires:	gcc >= 5:3.2
 BuildRequires:	xz >= 1:4.999.7
 AutoReqProv:	no
 # for hostname command
+BuildRequires:	module-init-tools >= 3.5
 BuildRequires:	net-tools
 BuildRequires:	perl-base
 BuildRequires:	rpm-build >= 4.5-24
