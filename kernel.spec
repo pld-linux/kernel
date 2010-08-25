@@ -219,9 +219,6 @@ Patch37:	kernel-owner-xid.patch
 # based on http://www.svn.barbara.eu.org/ipt_account/attachment/wiki/Software/ipt_account-0.1.21-20070804164729.tar.gz?format=raw
 Patch38:	kernel-ipt_account.patch
 
-# based on http://www.intra2net.com/de/produkte/opensource/ipt_account/pom-ng-ipt_ACCOUNT-1.12.tgz
-Patch39:	kernel-ipt_ACCOUNT.patch
-
 # based on kernel-2.6.25-layer7-2.20.patch from
 # http://switch.dl.sourceforge.net/sourceforge/l7-filter/netfilter-layer7-v2.20.tar.gz
 Patch40:	kernel-layer7.patch
@@ -745,9 +742,6 @@ sed -i 's/-Werror//' arch/alpha/kernel/Makefile
 
 # kernel-ipt_account.patch
 %patch38 -p1
-
-# kernel-ipt_ACCOUNT.patch
-%patch39 -p1
 
 # kernel-layer7.patch
 %patch40 -p1
