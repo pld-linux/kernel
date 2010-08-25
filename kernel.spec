@@ -206,7 +206,6 @@ Patch4:		kernel-fbcon-margins.patch
 Patch10:	kernel-pom-ng-IPV4OPTSSTRIP.patch
 Patch11:	kernel-pom-ng-ipv4options.patch
 
-Patch14:	kernel-pom-ng-ROUTE.patch
 Patch16:	kernel-pom-ng-mms-conntrack-nat.patch
 Patch22:	kernel-pom-ng-rsh.patch
 Patch23:	kernel-pom-ng-rpc.patch
@@ -726,9 +725,6 @@ sed -i 's/-Werror//' arch/alpha/kernel/Makefile
 
 # kernel-pom-ng-ipv4options.patch
 %patch11 -p1
-
-# kernel-pom-ng-ROUTE.patch
-%patch14 -p1
 
 # kernel-pom-ng-mms-conntrack-nat.patch
 %patch16 -p1
