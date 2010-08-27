@@ -9834,12 +9834,12 @@ diff -urNp linux-2.6.27.10/arch/x86/mm/fault.c linux-2.6.27.10/arch/x86/mm/fault
  #endif
  
 @@ -586,13 +629,22 @@ void __kprobes do_page_fault(struct pt_r
- 	struct task_struct *tsk;
  	struct mm_struct *mm;
  	struct vm_area_struct *vma;
 -	unsigned long address;
  	int write, si_code;
  	int fault;
+ 	int should_exit_no_context = 0;
  #ifdef CONFIG_X86_64
  	unsigned long flags;
  #endif
@@ -17164,14 +17164,14 @@ diff -urNp linux-2.6.27.10/fs/proc/task_mmu.c linux-2.6.27.10/fs/proc/task_mmu.c
  {
  	struct mm_struct *mm = vma->vm_mm;
 @@ -214,13 +231,22 @@ static void show_map_vma(struct seq_file
- 	}
+ 		start += PAGE_SIZE;
  
  	seq_printf(m, "%08lx-%08lx %c%c%c%c %08llx %02x:%02x %lu %n",
 +#ifdef CONFIG_GRKERNSEC_PROC_MEMMAP
 +			PAX_RAND_FLAGS(mm) ? 0UL : vma->vm_start,
 +			PAX_RAND_FLAGS(mm) ? 0UL : vma->vm_end,
 +#else
- 			vma->vm_start,
+ 			start,
  			vma->vm_end,
 +#endif
  			flags & VM_READ ? 'r' : '-',
@@ -34604,15 +34604,6 @@ diff -urNp linux-2.6.27.10/mm/mmap.c linux-2.6.27.10/mm/mmap.c
  		if (locked > limit && !capable(CAP_IPC_LOCK))
  			return -ENOMEM;
  	}
-@@ -1569,7 +1779,7 @@ static int acct_stack_growth(struct vm_a
- 	 * Overcommit..  This must be the final test, as it will
- 	 * update security statistics.
- 	 */
--	if (security_vm_enough_memory(grow))
-+	if (security_vm_enough_memory_mm(mm, grow))
- 		return -ENOMEM;
- 
- 	/* Ok, everything looks good - let it rip */
 @@ -1590,35 +1800,40 @@ static inline
  #endif
  int expand_upwards(struct vm_area_struct *vma, unsigned long address)
