@@ -9537,13 +9537,13 @@ diff -NurpP --minimal linux-2.6.34.1/fs/xfs/xfs_dinode.h linux-2.6.34.1-vs2.3.0.
 --- linux-2.6.34.1/fs/xfs/xfs_dinode.h	2009-06-11 17:13:09.000000000 +0200
 +++ linux-2.6.34.1-vs2.3.0.36.30.4.pre8/fs/xfs/xfs_dinode.h	2010-05-18 18:11:22.000000000 +0200
 @@ -50,7 +50,9 @@ typedef struct xfs_dinode {
- 	__be32		di_gid;		/* owner's group id */
  	__be32		di_nlink;	/* number of links to file */
- 	__be16		di_projid;	/* owner's project id */
--	__u8		di_pad[8];	/* unused, zeroed space */
+ 	__be16		di_projid_lo;	/* lower part of owner's project id */
+ 	__be16		di_projid_hi;	/* higher part owner's project id */
+-	__u8		di_pad[6];	/* unused, zeroed space */
 +	__be16		di_tag;		/* context tagging */
 +	__be16		di_vflags;	/* vserver specific flags */
-+	__u8		di_pad[4];	/* unused, zeroed space */
++	__u8		di_pad[2];	/* unused, zeroed space */
  	__be16		di_flushiter;	/* incremented on flush */
  	xfs_timestamp_t	di_atime;	/* time last accessed */
  	xfs_timestamp_t	di_mtime;	/* time last modified */
@@ -9590,12 +9590,12 @@ diff -NurpP --minimal linux-2.6.34.1/fs/xfs/xfs_fs.h linux-2.6.34.1-vs2.3.0.36.3
  
  /*
 @@ -293,7 +296,8 @@ typedef struct xfs_bstat {
- 	__u32		bs_gen;		/* generation count		*/
- 	__u16		bs_projid;	/* project id			*/
+ 	__u16		bs_projid_lo;	/* lower part of project id			*/
  	__u16		bs_forkoff;	/* inode fork offset in bytes	*/
--	unsigned char	bs_pad[12];	/* pad space, unused		*/
+ 	__u16		bs_projid_hi;	/* higher part of project id	*/
+-	unsigned char	bs_pad[10];	/* pad space, unused		*/
 +	__u16		bs_tag;		/* context tagging		*/
-+	unsigned char	bs_pad[10];	/* pad space, unused		*/
++	unsigned char	bs_pad[8];	/* pad space, unused		*/
  	__u32		bs_dmevmask;	/* DMIG event mask		*/
  	__u16		bs_dmstate;	/* DMIG state info		*/
  	__u16		bs_aextents;	/* attribute number of extents	*/
@@ -9758,7 +9758,7 @@ diff -NurpP --minimal linux-2.6.34.1/fs/xfs/xfs_inode.c linux-2.6.34.1-vs2.3.0.3
  	ip->i_d.di_uid = current_fsuid();
  	ip->i_d.di_gid = current_fsgid();
 +	ip->i_d.di_tag = current_fstag(cr, &ip->i_vnode);
- 	ip->i_d.di_projid = prid;
+ 	xfs_set_projid(ip, prid);
  	memset(&(ip->i_d.di_pad[0]), 0, sizeof(ip->i_d.di_pad));
  
 @@ -1096,6 +1122,7 @@ xfs_ialloc(
@@ -9793,11 +9793,12 @@ diff -NurpP --minimal linux-2.6.34.1/fs/xfs/xfs_inode.h linux-2.6.34.1-vs2.3.0.3
 @@ -135,7 +135,9 @@ typedef struct xfs_icdinode {
  	__uint32_t	di_gid;		/* owner's group id */
  	__uint32_t	di_nlink;	/* number of links to file */
- 	__uint16_t	di_projid;	/* owner's project id */
--	__uint8_t	di_pad[8];	/* unused, zeroed space */
+ 	__uint16_t	di_projid_lo;	/* lower part of owner's project id */
+ 	__uint16_t	di_projid_hi;	/* higher part of owner's project id */
+-	__uint8_t	di_pad[6];	/* unused, zeroed space */
 +	__uint16_t	di_tag;		/* context tagging */
 +	__uint16_t	di_vflags;	/* vserver specific flags */
-+	__uint8_t	di_pad[4];	/* unused, zeroed space */
++	__uint8_t	di_pad[2];	/* unused, zeroed space */
  	__uint16_t	di_flushiter;	/* incremented on flush */
  	xfs_ictimestamp_t di_atime;	/* time last accessed */
  	xfs_ictimestamp_t di_mtime;	/* time last modified */
