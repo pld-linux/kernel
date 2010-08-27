@@ -3215,7 +3215,7 @@ diff -urNp linux-2.6.34/arch/sparc/include/asm/atomic_64.h linux-2.6.34/arch/spa
  #define ATOMIC64_INIT(i)	{ (i) }
  
  #define atomic_read(v)		((v)->counter)
-+static inline int atomic_read_unchecked(const atomic_unchecked_t *v)
++static inline long atomic_read_unchecked(const atomic_unchecked_t *v)
 +{
 +	return v->counter;
 +}
@@ -3238,18 +3238,18 @@ diff -urNp linux-2.6.34/arch/sparc/include/asm/atomic_64.h linux-2.6.34/arch/spa
  
  extern void atomic_add(int, atomic_t *);
 +extern void atomic_add_unchecked(int, atomic_unchecked_t *);
- extern void atomic64_add(int, atomic64_t *);
-+extern void atomic64_add_unchecked(int, atomic64_unchecked_t *);
+ extern void atomic64_add(long, atomic64_t *);
++extern void atomic64_add_unchecked(long, atomic64_unchecked_t *);
  extern void atomic_sub(int, atomic_t *);
 +extern void atomic_sub_unchecked(int, atomic_unchecked_t *);
- extern void atomic64_sub(int, atomic64_t *);
-+extern void atomic64_sub_unchecked(int, atomic64_unchecked_t *);
+ extern void atomic64_sub(long, atomic64_t *);
++extern void atomic64_sub_unchecked(long, atomic64_unchecked_t *);
  
  extern int atomic_add_ret(int, atomic_t *);
- extern int atomic64_add_ret(int, atomic64_t *);
-+extern int atomic64_add_ret_unchecked(int, atomic64_unchecked_t *);
+ extern long atomic64_add_ret(long, atomic64_t *);
++extern long atomic64_add_ret_unchecked(long, atomic64_unchecked_t *);
  extern int atomic_sub_ret(int, atomic_t *);
- extern int atomic64_sub_ret(int, atomic64_t *);
+ extern long atomic64_sub_ret(long, atomic64_t *);
  
 @@ -34,6 +55,7 @@ extern int atomic64_sub_ret(int, atomic6
  
@@ -46615,7 +46615,7 @@ diff -urNp linux-2.6.34/kernel/fork.c linux-2.6.34/kernel/fork.c
 @@ -347,6 +347,7 @@ static int dup_mmap(struct mm_struct *mm
  		tmp->vm_flags &= ~VM_LOCKED;
  		tmp->vm_mm = mm;
- 		tmp->vm_next = NULL;
+ 		tmp->vm_next = tmp->vm_prev = NULL;
 +		tmp->vm_mirror = NULL;
  		file = tmp->vm_file;
  		if (file) {
