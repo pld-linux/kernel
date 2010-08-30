@@ -298,6 +298,9 @@ Patch101:	kernel-vserver-fixes.patch
 # Fix verified for that kernel version.
 Patch130:	linux-2.6-forcedeth-WON.patch
 
+# add tty ioctl to figure physical device of the console. used by showconsole.spec (blogd)
+Patch131:	kernel-TIOCGDEV.patch
+
 # http://download.filesystems.org/unionfs/unionfs-2.x/unionfs-2.5_for_2.6.27-rc6.diff.gz
 Patch140:	kernel-unionfs.patch
 Patch141:	kernel-unionfs-apparmor.patch
@@ -862,6 +865,8 @@ install %{SOURCE5} Makefile.ppclibs
 
 # forcedeth
 %patch130 -p1
+
+%patch131 -p1
 
 # unionfs
 %patch140 -p1
