@@ -284,6 +284,9 @@ Patch101:	kernel-vserver-fixes.patch
 # Fix verified for that kernel version.
 Patch130:	kernel-forcedeth-WON.patch
 
+# add tty ioctl to figure physical device of the console. used by showconsole.spec (blogd)
+Patch131:	kernel-TIOCGDEV.patch
+
 # http://download.filesystems.org/unionfs/unionfs-2.x/unionfs-2.5.4_for_2.6.33.diff.gz
 Patch140:	kernel-unionfs.patch
 
@@ -809,6 +812,8 @@ sed -i 's/-Werror//' arch/alpha/kernel/Makefile
 
 # forcedeth
 %patch130 -p1
+
+%patch131 -p1
 
 # unionfs (problems with aufs2, needed for aufs1 patch)
 %if %{without rescuecd}
