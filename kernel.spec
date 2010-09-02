@@ -1136,33 +1136,33 @@ done
 install -d $RPM_BUILD_ROOT/boot
 cp -a %{objdir}/System.map $RPM_BUILD_ROOT/boot/System.map-%{kernel_release}
 %ifarch %{ix86} %{x8664}
-cp -a %{objdir}/arch/%{target_arch_dir}/boot/bzImage $RPM_BUILD_ROOT/boot/vmlinuz-%{kernel_release}
-install %{objdir}/vmlinux $RPM_BUILD_ROOT/boot/vmlinux-%{kernel_release}
+	cp -a %{objdir}/arch/%{target_arch_dir}/boot/bzImage $RPM_BUILD_ROOT/boot/vmlinuz-%{kernel_release}
+	install -p %{objdir}/vmlinux $RPM_BUILD_ROOT/boot/vmlinux-%{kernel_release}
 %endif
 %ifarch ppc ppc64
-install %{objdir}/vmlinux $RPM_BUILD_ROOT/boot/vmlinuz-%{kernel_release}
-install %{objdir}/vmlinux $RPM_BUILD_ROOT/boot/vmlinux-%{kernel_release}
+	install -p %{objdir}/vmlinux $RPM_BUILD_ROOT/boot/vmlinuz-%{kernel_release}
+	install -p %{objdir}/vmlinux $RPM_BUILD_ROOT/boot/vmlinux-%{kernel_release}
 %endif
 %ifarch ia64
-%{__gzip} -cfv %{objdir}/vmlinux > %{objdir}/vmlinuz
-cp -a %{objdir}/vmlinuz $RPM_BUILD_ROOT/boot/efi/vmlinuz-%{kernel_release}
-ln -sf efi/vmlinuz-%{kernel_release} $RPM_BUILD_ROOT/boot/vmlinuz-%{kernel_release}
+	%{__gzip} -cfv %{objdir}/vmlinux > %{objdir}/vmlinuz
+	cp -a %{objdir}/vmlinuz $RPM_BUILD_ROOT/boot/efi/vmlinuz-%{kernel_release}
+	ln -sf efi/vmlinuz-%{kernel_release} $RPM_BUILD_ROOT/boot/vmlinuz-%{kernel_release}
 %endif
 %ifarch alpha sparc sparc64
 	%{__gzip} -cfv %{objdir}/vmlinux > %{objdir}/vmlinuz
 	cp -a %{objdir}/vmlinuz $RPM_BUILD_ROOT/boot/vmlinuz-%{kernel_release}
-	install %{objdir}/vmlinux $RPM_BUILD_ROOT/boot/vmlinuz-%{kernel_release}
-%ifarch sparc
-	elftoaout %{objdir}/arch/sparc/boot/image -o %{objdir}/vmlinux.aout
-	install %{objdir}/vmlinux.aout $RPM_BUILD_ROOT/boot/vmlinux.aout-%{kernel_release}
-%endif
-%ifarch sparc64
-	elftoaout %{objdir}/arch/sparc64/boot/image -o %{objdir}/vmlinux.aout
-	install %{objdir}/vmlinux.aout $RPM_BUILD_ROOT/boot/vmlinux.aout-%{kernel_release}
+	install -p %{objdir}/vmlinux $RPM_BUILD_ROOT/boot/vmlinuz-%{kernel_release}
+	%ifarch sparc
+		elftoaout %{objdir}/arch/sparc/boot/image -o %{objdir}/vmlinux.aout
+		install -p %{objdir}/vmlinux.aout $RPM_BUILD_ROOT/boot/vmlinux.aout-%{kernel_release}
+	%endif
+	%ifarch sparc64
+		elftoaout %{objdir}/arch/sparc64/boot/image -o %{objdir}/vmlinux.aout
+		install -p %{objdir}/vmlinux.aout $RPM_BUILD_ROOT/boot/vmlinux.aout-%{kernel_release}
+	%endif
 %endif
 %ifarch arm
-	install %{objdir}/arch/arm/boot/zImage $RPM_BUILD_ROOT/boot/vmlinuz-%{kernel_release}
-%endif
+	install -p %{objdir}/arch/arm/boot/zImage $RPM_BUILD_ROOT/boot/vmlinuz-%{kernel_release}
 %endif
 
 # ghosted initrd
