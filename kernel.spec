@@ -1123,7 +1123,7 @@ cd -
 
 %install
 rm -rf $RPM_BUILD_ROOT
-%{__make} %{MakeOpts} %{!?with_verbose:-s} modules_install firmware_install \
+%{__make} %{MakeOpts} -j1 %{!?with_verbose:-s} modules_install firmware_install \
 	-C %{objdir} \
 	%{?with_verbose:V=1} \
 	DEPMOD=%{DepMod} \
