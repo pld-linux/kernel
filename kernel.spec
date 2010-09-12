@@ -115,7 +115,7 @@
 
 %define		basever		2.6.34
 %define		postver		.6
-%define		rel		1
+%define		rel		2
 
 %define		_enable_debug_packages			0
 
@@ -201,6 +201,8 @@ Patch2:		kernel-tahoe9xx.patch
 # http://dev.gentoo.org/~spock/projects/fbcondecor/archive/fbcondecor-0.9.4-2.6.25-rc6.patch
 Patch3:		kernel-fbcondecor.patch
 Patch4:		kernel-fbcon-margins.patch
+
+Patch5:		kernel-logitech-harmony-700-quirk.patch
 
 # netfilter related stuff mostly based on patch-o-matic-ng
 # snapshot 20070806 with some fixes. Some modules
@@ -719,6 +721,8 @@ sed -i 's/-Werror//' arch/alpha/kernel/Makefile
 %patch3 -p1
 %endif
 %patch4 -p1
+
+%patch5 -p1 -R
 
 ## netfilter
 #
