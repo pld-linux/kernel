@@ -77,3 +77,45 @@
  #include "../../include/linux/license.h"
  
  /* Some toolchains use a `_' prefix for all user symbols. */
+Subject: [PATCH] Disallow 32bit project quota id.
+
+Currently on-disk structure is able to keep only 16bit project quota id,
+so disallow 32bit ones. This fixes a problem where parts of kernel
+structures holding project quota id are 32bit while parts (on-disk)
+are 16bit variables which causes project quota member files to be
+inaccessible for some operations (like mv/rm).
+
+Signed-off-by: Arkadiusz Miśkiewicz <arekm@maven.pl>
+---
+
+Issues solved:
+- FSX_PROJID in mask is checked
+- 80 column issue fixed
+- checkpath.pl checked
+
+
+ fs/xfs/linux-2.6/xfs_ioctl.c |    7 +++++++
+ 1 files changed, 7 insertions(+), 0 deletions(-)
+
+diff --git a/fs/xfs/linux-2.6/xfs_ioctl.c b/fs/xfs/linux-2.6/xfs_ioctl.c
+index 237f5ff..4fec427 100644
+--- a/fs/xfs/linux-2.6/xfs_ioctl.c
++++ b/fs/xfs/linux-2.6/xfs_ioctl.c
+@@ -907,6 +907,13 @@ xfs_ioctl_setattr(
+ 		return XFS_ERROR(EIO);
+ 
+ 	/*
++	 * Disallow 32bit project ids because on-disk structure
++	 * is 16bit only.
++	 */
++	if ((mask & FSX_PROJID) && (fa->fsx_projid > (__uint16_t)-1))
++		return XFS_ERROR(EINVAL);
++
++	/*
+ 	 * If disk quotas is on, we make sure that the dquots do exist on disk,
+ 	 * before we start any other transactions. Trying to do this later
+ 	 * is messy. We don't care to take a readlock to look at the ids
+-- 
+1.7.2.2
+
+
