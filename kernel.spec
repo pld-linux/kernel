@@ -114,8 +114,8 @@
 %endif
 
 %define		basever		2.6.34
-%define		postver		.6
-%define		rel		2
+%define		postver		.7
+%define		rel		1
 
 %define		_enable_debug_packages			0
 
@@ -158,7 +158,7 @@ Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{basever}.tar.bz2
 # Source0-md5:	10eebcb0178fb4540e2165bfd7efc7ad
 %if "%{postver}" != "%{nil}"
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
-# Source1-md5:	49d8234d88bba062edcab19fd0ee28b4
+# Source1-md5:	a88e4b5a9fcb23c2229301ac4dae1f1a
 %endif
 
 Source3:	kernel-autoconf.h
@@ -201,8 +201,6 @@ Patch2:		kernel-tahoe9xx.patch
 # http://dev.gentoo.org/~spock/projects/fbcondecor/archive/fbcondecor-0.9.4-2.6.25-rc6.patch
 Patch3:		kernel-fbcondecor.patch
 Patch4:		kernel-fbcon-margins.patch
-
-Patch5:		kernel-logitech-harmony-700-quirk.patch
 
 # netfilter related stuff mostly based on patch-o-matic-ng
 # snapshot 20070806 with some fixes. Some modules
@@ -721,8 +719,6 @@ sed -i 's/-Werror//' arch/alpha/kernel/Makefile
 %patch3 -p1
 %endif
 %patch4 -p1
-
-%patch5 -p1 -R
 
 ## netfilter
 #
