@@ -114,7 +114,7 @@
 
 %define		basever		2.6.35
 %define		postver		.4
-%define		rel		1
+%define		rel		2
 
 %define		_enable_debug_packages			0
 
@@ -312,6 +312,7 @@ Patch1000:	kernel-grsec-minimal.patch
 Patch2000:	kernel-small_fixes.patch
 Patch2001:	kernel-pwc-uncompress.patch
 Patch2003:	kernel-regressions.patch
+Patch2004:	kernel-CVE-2010-3081.patch
 
 # kill some thousands of warnings
 # (only warnings, so just remove parts of this patch if conflics)
@@ -855,6 +856,7 @@ sed -i 's/-Werror//' arch/alpha/kernel/Makefile
 %patch2000 -p1
 %patch2001 -p1
 #%patch2003 -p1
+%patch2004 -p1
 
 # Fix EXTRAVERSION in main Makefile
 sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{postver}%{?alt_kernel:_%{alt_kernel}}#g' Makefile
