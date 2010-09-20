@@ -299,6 +299,9 @@ Patch150:	kernel-ppc-crtsavres.patch
 
 Patch200:	kernel-ppc-ICE-hacks.patch
 
+# Show normal colors in menuconfig with ncurses ABI 6
+Patch250:	kernel-fix_256colors_menuconfig.patch
+
 # The following patch extend the routing functionality in Linux
 # to support static routes (defined by user), new way to use the
 # alternative routes, the reverse path protection (rp_filter),
@@ -848,6 +851,8 @@ sed -i 's/-Werror//' arch/alpha/kernel/Makefile
 %ifarch ppc ppc64
 #patch200 -p1
 %endif
+
+%patch250 -p1
 
 # routes
 %patch300 -p1
