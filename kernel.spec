@@ -316,6 +316,7 @@ Patch2000:	kernel-small_fixes.patch
 Patch2001:	linux-2.6.21.1-pwc-uncompress.patch
 Patch2003:	kernel-regressions.patch
 Patch2004:	kernel-getline.patch
+Patch2005:	CVE-2010-3081,CVE-2010-3301.patch
 
 Patch2100:	kernel-mmap_min_addr.patch
 Patch2101:	kernel-CVE-2009-1895.patch
@@ -942,6 +943,7 @@ install %{SOURCE5} Makefile.ppclibs
 %patch2001 -p1
 #%patch2003 -p1
 %patch2004 -p1
+%patch2005 -p1
 
 %patch2100 -p1
 %patch2101 -p1
