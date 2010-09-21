@@ -113,8 +113,8 @@
 %endif
 
 %define		basever		2.6.35
-%define		postver		.4
-%define		rel		3
+%define		postver		.5
+%define		rel		1
 
 %define		_enable_debug_packages			0
 
@@ -157,7 +157,7 @@ Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{basever}.tar.bz2
 # Source0-md5:	091abeb4684ce03d1d936851618687b6
 %if "%{postver}" != "%{nil}"
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
-# Source1-md5:	738f762746488345b1a8707d00895eef
+# Source1-md5:	5bf1900e4ea72b8c65f4f7aae0a28d14
 %endif
 
 Source3:	kernel-autoconf.h
@@ -315,7 +315,6 @@ Patch1000:	kernel-grsec-minimal.patch
 Patch2000:	kernel-small_fixes.patch
 Patch2001:	kernel-pwc-uncompress.patch
 Patch2003:	kernel-regressions.patch
-Patch2004:	kernel-netfilter-bug-669.patch
 
 # kill some thousands of warnings
 # (only warnings, so just remove parts of this patch if conflics)
@@ -861,7 +860,6 @@ sed -i 's/-Werror//' arch/alpha/kernel/Makefile
 %patch2000 -p1
 %patch2001 -p1
 #%patch2003 -p1
-%patch2004 -p1
 
 # Fix EXTRAVERSION in main Makefile
 sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{postver}%{?alt_kernel:_%{alt_kernel}}#g' Makefile
