@@ -23319,9 +23319,9 @@ diff -urNp linux-2.6.35.5/drivers/char/agp/intel-agp.c linux-2.6.35.5/drivers/ch
 --- linux-2.6.35.5/drivers/char/agp/intel-agp.c	2010-08-26 19:47:12.000000000 -0400
 +++ linux-2.6.35.5/drivers/char/agp/intel-agp.c	2010-09-17 20:12:09.000000000 -0400
 @@ -1036,7 +1036,7 @@ static struct pci_device_id agp_intel_pc
- 	ID(PCI_DEVICE_ID_INTEL_IRONLAKE_MC2_HB),
  	ID(PCI_DEVICE_ID_INTEL_SANDYBRIDGE_HB),
  	ID(PCI_DEVICE_ID_INTEL_SANDYBRIDGE_M_HB),
+ 	ID(PCI_DEVICE_ID_INTEL_SANDYBRIDGE_S_HB),
 -	{ }
 +	{ 0, 0, 0, 0, 0, 0, 0 }
  };
@@ -30002,15 +30002,6 @@ diff -urNp linux-2.6.35.5/fs/compat_binfmt_elf.c linux-2.6.35.5/fs/compat_binfmt
 diff -urNp linux-2.6.35.5/fs/compat.c linux-2.6.35.5/fs/compat.c
 --- linux-2.6.35.5/fs/compat.c	2010-08-26 19:47:12.000000000 -0400
 +++ linux-2.6.35.5/fs/compat.c	2010-09-21 20:51:20.000000000 -0400
-@@ -1150,7 +1150,7 @@ static ssize_t compat_do_readv_writev(in
- {
- 	compat_ssize_t tot_len;
- 	struct iovec iovstack[UIO_FASTIOV];
--	struct iovec *iov;
-+	struct iovec *iov = iovstack;
- 	ssize_t ret;
- 	io_fn_t fn;
- 	iov_fn_t fnv;
 @@ -1433,14 +1433,12 @@ static int compat_copy_strings(int argc,
  			if (!kmapped_page || kpos != (pos & PAGE_MASK)) {
  				struct page *page;
@@ -50830,15 +50821,13 @@ diff -urNp linux-2.6.35.5/mm/memory.c linux-2.6.35.5/mm/memory.c
  unlock:
  	pte_unmap_unlock(page_table, ptl);
  out:
-@@ -2760,33 +2968,6 @@ out_release:
+@@ -3000,40 +3000,6 @@ out_release:
  }
  
  /*
-- * This is like a special single-page "expand_downwards()",
-- * except we must first make sure that 'address-PAGE_SIZE'
+- * This is like a special single-page "expand_{down|up}wards()",
+- * except we must first make sure that 'address{-|+}PAGE_SIZE'
 - * doesn't hit another vma.
-- *
-- * The "find_vma()" will do the right thing even if we wrap
 - */
 -static inline int check_stack_guard_page(struct vm_area_struct *vma, unsigned long address)
 -{
@@ -50856,6 +50845,15 @@ diff -urNp linux-2.6.35.5/mm/memory.c linux-2.6.35.5/mm/memory.c
 -			return prev->vm_flags & VM_GROWSDOWN ? 0 : -ENOMEM;
 -
 -		expand_stack(vma, address - PAGE_SIZE);
+-	}
+-	if ((vma->vm_flags & VM_GROWSUP) && address + PAGE_SIZE == vma->vm_end) {
+-		struct vm_area_struct *next = vma->vm_next;
+-
+-		/* As VM_GROWSDOWN but s/below/above/ */
+-		if (next && next->vm_start == address + PAGE_SIZE)
+-			return next->vm_flags & VM_GROWSUP ? 0 : -ENOMEM;
+-
+-		expand_upwards(vma, address + PAGE_SIZE);
 -	}
 -	return 0;
 -}
@@ -54894,17 +54892,6 @@ diff -urNp linux-2.6.35.5/net/rose/af_rose.c linux-2.6.35.5/net/rose/af_rose.c
  		return -EINVAL;
  
  	/* Source + Destination digis should not exceed ROSE_MAX_DIGIS */
-diff -urNp linux-2.6.35.5/net/sctp/output.c linux-2.6.35.5/net/sctp/output.c
---- linux-2.6.35.5/net/sctp/output.c	2010-08-26 19:47:12.000000000 -0400
-+++ linux-2.6.35.5/net/sctp/output.c	2010-09-23 20:47:39.000000000 -0400
-@@ -92,7 +92,6 @@ struct sctp_packet *sctp_packet_config(s
- 	SCTP_DEBUG_PRINTK("%s: packet:%p vtag:0x%x\n", __func__,
- 			  packet, vtag);
- 
--	sctp_packet_reset(packet);
- 	packet->vtag = vtag;
- 
- 	if (ecn_capable && sctp_packet_empty(packet)) {
 diff -urNp linux-2.6.35.5/net/sctp/socket.c linux-2.6.35.5/net/sctp/socket.c
 --- linux-2.6.35.5/net/sctp/socket.c	2010-08-26 19:47:12.000000000 -0400
 +++ linux-2.6.35.5/net/sctp/socket.c	2010-09-17 20:12:09.000000000 -0400
