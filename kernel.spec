@@ -278,11 +278,6 @@ Patch131:	kernel-TIOCGDEV.patch
 # based on mandriva kernel src.rpm patches
 Patch140:	kernel-unionfs.patch
 
-# aufs1, http://aufs.sourceforge.net/
-# aufs1 is NOT maintained since Jan 2009.
-Patch145:	kernel-aufs.patch
-Patch146:	kernel-aufs-support.patch
-
 # http://git.c3sl.ufpr.br/pub/scm/aufs/aufs2-standalone.git, read README
 # Patch creation:
 # git clone http://git.c3sl.ufpr.br/pub/scm/aufs/aufs2-standalone.git
@@ -293,7 +288,9 @@ Patch146:	kernel-aufs-support.patch
 # cp -a Documentation fs include linux
 # diff -urN /usr/share/empty linux >> ~/rpm/packages/kernel/kernel-aufs2.patch 
 
-Patch148:	kernel-aufs2.patch
+Patch145:	kernel-aufs2.patch
+Patch146:	kernel-aufs2-unionfs.patch
+Patch147:	kernel-aufs2-no-const-grsec.patch
 
 Patch150:	kernel-ppc-crtsavres.patch
 
@@ -799,19 +796,12 @@ sed -i 's/-Werror//' arch/alpha/kernel/Makefile
 
 %patch131 -p1
 
-# unionfs (problems with aufs2, needed for aufs1 patch)
-%if %{without rescuecd}
-%patch140 -p1
-%endif
-
-%if %{with rescuecd}
 # aufs2
-%patch148 -p1
-%else
-# aufs1
-#patch145 -p1
-#patch146 -p1
-%endif
+%patch145 -p1
+%patch146 -p1
+
+# unionfs
+%patch140 -p1
 
 %patch2500 -p1
 
@@ -831,6 +821,8 @@ sed -i 's/-Werror//' arch/alpha/kernel/Makefile
 %else
 # grsec_full and/or pax
 %patch9999 -p1
+# aufs2 needs to modify those pointers
+%patch147 -p1
 %{?with_vserver:%patch10000 -p1}
 %{?with_vserver:%patch10001 -p1}
 %{?with_vserver:%patch10002 -p1}
