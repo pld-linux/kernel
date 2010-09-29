@@ -113,8 +113,8 @@
 %endif
 
 %define		basever		2.6.35
-%define		postver		.6
-%define		rel		2
+%define		postver		.7
+%define		rel		1
 
 %define		_enable_debug_packages			0
 
@@ -157,7 +157,7 @@ Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{basever}.tar.bz2
 # Source0-md5:	091abeb4684ce03d1d936851618687b6
 %if "%{postver}" != "%{nil}"
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
-# Source1-md5:	0dbd6ebf242a1428d4161bc32b1306fa
+# Source1-md5:	6a00ec267b0100f20a3fa900b97a5b7f
 %endif
 
 Source3:	kernel-autoconf.h
@@ -324,7 +324,7 @@ Patch5000:	kernel-apparmor.patch
 # based on http://ftp.leg.uct.ac.za/pub/linux/rip/inittmpfs-2.6.14.diff.gz
 Patch7000:	kernel-inittmpfs.patch
 
-# based on http://www.grsecurity.net/~spender/grsecurity-2.2.0-2.6.35.5-201009241805.patch
+# based on http://www.grsecurity.net/~spender/grsecurity-2.2.0-2.6.35.6-201009281623.patch
 # NOTE: put raw upstream patches on kernel-grsec_full.patch:GRSECURITY_RAW for reference
 #       (since upstream deletes older patches)
 Patch9999:	kernel-grsec_full.patch
