@@ -282,7 +282,7 @@ Patch140:	kernel-unionfs.patch
 # Patch creation:
 # git clone http://git.c3sl.ufpr.br/pub/scm/aufs/aufs2-standalone.git
 # cd aufs2-standalone.git
-# git checkout -b aufs2-35 origin/aufs2-35
+# git checkout -b aufs2.1-35 origin/aufs2.1-35
 # cat aufs2-kbuild.patch aufs2-base.patch aufs2-standalone.patch > ~/rpm/packages/kernel/kernel-aufs2.patch
 # mkdir linux
 # cp -a Documentation fs include linux
@@ -291,6 +291,7 @@ Patch140:	kernel-unionfs.patch
 Patch145:	kernel-aufs2.patch
 Patch146:	kernel-aufs2-unionfs.patch
 Patch147:	kernel-aufs2-no-const-grsec.patch
+Patch148:	kernel-aufs2-reiser4.patch
 
 Patch150:	kernel-ppc-crtsavres.patch
 
@@ -797,6 +798,9 @@ sed -i 's/-Werror//' arch/alpha/kernel/Makefile
 %patch131 -p1
 
 # aufs2
+%if %{with reiser4}
+%patch148 -p1
+%endif
 %patch145 -p1
 %patch146 -p1
 
