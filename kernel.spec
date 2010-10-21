@@ -274,6 +274,9 @@ Patch101:	kernel-vserver-fixes.patch
 Patch130:	kernel-forcedeth-WON.patch
 
 # add tty ioctl to figure physical device of the console. used by showconsole.spec (blogd)
+# raw from http://download.opensuse.org/update/11.2/rpm/src/kernel-source-2.6.31.12-0.2.1.src.rpm
+# from patches.fixes.tar.bz2
+# from patches.fixes/tiocgdev
 Patch131:	kernel-TIOCGDEV.patch
 
 # http://download.filesystems.org/unionfs/unionfs-2.x/unionfs-2.5.4_for_2.6.34-rc0.diff.gz
