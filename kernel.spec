@@ -10,6 +10,8 @@
 # # curl -s http://www.kernel.org/kdist/finger_banner
 #
 # TODO:
+# - update aufs2 patch when final version for 2.6.36 exists
+
 # - benchmark NO_HZ & HZ=1000 vs HZ=300 on i686
 # - update or remove tahoe9xx patch2
 # - update grsec_minimal patch1000:
@@ -281,7 +283,7 @@ Patch140:	kernel-unionfs.patch
 # http://git.c3sl.ufpr.br/pub/scm/aufs/aufs2-standalone.git, read README
 # Patch creation:
 # git clone http://git.c3sl.ufpr.br/pub/scm/aufs/aufs2-standalone.git
-# cd aufs2-standalone.git
+# cd aufs2-standalone
 # git checkout -b aufs2.1-35 origin/aufs2.1-35
 # cat aufs2-kbuild.patch aufs2-base.patch aufs2-standalone.patch > ~/rpm/packages/kernel/kernel-aufs2.patch
 # mkdir linux
