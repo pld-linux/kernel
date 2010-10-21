@@ -323,7 +323,9 @@ Patch2003:	kernel-regressions.patch
 # (only warnings, so just remove parts of this patch if conflics)
 Patch2500:	kernel-warnings.patch
 
-# http://kernel.org/pub/linux/security/apparmor/AppArmor-2.6/apparmor-v2.6+v2.4-compat-for-2.6.35.patch
+# 0001-AppArmor-compatibility-patch-for-v5-network-controll.patch
+# 0002-AppArmor-compatibility-patch-for-v5-interface.patch
+# from http://kernel.org/pub/linux/security/apparmor/apparmor-2.6.36-patches.tgz
 Patch5000:	kernel-apparmor.patch
 
 # for rescuecd
