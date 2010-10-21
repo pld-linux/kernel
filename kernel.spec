@@ -159,7 +159,7 @@ Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{basever}.tar.bz2
 # Source0-md5:	61f3739a73afb6914cb007f37fb09b62
 %if "%{postver}" != "%{nil}"
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
-# Source1-md5:	6a00ec267b0100f20a3fa900b97a5b7f
+# Source1-md5:	7115d47e87afef1b9a14dbc9c387cd20
 %endif
 
 Source3:	kernel-autoconf.h
