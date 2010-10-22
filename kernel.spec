@@ -2,7 +2,6 @@
 # NOTE:
 # the following bcond combos will not work
 # - without_vserver and any of the following
-#   - with_apparmor
 #   - with_grsec_minimal
 #   - with_grsec_full
 #
@@ -48,7 +47,6 @@
 
 %bcond_without	vserver		# support for VServer (enabled by default)
 %bcond_without	tuxonice	# support for tuxonice (ex-suspend2) (enabled by default)
-%bcond_without	apparmor	# build kernel with apparmor (exerimental mix)
 
 %bcond_with	rescuecd	# build kernel for our rescue
 
@@ -86,7 +84,6 @@
 %define		have_pcmcia	1
 
 %if %{with rescuecd}
-%unglobal	with_apparmor
 %unglobal	with_tuxonice
 %unglobal	with_grsecurity
 %unglobal	with_grsec_full
@@ -129,7 +126,7 @@
 %endif
 %else
 %if %{without rescuecd}
-%define		__alt_kernel	%{?with_pax:pax}%{!?with_grsec_full:nogrsecurity}%{!?with_apparmor:noaa}%{?with_pae:pae}
+%define		__alt_kernel	%{?with_pax:pax}%{!?with_grsec_full:nogrsecurity}%{?with_pae:pae}
 %if "%{__alt_kernel}" != ""
 %define		alt_kernel	%{__alt_kernel}
 %endif
@@ -474,7 +471,6 @@ BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 %{?with_pax:PaX support - enabled}\
 %{?with_fbcondecor:Fbsplash/fbcondecor - enabled }\
 %{?with_nfsroot:Root on NFS - enabled}\
-%{?with_apparmor:apparmor support - enabled}\
 
 %define Features %(echo "%{__features}" | sed '/^$/d')
 
@@ -843,9 +839,7 @@ sed -i 's/-Werror//' arch/alpha/kernel/Makefile
 # end of grsecurity & pax stuff
 
 # apparmor
-%if %{with apparmor}
 %patch5000 -p1
-%endif
 
 # FIXME
 #%patch150 -p1
@@ -986,16 +980,6 @@ BuildConfig() {
 		CONFIG_DEBUG_SLAB_LEAK=y
 		CONFIG_DEBUG_PREEMPT=y
 		CONFIG_RT_DEADLOCK_DETECT=y
-%endif
-
-# apparmor, will be moved to external file if works
-%if %{with apparmor}
-		CONFIG_SECURITY_APPARMOR=y
-		CONFIG_SECURITY_APPARMOR_BOOTPARAM_VALUE=1
-		CONFIG_SECURITY_APPARMOR_DISABLE=n
-		CONFIG_SECURITY_APPARMOR_NETWORK=y
-		CONFIG_SECURITY_APPARMOR_COMPAT_24=y
-		CONFIG_DEFAULT_SECURITY_APPARMOR=n
 %endif
 
 %if %{without ipv6}
