@@ -268,10 +268,6 @@ Patch146:	kernel-aufs2-unionfs.patch
 Patch147:	kernel-aufs2-no-const-grsec.patch
 Patch148:	kernel-aufs2-reiser4.patch
 
-Patch150:	kernel-ppc-crtsavres.patch
-
-Patch200:	kernel-ppc-ICE-hacks.patch
-
 # Show normal colors in menuconfig with ncurses ABI 6
 Patch250:	kernel-fix_256colors_menuconfig.patch
 
@@ -794,19 +790,11 @@ sed -i 's/-Werror//' arch/alpha/kernel/Makefile
 %{?with_vserver:%patch10001 -p1}
 %{?with_vserver:%patch10002 -p1}
 %endif
-%endif
 #
 # end of grsecurity & pax stuff
 
 # apparmor
 %patch5000 -p1
-
-# FIXME
-#%patch150 -p1
-
-%ifarch ppc ppc64
-#patch200 -p1
-%endif
 
 %patch250 -p1
 
