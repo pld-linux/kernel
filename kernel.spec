@@ -12,7 +12,6 @@
 # - update aufs2 patch when final version for 2.6.36 exists
 
 # - benchmark NO_HZ & HZ=1000 vs HZ=300 on i686
-# - update or remove tahoe9xx patch2
 # - update grsec_minimal patch1000:
 #   fs/proc/base.c:1484: error: 'struct task_struct' has no member named 'uid'
 #
@@ -190,9 +189,6 @@ Source57:	kernel-wrr.config
 
 Source58:	kernel-inittmpfs.config
 Source59:	kernel-bzip2-lzma.config
-
-# tahoe9xx http://www.tahoe.pl/drivers/tahoe9xx-2.6.24.patch
-Patch2:		kernel-tahoe9xx.patch
 
 # http://dev.gentoo.org/~spock/projects/fbcondecor/archive/fbcondecor-0.9.4-2.6.25-rc6.patch
 Patch3:		kernel-fbcondecor.patch
@@ -709,9 +705,6 @@ sed -i 's/-Werror//' arch/alpha/kernel/Makefile
 %patch69 -p1
 %patch70 -p1
 %endif
-
-# tahoe9xx: 2.6.29 - need update
-#%patch2 -p1
 
 %if %{with fbcondecor}
 %patch3 -p1
