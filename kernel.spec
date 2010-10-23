@@ -9,7 +9,7 @@
 #
 # TODO:
 # - update aufs2 patch when final version for 2.6.36 exists
-
+#
 # - benchmark NO_HZ & HZ=1000 vs HZ=300 on i686
 #
 # HOWTO update configuration files:
@@ -28,7 +28,7 @@
 %bcond_without	reiser4		# support for reiser4 fs (experimental)
 
 %bcond_without	grsecurity	# don't build grsecurity nor pax at all
-%bcond_with	pax		# build pax and full grsecurity (ie. grsec_full && pax)
+%bcond_with	pax		# build pax and grsecurity (ie. grsecurity && pax)
 
 %bcond_with	fbcondecor	# build fbcondecor (disable FB_TILEBLITTING and affected fb modules)
 %bcond_with	pae		# build PAE (HIGHMEM64G) support on uniprocessor
@@ -865,7 +865,7 @@ PaXconfig() {
 		CONFIG_PAX_EMUPLT=y
 	%endif
 
-	# Now we have to check MAC system integration. Grsecurity (full) uses PAX_HAVE_ACL_FLAGS
+	# Now we have to check MAC system integration. Grsecurity uses PAX_HAVE_ACL_FLAGS
 	# setting (direct acces). grsec_minimal probably have no idea about PaX so we probably
 	# could use PAX_NO_ACL_FLAGS, but for testing the hooks setting will be used
 	# PAX_HOOK_ACL_FLAGS.
