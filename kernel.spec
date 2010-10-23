@@ -2,8 +2,7 @@
 # NOTE:
 # the following bcond combos will not work
 # - without_vserver and any of the following
-#   - with_grsec_minimal
-#   - with_grsec_full
+#   - with_grsecurity
 #
 # LATEST VERSION CHECKER:
 # # curl -s http://www.kernel.org/kdist/finger_banner
@@ -12,8 +11,6 @@
 # - update aufs2 patch when final version for 2.6.36 exists
 
 # - benchmark NO_HZ & HZ=1000 vs HZ=300 on i686
-# - update grsec_minimal patch1000:
-#   fs/proc/base.c:1484: error: 'struct task_struct' has no member named 'uid'
 #
 # HOWTO update configuration files:
 # - run build
@@ -31,8 +28,6 @@
 %bcond_without	reiser4		# support for reiser4 fs (experimental)
 
 %bcond_without	grsecurity	# don't build grsecurity nor pax at all
-%bcond_without	grsec_full	# build full grsecurity
-%bcond_with	grsec_minimal	# build only minimal subset (proc,link,fifo,shm)
 %bcond_with	pax		# build pax and full grsecurity (ie. grsec_full && pax)
 
 %bcond_with	fbcondecor	# build fbcondecor (disable FB_TILEBLITTING and affected fb modules)
@@ -54,27 +49,12 @@
 %{?debug:%define with_verbose 1}
 
 %if %{without grsecurity}
-%unglobal	with_grsec_full
-%unglobal	with_grsec_minimal
 %unglobal	with_pax
 %endif
 
 %if %{with pax}
-%unglobal	with_grsec_minimal
-%define		with_grsec_full		1
 %define		with_grsecurity		1
 %define		with_pax		1
-%endif
-
-%if %{with grsec_minimal}
-%unglobal	with_pax
-%unglobal	with_grsec_full
-%define		with_grsecurity		1
-%endif
-
-%if %{with grsec_full}
-%unglobal	with_grsec_minimal
-%define		with_grsecurity		1
 %endif
 
 %define		have_drm	1
@@ -85,8 +65,6 @@
 %if %{with rescuecd}
 %unglobal	with_tuxonice
 %unglobal	with_grsecurity
-%unglobal	with_grsec_full
-%unglobal	with_grsec_minimal
 %unglobal	with_pax
 %unglobal	with_vserver
 %define		have_drm	0
@@ -125,7 +103,7 @@
 %endif
 %else
 %if %{without rescuecd}
-%define		__alt_kernel	%{?with_pax:pax}%{!?with_grsec_full:nogrsecurity}%{?with_pae:pae}
+%define		__alt_kernel	%{?with_pax:pax}%{!?with_grsecurity:nogrsecurity}%{?with_pae:pae}
 %if "%{__alt_kernel}" != ""
 %define		alt_kernel	%{__alt_kernel}
 %endif
@@ -182,7 +160,6 @@ Source45:	kernel-grsec.config
 
 Source49:	kernel-pax.config
 Source50:	kernel-no-pax.config
-Source51:	kernel-grsec_minimal.config
 Source55:	kernel-imq.config
 Source56:	kernel-reiser4.config
 Source57:	kernel-wrr.config
@@ -305,8 +282,6 @@ Patch250:	kernel-fix_256colors_menuconfig.patch
 # gateways are used.
 # http://www.ssi.bg/~ja/routes-2.6.35-16.diff
 Patch300:	kernel-routes.patch
-
-Patch1000:	kernel-grsec-minimal.patch
 
 Patch2000:	kernel-small_fixes.patch
 Patch2001:	kernel-pwc-uncompress.patch
@@ -462,8 +437,7 @@ BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 %define MakeOpts %{CrossOpts} HOSTCC="%{__cc}"
 
 %define __features Netfilter module dated: %{netfilter_snap}\
-%{?with_grsec_full:Grsecurity support - enabled}\
-%{?with_grsec_minimal:Grsecurity minimal support /proc,link,fifo,shm/ - enabled}\
+%{?with_grsecurity:Grsecurity support - enabled}\
 %{?with_pax:PaX support - enabled}\
 %{?with_fbcondecor:Fbsplash/fbcondecor - enabled }\
 %{?with_nfsroot:Root on NFS - enabled}\
@@ -812,14 +786,7 @@ sed -i 's/-Werror//' arch/alpha/kernel/Makefile
 # grsecurity & pax stuff
 #
 
-# remember that we have the same config file for grsec_minimal and
-# grsec_full, but the patches are different.
-
 %if %{with grsecurity}
-%if %{with grsec_minimal}
-%patch1000 -p1
-%else
-# grsec_full and/or pax
 %patch9999 -p1
 # aufs2 needs to modify those pointers
 %patch147 -p1
@@ -903,7 +870,7 @@ PaXconfig() {
 	# could use PAX_NO_ACL_FLAGS, but for testing the hooks setting will be used
 	# PAX_HOOK_ACL_FLAGS.
 
-	%if %{with grsec_full}
+	%if %{with grsecurity}
 		# Hardening grsec options if with pax
 		CONFIG_GRKERNSEC_PROC_MEMMAP=y
 		# almost rational (see HIDESYM help)
@@ -1006,7 +973,7 @@ BuildConfig() {
 %endif
 
 # Temporary disabled RELOCATABLE. Needed only on x86??
-%if %{with pax} || %{with grsec_full}
+%if %{with pax} || %{with grsecurity}
 		CONFIG_RELOCATABLE=n
 %endif
 EOCONFIG
@@ -1035,13 +1002,9 @@ EOCONFIG
 		%{SOURCE49} \
 		pax.config \
 %else
-  %if %{with grsec_full}
+  %if %{with grsecurity}
 		%{SOURCE45} \
 		%{SOURCE50} \
-  %else
-	%if %{with grsec_minimal}
-		%{SOURCE51} \
-	%endif
   %endif
 %endif
 		\
