@@ -26915,3 +26915,31 @@ diff -NurpP --minimal linux-2.6.36/security/selinux/hooks.c linux-2.6.36-vs2.3.0
  #include <linux/parser.h>
  #include <linux/nfs_mount.h>
  #include <net/ipv6.h>
+diff -NurpP --minimal linux-2.6.36-vs2.3.0.36.36/fs/namei.c linux-2.6.36-vs2.3.0.36.37/fs/namei.c
+--- linux-2.6.36-vs2.3.0.36.36/fs/namei.c	2010-10-21 22:09:46.000000000 +0200
++++ linux-2.6.36-vs2.3.0.36.37/fs/namei.c	2010-10-21 22:29:08.000000000 +0200
+@@ -194,7 +194,7 @@ static int __dx_permission(const struct 
+ 		    vx_check((xid_t)inode->i_tag, VS_IDENT | VS_WATCH_P))
+ 			return 0;
+ 
+-		/* just say we didn't find anything */
++		/* just pretend we didn't find anything */
+ 		return -ENOENT;
+ 	}
+ 	else if (inode->i_sb->s_magic == PROC_SUPER_MAGIC) {
+diff -NurpP --minimal linux-2.6.36-vs2.3.0.36.36/kernel/vserver/cvirt.c linux-2.6.36-vs2.3.0.36.37/kernel/vserver/cvirt.c
+--- linux-2.6.36-vs2.3.0.36.36/kernel/vserver/cvirt.c	2010-10-21 14:47:08.000000000 +0200
++++ linux-2.6.36-vs2.3.0.36.37/kernel/vserver/cvirt.c	2010-10-24 12:39:42.000000000 +0200
+@@ -292,10 +292,10 @@ int vx_settimeofday(struct timespec *ts)
+ 		return do_settimeofday(ts);
+ 
+ 	getnstimeofday(&ats);
+-	delta = timespec_sub(ts, &ats);
++	delta = timespec_sub(*ts, ats);
+ 
+ 	vxi = current_vx_info();
+-	vxi->cvirt.bias_ts = timespec_add(&vxi->cvirt.bias_ts, &delta);
++	vxi->cvirt.bias_ts = timespec_add(vxi->cvirt.bias_ts, delta);
+ 	return 0;
+ }
+ 
