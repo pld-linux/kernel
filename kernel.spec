@@ -227,7 +227,7 @@ Patch57:	kernel-squashfs-lzma.patch
 Patch59:	kernel-rndis_host-wm5.patch
 
 # Project suspend2 renamed to tuxonice
-# http://tuxonice.net/files/tuxonice-3.2-rc2-for-2.6.35.patch.bz2
+# http://tuxonice.net/files/tuxonice-3.2-rc2-for-2.6.36.patch.bz2
 Patch69:	kernel-tuxonice.patch
 Patch70:	kernel-tuxonice-headers.patch
 
