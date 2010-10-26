@@ -304,6 +304,10 @@ Patch10000:	kernel-grsec-caps.patch
 Patch10001:	kernel-grsec-common.patch
 Patch10002:	kernel-grsec_fixes.patch
 
+# Do not remove this line, please. It is easier for me to uncomment two lines, then patch
+# kernel.spec every time.
+#Patch50000:	kernel-usb_reset.patch
+
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 3:2.18
 %ifarch sparc sparc64
@@ -806,6 +810,9 @@ sed -i 's/-Werror//' arch/alpha/kernel/Makefile
 %patch2000 -p1
 %patch2001 -p1
 #%patch2003 -p1
+
+# Do not remove this, please!
+#%patch50000 -p1
 
 # Fix EXTRAVERSION in main Makefile
 sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{postver}%{?alt_kernel:_%{alt_kernel}}#g' Makefile
