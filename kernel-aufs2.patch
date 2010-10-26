@@ -10669,7 +10669,7 @@ index c53949f..0ae5b91 100644
 +#endif /* __AUFS_FSTYPE_H__ */
 --- /dev/null
 +++ linux-2.6/fs/aufs/hfsnotify.c	2010-10-24 11:37:18.000000000 +0200
-@@ -0,0 +1,230 @@
+@@ -0,0 +1,226 @@
 +/*
 + * Copyright (C) 2005-2010 Junjiro R. Okajima
 + *
@@ -10716,7 +10716,7 @@ index c53949f..0ae5b91 100644
 +	entry = &hn->hn_entry;
 +	fsnotify_init_mark(entry, au_hfsn_free_mark);
 +	entry->mask = AuHfsnMask;
-+	return fsnotify_add_mark(entry, au_hfsn_group, h_inode);
++	return fsnotify_add_mark(entry, au_hfsn_group, h_inode, NULL, 0);
 +}
 +
 +static void au_hfsn_free(struct au_hnotify *hn)
@@ -10724,7 +10724,7 @@ index c53949f..0ae5b91 100644
 +	struct fsnotify_mark *entry;
 +
 +	entry = &hn->hn_entry;
-+	fsnotify_destroy_mark_by_entry(entry);
++	fsnotify_destroy_mark(entry);
 +	fsnotify_put_mark(entry);
 +}
 +
@@ -10820,9 +10820,7 @@ index c53949f..0ae5b91 100644
 +	au_debug(0);
 +#endif
 +
-+	spin_lock(&h_dir->i_lock);
-+	entry = fsnotify_find_mark_entry(group, h_dir);
-+	spin_unlock(&h_dir->i_lock);
++	entry = fsnotify_find_inode_mark(group, h_dir);
 +	if (entry) {
 +		hnotify = container_of(entry, struct au_hnotify, hn_entry);
 +		err = au_hnotify(h_dir, hnotify, mask, &h_child_qstr, h_inode);
@@ -10841,9 +10839,7 @@ index c53949f..0ae5b91 100644
 +	struct fsnotify_mark *entry;
 +	bool send;
 +
-+	spin_lock(&h_inode->i_lock);
-+	entry = fsnotify_find_mark_entry(group, h_inode);
-+	spin_unlock(&h_inode->i_lock);
++	entry = fsnotify_find_inode_mark(group, h_inode);
 +	if (!entry)
 +		return false;
 +
