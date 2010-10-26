@@ -329,6 +329,7 @@ Requires:	/sbin/depmod
 Requires:	coreutils
 Requires:	geninitrd >= 10000-3
 Requires:	module-init-tools >= 0.9.9
+Suggests:	keyutils
 Provides:	%{name}(netfilter) = %{netfilter_snap}
 Provides:	%{name}(vermagic) = %{kernel_release}
 Obsoletes:	kernel%{_alt_kernel}-isdn-mISDN
