@@ -10699,7 +10699,7 @@ index c53949f..0ae5b91 100644
 +				 | FS_CREATE | FS_EVENT_ON_CHILD);
 +static struct fsnotify_group *au_hfsn_group;
 +
-+static void au_hfsn_free_mark(struct fsnotify_mark_entry *entry)
++static void au_hfsn_free_mark(struct fsnotify_mark *entry)
 +{
 +#if 0
 +	struct au_hnotify *hn = container_of(entry, struct au_hnotify,
@@ -10711,7 +10711,7 @@ index c53949f..0ae5b91 100644
 +
 +static int au_hfsn_alloc(struct au_hnotify *hn, struct inode *h_inode)
 +{
-+	struct fsnotify_mark_entry *entry;
++	struct fsnotify_mark *entry;
 +
 +	entry = &hn->hn_entry;
 +	fsnotify_init_mark(entry, au_hfsn_free_mark);
@@ -10721,7 +10721,7 @@ index c53949f..0ae5b91 100644
 +
 +static void au_hfsn_free(struct au_hnotify *hn)
 +{
-+	struct fsnotify_mark_entry *entry;
++	struct fsnotify_mark *entry;
 +
 +	entry = &hn->hn_entry;
 +	fsnotify_destroy_mark_by_entry(entry);
@@ -10732,7 +10732,7 @@ index c53949f..0ae5b91 100644
 +
 +static void au_hfsn_ctl(struct au_hinode *hinode, int do_set)
 +{
-+	struct fsnotify_mark_entry *entry;
++	struct fsnotify_mark *entry;
 +
 +	entry = &hinode->hi_notify->hn_entry;
 +	spin_lock(&entry->lock);
@@ -10791,7 +10791,7 @@ index c53949f..0ae5b91 100644
 +	struct au_hnotify *hnotify;
 +	struct inode *h_dir, *h_inode;
 +	__u32 mask;
-+	struct fsnotify_mark_entry *entry;
++	struct fsnotify_mark *entry;
 +	struct qstr h_child_qstr = {
 +		.name	= event->file_name,
 +		.len	= event->name_len
@@ -10838,7 +10838,7 @@ index c53949f..0ae5b91 100644
 +static bool au_hfsn_should_send_event(struct fsnotify_group *group,
 +				      struct inode *h_inode, __u32 mask)
 +{
-+	struct fsnotify_mark_entry *entry;
++	struct fsnotify_mark *entry;
 +	bool send;
 +
 +	spin_lock(&h_inode->i_lock);
@@ -12608,7 +12608,7 @@ index c53949f..0ae5b91 100644
 +struct au_hnotify {
 +#ifdef CONFIG_AUFS_HNOTIFY
 +#ifdef CONFIG_AUFS_HFSNOTIFY
-+	struct fsnotify_mark_entry	hn_entry;
++	struct fsnotify_mark		hn_entry;
 +#else
 +	struct inotify_watch		hn_watch;
 +#endif
