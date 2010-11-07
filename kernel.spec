@@ -235,7 +235,7 @@ Patch70:	kernel-tuxonice-headers.patch
 # http://patches.aircrack-ng.org/hostap-kernel-2.6.18.patch
 Patch85:	kernel-hostap.patch
 
-# http://vserver.13thfloor.at/Experimental/patch-2.6.36-vs2.3.0.36.36.diff
+# http://vserver.13thfloor.at/Experimental/patch-2.6.36-vs2.3.0.36.38.diff
 Patch100:	kernel-vserver-2.3.patch
 Patch101:	kernel-vserver-fixes.patch
 
@@ -249,8 +249,7 @@ Patch130:	kernel-forcedeth-WON.patch
 # from patches.fixes/tiocgdev
 Patch131:	kernel-TIOCGDEV.patch
 
-# http://download.filesystems.org/unionfs/unionfs-2.x/unionfs-2.5.4_for_2.6.34-rc0.diff.gz
-# based on mandriva kernel src.rpm patches
+# http://download.filesystems.org/unionfs/unionfs-2.x/unionfs-2.5.7_for_2.6.36.diff.gz
 Patch140:	kernel-unionfs.patch
 
 # http://git.c3sl.ufpr.br/pub/scm/aufs/aufs2-standalone.git, read README
@@ -262,7 +261,9 @@ Patch140:	kernel-unionfs.patch
 # mkdir linux
 # cp -a Documentation fs include linux
 # diff -urN /usr/share/empty linux >> ~/rpm/packages/kernel/kernel-aufs2.patch 
-
+#
+# NOTE: temporaily from http://livenet.selfip.com/ftp/debian/aufs2.1-36/ until upstream catches up with 2.6.36
+#
 Patch145:	kernel-aufs2.patch
 Patch146:	kernel-aufs2-unionfs.patch
 Patch147:	kernel-aufs2-no-const-grsec.patch
@@ -296,13 +297,17 @@ Patch5000:	kernel-apparmor.patch
 # based on http://ftp.leg.uct.ac.za/pub/linux/rip/inittmpfs-2.6.14.diff.gz
 Patch7000:	kernel-inittmpfs.patch
 
-# based on http://www.grsecurity.net/~spender/grsecurity-2.2.0-2.6.35.7-201010191911.patch
+# based on http://www.grsecurity.net/~spender/grsecurity-2.2.0-2.6.36-201011062054.patch
 # NOTE: put raw upstream patches on kernel-grsec_full.patch:GRSECURITY_RAW for reference
 #       (since upstream deletes older patches)
 Patch9999:	kernel-grsec_full.patch
 Patch10000:	kernel-grsec-caps.patch
 Patch10001:	kernel-grsec-common.patch
 Patch10002:	kernel-grsec_fixes.patch
+
+# Do not remove this line, please. It is easier for me to uncomment two lines, then patch
+# kernel.spec every time.
+#Patch50000:	kernel-usb_reset.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 3:2.18
@@ -806,6 +811,9 @@ sed -i 's/-Werror//' arch/alpha/kernel/Makefile
 %patch2000 -p1
 %patch2001 -p1
 #%patch2003 -p1
+
+# Do not remove this, please!
+#%patch50000 -p1
 
 # Fix EXTRAVERSION in main Makefile
 sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{postver}%{?alt_kernel:_%{alt_kernel}}#g' Makefile
