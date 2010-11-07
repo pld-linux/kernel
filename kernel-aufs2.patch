@@ -1,397 +1,5 @@
-aufs2.1 kbuild patch for linux-2.6.36
-
-diff --git a/fs/Kconfig b/fs/Kconfig
-index 3d18530..8f582e1 100644
---- a/fs/Kconfig
-+++ b/fs/Kconfig
-@@ -189,6 +189,7 @@ source "fs/romfs/Kconfig"
- source "fs/sysv/Kconfig"
- source "fs/ufs/Kconfig"
- source "fs/exofs/Kconfig"
-+source "fs/aufs/Kconfig"
- 
- endif # MISC_FILESYSTEMS
- 
-diff --git a/fs/Makefile b/fs/Makefile
-index e6ec1d3..b0d795a 100644
---- a/fs/Makefile
-+++ b/fs/Makefile
-@@ -126,3 +126,4 @@ obj-$(CONFIG_BTRFS_FS)		+= btrfs/
- obj-$(CONFIG_GFS2_FS)           += gfs2/
- obj-$(CONFIG_EXOFS_FS)          += exofs/
- obj-$(CONFIG_CEPH_FS)		+= ceph/
-+obj-$(CONFIG_AUFS_FS)           += aufs/
-diff --git a/include/linux/Kbuild b/include/linux/Kbuild
-index 626b629..a841231 100644
---- a/include/linux/Kbuild
-+++ b/include/linux/Kbuild
-@@ -60,6 +60,7 @@ header-y += atmppp.h
- header-y += atmsap.h
- header-y += atmsvc.h
- header-y += audit.h
-+header-y += aufs_type.h
- header-y += auto_fs.h
- header-y += auto_fs4.h
- header-y += auxvec.h
-aufs2.1 base patch for linux-2.6.35
-
-diff --git a/fs/namei.c b/fs/namei.c
-index 868d0cb..6e92c81 100644
---- a/fs/namei.c
-+++ b/fs/namei.c
-@@ -1178,7 +1178,7 @@ out:
-  * needs parent already locked. Doesn't follow mounts.
-  * SMP-safe.
-  */
--static struct dentry *lookup_hash(struct nameidata *nd)
-+struct dentry *lookup_hash(struct nameidata *nd)
- {
- 	int err;
- 
-@@ -1188,7 +1188,7 @@ static struct dentry *lookup_hash(struct nameidata *nd)
- 	return __lookup_hash(&nd->last, nd->path.dentry, nd);
- }
- 
--static int __lookup_one_len(const char *name, struct qstr *this,
-+int __lookup_one_len(const char *name, struct qstr *this,
- 		struct dentry *base, int len)
- {
- 	unsigned long hash;
-diff --git a/fs/splice.c b/fs/splice.c
-index efdbfec..e01a51e 100644
---- a/fs/splice.c
-+++ b/fs/splice.c
-@@ -1104,8 +1104,8 @@ EXPORT_SYMBOL(generic_splice_sendpage);
- /*
-  * Attempt to initiate a splice from pipe to file.
-  */
--static long do_splice_from(struct pipe_inode_info *pipe, struct file *out,
--			   loff_t *ppos, size_t len, unsigned int flags)
-+long do_splice_from(struct pipe_inode_info *pipe, struct file *out,
-+		    loff_t *ppos, size_t len, unsigned int flags)
- {
- 	ssize_t (*splice_write)(struct pipe_inode_info *, struct file *,
- 				loff_t *, size_t, unsigned int);
-@@ -1132,9 +1132,9 @@ static long do_splice_from(struct pipe_inode_info *pipe, struct file *out,
- /*
-  * Attempt to initiate a splice from a file to a pipe.
-  */
--static long do_splice_to(struct file *in, loff_t *ppos,
--			 struct pipe_inode_info *pipe, size_t len,
--			 unsigned int flags)
-+long do_splice_to(struct file *in, loff_t *ppos,
-+		  struct pipe_inode_info *pipe, size_t len,
-+		  unsigned int flags)
- {
- 	ssize_t (*splice_read)(struct file *, loff_t *,
- 			       struct pipe_inode_info *, size_t, unsigned int);
-diff --git a/include/linux/namei.h b/include/linux/namei.h
-index 05b441d..91bc74e 100644
---- a/include/linux/namei.h
-+++ b/include/linux/namei.h
-@@ -73,6 +73,9 @@ extern int vfs_path_lookup(struct dentry *, struct vfsmount *,
- extern struct file *lookup_instantiate_filp(struct nameidata *nd, struct dentry *dentry,
- 		int (*open)(struct inode *, struct file *));
- 
-+extern struct dentry *lookup_hash(struct nameidata *nd);
-+extern int __lookup_one_len(const char *name, struct qstr *this,
-+			    struct dentry *base, int len);
- extern struct dentry *lookup_one_len(const char *, struct dentry *, int);
- 
- extern int follow_down(struct path *);
-diff --git a/include/linux/splice.h b/include/linux/splice.h
-index 997c3b4..be9a153 100644
---- a/include/linux/splice.h
-+++ b/include/linux/splice.h
-@@ -89,4 +89,10 @@ extern int splice_grow_spd(struct pipe_inode_info *, struct splice_pipe_desc *);
- extern void splice_shrink_spd(struct pipe_inode_info *,
- 				struct splice_pipe_desc *);
- 
-+extern long do_splice_from(struct pipe_inode_info *pipe, struct file *out,
-+			   loff_t *ppos, size_t len, unsigned int flags);
-+extern long do_splice_to(struct file *in, loff_t *ppos,
-+			 struct pipe_inode_info *pipe, size_t len,
-+			 unsigned int flags);
-+
- #endif
-aufs2.1 standalone patch for linux-2.6.36
-
-diff --git a/fs/inode.c b/fs/inode.c
-index 722860b..bfb0698 100644
---- a/fs/inode.c
-+++ b/fs/inode.c
-@@ -84,6 +84,7 @@ static struct hlist_head *inode_hashtable __read_mostly;
-  * the i_state of an inode while it is in use..
-  */
- DEFINE_SPINLOCK(inode_lock);
-+EXPORT_SYMBOL(inode_lock);
- 
- /*
-  * iprune_sem provides exclusion between the kswapd or try_to_free_pages
-diff --git a/fs/namei.c b/fs/namei.c
-index 56e8ece..ba75f28 100644
---- a/fs/namei.c
-+++ b/fs/namei.c
-@@ -347,6 +347,7 @@ int deny_write_access(struct file * file)
- 
- 	return 0;
- }
-+EXPORT_SYMBOL(deny_write_access);
- 
- /**
-  * path_get - get a reference to a path
-@@ -1177,6 +1178,7 @@ struct dentry *lookup_hash(struct nameidata *nd)
- 		return ERR_PTR(err);
- 	return __lookup_hash(&nd->last, nd->path.dentry, nd);
- }
-+EXPORT_SYMBOL(lookup_hash);
- 
- int __lookup_one_len(const char *name, struct qstr *this,
- 		struct dentry *base, int len)
-@@ -1199,6 +1201,7 @@ int __lookup_one_len(const char *name, struct qstr *this,
- 	this->hash = end_name_hash(hash);
- 	return 0;
- }
-+EXPORT_SYMBOL(__lookup_one_len);
- 
- /**
-  * lookup_one_len - filesystem helper to lookup single pathname component
-diff --git a/fs/namespace.c b/fs/namespace.c
-index 2e10cb1..8fa77c4 100644
---- a/fs/namespace.c
-+++ b/fs/namespace.c
-@@ -1283,6 +1283,7 @@ int iterate_mounts(int (*f)(struct vfsmount *, void *), void *arg,
- 	}
- 	return 0;
- }
-+EXPORT_SYMBOL(iterate_mounts);
- 
- static void cleanup_group_ids(struct vfsmount *mnt, struct vfsmount *end)
- {
-diff --git a/fs/notify/group.c b/fs/notify/group.c
-index d309f38..f0e9568 100644
---- a/fs/notify/group.c
-+++ b/fs/notify/group.c
-@@ -22,6 +22,7 @@
- #include <linux/srcu.h>
- #include <linux/rculist.h>
- #include <linux/wait.h>
-+#include <linux/module.h>
- 
- #include <linux/fsnotify_backend.h>
- #include "fsnotify.h"
-@@ -70,6 +71,7 @@ void fsnotify_put_group(struct fsnotify_group *group)
- 	if (atomic_dec_and_test(&group->refcnt))
- 		fsnotify_destroy_group(group);
- }
-+EXPORT_SYMBOL(fsnotify_put_group);
- 
- /*
-  * Create a new fsnotify_group and hold a reference for the group returned.
-@@ -102,3 +104,4 @@ struct fsnotify_group *fsnotify_alloc_group(const struct fsnotify_ops *ops)
- 
- 	return group;
- }
-+EXPORT_SYMBOL(fsnotify_alloc_group);
-diff --git a/fs/notify/mark.c b/fs/notify/mark.c
-index 325185e..adede09 100644
---- a/fs/notify/mark.c
-+++ b/fs/notify/mark.c
-@@ -113,6 +113,7 @@ void fsnotify_put_mark(struct fsnotify_mark *mark)
- 	if (atomic_dec_and_test(&mark->refcnt))
- 		mark->free_mark(mark);
- }
-+EXPORT_SYMBOL(fsnotify_put_mark);
- 
- /*
-  * Any time a mark is getting freed we end up here.
-@@ -190,6 +191,7 @@ void fsnotify_destroy_mark(struct fsnotify_mark *mark)
- 	if (unlikely(atomic_dec_and_test(&group->num_marks)))
- 		fsnotify_final_destroy_group(group);
- }
-+EXPORT_SYMBOL(fsnotify_destroy_mark);
- 
- void fsnotify_set_mark_mask_locked(struct fsnotify_mark *mark, __u32 mask)
- {
-@@ -277,6 +279,7 @@ err:
- 
- 	return ret;
- }
-+EXPORT_SYMBOL(fsnotify_add_mark);
- 
- /*
-  * clear any marks in a group in which mark->flags & flags is true
-@@ -332,6 +335,7 @@ void fsnotify_init_mark(struct fsnotify_mark *mark,
- 	atomic_set(&mark->refcnt, 1);
- 	mark->free_mark = free_mark;
- }
-+EXPORT_SYMBOL(fsnotify_init_mark);
- 
- static int fsnotify_mark_destroy(void *ignored)
- {
-diff --git a/fs/open.c b/fs/open.c
-index 630715f..1c864c7 100644
---- a/fs/open.c
-+++ b/fs/open.c
-@@ -60,6 +60,7 @@ int do_truncate(struct dentry *dentry, loff_t length, unsigned int time_attrs,
- 	mutex_unlock(&dentry->d_inode->i_mutex);
- 	return ret;
- }
-+EXPORT_SYMBOL(do_truncate);
- 
- static long do_sys_truncate(const char __user *pathname, loff_t length)
- {
-diff --git a/fs/splice.c b/fs/splice.c
-index 278c94f..033f7ac 100644
---- a/fs/splice.c
-+++ b/fs/splice.c
-@@ -1116,6 +1116,7 @@ long do_splice_from(struct pipe_inode_info *pipe, struct file *out,
- 
- 	return splice_write(pipe, out, ppos, len, flags);
- }
-+EXPORT_SYMBOL(do_splice_from);
- 
- /*
-  * Attempt to initiate a splice from a file to a pipe.
-@@ -1142,6 +1143,7 @@ long do_splice_to(struct file *in, loff_t *ppos,
- 
- 	return splice_read(in, ppos, pipe, len, flags);
- }
-+EXPORT_SYMBOL(do_splice_to);
- 
- /**
-  * splice_direct_to_actor - splices data directly between two non-pipes
-diff --git a/security/commoncap.c b/security/commoncap.c
-index 4e01599..3611e1b 100644
---- a/security/commoncap.c
-+++ b/security/commoncap.c
-@@ -951,3 +951,4 @@ int cap_file_mmap(struct file *file, unsigned long reqprot,
- 	}
- 	return ret;
- }
-+EXPORT_SYMBOL(cap_file_mmap);
-diff --git a/security/device_cgroup.c b/security/device_cgroup.c
-index 8d9c48f..29108aa 100644
---- a/security/device_cgroup.c
-+++ b/security/device_cgroup.c
-@@ -515,6 +515,7 @@ found:
- 
- 	return -EPERM;
- }
-+EXPORT_SYMBOL(devcgroup_inode_permission);
- 
- int devcgroup_inode_mknod(int mode, dev_t dev)
- {
-diff --git a/security/security.c b/security/security.c
-index c53949f..0ae5b91 100644
---- a/security/security.c
-+++ b/security/security.c
-@@ -376,6 +376,7 @@ int security_path_mkdir(struct path *dir, struct dentry *dentry, int mode)
- 		return 0;
- 	return security_ops->path_mkdir(dir, dentry, mode);
- }
-+EXPORT_SYMBOL(security_path_mkdir);
- 
- int security_path_rmdir(struct path *dir, struct dentry *dentry)
- {
-@@ -383,6 +384,7 @@ int security_path_rmdir(struct path *dir, struct dentry *dentry)
- 		return 0;
- 	return security_ops->path_rmdir(dir, dentry);
- }
-+EXPORT_SYMBOL(security_path_rmdir);
- 
- int security_path_unlink(struct path *dir, struct dentry *dentry)
- {
-@@ -390,6 +392,7 @@ int security_path_unlink(struct path *dir, struct dentry *dentry)
- 		return 0;
- 	return security_ops->path_unlink(dir, dentry);
- }
-+EXPORT_SYMBOL(security_path_unlink);
- 
- int security_path_symlink(struct path *dir, struct dentry *dentry,
- 			  const char *old_name)
-@@ -398,6 +401,7 @@ int security_path_symlink(struct path *dir, struct dentry *dentry,
- 		return 0;
- 	return security_ops->path_symlink(dir, dentry, old_name);
- }
-+EXPORT_SYMBOL(security_path_symlink);
- 
- int security_path_link(struct dentry *old_dentry, struct path *new_dir,
- 		       struct dentry *new_dentry)
-@@ -406,6 +410,7 @@ int security_path_link(struct dentry *old_dentry, struct path *new_dir,
- 		return 0;
- 	return security_ops->path_link(old_dentry, new_dir, new_dentry);
- }
-+EXPORT_SYMBOL(security_path_link);
- 
- int security_path_rename(struct path *old_dir, struct dentry *old_dentry,
- 			 struct path *new_dir, struct dentry *new_dentry)
-@@ -416,6 +421,7 @@ int security_path_rename(struct path *old_dir, struct dentry *old_dentry,
- 	return security_ops->path_rename(old_dir, old_dentry, new_dir,
- 					 new_dentry);
- }
-+EXPORT_SYMBOL(security_path_rename);
- 
- int security_path_truncate(struct path *path)
- {
-@@ -423,6 +429,7 @@ int security_path_truncate(struct path *path)
- 		return 0;
- 	return security_ops->path_truncate(path);
- }
-+EXPORT_SYMBOL(security_path_truncate);
- 
- int security_path_chmod(struct dentry *dentry, struct vfsmount *mnt,
- 			mode_t mode)
-@@ -431,6 +438,7 @@ int security_path_chmod(struct dentry *dentry, struct vfsmount *mnt,
- 		return 0;
- 	return security_ops->path_chmod(dentry, mnt, mode);
- }
-+EXPORT_SYMBOL(security_path_chmod);
- 
- int security_path_chown(struct path *path, uid_t uid, gid_t gid)
- {
-@@ -438,6 +446,7 @@ int security_path_chown(struct path *path, uid_t uid, gid_t gid)
- 		return 0;
- 	return security_ops->path_chown(path, uid, gid);
- }
-+EXPORT_SYMBOL(security_path_chown);
- 
- int security_path_chroot(struct path *path)
- {
-@@ -514,6 +523,7 @@ int security_inode_readlink(struct dentry *dentry)
- 		return 0;
- 	return security_ops->inode_readlink(dentry);
- }
-+EXPORT_SYMBOL(security_inode_readlink);
- 
- int security_inode_follow_link(struct dentry *dentry, struct nameidata *nd)
- {
-@@ -528,6 +538,7 @@ int security_inode_permission(struct inode *inode, int mask)
- 		return 0;
- 	return security_ops->inode_permission(inode, mask);
- }
-+EXPORT_SYMBOL(security_inode_permission);
- 
- int security_inode_setattr(struct dentry *dentry, struct iattr *attr)
- {
-@@ -627,6 +638,7 @@ int security_file_permission(struct file *file, int mask)
- 
- 	return fsnotify_perm(file, mask);
- }
-+EXPORT_SYMBOL(security_file_permission);
- 
- int security_file_alloc(struct file *file)
- {
-@@ -654,6 +666,7 @@ int security_file_mmap(struct file *file, unsigned long reqprot,
- 		return ret;
- 	return ima_file_mmap(file, prot);
- }
-+EXPORT_SYMBOL(security_file_mmap);
- 
- int security_file_mprotect(struct vm_area_struct *vma, unsigned long reqprot,
- 			    unsigned long prot)
 --- /dev/null
-+++ linux-2.6/Documentation/ABI/testing/debugfs-aufs	2010-10-24 11:11:14.000000000 +0200
++++ linux-2.6/Documentation/ABI/testing/debugfs-aufs	2010-10-25 14:20:44.000000000 +0200
 @@ -0,0 +1,37 @@
 +What:		/debug/aufs/si_<id>/
 +Date:		March 2009
@@ -431,7 +39,7 @@ index c53949f..0ae5b91 100644
 +		When the aufs mount option 'noxino' is specified, it
 +		will be empty. About XINO files, see the aufs manual.
 --- /dev/null
-+++ linux-2.6/Documentation/ABI/testing/sysfs-aufs	2010-10-24 11:11:14.000000000 +0200
++++ linux-2.6/Documentation/ABI/testing/sysfs-aufs	2010-10-25 14:20:44.000000000 +0200
 @@ -0,0 +1,24 @@
 +What:		/sys/fs/aufs/si_<id>/
 +Date:		March 2009
@@ -458,7 +66,7 @@ index c53949f..0ae5b91 100644
 +		When the aufs mount option 'noxino' is specified, it
 +		will be empty. About XINO files, see the aufs manual.
 --- /dev/null
-+++ linux-2.6/fs/aufs/aufs.h	2010-10-24 11:19:23.000000000 +0200
++++ linux-2.6/fs/aufs/aufs.h	2010-10-25 14:20:44.000000000 +0200
 @@ -0,0 +1,61 @@
 +/*
 + * Copyright (C) 2005-2010 Junjiro R. Okajima
@@ -522,8 +130,8 @@ index c53949f..0ae5b91 100644
 +#endif /* __KERNEL__ */
 +#endif /* __AUFS_H__ */
 --- /dev/null
-+++ linux-2.6/fs/aufs/branch.c	2010-10-24 16:28:53.000000000 +0200
-@@ -0,0 +1,1020 @@
++++ linux-2.6/fs/aufs/branch.c	2010-11-03 09:26:13.000000000 +0100
+@@ -0,0 +1,1008 @@
 +/*
 + * Copyright (C) 2005-2010 Junjiro R. Okajima
 + *
@@ -848,7 +456,7 @@ index c53949f..0ae5b91 100644
 +	 * cf. AUFS_MAX_NAMELEN in include/linux/aufs_type.h
 +	 */
 +	h_dentry = path->dentry;
-+	err = vfs_statfs(path, &kst);
++	err = statfs_by_dentry(h_dentry, &kst);
 +	if (unlikely(err))
 +		goto out;
 +	err = -EINVAL;
@@ -1370,10 +978,6 @@ index c53949f..0ae5b91 100644
 +	struct dentry *dentry;
 +	struct inode *inode;
 +	struct au_hfile *hfile;
-+	struct list_head *list;
-+#ifdef CONFIG_SMP
-+	int cpu;
-+#endif
 +	const int step_bytes = 1024, /* memory allocation unit */
 +		step_files = step_bytes / sizeof(*a);
 +
@@ -1385,17 +989,9 @@ index c53949f..0ae5b91 100644
 +	if (unlikely(!a))
 +		goto out;
 +
-+#ifdef CONFIG_SMP
-+	cpu = smp_processor_id();
-+	file->f_sb_list_cpu = cpu;
-+	list = per_cpu_ptr(sb->s_files, cpu);
-+#else
-+	list = &sb->s_files;
-+#endif
-+
 +	/* no need file_list_lock() since sbinfo is locked? defered? */
 +	br_id = au_sbr_id(sb, bindex);
-+	list_for_each_entry(file, list, f_u.fu_list) {
++	do_file_list_for_each_entry(sb, file) {
 +		if (special_file(file->f_dentry->d_inode->i_mode))
 +			continue;
 +		dentry = file->f_dentry;
@@ -1439,7 +1035,7 @@ index c53949f..0ae5b91 100644
 +			} else
 +				goto out_free;
 +		}
-+	}
++	} while_file_list_for_each_entry;
 +
 +	err = 0;
 +	if (n)
@@ -1545,7 +1141,7 @@ index c53949f..0ae5b91 100644
 +	return err;
 +}
 --- /dev/null
-+++ linux-2.6/fs/aufs/branch.h	2010-10-24 11:30:39.000000000 +0200
++++ linux-2.6/fs/aufs/branch.h	2010-10-25 14:20:44.000000000 +0200
 @@ -0,0 +1,224 @@
 +/*
 + * Copyright (C) 2005-2010 Junjiro R. Okajima
@@ -1772,7 +1368,7 @@ index c53949f..0ae5b91 100644
 +#endif /* __KERNEL__ */
 +#endif /* __AUFS_BRANCH_H__ */
 --- /dev/null
-+++ linux-2.6/fs/aufs/conf.mk	2010-10-24 11:31:04.000000000 +0200
++++ linux-2.6/fs/aufs/conf.mk	2010-10-25 14:20:44.000000000 +0200
 @@ -0,0 +1,37 @@
 +
 +AuConfStr = CONFIG_AUFS_FS=${CONFIG_AUFS_FS}
@@ -1812,7 +1408,7 @@ index c53949f..0ae5b91 100644
 +
 +-include ${srctree}/${src}/conf_priv.mk
 --- /dev/null
-+++ linux-2.6/fs/aufs/cpup.c	2010-10-24 11:19:23.000000000 +0200
++++ linux-2.6/fs/aufs/cpup.c	2010-10-25 14:20:44.000000000 +0200
 @@ -0,0 +1,1059 @@
 +/*
 + * Copyright (C) 2005-2010 Junjiro R. Okajima
@@ -2874,7 +2470,7 @@ index c53949f..0ae5b91 100644
 +	return err;
 +}
 --- /dev/null
-+++ linux-2.6/fs/aufs/cpup.h	2010-10-24 11:19:23.000000000 +0200
++++ linux-2.6/fs/aufs/cpup.h	2010-10-25 14:20:44.000000000 +0200
 @@ -0,0 +1,81 @@
 +/*
 + * Copyright (C) 2005-2010 Junjiro R. Okajima
@@ -2958,7 +2554,7 @@ index c53949f..0ae5b91 100644
 +#endif /* __KERNEL__ */
 +#endif /* __AUFS_CPUP_H__ */
 --- /dev/null
-+++ linux-2.6/fs/aufs/dbgaufs.c	2010-10-24 11:19:23.000000000 +0200
++++ linux-2.6/fs/aufs/dbgaufs.c	2010-10-25 14:20:44.000000000 +0200
 @@ -0,0 +1,334 @@
 +/*
 + * Copyright (C) 2005-2010 Junjiro R. Okajima
@@ -3295,7 +2891,7 @@ index c53949f..0ae5b91 100644
 +	return err;
 +}
 --- /dev/null
-+++ linux-2.6/fs/aufs/dbgaufs.h	2010-10-24 11:19:23.000000000 +0200
++++ linux-2.6/fs/aufs/dbgaufs.h	2010-10-25 14:20:44.000000000 +0200
 @@ -0,0 +1,52 @@
 +/*
 + * Copyright (C) 2005-2010 Junjiro R. Okajima
@@ -3350,7 +2946,7 @@ index c53949f..0ae5b91 100644
 +#endif /* __KERNEL__ */
 +#endif /* __DBGAUFS_H__ */
 --- /dev/null
-+++ linux-2.6/fs/aufs/dcsub.c	2010-10-24 11:19:23.000000000 +0200
++++ linux-2.6/fs/aufs/dcsub.c	2010-10-25 14:20:44.000000000 +0200
 @@ -0,0 +1,200 @@
 +/*
 + * Copyright (C) 2005-2010 Junjiro R. Okajima
@@ -3553,7 +3149,7 @@ index c53949f..0ae5b91 100644
 +	return path_is_under(path + 0, path + 1);
 +}
 --- /dev/null
-+++ linux-2.6/fs/aufs/dcsub.h	2010-10-24 11:19:23.000000000 +0200
++++ linux-2.6/fs/aufs/dcsub.h	2010-10-25 14:20:44.000000000 +0200
 @@ -0,0 +1,54 @@
 +/*
 + * Copyright (C) 2005-2010 Junjiro R. Okajima
@@ -3610,8 +3206,8 @@ index c53949f..0ae5b91 100644
 +#endif /* __KERNEL__ */
 +#endif /* __AUFS_DCSUB_H__ */
 --- /dev/null
-+++ linux-2.6/fs/aufs/debug.c	2010-10-24 11:31:58.000000000 +0200
-@@ -0,0 +1,443 @@
++++ linux-2.6/fs/aufs/debug.c	2010-10-26 21:35:34.000000000 +0200
+@@ -0,0 +1,442 @@
 +/*
 + * Copyright (C) 2005-2010 Junjiro R. Okajima
 + *
@@ -3635,7 +3231,6 @@ index c53949f..0ae5b91 100644
 + */
 +
 +#include <linux/module.h>
-+#include <linux/vt_kern.h>
 +#include "aufs.h"
 +
 +int aufs_debug;
@@ -4056,8 +3651,8 @@ index c53949f..0ae5b91 100644
 +	return 0;
 +}
 --- /dev/null
-+++ linux-2.6/fs/aufs/debug.h	2010-10-24 11:32:22.000000000 +0200
-@@ -0,0 +1,245 @@
++++ linux-2.6/fs/aufs/debug.h	2010-10-26 21:35:59.000000000 +0200
+@@ -0,0 +1,241 @@
 +/*
 + * Copyright (C) 2005-2010 Junjiro R. Okajima
 + *
@@ -4087,14 +3682,10 @@ index c53949f..0ae5b91 100644
 +
 +#include <asm/system.h>
 +#include <linux/bug.h>
-+/* #include <linux/err.h> */
 +#include <linux/init.h>
 +#include <linux/module.h>
 +#include <linux/kallsyms.h>
-+/* #include <linux/kernel.h> */
 +#include <linux/delay.h>
-+/* #include <linux/kd.h> */
-+#include <linux/vt_kern.h>
 +#include <linux/sysrq.h>
 +#include <linux/aufs_type.h>
 +
@@ -4289,7 +3880,7 @@ index c53949f..0ae5b91 100644
 +#ifdef CONFIG_HW_CONSOLE
 +#define au_dbg_blocked() do { \
 +	WARN_ON(1); \
-+	handle_sysrq('w', vc_cons[fg_console].d->vc_tty); \
++	handle_sysrq('w'); \
 +} while (0)
 +#else
 +AuStubVoid(au_dbg_blocked, void)
@@ -4304,7 +3895,7 @@ index c53949f..0ae5b91 100644
 +#endif /* __KERNEL__ */
 +#endif /* __AUFS_DEBUG_H__ */
 --- /dev/null
-+++ linux-2.6/fs/aufs/dentry.c	2010-10-24 11:32:50.000000000 +0200
++++ linux-2.6/fs/aufs/dentry.c	2010-10-25 14:20:44.000000000 +0200
 @@ -0,0 +1,860 @@
 +/*
 + * Copyright (C) 2005-2010 Junjiro R. Okajima
@@ -5167,7 +4758,7 @@ index c53949f..0ae5b91 100644
 +	.d_release	= aufs_d_release
 +};
 --- /dev/null
-+++ linux-2.6/fs/aufs/dentry.h	2010-10-24 11:33:02.000000000 +0200
++++ linux-2.6/fs/aufs/dentry.h	2010-10-25 14:20:44.000000000 +0200
 @@ -0,0 +1,231 @@
 +/*
 + * Copyright (C) 2005-2010 Junjiro R. Okajima
@@ -5401,7 +4992,7 @@ index c53949f..0ae5b91 100644
 +#endif /* __KERNEL__ */
 +#endif /* __AUFS_DENTRY_H__ */
 --- /dev/null
-+++ linux-2.6/fs/aufs/dinfo.c	2010-10-24 11:33:24.000000000 +0200
++++ linux-2.6/fs/aufs/dinfo.c	2010-10-25 14:20:44.000000000 +0200
 @@ -0,0 +1,397 @@
 +/*
 + * Copyright (C) 2005-2010 Junjiro R. Okajima
@@ -5801,7 +5392,7 @@ index c53949f..0ae5b91 100644
 +	return -1;
 +}
 --- /dev/null
-+++ linux-2.6/fs/aufs/dir.c	2010-10-24 15:03:11.000000000 +0200
++++ linux-2.6/fs/aufs/dir.c	2010-10-26 21:41:15.000000000 +0200
 @@ -0,0 +1,638 @@
 +/*
 + * Copyright (C) 2005-2010 Junjiro R. Okajima
@@ -6008,16 +5599,16 @@ index c53949f..0ae5b91 100644
 +			    struct file *file)
 +{
 +	struct au_vdir *vdir_cache;
-+	struct super_block *sb;
 +	struct au_finfo *finfo;
 +	struct au_fidir *fidir;
 +	aufs_bindex_t bindex, bend;
 +
-+	sb = file->f_dentry->d_sb;
-+	au_plink_maint_leave(au_sbi(sb));
 +	finfo = au_fi(file);
 +	fidir = finfo->fi_hdir;
 +	if (fidir) {
++		/* remove me from sb->s_files */
++		file_sb_list_del(file);
++
 +		vdir_cache = fidir->fd_vdir_cache; /* lock-free */
 +		if (vdir_cache)
 +			au_vdir_free(vdir_cache);
@@ -6442,7 +6033,7 @@ index c53949f..0ae5b91 100644
 +	.fsync		= aufs_fsync_dir
 +};
 --- /dev/null
-+++ linux-2.6/fs/aufs/dir.h	2010-10-24 11:19:23.000000000 +0200
++++ linux-2.6/fs/aufs/dir.h	2010-10-25 14:20:44.000000000 +0200
 @@ -0,0 +1,138 @@
 +/*
 + * Copyright (C) 2005-2010 Junjiro R. Okajima
@@ -6583,7 +6174,7 @@ index c53949f..0ae5b91 100644
 +#endif /* __KERNEL__ */
 +#endif /* __AUFS_DIR_H__ */
 --- /dev/null
-+++ linux-2.6/fs/aufs/dynop.c	2010-10-24 11:19:23.000000000 +0200
++++ linux-2.6/fs/aufs/dynop.c	2010-10-25 14:20:44.000000000 +0200
 @@ -0,0 +1,425 @@
 +/*
 + * Copyright (C) 2010 Junjiro R. Okajima
@@ -7011,7 +6602,7 @@ index c53949f..0ae5b91 100644
 +		WARN_ON(!list_empty(&dynop[i].head));
 +}
 --- /dev/null
-+++ linux-2.6/fs/aufs/dynop.h	2010-10-24 11:19:23.000000000 +0200
++++ linux-2.6/fs/aufs/dynop.h	2010-10-25 14:20:44.000000000 +0200
 @@ -0,0 +1,89 @@
 +/*
 + * Copyright (C) 2010 Junjiro R. Okajima
@@ -7103,8 +6694,8 @@ index c53949f..0ae5b91 100644
 +#endif /* __KERNEL__ */
 +#endif /* __AUFS_DYNOP_H__ */
 --- /dev/null
-+++ linux-2.6/fs/aufs/export.c	2010-10-24 11:34:10.000000000 +0200
-@@ -0,0 +1,788 @@
++++ linux-2.6/fs/aufs/export.c	2010-10-26 21:38:27.000000000 +0200
+@@ -0,0 +1,790 @@
 +/*
 + * Copyright (C) 2005-2010 Junjiro R. Okajima
 + *
@@ -7385,11 +6976,13 @@ index c53949f..0ae5b91 100644
 +	};
 +	struct mnt_namespace *ns;
 +
++	br_read_lock(vfsmount_lock);
 +	/* no get/put ?? */
 +	AuDebugOn(!current->nsproxy);
 +	ns = current->nsproxy->mnt_ns;
 +	AuDebugOn(!ns);
 +	err = iterate_mounts(au_compare_mnt, &args, ns->root);
++	br_read_unlock(vfsmount_lock);
 +	AuDebugOn(!err);
 +	AuDebugOn(!args.mnt);
 +	return args.mnt;
@@ -7894,7 +7487,7 @@ index c53949f..0ae5b91 100644
 +	atomic_set(&sbinfo->si_xigen_next, u);
 +}
 --- /dev/null
-+++ linux-2.6/fs/aufs/file.c	2010-10-24 14:50:09.000000000 +0200
++++ linux-2.6/fs/aufs/file.c	2010-10-25 14:20:44.000000000 +0200
 @@ -0,0 +1,652 @@
 +/*
 + * Copyright (C) 2005-2010 Junjiro R. Okajima
@@ -8549,7 +8142,7 @@ index c53949f..0ae5b91 100644
 +#endif /* CONFIG_AUFS_DEBUG */
 +};
 --- /dev/null
-+++ linux-2.6/fs/aufs/file.h	2010-10-24 11:19:23.000000000 +0200
++++ linux-2.6/fs/aufs/file.h	2010-10-25 14:20:44.000000000 +0200
 @@ -0,0 +1,238 @@
 +/*
 + * Copyright (C) 2005-2010 Junjiro R. Okajima
@@ -8790,7 +8383,7 @@ index c53949f..0ae5b91 100644
 +#endif /* __KERNEL__ */
 +#endif /* __AUFS_FILE_H__ */
 --- /dev/null
-+++ linux-2.6/fs/aufs/finfo.c	2010-10-24 11:36:29.000000000 +0200
++++ linux-2.6/fs/aufs/finfo.c	2010-10-25 14:20:44.000000000 +0200
 @@ -0,0 +1,171 @@
 +/*
 + * Copyright (C) 2005-2010 Junjiro R. Okajima
@@ -8964,8 +8557,8 @@ index c53949f..0ae5b91 100644
 +	return err;
 +}
 --- /dev/null
-+++ linux-2.6/fs/aufs/f_op.c	2010-10-24 15:02:31.000000000 +0200
-@@ -0,0 +1,899 @@
++++ linux-2.6/fs/aufs/f_op.c	2010-10-26 21:39:38.000000000 +0200
+@@ -0,0 +1,900 @@
 +/*
 + * Copyright (C) 2005-2010 Junjiro R. Okajima
 + *
@@ -9046,12 +8639,13 @@ index c53949f..0ae5b91 100644
 +	struct au_finfo *finfo;
 +	aufs_bindex_t bindex;
 +
-+	au_plink_maint_leave(au_sbi(file->f_dentry->d_sb));
 +	finfo = au_fi(file);
 +	bindex = finfo->fi_btop;
-+	if (bindex >= 0)
++	if (bindex >= 0) {
++		/* remove me from sb->s_files */
++		file_sb_list_del(file);
 +		au_set_h_fptr(file, bindex, NULL);
-+
++	}
 +	au_finfo_fin(file);
 +	return 0;
 +}
@@ -9866,7 +9460,7 @@ index c53949f..0ae5b91 100644
 +#endif
 +};
 --- /dev/null
-+++ linux-2.6/fs/aufs/f_op_sp.c	2010-10-24 11:35:52.000000000 +0200
++++ linux-2.6/fs/aufs/f_op_sp.c	2010-10-25 14:20:44.000000000 +0200
 @@ -0,0 +1,299 @@
 +/*
 + * Copyright (C) 2005-2010 Junjiro R. Okajima
@@ -10168,7 +9762,7 @@ index c53949f..0ae5b91 100644
 +	return ret;
 +}
 --- /dev/null
-+++ linux-2.6/fs/aufs/fstype.h	2010-10-24 11:19:23.000000000 +0200
++++ linux-2.6/fs/aufs/fstype.h	2010-10-25 14:20:44.000000000 +0200
 @@ -0,0 +1,497 @@
 +/*
 + * Copyright (C) 2005-2010 Junjiro R. Okajima
@@ -10668,8 +10262,8 @@ index c53949f..0ae5b91 100644
 +#endif /* __KERNEL__ */
 +#endif /* __AUFS_FSTYPE_H__ */
 --- /dev/null
-+++ linux-2.6/fs/aufs/hfsnotify.c	2010-10-24 11:37:18.000000000 +0200
-@@ -0,0 +1,226 @@
++++ linux-2.6/fs/aufs/hfsnotify.c	2010-10-26 10:55:35.000000000 +0200
+@@ -0,0 +1,213 @@
 +/*
 + * Copyright (C) 2005-2010 Junjiro R. Okajima
 + *
@@ -10699,11 +10293,11 @@ index c53949f..0ae5b91 100644
 +				 | FS_CREATE | FS_EVENT_ON_CHILD);
 +static struct fsnotify_group *au_hfsn_group;
 +
-+static void au_hfsn_free_mark(struct fsnotify_mark *entry)
++static void au_hfsn_free_mark(struct fsnotify_mark *mark)
 +{
 +#if 0
-+	struct au_hnotify *hn = container_of(entry, struct au_hnotify,
-+					     hn_entry);
++	struct au_hnotify *hn = container_of(mark, struct au_hnotify,
++					     hn_mark);
 +	au_cache_free_hnotify(hn);
 +#endif
 +	AuDbg("here\n");
@@ -10711,39 +10305,39 @@ index c53949f..0ae5b91 100644
 +
 +static int au_hfsn_alloc(struct au_hnotify *hn, struct inode *h_inode)
 +{
-+	struct fsnotify_mark *entry;
++	struct fsnotify_mark *mark;
 +
-+	entry = &hn->hn_entry;
-+	fsnotify_init_mark(entry, au_hfsn_free_mark);
-+	entry->mask = AuHfsnMask;
-+	return fsnotify_add_mark(entry, au_hfsn_group, h_inode, NULL, 0);
++	mark = &hn->hn_mark;
++	fsnotify_init_mark(mark, au_hfsn_free_mark);
++	mark->mask = AuHfsnMask;
++	return fsnotify_add_mark(mark, au_hfsn_group, h_inode, NULL, 1);
 +}
 +
 +static void au_hfsn_free(struct au_hnotify *hn)
 +{
-+	struct fsnotify_mark *entry;
++	struct fsnotify_mark *mark;
 +
-+	entry = &hn->hn_entry;
-+	fsnotify_destroy_mark(entry);
-+	fsnotify_put_mark(entry);
++	mark = &hn->hn_mark;
++	fsnotify_destroy_mark(mark);
++	fsnotify_put_mark(mark);
 +}
 +
 +/* ---------------------------------------------------------------------- */
 +
 +static void au_hfsn_ctl(struct au_hinode *hinode, int do_set)
 +{
-+	struct fsnotify_mark *entry;
++	struct fsnotify_mark *mark;
 +
-+	entry = &hinode->hi_notify->hn_entry;
-+	spin_lock(&entry->lock);
++	mark = &hinode->hi_notify->hn_mark;
++	spin_lock(&mark->lock);
 +	if (do_set) {
-+		AuDebugOn(entry->mask & AuHfsnMask);
-+		entry->mask |= AuHfsnMask;
++		AuDebugOn(mark->mask & AuHfsnMask);
++		mark->mask |= AuHfsnMask;
 +	} else {
-+		AuDebugOn(!(entry->mask & AuHfsnMask));
-+		entry->mask &= ~AuHfsnMask;
++		AuDebugOn(!(mark->mask & AuHfsnMask));
++		mark->mask &= ~AuHfsnMask;
 +	}
-+	spin_unlock(&entry->lock);
++	spin_unlock(&mark->lock);
 +	/* fsnotify_recalc_inode_mask(hinode->hi_inode); */
 +}
 +
@@ -10785,13 +10379,14 @@ index c53949f..0ae5b91 100644
 +/* ---------------------------------------------------------------------- */
 +
 +static int au_hfsn_handle_event(struct fsnotify_group *group,
++				struct fsnotify_mark *inode_mark,
++				struct fsnotify_mark *vfsmount_mark,
 +				struct fsnotify_event *event)
 +{
 +	int err;
 +	struct au_hnotify *hnotify;
 +	struct inode *h_dir, *h_inode;
 +	__u32 mask;
-+	struct fsnotify_mark *entry;
 +	struct qstr h_child_qstr = {
 +		.name	= event->file_name,
 +		.len	= event->name_len
@@ -10800,10 +10395,10 @@ index c53949f..0ae5b91 100644
 +	AuDebugOn(event->data_type != FSNOTIFY_EVENT_INODE);
 +
 +	err = 0;
-+	/* if IN_UNMOUNT happens, there must be another bug */
++	/* if FS_UNMOUNT happens, there must be another bug */
 +	mask = event->mask;
 +	AuDebugOn(mask & FS_UNMOUNT);
-+	if (mask & (IN_IGNORED | IN_UNMOUNT))
++	if (mask & (FS_IN_IGNORED | FS_UNMOUNT))
 +		goto out;
 +
 +	h_dir = event->to_tell;
@@ -10820,34 +10415,29 @@ index c53949f..0ae5b91 100644
 +	au_debug(0);
 +#endif
 +
-+	entry = fsnotify_find_inode_mark(group, h_dir);
-+	if (entry) {
-+		hnotify = container_of(entry, struct au_hnotify, hn_entry);
-+		err = au_hnotify(h_dir, hnotify, mask, &h_child_qstr, h_inode);
-+		fsnotify_put_mark(entry);
-+	}
++	AuDebugOn(!inode_mark);
++	hnotify = container_of(inode_mark, struct au_hnotify, hn_mark);
++	err = au_hnotify(h_dir, hnotify, mask, &h_child_qstr, h_inode);
++	fsnotify_put_mark(inode_mark);
 +
 +out:
 +	return err;
 +}
 +
-+/* copied from linux/fs/notify/inotify/inotify_fsnotiry.c */
++/* copied from linux/fs/notify/inotify/inotify_fsnotify.c */
 +/* it should be exported to modules */
-+static bool au_hfsn_should_send_event(struct fsnotify_group *group,
-+				      struct inode *h_inode, __u32 mask)
++static bool au_hfsn_should_send_event(struct fsnotify_group *group, struct inode *inode,
++				      struct fsnotify_mark *inode_mark,
++				      struct fsnotify_mark *vfsmount_mark,
++				      __u32 mask, void *data, int data_type)
 +{
-+	struct fsnotify_mark *entry;
 +	bool send;
 +
-+	entry = fsnotify_find_inode_mark(group, h_inode);
-+	if (!entry)
-+		return false;
-+
 +	mask = (mask & ~FS_EVENT_ON_CHILD);
-+	send = (entry->mask & mask);
++	send = (inode_mark->mask & mask);
 +
 +	/* find took a reference */
-+	fsnotify_put_mark(entry);
++	fsnotify_put_mark(inode_mark);
 +
 +	return send;
 +}
@@ -10862,21 +10452,12 @@ index c53949f..0ae5b91 100644
 +static int __init au_hfsn_init(void)
 +{
 +	int err;
-+	unsigned int gn;
-+	const unsigned int gn_max = 10;
-+
-+	gn = 0;
-+	for (gn = 0; gn < gn_max; gn++) {
-+		au_hfsn_group = fsnotify_obtain_group(gn, AuHfsnMask,
-+						      &au_hfsn_ops);
-+		if (au_hfsn_group != ERR_PTR(-EEXIST))
-+			break;
-+	}
 +
 +	err = 0;
++	au_hfsn_group = fsnotify_alloc_group(&au_hfsn_ops);
 +	if (IS_ERR(au_hfsn_group)) {
-+		pr_err("fsnotify_obtain_group() failed %u times\n", gn_max);
 +		err = PTR_ERR(au_hfsn_group);
++		pr_err("fsnotify_alloc_group() failed, %d\n", err);
 +	}
 +
 +	AuTraceErr(err);
@@ -10897,7 +10478,7 @@ index c53949f..0ae5b91 100644
 +	.init		= au_hfsn_init
 +};
 --- /dev/null
-+++ linux-2.6/fs/aufs/hfsplus.c	2010-10-24 11:19:23.000000000 +0200
++++ linux-2.6/fs/aufs/hfsplus.c	2010-10-25 14:20:44.000000000 +0200
 @@ -0,0 +1,58 @@
 +/*
 + * Copyright (C) 2010 Junjiro R. Okajima
@@ -10958,7 +10539,7 @@ index c53949f..0ae5b91 100644
 +	}
 +}
 --- /dev/null
-+++ linux-2.6/fs/aufs/hinotify.c	2010-10-24 11:11:14.000000000 +0200
++++ linux-2.6/fs/aufs/hinotify.c	2010-10-25 14:20:44.000000000 +0200
 @@ -0,0 +1,231 @@
 +/*
 + * Copyright (C) 2005-2010 Junjiro R. Okajima
@@ -11192,7 +10773,7 @@ index c53949f..0ae5b91 100644
 +	.init		= au_hin_init
 +};
 --- /dev/null
-+++ linux-2.6/fs/aufs/hnotify.c	2010-10-24 11:37:32.000000000 +0200
++++ linux-2.6/fs/aufs/hnotify.c	2010-10-25 14:20:44.000000000 +0200
 @@ -0,0 +1,662 @@
 +/*
 + * Copyright (C) 2005-2010 Junjiro R. Okajima
@@ -11857,7 +11438,7 @@ index c53949f..0ae5b91 100644
 +		au_hn_destroy_cache();
 +}
 --- /dev/null
-+++ linux-2.6/fs/aufs/iinfo.c	2010-10-24 11:38:41.000000000 +0200
++++ linux-2.6/fs/aufs/iinfo.c	2010-10-25 14:20:44.000000000 +0200
 @@ -0,0 +1,259 @@
 +/*
 + * Copyright (C) 2005-2010 Junjiro R. Okajima
@@ -12119,7 +11700,7 @@ index c53949f..0ae5b91 100644
 +	AuRwDestroy(&iinfo->ii_rwsem);
 +}
 --- /dev/null
-+++ linux-2.6/fs/aufs/inode.c	2010-10-24 11:38:51.000000000 +0200
++++ linux-2.6/fs/aufs/inode.c	2010-10-25 14:20:44.000000000 +0200
 @@ -0,0 +1,443 @@
 +/*
 + * Copyright (C) 2005-2010 Junjiro R. Okajima
@@ -12565,7 +12146,7 @@ index c53949f..0ae5b91 100644
 +	return au_test_h_perm(h_inode, mask);
 +}
 --- /dev/null
-+++ linux-2.6/fs/aufs/inode.h	2010-10-24 15:01:53.000000000 +0200
++++ linux-2.6/fs/aufs/inode.h	2010-10-26 10:58:14.000000000 +0200
 @@ -0,0 +1,514 @@
 +/*
 + * Copyright (C) 2005-2010 Junjiro R. Okajima
@@ -12604,11 +12185,11 @@ index c53949f..0ae5b91 100644
 +struct au_hnotify {
 +#ifdef CONFIG_AUFS_HNOTIFY
 +#ifdef CONFIG_AUFS_HFSNOTIFY
-+	struct fsnotify_mark		hn_entry;
++	struct fsnotify_mark		hn_mark;
 +#else
 +	struct inotify_watch		hn_watch;
 +#endif
-+	struct inode			*hn_aufs_inode;	/* no get/put */
++	struct inode				*hn_aufs_inode;	/* no get/put */
 +#endif
 +} ____cacheline_aligned_in_smp;
 +
@@ -13082,7 +12663,7 @@ index c53949f..0ae5b91 100644
 +#endif /* __KERNEL__ */
 +#endif /* __AUFS_INODE_H__ */
 --- /dev/null
-+++ linux-2.6/fs/aufs/ioctl.c	2010-10-24 11:39:20.000000000 +0200
++++ linux-2.6/fs/aufs/ioctl.c	2010-10-25 14:20:44.000000000 +0200
 @@ -0,0 +1,150 @@
 +/*
 + * Copyright (C) 2005-2010 Junjiro R. Okajima
@@ -13235,7 +12816,7 @@ index c53949f..0ae5b91 100644
 +#endif
 +#endif
 --- /dev/null
-+++ linux-2.6/fs/aufs/i_op_add.c	2010-10-24 11:38:14.000000000 +0200
++++ linux-2.6/fs/aufs/i_op_add.c	2010-10-25 14:20:44.000000000 +0200
 @@ -0,0 +1,676 @@
 +/*
 + * Copyright (C) 2005-2010 Junjiro R. Okajima
@@ -13914,7 +13495,7 @@ index c53949f..0ae5b91 100644
 +	return err;
 +}
 --- /dev/null
-+++ linux-2.6/fs/aufs/i_op.c	2010-10-24 13:50:56.000000000 +0200
++++ linux-2.6/fs/aufs/i_op.c	2010-10-25 14:20:44.000000000 +0200
 @@ -0,0 +1,919 @@
 +/*
 + * Copyright (C) 2005-2010 Junjiro R. Okajima
@@ -14836,7 +14417,7 @@ index c53949f..0ae5b91 100644
 +	.truncate_range	= aufs_truncate_range
 +};
 --- /dev/null
-+++ linux-2.6/fs/aufs/i_op_del.c	2010-10-24 11:19:23.000000000 +0200
++++ linux-2.6/fs/aufs/i_op_del.c	2010-10-25 14:20:44.000000000 +0200
 @@ -0,0 +1,472 @@
 +/*
 + * Copyright (C) 2005-2010 Junjiro R. Okajima
@@ -15311,7 +14892,7 @@ index c53949f..0ae5b91 100644
 +	return err;
 +}
 --- /dev/null
-+++ linux-2.6/fs/aufs/i_op_ren.c	2010-10-24 11:38:32.000000000 +0200
++++ linux-2.6/fs/aufs/i_op_ren.c	2010-10-25 14:20:44.000000000 +0200
 @@ -0,0 +1,980 @@
 +/*
 + * Copyright (C) 2005-2010 Junjiro R. Okajima
@@ -16294,7 +15875,7 @@ index c53949f..0ae5b91 100644
 +	return err;
 +}
 --- /dev/null
-+++ linux-2.6/fs/aufs/Kconfig	2010-10-24 11:39:57.000000000 +0200
++++ linux-2.6/fs/aufs/Kconfig	2010-10-25 14:20:44.000000000 +0200
 @@ -0,0 +1,182 @@
 +config AUFS_FS
 +	tristate "Aufs (Advanced multi layered unification filesystem) support"
@@ -16479,7 +16060,7 @@ index c53949f..0ae5b91 100644
 +	When aufs supports Magic SysRq, enabled automatically.
 +endif
 --- /dev/null
-+++ linux-2.6/fs/aufs/loop.c	2010-10-24 11:19:23.000000000 +0200
++++ linux-2.6/fs/aufs/loop.c	2010-10-25 14:20:44.000000000 +0200
 @@ -0,0 +1,63 @@
 +/*
 + * Copyright (C) 2005-2010 Junjiro R. Okajima
@@ -16545,7 +16126,7 @@ index c53949f..0ae5b91 100644
 +	return ret;
 +}
 --- /dev/null
-+++ linux-2.6/fs/aufs/loop.h	2010-10-24 11:19:23.000000000 +0200
++++ linux-2.6/fs/aufs/loop.h	2010-10-25 14:20:44.000000000 +0200
 @@ -0,0 +1,42 @@
 +/*
 + * Copyright (C) 2005-2010 Junjiro R. Okajima
@@ -16590,7 +16171,7 @@ index c53949f..0ae5b91 100644
 +#endif /* __KERNEL__ */
 +#endif /* __AUFS_LOOP_H__ */
 --- /dev/null
-+++ linux-2.6/fs/aufs/magic.mk	2010-10-24 11:19:23.000000000 +0200
++++ linux-2.6/fs/aufs/magic.mk	2010-10-25 14:20:44.000000000 +0200
 @@ -0,0 +1,54 @@
 +
 +# defined in ${srctree}/fs/fuse/inode.c
@@ -16647,7 +16228,7 @@ index c53949f..0ae5b91 100644
 +ccflags-y += -DHFSPLUS_SUPER_MAGIC=0x482b
 +endif
 --- /dev/null
-+++ linux-2.6/fs/aufs/Makefile	2010-10-24 11:40:16.000000000 +0200
++++ linux-2.6/fs/aufs/Makefile	2010-10-25 14:20:44.000000000 +0200
 @@ -0,0 +1,39 @@
 +
 +include ${src}/magic.mk
@@ -16689,7 +16270,7 @@ index c53949f..0ae5b91 100644
 +aufs-$(CONFIG_AUFS_DEBUG) += debug.o
 +aufs-$(CONFIG_AUFS_MAGIC_SYSRQ) += sysrq.o
 --- /dev/null
-+++ linux-2.6/fs/aufs/module.c	2010-10-24 11:40:26.000000000 +0200
++++ linux-2.6/fs/aufs/module.c	2010-10-25 14:20:44.000000000 +0200
 @@ -0,0 +1,182 @@
 +/*
 + * Copyright (C) 2005-2010 Junjiro R. Okajima
@@ -16874,7 +16455,7 @@ index c53949f..0ae5b91 100644
 +module_init(aufs_init);
 +module_exit(aufs_exit);
 --- /dev/null
-+++ linux-2.6/fs/aufs/module.h	2010-10-24 11:40:35.000000000 +0200
++++ linux-2.6/fs/aufs/module.h	2010-10-25 14:20:44.000000000 +0200
 @@ -0,0 +1,91 @@
 +/*
 + * Copyright (C) 2005-2010 Junjiro R. Okajima
@@ -16968,7 +16549,7 @@ index c53949f..0ae5b91 100644
 +#endif /* __KERNEL__ */
 +#endif /* __AUFS_MODULE_H__ */
 --- /dev/null
-+++ linux-2.6/fs/aufs/mtx.h	2010-10-24 11:19:23.000000000 +0200
++++ linux-2.6/fs/aufs/mtx.h	2010-10-25 14:20:44.000000000 +0200
 @@ -0,0 +1,48 @@
 +/*
 + * Copyright (C) 2010 Junjiro R. Okajima
@@ -17019,7 +16600,7 @@ index c53949f..0ae5b91 100644
 +#endif /* __KERNEL__ */
 +#endif /* __AUFS_MTX_H__ */
 --- /dev/null
-+++ linux-2.6/fs/aufs/opts.c	2010-10-24 11:40:51.000000000 +0200
++++ linux-2.6/fs/aufs/opts.c	2010-10-25 14:20:44.000000000 +0200
 @@ -0,0 +1,1595 @@
 +/*
 + * Copyright (C) 2005-2010 Junjiro R. Okajima
@@ -18617,7 +18198,7 @@ index c53949f..0ae5b91 100644
 +	return au_mntflags(sb) & AuOptMask_UDBA;
 +}
 --- /dev/null
-+++ linux-2.6/fs/aufs/opts.h	2010-10-24 11:41:02.000000000 +0200
++++ linux-2.6/fs/aufs/opts.h	2010-10-25 14:20:44.000000000 +0200
 @@ -0,0 +1,207 @@
 +/*
 + * Copyright (C) 2005-2010 Junjiro R. Okajima
@@ -18827,7 +18408,7 @@ index c53949f..0ae5b91 100644
 +#endif /* __KERNEL__ */
 +#endif /* __AUFS_OPTS_H__ */
 --- /dev/null
-+++ linux-2.6/fs/aufs/plink.c	2010-10-24 15:01:46.000000000 +0200
++++ linux-2.6/fs/aufs/plink.c	2010-10-25 14:20:44.000000000 +0200
 @@ -0,0 +1,483 @@
 +/*
 + * Copyright (C) 2005-2010 Junjiro R. Okajima
@@ -19313,7 +18894,7 @@ index c53949f..0ae5b91 100644
 +	}
 +}
 --- /dev/null
-+++ linux-2.6/fs/aufs/poll.c	2010-10-24 11:41:22.000000000 +0200
++++ linux-2.6/fs/aufs/poll.c	2010-10-25 14:20:44.000000000 +0200
 @@ -0,0 +1,56 @@
 +/*
 + * Copyright (C) 2005-2010 Junjiro R. Okajima
@@ -19372,7 +18953,7 @@ index c53949f..0ae5b91 100644
 +	return mask;
 +}
 --- /dev/null
-+++ linux-2.6/fs/aufs/procfs.c	2010-10-24 11:11:14.000000000 +0200
++++ linux-2.6/fs/aufs/procfs.c	2010-10-25 14:20:44.000000000 +0200
 @@ -0,0 +1,169 @@
 +/*
 + * Copyright (C) 2010 Junjiro R. Okajima
@@ -19544,7 +19125,7 @@ index c53949f..0ae5b91 100644
 +	return err;
 +}
 --- /dev/null
-+++ linux-2.6/fs/aufs/rdu.c	2010-10-24 11:42:00.000000000 +0200
++++ linux-2.6/fs/aufs/rdu.c	2010-10-25 14:20:44.000000000 +0200
 @@ -0,0 +1,380 @@
 +/*
 + * Copyright (C) 2005-2010 Junjiro R. Okajima
@@ -19927,7 +19508,7 @@ index c53949f..0ae5b91 100644
 +}
 +#endif
 --- /dev/null
-+++ linux-2.6/fs/aufs/rwsem.h	2010-10-24 11:42:11.000000000 +0200
++++ linux-2.6/fs/aufs/rwsem.h	2010-10-25 14:20:44.000000000 +0200
 @@ -0,0 +1,189 @@
 +/*
 + * Copyright (C) 2005-2010 Junjiro R. Okajima
@@ -20119,7 +19700,7 @@ index c53949f..0ae5b91 100644
 +#endif /* __KERNEL__ */
 +#endif /* __AUFS_RWSEM_H__ */
 --- /dev/null
-+++ linux-2.6/fs/aufs/sbinfo.c	2010-10-24 11:42:17.000000000 +0200
++++ linux-2.6/fs/aufs/sbinfo.c	2010-10-25 14:20:44.000000000 +0200
 @@ -0,0 +1,311 @@
 +/*
 + * Copyright (C) 2005-2010 Junjiro R. Okajima
@@ -20433,7 +20014,7 @@ index c53949f..0ae5b91 100644
 +	AuDebugOn(1 != (long)p);
 +}
 --- /dev/null
-+++ linux-2.6/fs/aufs/spl.h	2010-10-24 11:19:23.000000000 +0200
++++ linux-2.6/fs/aufs/spl.h	2010-10-25 14:20:44.000000000 +0200
 @@ -0,0 +1,66 @@
 +/*
 + * Copyright (C) 2005-2010 Junjiro R. Okajima
@@ -20502,8 +20083,8 @@ index c53949f..0ae5b91 100644
 +#endif /* __KERNEL__ */
 +#endif /* __AUFS_SPL_H__ */
 --- /dev/null
-+++ linux-2.6/fs/aufs/super.c	2010-10-24 13:42:19.000000000 +0200
-@@ -0,0 +1,867 @@
++++ linux-2.6/fs/aufs/super.c	2010-11-02 08:23:34.000000000 +0100
+@@ -0,0 +1,863 @@
 +/*
 + * Copyright (C) 2005-2010 Junjiro R. Okajima
 + *
@@ -20804,7 +20385,7 @@ index c53949f..0ae5b91 100644
 +	u64 blocks, bfree, bavail, files, ffree;
 +	aufs_bindex_t bend, bindex, i;
 +	unsigned char shared;
-+	struct path h_path;
++	struct vfsmount *h_mnt;
 +	struct super_block *h_sb;
 +
 +	blocks = 0;
@@ -20816,8 +20397,8 @@ index c53949f..0ae5b91 100644
 +	err = 0;
 +	bend = au_sbend(sb);
 +	for (bindex = bend; bindex >= 0; bindex--) {
-+		h_path.mnt = au_sbr_mnt(sb, bindex);
-+		h_sb = h_path.mnt->mnt_sb;
++		h_mnt = au_sbr_mnt(sb, bindex);
++		h_sb = h_mnt->mnt_sb;
 +		shared = 0;
 +		for (i = bindex + 1; !shared && i <= bend; i++)
 +			shared = (au_sbr_sb(sb, i) == h_sb);
@@ -20825,8 +20406,7 @@ index c53949f..0ae5b91 100644
 +			continue;
 +
 +		/* sb->s_root for NFS is unreliable */
-+		h_path.dentry = h_path.mnt->mnt_root;
-+		err = vfs_statfs(&h_path, buf);
++		err = statfs_by_dentry(h_mnt->mnt_root, buf);
 +		if (unlikely(err))
 +			goto out;
 +
@@ -20850,18 +20430,15 @@ index c53949f..0ae5b91 100644
 +static int aufs_statfs(struct dentry *dentry, struct kstatfs *buf)
 +{
 +	int err;
-+	struct path h_path;
 +	struct super_block *sb;
 +
 +	/* lock free root dinfo */
 +	sb = dentry->d_sb;
 +	si_noflush_read_lock(sb);
-+	if (!au_opt_test(au_mntflags(sb), SUM)) {
++	if (!au_opt_test(au_mntflags(sb), SUM))
 +		/* sb->s_root for NFS is unreliable */
-+		h_path.mnt = au_sbr_mnt(sb, 0);
-+		h_path.dentry = h_path.mnt->mnt_root;
-+		err = vfs_statfs(&h_path, buf);
-+	} else
++		err = statfs_by_dentry(au_sbr_mnt(sb, 0)->mnt_root, buf);
++	else
 +		err = au_statfs_sum(sb, buf);
 +	si_read_unlock(sb);
 +
@@ -21372,7 +20949,7 @@ index c53949f..0ae5b91 100644
 +	.owner		= THIS_MODULE,
 +};
 --- /dev/null
-+++ linux-2.6/fs/aufs/super.h	2010-10-24 11:42:36.000000000 +0200
++++ linux-2.6/fs/aufs/super.h	2010-10-25 14:20:44.000000000 +0200
 @@ -0,0 +1,488 @@
 +/*
 + * Copyright (C) 2005-2010 Junjiro R. Okajima
@@ -21863,7 +21440,7 @@ index c53949f..0ae5b91 100644
 +#endif /* __KERNEL__ */
 +#endif /* __AUFS_SUPER_H__ */
 --- /dev/null
-+++ linux-2.6/fs/aufs/sysaufs.c	2010-10-24 11:42:49.000000000 +0200
++++ linux-2.6/fs/aufs/sysaufs.c	2010-10-25 14:20:44.000000000 +0200
 @@ -0,0 +1,107 @@
 +/*
 + * Copyright (C) 2005-2010 Junjiro R. Okajima
@@ -21973,7 +21550,7 @@ index c53949f..0ae5b91 100644
 +	return err;
 +}
 --- /dev/null
-+++ linux-2.6/fs/aufs/sysaufs.h	2010-10-24 11:43:00.000000000 +0200
++++ linux-2.6/fs/aufs/sysaufs.h	2010-10-25 14:20:44.000000000 +0200
 @@ -0,0 +1,105 @@
 +/*
 + * Copyright (C) 2005-2010 Junjiro R. Okajima
@@ -22081,7 +21658,7 @@ index c53949f..0ae5b91 100644
 +#endif /* __KERNEL__ */
 +#endif /* __SYSAUFS_H__ */
 --- /dev/null
-+++ linux-2.6/fs/aufs/sysfs.c	2010-10-24 15:24:09.000000000 +0200
++++ linux-2.6/fs/aufs/sysfs.c	2010-10-25 14:20:44.000000000 +0200
 @@ -0,0 +1,250 @@
 +/*
 + * Copyright (C) 2005-2010 Junjiro R. Okajima
@@ -22334,8 +21911,8 @@ index c53949f..0ae5b91 100644
 +	}
 +}
 --- /dev/null
-+++ linux-2.6/fs/aufs/sysrq.c	2010-10-24 11:43:18.000000000 +0200
-@@ -0,0 +1,119 @@
++++ linux-2.6/fs/aufs/sysrq.c	2010-10-26 21:43:12.000000000 +0200
+@@ -0,0 +1,118 @@
 +/*
 + * Copyright (C) 2005-2010 Junjiro R. Okajima
 + *
@@ -22394,14 +21971,14 @@ index c53949f..0ae5b91 100644
 +	spin_unlock(&inode_lock);
 +#endif
 +	printk(KERN_WARNING AUFS_NAME ": files\n");
-+	file_list_lock();
-+	list_for_each_entry(file, &sb->s_files, f_u.fu_list) {
++	lg_global_lock(files_lglock);
++	do_file_list_for_each_entry(sb, file) {
 +		umode_t mode;
 +		mode = file->f_dentry->d_inode->i_mode;
 +		if (!special_file(mode) || au_special_file(mode))
 +			au_dpri_file(file);
-+	}
-+	file_list_unlock();
++	} while_file_list_for_each_entry;
++	lg_global_unlock(files_lglock);
 +	printk(KERN_WARNING AUFS_NAME ": done\n");
 +
 +	au_plevel = plevel;
@@ -22414,8 +21991,7 @@ index c53949f..0ae5b91 100644
 +module_param_named(sysrq, aufs_sysrq_key, charp, S_IRUGO);
 +MODULE_PARM_DESC(sysrq, "MagicSysRq key for " AUFS_NAME);
 +
-+static void au_sysrq(int key __maybe_unused,
-+		     struct tty_struct *tty __maybe_unused)
++static void au_sysrq(int key __maybe_unused)
 +{
 +	struct au_sbinfo *sbinfo;
 +
@@ -22456,7 +22032,7 @@ index c53949f..0ae5b91 100644
 +		pr_err("err %d (ignored)\n", err);
 +}
 --- /dev/null
-+++ linux-2.6/fs/aufs/vdir.c	2010-10-24 11:19:23.000000000 +0200
++++ linux-2.6/fs/aufs/vdir.c	2010-10-25 14:20:44.000000000 +0200
 @@ -0,0 +1,884 @@
 +/*
 + * Copyright (C) 2005-2010 Junjiro R. Okajima
@@ -23343,8 +22919,8 @@ index c53949f..0ae5b91 100644
 +	return 0;
 +}
 --- /dev/null
-+++ linux-2.6/fs/aufs/vfsub.c	2010-10-24 12:39:12.000000000 +0200
-@@ -0,0 +1,786 @@
++++ linux-2.6/fs/aufs/vfsub.c	2010-10-26 21:45:14.000000000 +0200
+@@ -0,0 +1,789 @@
 +/*
 + * Copyright (C) 2005-2010 Junjiro R. Okajima
 + *
@@ -23430,7 +23006,9 @@ index c53949f..0ae5b91 100644
 +	int err;
 +
 +	path_get(path);
-+	file = dentry_open(path->dentry, path->mnt, flags, current_cred());
++	file = dentry_open(path->dentry, path->mnt,
++			flags | vfsub_fmode_to_uint(FMODE_NONOTIFY),
++			current_cred());
 +	if (IS_ERR(file))
 +		goto out;
 +
@@ -23447,7 +23025,8 @@ index c53949f..0ae5b91 100644
 +{
 +	struct file *file;
 +
-+	file = filp_open(path, oflags, mode);
++	file = filp_open(path, oflags | vfsub_fmode_to_uint(FMODE_NONOTIFY),
++			mode);
 +	if (IS_ERR(file))
 +		goto out;
 +	vfsub_update_h_iattr(&file->f_path, /*did*/NULL); /*ignore*/
@@ -24132,8 +23711,8 @@ index c53949f..0ae5b91 100644
 +	return err;
 +}
 --- /dev/null
-+++ linux-2.6/fs/aufs/vfsub.h	2010-10-24 11:19:23.000000000 +0200
-@@ -0,0 +1,174 @@
++++ linux-2.6/fs/aufs/vfsub.h	2010-11-02 08:19:59.000000000 +0100
+@@ -0,0 +1,208 @@
 +/*
 + * Copyright (C) 2005-2010 Junjiro R. Okajima
 + *
@@ -24162,8 +23741,42 @@ index c53949f..0ae5b91 100644
 +#ifdef __KERNEL__
 +
 +#include <linux/fs.h>
++#include <linux/lglock.h>
 +
 +/* ---------------------------------------------------------------------- */
++DECLARE_BRLOCK(vfsmount_lock);
++DECLARE_LGLOCK(files_lglock);
++extern void file_sb_list_del(struct file *f);
++
++/* copied from fs/file_table.c */
++#ifdef CONFIG_SMP
++/*
++ * These macros iterate all files on all CPUs for a given superblock.
++ * files_lglock must be held globally.
++ */
++#define do_file_list_for_each_entry(__sb, __file)		\
++{								\
++	int i;							\
++	for_each_possible_cpu(i) {				\
++		struct list_head *list;				\
++		list = per_cpu_ptr((__sb)->s_files, i);		\
++		list_for_each_entry((__file), list, f_u.fu_list)
++
++#define while_file_list_for_each_entry				\
++	}							\
++}
++
++#else
++
++#define do_file_list_for_each_entry(__sb, __file)		\
++{								\
++	struct list_head *list;					\
++	list = &(sb)->s_files;					\
++	list_for_each_entry((__file), list, f_u.fu_list)
++
++#define while_file_list_for_each_entry				\
++}
++#endif /* CONFIG_SMP */
 +
 +/* lock subclass for lower inode */
 +/* default MAX_LOCKDEP_SUBCLASSES(8) is not enough */
@@ -24309,8 +23922,8 @@ index c53949f..0ae5b91 100644
 +#endif /* __KERNEL__ */
 +#endif /* __AUFS_VFSUB_H__ */
 --- /dev/null
-+++ linux-2.6/fs/aufs/wbr_policy.c	2010-10-24 14:48:12.000000000 +0200
-@@ -0,0 +1,699 @@
++++ linux-2.6/fs/aufs/wbr_policy.c	2010-11-02 08:24:52.000000000 +0100
+@@ -0,0 +1,696 @@
 +/*
 + * Copyright (C) 2005-2010 Junjiro R. Okajima
 + *
@@ -24720,7 +24333,6 @@ index c53949f..0ae5b91 100644
 +	aufs_bindex_t bindex, bend;
 +	int err;
 +	unsigned long long b, bavail;
-+	struct path h_path;
 +	/* reduce the stack usage */
 +	struct kstatfs *st;
 +
@@ -24743,9 +24355,7 @@ index c53949f..0ae5b91 100644
 +			continue;
 +
 +		/* sb->s_root for NFS is unreliable */
-+		h_path.mnt = br->br_mnt;
-+		h_path.dentry = h_path.mnt->mnt_root;
-+		err = vfs_statfs(&h_path, st);
++		err = statfs_by_dentry(br->br_mnt->mnt_root, st);
 +		if (unlikely(err)) {
 +			AuWarn1("failed statfs, b%d, %d\n", bindex, err);
 +			continue;
@@ -25011,7 +24621,7 @@ index c53949f..0ae5b91 100644
 +	}
 +};
 --- /dev/null
-+++ linux-2.6/fs/aufs/whout.c	2010-10-24 11:43:45.000000000 +0200
++++ linux-2.6/fs/aufs/whout.c	2010-10-25 14:20:44.000000000 +0200
 @@ -0,0 +1,1059 @@
 +/*
 + * Copyright (C) 2005-2010 Junjiro R. Okajima
@@ -26073,7 +25683,7 @@ index c53949f..0ae5b91 100644
 +	}
 +}
 --- /dev/null
-+++ linux-2.6/fs/aufs/whout.h	2010-10-24 11:43:55.000000000 +0200
++++ linux-2.6/fs/aufs/whout.h	2010-10-25 14:20:44.000000000 +0200
 @@ -0,0 +1,87 @@
 +/*
 + * Copyright (C) 2005-2010 Junjiro R. Okajima
@@ -26163,7 +25773,7 @@ index c53949f..0ae5b91 100644
 +#endif /* __KERNEL__ */
 +#endif /* __AUFS_WHOUT_H__ */
 --- /dev/null
-+++ linux-2.6/fs/aufs/wkq.c	2010-10-24 11:44:06.000000000 +0200
++++ linux-2.6/fs/aufs/wkq.c	2010-10-25 14:20:44.000000000 +0200
 @@ -0,0 +1,223 @@
 +/*
 + * Copyright (C) 2005-2010 Junjiro R. Okajima
@@ -26389,7 +25999,7 @@ index c53949f..0ae5b91 100644
 +	return err;
 +}
 --- /dev/null
-+++ linux-2.6/fs/aufs/wkq.h	2010-10-24 11:44:14.000000000 +0200
++++ linux-2.6/fs/aufs/wkq.h	2010-10-25 14:20:44.000000000 +0200
 @@ -0,0 +1,88 @@
 +/*
 + * Copyright (C) 2005-2010 Junjiro R. Okajima
@@ -26480,7 +26090,7 @@ index c53949f..0ae5b91 100644
 +#endif /* __KERNEL__ */
 +#endif /* __AUFS_WKQ_H__ */
 --- /dev/null
-+++ linux-2.6/fs/aufs/xino.c	2010-10-24 11:44:28.000000000 +0200
++++ linux-2.6/fs/aufs/xino.c	2010-10-25 14:20:44.000000000 +0200
 @@ -0,0 +1,1263 @@
 +/*
 + * Copyright (C) 2005-2010 Junjiro R. Okajima
@@ -27746,7 +27356,7 @@ index c53949f..0ae5b91 100644
 +	return err;
 +}
 --- /dev/null
-+++ linux-2.6/include/linux/aufs_type.h	2010-10-24 15:14:43.000000000 +0200
++++ linux-2.6/include/linux/aufs_type.h	2010-11-03 09:30:26.000000000 +0100
 @@ -0,0 +1,198 @@
 +/*
 + * Copyright (C) 2005-2010 Junjiro R. Okajima
@@ -27777,7 +27387,7 @@ index c53949f..0ae5b91 100644
 +#include <linux/limits.h>
 +#include <linux/types.h>
 +
-+#define AUFS_VERSION	"2.1-standalone.tree-36-UNRELEASED-20101024"
++#define AUFS_VERSION	"2.1-standalone.tree-36-UNRELEASED-20101103"
 +
 +/* todo? move this to linux-2.6.19/include/magic.h */
 +#define AUFS_SUPER_MAGIC	('a' << 24 | 'u' << 16 | 'f' << 8 | 's')
@@ -27946,3 +27556,420 @@ index c53949f..0ae5b91 100644
 +#define AUFS_CTL_WBR_FD		_IO(AuCtlType, AuCtl_WBR_FD)
 +
 +#endif /* __AUFS_TYPE_H__ */
+aufs2.1 base patch for linux-2.6.35
+
+diff --git a/fs/namei.c b/fs/namei.c
+index 868d0cb..6e92c81 100644
+--- a/fs/namei.c
++++ b/fs/namei.c
+@@ -1178,7 +1178,7 @@ out:
+  * needs parent already locked. Doesn't follow mounts.
+  * SMP-safe.
+  */
+-static struct dentry *lookup_hash(struct nameidata *nd)
++struct dentry *lookup_hash(struct nameidata *nd)
+ {
+ 	int err;
+ 
+@@ -1188,7 +1188,7 @@ static struct dentry *lookup_hash(struct nameidata *nd)
+ 	return __lookup_hash(&nd->last, nd->path.dentry, nd);
+ }
+ 
+-static int __lookup_one_len(const char *name, struct qstr *this,
++int __lookup_one_len(const char *name, struct qstr *this,
+ 		struct dentry *base, int len)
+ {
+ 	unsigned long hash;
+diff --git a/fs/splice.c b/fs/splice.c
+index efdbfec..e01a51e 100644
+--- a/fs/splice.c
++++ b/fs/splice.c
+@@ -1104,8 +1104,8 @@ EXPORT_SYMBOL(generic_splice_sendpage);
+ /*
+  * Attempt to initiate a splice from pipe to file.
+  */
+-static long do_splice_from(struct pipe_inode_info *pipe, struct file *out,
+-			   loff_t *ppos, size_t len, unsigned int flags)
++long do_splice_from(struct pipe_inode_info *pipe, struct file *out,
++		    loff_t *ppos, size_t len, unsigned int flags)
+ {
+ 	ssize_t (*splice_write)(struct pipe_inode_info *, struct file *,
+ 				loff_t *, size_t, unsigned int);
+@@ -1132,9 +1132,9 @@ static long do_splice_from(struct pipe_inode_info *pipe, struct file *out,
+ /*
+  * Attempt to initiate a splice from a file to a pipe.
+  */
+-static long do_splice_to(struct file *in, loff_t *ppos,
+-			 struct pipe_inode_info *pipe, size_t len,
+-			 unsigned int flags)
++long do_splice_to(struct file *in, loff_t *ppos,
++		  struct pipe_inode_info *pipe, size_t len,
++		  unsigned int flags)
+ {
+ 	ssize_t (*splice_read)(struct file *, loff_t *,
+ 			       struct pipe_inode_info *, size_t, unsigned int);
+diff --git a/include/linux/namei.h b/include/linux/namei.h
+index 05b441d..91bc74e 100644
+--- a/include/linux/namei.h
++++ b/include/linux/namei.h
+@@ -73,6 +73,9 @@ extern int vfs_path_lookup(struct dentry *, struct vfsmount *,
+ extern struct file *lookup_instantiate_filp(struct nameidata *nd, struct dentry *dentry,
+ 		int (*open)(struct inode *, struct file *));
+ 
++extern struct dentry *lookup_hash(struct nameidata *nd);
++extern int __lookup_one_len(const char *name, struct qstr *this,
++			    struct dentry *base, int len);
+ extern struct dentry *lookup_one_len(const char *, struct dentry *, int);
+ 
+ extern int follow_down(struct path *);
+diff --git a/include/linux/splice.h b/include/linux/splice.h
+index 997c3b4..be9a153 100644
+--- a/include/linux/splice.h
++++ b/include/linux/splice.h
+@@ -89,4 +89,10 @@ extern int splice_grow_spd(struct pipe_inode_info *, struct splice_pipe_desc *);
+ extern void splice_shrink_spd(struct pipe_inode_info *,
+ 				struct splice_pipe_desc *);
+ 
++extern long do_splice_from(struct pipe_inode_info *pipe, struct file *out,
++			   loff_t *ppos, size_t len, unsigned int flags);
++extern long do_splice_to(struct file *in, loff_t *ppos,
++			 struct pipe_inode_info *pipe, size_t len,
++			 unsigned int flags);
++
+ #endif
+aufs2.1 kbuild patch for linux-2.6.36
+
+diff --git a/fs/Kconfig b/fs/Kconfig
+index 3d18530..8f582e1 100644
+--- a/fs/Kconfig
++++ b/fs/Kconfig
+@@ -189,6 +189,7 @@ source "fs/romfs/Kconfig"
+ source "fs/sysv/Kconfig"
+ source "fs/ufs/Kconfig"
+ source "fs/exofs/Kconfig"
++source "fs/aufs/Kconfig"
+ 
+ endif # MISC_FILESYSTEMS
+ 
+diff --git a/fs/Makefile b/fs/Makefile
+index e6ec1d3..b0d795a 100644
+--- a/fs/Makefile
++++ b/fs/Makefile
+@@ -126,3 +126,4 @@ obj-$(CONFIG_BTRFS_FS)		+= btrfs/
+ obj-$(CONFIG_GFS2_FS)           += gfs2/
+ obj-$(CONFIG_EXOFS_FS)          += exofs/
+ obj-$(CONFIG_CEPH_FS)		+= ceph/
++obj-$(CONFIG_AUFS_FS)           += aufs/
+diff --git a/include/linux/Kbuild b/include/linux/Kbuild
+index 626b629..a841231 100644
+--- a/include/linux/Kbuild
++++ b/include/linux/Kbuild
+@@ -60,6 +60,7 @@ header-y += atmppp.h
+ header-y += atmsap.h
+ header-y += atmsvc.h
+ header-y += audit.h
++header-y += aufs_type.h
+ header-y += auto_fs.h
+ header-y += auto_fs4.h
+ header-y += auxvec.h
+aufs2.1 standalone patch for linux-2.6.36
+
+diff --git a/fs/inode.c b/fs/inode.c
+index 722860b..bfb0698 100644
+--- a/fs/inode.c
++++ b/fs/inode.c
+@@ -84,6 +84,7 @@ static struct hlist_head *inode_hashtable __read_mostly;
+  * the i_state of an inode while it is in use..
+  */
+ DEFINE_SPINLOCK(inode_lock);
++EXPORT_SYMBOL_GPL(inode_lock);
+ 
+ /*
+  * iprune_sem provides exclusion between the kswapd or try_to_free_pages
+diff --git a/fs/namei.c b/fs/namei.c
+index 56e8ece..ba75f28 100644
+--- a/fs/namei.c
++++ b/fs/namei.c
+@@ -347,6 +347,7 @@ int deny_write_access(struct file * file)
+ 
+ 	return 0;
+ }
++EXPORT_SYMBOL_GPL(deny_write_access);
+ 
+ /**
+  * path_get - get a reference to a path
+@@ -1177,6 +1178,7 @@ struct dentry *lookup_hash(struct nameidata *nd)
+ 		return ERR_PTR(err);
+ 	return __lookup_hash(&nd->last, nd->path.dentry, nd);
+ }
++EXPORT_SYMBOL_GPL(lookup_hash);
+ 
+ int __lookup_one_len(const char *name, struct qstr *this,
+ 		struct dentry *base, int len)
+@@ -1199,6 +1201,7 @@ int __lookup_one_len(const char *name, struct qstr *this,
+ 	this->hash = end_name_hash(hash);
+ 	return 0;
+ }
++EXPORT_SYMBOL_GPL(__lookup_one_len);
+ 
+ /**
+  * lookup_one_len - filesystem helper to lookup single pathname component
+diff --git a/fs/namespace.c b/fs/namespace.c
+index 2e10cb1..8fa77c4 100644
+--- a/fs/namespace.c
++++ b/fs/namespace.c
+@@ -1283,6 +1283,7 @@ int iterate_mounts(int (*f)(struct vfsmount *, void *), void *arg,
+ 	}
+ 	return 0;
+ }
++EXPORT_SYMBOL_GPL(iterate_mounts);
+ 
+ static void cleanup_group_ids(struct vfsmount *mnt, struct vfsmount *end)
+ {
+diff --git a/fs/notify/group.c b/fs/notify/group.c
+index d309f38..f0e9568 100644
+--- a/fs/notify/group.c
++++ b/fs/notify/group.c
+@@ -22,6 +22,7 @@
+ #include <linux/srcu.h>
+ #include <linux/rculist.h>
+ #include <linux/wait.h>
++#include <linux/module.h>
+ 
+ #include <linux/fsnotify_backend.h>
+ #include "fsnotify.h"
+@@ -70,6 +71,7 @@ void fsnotify_put_group(struct fsnotify_group *group)
+ 	if (atomic_dec_and_test(&group->refcnt))
+ 		fsnotify_destroy_group(group);
+ }
++EXPORT_SYMBOL_GPL(fsnotify_put_group);
+ 
+ /*
+  * Create a new fsnotify_group and hold a reference for the group returned.
+@@ -102,3 +104,4 @@ struct fsnotify_group *fsnotify_alloc_group(const struct fsnotify_ops *ops)
+ 
+ 	return group;
+ }
++EXPORT_SYMBOL_GPL(fsnotify_alloc_group);
+diff --git a/fs/notify/mark.c b/fs/notify/mark.c
+index 325185e..adede09 100644
+--- a/fs/notify/mark.c
++++ b/fs/notify/mark.c
+@@ -113,6 +113,7 @@ void fsnotify_put_mark(struct fsnotify_mark *mark)
+ 	if (atomic_dec_and_test(&mark->refcnt))
+ 		mark->free_mark(mark);
+ }
++EXPORT_SYMBOL_GPL(fsnotify_put_mark);
+ 
+ /*
+  * Any time a mark is getting freed we end up here.
+@@ -190,6 +191,7 @@ void fsnotify_destroy_mark(struct fsnotify_mark *mark)
+ 	if (unlikely(atomic_dec_and_test(&group->num_marks)))
+ 		fsnotify_final_destroy_group(group);
+ }
++EXPORT_SYMBOL_GPL(fsnotify_destroy_mark);
+ 
+ void fsnotify_set_mark_mask_locked(struct fsnotify_mark *mark, __u32 mask)
+ {
+@@ -277,6 +279,7 @@ err:
+ 
+ 	return ret;
+ }
++EXPORT_SYMBOL_GPL(fsnotify_add_mark);
+ 
+ /*
+  * clear any marks in a group in which mark->flags & flags is true
+@@ -332,6 +335,7 @@ void fsnotify_init_mark(struct fsnotify_mark *mark,
+ 	atomic_set(&mark->refcnt, 1);
+ 	mark->free_mark = free_mark;
+ }
++EXPORT_SYMBOL_GPL(fsnotify_init_mark);
+ 
+ static int fsnotify_mark_destroy(void *ignored)
+ {
+diff --git a/fs/open.c b/fs/open.c
+index 630715f..1c864c7 100644
+--- a/fs/open.c
++++ b/fs/open.c
+@@ -60,6 +60,7 @@ int do_truncate(struct dentry *dentry, loff_t length, unsigned int time_attrs,
+ 	mutex_unlock(&dentry->d_inode->i_mutex);
+ 	return ret;
+ }
++EXPORT_SYMBOL_GPL(do_truncate);
+ 
+ static long do_sys_truncate(const char __user *pathname, loff_t length)
+ {
+diff --git a/fs/splice.c b/fs/splice.c
+index 278c94f..033f7ac 100644
+--- a/fs/splice.c
++++ b/fs/splice.c
+@@ -1116,6 +1116,7 @@ long do_splice_from(struct pipe_inode_info *pipe, struct file *out,
+ 
+ 	return splice_write(pipe, out, ppos, len, flags);
+ }
++EXPORT_SYMBOL_GPL(do_splice_from);
+ 
+ /*
+  * Attempt to initiate a splice from a file to a pipe.
+@@ -1142,6 +1143,7 @@ long do_splice_to(struct file *in, loff_t *ppos,
+ 
+ 	return splice_read(in, ppos, pipe, len, flags);
+ }
++EXPORT_SYMBOL_GPL(do_splice_to);
+ 
+ /**
+  * splice_direct_to_actor - splices data directly between two non-pipes
+diff --git a/security/commoncap.c b/security/commoncap.c
+index 4e01599..3611e1b 100644
+--- a/security/commoncap.c
++++ b/security/commoncap.c
+@@ -951,3 +951,4 @@ int cap_file_mmap(struct file *file, unsigned long reqprot,
+ 	}
+ 	return ret;
+ }
++EXPORT_SYMBOL_GPL(cap_file_mmap);
+diff --git a/security/device_cgroup.c b/security/device_cgroup.c
+index 8d9c48f..29108aa 100644
+--- a/security/device_cgroup.c
++++ b/security/device_cgroup.c
+@@ -515,6 +515,7 @@ found:
+ 
+ 	return -EPERM;
+ }
++EXPORT_SYMBOL_GPL(devcgroup_inode_permission);
+ 
+ int devcgroup_inode_mknod(int mode, dev_t dev)
+ {
+diff --git a/security/security.c b/security/security.c
+index c53949f..0ae5b91 100644
+--- a/security/security.c
++++ b/security/security.c
+@@ -376,6 +376,7 @@ int security_path_mkdir(struct path *dir, struct dentry *dentry, int mode)
+ 		return 0;
+ 	return security_ops->path_mkdir(dir, dentry, mode);
+ }
++EXPORT_SYMBOL_GPL(security_path_mkdir);
+ 
+ int security_path_rmdir(struct path *dir, struct dentry *dentry)
+ {
+@@ -383,6 +384,7 @@ int security_path_rmdir(struct path *dir, struct dentry *dentry)
+ 		return 0;
+ 	return security_ops->path_rmdir(dir, dentry);
+ }
++EXPORT_SYMBOL_GPL(security_path_rmdir);
+ 
+ int security_path_unlink(struct path *dir, struct dentry *dentry)
+ {
+@@ -390,6 +392,7 @@ int security_path_unlink(struct path *dir, struct dentry *dentry)
+ 		return 0;
+ 	return security_ops->path_unlink(dir, dentry);
+ }
++EXPORT_SYMBOL_GPL(security_path_unlink);
+ 
+ int security_path_symlink(struct path *dir, struct dentry *dentry,
+ 			  const char *old_name)
+@@ -398,6 +401,7 @@ int security_path_symlink(struct path *dir, struct dentry *dentry,
+ 		return 0;
+ 	return security_ops->path_symlink(dir, dentry, old_name);
+ }
++EXPORT_SYMBOL_GPL(security_path_symlink);
+ 
+ int security_path_link(struct dentry *old_dentry, struct path *new_dir,
+ 		       struct dentry *new_dentry)
+@@ -406,6 +410,7 @@ int security_path_link(struct dentry *old_dentry, struct path *new_dir,
+ 		return 0;
+ 	return security_ops->path_link(old_dentry, new_dir, new_dentry);
+ }
++EXPORT_SYMBOL_GPL(security_path_link);
+ 
+ int security_path_rename(struct path *old_dir, struct dentry *old_dentry,
+ 			 struct path *new_dir, struct dentry *new_dentry)
+@@ -416,6 +421,7 @@ int security_path_rename(struct path *old_dir, struct dentry *old_dentry,
+ 	return security_ops->path_rename(old_dir, old_dentry, new_dir,
+ 					 new_dentry);
+ }
++EXPORT_SYMBOL_GPL(security_path_rename);
+ 
+ int security_path_truncate(struct path *path)
+ {
+@@ -423,6 +429,7 @@ int security_path_truncate(struct path *path)
+ 		return 0;
+ 	return security_ops->path_truncate(path);
+ }
++EXPORT_SYMBOL_GPL(security_path_truncate);
+ 
+ int security_path_chmod(struct dentry *dentry, struct vfsmount *mnt,
+ 			mode_t mode)
+@@ -431,6 +438,7 @@ int security_path_chmod(struct dentry *dentry, struct vfsmount *mnt,
+ 		return 0;
+ 	return security_ops->path_chmod(dentry, mnt, mode);
+ }
++EXPORT_SYMBOL_GPL(security_path_chmod);
+ 
+ int security_path_chown(struct path *path, uid_t uid, gid_t gid)
+ {
+@@ -438,6 +446,7 @@ int security_path_chown(struct path *path, uid_t uid, gid_t gid)
+ 		return 0;
+ 	return security_ops->path_chown(path, uid, gid);
+ }
++EXPORT_SYMBOL_GPL(security_path_chown);
+ 
+ int security_path_chroot(struct path *path)
+ {
+@@ -514,6 +523,7 @@ int security_inode_readlink(struct dentry *dentry)
+ 		return 0;
+ 	return security_ops->inode_readlink(dentry);
+ }
++EXPORT_SYMBOL_GPL(security_inode_readlink);
+ 
+ int security_inode_follow_link(struct dentry *dentry, struct nameidata *nd)
+ {
+@@ -528,6 +538,7 @@ int security_inode_permission(struct inode *inode, int mask)
+ 		return 0;
+ 	return security_ops->inode_permission(inode, mask);
+ }
++EXPORT_SYMBOL_GPL(security_inode_permission);
+ 
+ int security_inode_setattr(struct dentry *dentry, struct iattr *attr)
+ {
+@@ -627,6 +638,7 @@ int security_file_permission(struct file *file, int mask)
+ 
+ 	return fsnotify_perm(file, mask);
+ }
++EXPORT_SYMBOL_GPL(security_file_permission);
+ 
+ int security_file_alloc(struct file *file)
+ {
+@@ -654,6 +666,7 @@ int security_file_mmap(struct file *file, unsigned long reqprot,
+ 		return ret;
+ 	return ima_file_mmap(file, prot);
+ }
++EXPORT_SYMBOL_GPL(security_file_mmap);
+ 
+ int security_file_mprotect(struct vm_area_struct *vma, unsigned long reqprot,
+ 			    unsigned long prot)
+diff --git a/fs/file_table.c b/fs/file_table.c
+index 44abf87..4081dda 100644
+--- a/fs/file_table.c
++++ b/fs/file_table.c
+@@ -395,6 +395,8 @@ void file_sb_list_del(struct file *file)
+ 	}
+ }
+ 
++EXPORT_SYMBOL_GPL(file_sb_list_del);
++
+ #ifdef CONFIG_SMP
+ 
+ /*
+diff --git a/fs/statfs.c b/fs/statfs.c
+index 30ea8c8..9025c98 100644
+--- a/fs/statfs.c
++++ b/fs/statfs.c
+@@ -61,6 +61,7 @@  int statfs_by_dentry(struct dentry *dentry, struct kstatfs *buf)
+ 		buf->f_frsize = buf->f_bsize;
+ 	return retval;
+ }
++EXPORT_SYMBOL_GPL(statfs_by_dentry);
+ 
+ int vfs_statfs(struct path *path, struct kstatfs *buf)
+ {

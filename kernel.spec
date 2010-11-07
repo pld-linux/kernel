@@ -249,8 +249,7 @@ Patch130:	kernel-forcedeth-WON.patch
 # from patches.fixes/tiocgdev
 Patch131:	kernel-TIOCGDEV.patch
 
-# http://download.filesystems.org/unionfs/unionfs-2.x/unionfs-2.5.4_for_2.6.34-rc0.diff.gz
-# based on mandriva kernel src.rpm patches
+# http://download.filesystems.org/unionfs/unionfs-2.x/unionfs-2.5.7_for_2.6.36.diff.gz
 Patch140:	kernel-unionfs.patch
 
 # http://git.c3sl.ufpr.br/pub/scm/aufs/aufs2-standalone.git, read README
@@ -262,7 +261,9 @@ Patch140:	kernel-unionfs.patch
 # mkdir linux
 # cp -a Documentation fs include linux
 # diff -urN /usr/share/empty linux >> ~/rpm/packages/kernel/kernel-aufs2.patch 
-
+#
+# NOTE: temporaily from http://livenet.selfip.com/ftp/debian/aufs2.1-36/ until upstream catches up with 2.6.36
+#
 Patch145:	kernel-aufs2.patch
 Patch146:	kernel-aufs2-unionfs.patch
 Patch147:	kernel-aufs2-no-const-grsec.patch
