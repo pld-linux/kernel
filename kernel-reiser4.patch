@@ -40016,7 +40016,7 @@ diff -urN linux-2.6.35.orig/fs/reiser4/plugin/hash.c linux-2.6.35/fs/reiser4/plu
 diff -urN linux-2.6.35.orig/fs/reiser4/plugin/inode_ops.c linux-2.6.35/fs/reiser4/plugin/inode_ops.c
 --- linux-2.6.35.orig/fs/reiser4/plugin/inode_ops.c	1970-01-01 01:00:00.000000000 +0100
 +++ linux-2.6.35/fs/reiser4/plugin/inode_ops.c	2010-08-04 15:44:57.000000000 +0200
-@@ -0,0 +1,906 @@
+@@ -0,0 +1,916 @@
 +/*
 + * Copyright 2005 by Hans Reiser, licensing governed by reiser4/README
 + */
@@ -40479,9 +40479,19 @@ diff -urN linux-2.6.35.orig/fs/reiser4/plugin/inode_ops.c linux-2.6.35/fs/reiser
 +				return result;
 +			}
 +		}
-+		result = inode_setattr(inode, attr);
-+		if (!result)
++
++		if ((attr->ia_valid & ATTR_SIZE) &&
++		    attr->ia_size != i_size_read(inode))
++			result = vmtruncate(inode, attr->ia_size);
++			if (result)
++				goto result_error;
++		setattr_copy(inode, attr);
++		mark_inode_dirty(inode);
++		result = 0;
++result_error:
++		if (!result) {
 +			reiser4_update_sd(inode);
++		}
 +	}
 +
 +	context_set_commit_async(ctx);
@@ -56458,7 +56468,7 @@ diff -urN linux-2.6.35.orig/fs/reiser4/plugin/object.c linux-2.6.35/fs/reiser4/p
 +	.read = reiser4_read_careful,
 +	.write = reiser4_write_careful,
 +	.aio_read = generic_file_aio_read,
-+	.ioctl = reiser4_ioctl_careful,
++	.unlocked_ioctl = reiser4_ioctl_careful,
 +	.mmap = reiser4_mmap_careful,
 +	.open = reiser4_open_careful,
 +	.release = reiser4_release_careful,
@@ -65466,7 +65476,7 @@ diff -urN linux-2.6.35.orig/fs/reiser4/super_ops.c linux-2.6.35/fs/reiser4/super
 +
 +	truncate_inode_pages(&inode->i_data, 0);
 +	inode->i_blocks = 0;
-+	clear_inode(inode);
++	end_writeback(inode);
 +	reiser4_exit_context(ctx);
 +}
 +
@@ -65726,11 +65736,11 @@ diff -urN linux-2.6.35.orig/fs/reiser4/super_ops.c linux-2.6.35/fs/reiser4/super
 +	.alloc_inode = reiser4_alloc_inode,
 +	.destroy_inode = reiser4_destroy_inode,
 +	.dirty_inode = reiser4_dirty_inode,
-+	.delete_inode = reiser4_delete_inode,
++	.evict_inode = reiser4_delete_inode,
 +	.put_super = reiser4_put_super,
 +	.write_super = reiser4_write_super,
 +	.statfs = reiser4_statfs,
-+	.clear_inode = reiser4_clear_inode,
++//	.clear_inode = reiser4_clear_inode,
 +	.writeback_inodes = reiser4_writeback_inodes,
 +	.show_options = reiser4_show_options
 +};
