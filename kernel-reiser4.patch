@@ -40470,7 +40470,7 @@ diff -urN linux-2.6.35.orig/fs/reiser4/plugin/inode_ops.c linux-2.6.35/fs/reiser
 +	result = setattr_reserve(reiser4_tree_by_inode(inode));
 +	if (!result) {
 +		if ((attr->ia_valid & ATTR_UID && attr->ia_uid != inode->i_uid)
-+		    || (attr->ia_valid & ATTR_GID
++BROKEN		    || (attr->ia_valid & ATTR_GID
 +			&& attr->ia_gid != inode->i_gid)) {
 +			result = dquot_transfer(inode, attr) ? -EDQUOT : 0;
 +			if (result) {
@@ -40483,11 +40483,13 @@ diff -urN linux-2.6.35.orig/fs/reiser4/plugin/inode_ops.c linux-2.6.35/fs/reiser
 +		if ((attr->ia_valid & ATTR_SIZE) &&
 +		    attr->ia_size != i_size_read(inode))
 +			result = vmtruncate(inode, attr->ia_size);
-+			if (result)
++BROKEN			if (result)
 +				goto result_error;
 +		setattr_copy(inode, attr);
 +		mark_inode_dirty(inode);
 +		result = 0;
++
++
 +result_error:
 +		if (!result) {
 +			reiser4_update_sd(inode);
