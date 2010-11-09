@@ -25,7 +25,7 @@
 %bcond_without	pcmcia		# don't build pcmcia
 
 %bcond_with	verbose		# verbose build (V=1)
-%bcond_without	reiser4		# support for reiser4 fs (experimental)
+%bcond_with	reiser4		# support for reiser4 fs (experimental)
 
 %bcond_without	grsecurity	# don't build grsecurity nor pax at all
 %bcond_with	pax		# build pax and grsecurity (ie. grsecurity && pax)
@@ -90,7 +90,7 @@
 
 %define		basever		2.6.36
 %define		postver		%{nil}
-%define		rel		0.1
+%define		rel		1
 
 %define		_enable_debug_packages			0
 
