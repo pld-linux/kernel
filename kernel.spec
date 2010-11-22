@@ -297,7 +297,7 @@ Patch5000:	kernel-apparmor.patch
 # based on http://ftp.leg.uct.ac.za/pub/linux/rip/inittmpfs-2.6.14.diff.gz
 Patch7000:	kernel-inittmpfs.patch
 
-# based on http://www.grsecurity.net/~spender/grsecurity-2.2.0-2.6.36-201011062054.patch
+# based on http://www.grsecurity.net/~spender/grsecurity-2.2.0-2.6.36-201011151726.patch
 # NOTE: put raw upstream patches on kernel-grsec_full.patch:GRSECURITY_RAW for reference
 #       (since upstream deletes older patches)
 Patch9999:	kernel-grsec_full.patch
