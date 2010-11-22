@@ -8,8 +8,6 @@
 # # curl -s http://www.kernel.org/kdist/finger_banner
 #
 # TODO:
-# - update aufs2 patch when final version for 2.6.36 exists
-#
 # - benchmark NO_HZ & HZ=1000 vs HZ=300 on i686
 #
 # HOWTO update configuration files:
@@ -89,7 +87,7 @@
 %endif
 
 %define		basever		2.6.36
-%define		postver		%{nil}
+%define		postver		.1
 %define		rel		1
 
 %define		_enable_debug_packages			0
@@ -133,7 +131,7 @@ Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{basever}.tar.bz2
 # Source0-md5:	61f3739a73afb6914cb007f37fb09b62
 %if "%{postver}" != "%{nil}"
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
-# Source1-md5:	7115d47e87afef1b9a14dbc9c387cd20
+# Source1-md5:	dd38a6caf08df2822f93541ee95aed7d
 %endif
 
 Source3:	kernel-autoconf.h
