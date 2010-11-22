@@ -2611,7 +2611,40 @@ diff -urNp linux-2.6.36/arch/powerpc/kernel/pci-common.c linux-2.6.36/arch/power
  }
 diff -urNp linux-2.6.36/arch/powerpc/kernel/process.c linux-2.6.36/arch/powerpc/kernel/process.c
 --- linux-2.6.36/arch/powerpc/kernel/process.c	2010-10-20 16:30:22.000000000 -0400
-+++ linux-2.6.36/arch/powerpc/kernel/process.c	2010-11-06 18:58:15.000000000 -0400
++++ linux-2.6.36/arch/powerpc/kernel/process.c	2010-11-13 16:29:01.000000000 -0500
+@@ -654,8 +654,8 @@ void show_regs(struct pt_regs * regs)
+ 	 * Lookup NIP late so we have the best change of getting the
+ 	 * above info out without failing
+ 	 */
+-	printk("NIP ["REG"] %pS\n", regs->nip, (void *)regs->nip);
+-	printk("LR ["REG"] %pS\n", regs->link, (void *)regs->link);
++	printk("NIP ["REG"] %pA\n", regs->nip, (void *)regs->nip);
++	printk("LR ["REG"] %pA\n", regs->link, (void *)regs->link);
+ #endif
+ 	show_stack(current, (unsigned long *) regs->gpr[1]);
+ 	if (!user_mode(regs))
+@@ -1145,10 +1145,10 @@ void show_stack(struct task_struct *tsk,
+ 		newsp = stack[0];
+ 		ip = stack[STACK_FRAME_LR_SAVE];
+ 		if (!firstframe || ip != lr) {
+-			printk("["REG"] ["REG"] %pS", sp, ip, (void *)ip);
++			printk("["REG"] ["REG"] %pA", sp, ip, (void *)ip);
+ #ifdef CONFIG_FUNCTION_GRAPH_TRACER
+ 			if ((ip == rth || ip == mrth) && curr_frame >= 0) {
+-				printk(" (%pS)",
++				printk(" (%pA)",
+ 				       (void *)current->ret_stack[curr_frame].ret);
+ 				curr_frame--;
+ 			}
+@@ -1168,7 +1168,7 @@ void show_stack(struct task_struct *tsk,
+ 			struct pt_regs *regs = (struct pt_regs *)
+ 				(sp + STACK_FRAME_OVERHEAD);
+ 			lr = regs->link;
+-			printk("--- Exception: %lx at %pS\n    LR = %pS\n",
++			printk("--- Exception: %lx at %pA\n    LR = %pA\n",
+ 			       regs->trap, (void *)regs->nip, (void *)lr);
+ 			firstframe = 1;
+ 		}
 @@ -1251,54 +1251,6 @@ unsigned long arch_align_stack(unsigned 
  	return sp & ~0xf;
  }
@@ -4026,6 +4059,82 @@ diff -urNp linux-2.6.36/arch/sparc/kernel/pci_sun4v.c linux-2.6.36/arch/sparc/ke
  	.alloc_coherent			= dma_4v_alloc_coherent,
  	.free_coherent			= dma_4v_free_coherent,
  	.map_page			= dma_4v_map_page,
+diff -urNp linux-2.6.36/arch/sparc/kernel/process_32.c linux-2.6.36/arch/sparc/kernel/process_32.c
+--- linux-2.6.36/arch/sparc/kernel/process_32.c	2010-10-20 16:30:22.000000000 -0400
++++ linux-2.6.36/arch/sparc/kernel/process_32.c	2010-11-13 16:29:01.000000000 -0500
+@@ -196,7 +196,7 @@ void __show_backtrace(unsigned long fp)
+ 		       rw->ins[4], rw->ins[5],
+ 		       rw->ins[6],
+ 		       rw->ins[7]);
+-		printk("%pS\n", (void *) rw->ins[7]);
++		printk("%pA\n", (void *) rw->ins[7]);
+ 		rw = (struct reg_window32 *) rw->ins[6];
+ 	}
+ 	spin_unlock_irqrestore(&sparc_backtrace_lock, flags);
+@@ -263,14 +263,14 @@ void show_regs(struct pt_regs *r)
+ 
+         printk("PSR: %08lx PC: %08lx NPC: %08lx Y: %08lx    %s\n",
+ 	       r->psr, r->pc, r->npc, r->y, print_tainted());
+-	printk("PC: <%pS>\n", (void *) r->pc);
++	printk("PC: <%pA>\n", (void *) r->pc);
+ 	printk("%%G: %08lx %08lx  %08lx %08lx  %08lx %08lx  %08lx %08lx\n",
+ 	       r->u_regs[0], r->u_regs[1], r->u_regs[2], r->u_regs[3],
+ 	       r->u_regs[4], r->u_regs[5], r->u_regs[6], r->u_regs[7]);
+ 	printk("%%O: %08lx %08lx  %08lx %08lx  %08lx %08lx  %08lx %08lx\n",
+ 	       r->u_regs[8], r->u_regs[9], r->u_regs[10], r->u_regs[11],
+ 	       r->u_regs[12], r->u_regs[13], r->u_regs[14], r->u_regs[15]);
+-	printk("RPC: <%pS>\n", (void *) r->u_regs[15]);
++	printk("RPC: <%pA>\n", (void *) r->u_regs[15]);
+ 
+ 	printk("%%L: %08lx %08lx  %08lx %08lx  %08lx %08lx  %08lx %08lx\n",
+ 	       rw->locals[0], rw->locals[1], rw->locals[2], rw->locals[3],
+@@ -305,7 +305,7 @@ void show_stack(struct task_struct *tsk,
+ 		rw = (struct reg_window32 *) fp;
+ 		pc = rw->ins[7];
+ 		printk("[%08lx : ", pc);
+-		printk("%pS ] ", (void *) pc);
++		printk("%pA ] ", (void *) pc);
+ 		fp = rw->ins[6];
+ 	} while (++count < 16);
+ 	printk("\n");
+diff -urNp linux-2.6.36/arch/sparc/kernel/process_64.c linux-2.6.36/arch/sparc/kernel/process_64.c
+--- linux-2.6.36/arch/sparc/kernel/process_64.c	2010-10-20 16:30:22.000000000 -0400
++++ linux-2.6.36/arch/sparc/kernel/process_64.c	2010-11-13 16:34:22.000000000 -0500
+@@ -180,14 +180,14 @@ static void show_regwindow(struct pt_reg
+ 	printk("i4: %016lx i5: %016lx i6: %016lx i7: %016lx\n",
+ 	       rwk->ins[4], rwk->ins[5], rwk->ins[6], rwk->ins[7]);
+ 	if (regs->tstate & TSTATE_PRIV)
+-		printk("I7: <%pS>\n", (void *) rwk->ins[7]);
++		printk("I7: <%pA>\n", (void *) rwk->ins[7]);
+ }
+ 
+ void show_regs(struct pt_regs *regs)
+ {
+ 	printk("TSTATE: %016lx TPC: %016lx TNPC: %016lx Y: %08x    %s\n", regs->tstate,
+ 	       regs->tpc, regs->tnpc, regs->y, print_tainted());
+-	printk("TPC: <%pS>\n", (void *) regs->tpc);
++	printk("TPC: <%pA>\n", (void *) regs->tpc);
+ 	printk("g0: %016lx g1: %016lx g2: %016lx g3: %016lx\n",
+ 	       regs->u_regs[0], regs->u_regs[1], regs->u_regs[2],
+ 	       regs->u_regs[3]);
+@@ -200,7 +200,7 @@ void show_regs(struct pt_regs *regs)
+ 	printk("o4: %016lx o5: %016lx sp: %016lx ret_pc: %016lx\n",
+ 	       regs->u_regs[12], regs->u_regs[13], regs->u_regs[14],
+ 	       regs->u_regs[15]);
+-	printk("RPC: <%pS>\n", (void *) regs->u_regs[15]);
++	printk("RPC: <%pA>\n", (void *) regs->u_regs[15]);
+ 	show_regwindow(regs);
+ 	show_stack(current, (unsigned long *) regs->u_regs[UREG_FP]);
+ }
+@@ -285,7 +285,7 @@ void arch_trigger_all_cpu_backtrace(void
+ 		       ((tp && tp->task) ? tp->task->pid : -1));
+ 
+ 		if (gp->tstate & TSTATE_PRIV) {
+-			printk("             TPC[%pS] O7[%pS] I7[%pS] RPC[%pS]\n",
++			printk("             TPC[%pA] O7[%pA] I7[%pA] RPC[%pA]\n",
+ 			       (void *) gp->tpc,
+ 			       (void *) gp->o7,
+ 			       (void *) gp->i7,
 diff -urNp linux-2.6.36/arch/sparc/kernel/sys_sparc_32.c linux-2.6.36/arch/sparc/kernel/sys_sparc_32.c
 --- linux-2.6.36/arch/sparc/kernel/sys_sparc_32.c	2010-10-20 16:30:22.000000000 -0400
 +++ linux-2.6.36/arch/sparc/kernel/sys_sparc_32.c	2010-11-06 18:58:15.000000000 -0400
@@ -4170,9 +4279,30 @@ diff -urNp linux-2.6.36/arch/sparc/kernel/sys_sparc_64.c linux-2.6.36/arch/sparc
  		mm->get_unmapped_area = arch_get_unmapped_area_topdown;
  		mm->unmap_area = arch_unmap_area_topdown;
  	}
+diff -urNp linux-2.6.36/arch/sparc/kernel/traps_32.c linux-2.6.36/arch/sparc/kernel/traps_32.c
+--- linux-2.6.36/arch/sparc/kernel/traps_32.c	2010-10-20 16:30:22.000000000 -0400
++++ linux-2.6.36/arch/sparc/kernel/traps_32.c	2010-11-13 16:29:01.000000000 -0500
+@@ -76,7 +76,7 @@ void die_if_kernel(char *str, struct pt_
+ 		      count++ < 30				&&
+                       (((unsigned long) rw) >= PAGE_OFFSET)	&&
+ 		      !(((unsigned long) rw) & 0x7)) {
+-			printk("Caller[%08lx]: %pS\n", rw->ins[7],
++			printk("Caller[%08lx]: %pA\n", rw->ins[7],
+ 			       (void *) rw->ins[7]);
+ 			rw = (struct reg_window32 *)rw->ins[6];
+ 		}
 diff -urNp linux-2.6.36/arch/sparc/kernel/traps_64.c linux-2.6.36/arch/sparc/kernel/traps_64.c
 --- linux-2.6.36/arch/sparc/kernel/traps_64.c	2010-10-20 16:30:22.000000000 -0400
-+++ linux-2.6.36/arch/sparc/kernel/traps_64.c	2010-11-06 18:58:15.000000000 -0400
++++ linux-2.6.36/arch/sparc/kernel/traps_64.c	2010-11-13 16:34:06.000000000 -0500
+@@ -75,7 +75,7 @@ static void dump_tl1_traplog(struct tl1_
+ 		       i + 1,
+ 		       p->trapstack[i].tstate, p->trapstack[i].tpc,
+ 		       p->trapstack[i].tnpc, p->trapstack[i].tt);
+-		printk("TRAPLOG: TPC<%pS>\n", (void *) p->trapstack[i].tpc);
++		printk("TRAPLOG: TPC<%pA>\n", (void *) p->trapstack[i].tpc);
+ 	}
+ }
+ 
 @@ -95,6 +95,12 @@ void bad_trap(struct pt_regs *regs, long
  
  	lvl -= 0x100;
@@ -4204,6 +4334,94 @@ diff -urNp linux-2.6.36/arch/sparc/kernel/traps_64.c linux-2.6.36/arch/sparc/ker
  	dump_tl1_traplog((struct tl1_traplog *)(regs + 1));
  
  	sprintf (buffer, "Bad trap %lx at tl>0", lvl);
+@@ -1141,7 +1152,7 @@ static void cheetah_log_errors(struct pt
+ 	       regs->tpc, regs->tnpc, regs->u_regs[UREG_I7], regs->tstate);
+ 	printk("%s" "ERROR(%d): ",
+ 	       (recoverable ? KERN_WARNING : KERN_CRIT), smp_processor_id());
+-	printk("TPC<%pS>\n", (void *) regs->tpc);
++	printk("TPC<%pA>\n", (void *) regs->tpc);
+ 	printk("%s" "ERROR(%d): M_SYND(%lx),  E_SYND(%lx)%s%s\n",
+ 	       (recoverable ? KERN_WARNING : KERN_CRIT), smp_processor_id(),
+ 	       (afsr & CHAFSR_M_SYNDROME) >> CHAFSR_M_SYNDROME_SHIFT,
+@@ -1748,7 +1759,7 @@ void cheetah_plus_parity_error(int type,
+ 		       smp_processor_id(),
+ 		       (type & 0x1) ? 'I' : 'D',
+ 		       regs->tpc);
+-		printk(KERN_EMERG "TPC<%pS>\n", (void *) regs->tpc);
++		printk(KERN_EMERG "TPC<%pA>\n", (void *) regs->tpc);
+ 		panic("Irrecoverable Cheetah+ parity error.");
+ 	}
+ 
+@@ -1756,7 +1767,7 @@ void cheetah_plus_parity_error(int type,
+ 	       smp_processor_id(),
+ 	       (type & 0x1) ? 'I' : 'D',
+ 	       regs->tpc);
+-	printk(KERN_WARNING "TPC<%pS>\n", (void *) regs->tpc);
++	printk(KERN_WARNING "TPC<%pA>\n", (void *) regs->tpc);
+ }
+ 
+ struct sun4v_error_entry {
+@@ -1963,9 +1974,9 @@ void sun4v_itlb_error_report(struct pt_r
+ 
+ 	printk(KERN_EMERG "SUN4V-ITLB: Error at TPC[%lx], tl %d\n",
+ 	       regs->tpc, tl);
+-	printk(KERN_EMERG "SUN4V-ITLB: TPC<%pS>\n", (void *) regs->tpc);
++	printk(KERN_EMERG "SUN4V-ITLB: TPC<%pA>\n", (void *) regs->tpc);
+ 	printk(KERN_EMERG "SUN4V-ITLB: O7[%lx]\n", regs->u_regs[UREG_I7]);
+-	printk(KERN_EMERG "SUN4V-ITLB: O7<%pS>\n",
++	printk(KERN_EMERG "SUN4V-ITLB: O7<%pA>\n",
+ 	       (void *) regs->u_regs[UREG_I7]);
+ 	printk(KERN_EMERG "SUN4V-ITLB: vaddr[%lx] ctx[%lx] "
+ 	       "pte[%lx] error[%lx]\n",
+@@ -1987,9 +1998,9 @@ void sun4v_dtlb_error_report(struct pt_r
+ 
+ 	printk(KERN_EMERG "SUN4V-DTLB: Error at TPC[%lx], tl %d\n",
+ 	       regs->tpc, tl);
+-	printk(KERN_EMERG "SUN4V-DTLB: TPC<%pS>\n", (void *) regs->tpc);
++	printk(KERN_EMERG "SUN4V-DTLB: TPC<%pA>\n", (void *) regs->tpc);
+ 	printk(KERN_EMERG "SUN4V-DTLB: O7[%lx]\n", regs->u_regs[UREG_I7]);
+-	printk(KERN_EMERG "SUN4V-DTLB: O7<%pS>\n",
++	printk(KERN_EMERG "SUN4V-DTLB: O7<%pA>\n",
+ 	       (void *) regs->u_regs[UREG_I7]);
+ 	printk(KERN_EMERG "SUN4V-DTLB: vaddr[%lx] ctx[%lx] "
+ 	       "pte[%lx] error[%lx]\n",
+@@ -2196,13 +2207,13 @@ void show_stack(struct task_struct *tsk,
+ 			fp = (unsigned long)sf->fp + STACK_BIAS;
+ 		}
+ 
+-		printk(" [%016lx] %pS\n", pc, (void *) pc);
++		printk(" [%016lx] %pA\n", pc, (void *) pc);
+ #ifdef CONFIG_FUNCTION_GRAPH_TRACER
+ 		if ((pc + 8UL) == (unsigned long) &return_to_handler) {
+ 			int index = tsk->curr_ret_stack;
+ 			if (tsk->ret_stack && index >= graph) {
+ 				pc = tsk->ret_stack[index - graph].ret;
+-				printk(" [%016lx] %pS\n", pc, (void *) pc);
++				printk(" [%016lx] %pA\n", pc, (void *) pc);
+ 				graph++;
+ 			}
+ 		}
+@@ -2255,7 +2266,7 @@ void die_if_kernel(char *str, struct pt_
+ 		while (rw &&
+ 		       count++ < 30 &&
+ 		       kstack_valid(tp, (unsigned long) rw)) {
+-			printk("Caller[%016lx]: %pS\n", rw->ins[7],
++			printk("Caller[%016lx]: %pA\n", rw->ins[7],
+ 			       (void *) rw->ins[7]);
+ 
+ 			rw = kernel_stack_up(rw);
+diff -urNp linux-2.6.36/arch/sparc/kernel/unaligned_64.c linux-2.6.36/arch/sparc/kernel/unaligned_64.c
+--- linux-2.6.36/arch/sparc/kernel/unaligned_64.c	2010-10-20 16:30:22.000000000 -0400
++++ linux-2.6.36/arch/sparc/kernel/unaligned_64.c	2010-11-13 16:33:46.000000000 -0500
+@@ -278,7 +278,7 @@ static void log_unaligned(struct pt_regs
+ 	static DEFINE_RATELIMIT_STATE(ratelimit, 5 * HZ, 5);
+ 
+ 	if (__ratelimit(&ratelimit)) {
+-		printk("Kernel unaligned access at TPC[%lx] %pS\n",
++		printk("Kernel unaligned access at TPC[%lx] %pA\n",
+ 		       regs->tpc, (void *) regs->tpc);
+ 	}
+ }
 diff -urNp linux-2.6.36/arch/sparc/lib/atomic_64.S linux-2.6.36/arch/sparc/lib/atomic_64.S
 --- linux-2.6.36/arch/sparc/lib/atomic_64.S	2010-10-20 16:30:22.000000000 -0400
 +++ linux-2.6.36/arch/sparc/lib/atomic_64.S	2010-11-06 18:58:15.000000000 -0400
@@ -4783,7 +5001,7 @@ diff -urNp linux-2.6.36/arch/sparc/mm/fault_32.c linux-2.6.36/arch/sparc/mm/faul
  			goto bad_area;
 diff -urNp linux-2.6.36/arch/sparc/mm/fault_64.c linux-2.6.36/arch/sparc/mm/fault_64.c
 --- linux-2.6.36/arch/sparc/mm/fault_64.c	2010-10-20 16:30:22.000000000 -0400
-+++ linux-2.6.36/arch/sparc/mm/fault_64.c	2010-11-06 18:58:15.000000000 -0400
++++ linux-2.6.36/arch/sparc/mm/fault_64.c	2010-11-13 16:29:01.000000000 -0500
 @@ -21,6 +21,9 @@
  #include <linux/kprobes.h>
  #include <linux/kdebug.h>
@@ -4794,6 +5012,15 @@ diff -urNp linux-2.6.36/arch/sparc/mm/fault_64.c linux-2.6.36/arch/sparc/mm/faul
  
  #include <asm/page.h>
  #include <asm/pgtable.h>
+@@ -74,7 +77,7 @@ static void __kprobes bad_kernel_pc(stru
+ 	printk(KERN_CRIT "OOPS: Bogus kernel PC [%016lx] in fault handler\n",
+ 	       regs->tpc);
+ 	printk(KERN_CRIT "OOPS: RPC [%016lx]\n", regs->u_regs[15]);
+-	printk("OOPS: RPC <%pS>\n", (void *) regs->u_regs[15]);
++	printk("OOPS: RPC <%pA>\n", (void *) regs->u_regs[15]);
+ 	printk(KERN_CRIT "OOPS: Fault was to vaddr[%lx]\n", vaddr);
+ 	dump_stack();
+ 	unhandled_fault(regs->tpc, current, regs);
 @@ -272,6 +275,457 @@ static void noinline __kprobes bogus_32b
  	show_regs(regs);
  }
@@ -7885,6 +8112,18 @@ diff -urNp linux-2.6.36/arch/x86/include/asm/page_32_types.h linux-2.6.36/arch/x
  #ifdef CONFIG_4KSTACKS
  #define THREAD_ORDER	0
  #else
+diff -urNp linux-2.6.36/arch/x86/include/asm/page_64_types.h linux-2.6.36/arch/x86/include/asm/page_64_types.h
+--- linux-2.6.36/arch/x86/include/asm/page_64_types.h	2010-10-20 16:30:22.000000000 -0400
++++ linux-2.6.36/arch/x86/include/asm/page_64_types.h	2010-11-11 18:21:08.000000000 -0500
+@@ -56,7 +56,7 @@ void copy_page(void *to, void *from);
+ 
+ /* duplicated to the one in bootmem.h */
+ extern unsigned long max_pfn;
+-extern unsigned long phys_base;
++extern const unsigned long phys_base;
+ 
+ extern unsigned long __phys_addr(unsigned long);
+ #define __phys_reloc_hide(x)	(x)
 diff -urNp linux-2.6.36/arch/x86/include/asm/paravirt.h linux-2.6.36/arch/x86/include/asm/paravirt.h
 --- linux-2.6.36/arch/x86/include/asm/paravirt.h	2010-10-20 16:30:22.000000000 -0400
 +++ linux-2.6.36/arch/x86/include/asm/paravirt.h	2010-11-06 18:58:15.000000000 -0400
@@ -10209,7 +10448,7 @@ diff -urNp linux-2.6.36/arch/x86/kernel/asm-offsets_64.c linux-2.6.36/arch/x86/k
  	DEFINE(crypto_tfm_ctx_offset, offsetof(struct crypto_tfm, __crt_ctx));
 diff -urNp linux-2.6.36/arch/x86/kernel/cpu/common.c linux-2.6.36/arch/x86/kernel/cpu/common.c
 --- linux-2.6.36/arch/x86/kernel/cpu/common.c	2010-10-20 16:30:22.000000000 -0400
-+++ linux-2.6.36/arch/x86/kernel/cpu/common.c	2010-11-06 18:58:15.000000000 -0400
++++ linux-2.6.36/arch/x86/kernel/cpu/common.c	2010-11-11 18:21:08.000000000 -0500
 @@ -83,60 +83,6 @@ static const struct cpu_dev __cpuinitcon
  
  static const struct cpu_dev *this_cpu __cpuinitdata = &default_cpu;
@@ -10309,7 +10548,15 @@ diff -urNp linux-2.6.36/arch/x86/kernel/cpu/common.c linux-2.6.36/arch/x86/kerne
  
  	memset(me->thread.tls_array, 0, GDT_ENTRY_TLS_ENTRIES * 8);
  	syscall_init();
-@@ -1224,7 +1174,7 @@ void __cpuinit cpu_init(void)
+@@ -1170,7 +1120,6 @@ void __cpuinit cpu_init(void)
+ 	wrmsrl(MSR_KERNEL_GS_BASE, 0);
+ 	barrier();
+ 
+-	x86_configure_nx();
+ 	if (cpu != 0)
+ 		enable_x2apic();
+ 
+@@ -1224,7 +1173,7 @@ void __cpuinit cpu_init(void)
  {
  	int cpu = smp_processor_id();
  	struct task_struct *curr = current;
@@ -10621,7 +10868,16 @@ diff -urNp linux-2.6.36/arch/x86/kernel/dumpstack_32.c linux-2.6.36/arch/x86/ker
  	if (probe_kernel_address((unsigned short *)ip, ud2))
 diff -urNp linux-2.6.36/arch/x86/kernel/dumpstack.c linux-2.6.36/arch/x86/kernel/dumpstack.c
 --- linux-2.6.36/arch/x86/kernel/dumpstack.c	2010-10-20 16:30:22.000000000 -0400
-+++ linux-2.6.36/arch/x86/kernel/dumpstack.c	2010-11-06 18:58:15.000000000 -0400
++++ linux-2.6.36/arch/x86/kernel/dumpstack.c	2010-11-13 16:29:01.000000000 -0500
+@@ -27,7 +27,7 @@ static int die_counter;
+ 
+ void printk_address(unsigned long address, int reliable)
+ {
+-	printk(" [<%p>] %s%pS\n", (void *) address,
++	printk(" [<%p>] %s%pA\n", (void *) address,
+ 			reliable ? "" : "? ", (void *) address);
+ }
+ 
 @@ -206,7 +206,7 @@ void dump_stack(void)
  #endif
  
@@ -12170,7 +12426,7 @@ diff -urNp linux-2.6.36/arch/x86/kernel/head_32.S linux-2.6.36/arch/x86/kernel/h
 +	.endr
 diff -urNp linux-2.6.36/arch/x86/kernel/head_64.S linux-2.6.36/arch/x86/kernel/head_64.S
 --- linux-2.6.36/arch/x86/kernel/head_64.S	2010-10-20 16:30:22.000000000 -0400
-+++ linux-2.6.36/arch/x86/kernel/head_64.S	2010-11-06 18:58:15.000000000 -0400
++++ linux-2.6.36/arch/x86/kernel/head_64.S	2010-11-11 18:21:08.000000000 -0500
 @@ -19,6 +19,7 @@
  #include <asm/cache.h>
  #include <asm/processor-flags.h>
@@ -12297,7 +12553,15 @@ diff -urNp linux-2.6.36/arch/x86/kernel/head_64.S linux-2.6.36/arch/x86/kernel/h
  #define NEXT_PAGE(name) \
  	.balign	PAGE_SIZE; \
  ENTRY(name)
-@@ -350,13 +352,36 @@ NEXT_PAGE(init_level4_pgt)
+@@ -339,7 +341,6 @@ ENTRY(name)
+ 	i = i + 1 ;					\
+ 	.endr
+ 
+-	.data
+ 	/*
+ 	 * This default setting generates an ident mapping at address 0x100000
+ 	 * and a mapping for the kernel that precisely maps virtual address
+@@ -350,13 +351,36 @@ NEXT_PAGE(init_level4_pgt)
  	.quad	level3_ident_pgt - __START_KERNEL_map + _KERNPG_TABLE
  	.org	init_level4_pgt + L4_PAGE_OFFSET*8, 0
  	.quad	level3_ident_pgt - __START_KERNEL_map + _KERNPG_TABLE
@@ -12334,7 +12598,7 @@ diff -urNp linux-2.6.36/arch/x86/kernel/head_64.S linux-2.6.36/arch/x86/kernel/h
  
  NEXT_PAGE(level3_kernel_pgt)
  	.fill	L3_START_KERNEL,8,0
-@@ -364,20 +389,23 @@ NEXT_PAGE(level3_kernel_pgt)
+@@ -364,20 +388,23 @@ NEXT_PAGE(level3_kernel_pgt)
  	.quad	level2_kernel_pgt - __START_KERNEL_map + _KERNPG_TABLE
  	.quad	level2_fixmap_pgt - __START_KERNEL_map + _PAGE_TABLE
  
@@ -12366,7 +12630,7 @@ diff -urNp linux-2.6.36/arch/x86/kernel/head_64.S linux-2.6.36/arch/x86/kernel/h
  
  NEXT_PAGE(level2_kernel_pgt)
  	/*
-@@ -390,33 +418,55 @@ NEXT_PAGE(level2_kernel_pgt)
+@@ -390,33 +417,55 @@ NEXT_PAGE(level2_kernel_pgt)
  	 *  If you want to increase this then increase MODULES_VADDR
  	 *  too.)
  	 */
@@ -17420,7 +17684,7 @@ diff -urNp linux-2.6.36/arch/x86/mm/extable.c linux-2.6.36/arch/x86/mm/extable.c
  		pnp_bios_is_utter_crap = 1;
 diff -urNp linux-2.6.36/arch/x86/mm/fault.c linux-2.6.36/arch/x86/mm/fault.c
 --- linux-2.6.36/arch/x86/mm/fault.c	2010-10-20 16:30:22.000000000 -0400
-+++ linux-2.6.36/arch/x86/mm/fault.c	2010-11-06 18:58:50.000000000 -0400
++++ linux-2.6.36/arch/x86/mm/fault.c	2010-11-13 16:29:01.000000000 -0500
 @@ -11,10 +11,18 @@
  #include <linux/kprobes.h>		/* __kprobes, ...		*/
  #include <linux/mmiotrace.h>		/* kmmio_handler, ...		*/
@@ -17814,7 +18078,7 @@ diff -urNp linux-2.6.36/arch/x86/mm/fault.c linux-2.6.36/arch/x86/mm/fault.c
 +		}
 +		if (address < PAX_USER_SHADOW_BASE) {
 +			printk(KERN_ERR "PAX: please report this to pageexec@freemail.hu\n");
-+			printk(KERN_ERR "PAX: faulting IP: %pS\n", (void *)regs->ip);
++			printk(KERN_ERR "PAX: faulting IP: %pA\n", (void *)regs->ip);
 +			show_trace_log_lvl(NULL, NULL, (void *)regs->sp, regs->bp, KERN_ERR);
 +		} else
 +			address -= PAX_USER_SHADOW_BASE;
@@ -18707,7 +18971,7 @@ diff -urNp linux-2.6.36/arch/x86/mm/init_64.c linux-2.6.36/arch/x86/mm/init_64.c
  		return "[vsyscall]";
 diff -urNp linux-2.6.36/arch/x86/mm/init.c linux-2.6.36/arch/x86/mm/init.c
 --- linux-2.6.36/arch/x86/mm/init.c	2010-10-20 16:30:22.000000000 -0400
-+++ linux-2.6.36/arch/x86/mm/init.c	2010-11-06 18:58:15.000000000 -0400
++++ linux-2.6.36/arch/x86/mm/init.c	2010-11-11 18:21:08.000000000 -0500
 @@ -70,11 +70,7 @@ static void __init find_early_table_spac
  	 * cause a hotspot and fill up ZONE_DMA. The page tables
  	 * need roughly 0.5KB per GB.
@@ -18736,7 +19000,7 @@ diff -urNp linux-2.6.36/arch/x86/mm/init.c linux-2.6.36/arch/x86/mm/init.c
  		return 1;
  	if (iomem_is_exclusive(pagenr << PAGE_SHIFT))
  		return 0;
-@@ -380,6 +382,88 @@ void free_init_pages(char *what, unsigne
+@@ -380,6 +382,86 @@ void free_init_pages(char *what, unsigne
  
  void free_initmem(void)
  {
@@ -18814,8 +19078,6 @@ diff -urNp linux-2.6.36/arch/x86/mm/init.c linux-2.6.36/arch/x86/mm/init.c
 +			continue;
 +		if ((unsigned long)__va(__pa(_text)) <= addr && addr < (unsigned long)__va(__pa(_sdata)))
 +			set_pmd(pmd, __pmd(pmd_val(*pmd) & ~_PAGE_RW));
-+		else
-+			set_pmd(pmd, __pmd(pmd_val(*pmd) | (_PAGE_NX & __supported_pte_mask)));
 +	}
 +#endif
 +
@@ -20404,7 +20666,7 @@ diff -urNp linux-2.6.36/block/blk-iopoll.c linux-2.6.36/block/blk-iopoll.c
  	int rearm = 0, budget = blk_iopoll_budget;
 diff -urNp linux-2.6.36/block/blk-map.c linux-2.6.36/block/blk-map.c
 --- linux-2.6.36/block/blk-map.c	2010-10-20 16:30:22.000000000 -0400
-+++ linux-2.6.36/block/blk-map.c	2010-11-06 18:58:15.000000000 -0400
++++ linux-2.6.36/block/blk-map.c	2010-11-11 18:24:09.000000000 -0500
 @@ -54,7 +54,7 @@ static int __blk_rq_map_user(struct requ
  	 * direct dma. else, set up kernel bounce buffers
  	 */
@@ -20414,7 +20676,16 @@ diff -urNp linux-2.6.36/block/blk-map.c linux-2.6.36/block/blk-map.c
  		bio = bio_map_user(q, NULL, uaddr, len, reading, gfp_mask);
  	else
  		bio = bio_copy_user(q, map_data, uaddr, len, reading, gfp_mask);
-@@ -297,7 +297,7 @@ int blk_rq_map_kern(struct request_queue
+@@ -205,6 +205,8 @@ int blk_rq_map_user_iov(struct request_q
+ 			unaligned = 1;
+ 			break;
+ 		}
++		if (!iov[i].iov_len)
++			return -EINVAL;
+ 	}
+ 
+ 	if (unaligned || (q->dma_pad_mask & len) || map_data)
+@@ -297,7 +299,7 @@ int blk_rq_map_kern(struct request_queue
  	if (!len || !kbuf)
  		return -EINVAL;
  
@@ -20435,6 +20706,67 @@ diff -urNp linux-2.6.36/block/blk-softirq.c linux-2.6.36/block/blk-softirq.c
  {
  	struct list_head *cpu_list, local_list;
  
+diff -urNp linux-2.6.36/block/scsi_ioctl.c linux-2.6.36/block/scsi_ioctl.c
+--- linux-2.6.36/block/scsi_ioctl.c	2010-10-20 16:30:22.000000000 -0400
++++ linux-2.6.36/block/scsi_ioctl.c	2010-11-11 18:32:59.000000000 -0500
+@@ -321,33 +321,47 @@ static int sg_io(struct request_queue *q
+ 	if (hdr->iovec_count) {
+ 		const int size = sizeof(struct sg_iovec) * hdr->iovec_count;
+ 		size_t iov_data_len;
+-		struct sg_iovec *iov;
++		struct sg_iovec *sg_iov;
++		struct iovec *iov;
++		int i;
+ 
+-		iov = kmalloc(size, GFP_KERNEL);
+-		if (!iov) {
++		sg_iov = kmalloc(size, GFP_KERNEL);
++		if (!sg_iov) {
+ 			ret = -ENOMEM;
+ 			goto out;
+ 		}
+ 
+-		if (copy_from_user(iov, hdr->dxferp, size)) {
+-			kfree(iov);
++		if (copy_from_user(sg_iov, hdr->dxferp, size)) {
++			kfree(sg_iov);
+ 			ret = -EFAULT;
+ 			goto out;
+ 		}
+ 
++		/*
++		 * Sum up the vecs, making sure they don't overflow
++		 */
++		iov = (struct iovec *) sg_iov;
++		iov_data_len = 0;
++		for (i = 0; i < hdr->iovec_count; i++) {
++			if (iov_data_len + iov[i].iov_len < iov_data_len) {
++				kfree(sg_iov);
++				ret = -EINVAL;
++				goto out;
++			}
++			iov_data_len += iov[i].iov_len;
++		}
++
+ 		/* SG_IO howto says that the shorter of the two wins */
+-		iov_data_len = iov_length((struct iovec *)iov,
+-					  hdr->iovec_count);
+ 		if (hdr->dxfer_len < iov_data_len) {
+-			hdr->iovec_count = iov_shorten((struct iovec *)iov,
++			hdr->iovec_count = iov_shorten(iov,
+ 						       hdr->iovec_count,
+ 						       hdr->dxfer_len);
+ 			iov_data_len = hdr->dxfer_len;
+ 		}
+ 
+-		ret = blk_rq_map_user_iov(q, rq, NULL, iov, hdr->iovec_count,
++		ret = blk_rq_map_user_iov(q, rq, NULL, sg_iov, hdr->iovec_count,
+ 					  iov_data_len, GFP_KERNEL);
+-		kfree(iov);
++		kfree(sg_iov);
+ 	} else if (hdr->dxfer_len)
+ 		ret = blk_rq_map_user(q, rq, NULL, hdr->dxferp, hdr->dxfer_len,
+ 				      GFP_KERNEL);
 diff -urNp linux-2.6.36/crypto/lrw.c linux-2.6.36/crypto/lrw.c
 --- linux-2.6.36/crypto/lrw.c	2010-10-20 16:30:22.000000000 -0400
 +++ linux-2.6.36/crypto/lrw.c	2010-11-06 18:58:15.000000000 -0400
@@ -20449,7 +20781,7 @@ diff -urNp linux-2.6.36/crypto/lrw.c linux-2.6.36/crypto/lrw.c
  	crypto_cipher_clear_flags(child, CRYPTO_TFM_REQ_MASK);
 diff -urNp linux-2.6.36/Documentation/dontdiff linux-2.6.36/Documentation/dontdiff
 --- linux-2.6.36/Documentation/dontdiff	2010-10-20 16:30:22.000000000 -0400
-+++ linux-2.6.36/Documentation/dontdiff	2010-11-06 18:58:15.000000000 -0400
++++ linux-2.6.36/Documentation/dontdiff	2010-11-11 18:21:08.000000000 -0500
 @@ -3,6 +3,7 @@
  *.bin
  *.cpio
@@ -20486,7 +20818,15 @@ diff -urNp linux-2.6.36/Documentation/dontdiff linux-2.6.36/Documentation/dontdi
  SCCS
  System.map*
  TAGS
-@@ -76,7 +84,10 @@ btfixupprep
+@@ -62,6 +70,7 @@ aic7*reg_print.c*
+ aic7*seq.h*
+ aicasm
+ aicdb.h*
++altivec[0-9].c
+ asm-offsets.h
+ asm_offsets.h
+ autoconf.h*
+@@ -76,7 +85,10 @@ btfixupprep
  build
  bvmlinux
  bzImage*
@@ -20497,7 +20837,7 @@ diff -urNp linux-2.6.36/Documentation/dontdiff linux-2.6.36/Documentation/dontdi
  comp*.log
  compile.h*
  conf
-@@ -100,19 +111,22 @@ fore200e_mkfirm
+@@ -100,19 +112,23 @@ fore200e_mkfirm
  fore200e_pca_fw.c*
  gconf
  gen-devlist
@@ -20516,12 +20856,13 @@ diff -urNp linux-2.6.36/Documentation/dontdiff linux-2.6.36/Documentation/dontdi
 +initramfs_data.cpio.bz2
  initramfs_data.cpio.gz
  initramfs_list
++int[0-9]*.c
  kallsyms
 -kconfig
  keywords.c
  ksym.c*
  ksym.h*
-@@ -136,10 +150,13 @@ mkboot
+@@ -136,10 +152,13 @@ mkboot
  mkbugboot
  mkcpustr
  mkdep
@@ -20535,7 +20876,7 @@ diff -urNp linux-2.6.36/Documentation/dontdiff linux-2.6.36/Documentation/dontdi
  modules.order
  modversions.h*
  ncscope.*
-@@ -151,7 +168,9 @@ parse.h
+@@ -151,7 +170,9 @@ parse.h
  patches*
  pca200e.bin
  pca200e_ecd.bin2
@@ -20545,7 +20886,7 @@ diff -urNp linux-2.6.36/Documentation/dontdiff linux-2.6.36/Documentation/dontdi
  piggyback
  pnmtologo
  ppc_defs.h*
-@@ -160,12 +179,14 @@ qconf
+@@ -160,15 +181,18 @@ qconf
  raid6altivec*.c
  raid6int*.c
  raid6tables.c
@@ -20560,7 +20901,11 @@ diff -urNp linux-2.6.36/Documentation/dontdiff linux-2.6.36/Documentation/dontdi
  sm_tbl*
  split-include
  syscalltab.h
-@@ -189,14 +210,20 @@ version.h*
++tables.c
+ tags
+ tftpboot.img
+ timeconst.h
+@@ -189,14 +213,20 @@ version.h*
  vmlinux
  vmlinux-*
  vmlinux.aout
@@ -29934,8 +30279,67 @@ diff -urNp linux-2.6.36/fs/binfmt_misc.c linux-2.6.36/fs/binfmt_misc.c
  	if (!err)
 diff -urNp linux-2.6.36/fs/bio.c linux-2.6.36/fs/bio.c
 --- linux-2.6.36/fs/bio.c	2010-10-20 16:30:22.000000000 -0400
-+++ linux-2.6.36/fs/bio.c	2010-11-06 18:58:15.000000000 -0400
-@@ -1214,7 +1214,7 @@ static void bio_copy_kern_endio(struct b
++++ linux-2.6.36/fs/bio.c	2010-11-11 18:29:28.000000000 -0500
+@@ -370,6 +370,9 @@ struct bio *bio_kmalloc(gfp_t gfp_mask, 
+ {
+ 	struct bio *bio;
+ 
++	if (nr_iovecs > UIO_MAXIOV)
++		return NULL;
++
+ 	bio = kmalloc(sizeof(struct bio) + nr_iovecs * sizeof(struct bio_vec),
+ 		      gfp_mask);
+ 	if (unlikely(!bio))
+@@ -697,8 +700,12 @@ static void bio_free_map_data(struct bio
+ static struct bio_map_data *bio_alloc_map_data(int nr_segs, int iov_count,
+ 					       gfp_t gfp_mask)
+ {
+-	struct bio_map_data *bmd = kmalloc(sizeof(*bmd), gfp_mask);
++	struct bio_map_data *bmd;
+ 
++	if (iov_count > UIO_MAXIOV)
++		return NULL;
++
++	bmd = kmalloc(sizeof(*bmd), gfp_mask);
+ 	if (!bmd)
+ 		return NULL;
+ 
+@@ -827,6 +834,12 @@ struct bio *bio_copy_user_iov(struct req
+ 		end = (uaddr + iov[i].iov_len + PAGE_SIZE - 1) >> PAGE_SHIFT;
+ 		start = uaddr >> PAGE_SHIFT;
+ 
++		/*
++		 * Overflow, abort
++		 */
++		if (end < start)
++			return ERR_PTR(-EINVAL);
++
+ 		nr_pages += end - start;
+ 		len += iov[i].iov_len;
+ 	}
+@@ -955,6 +968,12 @@ static struct bio *__bio_map_user_iov(st
+ 		unsigned long end = (uaddr + len + PAGE_SIZE - 1) >> PAGE_SHIFT;
+ 		unsigned long start = uaddr >> PAGE_SHIFT;
+ 
++		/*
++		 * Overflow, abort
++		 */
++		if (end < start)
++			return ERR_PTR(-EINVAL);
++
+ 		nr_pages += end - start;
+ 		/*
+ 		 * buffer must be aligned to at least hardsector size for now
+@@ -982,7 +1001,7 @@ static struct bio *__bio_map_user_iov(st
+ 		unsigned long start = uaddr >> PAGE_SHIFT;
+ 		const int local_nr_pages = end - start;
+ 		const int page_limit = cur_page + local_nr_pages;
+-		
++
+ 		ret = get_user_pages_fast(uaddr, local_nr_pages,
+ 				write_to_vm, &pages[cur_page]);
+ 		if (ret < local_nr_pages) {
+@@ -1214,7 +1233,7 @@ static void bio_copy_kern_endio(struct b
  	const int read = bio_data_dir(bio) == READ;
  	struct bio_map_data *bmd = bio->bi_private;
  	int i;
@@ -34252,7 +34656,7 @@ diff -urNp linux-2.6.36/fs/utimes.c linux-2.6.36/fs/utimes.c
  	mutex_unlock(&inode->i_mutex);
 diff -urNp linux-2.6.36/fs/xfs/linux-2.6/xfs_ioctl.c linux-2.6.36/fs/xfs/linux-2.6/xfs_ioctl.c
 --- linux-2.6.36/fs/xfs/linux-2.6/xfs_ioctl.c	2010-10-20 16:30:22.000000000 -0400
-+++ linux-2.6.36/fs/xfs/linux-2.6/xfs_ioctl.c	2010-11-06 18:58:50.000000000 -0400
++++ linux-2.6.36/fs/xfs/linux-2.6/xfs_ioctl.c	2010-11-13 16:29:01.000000000 -0500
 @@ -127,7 +127,7 @@ xfs_find_handle(
  	}
  
@@ -34261,6 +34665,15 @@ diff -urNp linux-2.6.36/fs/xfs/linux-2.6/xfs_ioctl.c linux-2.6.36/fs/xfs/linux-2
 +	if (hsize > sizeof(handle) || copy_to_user(hreq->ohandle, &handle, hsize) ||
  	    copy_to_user(hreq->ohandlen, &hsize, sizeof(__s32)))
  		goto out_put;
+ 
+@@ -416,7 +416,7 @@ xfs_attrlist_by_handle(
+ 	if (IS_ERR(dentry))
+ 		return PTR_ERR(dentry);
+ 
+-	kbuf = kmalloc(al_hreq.buflen, GFP_KERNEL);
++	kbuf = kzalloc(al_hreq.buflen, GFP_KERNEL);
+ 	if (!kbuf)
+ 		goto out_dput;
  
 diff -urNp linux-2.6.36/fs/xfs/linux-2.6/xfs_iops.c linux-2.6.36/fs/xfs/linux-2.6/xfs_iops.c
 --- linux-2.6.36/fs/xfs/linux-2.6/xfs_iops.c	2010-10-20 16:30:22.000000000 -0400
@@ -42568,8 +42981,8 @@ diff -urNp linux-2.6.36/grsecurity/grsum.c linux-2.6.36/grsecurity/grsum.c
 +}
 diff -urNp linux-2.6.36/grsecurity/Kconfig linux-2.6.36/grsecurity/Kconfig
 --- linux-2.6.36/grsecurity/Kconfig	1969-12-31 19:00:00.000000000 -0500
-+++ linux-2.6.36/grsecurity/Kconfig	2010-11-06 18:58:50.000000000 -0400
-@@ -0,0 +1,995 @@
++++ linux-2.6.36/grsecurity/Kconfig	2010-11-13 16:29:01.000000000 -0500
+@@ -0,0 +1,999 @@
 +#
 +# grecurity configuration
 +#
@@ -42890,7 +43303,8 @@ diff -urNp linux-2.6.36/grsecurity/Kconfig linux-2.6.36/grsecurity/Kconfig
 +	  Note that this option is only effective provided the following
 +	  conditions are met:
 +	  1) The kernel using grsecurity is not precompiled by some distribution
-+	  2) You are using the RBAC system and hiding other files such as your
++	  2) You have also enabled GRKERNSEC_DMESG
++	  3) You are using the RBAC system and hiding other files such as your
 +	     kernel image and System.map.  Alternatively, enabling this option
 +	     causes the permissions on /boot, /lib/modules, and the kernel
 +	     source directory to change at compile time to prevent 
@@ -43310,6 +43724,9 @@ diff -urNp linux-2.6.36/grsecurity/Kconfig linux-2.6.36/grsecurity/Kconfig
 +	help
 +	  If you say Y here, non-root users will not be able to use dmesg(8)
 +	  to view up to the last 4kb of messages in the kernel's log buffer.
++	  The kernel's log buffer often contains kernel addresses and other
++	  identifying information useful to an attacker in fingerprinting a
++	  system for a targeted exploit.
 +	  If the sysctl option is enabled, a sysctl option with name "dmesg" is
 +	  created.
 +
@@ -45957,23 +46374,28 @@ diff -urNp linux-2.6.36/include/linux/jbd.h linux-2.6.36/include/linux/jbd.h
  static inline void *jbd_alloc(size_t size, gfp_t flags)
 diff -urNp linux-2.6.36/include/linux/kallsyms.h linux-2.6.36/include/linux/kallsyms.h
 --- linux-2.6.36/include/linux/kallsyms.h	2010-10-20 16:30:22.000000000 -0400
-+++ linux-2.6.36/include/linux/kallsyms.h	2010-11-06 18:58:50.000000000 -0400
++++ linux-2.6.36/include/linux/kallsyms.h	2010-11-15 17:10:35.000000000 -0500
 @@ -15,7 +15,8 @@
  
  struct module;
  
 -#ifdef CONFIG_KALLSYMS
-+#ifndef __INCLUDED_BY_HIDESYM
++#if !defined(__INCLUDED_BY_HIDESYM) || !defined(CONFIG_KALLSYMS)
 +#if defined(CONFIG_KALLSYMS) && !defined(CONFIG_GRKERNSEC_HIDESYM)
  /* Lookup the address for a symbol. Returns 0 if not found. */
  unsigned long kallsyms_lookup_name(const char *name);
  
-@@ -92,6 +93,9 @@ static inline int lookup_symbol_attrs(un
+@@ -92,6 +93,14 @@ static inline int lookup_symbol_attrs(un
  /* Stupid that this does nothing, but I didn't create this mess. */
  #define __print_symbol(fmt, addr)
  #endif /*CONFIG_KALLSYMS*/
-+#else /* when included by kallsyms.c, with HIDESYM enabled */
++#else /* when included by kallsyms.c or vsnprintf.c, with HIDESYM enabled */
 +extern void __print_symbol(const char *fmt, unsigned long address);
++extern int sprint_symbol(char *buffer, unsigned long address);
++const char *kallsyms_lookup(unsigned long addr,
++			    unsigned long *symbolsize,
++			    unsigned long *offset,
++			    char **modname, char *namebuf);
 +#endif
  
  /* This macro allows us to keep printk typechecking */
@@ -46969,6 +47391,18 @@ diff -urNp linux-2.6.36/include/linux/slub_def.h linux-2.6.36/include/linux/slub
  	void (*ctor)(void *);
  	int inuse;		/* Offset to metadata */
  	int align;		/* Alignment */
+diff -urNp linux-2.6.36/include/linux/socket.h linux-2.6.36/include/linux/socket.h
+--- linux-2.6.36/include/linux/socket.h	2010-10-20 16:30:22.000000000 -0400
++++ linux-2.6.36/include/linux/socket.h	2010-11-15 17:15:00.000000000 -0500
+@@ -322,7 +322,7 @@ extern int csum_partial_copy_fromiovecen
+ 					  int offset, 
+ 					  unsigned int len, __wsum *csump);
+ 
+-extern long verify_iovec(struct msghdr *m, struct iovec *iov, struct sockaddr *address, int mode);
++extern int verify_iovec(struct msghdr *m, struct iovec *iov, struct sockaddr *address, int mode);
+ extern int memcpy_toiovec(struct iovec *v, unsigned char *kdata, int len);
+ extern int memcpy_toiovecend(const struct iovec *v, unsigned char *kdata,
+ 			     int offset, int len);
 diff -urNp linux-2.6.36/include/linux/sonet.h linux-2.6.36/include/linux/sonet.h
 --- linux-2.6.36/include/linux/sonet.h	2010-10-20 16:30:22.000000000 -0400
 +++ linux-2.6.36/include/linux/sonet.h	2010-11-06 18:58:15.000000000 -0400
@@ -49520,14 +49954,23 @@ diff -urNp linux-2.6.36/kernel/module.c linux-2.6.36/kernel/module.c
  	return mod;
 diff -urNp linux-2.6.36/kernel/panic.c linux-2.6.36/kernel/panic.c
 --- linux-2.6.36/kernel/panic.c	2010-10-20 16:30:22.000000000 -0400
-+++ linux-2.6.36/kernel/panic.c	2010-11-06 18:58:15.000000000 -0400
++++ linux-2.6.36/kernel/panic.c	2010-11-13 16:29:01.000000000 -0500
+@@ -368,7 +368,7 @@ static void warn_slowpath_common(const c
+ 	const char *board;
+ 
+ 	printk(KERN_WARNING "------------[ cut here ]------------\n");
+-	printk(KERN_WARNING "WARNING: at %s:%d %pS()\n", file, line, caller);
++	printk(KERN_WARNING "WARNING: at %s:%d %pA()\n", file, line, caller);
+ 	board = dmi_get_system_info(DMI_PRODUCT_NAME);
+ 	if (board)
+ 		printk(KERN_WARNING "Hardware name: %s\n", board);
 @@ -423,7 +423,8 @@ EXPORT_SYMBOL(warn_slowpath_null);
   */
  void __stack_chk_fail(void)
  {
 -	panic("stack-protector: Kernel stack is corrupted in: %p\n",
 +	dump_stack();
-+	panic("stack-protector: Kernel stack is corrupted in: %pS\n",
++	panic("stack-protector: Kernel stack is corrupted in: %pA\n",
  		__builtin_return_address(0));
  }
  EXPORT_SYMBOL(__stack_chk_fail);
@@ -49569,7 +50012,7 @@ diff -urNp linux-2.6.36/kernel/pid.c linux-2.6.36/kernel/pid.c
  struct task_struct *find_task_by_vpid(pid_t vnr)
 diff -urNp linux-2.6.36/kernel/posix-cpu-timers.c linux-2.6.36/kernel/posix-cpu-timers.c
 --- linux-2.6.36/kernel/posix-cpu-timers.c	2010-10-20 16:30:22.000000000 -0400
-+++ linux-2.6.36/kernel/posix-cpu-timers.c	2010-11-06 18:58:50.000000000 -0400
++++ linux-2.6.36/kernel/posix-cpu-timers.c	2010-11-13 16:31:56.000000000 -0500
 @@ -6,6 +6,7 @@
  #include <linux/posix-timers.h>
  #include <linux/errno.h>
@@ -49578,22 +50021,6 @@ diff -urNp linux-2.6.36/kernel/posix-cpu-timers.c linux-2.6.36/kernel/posix-cpu-
  #include <asm/uaccess.h>
  #include <linux/kernel_stat.h>
  #include <trace/events/timer.h>
-@@ -965,6 +966,7 @@ static void check_thread_timers(struct t
- 		unsigned long hard =
- 			ACCESS_ONCE(sig->rlim[RLIMIT_RTTIME].rlim_max);
- 
-+		gr_learn_resource(tsk, RLIMIT_RTTIME, tsk->rt.timeout * (USEC_PER_SEC/HZ), 1);
- 		if (hard != RLIM_INFINITY &&
- 		    tsk->rt.timeout > DIV_ROUND_UP(hard, USEC_PER_SEC/HZ)) {
- 			/*
-@@ -1131,6 +1133,7 @@ static void check_process_timers(struct 
- 		unsigned long hard =
- 			ACCESS_ONCE(sig->rlim[RLIMIT_CPU].rlim_max);
- 		cputime_t x;
-+		gr_learn_resource(tsk, RLIMIT_CPU, psecs, 0);
- 		if (psecs >= hard) {
- 			/*
- 			 * At the hard limit, we just die.
 diff -urNp linux-2.6.36/kernel/power/hibernate.c linux-2.6.36/kernel/power/hibernate.c
 --- linux-2.6.36/kernel/power/hibernate.c	2010-10-20 16:30:22.000000000 -0400
 +++ linux-2.6.36/kernel/power/hibernate.c	2010-11-06 18:58:15.000000000 -0400
@@ -50666,8 +51093,36 @@ diff -urNp linux-2.6.36/lib/radix-tree.c linux-2.6.36/lib/radix-tree.c
  {
 diff -urNp linux-2.6.36/lib/vsprintf.c linux-2.6.36/lib/vsprintf.c
 --- linux-2.6.36/lib/vsprintf.c	2010-10-20 16:30:22.000000000 -0400
-+++ linux-2.6.36/lib/vsprintf.c	2010-11-06 18:58:15.000000000 -0400
-@@ -989,7 +989,7 @@ char *pointer(const char *fmt, char *buf
++++ linux-2.6.36/lib/vsprintf.c	2010-11-13 16:31:35.000000000 -0500
+@@ -16,6 +16,9 @@
+  * - scnprintf and vscnprintf
+  */
+ 
++#ifdef CONFIG_GRKERNSEC_HIDESYM
++#define __INCLUDED_BY_HIDESYM 1
++#endif
+ #include <stdarg.h>
+ #include <linux/module.h>
+ #include <linux/types.h>
+@@ -574,7 +577,7 @@ char *symbol_string(char *buf, char *end
+ 	unsigned long value = (unsigned long) ptr;
+ #ifdef CONFIG_KALLSYMS
+ 	char sym[KSYM_SYMBOL_LEN];
+-	if (ext != 'f' && ext != 's')
++	if (ext != 'f' && ext != 's' && ext != 'a')
+ 		sprint_symbol(sym, value);
+ 	else
+ 		kallsyms_lookup(value, NULL, NULL, NULL, sym);
+@@ -947,6 +950,8 @@ char *uuid_string(char *buf, char *end, 
+  * - 'f' For simple symbolic function names without offset
+  * - 'S' For symbolic direct pointers with offset
+  * - 's' For symbolic direct pointers without offset
++ * - 'A' For symbolic direct pointers with offset approved for use with GRKERNSEC_HIDESYM
++ * - 'a' For symbolic direct pointers without offset approved for use with GRKERNSEC_HIDESYM
+  * - 'R' For decoded struct resource, e.g., [mem 0x0-0x1f 64bit pref]
+  * - 'r' For raw struct resource, e.g., [mem 0x0-0x1f flags 0x201]
+  * - 'M' For a 6-byte MAC address, it prints the address in the
+@@ -989,7 +994,7 @@ char *pointer(const char *fmt, char *buf
  	      struct printf_spec spec)
  {
  	if (!ptr)
@@ -50676,6 +51131,20 @@ diff -urNp linux-2.6.36/lib/vsprintf.c linux-2.6.36/lib/vsprintf.c
  
  	switch (*fmt) {
  	case 'F':
+@@ -998,6 +1003,13 @@ char *pointer(const char *fmt, char *buf
+ 		/* Fallthrough */
+ 	case 'S':
+ 	case 's':
++#ifdef CONFIG_GRKERNSEC_HIDESYM
++		break;
++#else
++		return symbol_string(buf, end, ptr, spec, *fmt);
++#endif
++	case 'A':
++	case 'a':
+ 		return symbol_string(buf, end, ptr, spec, *fmt);
+ 	case 'R':
+ 	case 'r':
 diff -urNp linux-2.6.36/localversion-grsec linux-2.6.36/localversion-grsec
 --- linux-2.6.36/localversion-grsec	1969-12-31 19:00:00.000000000 -0500
 +++ linux-2.6.36/localversion-grsec	2010-11-06 18:58:50.000000000 -0400
@@ -50916,6 +51385,18 @@ diff -urNp linux-2.6.36/mm/Kconfig linux-2.6.36/mm/Kconfig
          help
  	  This is the portion of low virtual memory which should be protected
  	  from userspace allocation.  Keeping a user from writing to low pages
+diff -urNp linux-2.6.36/mm/kmemleak.c linux-2.6.36/mm/kmemleak.c
+--- linux-2.6.36/mm/kmemleak.c	2010-10-20 16:30:22.000000000 -0400
++++ linux-2.6.36/mm/kmemleak.c	2010-11-13 16:29:01.000000000 -0500
+@@ -355,7 +355,7 @@ static void print_unreferenced(struct se
+ 
+ 	for (i = 0; i < object->trace_len; i++) {
+ 		void *ptr = (void *)object->trace[i];
+-		seq_printf(seq, "    [<%p>] %pS\n", ptr, ptr);
++		seq_printf(seq, "    [<%p>] %pA\n", ptr, ptr);
+ 	}
+ }
+ 
 diff -urNp linux-2.6.36/mm/maccess.c linux-2.6.36/mm/maccess.c
 --- linux-2.6.36/mm/maccess.c	2010-10-20 16:30:22.000000000 -0400
 +++ linux-2.6.36/mm/maccess.c	2010-11-06 18:58:15.000000000 -0400
@@ -51851,7 +52332,7 @@ diff -urNp linux-2.6.36/mm/mlock.c linux-2.6.36/mm/mlock.c
  		ret = do_mlockall(flags);
 diff -urNp linux-2.6.36/mm/mmap.c linux-2.6.36/mm/mmap.c
 --- linux-2.6.36/mm/mmap.c	2010-10-20 16:30:22.000000000 -0400
-+++ linux-2.6.36/mm/mmap.c	2010-11-06 18:58:50.000000000 -0400
++++ linux-2.6.36/mm/mmap.c	2010-11-11 18:21:08.000000000 -0500
 @@ -44,6 +44,16 @@
  #define arch_rebalance_pgtables(addr, len)		(addr)
  #endif
@@ -52495,7 +52976,7 @@ diff -urNp linux-2.6.36/mm/mmap.c linux-2.6.36/mm/mmap.c
  		if (locked > limit && !capable(CAP_IPC_LOCK))
  			return -ENOMEM;
  	}
-@@ -1716,37 +1950,47 @@ static int acct_stack_growth(struct vm_a
+@@ -1716,37 +1950,48 @@ static int acct_stack_growth(struct vm_a
   * PA-RISC uses this for its stack; IA64 for its Register Backing Store.
   * vma is the last one with address > vma->vm_end.  Have to extend vma.
   */
@@ -52504,8 +52985,8 @@ diff -urNp linux-2.6.36/mm/mmap.c linux-2.6.36/mm/mmap.c
 +#endif
  int expand_upwards(struct vm_area_struct *vma, unsigned long address)
  {
--	int error;
-+	int error, locknext;
+ 	int error;
++	bool locknext;
  
  	if (!(vma->vm_flags & VM_GROWSUP))
  		return -EFAULT;
@@ -52553,7 +53034,7 @@ diff -urNp linux-2.6.36/mm/mmap.c linux-2.6.36/mm/mmap.c
  		unsigned long size, grow;
  
  		size = address - vma->vm_start;
-@@ -1758,6 +2002,8 @@ int expand_upwards(struct vm_area_struct
+@@ -1758,6 +2003,8 @@ int expand_upwards(struct vm_area_struct
  			perf_event_mmap(vma);
  		}
  	}
@@ -52562,17 +53043,16 @@ diff -urNp linux-2.6.36/mm/mmap.c linux-2.6.36/mm/mmap.c
  	vma_unlock_anon_vma(vma);
  	return error;
  }
-@@ -1769,7 +2015,8 @@ int expand_upwards(struct vm_area_struct
- static int expand_downwards(struct vm_area_struct *vma,
+@@ -1770,6 +2017,8 @@ static int expand_downwards(struct vm_ar
  				   unsigned long address)
  {
--	int error;
-+	int error, lockprev = 0;
+ 	int error;
++	bool lockprev = false;
 +	struct vm_area_struct *prev;
  
  	/*
  	 * We must make sure the anon_vma is allocated
-@@ -1783,6 +2030,15 @@ static int expand_downwards(struct vm_ar
+@@ -1783,6 +2032,15 @@ static int expand_downwards(struct vm_ar
  	if (error)
  		return error;
  
@@ -52588,7 +53068,7 @@ diff -urNp linux-2.6.36/mm/mmap.c linux-2.6.36/mm/mmap.c
  	vma_lock_anon_vma(vma);
  
  	/*
-@@ -1792,9 +2048,17 @@ static int expand_downwards(struct vm_ar
+@@ -1792,9 +2050,17 @@ static int expand_downwards(struct vm_ar
  	 */
  
  	/* Somebody else might have raced and expanded it already */
@@ -52607,7 +53087,7 @@ diff -urNp linux-2.6.36/mm/mmap.c linux-2.6.36/mm/mmap.c
  		size = vma->vm_end - address;
  		grow = (vma->vm_start - address) >> PAGE_SHIFT;
  
-@@ -1802,10 +2066,21 @@ static int expand_downwards(struct vm_ar
+@@ -1802,10 +2068,21 @@ static int expand_downwards(struct vm_ar
  		if (!error) {
  			vma->vm_start = address;
  			vma->vm_pgoff -= grow;
@@ -52629,7 +53109,7 @@ diff -urNp linux-2.6.36/mm/mmap.c linux-2.6.36/mm/mmap.c
  	return error;
  }
  
-@@ -1879,6 +2154,13 @@ static void remove_vma_list(struct mm_st
+@@ -1879,6 +2156,13 @@ static void remove_vma_list(struct mm_st
  	do {
  		long nrpages = vma_pages(vma);
  
@@ -52643,7 +53123,7 @@ diff -urNp linux-2.6.36/mm/mmap.c linux-2.6.36/mm/mmap.c
  		mm->total_vm -= nrpages;
  		vm_stat_account(mm, vma->vm_flags, vma->vm_file, -nrpages);
  		vma = remove_vma(vma);
-@@ -1924,6 +2206,16 @@ detach_vmas_to_be_unmapped(struct mm_str
+@@ -1924,6 +2208,16 @@ detach_vmas_to_be_unmapped(struct mm_str
  	insertion_point = (prev ? &prev->vm_next : &mm->mmap);
  	vma->vm_prev = NULL;
  	do {
@@ -52660,7 +53140,7 @@ diff -urNp linux-2.6.36/mm/mmap.c linux-2.6.36/mm/mmap.c
  		rb_erase(&vma->vm_rb, &mm->mm_rb);
  		mm->map_count--;
  		tail_vma = vma;
-@@ -1952,14 +2244,33 @@ static int __split_vma(struct mm_struct 
+@@ -1952,14 +2246,33 @@ static int __split_vma(struct mm_struct 
  	struct vm_area_struct *new;
  	int err = -ENOMEM;
  
@@ -52694,7 +53174,7 @@ diff -urNp linux-2.6.36/mm/mmap.c linux-2.6.36/mm/mmap.c
  	/* most fields are the same, copy all, and then fixup */
  	*new = *vma;
  
-@@ -1972,6 +2283,22 @@ static int __split_vma(struct mm_struct 
+@@ -1972,6 +2285,22 @@ static int __split_vma(struct mm_struct 
  		new->vm_pgoff += ((addr - vma->vm_start) >> PAGE_SHIFT);
  	}
  
@@ -52717,7 +53197,7 @@ diff -urNp linux-2.6.36/mm/mmap.c linux-2.6.36/mm/mmap.c
  	pol = mpol_dup(vma_policy(vma));
  	if (IS_ERR(pol)) {
  		err = PTR_ERR(pol);
-@@ -1997,6 +2324,42 @@ static int __split_vma(struct mm_struct 
+@@ -1997,6 +2326,42 @@ static int __split_vma(struct mm_struct 
  	else
  		err = vma_adjust(vma, vma->vm_start, addr, vma->vm_pgoff, new);
  
@@ -52760,7 +53240,7 @@ diff -urNp linux-2.6.36/mm/mmap.c linux-2.6.36/mm/mmap.c
  	/* Success. */
  	if (!err)
  		return 0;
-@@ -2009,10 +2372,18 @@ static int __split_vma(struct mm_struct 
+@@ -2009,10 +2374,18 @@ static int __split_vma(struct mm_struct 
  			removed_exe_file_vma(mm);
  		fput(new->vm_file);
  	}
@@ -52780,7 +53260,7 @@ diff -urNp linux-2.6.36/mm/mmap.c linux-2.6.36/mm/mmap.c
  	kmem_cache_free(vm_area_cachep, new);
   out_err:
  	return err;
-@@ -2025,6 +2396,15 @@ static int __split_vma(struct mm_struct 
+@@ -2025,6 +2398,15 @@ static int __split_vma(struct mm_struct 
  int split_vma(struct mm_struct *mm, struct vm_area_struct *vma,
  	      unsigned long addr, int new_below)
  {
@@ -52796,7 +53276,7 @@ diff -urNp linux-2.6.36/mm/mmap.c linux-2.6.36/mm/mmap.c
  	if (mm->map_count >= sysctl_max_map_count)
  		return -ENOMEM;
  
-@@ -2036,11 +2416,30 @@ int split_vma(struct mm_struct *mm, stru
+@@ -2036,11 +2418,30 @@ int split_vma(struct mm_struct *mm, stru
   * work.  This now handles partial unmappings.
   * Jeremy Fitzhardinge <jeremy@goop.org>
   */
@@ -52827,7 +53307,7 @@ diff -urNp linux-2.6.36/mm/mmap.c linux-2.6.36/mm/mmap.c
  	if ((start & ~PAGE_MASK) || start > TASK_SIZE || len > TASK_SIZE-start)
  		return -EINVAL;
  
-@@ -2114,6 +2513,8 @@ int do_munmap(struct mm_struct *mm, unsi
+@@ -2114,6 +2515,8 @@ int do_munmap(struct mm_struct *mm, unsi
  	/* Fix up all other VM information */
  	remove_vma_list(mm, vma);
  
@@ -52836,7 +53316,7 @@ diff -urNp linux-2.6.36/mm/mmap.c linux-2.6.36/mm/mmap.c
  	return 0;
  }
  
-@@ -2126,22 +2527,18 @@ SYSCALL_DEFINE2(munmap, unsigned long, a
+@@ -2126,22 +2529,18 @@ SYSCALL_DEFINE2(munmap, unsigned long, a
  
  	profile_munmap(addr);
  
@@ -52865,7 +53345,7 @@ diff -urNp linux-2.6.36/mm/mmap.c linux-2.6.36/mm/mmap.c
  /*
   *  this is really a simplified "do_mmap".  it only handles
   *  anonymous maps.  eventually we may be able to do some
-@@ -2155,6 +2552,7 @@ unsigned long do_brk(unsigned long addr,
+@@ -2155,6 +2554,7 @@ unsigned long do_brk(unsigned long addr,
  	struct rb_node ** rb_link, * rb_parent;
  	pgoff_t pgoff = addr >> PAGE_SHIFT;
  	int error;
@@ -52873,7 +53353,7 @@ diff -urNp linux-2.6.36/mm/mmap.c linux-2.6.36/mm/mmap.c
  
  	len = PAGE_ALIGN(len);
  	if (!len)
-@@ -2166,16 +2564,30 @@ unsigned long do_brk(unsigned long addr,
+@@ -2166,16 +2566,30 @@ unsigned long do_brk(unsigned long addr,
  
  	flags = VM_DATA_DEFAULT_FLAGS | VM_ACCOUNT | mm->def_flags;
  
@@ -52905,7 +53385,7 @@ diff -urNp linux-2.6.36/mm/mmap.c linux-2.6.36/mm/mmap.c
  		locked += mm->locked_vm;
  		lock_limit = rlimit(RLIMIT_MEMLOCK);
  		lock_limit >>= PAGE_SHIFT;
-@@ -2192,22 +2604,22 @@ unsigned long do_brk(unsigned long addr,
+@@ -2192,22 +2606,22 @@ unsigned long do_brk(unsigned long addr,
  	/*
  	 * Clear old maps.  this also does some error checking for us
  	 */
@@ -52932,7 +53412,7 @@ diff -urNp linux-2.6.36/mm/mmap.c linux-2.6.36/mm/mmap.c
  		return -ENOMEM;
  
  	/* Can we just expand an old private anonymous mapping? */
-@@ -2221,7 +2633,7 @@ unsigned long do_brk(unsigned long addr,
+@@ -2221,7 +2635,7 @@ unsigned long do_brk(unsigned long addr,
  	 */
  	vma = kmem_cache_zalloc(vm_area_cachep, GFP_KERNEL);
  	if (!vma) {
@@ -52941,7 +53421,7 @@ diff -urNp linux-2.6.36/mm/mmap.c linux-2.6.36/mm/mmap.c
  		return -ENOMEM;
  	}
  
-@@ -2235,11 +2647,12 @@ unsigned long do_brk(unsigned long addr,
+@@ -2235,11 +2649,12 @@ unsigned long do_brk(unsigned long addr,
  	vma_link(mm, vma, prev, rb_link, rb_parent);
  out:
  	perf_event_mmap(vma);
@@ -52956,7 +53436,7 @@ diff -urNp linux-2.6.36/mm/mmap.c linux-2.6.36/mm/mmap.c
  	return addr;
  }
  
-@@ -2286,8 +2699,10 @@ void exit_mmap(struct mm_struct *mm)
+@@ -2286,8 +2701,10 @@ void exit_mmap(struct mm_struct *mm)
  	 * Walk the list again, actually closing and freeing it,
  	 * with preemption enabled, without holding any MM locks.
  	 */
@@ -52968,7 +53448,7 @@ diff -urNp linux-2.6.36/mm/mmap.c linux-2.6.36/mm/mmap.c
  
  	BUG_ON(mm->nr_ptes > (FIRST_USER_ADDRESS+PMD_SIZE-1)>>PMD_SHIFT);
  }
-@@ -2301,6 +2716,10 @@ int insert_vm_struct(struct mm_struct * 
+@@ -2301,6 +2718,10 @@ int insert_vm_struct(struct mm_struct * 
  	struct vm_area_struct * __vma, * prev;
  	struct rb_node ** rb_link, * rb_parent;
  
@@ -52979,7 +53459,7 @@ diff -urNp linux-2.6.36/mm/mmap.c linux-2.6.36/mm/mmap.c
  	/*
  	 * The vm_pgoff of a purely anonymous vma should be irrelevant
  	 * until its first write fault, when page's anon_vma and index
-@@ -2323,7 +2742,22 @@ int insert_vm_struct(struct mm_struct * 
+@@ -2323,7 +2744,22 @@ int insert_vm_struct(struct mm_struct * 
  	if ((vma->vm_flags & VM_ACCOUNT) &&
  	     security_vm_enough_memory_mm(mm, vma_pages(vma)))
  		return -ENOMEM;
@@ -53002,7 +53482,7 @@ diff -urNp linux-2.6.36/mm/mmap.c linux-2.6.36/mm/mmap.c
  	return 0;
  }
  
-@@ -2341,6 +2775,8 @@ struct vm_area_struct *copy_vma(struct v
+@@ -2341,6 +2777,8 @@ struct vm_area_struct *copy_vma(struct v
  	struct rb_node **rb_link, *rb_parent;
  	struct mempolicy *pol;
  
@@ -53011,7 +53491,7 @@ diff -urNp linux-2.6.36/mm/mmap.c linux-2.6.36/mm/mmap.c
  	/*
  	 * If anonymous vma has not yet been faulted, update new pgoff
  	 * to match new location, to increase its chance of merging.
-@@ -2390,6 +2826,39 @@ struct vm_area_struct *copy_vma(struct v
+@@ -2390,6 +2828,39 @@ struct vm_area_struct *copy_vma(struct v
  	kmem_cache_free(vm_area_cachep, new_vma);
  	return NULL;
  }
@@ -53051,7 +53531,7 @@ diff -urNp linux-2.6.36/mm/mmap.c linux-2.6.36/mm/mmap.c
  
  /*
   * Return true if the calling process may expand its vm space by the passed
-@@ -2401,7 +2870,7 @@ int may_expand_vm(struct mm_struct *mm, 
+@@ -2401,7 +2872,7 @@ int may_expand_vm(struct mm_struct *mm, 
  	unsigned long lim;
  
  	lim = rlimit(RLIMIT_AS) >> PAGE_SHIFT;
@@ -53060,7 +53540,7 @@ diff -urNp linux-2.6.36/mm/mmap.c linux-2.6.36/mm/mmap.c
  	if (cur + npages > lim)
  		return 0;
  	return 1;
-@@ -2471,6 +2940,17 @@ int install_special_mapping(struct mm_st
+@@ -2471,6 +2942,17 @@ int install_special_mapping(struct mm_st
  	vma->vm_start = addr;
  	vma->vm_end = addr + len;
  
@@ -54044,7 +54524,16 @@ diff -urNp linux-2.6.36/mm/slob.c linux-2.6.36/mm/slob.c
  	trace_kmem_cache_free(_RET_IP_, b);
 diff -urNp linux-2.6.36/mm/slub.c linux-2.6.36/mm/slub.c
 --- linux-2.6.36/mm/slub.c	2010-10-20 16:30:22.000000000 -0400
-+++ linux-2.6.36/mm/slub.c	2010-11-06 18:58:50.000000000 -0400
++++ linux-2.6.36/mm/slub.c	2010-11-13 16:29:01.000000000 -0500
+@@ -392,7 +392,7 @@ static void print_track(const char *s, s
+ 	if (!t->addr)
+ 		return;
+ 
+-	printk(KERN_ERR "INFO: %s in %pS age=%lu cpu=%u pid=%d\n",
++	printk(KERN_ERR "INFO: %s in %pA age=%lu cpu=%u pid=%d\n",
+ 		s, (void *)t->addr, jiffies - t->when, t->cpu, t->pid);
+ }
+ 
 @@ -1873,6 +1873,8 @@ void kmem_cache_free(struct kmem_cache *
  
  	page = virt_to_head_page(x);
@@ -54650,6 +55139,26 @@ diff -urNp linux-2.6.36/net/bridge/netfilter/ebtables.c linux-2.6.36/net/bridge/
  			BUGPRINT("c2u Didn't work\n");
  			ret = -EFAULT;
  			break;
+diff -urNp linux-2.6.36/net/compat.c linux-2.6.36/net/compat.c
+--- linux-2.6.36/net/compat.c	2010-10-20 16:30:22.000000000 -0400
++++ linux-2.6.36/net/compat.c	2010-11-15 17:15:40.000000000 -0500
+@@ -41,10 +41,12 @@ static inline int iov_from_user_compat_t
+ 		compat_size_t len;
+ 
+ 		if (get_user(len, &uiov32->iov_len) ||
+-		   get_user(buf, &uiov32->iov_base)) {
+-			tot_len = -EFAULT;
+-			break;
+-		}
++		   get_user(buf, &uiov32->iov_base))
++			return -EFAULT;
++
++		if (len > INT_MAX - tot_len)
++			len = INT_MAX - tot_len;
++
+ 		tot_len += len;
+ 		kiov->iov_base = compat_ptr(buf);
+ 		kiov->iov_len = (__kernel_size_t) len;
 diff -urNp linux-2.6.36/net/core/dev.c linux-2.6.36/net/core/dev.c
 --- linux-2.6.36/net/core/dev.c	2010-10-20 16:30:22.000000000 -0400
 +++ linux-2.6.36/net/core/dev.c	2010-11-06 18:58:15.000000000 -0400
@@ -54671,6 +55180,44 @@ diff -urNp linux-2.6.36/net/core/dev.c linux-2.6.36/net/core/dev.c
  {
  	struct softnet_data *sd = &__get_cpu_var(softnet_data);
  	unsigned long time_limit = jiffies + 2;
+diff -urNp linux-2.6.36/net/core/iovec.c linux-2.6.36/net/core/iovec.c
+--- linux-2.6.36/net/core/iovec.c	2010-10-20 16:30:22.000000000 -0400
++++ linux-2.6.36/net/core/iovec.c	2010-11-15 17:16:46.000000000 -0500
+@@ -35,10 +35,9 @@
+  *	in any case.
+  */
+ 
+-long verify_iovec(struct msghdr *m, struct iovec *iov, struct sockaddr *address, int mode)
++int verify_iovec(struct msghdr *m, struct iovec *iov, struct sockaddr *address, int mode)
+ {
+-	int size, ct;
+-	long err;
++	int size, ct, err;
+ 
+ 	if (m->msg_namelen) {
+ 		if (mode == VERIFY_READ) {
+@@ -60,14 +59,13 @@ long verify_iovec(struct msghdr *m, stru
+ 	err = 0;
+ 
+ 	for (ct = 0; ct < m->msg_iovlen; ct++) {
+-		err += iov[ct].iov_len;
+-		/*
+-		 * Goal is not to verify user data, but to prevent returning
+-		 * negative value, which is interpreted as errno.
+-		 * Overflow is still possible, but it is harmless.
+-		 */
+-		if (err < 0)
+-			return -EMSGSIZE;
++		size_t len = iov[ct].iov_len;
++
++		if (len > INT_MAX - err) {
++			len = INT_MAX - err;
++			iov[ct].iov_len = len;
++		}
++		err += len;
+ 	}
+ 
+ 	return err;
 diff -urNp linux-2.6.36/net/core/net-sysfs.c linux-2.6.36/net/core/net-sysfs.c
 --- linux-2.6.36/net/core/net-sysfs.c	2010-10-20 16:30:22.000000000 -0400
 +++ linux-2.6.36/net/core/net-sysfs.c	2010-11-06 18:58:15.000000000 -0400
@@ -54753,6 +55300,70 @@ diff -urNp linux-2.6.36/net/decnet/sysctl_net_decnet.c linux-2.6.36/net/decnet/s
  		return -EFAULT;
  
  	*lenp = len;
+diff -urNp linux-2.6.36/net/ipv4/inet_diag.c linux-2.6.36/net/ipv4/inet_diag.c
+--- linux-2.6.36/net/ipv4/inet_diag.c	2010-10-20 16:30:22.000000000 -0400
++++ linux-2.6.36/net/ipv4/inet_diag.c	2010-11-13 16:33:13.000000000 -0500
+@@ -114,8 +114,14 @@ static int inet_csk_diag_fill(struct soc
+ 	r->idiag_retrans = 0;
+ 
+ 	r->id.idiag_if = sk->sk_bound_dev_if;
++
++#ifdef CONFIG_GRKERNSEC_HIDESYM
++	r->id.idiag_cookie[0] = 0;
++	r->id.idiag_cookie[1] = 0;
++#else
+ 	r->id.idiag_cookie[0] = (u32)(unsigned long)sk;
+ 	r->id.idiag_cookie[1] = (u32)(((unsigned long)sk >> 31) >> 1);
++#endif
+ 
+ 	r->id.idiag_sport = inet->inet_sport;
+ 	r->id.idiag_dport = inet->inet_dport;
+@@ -201,8 +207,15 @@ static int inet_twsk_diag_fill(struct in
+ 	r->idiag_family	      = tw->tw_family;
+ 	r->idiag_retrans      = 0;
+ 	r->id.idiag_if	      = tw->tw_bound_dev_if;
++
++#ifdef CONFIG_GRKERNSEC_HIDESYM
++	r->id.idiag_cookie[0] = 0;
++	r->id.idiag_cookie[1] = 0;
++#else
+ 	r->id.idiag_cookie[0] = (u32)(unsigned long)tw;
+ 	r->id.idiag_cookie[1] = (u32)(((unsigned long)tw >> 31) >> 1);
++#endif
++
+ 	r->id.idiag_sport     = tw->tw_sport;
+ 	r->id.idiag_dport     = tw->tw_dport;
+ 	r->id.idiag_src[0]    = tw->tw_rcv_saddr;
+@@ -285,12 +298,14 @@ static int inet_diag_get_exact(struct sk
+ 	if (sk == NULL)
+ 		goto unlock;
+ 
++#ifndef CONFIG_GRKERNSEC_HIDESYM
+ 	err = -ESTALE;
+ 	if ((req->id.idiag_cookie[0] != INET_DIAG_NOCOOKIE ||
+ 	     req->id.idiag_cookie[1] != INET_DIAG_NOCOOKIE) &&
+ 	    ((u32)(unsigned long)sk != req->id.idiag_cookie[0] ||
+ 	     (u32)((((unsigned long)sk) >> 31) >> 1) != req->id.idiag_cookie[1]))
+ 		goto out;
++#endif
+ 
+ 	err = -ENOMEM;
+ 	rep = alloc_skb(NLMSG_SPACE((sizeof(struct inet_diag_msg) +
+@@ -578,8 +593,14 @@ static int inet_diag_fill_req(struct sk_
+ 	r->idiag_retrans = req->retrans;
+ 
+ 	r->id.idiag_if = sk->sk_bound_dev_if;
++
++#ifdef CONFIG_GRKERNSEC_HIDESYM
++	r->id.idiag_cookie[0] = 0;
++	r->id.idiag_cookie[1] = 0;
++#else
+ 	r->id.idiag_cookie[0] = (u32)(unsigned long)req;
+ 	r->id.idiag_cookie[1] = (u32)(((unsigned long)req >> 31) >> 1);
++#endif
+ 
+ 	tmo = req->expires - jiffies;
+ 	if (tmo < 0)
 diff -urNp linux-2.6.36/net/ipv4/inet_hashtables.c linux-2.6.36/net/ipv4/inet_hashtables.c
 --- linux-2.6.36/net/ipv4/inet_hashtables.c	2010-10-20 16:30:22.000000000 -0400
 +++ linux-2.6.36/net/ipv4/inet_hashtables.c	2010-11-06 18:58:50.000000000 -0400
@@ -54852,6 +55463,18 @@ diff -urNp linux-2.6.36/net/ipv4/route.c linux-2.6.36/net/ipv4/route.c
  		if (rt->peer->tcp_ts_stamp) {
  			ts = rt->peer->tcp_ts;
  			tsage = get_seconds() - rt->peer->tcp_ts_stamp;
+diff -urNp linux-2.6.36/net/ipv4/tcp.c linux-2.6.36/net/ipv4/tcp.c
+--- linux-2.6.36/net/ipv4/tcp.c	2010-10-20 16:30:22.000000000 -0400
++++ linux-2.6.36/net/ipv4/tcp.c	2010-11-13 16:29:01.000000000 -0500
+@@ -2246,7 +2246,7 @@ static int do_tcp_setsockopt(struct sock
+ 		/* Values greater than interface MTU won't take effect. However
+ 		 * at the point when this call is done we typically don't yet
+ 		 * know which interface is going to be used */
+-		if (val < 8 || val > MAX_TCP_WINDOW) {
++		if (val < 64 || val > MAX_TCP_WINDOW) {
+ 			err = -EINVAL;
+ 			break;
+ 		}
 diff -urNp linux-2.6.36/net/ipv4/tcp_ipv4.c linux-2.6.36/net/ipv4/tcp_ipv4.c
 --- linux-2.6.36/net/ipv4/tcp_ipv4.c	2010-10-20 16:30:22.000000000 -0400
 +++ linux-2.6.36/net/ipv4/tcp_ipv4.c	2010-11-06 19:08:40.000000000 -0400
@@ -55784,6 +56407,54 @@ diff -urNp linux-2.6.36/net/phonet/af_phonet.c linux-2.6.36/net/phonet/af_phonet
  		return -EINVAL;
  
  	err = proto_register(pp->prot, 1);
+diff -urNp linux-2.6.36/net/phonet/socket.c linux-2.6.36/net/phonet/socket.c
+--- linux-2.6.36/net/phonet/socket.c	2010-10-20 16:30:22.000000000 -0400
++++ linux-2.6.36/net/phonet/socket.c	2010-11-13 16:29:01.000000000 -0500
+@@ -535,7 +535,12 @@ static int pn_sock_seq_show(struct seq_f
+ 			sk->sk_state,
+ 			sk_wmem_alloc_get(sk), sk_rmem_alloc_get(sk),
+ 			sock_i_uid(sk), sock_i_ino(sk),
+-			atomic_read(&sk->sk_refcnt), sk,
++			atomic_read(&sk->sk_refcnt),
++#ifdef CONFIG_GRKERNSEC_HIDESYM
++			NULL,
++#else
++			sk,
++#endif
+ 			atomic_read(&sk->sk_drops), &len);
+ 	}
+ 	seq_printf(seq, "%*s\n", 127 - len, "");
+diff -urNp linux-2.6.36/net/sctp/proc.c linux-2.6.36/net/sctp/proc.c
+--- linux-2.6.36/net/sctp/proc.c	2010-10-20 16:30:22.000000000 -0400
++++ linux-2.6.36/net/sctp/proc.c	2010-11-13 16:29:01.000000000 -0500
+@@ -212,7 +212,12 @@ static int sctp_eps_seq_show(struct seq_
+ 	sctp_for_each_hentry(epb, node, &head->chain) {
+ 		ep = sctp_ep(epb);
+ 		sk = epb->sk;
+-		seq_printf(seq, "%8p %8p %-3d %-3d %-4d %-5d %5d %5lu ", ep, sk,
++		seq_printf(seq, "%8p %8p %-3d %-3d %-4d %-5d %5d %5lu ",
++#ifdef CONFIG_GRKERNSEC_HIDESYM
++			   NULL, NULL,
++#else
++			   ep, sk,
++#endif
+ 			   sctp_sk(sk)->type, sk->sk_state, hash,
+ 			   epb->bind_addr.port,
+ 			   sock_i_uid(sk), sock_i_ino(sk));
+@@ -318,7 +323,12 @@ static int sctp_assocs_seq_show(struct s
+ 		seq_printf(seq,
+ 			   "%8p %8p %-3d %-3d %-2d %-4d "
+ 			   "%4d %8d %8d %7d %5lu %-5d %5d ",
+-			   assoc, sk, sctp_sk(sk)->type, sk->sk_state,
++#ifdef CONFIG_GRKERNSEC_HIDESYM
++			   NULL, NULL,
++#else
++			   assoc, sk,
++#endif
++			   sctp_sk(sk)->type, sk->sk_state,
+ 			   assoc->state, hash,
+ 			   assoc->assoc_id,
+ 			   assoc->sndbuf_used,
 diff -urNp linux-2.6.36/net/sctp/socket.c linux-2.6.36/net/sctp/socket.c
 --- linux-2.6.36/net/sctp/socket.c	2010-10-20 16:30:22.000000000 -0400
 +++ linux-2.6.36/net/sctp/socket.c	2010-11-06 18:58:15.000000000 -0400
@@ -56143,9 +56814,40 @@ diff -urNp linux-2.6.36/net/wireless/wext-core.c linux-2.6.36/net/wireless/wext-
  	iwp->length += essid_compat;
 diff -urNp linux-2.6.36/net/x25/x25_facilities.c linux-2.6.36/net/x25/x25_facilities.c
 --- linux-2.6.36/net/x25/x25_facilities.c	2010-10-20 16:30:22.000000000 -0400
-+++ linux-2.6.36/net/x25/x25_facilities.c	2010-11-06 18:58:50.000000000 -0400
-@@ -134,15 +134,15 @@ int x25_parse_facilities(struct sk_buff 
++++ linux-2.6.36/net/x25/x25_facilities.c	2010-11-11 18:50:38.000000000 -0500
+@@ -61,6 +61,8 @@ int x25_parse_facilities(struct sk_buff 
+ 	while (len > 0) {
+ 		switch (*p & X25_FAC_CLASS_MASK) {
+ 		case X25_FAC_CLASS_A:
++			if (len < 2)
++				return 0;
+ 			switch (*p) {
+ 			case X25_FAC_REVERSE:
+ 				if((p[1] & 0x81) == 0x81) {
+@@ -104,6 +106,8 @@ int x25_parse_facilities(struct sk_buff 
+ 			len -= 2;
+ 			break;
+ 		case X25_FAC_CLASS_B:
++			if (len < 3)
++				return 0;
+ 			switch (*p) {
+ 			case X25_FAC_PACKET_SIZE:
+ 				facilities->pacsize_in  = p[1];
+@@ -125,6 +129,8 @@ int x25_parse_facilities(struct sk_buff 
+ 			len -= 3;
+ 			break;
+ 		case X25_FAC_CLASS_C:
++			if (len < 4)
++				return 0;
+ 			printk(KERN_DEBUG "X.25: unknown facility %02X, "
+ 			       "values %02X, %02X, %02X\n",
+ 			       p[0], p[1], p[2], p[3]);
+@@ -132,26 +138,27 @@ int x25_parse_facilities(struct sk_buff 
+ 			len -= 4;
+ 			break;
  		case X25_FAC_CLASS_D:
++			if (len < p[1] + 2)
++				return 0;
  			switch (*p) {
  			case X25_FAC_CALLING_AE:
 -				if (p[1] > X25_MAX_DTE_FACIL_LEN)
@@ -56164,6 +56866,17 @@ diff -urNp linux-2.6.36/net/x25/x25_facilities.c linux-2.6.36/net/x25/x25_facili
  				dte_facs->called_len = p[2];
  				memcpy(dte_facs->called_ae, &p[3], p[1] - 1);
  				*vc_fac_mask |= X25_MASK_CALLED_AE;
+ 				break;
+ 			default:
+ 				printk(KERN_DEBUG "X.25: unknown facility %02X,"
+-					"length %d, values %02X, %02X, "
+-					"%02X, %02X\n",
+-					p[0], p[1], p[2], p[3], p[4], p[5]);
++					"length %d, values %02X, %02X\n",
++					p[0], p[1], p[2], p[3]);
+ 				break;
+ 			}
+ 			len -= p[1] + 2;
 diff -urNp linux-2.6.36/net/x25/x25_in.c linux-2.6.36/net/x25/x25_in.c
 --- linux-2.6.36/net/x25/x25_in.c	2010-10-20 16:30:22.000000000 -0400
 +++ linux-2.6.36/net/x25/x25_in.c	2010-11-06 18:58:50.000000000 -0400
