@@ -195,6 +195,9 @@ Patch41:	kernel-ipvs-nfct.patch
 
 ### End netfilter
 
+# http://marc.info/?l=dm-devel&m=129073232606808&q=raw
+Patch48:	kernel-scsi-corruption.patch
+
 # http://zph.bratcheda.org/linux-2.6.26.3-zph.patch
 Patch49:	kernel-zph.patch
 
@@ -719,6 +722,9 @@ sed -i 's/-Werror//' arch/alpha/kernel/Makefile
 
 ##
 # end of netfilter
+
+# scsi
+%patch48 -p1
 
 # zph
 %patch49 -p1
