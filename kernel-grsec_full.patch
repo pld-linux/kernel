@@ -7531,46 +7531,11 @@ diff -urNp linux-2.6.36.2/arch/x86/include/asm/elf.h linux-2.6.36.2/arch/x86/inc
  #endif /* _ASM_X86_ELF_H */
 diff -urNp linux-2.6.36.2/arch/x86/include/asm/futex.h linux-2.6.36.2/arch/x86/include/asm/futex.h
 --- linux-2.6.36.2/arch/x86/include/asm/futex.h	2010-10-20 16:30:22.000000000 -0400
-+++ linux-2.6.36.2/arch/x86/include/asm/futex.h	2010-12-09 20:24:53.000000000 -0500
-@@ -11,17 +11,54 @@
- #include <asm/processor.h>
++++ linux-2.6.36.2/arch/x86/include/asm/futex.h	2010-12-19 12:46:43.000000000 -0500
+@@ -12,16 +12,18 @@
  #include <asm/system.h>
  
-+#ifdef CONFIG_X86_32
  #define __futex_atomic_op1(insn, ret, oldval, uaddr, oparg)	\
-+	asm volatile(						\
-+		     "movw\t%w6, %%ds\n"			\
-+		     "1:\t" insn "\n"				\
-+		     "2:\tpushl\t%%ss\n"			\
-+		     "\tpopl\t%%ds\n"				\
-+		     "\t.section .fixup,\"ax\"\n"		\
-+		     "3:\tmov\t%3, %1\n"			\
-+		     "\tjmp\t2b\n"				\
-+		     "\t.previous\n"				\
-+		     _ASM_EXTABLE(1b, 3b)			\
-+		     : "=r" (oldval), "=r" (ret), "+m" (*uaddr)	\
-+		     : "i" (-EFAULT), "0" (oparg), "1" (0), "r" (__USER_DS))
-+
-+#define __futex_atomic_op2(insn, ret, oldval, uaddr, oparg)	\
-+	asm volatile("movw\t%w7, %%es\n"			\
-+		     "1:\tmovl\t%%es:%2, %0\n"			\
-+		     "\tmovl\t%0, %3\n"				\
-+		     "\t" insn "\n"				\
-+		     "2:\t" LOCK_PREFIX "cmpxchgl %3, %%es:%2\n"\
-+		     "\tjnz\t1b\n"				\
-+		     "3:\tpushl\t%%ss\n"			\
-+		     "\tpopl\t%%es\n"				\
-+		     "\t.section .fixup,\"ax\"\n"		\
-+		     "4:\tmov\t%5, %1\n"			\
-+		     "\tjmp\t3b\n"				\
-+		     "\t.previous\n"				\
-+		     _ASM_EXTABLE(1b, 4b)			\
-+		     _ASM_EXTABLE(2b, 4b)			\
-+		     : "=&a" (oldval), "=&r" (ret),		\
-+		       "+m" (*uaddr), "=&r" (tem)		\
-+		     : "r" (oparg), "i" (-EFAULT), "1" (0), "r" (__USER_DS))
-+#else
-+#define __futex_atomic_op1(insn, ret, oldval, uaddr, oparg)	\
 +	typecheck(u32 *, uaddr);				\
  	asm volatile("1:\t" insn "\n"				\
  		     "2:\t.section .fixup,\"ax\"\n"		\
@@ -7579,8 +7544,7 @@ diff -urNp linux-2.6.36.2/arch/x86/include/asm/futex.h linux-2.6.36.2/arch/x86/i
  		     "\t.previous\n"				\
  		     _ASM_EXTABLE(1b, 3b)			\
 -		     : "=r" (oldval), "=r" (ret), "+m" (*uaddr)	\
-+		     : "=r" (oldval), "=r" (ret),		\
-+		       "+m" (*(uaddr + PAX_USER_SHADOW_BASE / 4))\
++		     : "=r" (oldval), "=r" (ret), "+m" (*____m(uaddr))\
  		     : "i" (-EFAULT), "0" (oparg), "1" (0))
  
  #define __futex_atomic_op2(insn, ret, oldval, uaddr, oparg)	\
@@ -7588,43 +7552,33 @@ diff -urNp linux-2.6.36.2/arch/x86/include/asm/futex.h linux-2.6.36.2/arch/x86/i
  	asm volatile("1:\tmovl	%2, %0\n"			\
  		     "\tmovl\t%0, %3\n"				\
  		     "\t" insn "\n"				\
-@@ -34,10 +71,12 @@
+@@ -34,10 +36,10 @@
  		     _ASM_EXTABLE(1b, 4b)			\
  		     _ASM_EXTABLE(2b, 4b)			\
  		     : "=&a" (oldval), "=&r" (ret),		\
 -		       "+m" (*uaddr), "=&r" (tem)		\
-+		       "+m" (*(uaddr + PAX_USER_SHADOW_BASE / 4)),\
-+		       "=&r" (tem)				\
++		       "+m" (*(____m(uaddr))), "=&r" (tem)	\
  		     : "r" (oparg), "i" (-EFAULT), "1" (0))
-+#endif
  
 -static inline int futex_atomic_op_inuser(int encoded_op, int __user *uaddr)
 +static inline int futex_atomic_op_inuser(int encoded_op, u32 __user *uaddr)
  {
  	int op = (encoded_op >> 28) & 7;
  	int cmp = (encoded_op >> 24) & 15;
-@@ -61,11 +100,20 @@ static inline int futex_atomic_op_inuser
+@@ -61,10 +63,10 @@ static inline int futex_atomic_op_inuser
  
  	switch (op) {
  	case FUTEX_OP_SET:
-+#ifdef CONFIG_X86_32
-+		__futex_atomic_op1("xchgl %0, %%ds:%2", ret, oldval, uaddr, oparg);
-+#else
- 		__futex_atomic_op1("xchgl %0, %2", ret, oldval, uaddr, oparg);
-+#endif
+-		__futex_atomic_op1("xchgl %0, %2", ret, oldval, uaddr, oparg);
++		__futex_atomic_op1("xchgl %0, "__copyuser_seg"%2", ret, oldval, uaddr, oparg);
  		break;
  	case FUTEX_OP_ADD:
-+#ifdef CONFIG_X86_32
-+		__futex_atomic_op1(LOCK_PREFIX "xaddl %0, %%ds:%2", ret, oldval,
-+				   uaddr, oparg);
-+#else
- 		__futex_atomic_op1(LOCK_PREFIX "xaddl %0, %2", ret, oldval,
+-		__futex_atomic_op1(LOCK_PREFIX "xaddl %0, %2", ret, oldval,
++		__futex_atomic_op1(LOCK_PREFIX "xaddl %0, "__copyuser_seg"%2", ret, oldval,
  				   uaddr, oparg);
-+#endif
  		break;
  	case FUTEX_OP_OR:
- 		__futex_atomic_op2("orl %4, %3", ret, oldval, uaddr, oparg);
-@@ -109,7 +157,7 @@ static inline int futex_atomic_op_inuser
+@@ -109,7 +111,7 @@ static inline int futex_atomic_op_inuser
  	return ret;
  }
  
@@ -7633,7 +7587,7 @@ diff -urNp linux-2.6.36.2/arch/x86/include/asm/futex.h linux-2.6.36.2/arch/x86/i
  						int newval)
  {
  
-@@ -119,17 +167,31 @@ static inline int futex_atomic_cmpxchg_i
+@@ -119,16 +121,16 @@ static inline int futex_atomic_cmpxchg_i
  		return -ENOSYS;
  #endif
  
@@ -7642,32 +7596,17 @@ diff -urNp linux-2.6.36.2/arch/x86/include/asm/futex.h linux-2.6.36.2/arch/x86/i
  		return -EFAULT;
  
 -	asm volatile("1:\t" LOCK_PREFIX "cmpxchgl %3, %1\n"
--		     "2:\t.section .fixup, \"ax\"\n"
-+	asm volatile(
-+#ifdef CONFIG_X86_32
-+		     "\tmovw %w5, %%ds\n"
-+		     "1:\t" LOCK_PREFIX "cmpxchgl %3, %%ds:%1\n"
-+		     "2:\tpushl   %%ss\n"
-+		     "\tpopl    %%ds\n"
-+#else
-+		     "1:\t" LOCK_PREFIX "cmpxchgl %3, %1\n"
-+		     "2:\n"
-+#endif
-+		     "\t.section .fixup, \"ax\"\n"
++	asm volatile("1:\t" LOCK_PREFIX "cmpxchgl %3, "__copyuser_seg"%1\n"
+ 		     "2:\t.section .fixup, \"ax\"\n"
  		     "3:\tmov     %2, %0\n"
  		     "\tjmp     2b\n"
  		     "\t.previous\n"
  		     _ASM_EXTABLE(1b, 3b)
-+#ifdef CONFIG_X86_32
- 		     : "=a" (oldval), "+m" (*uaddr)
-+		     : "i" (-EFAULT), "r" (newval), "0" (oldval), "r" (__USER_DS)
-+#else
-+		     : "=a" (oldval), "+m" (*(uaddr + PAX_USER_SHADOW_BASE / 4))
+-		     : "=a" (oldval), "+m" (*uaddr)
++		     : "=a" (oldval), "+m" (*____m(uaddr))
  		     : "i" (-EFAULT), "r" (newval), "0" (oldval)
-+#endif
  		     : "memory"
  	);
- 
 diff -urNp linux-2.6.36.2/arch/x86/include/asm/i387.h linux-2.6.36.2/arch/x86/include/asm/i387.h
 --- linux-2.6.36.2/arch/x86/include/asm/i387.h	2010-10-20 16:30:22.000000000 -0400
 +++ linux-2.6.36.2/arch/x86/include/asm/i387.h	2010-12-09 20:24:53.000000000 -0500
@@ -9419,6 +9358,18 @@ diff -urNp linux-2.6.36.2/arch/x86/include/asm/spinlock.h linux-2.6.36.2/arch/x8
  		     : "+m" (rw->lock) : "i" (RW_LOCK_BIAS) : "memory");
  }
  
+diff -urNp linux-2.6.36.2/arch/x86/include/asm/stackprotector.h linux-2.6.36.2/arch/x86/include/asm/stackprotector.h
+--- linux-2.6.36.2/arch/x86/include/asm/stackprotector.h	2010-10-20 16:30:22.000000000 -0400
++++ linux-2.6.36.2/arch/x86/include/asm/stackprotector.h	2010-12-19 12:46:50.000000000 -0500
+@@ -113,7 +113,7 @@ static inline void setup_stack_canary_se
+ 
+ static inline void load_stack_canary_segment(void)
+ {
+-#ifdef CONFIG_X86_32
++#if defined(CONFIG_X86_32) && !defined(CONFIG_PAX_MEMORY_UDEREF)
+ 	asm volatile ("mov %0, %%gs" : : "r" (0));
+ #endif
+ }
 diff -urNp linux-2.6.36.2/arch/x86/include/asm/system.h linux-2.6.36.2/arch/x86/include/asm/system.h
 --- linux-2.6.36.2/arch/x86/include/asm/system.h	2010-10-20 16:30:22.000000000 -0400
 +++ linux-2.6.36.2/arch/x86/include/asm/system.h	2010-12-09 20:24:53.000000000 -0500
@@ -9936,7 +9887,7 @@ diff -urNp linux-2.6.36.2/arch/x86/include/asm/uaccess_64.h linux-2.6.36.2/arch/
  #endif /* _ASM_X86_UACCESS_64_H */
 diff -urNp linux-2.6.36.2/arch/x86/include/asm/uaccess.h linux-2.6.36.2/arch/x86/include/asm/uaccess.h
 --- linux-2.6.36.2/arch/x86/include/asm/uaccess.h	2010-10-20 16:30:22.000000000 -0400
-+++ linux-2.6.36.2/arch/x86/include/asm/uaccess.h	2010-12-09 20:24:53.000000000 -0500
++++ linux-2.6.36.2/arch/x86/include/asm/uaccess.h	2010-12-19 12:46:43.000000000 -0500
 @@ -8,12 +8,15 @@
  #include <linux/thread_info.h>
  #include <linux/prefetch.h>
@@ -9953,12 +9904,11 @@ diff -urNp linux-2.6.36.2/arch/x86/include/asm/uaccess.h linux-2.6.36.2/arch/x86
  /*
   * The fs value determines whether argument validity checking should be
   * performed or not.  If get_fs() == USER_DS, checking is performed, with
-@@ -29,7 +32,12 @@
+@@ -29,7 +32,11 @@
  
  #define get_ds()	(KERNEL_DS)
  #define get_fs()	(current_thread_info()->addr_limit)
-+#ifdef CONFIG_X86_32
-+void __set_fs(mm_segment_t x, int cpu);
++#if defined(CONFIG_X86_32) && defined(CONFIG_PAX_MEMORY_UDEREF)
 +void set_fs(mm_segment_t x);
 +#else
  #define set_fs(x)	(current_thread_info()->addr_limit = (x))
@@ -9966,7 +9916,7 @@ diff -urNp linux-2.6.36.2/arch/x86/include/asm/uaccess.h linux-2.6.36.2/arch/x86
  
  #define segment_eq(a, b)	((a).seg == (b).seg)
  
-@@ -77,7 +85,33 @@
+@@ -77,7 +84,33 @@
   * checks that the pointer is in the user space range - after calling
   * this function, memory access functions may still return -EFAULT.
   */
@@ -10001,92 +9951,69 @@ diff -urNp linux-2.6.36.2/arch/x86/include/asm/uaccess.h linux-2.6.36.2/arch/x86
  
  /*
   * The exception table consists of pairs of addresses: the first is the
-@@ -183,13 +217,21 @@ extern int __get_user_bad(void);
+@@ -183,12 +216,20 @@ extern int __get_user_bad(void);
  	asm volatile("call __put_user_" #size : "=a" (__ret_pu)	\
  		     : "0" ((typeof(*(ptr)))(x)), "c" (ptr) : "ebx")
  
 -
-+#ifdef CONFIG_X86_32
-+#define _ASM_LOAD_USER_DS(ds) "movw %w" #ds ",%%ds\n"
-+#define _ASM_LOAD_KERNEL_DS "pushl %%ss; popl %%ds\n"
++#if defined(CONFIG_X86_32) && defined(CONFIG_PAX_MEMORY_UDEREF)
++#define __copyuser_seg "%%gs:"
++#define __COPYUSER_SET_ES "pushl %%gs; popl %%es\n"
++#define __COPYUSER_RESTORE_ES "pushl %%ss; popl %%es\n"
 +#else
-+#define _ASM_LOAD_USER_DS(ds)
-+#define _ASM_LOAD_KERNEL_DS
++#define __copyuser_seg
++#define __COPYUSER_SET_ES
++#define __COPYUSER_RESTORE_ES
 +#endif
  
  #ifdef CONFIG_X86_32
  #define __put_user_asm_u64(x, addr, err, errret)			\
 -	asm volatile("1:	movl %%eax,0(%2)\n"			\
 -		     "2:	movl %%edx,4(%2)\n"			\
-+	asm volatile(_ASM_LOAD_USER_DS(5)				\
-+		     "1:	movl %%eax,%%ds:0(%2)\n"		\
-+		     "2:	movl %%edx,%%ds:4(%2)\n"		\
++	asm volatile("1:	movl %%eax," __copyuser_seg"0(%2)\n"	\
++		     "2:	movl %%edx," __copyuser_seg"4(%2)\n"	\
  		     "3:\n"						\
-+		     _ASM_LOAD_KERNEL_DS				\
  		     ".section .fixup,\"ax\"\n"				\
  		     "4:	movl %3,%0\n"				\
- 		     "	jmp 3b\n"					\
-@@ -197,15 +239,18 @@ extern int __get_user_bad(void);
- 		     _ASM_EXTABLE(1b, 4b)				\
- 		     _ASM_EXTABLE(2b, 4b)				\
- 		     : "=r" (err)					\
--		     : "A" (x), "r" (addr), "i" (errret), "0" (err))
-+		     : "A" (x), "r" (addr), "i" (errret), "0" (err),	\
-+		       "r"(__USER_DS))
+@@ -200,8 +241,8 @@ extern int __get_user_bad(void);
+ 		     : "A" (x), "r" (addr), "i" (errret), "0" (err))
  
  #define __put_user_asm_ex_u64(x, addr)					\
 -	asm volatile("1:	movl %%eax,0(%1)\n"			\
 -		     "2:	movl %%edx,4(%1)\n"			\
-+	asm volatile(_ASM_LOAD_USER_DS(2)				\
-+		     "1:	movl %%eax,%%ds:0(%1)\n"		\
-+		     "2:	movl %%edx,%%ds:4(%1)\n"		\
++	asm volatile("1:	movl %%eax," __copyuser_seg"0(%1)\n"	\
++		     "2:	movl %%edx," __copyuser_seg"4(%1)\n"	\
  		     "3:\n"						\
-+		     _ASM_LOAD_KERNEL_DS				\
  		     _ASM_EXTABLE(1b, 2b - 1b)				\
  		     _ASM_EXTABLE(2b, 3b - 2b)				\
--		     : : "A" (x), "r" (addr))
-+		     : : "A" (x), "r" (addr), "r"(__USER_DS))
- 
- #define __put_user_x8(x, ptr, __ret_pu)				\
- 	asm volatile("call __put_user_8" : "=a" (__ret_pu)	\
-@@ -374,16 +419,18 @@ do {									\
+@@ -374,7 +415,7 @@ do {									\
  } while (0)
  
  #define __get_user_asm(x, addr, err, itype, rtype, ltype, errret)	\
 -	asm volatile("1:	mov"itype" %2,%"rtype"1\n"		\
-+	asm volatile(_ASM_LOAD_USER_DS(5)				\
-+		     "1:	mov"itype" %%ds:%2,%"rtype"1\n"		\
++	asm volatile("1:	mov"itype" "__copyuser_seg"%2,%"rtype"1\n"\
  		     "2:\n"						\
-+		     _ASM_LOAD_KERNEL_DS				\
  		     ".section .fixup,\"ax\"\n"				\
  		     "3:	mov %3,%0\n"				\
- 		     "	xor"itype" %"rtype"1,%"rtype"1\n"		\
+@@ -382,7 +423,7 @@ do {									\
  		     "	jmp 2b\n"					\
  		     ".previous\n"					\
  		     _ASM_EXTABLE(1b, 3b)				\
 -		     : "=r" (err), ltype(x)				\
--		     : "m" (__m(addr)), "i" (errret), "0" (err))
 +		     : "=r" (err), ltype (x)				\
-+		     : "m" (__m(addr)), "i" (errret), "0" (err), "r"(__USER_DS))
+ 		     : "m" (__m(addr)), "i" (errret), "0" (err))
  
  #define __get_user_size_ex(x, ptr, size)				\
- do {									\
-@@ -407,10 +454,12 @@ do {									\
+@@ -407,7 +448,7 @@ do {									\
  } while (0)
  
  #define __get_user_asm_ex(x, addr, itype, rtype, ltype)			\
 -	asm volatile("1:	mov"itype" %1,%"rtype"0\n"		\
-+	asm volatile(_ASM_LOAD_USER_DS(2)				\
-+		     "1:	mov"itype" %%ds:%1,%"rtype"0\n"		\
++	asm volatile("1:	mov"itype" "__copyuser_seg"%1,%"rtype"0\n"\
  		     "2:\n"						\
-+		     _ASM_LOAD_KERNEL_DS				\
  		     _ASM_EXTABLE(1b, 2b - 1b)				\
--		     : ltype(x) : "m" (__m(addr)))
-+		     : ltype(x) : "m" (__m(addr)), "r"(__USER_DS))
- 
- #define __put_user_nocheck(x, ptr, size)			\
- ({								\
-@@ -424,13 +473,24 @@ do {									\
+ 		     : ltype(x) : "m" (__m(addr)))
+@@ -424,13 +465,24 @@ do {									\
  	int __gu_err;							\
  	unsigned long __gu_val;						\
  	__get_user_size(__gu_val, (ptr), (size), __gu_err, -EFAULT);	\
@@ -10113,38 +10040,29 @@ diff -urNp linux-2.6.36.2/arch/x86/include/asm/uaccess.h linux-2.6.36.2/arch/x86
  
  /*
   * Tell gcc we read from memory instead of writing: this is because
-@@ -438,21 +498,26 @@ struct __large_struct { unsigned long bu
+@@ -438,7 +490,7 @@ struct __large_struct { unsigned long bu
   * aliasing issues.
   */
  #define __put_user_asm(x, addr, err, itype, rtype, ltype, errret)	\
 -	asm volatile("1:	mov"itype" %"rtype"1,%2\n"		\
-+	asm volatile(_ASM_LOAD_USER_DS(5)				\
-+		     "1:	mov"itype" %"rtype"1,%%ds:%2\n"		\
++	asm volatile("1:	mov"itype" %"rtype"1," __copyuser_seg"%2\n"\
  		     "2:\n"						\
-+		     _ASM_LOAD_KERNEL_DS				\
  		     ".section .fixup,\"ax\"\n"				\
  		     "3:	mov %3,%0\n"				\
- 		     "	jmp 2b\n"					\
+@@ -446,10 +498,10 @@ struct __large_struct { unsigned long bu
  		     ".previous\n"					\
  		     _ASM_EXTABLE(1b, 3b)				\
  		     : "=r"(err)					\
 -		     : ltype(x), "m" (__m(addr)), "i" (errret), "0" (err))
-+		     : ltype (x), "m" (__m(addr)), "i" (errret), "0" (err),\
-+		       "r"(__USER_DS))
++		     : ltype (x), "m" (__m(addr)), "i" (errret), "0" (err))
  
  #define __put_user_asm_ex(x, addr, itype, rtype, ltype)			\
 -	asm volatile("1:	mov"itype" %"rtype"0,%1\n"		\
-+	asm volatile(_ASM_LOAD_USER_DS(2)				\
-+		     "1:	mov"itype" %"rtype"0,%%ds:%1\n"		\
++	asm volatile("1:	mov"itype" %"rtype"0," __copyuser_seg"%1\n"\
  		     "2:\n"						\
-+		     _ASM_LOAD_KERNEL_DS				\
  		     _ASM_EXTABLE(1b, 2b - 1b)				\
--		     : : ltype(x), "m" (__m(addr)))
-+		     : : ltype(x), "m" (__m(addr)), "r"(__USER_DS))
- 
- /*
-  * uaccess_try and catch
-@@ -530,7 +595,7 @@ struct __large_struct { unsigned long bu
+ 		     : : ltype(x), "m" (__m(addr)))
+@@ -530,7 +582,7 @@ struct __large_struct { unsigned long bu
  #define get_user_ex(x, ptr)	do {					\
  	unsigned long __gue_val;					\
  	__get_user_size_ex((__gue_val), (ptr), (sizeof(*(ptr))));	\
@@ -10153,7 +10071,7 @@ diff -urNp linux-2.6.36.2/arch/x86/include/asm/uaccess.h linux-2.6.36.2/arch/x86
  } while (0)
  
  #ifdef CONFIG_X86_WP_WORKS_OK
-@@ -567,6 +632,7 @@ extern struct movsl_mask {
+@@ -567,6 +619,7 @@ extern struct movsl_mask {
  
  #define ARCH_HAS_NOCACHE_UACCESS 1
  
@@ -10245,7 +10163,16 @@ diff -urNp linux-2.6.36.2/arch/x86/include/asm/xsave.h linux-2.6.36.2/arch/x86/i
  			     ".section .fixup,\"ax\"\n"
 diff -urNp linux-2.6.36.2/arch/x86/Kconfig linux-2.6.36.2/arch/x86/Kconfig
 --- linux-2.6.36.2/arch/x86/Kconfig	2010-10-20 16:30:22.000000000 -0400
-+++ linux-2.6.36.2/arch/x86/Kconfig	2010-12-09 20:24:54.000000000 -0500
++++ linux-2.6.36.2/arch/x86/Kconfig	2010-12-19 12:46:43.000000000 -0500
+@@ -236,7 +236,7 @@ config X86_TRAMPOLINE
+ 
+ config X86_32_LAZY_GS
+ 	def_bool y
+-	depends on X86_32 && !CC_STACKPROTECTOR
++	depends on X86_32 && !CC_STACKPROTECTOR && !PAX_MEMORY_UDEREF
+ 
+ config ARCH_HWEIGHT_CFLAGS
+ 	string
 @@ -1036,7 +1036,7 @@ choice
  
  config NOHIGHMEM
@@ -10282,7 +10209,15 @@ diff -urNp linux-2.6.36.2/arch/x86/Kconfig linux-2.6.36.2/arch/x86/Kconfig
  	---help---
  	  This enables the kernel to use EFI runtime services that are
  	  available (such as the EFI variable services).
-@@ -1546,6 +1546,7 @@ config KEXEC_JUMP
+@@ -1489,6 +1489,7 @@ config SECCOMP
+ 
+ config CC_STACKPROTECTOR
+ 	bool "Enable -fstack-protector buffer overflow detection (EXPERIMENTAL)"
++	depends on X86_64 || !PAX_MEMORY_UDEREF
+ 	---help---
+ 	  This option turns on the -fstack-protector GCC feature. This
+ 	  feature puts, at the beginning of functions, a canary value on
+@@ -1546,6 +1547,7 @@ config KEXEC_JUMP
  config PHYSICAL_START
  	hex "Physical address where the kernel is loaded" if (EMBEDDED || CRASH_DUMP)
  	default "0x1000000"
@@ -10290,7 +10225,7 @@ diff -urNp linux-2.6.36.2/arch/x86/Kconfig linux-2.6.36.2/arch/x86/Kconfig
  	---help---
  	  This gives the physical address where the kernel is loaded.
  
-@@ -1609,6 +1610,7 @@ config X86_NEED_RELOCS
+@@ -1609,6 +1611,7 @@ config X86_NEED_RELOCS
  config PHYSICAL_ALIGN
  	hex "Alignment value to which kernel should be aligned" if X86_32
  	default "0x1000000"
@@ -10298,7 +10233,7 @@ diff -urNp linux-2.6.36.2/arch/x86/Kconfig linux-2.6.36.2/arch/x86/Kconfig
  	range 0x2000 0x1000000
  	---help---
  	  This value puts the alignment restrictions on physical address
-@@ -1640,9 +1642,10 @@ config HOTPLUG_CPU
+@@ -1640,9 +1643,10 @@ config HOTPLUG_CPU
  	  Say N if you want to disable CPU hotplug.
  
  config COMPAT_VDSO
@@ -10719,7 +10654,7 @@ diff -urNp linux-2.6.36.2/arch/x86/kernel/asm-offsets_64.c linux-2.6.36.2/arch/x
  	DEFINE(crypto_tfm_ctx_offset, offsetof(struct crypto_tfm, __crt_ctx));
 diff -urNp linux-2.6.36.2/arch/x86/kernel/cpu/common.c linux-2.6.36.2/arch/x86/kernel/cpu/common.c
 --- linux-2.6.36.2/arch/x86/kernel/cpu/common.c	2010-10-20 16:30:22.000000000 -0400
-+++ linux-2.6.36.2/arch/x86/kernel/cpu/common.c	2010-12-09 20:24:55.000000000 -0500
++++ linux-2.6.36.2/arch/x86/kernel/cpu/common.c	2010-12-19 12:46:43.000000000 -0500
 @@ -83,60 +83,6 @@ static const struct cpu_dev __cpuinitcon
  
  static const struct cpu_dev *this_cpu __cpuinitdata = &default_cpu;
@@ -10801,6 +10736,15 @@ diff -urNp linux-2.6.36.2/arch/x86/kernel/cpu/common.c linux-2.6.36.2/arch/x86/k
  	/* If the model name is still unset, do table lookup. */
  	if (!c->x86_model_id[0]) {
  		const char *p;
+@@ -1080,7 +1030,7 @@ struct pt_regs * __cpuinit idle_regs(str
+ {
+ 	memset(regs, 0, sizeof(struct pt_regs));
+ 	regs->fs = __KERNEL_PERCPU;
+-	regs->gs = __KERNEL_STACK_CANARY;
++	savesegment(gs, regs->gs);
+ 
+ 	return regs;
+ }
 @@ -1135,7 +1085,7 @@ void __cpuinit cpu_init(void)
  	int i;
  
@@ -11371,8 +11315,22 @@ diff -urNp linux-2.6.36.2/arch/x86/kernel/efi_stub_32.S linux-2.6.36.2/arch/x86/
  efi_rt_function_ptr:
 diff -urNp linux-2.6.36.2/arch/x86/kernel/entry_32.S linux-2.6.36.2/arch/x86/kernel/entry_32.S
 --- linux-2.6.36.2/arch/x86/kernel/entry_32.S	2010-10-20 16:30:22.000000000 -0400
-+++ linux-2.6.36.2/arch/x86/kernel/entry_32.S	2010-12-09 20:24:54.000000000 -0500
-@@ -192,7 +192,67 @@
++++ linux-2.6.36.2/arch/x86/kernel/entry_32.S	2010-12-19 12:47:27.000000000 -0500
+@@ -186,13 +186,81 @@
+ 	/*CFI_REL_OFFSET gs, PT_GS*/
+ .endm
+ .macro SET_KERNEL_GS reg
++
++#ifdef CONFIG_CC_STACKPROTECTOR
+ 	movl $(__KERNEL_STACK_CANARY), \reg
++#elif defined(CONFIG_PAX_MEMORY_UDEREF)
++	movl $(__USER_DS), \reg
++#else
++	xorl \reg, \reg
++#endif
++
+ 	movl \reg, %gs
+ .endm
  
  #endif	/* CONFIG_X86_32_LAZY_GS */
  
@@ -11441,7 +11399,7 @@ diff -urNp linux-2.6.36.2/arch/x86/kernel/entry_32.S linux-2.6.36.2/arch/x86/ker
  	cld
  	PUSH_GS
  	pushl %fs
-@@ -225,7 +285,7 @@
+@@ -225,7 +293,7 @@
  	pushl %ebx
  	CFI_ADJUST_CFA_OFFSET 4
  	CFI_REL_OFFSET ebx, 0
@@ -11450,7 +11408,7 @@ diff -urNp linux-2.6.36.2/arch/x86/kernel/entry_32.S linux-2.6.36.2/arch/x86/ker
  	movl %edx, %ds
  	movl %edx, %es
  	movl $(__KERNEL_PERCPU), %edx
-@@ -233,6 +293,15 @@
+@@ -233,6 +301,15 @@
  	SET_KERNEL_GS %edx
  .endm
  
@@ -11466,7 +11424,7 @@ diff -urNp linux-2.6.36.2/arch/x86/kernel/entry_32.S linux-2.6.36.2/arch/x86/ker
  .macro RESTORE_INT_REGS
  	popl %ebx
  	CFI_ADJUST_CFA_OFFSET -4
-@@ -357,7 +426,15 @@ check_userspace:
+@@ -357,7 +434,15 @@ check_userspace:
  	movb PT_CS(%esp), %al
  	andl $(X86_EFLAGS_VM | SEGMENT_RPL_MASK), %eax
  	cmpl $USER_RPL, %eax
@@ -11482,7 +11440,7 @@ diff -urNp linux-2.6.36.2/arch/x86/kernel/entry_32.S linux-2.6.36.2/arch/x86/ker
  
  ENTRY(resume_userspace)
  	LOCKDEP_SYS_EXIT
-@@ -423,10 +500,9 @@ sysenter_past_esp:
+@@ -423,10 +508,9 @@ sysenter_past_esp:
  	/*CFI_REL_OFFSET cs, 0*/
  	/*
  	 * Push current_thread_info()->sysenter_return to the stack.
@@ -11495,7 +11453,7 @@ diff -urNp linux-2.6.36.2/arch/x86/kernel/entry_32.S linux-2.6.36.2/arch/x86/ker
  	CFI_ADJUST_CFA_OFFSET 4
  	CFI_REL_OFFSET eip, 0
  
-@@ -439,9 +515,19 @@ sysenter_past_esp:
+@@ -439,9 +523,19 @@ sysenter_past_esp:
   * Load the potential sixth argument from user stack.
   * Careful about security.
   */
@@ -11515,7 +11473,7 @@ diff -urNp linux-2.6.36.2/arch/x86/kernel/entry_32.S linux-2.6.36.2/arch/x86/ker
  	movl %ebp,PT_EBP(%esp)
  .section __ex_table,"a"
  	.align 4
-@@ -464,12 +550,23 @@ sysenter_do_call:
+@@ -464,12 +558,23 @@ sysenter_do_call:
  	testl $_TIF_ALLWORK_MASK, %ecx
  	jne sysexit_audit
  sysenter_exit:
@@ -11539,7 +11497,7 @@ diff -urNp linux-2.6.36.2/arch/x86/kernel/entry_32.S linux-2.6.36.2/arch/x86/ker
  	PTGS_TO_GS
  	ENABLE_INTERRUPTS_SYSEXIT
  
-@@ -513,11 +610,17 @@ sysexit_audit:
+@@ -513,11 +618,17 @@ sysexit_audit:
  
  	CFI_ENDPROC
  .pushsection .fixup,"ax"
@@ -11559,7 +11517,7 @@ diff -urNp linux-2.6.36.2/arch/x86/kernel/entry_32.S linux-2.6.36.2/arch/x86/ker
  .popsection
  	PTGS_TO_GS_EX
  ENDPROC(ia32_sysenter_target)
-@@ -551,6 +654,10 @@ syscall_exit:
+@@ -551,6 +662,10 @@ syscall_exit:
  	testl $_TIF_ALLWORK_MASK, %ecx	# current->work
  	jne syscall_exit_work
  
@@ -11570,7 +11528,7 @@ diff -urNp linux-2.6.36.2/arch/x86/kernel/entry_32.S linux-2.6.36.2/arch/x86/ker
  restore_all:
  	TRACE_IRQS_IRET
  restore_all_notrace:
-@@ -611,14 +718,21 @@ ldt_ss:
+@@ -611,14 +726,21 @@ ldt_ss:
   * compensating for the offset by changing to the ESPFIX segment with
   * a base address that matches for the difference.
   */
@@ -11595,7 +11553,7 @@ diff -urNp linux-2.6.36.2/arch/x86/kernel/entry_32.S linux-2.6.36.2/arch/x86/ker
  	pushl $__ESPFIX_SS
  	CFI_ADJUST_CFA_OFFSET 4
  	push %eax			/* new kernel esp */
-@@ -655,25 +769,19 @@ work_resched:
+@@ -655,25 +777,19 @@ work_resched:
  
  work_notifysig:				# deal with pending signals and
  					# notify-resume requests
@@ -11624,7 +11582,7 @@ diff -urNp linux-2.6.36.2/arch/x86/kernel/entry_32.S linux-2.6.36.2/arch/x86/ker
  #endif
  	xorl %edx, %edx
  	call do_notify_resume
-@@ -708,6 +816,10 @@ END(syscall_exit_work)
+@@ -708,6 +824,10 @@ END(syscall_exit_work)
  
  	RING0_INT_FRAME			# can't unwind into user space anyway
  syscall_fault:
@@ -11635,7 +11593,39 @@ diff -urNp linux-2.6.36.2/arch/x86/kernel/entry_32.S linux-2.6.36.2/arch/x86/ker
  	GET_THREAD_INFO(%ebp)
  	movl $-EFAULT,PT_EAX(%esp)
  	jmp resume_userspace
-@@ -791,8 +903,15 @@ ptregs_clone:
+@@ -782,6 +902,31 @@ ptregs_clone:
+ 	addl $8,%esp
+ 	ret
+ 
++	ALIGN;
++ENTRY(kernel_execve)
++	push %ebp
++	sub $PT_OLDSS+4,%esp
++	push %edi
++	push %ecx
++	push %eax
++	lea 3*4(%esp),%edi
++	mov $PT_OLDSS/4+1,%ecx
++	xorl %eax,%eax
++	rep stosl
++	pop %eax
++	pop %ecx
++	pop %edi
++	movl $X86_EFLAGS_IF,PT_EFLAGS(%esp)
++	push %esp
++	call sys_execve
++	add $4,%esp
++	GET_THREAD_INFO(%ebp)
++	test %eax,%eax
++	jz syscall_exit
++	add $PT_OLDSS+4,%esp
++	pop %ebp
++	ret
++
+ .macro FIXUP_ESPFIX_STACK
+ /*
+  * Switch back for ESPFIX stack to the normal zerobased stack
+@@ -791,8 +936,15 @@ ptregs_clone:
   * normal stack and adjusts ESP with the matching offset.
   */
  	/* fixup the stack */
@@ -11653,7 +11643,7 @@ diff -urNp linux-2.6.36.2/arch/x86/kernel/entry_32.S linux-2.6.36.2/arch/x86/ker
  	shl $16, %eax
  	addl %esp, %eax			/* the adjusted stack pointer */
  	pushl $__KERNEL_DS
-@@ -1275,7 +1394,6 @@ return_to_handler:
+@@ -1275,7 +1427,6 @@ return_to_handler:
  	jmp *%ecx
  #endif
  
@@ -11661,7 +11651,7 @@ diff -urNp linux-2.6.36.2/arch/x86/kernel/entry_32.S linux-2.6.36.2/arch/x86/ker
  #include "syscall_table_32.S"
  
  syscall_table_size=(.-sys_call_table)
-@@ -1332,9 +1450,12 @@ error_code:
+@@ -1332,9 +1483,12 @@ error_code:
  	movl $-1, PT_ORIG_EAX(%esp)	# no syscall to restart
  	REG_TO_PTGS %ecx
  	SET_KERNEL_GS %ecx
@@ -11675,7 +11665,7 @@ diff -urNp linux-2.6.36.2/arch/x86/kernel/entry_32.S linux-2.6.36.2/arch/x86/ker
  	TRACE_IRQS_OFF
  	movl %esp,%eax			# pt_regs pointer
  	call *%edi
-@@ -1428,6 +1549,9 @@ nmi_stack_correct:
+@@ -1428,6 +1582,9 @@ nmi_stack_correct:
  	xorl %edx,%edx		# zero error code
  	movl %esp,%eax		# pt_regs pointer
  	call do_nmi
@@ -11685,7 +11675,7 @@ diff -urNp linux-2.6.36.2/arch/x86/kernel/entry_32.S linux-2.6.36.2/arch/x86/ker
  	jmp restore_all_notrace
  	CFI_ENDPROC
  
-@@ -1468,6 +1592,9 @@ nmi_espfix_stack:
+@@ -1468,6 +1625,9 @@ nmi_espfix_stack:
  	FIXUP_ESPFIX_STACK		# %eax == %esp
  	xorl %edx,%edx			# zero error code
  	call do_nmi
@@ -12253,7 +12243,7 @@ diff -urNp linux-2.6.36.2/arch/x86/kernel/head32.c linux-2.6.36.2/arch/x86/kerne
  	/* Reserve INITRD */
 diff -urNp linux-2.6.36.2/arch/x86/kernel/head_32.S linux-2.6.36.2/arch/x86/kernel/head_32.S
 --- linux-2.6.36.2/arch/x86/kernel/head_32.S	2010-10-20 16:30:22.000000000 -0400
-+++ linux-2.6.36.2/arch/x86/kernel/head_32.S	2010-12-09 20:24:55.000000000 -0500
++++ linux-2.6.36.2/arch/x86/kernel/head_32.S	2010-12-19 12:46:43.000000000 -0500
 @@ -25,6 +25,12 @@
  /* Physical address */
  #define pa(X) ((X) - __PAGE_OFFSET)
@@ -12307,7 +12297,7 @@ diff -urNp linux-2.6.36.2/arch/x86/kernel/head_32.S linux-2.6.36.2/arch/x86/kern
  ENTRY(startup_32)
  	/* test KEEP_SEGMENTS flag to see if the bootloader is asking
  		us to not reload segments */
-@@ -99,6 +114,55 @@ ENTRY(startup_32)
+@@ -99,6 +114,57 @@ ENTRY(startup_32)
  	movl %eax,%gs
  2:
  
@@ -12328,6 +12318,8 @@ diff -urNp linux-2.6.36.2/arch/x86/kernel/head_32.S linux-2.6.36.2/arch/x86/kern
 +	movl $pa(cpu_gdt_table),%edi
 +1:
 +	movl $((((__PAGE_OFFSET-1) & 0xf0000000) >> 12) | 0x00c09700),GDT_ENTRY_KERNEL_DS * 8 + 4(%edi)
++	movl $((((__PAGE_OFFSET-1) & 0xf0000000) >> 12) | 0x00c0fb00),GDT_ENTRY_DEFAULT_USER_CS * 8 + 4(%edi)
++	movl $((((__PAGE_OFFSET-1) & 0xf0000000) >> 12) | 0x00c0f300),GDT_ENTRY_DEFAULT_USER_DS * 8 + 4(%edi)
 +	addl $PAGE_SIZE_asm,%edi
 +	loop 1b
 +#endif
@@ -12363,7 +12355,7 @@ diff -urNp linux-2.6.36.2/arch/x86/kernel/head_32.S linux-2.6.36.2/arch/x86/kern
  /*
   * Clear BSS first so that there are no surprises...
   */
-@@ -148,9 +212,7 @@ ENTRY(startup_32)
+@@ -148,9 +214,7 @@ ENTRY(startup_32)
  	cmpl $num_subarch_entries, %eax
  	jae bad_subarch
  
@@ -12374,7 +12366,7 @@ diff -urNp linux-2.6.36.2/arch/x86/kernel/head_32.S linux-2.6.36.2/arch/x86/kern
  
  bad_subarch:
  WEAK(lguest_entry)
-@@ -162,10 +224,10 @@ WEAK(xen_entry)
+@@ -162,10 +226,10 @@ WEAK(xen_entry)
  	__INITDATA
  
  subarch_entries:
@@ -12389,7 +12381,7 @@ diff -urNp linux-2.6.36.2/arch/x86/kernel/head_32.S linux-2.6.36.2/arch/x86/kern
  num_subarch_entries = (. - subarch_entries) / 4
  .previous
  #endif /* CONFIG_PARAVIRT */
-@@ -226,8 +288,11 @@ default_entry:
+@@ -226,8 +290,11 @@ default_entry:
  	movl %eax, pa(max_pfn_mapped)
  
  	/* Do early initialization of the fixmap area */
@@ -12403,7 +12395,7 @@ diff -urNp linux-2.6.36.2/arch/x86/kernel/head_32.S linux-2.6.36.2/arch/x86/kern
  #else	/* Not PAE */
  
  page_pde_offset = (__PAGE_OFFSET >> 20);
-@@ -257,8 +322,11 @@ page_pde_offset = (__PAGE_OFFSET >> 20);
+@@ -257,8 +324,11 @@ page_pde_offset = (__PAGE_OFFSET >> 20);
  	movl %eax, pa(max_pfn_mapped)
  
  	/* Do early initialization of the fixmap area */
@@ -12417,7 +12409,7 @@ diff -urNp linux-2.6.36.2/arch/x86/kernel/head_32.S linux-2.6.36.2/arch/x86/kern
  #endif
  	jmp 3f
  /*
-@@ -305,6 +373,7 @@ ENTRY(startup_32_smp)
+@@ -305,6 +375,7 @@ ENTRY(startup_32_smp)
  	orl %edx,%eax
  	movl %eax,%cr4
  
@@ -12425,7 +12417,7 @@ diff -urNp linux-2.6.36.2/arch/x86/kernel/head_32.S linux-2.6.36.2/arch/x86/kern
  	testb $X86_CR4_PAE, %al		# check if PAE is enabled
  	jz 6f
  
-@@ -329,6 +398,9 @@ ENTRY(startup_32_smp)
+@@ -329,6 +400,9 @@ ENTRY(startup_32_smp)
  	/* Make changes effective */
  	wrmsr
  
@@ -12435,7 +12427,7 @@ diff -urNp linux-2.6.36.2/arch/x86/kernel/head_32.S linux-2.6.36.2/arch/x86/kern
  6:
  
  /*
-@@ -354,9 +426,7 @@ ENTRY(startup_32_smp)
+@@ -354,9 +428,7 @@ ENTRY(startup_32_smp)
  
  #ifdef CONFIG_SMP
  	cmpb $0, ready
@@ -12446,7 +12438,7 @@ diff -urNp linux-2.6.36.2/arch/x86/kernel/head_32.S linux-2.6.36.2/arch/x86/kern
  #endif /* CONFIG_SMP */
  
  /*
-@@ -434,7 +504,7 @@ is386:	movl $2,%ecx		# set MP
+@@ -434,7 +506,7 @@ is386:	movl $2,%ecx		# set MP
  1:	movl $(__KERNEL_DS),%eax	# reload all the segment registers
  	movl %eax,%ss			# after changing gdt.
  
@@ -12455,7 +12447,7 @@ diff -urNp linux-2.6.36.2/arch/x86/kernel/head_32.S linux-2.6.36.2/arch/x86/kern
  	movl %eax,%ds
  	movl %eax,%es
  
-@@ -448,8 +518,11 @@ is386:	movl $2,%ecx		# set MP
+@@ -448,15 +520,22 @@ is386:	movl $2,%ecx		# set MP
  	 */
  	cmpb $0,ready
  	jne 1f
@@ -12468,7 +12460,19 @@ diff -urNp linux-2.6.36.2/arch/x86/kernel/head_32.S linux-2.6.36.2/arch/x86/kern
  	movw %cx, 8 * GDT_ENTRY_STACK_CANARY + 2(%eax)
  	shrl $16, %ecx
  	movb %cl, 8 * GDT_ENTRY_STACK_CANARY + 4(%eax)
-@@ -467,10 +540,6 @@ is386:	movl $2,%ecx		# set MP
+ 	movb %ch, 8 * GDT_ENTRY_STACK_CANARY + 7(%eax)
+ 1:
+-#endif
+ 	movl $(__KERNEL_STACK_CANARY),%eax
++#elif defined(CONFIG_PAX_MEMORY_UDEREF)
++	movl $(__USER_DS),%eax
++#else
++	xorl %eax,%eax
++#endif
+ 	movl %eax,%gs
+ 
+ 	xorl %eax,%eax			# Clear LDT
+@@ -467,10 +546,6 @@ is386:	movl $2,%ecx		# set MP
  #ifdef CONFIG_SMP
  	movb ready, %cl
  	movb $1, ready
@@ -12479,7 +12483,7 @@ diff -urNp linux-2.6.36.2/arch/x86/kernel/head_32.S linux-2.6.36.2/arch/x86/kern
  #endif /* CONFIG_SMP */
  	jmp *(initial_code)
  
-@@ -556,22 +625,22 @@ early_page_fault:
+@@ -556,22 +631,22 @@ early_page_fault:
  	jmp early_fault
  
  early_fault:
@@ -12507,7 +12511,7 @@ diff -urNp linux-2.6.36.2/arch/x86/kernel/head_32.S linux-2.6.36.2/arch/x86/kern
  hlt_loop:
  	hlt
  	jmp hlt_loop
-@@ -579,8 +648,11 @@ hlt_loop:
+@@ -579,8 +654,11 @@ hlt_loop:
  /* This is the default interrupt "handler" :-) */
  	ALIGN
  ignore_int:
@@ -12520,7 +12524,7 @@ diff -urNp linux-2.6.36.2/arch/x86/kernel/head_32.S linux-2.6.36.2/arch/x86/kern
  	pushl %eax
  	pushl %ecx
  	pushl %edx
-@@ -589,9 +661,6 @@ ignore_int:
+@@ -589,9 +667,6 @@ ignore_int:
  	movl $(__KERNEL_DS),%eax
  	movl %eax,%ds
  	movl %eax,%es
@@ -12530,7 +12534,7 @@ diff -urNp linux-2.6.36.2/arch/x86/kernel/head_32.S linux-2.6.36.2/arch/x86/kern
  	pushl 16(%esp)
  	pushl 24(%esp)
  	pushl 32(%esp)
-@@ -620,31 +689,47 @@ ENTRY(initial_page_table)
+@@ -620,31 +695,47 @@ ENTRY(initial_page_table)
  /*
   * BSS section
   */
@@ -12583,7 +12587,7 @@ diff -urNp linux-2.6.36.2/arch/x86/kernel/head_32.S linux-2.6.36.2/arch/x86/kern
  ENTRY(swapper_pg_dir)
  	.long	pa(swapper_pg_pmd+PGD_IDENT_ATTR),0	/* low identity map */
  # if KPMDS == 3
-@@ -663,15 +748,24 @@ ENTRY(swapper_pg_dir)
+@@ -663,15 +754,24 @@ ENTRY(swapper_pg_dir)
  #  error "Kernel PMDs should be 1, 2 or 3"
  # endif
  	.align PAGE_SIZE_asm		/* needs to be page-sized too */
@@ -12609,7 +12613,7 @@ diff -urNp linux-2.6.36.2/arch/x86/kernel/head_32.S linux-2.6.36.2/arch/x86/kern
  early_recursion_flag:
  	.long 0
  
-@@ -707,7 +801,7 @@ fault_msg:
+@@ -707,7 +807,7 @@ fault_msg:
  	.word 0				# 32 bit align gdt_desc.address
  boot_gdt_descr:
  	.word __BOOT_DS+7
@@ -12618,7 +12622,7 @@ diff -urNp linux-2.6.36.2/arch/x86/kernel/head_32.S linux-2.6.36.2/arch/x86/kern
  
  	.word 0				# 32-bit align idt_desc.address
  idt_descr:
-@@ -718,7 +812,7 @@ idt_descr:
+@@ -718,7 +818,7 @@ idt_descr:
  	.word 0				# 32 bit align gdt_desc.address
  ENTRY(early_gdt_descr)
  	.word GDT_ENTRIES*8-1
@@ -12627,7 +12631,7 @@ diff -urNp linux-2.6.36.2/arch/x86/kernel/head_32.S linux-2.6.36.2/arch/x86/kern
  
  /*
   * The boot_gdt must mirror the equivalent in setup.S and is
-@@ -727,5 +821,65 @@ ENTRY(early_gdt_descr)
+@@ -727,5 +827,65 @@ ENTRY(early_gdt_descr)
  	.align L1_CACHE_BYTES
  ENTRY(boot_gdt)
  	.fill GDT_ENTRY_BOOT_CS,8,0
@@ -13050,7 +13054,7 @@ diff -urNp linux-2.6.36.2/arch/x86/kernel/ioport.c linux-2.6.36.2/arch/x86/kerne
  	}
 diff -urNp linux-2.6.36.2/arch/x86/kernel/irq_32.c linux-2.6.36.2/arch/x86/kernel/irq_32.c
 --- linux-2.6.36.2/arch/x86/kernel/irq_32.c	2010-10-20 16:30:22.000000000 -0400
-+++ linux-2.6.36.2/arch/x86/kernel/irq_32.c	2010-12-09 21:11:07.000000000 -0500
++++ linux-2.6.36.2/arch/x86/kernel/irq_32.c	2010-12-10 17:10:33.000000000 -0500
 @@ -94,7 +94,7 @@ execute_on_irq_stack(int overflow, struc
  		return 0;
  
@@ -13097,7 +13101,7 @@ diff -urNp linux-2.6.36.2/arch/x86/kernel/irq_32.c linux-2.6.36.2/arch/x86/kerne
  		call_on_stack(__do_softirq, isp);
 +
 +#ifdef CONFIG_PAX_MEMORY_UDEREF
-+		__set_fs(curctx->tinfo.addr_limit, smp_processor_id());
++		__set_fs(curctx->addr_limit, smp_processor_id());
 +#endif
 +
  		/*
@@ -13725,7 +13729,7 @@ diff -urNp linux-2.6.36.2/arch/x86/kernel/pci-swiotlb.c linux-2.6.36.2/arch/x86/
  	.free_coherent = swiotlb_free_coherent,
 diff -urNp linux-2.6.36.2/arch/x86/kernel/process_32.c linux-2.6.36.2/arch/x86/kernel/process_32.c
 --- linux-2.6.36.2/arch/x86/kernel/process_32.c	2010-10-20 16:30:22.000000000 -0400
-+++ linux-2.6.36.2/arch/x86/kernel/process_32.c	2010-12-09 20:24:54.000000000 -0500
++++ linux-2.6.36.2/arch/x86/kernel/process_32.c	2010-12-19 12:47:27.000000000 -0500
 @@ -67,6 +67,7 @@ asmlinkage void ret_from_fork(void) __as
  unsigned long thread_saved_pc(struct task_struct *tsk)
  {
@@ -13734,7 +13738,7 @@ diff -urNp linux-2.6.36.2/arch/x86/kernel/process_32.c linux-2.6.36.2/arch/x86/k
  }
  
  #ifndef CONFIG_SMP
-@@ -130,7 +131,7 @@ void __show_regs(struct pt_regs *regs, i
+@@ -130,15 +131,14 @@ void __show_regs(struct pt_regs *regs, i
  	unsigned long sp;
  	unsigned short ss, gs;
  
@@ -13742,8 +13746,17 @@ diff -urNp linux-2.6.36.2/arch/x86/kernel/process_32.c linux-2.6.36.2/arch/x86/k
 +	if (user_mode(regs)) {
  		sp = regs->sp;
  		ss = regs->ss & 0xffff;
- 		gs = get_user_gs(regs);
-@@ -200,7 +201,7 @@ int copy_thread(unsigned long clone_flag
+-		gs = get_user_gs(regs);
+ 	} else {
+ 		sp = kernel_stack_pointer(regs);
+ 		savesegment(ss, ss);
+-		savesegment(gs, gs);
+ 	}
++	gs = get_user_gs(regs);
+ 
+ 	show_regs_common();
+ 
+@@ -200,7 +200,7 @@ int copy_thread(unsigned long clone_flag
  	struct task_struct *tsk;
  	int err;
  
@@ -13752,15 +13765,7 @@ diff -urNp linux-2.6.36.2/arch/x86/kernel/process_32.c linux-2.6.36.2/arch/x86/k
  	*childregs = *regs;
  	childregs->ax = 0;
  	childregs->sp = sp;
-@@ -234,6 +235,7 @@ int copy_thread(unsigned long clone_flag
- 	 * Set a new TLS for the child thread?
- 	 */
- 	if (clone_flags & CLONE_SETTLS)
-+//XXX needs set_fs()?
- 		err = do_set_thread_area(p, -1,
- 			(struct user_desc __user *)childregs->si, 0);
- 
-@@ -297,7 +299,7 @@ __switch_to(struct task_struct *prev_p, 
+@@ -297,7 +297,7 @@ __switch_to(struct task_struct *prev_p, 
  	struct thread_struct *prev = &prev_p->thread,
  				 *next = &next_p->thread;
  	int cpu = smp_processor_id();
@@ -13769,19 +13774,19 @@ diff -urNp linux-2.6.36.2/arch/x86/kernel/process_32.c linux-2.6.36.2/arch/x86/k
  	bool preload_fpu;
  
  	/* never put a printk in __switch_to... printk() calls wake_up*() indirectly */
-@@ -332,6 +334,11 @@ __switch_to(struct task_struct *prev_p, 
+@@ -332,6 +332,11 @@ __switch_to(struct task_struct *prev_p, 
  	 */
  	lazy_save_gs(prev->gs);
  
 +#ifdef CONFIG_PAX_MEMORY_UDEREF
 +	if (!segment_eq(task_thread_info(prev_p)->addr_limit, task_thread_info(next_p)->addr_limit))
-+		__set_fs(task_thread_info(next_p)->addr_limit, cpu);
++		set_fs(task_thread_info(next_p)->addr_limit);
 +#endif
 +
  	/*
  	 * Load the per-thread Thread-Local Storage descriptor.
  	 */
-@@ -408,3 +415,27 @@ unsigned long get_wchan(struct task_stru
+@@ -408,3 +413,27 @@ unsigned long get_wchan(struct task_stru
  	return 0;
  }
  
@@ -13847,7 +13852,7 @@ diff -urNp linux-2.6.36.2/arch/x86/kernel/process_64.c linux-2.6.36.2/arch/x86/k
  		if (!in_sched_functions(ip))
 diff -urNp linux-2.6.36.2/arch/x86/kernel/process.c linux-2.6.36.2/arch/x86/kernel/process.c
 --- linux-2.6.36.2/arch/x86/kernel/process.c	2010-10-20 16:30:22.000000000 -0400
-+++ linux-2.6.36.2/arch/x86/kernel/process.c	2010-12-09 20:24:55.000000000 -0500
++++ linux-2.6.36.2/arch/x86/kernel/process.c	2010-12-19 21:09:53.000000000 -0500
 @@ -74,7 +74,7 @@ void exit_thread(void)
  	unsigned long *bp = t->io_bitmap_ptr;
  
@@ -13870,13 +13875,13 @@ diff -urNp linux-2.6.36.2/arch/x86/kernel/process.c linux-2.6.36.2/arch/x86/kern
  {
  	struct task_struct *tsk = current;
  
-+#if defined(CONFIG_X86_32) && !defined(CONFIG_CC_STACKPROTECTOR)
++#if defined(CONFIG_X86_32) && !defined(CONFIG_CC_STACKPROTECTOR) && !defined(CONFIG_PAX_MEMORY_UDEREF)
 +	loadsegment(gs, 0);
 +#endif
  	flush_ptrace_hw_breakpoint(tsk);
  	memset(tsk->thread.tls_array, 0, sizeof(tsk->thread.tls_array));
  	/*
-@@ -280,8 +283,8 @@ int kernel_thread(int (*fn)(void *), voi
+@@ -280,10 +283,10 @@ int kernel_thread(int (*fn)(void *), voi
  	regs.di = (unsigned long) arg;
  
  #ifdef CONFIG_X86_32
@@ -13885,8 +13890,11 @@ diff -urNp linux-2.6.36.2/arch/x86/kernel/process.c linux-2.6.36.2/arch/x86/kern
 +	regs.ds = __KERNEL_DS;
 +	regs.es = __KERNEL_DS;
  	regs.fs = __KERNEL_PERCPU;
- 	regs.gs = __KERNEL_STACK_CANARY;
+-	regs.gs = __KERNEL_STACK_CANARY;
++	savesegment(gs, regs.gs);
  #else
+ 	regs.ss = __KERNEL_DS;
+ #endif
 @@ -658,17 +661,3 @@ static int __init idle_setup(char *str)
  	return 0;
  }
@@ -14270,13 +14278,25 @@ diff -urNp linux-2.6.36.2/arch/x86/kernel/syscall_table_32.S linux-2.6.36.2/arch
  	.long sys_exit
 diff -urNp linux-2.6.36.2/arch/x86/kernel/sys_i386_32.c linux-2.6.36.2/arch/x86/kernel/sys_i386_32.c
 --- linux-2.6.36.2/arch/x86/kernel/sys_i386_32.c	2010-10-20 16:30:22.000000000 -0400
-+++ linux-2.6.36.2/arch/x86/kernel/sys_i386_32.c	2010-12-09 20:24:55.000000000 -0500
-@@ -24,6 +24,228 @@
++++ linux-2.6.36.2/arch/x86/kernel/sys_i386_32.c	2010-12-19 12:47:27.000000000 -0500
+@@ -24,17 +24,224 @@
  
  #include <asm/syscalls.h>
  
+-/*
+- * Do a system call from kernel instead of calling sys_execve so we
+- * end up with proper pt_regs.
+- */
+-int kernel_execve(const char *filename,
+-		  const char *const argv[],
+-		  const char *const envp[])
 +int i386_mmap_check(unsigned long addr, unsigned long len, unsigned long flags)
-+{
+ {
+-	long __res;
+-	asm volatile ("push %%ebx ; movl %2,%%ebx ; int $0x80 ; pop %%ebx"
+-	: "=a" (__res)
+-	: "0" (__NR_execve), "ri" (filename), "c" (argv), "d" (envp) : "memory");
+-	return __res;
 +	unsigned long pax_task_size = TASK_SIZE;
 +
 +#ifdef CONFIG_PAX_SEGMEXEC
@@ -14495,11 +14515,7 @@ diff -urNp linux-2.6.36.2/arch/x86/kernel/sys_i386_32.c linux-2.6.36.2/arch/x86/
 +	mm->cached_hole_size = ~0UL;
 +
 +	return addr;
-+}
-+
- /*
-  * Do a system call from kernel instead of calling sys_execve so we
-  * end up with proper pt_regs.
+ }
 diff -urNp linux-2.6.36.2/arch/x86/kernel/sys_x86_64.c linux-2.6.36.2/arch/x86/kernel/sys_x86_64.c
 --- linux-2.6.36.2/arch/x86/kernel/sys_x86_64.c	2010-10-20 16:30:22.000000000 -0400
 +++ linux-2.6.36.2/arch/x86/kernel/sys_x86_64.c	2010-12-09 20:24:54.000000000 -0500
@@ -14952,7 +14968,7 @@ diff -urNp linux-2.6.36.2/arch/x86/kernel/vm86_32.c linux-2.6.36.2/arch/x86/kern
  	if ((segoffs >> 16) == BIOSSEG)
 diff -urNp linux-2.6.36.2/arch/x86/kernel/vmi_32.c linux-2.6.36.2/arch/x86/kernel/vmi_32.c
 --- linux-2.6.36.2/arch/x86/kernel/vmi_32.c	2010-10-20 16:30:22.000000000 -0400
-+++ linux-2.6.36.2/arch/x86/kernel/vmi_32.c	2010-12-09 20:24:55.000000000 -0500
++++ linux-2.6.36.2/arch/x86/kernel/vmi_32.c	2010-12-19 12:46:50.000000000 -0500
 @@ -46,12 +46,17 @@ typedef u32 __attribute__((regparm(1))) 
  typedef u64 __attribute__((regparm(2))) (VROMLONGFUNC)(int);
  
@@ -15020,7 +15036,7 @@ diff -urNp linux-2.6.36.2/arch/x86/kernel/vmi_32.c linux-2.6.36.2/arch/x86/kerne
  	vmi_ops.set_pte(pte, (pte_t *)pmd, VMI_PAGE_PD);
  }
  #endif
-@@ -416,8 +422,8 @@ vmi_startup_ipi_hook(int phys_apicid, un
+@@ -416,10 +422,10 @@ vmi_startup_ipi_hook(int phys_apicid, un
  	ap.ss = __KERNEL_DS;
  	ap.esp = (unsigned long) start_esp;
  
@@ -15029,7 +15045,10 @@ diff -urNp linux-2.6.36.2/arch/x86/kernel/vmi_32.c linux-2.6.36.2/arch/x86/kerne
 +	ap.ds = __KERNEL_DS;
 +	ap.es = __KERNEL_DS;
  	ap.fs = __KERNEL_PERCPU;
- 	ap.gs = __KERNEL_STACK_CANARY;
+-	ap.gs = __KERNEL_STACK_CANARY;
++	savesegment(gs, ap.gs);
+ 
+ 	ap.eflags = 0;
  
 @@ -464,6 +470,18 @@ static void vmi_leave_lazy_mmu(void)
  	paravirt_leave_lazy_mmu();
@@ -15114,7 +15133,7 @@ diff -urNp linux-2.6.36.2/arch/x86/kernel/vmi_32.c linux-2.6.36.2/arch/x86/kerne
  	local_irq_save(flags);
 diff -urNp linux-2.6.36.2/arch/x86/kernel/vmlinux.lds.S linux-2.6.36.2/arch/x86/kernel/vmlinux.lds.S
 --- linux-2.6.36.2/arch/x86/kernel/vmlinux.lds.S	2010-10-20 16:30:22.000000000 -0400
-+++ linux-2.6.36.2/arch/x86/kernel/vmlinux.lds.S	2010-12-09 20:24:55.000000000 -0500
++++ linux-2.6.36.2/arch/x86/kernel/vmlinux.lds.S	2010-12-19 12:46:50.000000000 -0500
 @@ -26,6 +26,13 @@
  #include <asm/page_types.h>
  #include <asm/cache.h>
@@ -15129,7 +15148,7 @@ diff -urNp linux-2.6.36.2/arch/x86/kernel/vmlinux.lds.S linux-2.6.36.2/arch/x86/
  
  #undef i386     /* in case the preprocessor is a 32bit one */
  
-@@ -34,13 +41,13 @@ OUTPUT_FORMAT(CONFIG_OUTPUT_FORMAT, CONF
+@@ -34,11 +41,9 @@ OUTPUT_FORMAT(CONFIG_OUTPUT_FORMAT, CONF
  #ifdef CONFIG_X86_32
  OUTPUT_ARCH(i386)
  ENTRY(phys_startup_32)
@@ -15140,12 +15159,8 @@ diff -urNp linux-2.6.36.2/arch/x86/kernel/vmlinux.lds.S linux-2.6.36.2/arch/x86/
 -jiffies_64 = jiffies;
  #endif
  
-+jiffies = jiffies_64;
-+
  #if defined(CONFIG_X86_64) && defined(CONFIG_DEBUG_RODATA)
- /*
-  * On 64-bit, align RODATA to 2MB so that even with CONFIG_DEBUG_RODATA
-@@ -69,31 +76,46 @@ jiffies_64 = jiffies;
+@@ -69,31 +74,46 @@ jiffies_64 = jiffies;
  
  PHDRS {
  	text PT_LOAD FLAGS(5);          /* R_E */
@@ -15200,7 +15215,7 @@ diff -urNp linux-2.6.36.2/arch/x86/kernel/vmlinux.lds.S linux-2.6.36.2/arch/x86/
  		HEAD_TEXT
  #ifdef CONFIG_X86_32
  		. = ALIGN(PAGE_SIZE);
-@@ -108,13 +130,52 @@ SECTIONS
+@@ -108,13 +128,52 @@ SECTIONS
  		IRQENTRY_TEXT
  		*(.fixup)
  		*(.gnu.warning)
@@ -15210,7 +15225,8 @@ diff -urNp linux-2.6.36.2/arch/x86/kernel/vmlinux.lds.S linux-2.6.36.2/arch/x86/
  
 -	NOTES :text :note
 +	. += __KERNEL_TEXT_OFFSET;
-+
+ 
+-	EXCEPTION_TABLE(16) :text = 0x9090
 +#ifdef CONFIG_X86_32
 +	. = ALIGN(PAGE_SIZE);
 +	.vmi.rom : AT(ADDR(.vmi.rom) - LOAD_OFFSET) {
@@ -15251,21 +15267,20 @@ diff -urNp linux-2.6.36.2/arch/x86/kernel/vmlinux.lds.S linux-2.6.36.2/arch/x86/
 +
 +	. = ALIGN(PAGE_SIZE);
 +	NOTES :rodata :note
- 
--	EXCEPTION_TABLE(16) :text = 0x9090
++
 +	EXCEPTION_TABLE(16) :rodata
  
  	X64_ALIGN_DEBUG_RODATA_BEGIN
  	RO_DATA(PAGE_SIZE)
-@@ -122,16 +183,20 @@ SECTIONS
+@@ -122,16 +181,20 @@ SECTIONS
  
  	/* Data */
  	.data : AT(ADDR(.data) - LOAD_OFFSET) {
 +
 +#ifdef CONFIG_PAX_KERNEXEC
-+	. = ALIGN(HPAGE_SIZE);
++		. = ALIGN(HPAGE_SIZE);
 +#else
-+	. = ALIGN(PAGE_SIZE);
++		. = ALIGN(PAGE_SIZE);
 +#endif
 +
  		/* Start of data section */
@@ -15280,6 +15295,15 @@ diff -urNp linux-2.6.36.2/arch/x86/kernel/vmlinux.lds.S linux-2.6.36.2/arch/x86/
 -#endif
  
  		PAGE_ALIGNED_DATA(PAGE_SIZE)
+ 
+@@ -140,6 +203,8 @@ SECTIONS
+ 		DATA_DATA
+ 		CONSTRUCTORS
+ 
++		jiffies = jiffies_64;
++
+ 		/* rarely changed data like cpu maps */
+ 		READ_MOSTLY_DATA(INTERNODE_CACHE_BYTES)
  
 @@ -194,12 +259,6 @@ SECTIONS
  	}
@@ -15333,7 +15357,8 @@ diff -urNp linux-2.6.36.2/arch/x86/kernel/vmlinux.lds.S linux-2.6.36.2/arch/x86/
 +		VMLINUX_SYMBOL(_einittext) = .;
 +		. = ALIGN(PAGE_SIZE);
 +	} :text.init
-+
+ 
+-	INIT_DATA_SECTION(16)
 +	/*
 +	 * .exit.text is discard at runtime, not link time, to deal with
 +	 *  references from .altinstructions and .eh_frame
@@ -15343,8 +15368,7 @@ diff -urNp linux-2.6.36.2/arch/x86/kernel/vmlinux.lds.S linux-2.6.36.2/arch/x86/
 +		. = ALIGN(16);
 +	} :text.exit
 +	. = init_begin + SIZEOF(.init.text) + SIZEOF(.exit.text);
- 
--	INIT_DATA_SECTION(16)
++
 +	. = ALIGN(PAGE_SIZE);
 +	INIT_DATA_SECTION(16) :init
  
@@ -16209,25 +16233,29 @@ diff -urNp linux-2.6.36.2/arch/x86/lib/csum-wrappers_64.c linux-2.6.36.2/arch/x8
  }
 diff -urNp linux-2.6.36.2/arch/x86/lib/getuser.S linux-2.6.36.2/arch/x86/lib/getuser.S
 --- linux-2.6.36.2/arch/x86/lib/getuser.S	2010-10-20 16:30:22.000000000 -0400
-+++ linux-2.6.36.2/arch/x86/lib/getuser.S	2010-12-09 20:24:54.000000000 -0500
-@@ -33,14 +33,38 @@
++++ linux-2.6.36.2/arch/x86/lib/getuser.S	2010-12-19 12:46:50.000000000 -0500
+@@ -33,14 +33,35 @@
  #include <asm/asm-offsets.h>
  #include <asm/thread_info.h>
  #include <asm/asm.h>
 +#include <asm/segment.h>
 +#include <asm/pgtable.h>
++
++#if defined(CONFIG_X86_32) && defined(CONFIG_PAX_MEMORY_UDEREF)
++#define __copyuser_seg %gs:
++#else
++#define __copyuser_seg
++#endif
  
  	.text
  ENTRY(__get_user_1)
  	CFI_STARTPROC
 +
-+#if defined(CONFIG_X86_32) && defined(CONFIG_PAX_MEMORY_UDEREF)
-+	pushl $(__USER_DS)
-+	popl %ds
-+#else
++#if !defined(CONFIG_X86_32) || !defined(CONFIG_PAX_MEMORY_UDEREF)
  	GET_THREAD_INFO(%_ASM_DX)
  	cmp TI_addr_limit(%_ASM_DX),%_ASM_AX
  	jae bad_get_user
+-1:	movzb (%_ASM_AX),%edx
 +
 +#if defined(CONFIG_X86_64) && defined(CONFIG_PAX_MEMORY_UDEREF)
 +	mov $PAX_USER_SHADOW_BASE,%_ASM_DX
@@ -16239,29 +16267,21 @@ diff -urNp linux-2.6.36.2/arch/x86/lib/getuser.S linux-2.6.36.2/arch/x86/lib/get
 +
 +#endif
 +
- 1:	movzb (%_ASM_AX),%edx
-+
-+#if defined(CONFIG_X86_32) && defined(CONFIG_PAX_MEMORY_UDEREF)
-+	pushl %ss
-+	pop %ds
-+#endif
-+
++1:	movzb __copyuser_seg (%_ASM_AX),%edx
  	xor %eax,%eax
  	ret
  	CFI_ENDPROC
-@@ -49,11 +73,33 @@ ENDPROC(__get_user_1)
+@@ -49,11 +70,24 @@ ENDPROC(__get_user_1)
  ENTRY(__get_user_2)
  	CFI_STARTPROC
  	add $1,%_ASM_AX
 +
-+#if defined(CONFIG_X86_32) && defined(CONFIG_PAX_MEMORY_UDEREF)
-+	pushl $(__USER_DS)
-+	popl %ds
-+#else
++#if !defined(CONFIG_X86_32) || !defined(CONFIG_PAX_MEMORY_UDEREF)
  	jc bad_get_user
  	GET_THREAD_INFO(%_ASM_DX)
  	cmp TI_addr_limit(%_ASM_DX),%_ASM_AX
  	jae bad_get_user
+-2:	movzwl -1(%_ASM_AX),%edx
 +
 +#if defined(CONFIG_X86_64) && defined(CONFIG_PAX_MEMORY_UDEREF)
 +	mov $PAX_USER_SHADOW_BASE,%_ASM_DX
@@ -16273,29 +16293,21 @@ diff -urNp linux-2.6.36.2/arch/x86/lib/getuser.S linux-2.6.36.2/arch/x86/lib/get
 +
 +#endif
 +
- 2:	movzwl -1(%_ASM_AX),%edx
-+
-+#if defined(CONFIG_X86_32) && defined(CONFIG_PAX_MEMORY_UDEREF)
-+	pushl %ss
-+	pop %ds
-+#endif
-+
++2:	movzwl __copyuser_seg -1(%_ASM_AX),%edx
  	xor %eax,%eax
  	ret
  	CFI_ENDPROC
-@@ -62,11 +108,33 @@ ENDPROC(__get_user_2)
+@@ -62,11 +96,24 @@ ENDPROC(__get_user_2)
  ENTRY(__get_user_4)
  	CFI_STARTPROC
  	add $3,%_ASM_AX
 +
-+#if defined(CONFIG_X86_32) && defined(CONFIG_PAX_MEMORY_UDEREF)
-+	pushl $(__USER_DS)
-+	popl %ds
-+#else
++#if !defined(CONFIG_X86_32) || !defined(CONFIG_PAX_MEMORY_UDEREF)
  	jc bad_get_user
  	GET_THREAD_INFO(%_ASM_DX)
  	cmp TI_addr_limit(%_ASM_DX),%_ASM_AX
  	jae bad_get_user
+-3:	mov -3(%_ASM_AX),%edx
 +
 +#if defined(CONFIG_X86_64) && defined(CONFIG_PAX_MEMORY_UDEREF)
 +	mov $PAX_USER_SHADOW_BASE,%_ASM_DX
@@ -16307,17 +16319,11 @@ diff -urNp linux-2.6.36.2/arch/x86/lib/getuser.S linux-2.6.36.2/arch/x86/lib/get
 +
 +#endif
 +
- 3:	mov -3(%_ASM_AX),%edx
-+
-+#if defined(CONFIG_X86_32) && defined(CONFIG_PAX_MEMORY_UDEREF)
-+	pushl %ss
-+	pop %ds
-+#endif
-+
++3:	mov __copyuser_seg -3(%_ASM_AX),%edx
  	xor %eax,%eax
  	ret
  	CFI_ENDPROC
-@@ -80,6 +148,15 @@ ENTRY(__get_user_8)
+@@ -80,6 +127,15 @@ ENTRY(__get_user_8)
  	GET_THREAD_INFO(%_ASM_DX)
  	cmp TI_addr_limit(%_ASM_DX),%_ASM_AX
  	jae	bad_get_user
@@ -16332,19 +16338,6 @@ diff -urNp linux-2.6.36.2/arch/x86/lib/getuser.S linux-2.6.36.2/arch/x86/lib/get
 +
  4:	movq -7(%_ASM_AX),%_ASM_DX
  	xor %eax,%eax
- 	ret
-@@ -89,6 +166,12 @@ ENDPROC(__get_user_8)
- 
- bad_get_user:
- 	CFI_STARTPROC
-+
-+#if defined(CONFIG_X86_32) && defined(CONFIG_PAX_MEMORY_UDEREF)
-+	pushl %ss
-+	pop %ds
-+#endif
-+
- 	xor %edx,%edx
- 	mov $(-EFAULT),%_ASM_AX
  	ret
 diff -urNp linux-2.6.36.2/arch/x86/lib/insn.c linux-2.6.36.2/arch/x86/lib/insn.c
 --- linux-2.6.36.2/arch/x86/lib/insn.c	2010-10-20 16:30:22.000000000 -0400
@@ -16688,7 +16681,7 @@ diff -urNp linux-2.6.36.2/arch/x86/lib/mmx_32.c linux-2.6.36.2/arch/x86/lib/mmx_
  		to += 64;
 diff -urNp linux-2.6.36.2/arch/x86/lib/putuser.S linux-2.6.36.2/arch/x86/lib/putuser.S
 --- linux-2.6.36.2/arch/x86/lib/putuser.S	2010-10-20 16:30:22.000000000 -0400
-+++ linux-2.6.36.2/arch/x86/lib/putuser.S	2010-12-09 20:24:54.000000000 -0500
++++ linux-2.6.36.2/arch/x86/lib/putuser.S	2010-12-19 12:46:50.000000000 -0500
 @@ -15,7 +15,8 @@
  #include <asm/thread_info.h>
  #include <asm/errno.h>
@@ -16699,7 +16692,7 @@ diff -urNp linux-2.6.36.2/arch/x86/lib/putuser.S linux-2.6.36.2/arch/x86/lib/put
  
  /*
   * __put_user_X
-@@ -29,59 +30,162 @@
+@@ -29,52 +30,119 @@
   * as they get called from within inline assembly.
   */
  
@@ -16715,14 +16708,17 @@ diff -urNp linux-2.6.36.2/arch/x86/lib/putuser.S linux-2.6.36.2/arch/x86/lib/put
 +#define _DEST %_ASM_CX
 +#endif
 +
++#if defined(CONFIG_X86_32) && defined(CONFIG_PAX_MEMORY_UDEREF)
++#define __copyuser_seg %gs:
++#else
++#define __copyuser_seg
++#endif
++
  .text
  ENTRY(__put_user_1)
  	ENTER
 +
-+#if defined(CONFIG_X86_32) && defined(CONFIG_PAX_MEMORY_UDEREF)
-+	pushl $(__USER_DS)
-+	popl %ds
-+#else
++#if !defined(CONFIG_X86_32) || !defined(CONFIG_PAX_MEMORY_UDEREF)
 +	GET_THREAD_INFO(%_ASM_BX)
  	cmp TI_addr_limit(%_ASM_BX),%_ASM_CX
  	jae bad_put_user
@@ -16738,13 +16734,7 @@ diff -urNp linux-2.6.36.2/arch/x86/lib/putuser.S linux-2.6.36.2/arch/x86/lib/put
 +
 +#endif
 +
-+1:	movb %al,(_DEST)
-+
-+#if defined(CONFIG_X86_32) && defined(CONFIG_PAX_MEMORY_UDEREF)
-+	pushl %ss
-+	popl %ds
-+#endif
-+
++1:	movb %al,__copyuser_seg (_DEST)
  	xor %eax,%eax
  	EXIT
  ENDPROC(__put_user_1)
@@ -16752,10 +16742,7 @@ diff -urNp linux-2.6.36.2/arch/x86/lib/putuser.S linux-2.6.36.2/arch/x86/lib/put
  ENTRY(__put_user_2)
  	ENTER
 +
-+#if defined(CONFIG_X86_32) && defined(CONFIG_PAX_MEMORY_UDEREF)
-+	pushl $(__USER_DS)
-+	popl %ds
-+#else
++#if !defined(CONFIG_X86_32) || !defined(CONFIG_PAX_MEMORY_UDEREF)
 +	GET_THREAD_INFO(%_ASM_BX)
  	mov TI_addr_limit(%_ASM_BX),%_ASM_BX
  	sub $1,%_ASM_BX
@@ -16773,13 +16760,7 @@ diff -urNp linux-2.6.36.2/arch/x86/lib/putuser.S linux-2.6.36.2/arch/x86/lib/put
 +
 +#endif
 +
-+2:	movw %ax,(_DEST)
-+
-+#if defined(CONFIG_X86_32) && defined(CONFIG_PAX_MEMORY_UDEREF)
-+	pushl %ss
-+	popl %ds
-+#endif
-+
++2:	movw %ax,__copyuser_seg (_DEST)
  	xor %eax,%eax
  	EXIT
  ENDPROC(__put_user_2)
@@ -16787,10 +16768,7 @@ diff -urNp linux-2.6.36.2/arch/x86/lib/putuser.S linux-2.6.36.2/arch/x86/lib/put
  ENTRY(__put_user_4)
  	ENTER
 +
-+#if defined(CONFIG_X86_32) && defined(CONFIG_PAX_MEMORY_UDEREF)
-+	pushl $(__USER_DS)
-+	popl %ds
-+#else
++#if !defined(CONFIG_X86_32) || !defined(CONFIG_PAX_MEMORY_UDEREF)
 +	GET_THREAD_INFO(%_ASM_BX)
  	mov TI_addr_limit(%_ASM_BX),%_ASM_BX
  	sub $3,%_ASM_BX
@@ -16808,13 +16786,7 @@ diff -urNp linux-2.6.36.2/arch/x86/lib/putuser.S linux-2.6.36.2/arch/x86/lib/put
 +
 +#endif
 +
-+3:	movl %eax,(_DEST)
-+
-+#if defined(CONFIG_X86_32) && defined(CONFIG_PAX_MEMORY_UDEREF)
-+	pushl %ss
-+	popl %ds
-+#endif
-+
++3:	movl %eax,__copyuser_seg (_DEST)
  	xor %eax,%eax
  	EXIT
  ENDPROC(__put_user_4)
@@ -16822,10 +16794,7 @@ diff -urNp linux-2.6.36.2/arch/x86/lib/putuser.S linux-2.6.36.2/arch/x86/lib/put
  ENTRY(__put_user_8)
  	ENTER
 +
-+#if defined(CONFIG_X86_32) && defined(CONFIG_PAX_MEMORY_UDEREF)
-+	pushl $(__USER_DS)
-+	popl %ds
-+#else
++#if !defined(CONFIG_X86_32) || !defined(CONFIG_PAX_MEMORY_UDEREF)
 +	GET_THREAD_INFO(%_ASM_BX)
  	mov TI_addr_limit(%_ASM_BX),%_ASM_BX
  	sub $7,%_ASM_BX
@@ -16843,278 +16812,126 @@ diff -urNp linux-2.6.36.2/arch/x86/lib/putuser.S linux-2.6.36.2/arch/x86/lib/put
 +
 +#endif
 +
-+4:	mov %_ASM_AX,(_DEST)
++4:	mov %_ASM_AX,__copyuser_seg (_DEST)
  #ifdef CONFIG_X86_32
 -5:	movl %edx,4(%_ASM_CX)
-+5:	movl %edx,4(_DEST)
++5:	movl %edx,__copyuser_seg 4(_DEST)
  #endif
-+
-+#if defined(CONFIG_X86_32) && defined(CONFIG_PAX_MEMORY_UDEREF)
-+	pushl %ss
-+	popl %ds
-+#endif
-+
  	xor %eax,%eax
  	EXIT
- ENDPROC(__put_user_8)
- 
- bad_put_user:
- 	CFI_STARTPROC
-+
-+#if defined(CONFIG_X86_32) && defined(CONFIG_PAX_MEMORY_UDEREF)
-+	pushl %ss
-+	popl %ds
-+#endif
-+
- 	movl $-EFAULT,%eax
- 	EXIT
- END(bad_put_user)
 diff -urNp linux-2.6.36.2/arch/x86/lib/usercopy_32.c linux-2.6.36.2/arch/x86/lib/usercopy_32.c
 --- linux-2.6.36.2/arch/x86/lib/usercopy_32.c	2010-10-20 16:30:22.000000000 -0400
-+++ linux-2.6.36.2/arch/x86/lib/usercopy_32.c	2010-12-09 20:24:54.000000000 -0500
-@@ -36,31 +36,38 @@ static inline int __movsl_is_ok(unsigned
-  * Copy a null terminated string from userspace.
-  */
- 
--#define __do_strncpy_from_user(dst, src, count, res)			   \
--do {									   \
--	int __d0, __d1, __d2;						   \
--	might_fault();							   \
--	__asm__ __volatile__(						   \
--		"	testl %1,%1\n"					   \
--		"	jz 2f\n"					   \
++++ linux-2.6.36.2/arch/x86/lib/usercopy_32.c	2010-12-19 13:16:20.000000000 -0500
+@@ -43,7 +43,7 @@ do {									   \
+ 	__asm__ __volatile__(						   \
+ 		"	testl %1,%1\n"					   \
+ 		"	jz 2f\n"					   \
 -		"0:	lodsb\n"					   \
--		"	stosb\n"					   \
--		"	testb %%al,%%al\n"				   \
--		"	jz 1f\n"					   \
--		"	decl %1\n"					   \
--		"	jnz 0b\n"					   \
--		"1:	subl %1,%0\n"					   \
--		"2:\n"							   \
--		".section .fixup,\"ax\"\n"				   \
--		"3:	movl %5,%0\n"					   \
--		"	jmp 2b\n"					   \
--		".previous\n"						   \
--		_ASM_EXTABLE(0b,3b)					   \
--		: "=&d"(res), "=&c"(count), "=&a" (__d0), "=&S" (__d1),	   \
--		  "=&D" (__d2)						   \
--		: "i"(-EFAULT), "0"(count), "1"(count), "3"(src), "4"(dst) \
--		: "memory");						   \
--} while (0)
-+static long __do_strncpy_from_user(char *dst, const char __user *src, long count)
-+{
-+	int __d0, __d1, __d2;
-+	long res = -EFAULT;
-+
-+	might_fault();
-+	__asm__ __volatile__(
-+		"	movw %w10,%%ds\n"
-+		"	testl %1,%1\n"
-+		"	jz 2f\n"
-+		"0:	lodsb\n"
-+		"	stosb\n"
-+		"	testb %%al,%%al\n"
-+		"	jz 1f\n"
-+		"	decl %1\n"
-+		"	jnz 0b\n"
-+		"1:	subl %1,%0\n"
-+		"2:\n"
-+		"	pushl %%ss\n"
-+		"	popl %%ds\n"
-+		".section .fixup,\"ax\"\n"
-+		"3:	movl %5,%0\n"
-+		"	jmp 2b\n"
-+		".previous\n"
-+		_ASM_EXTABLE(0b,3b)
-+		: "=&d"(res), "=&c"(count), "=&a" (__d0), "=&S" (__d1),
-+		  "=&D" (__d2)
-+		: "i"(-EFAULT), "0"(count), "1"(count), "3"(src), "4"(dst),
-+		  "r"(__USER_DS)
-+		: "memory");
-+	return res;
-+}
- 
- /**
-  * __strncpy_from_user: - Copy a NUL terminated string from userspace, with less checking.
-@@ -85,9 +92,7 @@ do {									   \
- long
- __strncpy_from_user(char *dst, const char __user *src, long count)
- {
--	long res;
--	__do_strncpy_from_user(dst, src, count, res);
--	return res;
-+	return __do_strncpy_from_user(dst, src, count);
- }
- EXPORT_SYMBOL(__strncpy_from_user);
- 
-@@ -114,7 +119,7 @@ strncpy_from_user(char *dst, const char 
- {
- 	long res = -EFAULT;
- 	if (access_ok(VERIFY_READ, src, 1))
--		__do_strncpy_from_user(dst, src, count, res);
-+		res = __do_strncpy_from_user(dst, src, count);
- 	return res;
- }
- EXPORT_SYMBOL(strncpy_from_user);
-@@ -123,24 +128,30 @@ EXPORT_SYMBOL(strncpy_from_user);
-  * Zero Userspace
-  */
- 
--#define __do_clear_user(addr,size)					\
--do {									\
--	int __d0;							\
--	might_fault();							\
--	__asm__ __volatile__(						\
--		"0:	rep; stosl\n"					\
--		"	movl %2,%0\n"					\
--		"1:	rep; stosb\n"					\
--		"2:\n"							\
--		".section .fixup,\"ax\"\n"				\
--		"3:	lea 0(%2,%0,4),%0\n"				\
--		"	jmp 2b\n"					\
--		".previous\n"						\
--		_ASM_EXTABLE(0b,3b)					\
--		_ASM_EXTABLE(1b,2b)					\
--		: "=&c"(size), "=&D" (__d0)				\
--		: "r"(size & 3), "0"(size / 4), "1"(addr), "a"(0));	\
--} while (0)
-+static unsigned long __do_clear_user(void __user *addr, unsigned long size)
-+{
-+	int __d0;
-+
-+	might_fault();
-+	__asm__ __volatile__(
-+		"	movw %w6,%%es\n"
-+		"0:	rep; stosl\n"
-+		"	movl %2,%0\n"
-+		"1:	rep; stosb\n"
-+		"2:\n"
-+		"	pushl %%ss\n"
-+		"	popl %%es\n"
-+		".section .fixup,\"ax\"\n"
-+		"3:	lea 0(%2,%0,4),%0\n"
-+		"	jmp 2b\n"
-+		".previous\n"
-+		_ASM_EXTABLE(0b,3b)
-+		_ASM_EXTABLE(1b,2b)
-+		: "=&c"(size), "=&D" (__d0)
-+		: "r"(size & 3), "0"(size / 4), "1"(addr), "a"(0),
-+		  "r"(__USER_DS));
-+	return size;
-+}
- 
- /**
-  * clear_user: - Zero a block of memory in user space.
-@@ -157,7 +168,7 @@ clear_user(void __user *to, unsigned lon
- {
- 	might_fault();
- 	if (access_ok(VERIFY_WRITE, to, n))
--		__do_clear_user(to, n);
-+		n = __do_clear_user(to, n);
- 	return n;
- }
- EXPORT_SYMBOL(clear_user);
-@@ -176,8 +187,7 @@ EXPORT_SYMBOL(clear_user);
- unsigned long
- __clear_user(void __user *to, unsigned long n)
- {
--	__do_clear_user(to, n);
--	return n;
-+	return __do_clear_user(to, n);
- }
- EXPORT_SYMBOL(__clear_user);
- 
-@@ -200,14 +210,17 @@ long strnlen_user(const char __user *s, 
++		"0:	lodsb " __copyuser_seg" (%%esi)\n"		   \
+ 		"	stosb\n"					   \
+ 		"	testb %%al,%%al\n"				   \
+ 		"	jz 1f\n"					   \
+@@ -128,10 +128,12 @@ do {									\
+ 	int __d0;							\
+ 	might_fault();							\
+ 	__asm__ __volatile__(						\
++		__COPYUSER_SET_ES					\
+ 		"0:	rep; stosl\n"					\
+ 		"	movl %2,%0\n"					\
+ 		"1:	rep; stosb\n"					\
+ 		"2:\n"							\
++		__COPYUSER_RESTORE_ES					\
+ 		".section .fixup,\"ax\"\n"				\
+ 		"3:	lea 0(%2,%0,4),%0\n"				\
+ 		"	jmp 2b\n"					\
+@@ -200,6 +202,7 @@ long strnlen_user(const char __user *s, 
  	might_fault();
  
  	__asm__ __volatile__(
-+		"	movw %w8,%%es\n"
++		__COPYUSER_SET_ES
  		"	testl %0, %0\n"
  		"	jz 3f\n"
--		"	andl %0,%%ecx\n"
-+		"	movl %0,%%ecx\n"
- 		"0:	repne; scasb\n"
- 		"	setne %%al\n"
+ 		"	andl %0,%%ecx\n"
+@@ -208,6 +211,7 @@ long strnlen_user(const char __user *s, 
  		"	subl %%ecx,%0\n"
  		"	addl %0,%%eax\n"
  		"1:\n"
-+		"	pushl %%ss\n"
-+		"	popl %%es\n"
++		__COPYUSER_RESTORE_ES
  		".section .fixup,\"ax\"\n"
  		"2:	xorl %%eax,%%eax\n"
  		"	jmp 1b\n"
-@@ -219,7 +232,7 @@ long strnlen_user(const char __user *s, 
- 		"	.long 0b,2b\n"
- 		".previous"
- 		:"=&r" (n), "=&D" (s), "=&a" (res), "=&c" (tmp)
--		:"0" (n), "1" (s), "2" (0), "3" (mask)
-+		:"0" (n), "1" (s), "2" (0), "3" (mask), "r" (__USER_DS)
- 		:"cc");
- 	return res & mask;
- }
-@@ -227,10 +240,121 @@ EXPORT_SYMBOL(strnlen_user);
+@@ -227,7 +231,7 @@ EXPORT_SYMBOL(strnlen_user);
  
  #ifdef CONFIG_X86_INTEL_USERCOPY
  static unsigned long
 -__copy_user_intel(void __user *to, const void *from, unsigned long size)
 +__generic_copy_to_user_intel(void __user *to, const void *from, unsigned long size)
-+{
-+	int d0, d1;
-+	__asm__ __volatile__(
-+		       "       movw %w6, %%es\n"
-+		       "       .align 2,0x90\n"
-+		       "1:     movl 32(%4), %%eax\n"
-+		       "       cmpl $67, %0\n"
-+		       "       jbe 3f\n"
-+		       "2:     movl 64(%4), %%eax\n"
-+		       "       .align 2,0x90\n"
-+		       "3:     movl 0(%4), %%eax\n"
-+		       "4:     movl 4(%4), %%edx\n"
-+		       "5:     movl %%eax, %%es:0(%3)\n"
-+		       "6:     movl %%edx, %%es:4(%3)\n"
-+		       "7:     movl 8(%4), %%eax\n"
-+		       "8:     movl 12(%4),%%edx\n"
-+		       "9:     movl %%eax, %%es:8(%3)\n"
-+		       "10:    movl %%edx, %%es:12(%3)\n"
-+		       "11:    movl 16(%4), %%eax\n"
-+		       "12:    movl 20(%4), %%edx\n"
-+		       "13:    movl %%eax, %%es:16(%3)\n"
-+		       "14:    movl %%edx, %%es:20(%3)\n"
-+		       "15:    movl 24(%4), %%eax\n"
-+		       "16:    movl 28(%4), %%edx\n"
-+		       "17:    movl %%eax, %%es:24(%3)\n"
-+		       "18:    movl %%edx, %%es:28(%3)\n"
-+		       "19:    movl 32(%4), %%eax\n"
-+		       "20:    movl 36(%4), %%edx\n"
-+		       "21:    movl %%eax, %%es:32(%3)\n"
-+		       "22:    movl %%edx, %%es:36(%3)\n"
-+		       "23:    movl 40(%4), %%eax\n"
-+		       "24:    movl 44(%4), %%edx\n"
-+		       "25:    movl %%eax, %%es:40(%3)\n"
-+		       "26:    movl %%edx, %%es:44(%3)\n"
-+		       "27:    movl 48(%4), %%eax\n"
-+		       "28:    movl 52(%4), %%edx\n"
-+		       "29:    movl %%eax, %%es:48(%3)\n"
-+		       "30:    movl %%edx, %%es:52(%3)\n"
-+		       "31:    movl 56(%4), %%eax\n"
-+		       "32:    movl 60(%4), %%edx\n"
-+		       "33:    movl %%eax, %%es:56(%3)\n"
-+		       "34:    movl %%edx, %%es:60(%3)\n"
-+		       "       addl $-64, %0\n"
-+		       "       addl $64, %4\n"
-+		       "       addl $64, %3\n"
-+		       "       cmpl $63, %0\n"
-+		       "       ja  1b\n"
-+		       "35:    movl  %0, %%eax\n"
-+		       "       shrl  $2, %0\n"
-+		       "       andl  $3, %%eax\n"
-+		       "       cld\n"
-+		       "99:    rep; movsl\n"
-+		       "36:    movl %%eax, %0\n"
-+		       "37:    rep; movsb\n"
-+		       "100:\n"
-+		       "       pushl %%ss\n"
-+		       "       popl %%es\n"
+ {
+ 	int d0, d1;
+ 	__asm__ __volatile__(
+@@ -239,36 +243,36 @@ __copy_user_intel(void __user *to, const
+ 		       "       .align 2,0x90\n"
+ 		       "3:     movl 0(%4), %%eax\n"
+ 		       "4:     movl 4(%4), %%edx\n"
+-		       "5:     movl %%eax, 0(%3)\n"
+-		       "6:     movl %%edx, 4(%3)\n"
++		       "5:     movl %%eax, "__copyuser_seg" 0(%3)\n"
++		       "6:     movl %%edx, "__copyuser_seg" 4(%3)\n"
+ 		       "7:     movl 8(%4), %%eax\n"
+ 		       "8:     movl 12(%4),%%edx\n"
+-		       "9:     movl %%eax, 8(%3)\n"
+-		       "10:    movl %%edx, 12(%3)\n"
++		       "9:     movl %%eax, "__copyuser_seg" 8(%3)\n"
++		       "10:    movl %%edx, "__copyuser_seg" 12(%3)\n"
+ 		       "11:    movl 16(%4), %%eax\n"
+ 		       "12:    movl 20(%4), %%edx\n"
+-		       "13:    movl %%eax, 16(%3)\n"
+-		       "14:    movl %%edx, 20(%3)\n"
++		       "13:    movl %%eax, "__copyuser_seg" 16(%3)\n"
++		       "14:    movl %%edx, "__copyuser_seg" 20(%3)\n"
+ 		       "15:    movl 24(%4), %%eax\n"
+ 		       "16:    movl 28(%4), %%edx\n"
+-		       "17:    movl %%eax, 24(%3)\n"
+-		       "18:    movl %%edx, 28(%3)\n"
++		       "17:    movl %%eax, "__copyuser_seg" 24(%3)\n"
++		       "18:    movl %%edx, "__copyuser_seg" 28(%3)\n"
+ 		       "19:    movl 32(%4), %%eax\n"
+ 		       "20:    movl 36(%4), %%edx\n"
+-		       "21:    movl %%eax, 32(%3)\n"
+-		       "22:    movl %%edx, 36(%3)\n"
++		       "21:    movl %%eax, "__copyuser_seg" 32(%3)\n"
++		       "22:    movl %%edx, "__copyuser_seg" 36(%3)\n"
+ 		       "23:    movl 40(%4), %%eax\n"
+ 		       "24:    movl 44(%4), %%edx\n"
+-		       "25:    movl %%eax, 40(%3)\n"
+-		       "26:    movl %%edx, 44(%3)\n"
++		       "25:    movl %%eax, "__copyuser_seg" 40(%3)\n"
++		       "26:    movl %%edx, "__copyuser_seg" 44(%3)\n"
+ 		       "27:    movl 48(%4), %%eax\n"
+ 		       "28:    movl 52(%4), %%edx\n"
+-		       "29:    movl %%eax, 48(%3)\n"
+-		       "30:    movl %%edx, 52(%3)\n"
++		       "29:    movl %%eax, "__copyuser_seg" 48(%3)\n"
++		       "30:    movl %%edx, "__copyuser_seg" 52(%3)\n"
+ 		       "31:    movl 56(%4), %%eax\n"
+ 		       "32:    movl 60(%4), %%edx\n"
+-		       "33:    movl %%eax, 56(%3)\n"
+-		       "34:    movl %%edx, 60(%3)\n"
++		       "33:    movl %%eax, "__copyuser_seg" 56(%3)\n"
++		       "34:    movl %%edx, "__copyuser_seg" 60(%3)\n"
+ 		       "       addl $-64, %0\n"
+ 		       "       addl $64, %4\n"
+ 		       "       addl $64, %3\n"
+@@ -278,10 +282,119 @@ __copy_user_intel(void __user *to, const
+ 		       "       shrl  $2, %0\n"
+ 		       "       andl  $3, %%eax\n"
+ 		       "       cld\n"
++		       __COPYUSER_SET_ES
+ 		       "99:    rep; movsl\n"
+ 		       "36:    movl %%eax, %0\n"
+ 		       "37:    rep; movsb\n"
+ 		       "100:\n"
++		       __COPYUSER_RESTORE_ES
 +		       ".section .fixup,\"ax\"\n"
 +		       "101:   lea 0(%%eax,%0,4),%0\n"
 +		       "       jmp 100b\n"
@@ -17161,329 +16978,287 @@ diff -urNp linux-2.6.36.2/arch/x86/lib/usercopy_32.c linux-2.6.36.2/arch/x86/lib
 +		       "       .long 99b,101b\n"
 +		       ".previous"
 +		       : "=&c"(size), "=&D" (d0), "=&S" (d1)
-+		       :  "1"(to), "2"(from), "0"(size), "r"(__USER_DS)
++		       :  "1"(to), "2"(from), "0"(size)
 +		       : "eax", "edx", "memory");
 +	return size;
 +}
 +
 +static unsigned long
 +__generic_copy_from_user_intel(void *to, const void __user *from, unsigned long size)
- {
- 	int d0, d1;
- 	__asm__ __volatile__(
-+		       "       movw %w6, %%ds\n"
- 		       "       .align 2,0x90\n"
- 		       "1:     movl 32(%4), %%eax\n"
- 		       "       cmpl $67, %0\n"
-@@ -239,36 +363,36 @@ __copy_user_intel(void __user *to, const
- 		       "       .align 2,0x90\n"
- 		       "3:     movl 0(%4), %%eax\n"
- 		       "4:     movl 4(%4), %%edx\n"
--		       "5:     movl %%eax, 0(%3)\n"
--		       "6:     movl %%edx, 4(%3)\n"
-+		       "5:     movl %%eax, %%es:0(%3)\n"
-+		       "6:     movl %%edx, %%es:4(%3)\n"
- 		       "7:     movl 8(%4), %%eax\n"
- 		       "8:     movl 12(%4),%%edx\n"
--		       "9:     movl %%eax, 8(%3)\n"
--		       "10:    movl %%edx, 12(%3)\n"
-+		       "9:     movl %%eax, %%es:8(%3)\n"
-+		       "10:    movl %%edx, %%es:12(%3)\n"
- 		       "11:    movl 16(%4), %%eax\n"
- 		       "12:    movl 20(%4), %%edx\n"
--		       "13:    movl %%eax, 16(%3)\n"
--		       "14:    movl %%edx, 20(%3)\n"
-+		       "13:    movl %%eax, %%es:16(%3)\n"
-+		       "14:    movl %%edx, %%es:20(%3)\n"
- 		       "15:    movl 24(%4), %%eax\n"
- 		       "16:    movl 28(%4), %%edx\n"
--		       "17:    movl %%eax, 24(%3)\n"
--		       "18:    movl %%edx, 28(%3)\n"
-+		       "17:    movl %%eax, %%es:24(%3)\n"
-+		       "18:    movl %%edx, %%es:28(%3)\n"
- 		       "19:    movl 32(%4), %%eax\n"
- 		       "20:    movl 36(%4), %%edx\n"
--		       "21:    movl %%eax, 32(%3)\n"
--		       "22:    movl %%edx, 36(%3)\n"
-+		       "21:    movl %%eax, %%es:32(%3)\n"
-+		       "22:    movl %%edx, %%es:36(%3)\n"
- 		       "23:    movl 40(%4), %%eax\n"
- 		       "24:    movl 44(%4), %%edx\n"
--		       "25:    movl %%eax, 40(%3)\n"
--		       "26:    movl %%edx, 44(%3)\n"
-+		       "25:    movl %%eax, %%es:40(%3)\n"
-+		       "26:    movl %%edx, %%es:44(%3)\n"
- 		       "27:    movl 48(%4), %%eax\n"
- 		       "28:    movl 52(%4), %%edx\n"
--		       "29:    movl %%eax, 48(%3)\n"
--		       "30:    movl %%edx, 52(%3)\n"
-+		       "29:    movl %%eax, %%es:48(%3)\n"
-+		       "30:    movl %%edx, %%es:52(%3)\n"
- 		       "31:    movl 56(%4), %%eax\n"
- 		       "32:    movl 60(%4), %%edx\n"
--		       "33:    movl %%eax, 56(%3)\n"
--		       "34:    movl %%edx, 60(%3)\n"
-+		       "33:    movl %%eax, %%es:56(%3)\n"
-+		       "34:    movl %%edx, %%es:60(%3)\n"
- 		       "       addl $-64, %0\n"
- 		       "       addl $64, %4\n"
- 		       "       addl $64, %3\n"
-@@ -282,6 +406,8 @@ __copy_user_intel(void __user *to, const
- 		       "36:    movl %%eax, %0\n"
- 		       "37:    rep; movsb\n"
- 		       "100:\n"
-+		       "       pushl %%ss\n"
-+		       "       popl %%ds\n"
++{
++	int d0, d1;
++	__asm__ __volatile__(
++		       "       .align 2,0x90\n"
++		       "1:     movl "__copyuser_seg" 32(%4), %%eax\n"
++		       "       cmpl $67, %0\n"
++		       "       jbe 3f\n"
++		       "2:     movl "__copyuser_seg" 64(%4), %%eax\n"
++		       "       .align 2,0x90\n"
++		       "3:     movl "__copyuser_seg" 0(%4), %%eax\n"
++		       "4:     movl "__copyuser_seg" 4(%4), %%edx\n"
++		       "5:     movl %%eax, 0(%3)\n"
++		       "6:     movl %%edx, 4(%3)\n"
++		       "7:     movl "__copyuser_seg" 8(%4), %%eax\n"
++		       "8:     movl "__copyuser_seg" 12(%4),%%edx\n"
++		       "9:     movl %%eax, 8(%3)\n"
++		       "10:    movl %%edx, 12(%3)\n"
++		       "11:    movl "__copyuser_seg" 16(%4), %%eax\n"
++		       "12:    movl "__copyuser_seg" 20(%4), %%edx\n"
++		       "13:    movl %%eax, 16(%3)\n"
++		       "14:    movl %%edx, 20(%3)\n"
++		       "15:    movl "__copyuser_seg" 24(%4), %%eax\n"
++		       "16:    movl "__copyuser_seg" 28(%4), %%edx\n"
++		       "17:    movl %%eax, 24(%3)\n"
++		       "18:    movl %%edx, 28(%3)\n"
++		       "19:    movl "__copyuser_seg" 32(%4), %%eax\n"
++		       "20:    movl "__copyuser_seg" 36(%4), %%edx\n"
++		       "21:    movl %%eax, 32(%3)\n"
++		       "22:    movl %%edx, 36(%3)\n"
++		       "23:    movl "__copyuser_seg" 40(%4), %%eax\n"
++		       "24:    movl "__copyuser_seg" 44(%4), %%edx\n"
++		       "25:    movl %%eax, 40(%3)\n"
++		       "26:    movl %%edx, 44(%3)\n"
++		       "27:    movl "__copyuser_seg" 48(%4), %%eax\n"
++		       "28:    movl "__copyuser_seg" 52(%4), %%edx\n"
++		       "29:    movl %%eax, 48(%3)\n"
++		       "30:    movl %%edx, 52(%3)\n"
++		       "31:    movl "__copyuser_seg" 56(%4), %%eax\n"
++		       "32:    movl "__copyuser_seg" 60(%4), %%edx\n"
++		       "33:    movl %%eax, 56(%3)\n"
++		       "34:    movl %%edx, 60(%3)\n"
++		       "       addl $-64, %0\n"
++		       "       addl $64, %4\n"
++		       "       addl $64, %3\n"
++		       "       cmpl $63, %0\n"
++		       "       ja  1b\n"
++		       "35:    movl  %0, %%eax\n"
++		       "       shrl  $2, %0\n"
++		       "       andl  $3, %%eax\n"
++		       "       cld\n"
++		       "99:    rep; movsl "__copyuser_seg" (%%esi), (%%edi)\n"
++		       "36:    movl %%eax, %0\n"
++		       "37:    rep; movsb "__copyuser_seg" (%%esi), (%%edi)\n"
++		       "100:\n"
  		       ".section .fixup,\"ax\"\n"
  		       "101:   lea 0(%%eax,%0,4),%0\n"
  		       "       jmp 100b\n"
-@@ -328,7 +454,7 @@ __copy_user_intel(void __user *to, const
- 		       "       .long 99b,101b\n"
- 		       ".previous"
- 		       : "=&c"(size), "=&D" (d0), "=&S" (d1)
--		       :  "1"(to), "2"(from), "0"(size)
-+		       :  "1"(to), "2"(from), "0"(size), "r"(__USER_DS)
- 		       : "eax", "edx", "memory");
- 	return size;
- }
-@@ -338,6 +464,7 @@ __copy_user_zeroing_intel(void *to, cons
- {
+@@ -339,41 +452,41 @@ __copy_user_zeroing_intel(void *to, cons
  	int d0, d1;
  	__asm__ __volatile__(
-+		       "        movw %w6, %%ds\n"
  		       "        .align 2,0x90\n"
- 		       "0:      movl 32(%4), %%eax\n"
+-		       "0:      movl 32(%4), %%eax\n"
++		       "0:      movl "__copyuser_seg" 32(%4), %%eax\n"
  		       "        cmpl $67, %0\n"
-@@ -346,36 +473,36 @@ __copy_user_zeroing_intel(void *to, cons
+ 		       "        jbe 2f\n"
+-		       "1:      movl 64(%4), %%eax\n"
++		       "1:      movl "__copyuser_seg" 64(%4), %%eax\n"
  		       "        .align 2,0x90\n"
- 		       "2:      movl 0(%4), %%eax\n"
- 		       "21:     movl 4(%4), %%edx\n"
--		       "        movl %%eax, 0(%3)\n"
--		       "        movl %%edx, 4(%3)\n"
-+		       "        movl %%eax, %%es:0(%3)\n"
-+		       "        movl %%edx, %%es:4(%3)\n"
- 		       "3:      movl 8(%4), %%eax\n"
- 		       "31:     movl 12(%4),%%edx\n"
--		       "        movl %%eax, 8(%3)\n"
--		       "        movl %%edx, 12(%3)\n"
-+		       "        movl %%eax, %%es:8(%3)\n"
-+		       "        movl %%edx, %%es:12(%3)\n"
- 		       "4:      movl 16(%4), %%eax\n"
- 		       "41:     movl 20(%4), %%edx\n"
--		       "        movl %%eax, 16(%3)\n"
--		       "        movl %%edx, 20(%3)\n"
-+		       "        movl %%eax, %%es:16(%3)\n"
-+		       "        movl %%edx, %%es:20(%3)\n"
- 		       "10:     movl 24(%4), %%eax\n"
- 		       "51:     movl 28(%4), %%edx\n"
--		       "        movl %%eax, 24(%3)\n"
--		       "        movl %%edx, 28(%3)\n"
-+		       "        movl %%eax, %%es:24(%3)\n"
-+		       "        movl %%edx, %%es:28(%3)\n"
- 		       "11:     movl 32(%4), %%eax\n"
- 		       "61:     movl 36(%4), %%edx\n"
--		       "        movl %%eax, 32(%3)\n"
--		       "        movl %%edx, 36(%3)\n"
-+		       "        movl %%eax, %%es:32(%3)\n"
-+		       "        movl %%edx, %%es:36(%3)\n"
- 		       "12:     movl 40(%4), %%eax\n"
- 		       "71:     movl 44(%4), %%edx\n"
--		       "        movl %%eax, 40(%3)\n"
--		       "        movl %%edx, 44(%3)\n"
-+		       "        movl %%eax, %%es:40(%3)\n"
-+		       "        movl %%edx, %%es:44(%3)\n"
- 		       "13:     movl 48(%4), %%eax\n"
- 		       "81:     movl 52(%4), %%edx\n"
--		       "        movl %%eax, 48(%3)\n"
--		       "        movl %%edx, 52(%3)\n"
-+		       "        movl %%eax, %%es:48(%3)\n"
-+		       "        movl %%edx, %%es:52(%3)\n"
- 		       "14:     movl 56(%4), %%eax\n"
- 		       "91:     movl 60(%4), %%edx\n"
--		       "        movl %%eax, 56(%3)\n"
--		       "        movl %%edx, 60(%3)\n"
-+		       "        movl %%eax, %%es:56(%3)\n"
-+		       "        movl %%edx, %%es:60(%3)\n"
+-		       "2:      movl 0(%4), %%eax\n"
+-		       "21:     movl 4(%4), %%edx\n"
++		       "2:      movl "__copyuser_seg" 0(%4), %%eax\n"
++		       "21:     movl "__copyuser_seg" 4(%4), %%edx\n"
+ 		       "        movl %%eax, 0(%3)\n"
+ 		       "        movl %%edx, 4(%3)\n"
+-		       "3:      movl 8(%4), %%eax\n"
+-		       "31:     movl 12(%4),%%edx\n"
++		       "3:      movl "__copyuser_seg" 8(%4), %%eax\n"
++		       "31:     movl "__copyuser_seg" 12(%4),%%edx\n"
+ 		       "        movl %%eax, 8(%3)\n"
+ 		       "        movl %%edx, 12(%3)\n"
+-		       "4:      movl 16(%4), %%eax\n"
+-		       "41:     movl 20(%4), %%edx\n"
++		       "4:      movl "__copyuser_seg" 16(%4), %%eax\n"
++		       "41:     movl "__copyuser_seg" 20(%4), %%edx\n"
+ 		       "        movl %%eax, 16(%3)\n"
+ 		       "        movl %%edx, 20(%3)\n"
+-		       "10:     movl 24(%4), %%eax\n"
+-		       "51:     movl 28(%4), %%edx\n"
++		       "10:     movl "__copyuser_seg" 24(%4), %%eax\n"
++		       "51:     movl "__copyuser_seg" 28(%4), %%edx\n"
+ 		       "        movl %%eax, 24(%3)\n"
+ 		       "        movl %%edx, 28(%3)\n"
+-		       "11:     movl 32(%4), %%eax\n"
+-		       "61:     movl 36(%4), %%edx\n"
++		       "11:     movl "__copyuser_seg" 32(%4), %%eax\n"
++		       "61:     movl "__copyuser_seg" 36(%4), %%edx\n"
+ 		       "        movl %%eax, 32(%3)\n"
+ 		       "        movl %%edx, 36(%3)\n"
+-		       "12:     movl 40(%4), %%eax\n"
+-		       "71:     movl 44(%4), %%edx\n"
++		       "12:     movl "__copyuser_seg" 40(%4), %%eax\n"
++		       "71:     movl "__copyuser_seg" 44(%4), %%edx\n"
+ 		       "        movl %%eax, 40(%3)\n"
+ 		       "        movl %%edx, 44(%3)\n"
+-		       "13:     movl 48(%4), %%eax\n"
+-		       "81:     movl 52(%4), %%edx\n"
++		       "13:     movl "__copyuser_seg" 48(%4), %%eax\n"
++		       "81:     movl "__copyuser_seg" 52(%4), %%edx\n"
+ 		       "        movl %%eax, 48(%3)\n"
+ 		       "        movl %%edx, 52(%3)\n"
+-		       "14:     movl 56(%4), %%eax\n"
+-		       "91:     movl 60(%4), %%edx\n"
++		       "14:     movl "__copyuser_seg" 56(%4), %%eax\n"
++		       "91:     movl "__copyuser_seg" 60(%4), %%edx\n"
+ 		       "        movl %%eax, 56(%3)\n"
+ 		       "        movl %%edx, 60(%3)\n"
  		       "        addl $-64, %0\n"
- 		       "        addl $64, %4\n"
- 		       "        addl $64, %3\n"
-@@ -389,6 +516,8 @@ __copy_user_zeroing_intel(void *to, cons
+@@ -385,9 +498,9 @@ __copy_user_zeroing_intel(void *to, cons
+ 		       "        shrl  $2, %0\n"
+ 		       "        andl $3, %%eax\n"
+ 		       "        cld\n"
+-		       "6:      rep; movsl\n"
++		       "6:      rep; movsl "__copyuser_seg" (%%esi), (%%edi)\n"
  		       "        movl %%eax,%0\n"
- 		       "7:      rep; movsb\n"
+-		       "7:      rep; movsb\n"
++		       "7:      rep; movsb "__copyuser_seg" (%%esi), (%%edi)\n"
  		       "8:\n"
-+		       "        pushl %%ss\n"
-+		       "        popl %%ds\n"
  		       ".section .fixup,\"ax\"\n"
  		       "9:      lea 0(%%eax,%0,4),%0\n"
- 		       "16:     pushl %0\n"
-@@ -423,7 +552,7 @@ __copy_user_zeroing_intel(void *to, cons
- 		       "        .long 7b,16b\n"
- 		       ".previous"
- 		       : "=&c"(size), "=&D" (d0), "=&S" (d1)
--		       :  "1"(to), "2"(from), "0"(size)
-+		       :  "1"(to), "2"(from), "0"(size), "r"(__USER_DS)
- 		       : "eax", "edx", "memory");
- 	return size;
- }
-@@ -439,6 +568,7 @@ static unsigned long __copy_user_zeroing
- 	int d0, d1;
+@@ -440,41 +553,41 @@ static unsigned long __copy_user_zeroing
  
  	__asm__ __volatile__(
-+	       "        movw %w6, %%ds\n"
  	       "        .align 2,0x90\n"
- 	       "0:      movl 32(%4), %%eax\n"
+-	       "0:      movl 32(%4), %%eax\n"
++	       "0:      movl "__copyuser_seg" 32(%4), %%eax\n"
  	       "        cmpl $67, %0\n"
-@@ -447,36 +577,36 @@ static unsigned long __copy_user_zeroing
+ 	       "        jbe 2f\n"
+-	       "1:      movl 64(%4), %%eax\n"
++	       "1:      movl "__copyuser_seg" 64(%4), %%eax\n"
  	       "        .align 2,0x90\n"
- 	       "2:      movl 0(%4), %%eax\n"
- 	       "21:     movl 4(%4), %%edx\n"
--	       "        movnti %%eax, 0(%3)\n"
--	       "        movnti %%edx, 4(%3)\n"
-+	       "        movnti %%eax, %%es:0(%3)\n"
-+	       "        movnti %%edx, %%es:4(%3)\n"
- 	       "3:      movl 8(%4), %%eax\n"
- 	       "31:     movl 12(%4),%%edx\n"
--	       "        movnti %%eax, 8(%3)\n"
--	       "        movnti %%edx, 12(%3)\n"
-+	       "        movnti %%eax, %%es:8(%3)\n"
-+	       "        movnti %%edx, %%es:12(%3)\n"
- 	       "4:      movl 16(%4), %%eax\n"
- 	       "41:     movl 20(%4), %%edx\n"
--	       "        movnti %%eax, 16(%3)\n"
--	       "        movnti %%edx, 20(%3)\n"
-+	       "        movnti %%eax, %%es:16(%3)\n"
-+	       "        movnti %%edx, %%es:20(%3)\n"
- 	       "10:     movl 24(%4), %%eax\n"
- 	       "51:     movl 28(%4), %%edx\n"
--	       "        movnti %%eax, 24(%3)\n"
--	       "        movnti %%edx, 28(%3)\n"
-+	       "        movnti %%eax, %%es:24(%3)\n"
-+	       "        movnti %%edx, %%es:28(%3)\n"
- 	       "11:     movl 32(%4), %%eax\n"
- 	       "61:     movl 36(%4), %%edx\n"
--	       "        movnti %%eax, 32(%3)\n"
--	       "        movnti %%edx, 36(%3)\n"
-+	       "        movnti %%eax, %%es:32(%3)\n"
-+	       "        movnti %%edx, %%es:36(%3)\n"
- 	       "12:     movl 40(%4), %%eax\n"
- 	       "71:     movl 44(%4), %%edx\n"
--	       "        movnti %%eax, 40(%3)\n"
--	       "        movnti %%edx, 44(%3)\n"
-+	       "        movnti %%eax, %%es:40(%3)\n"
-+	       "        movnti %%edx, %%es:44(%3)\n"
- 	       "13:     movl 48(%4), %%eax\n"
- 	       "81:     movl 52(%4), %%edx\n"
--	       "        movnti %%eax, 48(%3)\n"
--	       "        movnti %%edx, 52(%3)\n"
-+	       "        movnti %%eax, %%es:48(%3)\n"
-+	       "        movnti %%edx, %%es:52(%3)\n"
- 	       "14:     movl 56(%4), %%eax\n"
- 	       "91:     movl 60(%4), %%edx\n"
--	       "        movnti %%eax, 56(%3)\n"
--	       "        movnti %%edx, 60(%3)\n"
-+	       "        movnti %%eax, %%es:56(%3)\n"
-+	       "        movnti %%edx, %%es:60(%3)\n"
+-	       "2:      movl 0(%4), %%eax\n"
+-	       "21:     movl 4(%4), %%edx\n"
++	       "2:      movl "__copyuser_seg" 0(%4), %%eax\n"
++	       "21:     movl "__copyuser_seg" 4(%4), %%edx\n"
+ 	       "        movnti %%eax, 0(%3)\n"
+ 	       "        movnti %%edx, 4(%3)\n"
+-	       "3:      movl 8(%4), %%eax\n"
+-	       "31:     movl 12(%4),%%edx\n"
++	       "3:      movl "__copyuser_seg" 8(%4), %%eax\n"
++	       "31:     movl "__copyuser_seg" 12(%4),%%edx\n"
+ 	       "        movnti %%eax, 8(%3)\n"
+ 	       "        movnti %%edx, 12(%3)\n"
+-	       "4:      movl 16(%4), %%eax\n"
+-	       "41:     movl 20(%4), %%edx\n"
++	       "4:      movl "__copyuser_seg" 16(%4), %%eax\n"
++	       "41:     movl "__copyuser_seg" 20(%4), %%edx\n"
+ 	       "        movnti %%eax, 16(%3)\n"
+ 	       "        movnti %%edx, 20(%3)\n"
+-	       "10:     movl 24(%4), %%eax\n"
+-	       "51:     movl 28(%4), %%edx\n"
++	       "10:     movl "__copyuser_seg" 24(%4), %%eax\n"
++	       "51:     movl "__copyuser_seg" 28(%4), %%edx\n"
+ 	       "        movnti %%eax, 24(%3)\n"
+ 	       "        movnti %%edx, 28(%3)\n"
+-	       "11:     movl 32(%4), %%eax\n"
+-	       "61:     movl 36(%4), %%edx\n"
++	       "11:     movl "__copyuser_seg" 32(%4), %%eax\n"
++	       "61:     movl "__copyuser_seg" 36(%4), %%edx\n"
+ 	       "        movnti %%eax, 32(%3)\n"
+ 	       "        movnti %%edx, 36(%3)\n"
+-	       "12:     movl 40(%4), %%eax\n"
+-	       "71:     movl 44(%4), %%edx\n"
++	       "12:     movl "__copyuser_seg" 40(%4), %%eax\n"
++	       "71:     movl "__copyuser_seg" 44(%4), %%edx\n"
+ 	       "        movnti %%eax, 40(%3)\n"
+ 	       "        movnti %%edx, 44(%3)\n"
+-	       "13:     movl 48(%4), %%eax\n"
+-	       "81:     movl 52(%4), %%edx\n"
++	       "13:     movl "__copyuser_seg" 48(%4), %%eax\n"
++	       "81:     movl "__copyuser_seg" 52(%4), %%edx\n"
+ 	       "        movnti %%eax, 48(%3)\n"
+ 	       "        movnti %%edx, 52(%3)\n"
+-	       "14:     movl 56(%4), %%eax\n"
+-	       "91:     movl 60(%4), %%edx\n"
++	       "14:     movl "__copyuser_seg" 56(%4), %%eax\n"
++	       "91:     movl "__copyuser_seg" 60(%4), %%edx\n"
+ 	       "        movnti %%eax, 56(%3)\n"
+ 	       "        movnti %%edx, 60(%3)\n"
  	       "        addl $-64, %0\n"
- 	       "        addl $64, %4\n"
- 	       "        addl $64, %3\n"
-@@ -491,6 +621,8 @@ static unsigned long __copy_user_zeroing
+@@ -487,9 +600,9 @@ static unsigned long __copy_user_zeroing
+ 	       "        shrl  $2, %0\n"
+ 	       "        andl $3, %%eax\n"
+ 	       "        cld\n"
+-	       "6:      rep; movsl\n"
++	       "6:      rep; movsl "__copyuser_seg" (%%esi), (%%edi)\n"
  	       "        movl %%eax,%0\n"
- 	       "7:      rep; movsb\n"
+-	       "7:      rep; movsb\n"
++	       "7:      rep; movsb "__copyuser_seg" (%%esi), (%%edi)\n"
  	       "8:\n"
-+	       "        pushl %%ss\n"
-+	       "        popl %%ds\n"
  	       ".section .fixup,\"ax\"\n"
  	       "9:      lea 0(%%eax,%0,4),%0\n"
- 	       "16:     pushl %0\n"
-@@ -525,7 +657,7 @@ static unsigned long __copy_user_zeroing
- 	       "        .long 7b,16b\n"
- 	       ".previous"
- 	       : "=&c"(size), "=&D" (d0), "=&S" (d1)
--	       :  "1"(to), "2"(from), "0"(size)
-+	       :  "1"(to), "2"(from), "0"(size), "r"(__USER_DS)
- 	       : "eax", "edx", "memory");
- 	return size;
- }
-@@ -536,6 +668,7 @@ static unsigned long __copy_user_intel_n
- 	int d0, d1;
+@@ -537,41 +650,41 @@ static unsigned long __copy_user_intel_n
  
  	__asm__ __volatile__(
-+	       "        movw %w6, %%ds\n"
  	       "        .align 2,0x90\n"
- 	       "0:      movl 32(%4), %%eax\n"
+-	       "0:      movl 32(%4), %%eax\n"
++	       "0:      movl "__copyuser_seg" 32(%4), %%eax\n"
  	       "        cmpl $67, %0\n"
-@@ -544,36 +677,36 @@ static unsigned long __copy_user_intel_n
+ 	       "        jbe 2f\n"
+-	       "1:      movl 64(%4), %%eax\n"
++	       "1:      movl "__copyuser_seg" 64(%4), %%eax\n"
  	       "        .align 2,0x90\n"
- 	       "2:      movl 0(%4), %%eax\n"
- 	       "21:     movl 4(%4), %%edx\n"
--	       "        movnti %%eax, 0(%3)\n"
--	       "        movnti %%edx, 4(%3)\n"
-+	       "        movnti %%eax, %%es:0(%3)\n"
-+	       "        movnti %%edx, %%es:4(%3)\n"
- 	       "3:      movl 8(%4), %%eax\n"
- 	       "31:     movl 12(%4),%%edx\n"
--	       "        movnti %%eax, 8(%3)\n"
--	       "        movnti %%edx, 12(%3)\n"
-+	       "        movnti %%eax, %%es:8(%3)\n"
-+	       "        movnti %%edx, %%es:12(%3)\n"
- 	       "4:      movl 16(%4), %%eax\n"
- 	       "41:     movl 20(%4), %%edx\n"
--	       "        movnti %%eax, 16(%3)\n"
--	       "        movnti %%edx, 20(%3)\n"
-+	       "        movnti %%eax, %%es:16(%3)\n"
-+	       "        movnti %%edx, %%es:20(%3)\n"
- 	       "10:     movl 24(%4), %%eax\n"
- 	       "51:     movl 28(%4), %%edx\n"
--	       "        movnti %%eax, 24(%3)\n"
--	       "        movnti %%edx, 28(%3)\n"
-+	       "        movnti %%eax, %%es:24(%3)\n"
-+	       "        movnti %%edx, %%es:28(%3)\n"
- 	       "11:     movl 32(%4), %%eax\n"
- 	       "61:     movl 36(%4), %%edx\n"
--	       "        movnti %%eax, 32(%3)\n"
--	       "        movnti %%edx, 36(%3)\n"
-+	       "        movnti %%eax, %%es:32(%3)\n"
-+	       "        movnti %%edx, %%es:36(%3)\n"
- 	       "12:     movl 40(%4), %%eax\n"
- 	       "71:     movl 44(%4), %%edx\n"
--	       "        movnti %%eax, 40(%3)\n"
--	       "        movnti %%edx, 44(%3)\n"
-+	       "        movnti %%eax, %%es:40(%3)\n"
-+	       "        movnti %%edx, %%es:44(%3)\n"
- 	       "13:     movl 48(%4), %%eax\n"
- 	       "81:     movl 52(%4), %%edx\n"
--	       "        movnti %%eax, 48(%3)\n"
--	       "        movnti %%edx, 52(%3)\n"
-+	       "        movnti %%eax, %%es:48(%3)\n"
-+	       "        movnti %%edx, %%es:52(%3)\n"
- 	       "14:     movl 56(%4), %%eax\n"
- 	       "91:     movl 60(%4), %%edx\n"
--	       "        movnti %%eax, 56(%3)\n"
--	       "        movnti %%edx, 60(%3)\n"
-+	       "        movnti %%eax, %%es:56(%3)\n"
-+	       "        movnti %%edx, %%es:60(%3)\n"
+-	       "2:      movl 0(%4), %%eax\n"
+-	       "21:     movl 4(%4), %%edx\n"
++	       "2:      movl "__copyuser_seg" 0(%4), %%eax\n"
++	       "21:     movl "__copyuser_seg" 4(%4), %%edx\n"
+ 	       "        movnti %%eax, 0(%3)\n"
+ 	       "        movnti %%edx, 4(%3)\n"
+-	       "3:      movl 8(%4), %%eax\n"
+-	       "31:     movl 12(%4),%%edx\n"
++	       "3:      movl "__copyuser_seg" 8(%4), %%eax\n"
++	       "31:     movl "__copyuser_seg" 12(%4),%%edx\n"
+ 	       "        movnti %%eax, 8(%3)\n"
+ 	       "        movnti %%edx, 12(%3)\n"
+-	       "4:      movl 16(%4), %%eax\n"
+-	       "41:     movl 20(%4), %%edx\n"
++	       "4:      movl "__copyuser_seg" 16(%4), %%eax\n"
++	       "41:     movl "__copyuser_seg" 20(%4), %%edx\n"
+ 	       "        movnti %%eax, 16(%3)\n"
+ 	       "        movnti %%edx, 20(%3)\n"
+-	       "10:     movl 24(%4), %%eax\n"
+-	       "51:     movl 28(%4), %%edx\n"
++	       "10:     movl "__copyuser_seg" 24(%4), %%eax\n"
++	       "51:     movl "__copyuser_seg" 28(%4), %%edx\n"
+ 	       "        movnti %%eax, 24(%3)\n"
+ 	       "        movnti %%edx, 28(%3)\n"
+-	       "11:     movl 32(%4), %%eax\n"
+-	       "61:     movl 36(%4), %%edx\n"
++	       "11:     movl "__copyuser_seg" 32(%4), %%eax\n"
++	       "61:     movl "__copyuser_seg" 36(%4), %%edx\n"
+ 	       "        movnti %%eax, 32(%3)\n"
+ 	       "        movnti %%edx, 36(%3)\n"
+-	       "12:     movl 40(%4), %%eax\n"
+-	       "71:     movl 44(%4), %%edx\n"
++	       "12:     movl "__copyuser_seg" 40(%4), %%eax\n"
++	       "71:     movl "__copyuser_seg" 44(%4), %%edx\n"
+ 	       "        movnti %%eax, 40(%3)\n"
+ 	       "        movnti %%edx, 44(%3)\n"
+-	       "13:     movl 48(%4), %%eax\n"
+-	       "81:     movl 52(%4), %%edx\n"
++	       "13:     movl "__copyuser_seg" 48(%4), %%eax\n"
++	       "81:     movl "__copyuser_seg" 52(%4), %%edx\n"
+ 	       "        movnti %%eax, 48(%3)\n"
+ 	       "        movnti %%edx, 52(%3)\n"
+-	       "14:     movl 56(%4), %%eax\n"
+-	       "91:     movl 60(%4), %%edx\n"
++	       "14:     movl "__copyuser_seg" 56(%4), %%eax\n"
++	       "91:     movl "__copyuser_seg" 60(%4), %%edx\n"
+ 	       "        movnti %%eax, 56(%3)\n"
+ 	       "        movnti %%edx, 60(%3)\n"
  	       "        addl $-64, %0\n"
- 	       "        addl $64, %4\n"
- 	       "        addl $64, %3\n"
-@@ -588,6 +721,8 @@ static unsigned long __copy_user_intel_n
+@@ -584,9 +697,9 @@ static unsigned long __copy_user_intel_n
+ 	       "        shrl  $2, %0\n"
+ 	       "        andl $3, %%eax\n"
+ 	       "        cld\n"
+-	       "6:      rep; movsl\n"
++	       "6:      rep; movsl "__copyuser_seg" (%%esi), (%%edi)\n"
  	       "        movl %%eax,%0\n"
- 	       "7:      rep; movsb\n"
+-	       "7:      rep; movsb\n"
++	       "7:      rep; movsb "__copyuser_seg" (%%esi), (%%edi)\n"
  	       "8:\n"
-+	       "        pushl %%ss\n"
-+	       "        popl %%ds\n"
  	       ".section .fixup,\"ax\"\n"
  	       "9:      lea 0(%%eax,%0,4),%0\n"
- 	       "16:     jmp 8b\n"
-@@ -616,7 +751,7 @@ static unsigned long __copy_user_intel_n
- 	       "        .long 7b,16b\n"
- 	       ".previous"
- 	       : "=&c"(size), "=&D" (d0), "=&S" (d1)
--	       :  "1"(to), "2"(from), "0"(size)
-+	       :  "1"(to), "2"(from), "0"(size), "r"(__USER_DS)
- 	       : "eax", "edx", "memory");
- 	return size;
- }
-@@ -629,90 +764,146 @@ static unsigned long __copy_user_intel_n
+@@ -629,32 +742,36 @@ static unsigned long __copy_user_intel_n
   */
  unsigned long __copy_user_zeroing_intel(void *to, const void __user *from,
  					unsigned long size);
@@ -17498,243 +17273,69 @@ diff -urNp linux-2.6.36.2/arch/x86/lib/usercopy_32.c linux-2.6.36.2/arch/x86/lib
  
  /* Generic arbitrary sized copy.  */
 -#define __copy_user(to, from, size)					\
--do {									\
--	int __d0, __d1, __d2;						\
--	__asm__ __volatile__(						\
--		"	cmp  $7,%0\n"					\
--		"	jbe  1f\n"					\
--		"	movl %1,%0\n"					\
--		"	negl %0\n"					\
--		"	andl $7,%0\n"					\
--		"	subl %0,%3\n"					\
++#define __copy_user(to, from, size, prefix, set, restore)		\
+ do {									\
+ 	int __d0, __d1, __d2;						\
+ 	__asm__ __volatile__(						\
++		set							\
+ 		"	cmp  $7,%0\n"					\
+ 		"	jbe  1f\n"					\
+ 		"	movl %1,%0\n"					\
+ 		"	negl %0\n"					\
+ 		"	andl $7,%0\n"					\
+ 		"	subl %0,%3\n"					\
 -		"4:	rep; movsb\n"					\
--		"	movl %3,%0\n"					\
--		"	shrl $2,%0\n"					\
--		"	andl $3,%3\n"					\
--		"	.align 2,0x90\n"				\
++		"4:	rep; movsb "prefix" (%%esi), (%%edi)\n"		\
+ 		"	movl %3,%0\n"					\
+ 		"	shrl $2,%0\n"					\
+ 		"	andl $3,%3\n"					\
+ 		"	.align 2,0x90\n"				\
 -		"0:	rep; movsl\n"					\
--		"	movl %3,%0\n"					\
++		"0:	rep; movsl "prefix" (%%esi), (%%edi)\n"		\
+ 		"	movl %3,%0\n"					\
 -		"1:	rep; movsb\n"					\
--		"2:\n"							\
--		".section .fixup,\"ax\"\n"				\
--		"5:	addl %3,%0\n"					\
--		"	jmp 2b\n"					\
--		"3:	lea 0(%3,%0,4),%0\n"				\
--		"	jmp 2b\n"					\
--		".previous\n"						\
--		".section __ex_table,\"a\"\n"				\
--		"	.align 4\n"					\
--		"	.long 4b,5b\n"					\
--		"	.long 0b,3b\n"					\
--		"	.long 1b,2b\n"					\
--		".previous"						\
--		: "=&c"(size), "=&D" (__d0), "=&S" (__d1), "=r"(__d2)	\
--		: "3"(size), "0"(size), "1"(to), "2"(from)		\
--		: "memory");						\
--} while (0)
--
--#define __copy_user_zeroing(to, from, size)				\
--do {									\
--	int __d0, __d1, __d2;						\
--	__asm__ __volatile__(						\
--		"	cmp  $7,%0\n"					\
--		"	jbe  1f\n"					\
--		"	movl %1,%0\n"					\
--		"	negl %0\n"					\
--		"	andl $7,%0\n"					\
--		"	subl %0,%3\n"					\
++		"1:	rep; movsb "prefix" (%%esi), (%%edi)\n"		\
+ 		"2:\n"							\
++		restore							\
+ 		".section .fixup,\"ax\"\n"				\
+ 		"5:	addl %3,%0\n"					\
+ 		"	jmp 2b\n"					\
+@@ -682,14 +799,14 @@ do {									\
+ 		"	negl %0\n"					\
+ 		"	andl $7,%0\n"					\
+ 		"	subl %0,%3\n"					\
 -		"4:	rep; movsb\n"					\
--		"	movl %3,%0\n"					\
--		"	shrl $2,%0\n"					\
--		"	andl $3,%3\n"					\
--		"	.align 2,0x90\n"				\
++		"4:	rep; movsb "__copyuser_seg" (%%esi), (%%edi)\n"	\
+ 		"	movl %3,%0\n"					\
+ 		"	shrl $2,%0\n"					\
+ 		"	andl $3,%3\n"					\
+ 		"	.align 2,0x90\n"				\
 -		"0:	rep; movsl\n"					\
--		"	movl %3,%0\n"					\
++		"0:	rep; movsl "__copyuser_seg" (%%esi), (%%edi)\n"	\
+ 		"	movl %3,%0\n"					\
 -		"1:	rep; movsb\n"					\
--		"2:\n"							\
--		".section .fixup,\"ax\"\n"				\
--		"5:	addl %3,%0\n"					\
--		"	jmp 6f\n"					\
--		"3:	lea 0(%3,%0,4),%0\n"				\
--		"6:	pushl %0\n"					\
--		"	pushl %%eax\n"					\
--		"	xorl %%eax,%%eax\n"				\
--		"	rep; stosb\n"					\
--		"	popl %%eax\n"					\
--		"	popl %0\n"					\
--		"	jmp 2b\n"					\
--		".previous\n"						\
--		".section __ex_table,\"a\"\n"				\
--		"	.align 4\n"					\
--		"	.long 4b,5b\n"					\
--		"	.long 0b,3b\n"					\
--		"	.long 1b,6b\n"					\
--		".previous"						\
--		: "=&c"(size), "=&D" (__d0), "=&S" (__d1), "=r"(__d2)	\
--		: "3"(size), "0"(size), "1"(to), "2"(from)		\
--		: "memory");						\
--} while (0)
-+static unsigned long
-+__generic_copy_to_user(void __user *to, const void *from, unsigned long size)
-+{
-+	int __d0, __d1, __d2;
-+
-+	__asm__ __volatile__(
-+		"	movw %w8,%%es\n"
-+		"	cmp  $7,%0\n"
-+		"	jbe  1f\n"
-+		"	movl %1,%0\n"
-+		"	negl %0\n"
-+		"	andl $7,%0\n"
-+		"	subl %0,%3\n"
-+		"4:	rep; movsb\n"
-+		"	movl %3,%0\n"
-+		"	shrl $2,%0\n"
-+		"	andl $3,%3\n"
-+		"	.align 2,0x90\n"
-+		"0:	rep; movsl\n"
-+		"	movl %3,%0\n"
-+		"1:	rep; movsb\n"
-+		"2:\n"
-+		"	pushl %%ss\n"
-+		"	popl %%es\n"
-+		".section .fixup,\"ax\"\n"
-+		"5:	addl %3,%0\n"
-+		"	jmp 2b\n"
-+		"3:	lea 0(%3,%0,4),%0\n"
-+		"	jmp 2b\n"
-+		".previous\n"
-+		".section __ex_table,\"a\"\n"
-+		"	.align 4\n"
-+		"	.long 4b,5b\n"
-+		"	.long 0b,3b\n"
-+		"	.long 1b,2b\n"
-+		".previous"
-+		: "=&c"(size), "=&D" (__d0), "=&S" (__d1), "=r"(__d2)
-+		: "3"(size), "0"(size), "1"(to), "2"(from), "r"(__USER_DS)
-+		: "memory");
-+	return size;
-+}
-+
-+static unsigned long
-+__generic_copy_from_user(void *to, const void __user *from, unsigned long size)
-+{
-+	int __d0, __d1, __d2;
-+
-+	__asm__ __volatile__(
-+		"	movw %w8,%%ds\n"
-+		"	cmp  $7,%0\n"
-+		"	jbe  1f\n"
-+		"	movl %1,%0\n"
-+		"	negl %0\n"
-+		"	andl $7,%0\n"
-+		"	subl %0,%3\n"
-+		"4:	rep; movsb\n"
-+		"	movl %3,%0\n"
-+		"	shrl $2,%0\n"
-+		"	andl $3,%3\n"
-+		"	.align 2,0x90\n"
-+		"0:	rep; movsl\n"
-+		"	movl %3,%0\n"
-+		"1:	rep; movsb\n"
-+		"2:\n"
-+		"	pushl %%ss\n"
-+		"	popl %%ds\n"
-+		".section .fixup,\"ax\"\n"
-+		"5:	addl %3,%0\n"
-+		"	jmp 2b\n"
-+		"3:	lea 0(%3,%0,4),%0\n"
-+		"	jmp 2b\n"
-+		".previous\n"
-+		".section __ex_table,\"a\"\n"
-+		"	.align 4\n"
-+		"	.long 4b,5b\n"
-+		"	.long 0b,3b\n"
-+		"	.long 1b,2b\n"
-+		".previous"
-+		: "=&c"(size), "=&D" (__d0), "=&S" (__d1), "=r"(__d2)
-+		: "3"(size), "0"(size), "1"(to), "2"(from), "r"(__USER_DS)
-+		: "memory");
-+	return size;
-+}
-+
-+static unsigned long
-+__copy_user_zeroing(void *to, const void __user *from, unsigned long size)
-+{
-+	int __d0, __d1, __d2;
-+
-+	__asm__ __volatile__(
-+		"	movw %w8,%%ds\n"
-+		"	cmp  $7,%0\n"
-+		"	jbe  1f\n"
-+		"	movl %1,%0\n"
-+		"	negl %0\n"
-+		"	andl $7,%0\n"
-+		"	subl %0,%3\n"
-+		"4:	rep; movsb\n"
-+		"	movl %3,%0\n"
-+		"	shrl $2,%0\n"
-+		"	andl $3,%3\n"
-+		"	.align 2,0x90\n"
-+		"0:	rep; movsl\n"
-+		"	movl %3,%0\n"
-+		"1:	rep; movsb\n"
-+		"2:\n"
-+		"	pushl %%ss\n"
-+		"	popl %%ds\n"
-+		".section .fixup,\"ax\"\n"
-+		"5:	addl %3,%0\n"
-+		"	jmp 6f\n"
-+		"3:	lea 0(%3,%0,4),%0\n"
-+		"6:	pushl %0\n"
-+		"	pushl %%eax\n"
-+		"	xorl %%eax,%%eax\n"
-+		"	rep; stosb\n"
-+		"	popl %%eax\n"
-+		"	popl %0\n"
-+		"	jmp 2b\n"
-+		".previous\n"
-+		".section __ex_table,\"a\"\n"
-+		"	.align 4\n"
-+		"	.long 4b,5b\n"
-+		"	.long 0b,3b\n"
-+		"	.long 1b,6b\n"
-+		".previous"
-+		: "=&c"(size), "=&D" (__d0), "=&S" (__d1), "=r"(__d2)
-+		: "3"(size), "0"(size), "1"(to), "2"(from), "r"(__USER_DS)
-+		: "memory");
-+	return size;
-+}
- 
- unsigned long __copy_to_user_ll(void __user *to, const void *from,
- 				unsigned long n)
-@@ -775,9 +966,9 @@ survive:
++		"1:	rep; movsb "__copyuser_seg" (%%esi), (%%edi)\n"	\
+ 		"2:\n"							\
+ 		".section .fixup,\"ax\"\n"				\
+ 		"5:	addl %3,%0\n"					\
+@@ -775,9 +892,9 @@ survive:
  	}
  #endif
  	if (movsl_is_ok(to, from, n))
 -		__copy_user(to, from, n);
-+		n = __generic_copy_to_user(to, from, n);
++		__copy_user(to, from, n, "", __COPYUSER_SET_ES, __COPYUSER_RESTORE_ES);
  	else
 -		n = __copy_user_intel(to, from, n);
 +		n = __generic_copy_to_user_intel(to, from, n);
  	return n;
  }
  EXPORT_SYMBOL(__copy_to_user_ll);
-@@ -786,7 +977,7 @@ unsigned long __copy_from_user_ll(void *
- 					unsigned long n)
- {
- 	if (movsl_is_ok(to, from, n))
--		__copy_user_zeroing(to, from, n);
-+		n = __copy_user_zeroing(to, from, n);
- 	else
- 		n = __copy_user_zeroing_intel(to, from, n);
- 	return n;
-@@ -797,10 +988,9 @@ unsigned long __copy_from_user_ll_nozero
+@@ -797,10 +914,9 @@ unsigned long __copy_from_user_ll_nozero
  					 unsigned long n)
  {
  	if (movsl_is_ok(to, from, n))
 -		__copy_user(to, from, n);
-+		n = __generic_copy_from_user(to, from, n);
++		__copy_user(to, from, n, __copyuser_seg, "", "");
  	else
 -		n = __copy_user_intel((void __user *)to,
 -				      (const void *)from, n);
@@ -17742,27 +17343,15 @@ diff -urNp linux-2.6.36.2/arch/x86/lib/usercopy_32.c linux-2.6.36.2/arch/x86/lib
  	return n;
  }
  EXPORT_SYMBOL(__copy_from_user_ll_nozero);
-@@ -812,9 +1002,9 @@ unsigned long __copy_from_user_ll_nocach
- 	if (n > 64 && cpu_has_xmm2)
- 		n = __copy_user_zeroing_intel_nocache(to, from, n);
- 	else
--		__copy_user_zeroing(to, from, n);
-+		n = __copy_user_zeroing(to, from, n);
- #else
--	__copy_user_zeroing(to, from, n);
-+	n = __copy_user_zeroing(to, from, n);
- #endif
- 	return n;
- }
-@@ -827,65 +1017,53 @@ unsigned long __copy_from_user_ll_nocach
+@@ -827,65 +943,46 @@ unsigned long __copy_from_user_ll_nocach
  	if (n > 64 && cpu_has_xmm2)
  		n = __copy_user_intel_nocache(to, from, n);
  	else
 -		__copy_user(to, from, n);
-+		n = __generic_copy_from_user(to, from, n);
++		__copy_user(to, from, n, __copyuser_seg, "", "");
  #else
 -	__copy_user(to, from, n);
-+	n = __generic_copy_from_user(to, from, n);
++	__copy_user(to, from, n, __copyuser_seg, "", "");
  #endif
  	return n;
  }
@@ -17825,37 +17414,30 @@ diff -urNp linux-2.6.36.2/arch/x86/lib/usercopy_32.c linux-2.6.36.2/arch/x86/lib
  
 -void copy_from_user_overflow(void)
 +#ifdef CONFIG_PAX_MEMORY_UDEREF
-+void __set_fs(mm_segment_t x, int cpu)
++void set_fs(mm_segment_t x)
  {
 -	WARN(1, "Buffer overflow detected!\n");
-+	unsigned long limit = x.seg;
-+	struct desc_struct d;
-+
 +	current_thread_info()->addr_limit = x;
-+	if (unlikely(paravirt_enabled()))
-+		return;
-+
-+	if (likely(limit))
-+		limit = (limit - 1UL) >> PAGE_SHIFT;
-+	pack_descriptor(&d, 0UL, limit, 0xF3, 0xC);
-+	write_gdt_entry(get_cpu_gdt_table(cpu), GDT_ENTRY_DEFAULT_USER_DS, &d, DESCTYPE_S);
++	switch (x.seg) {
++	case 0:
++		loadsegment(gs, 0);
++		break;
++	case TASK_SIZE_MAX:
++		loadsegment(gs, __USER_DS);
++		break;
++	case -1UL:
++		loadsegment(gs, __KERNEL_DS);
++		break;
++	default:
++		BUG();
++	}
++	return;
  }
 -EXPORT_SYMBOL(copy_from_user_overflow);
 +
-+void set_fs(mm_segment_t x)
-+{
-+	__set_fs(x, get_cpu());
-+	put_cpu();
-+}
-+EXPORT_SYMBOL(copy_from_user);
-+#else
-+void set_fs(mm_segment_t x)
-+{
-+	current_thread_info()->addr_limit = x;
-+}
-+#endif
-+
 +EXPORT_SYMBOL(set_fs);
++
++#endif
 diff -urNp linux-2.6.36.2/arch/x86/lib/usercopy_64.c linux-2.6.36.2/arch/x86/lib/usercopy_64.c
 --- linux-2.6.36.2/arch/x86/lib/usercopy_64.c	2010-10-20 16:30:22.000000000 -0400
 +++ linux-2.6.36.2/arch/x86/lib/usercopy_64.c	2010-12-09 20:24:54.000000000 -0500
@@ -17989,7 +17571,7 @@ diff -urNp linux-2.6.36.2/arch/x86/mm/extable.c linux-2.6.36.2/arch/x86/mm/extab
  		pnp_bios_is_utter_crap = 1;
 diff -urNp linux-2.6.36.2/arch/x86/mm/fault.c linux-2.6.36.2/arch/x86/mm/fault.c
 --- linux-2.6.36.2/arch/x86/mm/fault.c	2010-10-20 16:30:22.000000000 -0400
-+++ linux-2.6.36.2/arch/x86/mm/fault.c	2010-12-09 20:24:55.000000000 -0500
++++ linux-2.6.36.2/arch/x86/mm/fault.c	2010-12-19 12:46:50.000000000 -0500
 @@ -11,10 +11,18 @@
  #include <linux/kprobes.h>		/* __kprobes, ...		*/
  #include <linux/mmiotrace.h>		/* kmmio_handler, ...		*/
@@ -18018,7 +17600,31 @@ diff -urNp linux-2.6.36.2/arch/x86/mm/fault.c linux-2.6.36.2/arch/x86/mm/fault.c
  		preempt_disable();
  		if (kprobe_running() && kprobe_fault_handler(regs, 14))
  			ret = 1;
-@@ -173,6 +181,30 @@ force_sig_info_fault(int si_signo, int s
+@@ -113,7 +121,10 @@ check_prefetch_opcode(struct pt_regs *re
+ 		return !instr_lo || (instr_lo>>1) == 1;
+ 	case 0x00:
+ 		/* Prefetch instruction is 0x0F0D or 0x0F18 */
+-		if (probe_kernel_address(instr, opcode))
++		if (user_mode(regs)) {
++			if (__copy_from_user_inatomic(&opcode, (__force unsigned char __user *)(instr), 1))
++				return 0;
++		} else if (probe_kernel_address(instr, opcode))
+ 			return 0;
+ 
+ 		*prefetch = (instr_lo == 0xF) &&
+@@ -147,7 +158,10 @@ is_prefetch(struct pt_regs *regs, unsign
+ 	while (instr < max_instr) {
+ 		unsigned char opcode;
+ 
+-		if (probe_kernel_address(instr, opcode))
++		if (user_mode(regs)) {
++			if (__copy_from_user_inatomic(&opcode, (__force unsigned char __user *)(instr), 1))
++				break;
++		} else if (probe_kernel_address(instr, opcode))
+ 			break;
+ 
+ 		instr++;
+@@ -173,6 +187,30 @@ force_sig_info_fault(int si_signo, int s
  	force_sig_info(si_signo, &info, tsk);
  }
  
@@ -18049,7 +17655,7 @@ diff -urNp linux-2.6.36.2/arch/x86/mm/fault.c linux-2.6.36.2/arch/x86/mm/fault.c
  DEFINE_SPINLOCK(pgd_lock);
  LIST_HEAD(pgd_list);
  
-@@ -225,11 +257,24 @@ void vmalloc_sync_all(void)
+@@ -225,11 +263,24 @@ void vmalloc_sync_all(void)
  	     address += PMD_SIZE) {
  
  		unsigned long flags;
@@ -18075,7 +17681,7 @@ diff -urNp linux-2.6.36.2/arch/x86/mm/fault.c linux-2.6.36.2/arch/x86/mm/fault.c
  				break;
  		}
  		spin_unlock_irqrestore(&pgd_lock, flags);
-@@ -259,6 +304,11 @@ static noinline __kprobes int vmalloc_fa
+@@ -259,6 +310,11 @@ static noinline __kprobes int vmalloc_fa
  	 * an interrupt in the middle of a task switch..
  	 */
  	pgd_paddr = read_cr3();
@@ -18087,7 +17693,7 @@ diff -urNp linux-2.6.36.2/arch/x86/mm/fault.c linux-2.6.36.2/arch/x86/mm/fault.c
  	pmd_k = vmalloc_sync_one(__va(pgd_paddr), address);
  	if (!pmd_k)
  		return -1;
-@@ -333,15 +383,27 @@ void vmalloc_sync_all(void)
+@@ -333,15 +389,27 @@ void vmalloc_sync_all(void)
  
  		const pgd_t *pgd_ref = pgd_offset_k(address);
  		unsigned long flags;
@@ -18115,7 +17721,7 @@ diff -urNp linux-2.6.36.2/arch/x86/mm/fault.c linux-2.6.36.2/arch/x86/mm/fault.c
  			if (pgd_none(*pgd))
  				set_pgd(pgd, *pgd_ref);
  			else
-@@ -374,7 +436,14 @@ static noinline __kprobes int vmalloc_fa
+@@ -374,7 +442,14 @@ static noinline __kprobes int vmalloc_fa
  	 * happen within a race in page table update. In the later
  	 * case just flush:
  	 */
@@ -18130,7 +17736,7 @@ diff -urNp linux-2.6.36.2/arch/x86/mm/fault.c linux-2.6.36.2/arch/x86/mm/fault.c
  	pgd_ref = pgd_offset_k(address);
  	if (pgd_none(*pgd_ref))
  		return -1;
-@@ -536,7 +605,7 @@ static int is_errata93(struct pt_regs *r
+@@ -536,7 +611,7 @@ static int is_errata93(struct pt_regs *r
  static int is_errata100(struct pt_regs *regs, unsigned long address)
  {
  #ifdef CONFIG_X86_64
@@ -18139,7 +17745,7 @@ diff -urNp linux-2.6.36.2/arch/x86/mm/fault.c linux-2.6.36.2/arch/x86/mm/fault.c
  		return 1;
  #endif
  	return 0;
-@@ -563,7 +632,7 @@ static int is_f00f_bug(struct pt_regs *r
+@@ -563,7 +638,7 @@ static int is_f00f_bug(struct pt_regs *r
  }
  
  static const char nx_warning[] = KERN_CRIT
@@ -18148,7 +17754,7 @@ diff -urNp linux-2.6.36.2/arch/x86/mm/fault.c linux-2.6.36.2/arch/x86/mm/fault.c
  
  static void
  show_fault_oops(struct pt_regs *regs, unsigned long error_code,
-@@ -572,15 +641,26 @@ show_fault_oops(struct pt_regs *regs, un
+@@ -572,15 +647,26 @@ show_fault_oops(struct pt_regs *regs, un
  	if (!oops_may_print())
  		return;
  
@@ -18177,7 +17783,7 @@ diff -urNp linux-2.6.36.2/arch/x86/mm/fault.c linux-2.6.36.2/arch/x86/mm/fault.c
  	printk(KERN_ALERT "BUG: unable to handle kernel ");
  	if (address < PAGE_SIZE)
  		printk(KERN_CONT "NULL pointer dereference");
-@@ -705,6 +785,68 @@ __bad_area_nosemaphore(struct pt_regs *r
+@@ -705,6 +791,68 @@ __bad_area_nosemaphore(struct pt_regs *r
  		       unsigned long address, int si_code)
  {
  	struct task_struct *tsk = current;
@@ -18246,7 +17852,7 @@ diff -urNp linux-2.6.36.2/arch/x86/mm/fault.c linux-2.6.36.2/arch/x86/mm/fault.c
  
  	/* User mode accesses just cause a SIGSEGV */
  	if (error_code & PF_USER) {
-@@ -851,6 +993,106 @@ static int spurious_fault_check(unsigned
+@@ -851,6 +999,99 @@ static int spurious_fault_check(unsigned
  	return 1;
  }
  
@@ -18315,9 +17921,6 @@ diff -urNp linux-2.6.36.2/arch/x86/mm/fault.c linux-2.6.36.2/arch/x86/mm/fault.c
 +	 * PaX: fill DTLB with user rights and retry
 +	 */
 +	__asm__ __volatile__ (
-+#ifdef CONFIG_PAX_MEMORY_UDEREF
-+		"movw %w4,%%es\n"
-+#endif
 +		"orb %2,(%1)\n"
 +#if defined(CONFIG_M586) || defined(CONFIG_M586TSC)
 +/*
@@ -18335,14 +17938,10 @@ diff -urNp linux-2.6.36.2/arch/x86/mm/fault.c linux-2.6.36.2/arch/x86/mm/fault.c
 + */
 +		"invlpg (%0)\n"
 +#endif
-+		"testb $0,%%es:(%0)\n"
++		"testb $0,"__copyuser_seg"(%0)\n"
 +		"xorb %3,(%1)\n"
-+#ifdef CONFIG_PAX_MEMORY_UDEREF
-+		"pushl %%ss\n"
-+		"popl %%es\n"
-+#endif
 +		:
-+		: "r" (address), "r" (pte), "q" (pte_mask), "i" (_PAGE_USER), "r" (__USER_DS)
++		: "r" (address), "r" (pte), "q" (pte_mask), "i" (_PAGE_USER)
 +		: "memory", "cc");
 +	pte_unmap_unlock(pte, ptl);
 +	up_read(&mm->mmap_sem);
@@ -18353,7 +17952,7 @@ diff -urNp linux-2.6.36.2/arch/x86/mm/fault.c linux-2.6.36.2/arch/x86/mm/fault.c
  /*
   * Handle a spurious fault caused by a stale TLB entry.
   *
-@@ -917,6 +1159,9 @@ int show_unhandled_signals = 1;
+@@ -917,6 +1158,9 @@ int show_unhandled_signals = 1;
  static inline int
  access_error(unsigned long error_code, int write, struct vm_area_struct *vma)
  {
@@ -18363,7 +17962,7 @@ diff -urNp linux-2.6.36.2/arch/x86/mm/fault.c linux-2.6.36.2/arch/x86/mm/fault.c
  	if (write) {
  		/* write, present and write, not present: */
  		if (unlikely(!(vma->vm_flags & VM_WRITE)))
-@@ -950,17 +1195,31 @@ do_page_fault(struct pt_regs *regs, unsi
+@@ -950,17 +1194,31 @@ do_page_fault(struct pt_regs *regs, unsi
  {
  	struct vm_area_struct *vma;
  	struct task_struct *tsk;
@@ -18399,7 +17998,7 @@ diff -urNp linux-2.6.36.2/arch/x86/mm/fault.c linux-2.6.36.2/arch/x86/mm/fault.c
  	/*
  	 * Detect and handle instructions that would cause a page fault for
  	 * both a tracked kernel page and a userspace page.
-@@ -1020,7 +1279,7 @@ do_page_fault(struct pt_regs *regs, unsi
+@@ -1020,7 +1278,7 @@ do_page_fault(struct pt_regs *regs, unsi
  	 * User-mode registers count as a user access even for any
  	 * potential system fault or CPU buglet:
  	 */
@@ -18408,7 +18007,7 @@ diff -urNp linux-2.6.36.2/arch/x86/mm/fault.c linux-2.6.36.2/arch/x86/mm/fault.c
  		local_irq_enable();
  		error_code |= PF_USER;
  	} else {
-@@ -1074,6 +1333,11 @@ do_page_fault(struct pt_regs *regs, unsi
+@@ -1074,6 +1332,11 @@ do_page_fault(struct pt_regs *regs, unsi
  		might_sleep();
  	}
  
@@ -18420,7 +18019,7 @@ diff -urNp linux-2.6.36.2/arch/x86/mm/fault.c linux-2.6.36.2/arch/x86/mm/fault.c
  	vma = find_vma(mm, address);
  	if (unlikely(!vma)) {
  		bad_area(regs, error_code, address);
-@@ -1085,18 +1349,24 @@ do_page_fault(struct pt_regs *regs, unsi
+@@ -1085,18 +1348,24 @@ do_page_fault(struct pt_regs *regs, unsi
  		bad_area(regs, error_code, address);
  		return;
  	}
@@ -18444,19 +18043,19 @@ diff -urNp linux-2.6.36.2/arch/x86/mm/fault.c linux-2.6.36.2/arch/x86/mm/fault.c
 +	if (unlikely(address + 65536 + 32 * sizeof(unsigned long) < task_pt_regs(tsk)->sp)) {
 +		bad_area(regs, error_code, address);
 +		return;
- 	}
++	}
 +
 +#ifdef CONFIG_PAX_SEGMEXEC
 +	if (unlikely((mm->pax_flags & MF_PAX_SEGMEXEC) && vma->vm_end - SEGMEXEC_TASK_SIZE - 1 < address - SEGMEXEC_TASK_SIZE - 1)) {
 +		bad_area(regs, error_code, address);
 +		return;
-+	}
+ 	}
 +#endif
 +
  	if (unlikely(expand_stack(vma, address))) {
  		bad_area(regs, error_code, address);
  		return;
-@@ -1140,3 +1410,199 @@ good_area:
+@@ -1140,3 +1409,199 @@ good_area:
  
  	up_read(&mm->mmap_sem);
  }
@@ -20900,7 +20499,7 @@ diff -urNp linux-2.6.36.2/arch/x86/xen/pci-swiotlb-xen.c linux-2.6.36.2/arch/x86
  	.free_coherent = xen_swiotlb_free_coherent,
 diff -urNp linux-2.6.36.2/arch/x86/xen/smp.c linux-2.6.36.2/arch/x86/xen/smp.c
 --- linux-2.6.36.2/arch/x86/xen/smp.c	2010-11-26 18:26:24.000000000 -0500
-+++ linux-2.6.36.2/arch/x86/xen/smp.c	2010-12-09 20:24:54.000000000 -0500
++++ linux-2.6.36.2/arch/x86/xen/smp.c	2010-12-19 12:46:50.000000000 -0500
 @@ -169,11 +169,6 @@ static void __init xen_smp_prepare_boot_
  {
  	BUG_ON(smp_processor_id() != 0);
@@ -20913,7 +20512,7 @@ diff -urNp linux-2.6.36.2/arch/x86/xen/smp.c linux-2.6.36.2/arch/x86/xen/smp.c
  	xen_setup_vcpu_info_placement();
  }
  
-@@ -233,8 +228,8 @@ cpu_initialize_context(unsigned int cpu,
+@@ -233,12 +228,12 @@ cpu_initialize_context(unsigned int cpu,
  	gdt = get_cpu_gdt_table(cpu);
  
  	ctxt->flags = VGCF_IN_KERNEL;
@@ -20924,6 +20523,11 @@ diff -urNp linux-2.6.36.2/arch/x86/xen/smp.c linux-2.6.36.2/arch/x86/xen/smp.c
  	ctxt->user_regs.ss = __KERNEL_DS;
  #ifdef CONFIG_X86_32
  	ctxt->user_regs.fs = __KERNEL_PERCPU;
+-	ctxt->user_regs.gs = __KERNEL_STACK_CANARY;
++	savesegment(gs, ctxt->user_regs.gs);
+ #else
+ 	ctxt->gs_base_kernel = per_cpu_offset(cpu);
+ #endif
 diff -urNp linux-2.6.36.2/arch/x86/xen/xen-head.S linux-2.6.36.2/arch/x86/xen/xen-head.S
 --- linux-2.6.36.2/arch/x86/xen/xen-head.S	2010-10-20 16:30:22.000000000 -0400
 +++ linux-2.6.36.2/arch/x86/xen/xen-head.S	2010-12-09 20:24:54.000000000 -0500
@@ -24064,6 +23668,18 @@ diff -urNp linux-2.6.36.2/drivers/atm/zatm.c linux-2.6.36.2/drivers/atm/zatm.c
  	wake_up(&zatm_vcc->tx_wait);
  }
  
+diff -urNp linux-2.6.36.2/drivers/block/cciss.c linux-2.6.36.2/drivers/block/cciss.c
+--- linux-2.6.36.2/drivers/block/cciss.c	2010-10-20 16:30:22.000000000 -0400
++++ linux-2.6.36.2/drivers/block/cciss.c	2010-12-18 20:00:57.000000000 -0500
+@@ -1142,6 +1142,8 @@ static int cciss_ioctl32_passthru(struct
+ 	int err;
+ 	u32 cp;
+ 
++	memset(&arg64, 0, sizeof(arg64));
++
+ 	err = 0;
+ 	err |=
+ 	    copy_from_user(&arg64.LUN_info, &arg32->LUN_info,
 diff -urNp linux-2.6.36.2/drivers/char/agp/frontend.c linux-2.6.36.2/drivers/char/agp/frontend.c
 --- linux-2.6.36.2/drivers/char/agp/frontend.c	2010-10-20 16:30:22.000000000 -0400
 +++ linux-2.6.36.2/drivers/char/agp/frontend.c	2010-12-09 20:24:14.000000000 -0500
@@ -25733,6 +25349,30 @@ diff -urNp linux-2.6.36.2/drivers/gpu/drm/ttm/ttm_bo_vm.c linux-2.6.36.2/drivers
  
  static const struct vm_operations_struct ttm_bo_vm_ops = {
  	.fault = ttm_bo_vm_fault,
+diff -urNp linux-2.6.36.2/drivers/gpu/drm/vmwgfx/vmwgfx_ldu.c linux-2.6.36.2/drivers/gpu/drm/vmwgfx/vmwgfx_ldu.c
+--- linux-2.6.36.2/drivers/gpu/drm/vmwgfx/vmwgfx_ldu.c	2010-10-20 16:30:22.000000000 -0400
++++ linux-2.6.36.2/drivers/gpu/drm/vmwgfx/vmwgfx_ldu.c	2010-12-19 12:47:27.000000000 -0500
+@@ -547,7 +547,7 @@ int vmw_kms_init_legacy_display_system(s
+ 		return -EINVAL;
+ 	}
+ 
+-	dev_priv->ldu_priv = kmalloc(GFP_KERNEL, sizeof(*dev_priv->ldu_priv));
++	dev_priv->ldu_priv = kmalloc(sizeof(*dev_priv->ldu_priv), GFP_KERNEL);
+ 
+ 	if (!dev_priv->ldu_priv)
+ 		return -ENOMEM;
+diff -urNp linux-2.6.36.2/drivers/gpu/drm/vmwgfx/vmwgfx_overlay.c linux-2.6.36.2/drivers/gpu/drm/vmwgfx/vmwgfx_overlay.c
+--- linux-2.6.36.2/drivers/gpu/drm/vmwgfx/vmwgfx_overlay.c	2010-10-20 16:30:22.000000000 -0400
++++ linux-2.6.36.2/drivers/gpu/drm/vmwgfx/vmwgfx_overlay.c	2010-12-19 12:47:27.000000000 -0500
+@@ -585,7 +585,7 @@ int vmw_overlay_init(struct vmw_private 
+ 		return -ENOSYS;
+ 	}
+ 
+-	overlay = kmalloc(GFP_KERNEL, sizeof(*overlay));
++	overlay = kmalloc(sizeof(*overlay), GFP_KERNEL);
+ 	if (!overlay)
+ 		return -ENOMEM;
+ 
 diff -urNp linux-2.6.36.2/drivers/hid/hidraw.c linux-2.6.36.2/drivers/hid/hidraw.c
 --- linux-2.6.36.2/drivers/hid/hidraw.c	2010-10-20 16:30:22.000000000 -0400
 +++ linux-2.6.36.2/drivers/hid/hidraw.c	2010-12-09 20:24:23.000000000 -0500
@@ -28236,6 +27876,18 @@ diff -urNp linux-2.6.36.2/drivers/s390/cio/qdio_debug.c linux-2.6.36.2/drivers/s
  	.owner	 = THIS_MODULE,
  	.open	 = qperf_seq_open,
  	.read	 = seq_read,
+diff -urNp linux-2.6.36.2/drivers/scsi/hpsa.c linux-2.6.36.2/drivers/scsi/hpsa.c
+--- linux-2.6.36.2/drivers/scsi/hpsa.c	2010-10-20 16:30:22.000000000 -0400
++++ linux-2.6.36.2/drivers/scsi/hpsa.c	2010-12-19 12:15:22.000000000 -0500
+@@ -2298,6 +2298,8 @@ static int hpsa_ioctl32_passthru(struct 
+ 	int err;
+ 	u32 cp;
+ 
++	memset(&arg64, 0, sizeof(arg64));
++
+ 	err = 0;
+ 	err |= copy_from_user(&arg64.LUN_info, &arg32->LUN_info,
+ 			   sizeof(arg64.LUN_info));
 diff -urNp linux-2.6.36.2/drivers/scsi/ipr.c linux-2.6.36.2/drivers/scsi/ipr.c
 --- linux-2.6.36.2/drivers/scsi/ipr.c	2010-10-20 16:30:22.000000000 -0400
 +++ linux-2.6.36.2/drivers/scsi/ipr.c	2010-12-09 20:24:12.000000000 -0500
@@ -34298,7 +33950,7 @@ diff -urNp linux-2.6.36.2/fs/proc/Kconfig linux-2.6.36.2/fs/proc/Kconfig
  	  Various /proc files exist to monitor process memory utilization:
 diff -urNp linux-2.6.36.2/fs/proc/kcore.c linux-2.6.36.2/fs/proc/kcore.c
 --- linux-2.6.36.2/fs/proc/kcore.c	2010-10-20 16:30:22.000000000 -0400
-+++ linux-2.6.36.2/fs/proc/kcore.c	2010-12-09 20:24:41.000000000 -0500
++++ linux-2.6.36.2/fs/proc/kcore.c	2010-12-19 12:47:27.000000000 -0500
 @@ -478,9 +478,10 @@ read_kcore(struct file *file, char __use
  	 * the addresses in the elf_phdr on our list.
  	 */
@@ -34312,12 +33964,13 @@ diff -urNp linux-2.6.36.2/fs/proc/kcore.c linux-2.6.36.2/fs/proc/kcore.c
  	while (buflen) {
  		struct kcore_list *m;
  
-@@ -509,20 +510,18 @@ read_kcore(struct file *file, char __use
+@@ -509,20 +510,23 @@ read_kcore(struct file *file, char __use
  			kfree(elf_buf);
  		} else {
  			if (kern_addr_valid(start)) {
 -				unsigned long n;
 +				char *elf_buf;
++				mm_segment_t oldfs;
  
 -				n = copy_to_user(buffer, (char *)start, tsz);
 -				/*
@@ -34332,17 +33985,21 @@ diff -urNp linux-2.6.36.2/fs/proc/kcore.c linux-2.6.36.2/fs/proc/kcore.c
 +				elf_buf = kmalloc(tsz, GFP_KERNEL);
 +				if (!elf_buf)
 +					return -ENOMEM;
++				oldfs = get_fs();
++				set_fs(KERNEL_DS);
 +				if (!__copy_from_user(elf_buf, (const void __user *)start, tsz)) {
++					set_fs(oldfs);
 +					if (copy_to_user(buffer, elf_buf, tsz)) {
 +						kfree(elf_buf);
  						return -EFAULT;
 +					}
  				}
++				set_fs(oldfs);
 +				kfree(elf_buf);
  			} else {
  				if (clear_user(buffer, tsz))
  					return -EFAULT;
-@@ -542,6 +541,9 @@ read_kcore(struct file *file, char __use
+@@ -542,6 +546,9 @@ read_kcore(struct file *file, char __use
  
  static int open_kcore(struct inode *inode, struct file *filp)
  {
@@ -35315,8 +34972,8 @@ diff -urNp linux-2.6.36.2/grsecurity/gracl_alloc.c linux-2.6.36.2/grsecurity/gra
 +}
 diff -urNp linux-2.6.36.2/grsecurity/gracl.c linux-2.6.36.2/grsecurity/gracl.c
 --- linux-2.6.36.2/grsecurity/gracl.c	1969-12-31 19:00:00.000000000 -0500
-+++ linux-2.6.36.2/grsecurity/gracl.c	2010-12-09 20:24:32.000000000 -0500
-@@ -0,0 +1,3897 @@
++++ linux-2.6.36.2/grsecurity/gracl.c	2010-12-19 13:07:03.000000000 -0500
+@@ -0,0 +1,3907 @@
 +#include <linux/kernel.h>
 +#include <linux/module.h>
 +#include <linux/sched.h>
@@ -37013,9 +36670,19 @@ diff -urNp linux-2.6.36.2/grsecurity/gracl.c linux-2.6.36.2/grsecurity/gracl.c
 +	    const struct dentry *curr_dentry,
 +	    const struct acl_subject_label *subj, char **path, const int checkglob)
 +{
++	int newglob = checkglob;
++
++	/* if we aren't checking a subdirectory of the original path yet, don't do glob checking
++	   as we don't want a / * rule to match instead of the / object
++	   don't do this for create lookups that call this function though, since they're looking up
++	   on the parent and thus need globbing checks on all paths
++	*/
++	if (orig_dentry == curr_dentry && newglob != GR_CREATE_GLOB)
++		newglob = GR_NO_GLOB;
++
 +	return __full_lookup(orig_dentry, orig_mnt,
 +			     curr_dentry->d_inode->i_ino, 
-+			     curr_dentry->d_inode->i_sb->s_dev, subj, path, checkglob);
++			     curr_dentry->d_inode->i_sb->s_dev, subj, path, newglob);
 +}
 +
 +static struct acl_object_label *
@@ -37076,7 +36743,7 @@ diff -urNp linux-2.6.36.2/grsecurity/gracl.c linux-2.6.36.2/grsecurity/gracl.c
 +	      const struct acl_subject_label *subj)
 +{
 +	char *path = NULL;
-+	return __chk_obj_label(l_dentry, l_mnt, subj, path, 1);
++	return __chk_obj_label(l_dentry, l_mnt, subj, path, GR_REG_GLOB);
 +}
 +
 +static __inline__ struct acl_object_label *
@@ -37084,14 +36751,14 @@ diff -urNp linux-2.6.36.2/grsecurity/gracl.c linux-2.6.36.2/grsecurity/gracl.c
 +	      const struct acl_subject_label *subj)
 +{
 +	char *path = NULL;
-+	return __chk_obj_label(l_dentry, l_mnt, subj, path, 0);
++	return __chk_obj_label(l_dentry, l_mnt, subj, path, GR_NO_GLOB);
 +}
 +
 +static __inline__ struct acl_object_label *
 +chk_obj_create_label(const struct dentry *l_dentry, const struct vfsmount *l_mnt,
 +		     const struct acl_subject_label *subj, char *path)
 +{
-+	return __chk_obj_label(l_dentry, l_mnt, subj, path, 1);
++	return __chk_obj_label(l_dentry, l_mnt, subj, path, GR_CREATE_GLOB);
 +}
 +
 +static struct acl_subject_label *
@@ -39792,8 +39459,8 @@ diff -urNp linux-2.6.36.2/grsecurity/gracl_fs.c linux-2.6.36.2/grsecurity/gracl_
 +}
 diff -urNp linux-2.6.36.2/grsecurity/gracl_ip.c linux-2.6.36.2/grsecurity/gracl_ip.c
 --- linux-2.6.36.2/grsecurity/gracl_ip.c	1969-12-31 19:00:00.000000000 -0500
-+++ linux-2.6.36.2/grsecurity/gracl_ip.c	2010-12-09 20:33:49.000000000 -0500
-@@ -0,0 +1,378 @@
++++ linux-2.6.36.2/grsecurity/gracl_ip.c	2010-12-12 17:13:37.000000000 -0500
+@@ -0,0 +1,382 @@
 +#include <linux/kernel.h>
 +#include <asm/uaccess.h>
 +#include <asm/errno.h>
@@ -39962,8 +39629,12 @@ diff -urNp linux-2.6.36.2/grsecurity/gracl_ip.c linux-2.6.36.2/grsecurity/gracl_
 +	}
 +
 +exit_fail:
-+	gr_log_str3(GR_DONT_AUDIT, GR_SOCK_MSG, gr_sockfamily_to_name(domain), 
-+		    gr_socktype_to_name(type), gr_proto_to_name(protocol));
++	if (domain == PF_INET)
++		gr_log_str3(GR_DONT_AUDIT, GR_SOCK_MSG, gr_sockfamily_to_name(domain), 
++			    gr_socktype_to_name(type), gr_proto_to_name(protocol));
++	else
++		gr_log_str2_int(GR_DONT_AUDIT, GR_SOCK_NOINET_MSG, gr_sockfamily_to_name(domain), 
++			    gr_socktype_to_name(type), protocol);
 +
 +	return 0;
 +exit:
@@ -42728,8 +42399,8 @@ diff -urNp linux-2.6.36.2/grsecurity/grsec_sig.c linux-2.6.36.2/grsecurity/grsec
 +
 diff -urNp linux-2.6.36.2/grsecurity/grsec_sock.c linux-2.6.36.2/grsecurity/grsec_sock.c
 --- linux-2.6.36.2/grsecurity/grsec_sock.c	1969-12-31 19:00:00.000000000 -0500
-+++ linux-2.6.36.2/grsecurity/grsec_sock.c	2010-12-09 20:24:32.000000000 -0500
-@@ -0,0 +1,271 @@
++++ linux-2.6.36.2/grsecurity/grsec_sock.c	2010-12-12 17:16:39.000000000 -0500
+@@ -0,0 +1,275 @@
 +#include <linux/kernel.h>
 +#include <linux/module.h>
 +#include <linux/sched.h>
@@ -42771,6 +42442,7 @@ diff -urNp linux-2.6.36.2/grsecurity/grsec_sock.c linux-2.6.36.2/grsecurity/grse
 +
 +extern const char * gr_socktype_to_name(unsigned char type);
 +extern const char * gr_proto_to_name(unsigned char proto);
++extern const char * gr_sockfamily_to_name(unsigned char family);
 +
 +static __inline__ int 
 +conn_hash(__u32 saddr, __u32 daddr, __u16 sport, __u16 dport, unsigned int size)
@@ -42922,8 +42594,11 @@ diff -urNp linux-2.6.36.2/grsecurity/grsec_sock.c linux-2.6.36.2/grsecurity/grse
 +{
 +#ifdef CONFIG_GRKERNSEC_SOCKET_ALL
 +	if (grsec_enable_socket_all && in_group_p(grsec_socket_all_gid) &&
-+	    (family != AF_UNIX) && (family != AF_LOCAL)) {
-+		gr_log_int_str2(GR_DONT_AUDIT, GR_SOCK2_MSG, family, gr_socktype_to_name(type), gr_proto_to_name(protocol));
++	    (family != AF_UNIX)) {
++		if (family == AF_INET)
++			gr_log_str3(GR_DONT_AUDIT, GR_SOCK_MSG, gr_sockfamily_to_name(family), gr_socktype_to_name(type), gr_proto_to_name(protocol));
++		else
++			gr_log_str2_int(GR_DONT_AUDIT, GR_SOCK_NOINET_MSG, gr_sockfamily_to_name(family), gr_socktype_to_name(type), protocol);
 +		return -EACCES;
 +	}
 +#endif
@@ -45545,7 +45220,7 @@ diff -urNp linux-2.6.36.2/include/linux/compiler-gcc4.h linux-2.6.36.2/include/l
  #if __GNUC_MINOR__ > 0
 diff -urNp linux-2.6.36.2/include/linux/compiler.h linux-2.6.36.2/include/linux/compiler.h
 --- linux-2.6.36.2/include/linux/compiler.h	2010-10-20 16:30:22.000000000 -0400
-+++ linux-2.6.36.2/include/linux/compiler.h	2010-12-09 20:24:06.000000000 -0500
++++ linux-2.6.36.2/include/linux/compiler.h	2010-12-19 12:48:13.000000000 -0500
 @@ -269,6 +269,22 @@ void ftrace_likely_update(struct ftrace_
  #define __cold
  #endif
@@ -45577,6 +45252,18 @@ diff -urNp linux-2.6.36.2/include/linux/compiler.h linux-2.6.36.2/include/linux/
 +#define ACCESS_ONCE(x) (*(volatile const typeof(x) *)&(x))
  
  #endif /* __LINUX_COMPILER_H */
+diff -urNp linux-2.6.36.2/include/linux/cpuset.h linux-2.6.36.2/include/linux/cpuset.h
+--- linux-2.6.36.2/include/linux/cpuset.h	2010-10-20 16:30:22.000000000 -0400
++++ linux-2.6.36.2/include/linux/cpuset.h	2010-12-19 12:46:50.000000000 -0500
+@@ -118,7 +118,7 @@ static inline void put_mems_allowed(void
+ 	 * nodemask.
+ 	 */
+ 	smp_mb();
+-	--ACCESS_ONCE(current->mems_allowed_change_disable);
++	--current->mems_allowed_change_disable;
+ }
+ 
+ static inline void set_mems_allowed(nodemask_t nodemask)
 diff -urNp linux-2.6.36.2/include/linux/decompress/mm.h linux-2.6.36.2/include/linux/decompress/mm.h
 --- linux-2.6.36.2/include/linux/decompress/mm.h	2010-10-20 16:30:22.000000000 -0400
 +++ linux-2.6.36.2/include/linux/decompress/mm.h	2010-12-09 20:24:06.000000000 -0500
@@ -45910,8 +45597,8 @@ diff -urNp linux-2.6.36.2/include/linux/genhd.h linux-2.6.36.2/include/linux/gen
  	struct blk_integrity *integrity;
 diff -urNp linux-2.6.36.2/include/linux/gracl.h linux-2.6.36.2/include/linux/gracl.h
 --- linux-2.6.36.2/include/linux/gracl.h	1969-12-31 19:00:00.000000000 -0500
-+++ linux-2.6.36.2/include/linux/gracl.h	2010-12-09 20:24:05.000000000 -0500
-@@ -0,0 +1,311 @@
++++ linux-2.6.36.2/include/linux/gracl.h	2010-12-18 19:57:01.000000000 -0500
+@@ -0,0 +1,317 @@
 +#ifndef GR_ACL_H
 +#define GR_ACL_H
 +
@@ -45948,6 +45635,12 @@ diff -urNp linux-2.6.36.2/include/linux/gracl.h linux-2.6.36.2/include/linux/gra
 +
 +enum {
 +	GR_SPROLE_LEN = 64,
++};
++
++enum {
++	GR_NO_GLOB = 0,
++	GR_REG_GLOB,
++	GR_CREATE_GLOB
 +};
 +
 +#define GR_NLIMITS 32
@@ -46379,8 +46072,8 @@ diff -urNp linux-2.6.36.2/include/linux/grdefs.h linux-2.6.36.2/include/linux/gr
 +#endif
 diff -urNp linux-2.6.36.2/include/linux/grinternal.h linux-2.6.36.2/include/linux/grinternal.h
 --- linux-2.6.36.2/include/linux/grinternal.h	1969-12-31 19:00:00.000000000 -0500
-+++ linux-2.6.36.2/include/linux/grinternal.h	2010-12-09 20:24:05.000000000 -0500
-@@ -0,0 +1,214 @@
++++ linux-2.6.36.2/include/linux/grinternal.h	2010-12-12 17:06:37.000000000 -0500
+@@ -0,0 +1,216 @@
 +#ifndef __GRINTERNAL_H
 +#define __GRINTERNAL_H
 +
@@ -46534,6 +46227,7 @@ diff -urNp linux-2.6.36.2/include/linux/grinternal.h linux-2.6.36.2/include/linu
 +	GR_ONE_INT_TWO_STR,
 +	GR_ONE_STR,
 +	GR_STR_INT,
++	GR_TWO_STR_INT,
 +	GR_TWO_INT,
 +	GR_THREE_INT,
 +	GR_FIVE_INT_TWO_STR,
@@ -46573,6 +46267,7 @@ diff -urNp linux-2.6.36.2/include/linux/grinternal.h linux-2.6.36.2/include/linu
 +#define gr_log_int3(audit, msg, num1, num2, num3) gr_log_varargs(audit, msg, GR_THREE_INT, num1, num2, num3)
 +#define gr_log_int5_str2(audit, msg, num1, num2, str1, str2) gr_log_varargs(audit, msg, GR_FIVE_INT_TWO_STR, num1, num2, str1, str2)
 +#define gr_log_str_str(audit, msg, str1, str2) gr_log_varargs(audit, msg, GR_TWO_STR, str1, str2)
++#define gr_log_str2_int(audit, msg, str1, str2, num) gr_log_varargs(audit, msg, GR_TWO_STR_INT, str1, str2, num)
 +#define gr_log_str3(audit, msg, str1, str2, str3) gr_log_varargs(audit, msg, GR_THREE_STR, str1, str2, str3)
 +#define gr_log_str4(audit, msg, str1, str2, str3, str4) gr_log_varargs(audit, msg, GR_FOUR_STR, str1, str2, str3, str4)
 +#define gr_log_str_fs(audit, msg, str, dentry, mnt) gr_log_varargs(audit, msg, GR_STR_FILENAME, str, dentry, mnt)
@@ -46597,7 +46292,7 @@ diff -urNp linux-2.6.36.2/include/linux/grinternal.h linux-2.6.36.2/include/linu
 +#endif
 diff -urNp linux-2.6.36.2/include/linux/grmsg.h linux-2.6.36.2/include/linux/grmsg.h
 --- linux-2.6.36.2/include/linux/grmsg.h	1969-12-31 19:00:00.000000000 -0500
-+++ linux-2.6.36.2/include/linux/grmsg.h	2010-12-09 20:24:06.000000000 -0500
++++ linux-2.6.36.2/include/linux/grmsg.h	2010-12-12 17:19:24.000000000 -0500
 @@ -0,0 +1,111 @@
 +#define DEFAULTSECMSG "%.256s[%.16s:%d] uid/euid:%u/%u gid/egid:%u/%u, parent %.256s[%.16s:%d] uid/euid:%u/%u gid/egid:%u/%u"
 +#define GR_ACL_PROCACCT_MSG "%.256s[%.16s:%d] IP:%pI4 TTY:%.64s uid/euid:%u/%u gid/egid:%u/%u run time:[%ud %uh %um %us] cpu time:[%ud %uh %um %us] %s with exit code %ld, parent %.256s[%.16s:%d] IP:%pI4 TTY:%.64s uid/euid:%u/%u gid/egid:%u/%u"
@@ -46687,7 +46382,7 @@ diff -urNp linux-2.6.36.2/include/linux/grmsg.h linux-2.6.36.2/include/linux/grm
 +#define GR_MMAP_ACL_MSG "%s executable mmap of %.950s by "
 +#define GR_MPROTECT_ACL_MSG "%s executable mprotect of %.950s by "
 +#define GR_SOCK_MSG "denied socket(%.16s,%.16s,%.16s) by "
-+#define GR_SOCK2_MSG "denied socket(%d,%.16s,%.16s) by "
++#define GR_SOCK_NOINET_MSG "denied socket(%.16s,%.16s,%d) by "
 +#define GR_BIND_MSG "denied bind() by "
 +#define GR_CONNECT_MSG "denied connect() by "
 +#define GR_BIND_ACL_MSG "denied bind() to %pI4 port %u sock type %.16s protocol %.16s by "
@@ -49178,7 +48873,7 @@ diff -urNp linux-2.6.36.2/init/Kconfig linux-2.6.36.2/init/Kconfig
  	  also breaks ancient binaries (including anything libc5 based).
 diff -urNp linux-2.6.36.2/init/main.c linux-2.6.36.2/init/main.c
 --- linux-2.6.36.2/init/main.c	2010-10-20 16:30:22.000000000 -0400
-+++ linux-2.6.36.2/init/main.c	2010-12-09 20:24:09.000000000 -0500
++++ linux-2.6.36.2/init/main.c	2010-12-19 12:46:50.000000000 -0500
 @@ -95,6 +95,7 @@ static inline void mark_rodata_ro(void) 
  #ifdef CONFIG_TC
  extern void tc_init(void);
@@ -49187,7 +48882,7 @@ diff -urNp linux-2.6.36.2/init/main.c linux-2.6.36.2/init/main.c
  
  enum system_states system_state __read_mostly;
  EXPORT_SYMBOL(system_state);
-@@ -197,6 +198,45 @@ static int __init set_reset_devices(char
+@@ -197,6 +198,47 @@ static int __init set_reset_devices(char
  
  __setup("reset_devices", set_reset_devices);
  
@@ -49206,6 +48901,8 @@ diff -urNp linux-2.6.36.2/init/main.c linux-2.6.36.2/init/main.c
 +	for (cpu = 0; cpu < NR_CPUS; cpu++) {
 +		get_cpu_gdt_table(cpu)[GDT_ENTRY_KERNEL_DS].type = 3;
 +		get_cpu_gdt_table(cpu)[GDT_ENTRY_KERNEL_DS].limit = 0xf;
++		get_cpu_gdt_table(cpu)[GDT_ENTRY_DEFAULT_USER_CS].limit = 0xf;
++		get_cpu_gdt_table(cpu)[GDT_ENTRY_DEFAULT_USER_DS].limit = 0xf;
 +	}
 +	asm("mov %0, %%ds; mov %0, %%es; mov %0, %%ss" : : "r" (__KERNEL_DS) : "memory");
 +#else
@@ -49233,7 +48930,7 @@ diff -urNp linux-2.6.36.2/init/main.c linux-2.6.36.2/init/main.c
  static const char * argv_init[MAX_INIT_ARGS+2] = { "init", NULL, };
  const char * envp_init[MAX_INIT_ENVS+2] = { "HOME=/", "TERM=linux", NULL, };
  static const char *panic_later, *panic_param;
-@@ -743,6 +783,7 @@ int __init_or_module do_one_initcall(ini
+@@ -743,6 +785,7 @@ int __init_or_module do_one_initcall(ini
  {
  	int count = preempt_count();
  	int ret;
@@ -49241,7 +48938,7 @@ diff -urNp linux-2.6.36.2/init/main.c linux-2.6.36.2/init/main.c
  
  	if (initcall_debug)
  		ret = do_one_initcall_debug(fn);
-@@ -755,15 +796,15 @@ int __init_or_module do_one_initcall(ini
+@@ -755,15 +798,15 @@ int __init_or_module do_one_initcall(ini
  		sprintf(msgbuf, "error code %d ", ret);
  
  	if (preempt_count() != count) {
@@ -49261,7 +48958,7 @@ diff -urNp linux-2.6.36.2/init/main.c linux-2.6.36.2/init/main.c
  	}
  
  	return ret;
-@@ -893,7 +934,7 @@ static int __init kernel_init(void * unu
+@@ -893,7 +936,7 @@ static int __init kernel_init(void * unu
  	do_basic_setup();
  
  	/* Open the /dev/console on the rootfs, this should never fail */
@@ -49270,7 +48967,7 @@ diff -urNp linux-2.6.36.2/init/main.c linux-2.6.36.2/init/main.c
  		printk(KERN_WARNING "Warning: unable to open an initial console.\n");
  
  	(void) sys_dup(0);
-@@ -906,11 +947,13 @@ static int __init kernel_init(void * unu
+@@ -906,11 +949,13 @@ static int __init kernel_init(void * unu
  	if (!ramdisk_execute_command)
  		ramdisk_execute_command = "/init";
  
@@ -49958,7 +49655,7 @@ diff -urNp linux-2.6.36.2/kernel/fork.c linux-2.6.36.2/kernel/fork.c
  				new_fs = fs;
 diff -urNp linux-2.6.36.2/kernel/futex.c linux-2.6.36.2/kernel/futex.c
 --- linux-2.6.36.2/kernel/futex.c	2010-11-26 18:26:25.000000000 -0500
-+++ linux-2.6.36.2/kernel/futex.c	2010-12-09 20:24:42.000000000 -0500
++++ linux-2.6.36.2/kernel/futex.c	2010-12-19 12:47:27.000000000 -0500
 @@ -54,6 +54,7 @@
  #include <linux/mount.h>
  #include <linux/pagemap.h>
@@ -50023,6 +49720,25 @@ diff -urNp linux-2.6.36.2/kernel/futex.c linux-2.6.36.2/kernel/futex.c
 +				     unsigned int *pi)
  {
  	unsigned long uentry;
+ 
+@@ -2640,6 +2653,7 @@ static int __init futex_init(void)
+ {
+ 	u32 curval;
+ 	int i;
++	mm_segment_t oldfs;
+ 
+ 	/*
+ 	 * This will fail and we want it. Some arch implementations do
+@@ -2651,7 +2665,10 @@ static int __init futex_init(void)
+ 	 * implementation, the non functional ones will return
+ 	 * -ENOSYS.
+ 	 */
++	oldfs = get_fs();
++	set_fs(USER_DS);
+ 	curval = cmpxchg_futex_value_locked(NULL, 0, 0);
++	set_fs(oldfs);
+ 	if (curval == -EFAULT)
+ 		futex_cmpxchg_enabled = 1;
  
 diff -urNp linux-2.6.36.2/kernel/futex_compat.c linux-2.6.36.2/kernel/futex_compat.c
 --- linux-2.6.36.2/kernel/futex_compat.c	2010-10-20 16:30:22.000000000 -0400
@@ -53255,7 +52971,7 @@ diff -urNp linux-2.6.36.2/mm/mlock.c linux-2.6.36.2/mm/mlock.c
  		ret = do_mlockall(flags);
 diff -urNp linux-2.6.36.2/mm/mmap.c linux-2.6.36.2/mm/mmap.c
 --- linux-2.6.36.2/mm/mmap.c	2010-10-20 16:30:22.000000000 -0400
-+++ linux-2.6.36.2/mm/mmap.c	2010-12-09 20:24:51.000000000 -0500
++++ linux-2.6.36.2/mm/mmap.c	2010-12-15 18:01:19.000000000 -0500
 @@ -44,6 +44,16 @@
  #define arch_rebalance_pgtables(addr, len)		(addr)
  #endif
@@ -54204,8 +53920,8 @@ diff -urNp linux-2.6.36.2/mm/mmap.c linux-2.6.36.2/mm/mmap.c
   * Jeremy Fitzhardinge <jeremy@goop.org>
   */
 +#ifdef CONFIG_PAX_SEGMEXEC
-+int do_munmap(struct mm_struct *mm, unsigned long start, size_t len)
-+{
+ int do_munmap(struct mm_struct *mm, unsigned long start, size_t len)
+ {
 +	int ret = __do_munmap(mm, start, len);
 +	if (ret || !(mm->pax_flags & MF_PAX_SEGMEXEC))
 +		return ret;
@@ -54215,9 +53931,9 @@ diff -urNp linux-2.6.36.2/mm/mmap.c linux-2.6.36.2/mm/mmap.c
 +
 +int __do_munmap(struct mm_struct *mm, unsigned long start, size_t len)
 +#else
- int do_munmap(struct mm_struct *mm, unsigned long start, size_t len)
++int do_munmap(struct mm_struct *mm, unsigned long start, size_t len)
 +#endif
- {
++{
  	unsigned long end;
  	struct vm_area_struct *vma, *prev, *last;
  
@@ -54466,7 +54182,15 @@ diff -urNp linux-2.6.36.2/mm/mmap.c linux-2.6.36.2/mm/mmap.c
  	if (cur + npages > lim)
  		return 0;
  	return 1;
-@@ -2471,12 +2945,28 @@ int install_special_mapping(struct mm_st
+@@ -2460,6 +2934,7 @@ int install_special_mapping(struct mm_st
+ 			    unsigned long addr, unsigned long len,
+ 			    unsigned long vm_flags, struct page **pages)
+ {
++	int ret;
+ 	struct vm_area_struct *vma;
+ 
+ 	vma = kmem_cache_zalloc(vm_area_cachep, GFP_KERNEL);
+@@ -2471,22 +2946,41 @@ int install_special_mapping(struct mm_st
  	vma->vm_start = addr;
  	vma->vm_end = addr + len;
  
@@ -54487,14 +54211,31 @@ diff -urNp linux-2.6.36.2/mm/mmap.c linux-2.6.36.2/mm/mmap.c
  	vma->vm_ops = &special_mapping_vmops;
  	vma->vm_private_data = pages;
  
-+	if (security_file_mmap(NULL, 0, 0, 0, vma->vm_start, 1)) {
-+		kmem_cache_free(vm_area_cachep, vma);
-+		return -EPERM;
-+	}
+-	if (unlikely(insert_vm_struct(mm, vma))) {
+-		kmem_cache_free(vm_area_cachep, vma);
+-		return -ENOMEM;
+-	}
++	ret = security_file_mmap(NULL, 0, 0, 0, vma->vm_start, 1);
++	if (ret)
++		goto out;
 +
- 	if (unlikely(insert_vm_struct(mm, vma))) {
- 		kmem_cache_free(vm_area_cachep, vma);
- 		return -ENOMEM;
++	ret = insert_vm_struct(mm, vma);
++	if (ret)
++		goto out;
+ 
+ 	mm->total_vm += len >> PAGE_SHIFT;
+ 
+ 	perf_event_mmap(vma);
+ 
+ 	return 0;
++
++out:
++	kmem_cache_free(vm_area_cachep, vma);
++	return ret;
++
+ }
+ 
+ static DEFINE_MUTEX(mm_all_locks_mutex);
 diff -urNp linux-2.6.36.2/mm/mprotect.c linux-2.6.36.2/mm/mprotect.c
 --- linux-2.6.36.2/mm/mprotect.c	2010-12-09 20:53:48.000000000 -0500
 +++ linux-2.6.36.2/mm/mprotect.c	2010-12-09 20:59:26.000000000 -0500
@@ -55870,7 +55611,7 @@ diff -urNp linux-2.6.36.2/mm/vmalloc.c linux-2.6.36.2/mm/vmalloc.c
  
 diff -urNp linux-2.6.36.2/mm/vmstat.c linux-2.6.36.2/mm/vmstat.c
 --- linux-2.6.36.2/mm/vmstat.c	2010-10-20 16:30:22.000000000 -0400
-+++ linux-2.6.36.2/mm/vmstat.c	2010-12-09 20:24:51.000000000 -0500
++++ linux-2.6.36.2/mm/vmstat.c	2010-12-19 21:25:46.000000000 -0500
 @@ -76,7 +76,7 @@ void vm_events_fold_cpu(int cpu)
   *
   * vm_stat contains the global counters
@@ -55898,7 +55639,7 @@ diff -urNp linux-2.6.36.2/mm/vmstat.c linux-2.6.36.2/mm/vmstat.c
  }
  
  #endif
-@@ -1050,10 +1050,16 @@ static int __init setup_vmstat(void)
+@@ -1050,10 +1050,20 @@ static int __init setup_vmstat(void)
  		start_cpu_timer(cpu);
  #endif
  #ifdef CONFIG_PROC_FS
@@ -55913,7 +55654,11 @@ diff -urNp linux-2.6.36.2/mm/vmstat.c linux-2.6.36.2/mm/vmstat.c
 +#endif
 +		proc_create("buddyinfo", gr_mode, NULL, &fragmentation_file_operations);
 +		proc_create("pagetypeinfo", gr_mode, NULL, &pagetypeinfo_file_ops);
++#ifdef CONFIG_GRKERNSEC_PROC_USERGROUP
++		proc_create("vmstat", gr_mode | S_IRGRP, NULL, &proc_vmstat_file_operations);
++#else
 +		proc_create("vmstat", gr_mode, NULL, &proc_vmstat_file_operations);
++#endif
 +		proc_create("zoneinfo", gr_mode, NULL, &proc_zoneinfo_file_operations);
 +	}
  #endif
@@ -57758,6 +57503,19 @@ diff -urNp linux-2.6.36.2/net/xfrm/xfrm_policy.c linux-2.6.36.2/net/xfrm/xfrm_po
  xfrm_dst_update_origin(struct dst_entry *dst, struct flowi *fl)
  {
  #ifdef CONFIG_XFRM_SUB_POLICY
+diff -urNp linux-2.6.36.2/scripts/basic/docproc.c linux-2.6.36.2/scripts/basic/docproc.c
+--- linux-2.6.36.2/scripts/basic/docproc.c	2010-10-20 16:30:22.000000000 -0400
++++ linux-2.6.36.2/scripts/basic/docproc.c	2010-12-19 12:46:50.000000000 -0500
+@@ -333,7 +333,8 @@ static void docsect(char *filename, char
+ 		if (*s == '\n')
+ 			*s = '\0';
+ 
+-	asprintf(&s, "DOC: %s", line);
++	if (-1 == asprintf(&s, "DOC: %s", line))
++		return;
+ 	consume_symbol(s);
+ 	free(s);
+ 
 diff -urNp linux-2.6.36.2/scripts/basic/fixdep.c linux-2.6.36.2/scripts/basic/fixdep.c
 --- linux-2.6.36.2/scripts/basic/fixdep.c	2010-10-20 16:30:22.000000000 -0400
 +++ linux-2.6.36.2/scripts/basic/fixdep.c	2010-12-09 20:24:51.000000000 -0500
@@ -58835,6 +58593,43 @@ diff -urNp linux-2.6.36.2/sound/oss/sb_audio.c linux-2.6.36.2/sound/oss/sb_audio
  			if (copy_from_user(lbuf8,
  					   userbuf+useroffs + p,
  					   locallen))
+diff -urNp linux-2.6.36.2/sound/oss/swarm_cs4297a.c linux-2.6.36.2/sound/oss/swarm_cs4297a.c
+--- linux-2.6.36.2/sound/oss/swarm_cs4297a.c	2010-10-20 16:30:22.000000000 -0400
++++ linux-2.6.36.2/sound/oss/swarm_cs4297a.c	2010-12-19 12:46:50.000000000 -0500
+@@ -2606,7 +2606,6 @@ static int __init cs4297a_init(void)
+ {
+ 	struct cs4297a_state *s;
+ 	u32 pwr, id;
+-	mm_segment_t fs;
+ 	int rval;
+ #ifndef CONFIG_BCM_CS4297A_CSWARM
+ 	u64 cfg;
+@@ -2696,22 +2695,23 @@ static int __init cs4297a_init(void)
+         if (!rval) {
+ 		char *sb1250_duart_present;
+ 
++#if 0
++                mm_segment_t fs;
+                 fs = get_fs();
+                 set_fs(KERNEL_DS);
+-#if 0
+                 val = SOUND_MASK_LINE;
+                 mixer_ioctl(s, SOUND_MIXER_WRITE_RECSRC, (unsigned long) &val);
+                 for (i = 0; i < ARRAY_SIZE(initvol); i++) {
+                         val = initvol[i].vol;
+                         mixer_ioctl(s, initvol[i].mixch, (unsigned long) &val);
+                 }
++                set_fs(fs);
+ //                cs4297a_write_ac97(s, 0x18, 0x0808);
+ #else
+                 //                cs4297a_write_ac97(s, 0x5e, 0x180);
+                 cs4297a_write_ac97(s, 0x02, 0x0808);
+                 cs4297a_write_ac97(s, 0x18, 0x0808);
+ #endif
+-                set_fs(fs);
+ 
+                 list_add(&s->list, &cs4297a_devs);
+ 
 diff -urNp linux-2.6.36.2/sound/pci/ac97/ac97_codec.c linux-2.6.36.2/sound/pci/ac97/ac97_codec.c
 --- linux-2.6.36.2/sound/pci/ac97/ac97_codec.c	2010-10-20 16:30:22.000000000 -0400
 +++ linux-2.6.36.2/sound/pci/ac97/ac97_codec.c	2010-12-09 20:24:45.000000000 -0500
