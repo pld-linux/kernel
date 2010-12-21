@@ -105,7 +105,7 @@
 %endif
 
 %define		basever		2.6.27
-%define		postver		.54
+%define		postver		.57
 %define		rel			1
 
 %define		_enable_debug_packages			0
@@ -150,7 +150,7 @@ Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{basever}.tar.bz2
 # Source0-md5:	b3e78977aa79d3754cb7f8143d7ddabd
 %if "%{postver}" != "%{nil}"
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
-# Source1-md5:	3f759ef3b06a72c3b51dee8dedf9c75d
+# Source1-md5:	111822d91b43cb6273b5c4332ee257bb
 %endif
 
 Source3:	kernel-autoconf.h
@@ -1320,6 +1320,9 @@ cd $RPM_BUILD_ROOT%{_kernelsrcdir}
 %{__make} %{MakeOpts} mrproper archclean \
 	RCS_FIND_IGNORE='-name build-done -prune -o'
 
+rm -f *.config
+rm -rf samples
+
 if [ -e $KERNEL_BUILD_DIR/build-done/kernel%{_kernelsrcdir}/include/linux/autoconf-dist.h ]; then
 	install $KERNEL_BUILD_DIR/build-done/kernel%{_kernelsrcdir}/include/linux/autoconf-dist.h \
 		$RPM_BUILD_ROOT%{_kernelsrcdir}/include/linux
@@ -1642,6 +1645,7 @@ fi
 %{_kernelsrcdir}/arch/*/kernel/[!M]*
 %{_kernelsrcdir}/arch/ia64/kvm
 %{_kernelsrcdir}/arch/powerpc/kvm
+%{_kernelsrcdir}/firmware
 %ifarch ppc ppc64
 %exclude %{_kernelsrcdir}/arch/powerpc/lib/crtsavres.*
 %endif
