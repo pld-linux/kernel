@@ -190,13 +190,7 @@ Patch37:	kernel-owner-xid.patch
 # http://switch.dl.sourceforge.net/sourceforge/l7-filter/netfilter-layer7-v2.20.tar.gz
 Patch40:	kernel-layer7.patch
 
-# http://www.ssi.bg/~ja/nfct/ipvs-nfct-2.6.34-1.diff
-Patch41:	kernel-ipvs-nfct.patch
-
 ### End netfilter
-
-# http://marc.info/?l=dm-devel&m=129073232606808&q=raw
-Patch48:	kernel-scsi-corruption.patch
 
 # http://zph.bratcheda.org/linux-2.6.26.3-zph.patch
 Patch49:	kernel-zph.patch
@@ -295,7 +289,7 @@ Patch2500:	kernel-warnings.patch
 Patch5000:	kernel-apparmor.patch
 
 # for rescuecd
-# based on http://ftp.leg.uct.ac.za/pub/linux/rip/inittmpfs-2.6.14.diff.gz
+# based on ftp://ftp.leg.uct.ac.za/pub/linux/rip/tmpfs_root-2.6.30.diff.gz
 Patch7000:	kernel-inittmpfs.patch
 
 # based on http://www.grsecurity.net/~spender/grsecurity-2.2.1-2.6.36.2-201012192125.patch
@@ -717,14 +711,8 @@ sed -i 's/-Werror//' arch/alpha/kernel/Makefile
 # kernel-layer7.patch
 %patch40 -p1
 
-# ipvs-nfct
-%patch41 -p1
-
 ##
 # end of netfilter
-
-# scsi
-%patch48 -p1
 
 # zph
 %patch49 -p1

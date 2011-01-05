@@ -5,7 +5,6 @@ From: kraxel@suse.de
 add tty ioctl to figure physical device of the console.
 
  arch/alpha/include/asm/ioctls.h   |    1 +
- arch/arm/include/asm/ioctls.h     |    1 +
  arch/ia64/include/asm/ioctls.h    |    1 +
  arch/m68k/include/asm/ioctls.h    |    1 +
  arch/mips/include/asm/ioctls.h    |    1 +
@@ -28,36 +27,6 @@ add tty ioctl to figure physical device of the console.
  
  #define TIOCSERCONFIG	0x5453
  #define TIOCSERGWILD	0x5454
---- a/arch/arm/include/asm/ioctls.h
-+++ b/arch/arm/include/asm/ioctls.h
-@@ -52,6 +52,7 @@
- #define TIOCGPTN	_IOR('T',0x30, unsigned int) /* Get Pty Number (of pty-mux device) */
- #define TIOCSPTLCK	_IOW('T',0x31, int)  /* Lock/unlock Pty */
-+#define TIOCGDEV	_IOR('T',0x32, unsigned int) /* Get real dev no below /dev/console */
- #define TIOCSIG		_IOW('T',0x36, int)  /* Generate signal on Pty slave */
- 
- #define FIONCLEX	0x5450  /* these numbers need to be adjusted. */
- #define FIOCLEX		0x5451
---- a/arch/ia64/include/asm/ioctls.h
-+++ b/arch/ia64/include/asm/ioctls.h
-@@ -59,6 +59,7 @@
- #define TIOCGPTN	_IOR('T',0x30, unsigned int) /* Get Pty Number (of pty-mux device) */
- #define TIOCSPTLCK	_IOW('T',0x31, int)  /* Lock/unlock Pty */
-+#define TIOCGDEV	_IOR('T',0x32, unsigned int) /* Get real dev no below /dev/console */
- #define TIOCSIG		_IOW('T',0x36, int)  /* Generate signal on Pty slave */
- 
- #define FIONCLEX	0x5450  /* these numbers need to be adjusted. */
- #define FIOCLEX		0x5451
---- a/arch/m68k/include/asm/ioctls.h
-+++ b/arch/m68k/include/asm/ioctls.h
-@@ -52,6 +52,7 @@
- #define TIOCGPTN	_IOR('T',0x30, unsigned int) /* Get Pty Number (of pty-mux device) */
- #define TIOCSPTLCK	_IOW('T',0x31, int)  /* Lock/unlock Pty */
-+#define TIOCGDEV	_IOR('T',0x32, unsigned int) /* Get real dev no below /dev/console */
- #define TIOCSIG		_IOW('T',0x36, int)  /* Generate signal on Pty slave */
- 
- #define FIONCLEX	0x5450  /* these numbers need to be adjusted. */
- #define FIOCLEX		0x5451
 --- a/arch/mips/include/asm/ioctls.h
 +++ b/arch/mips/include/asm/ioctls.h
 @@ -83,6 +83,7 @@
@@ -78,16 +47,6 @@ add tty ioctl to figure physical device of the console.
  
  #define TIOCSERCONFIG	0x5453
  #define TIOCSERGWILD	0x5454
---- a/arch/s390/include/asm/ioctls.h
-+++ b/arch/s390/include/asm/ioctls.h
-@@ -60,6 +60,7 @@
- #define TIOCGPTN	_IOR('T',0x30, unsigned int) /* Get Pty Number (of pty-mux device) */
- #define TIOCSPTLCK	_IOW('T',0x31, int)  /* Lock/unlock Pty */
-+#define TIOCGDEV	_IOR('T',0x32, unsigned int) /* Get real dev no below /dev/console */
- #define TIOCSIG		_IOW('T',0x36, int)  /* Generate signal on Pty slave */
- 
- #define FIONCLEX	0x5450  /* these numbers need to be adjusted. */
- #define FIOCLEX		0x5451
 --- a/arch/sh/include/asm/ioctls.h
 +++ b/arch/sh/include/asm/ioctls.h
 @@ -84,6 +84,7 @@
@@ -118,8 +77,8 @@ add tty ioctl to figure physical device of the console.
  #define TCGETX		0x5432 /* SYS5 TCGETX compatibility */
  #define TCSETX		0x5433
  #define TCSETXF		0x5434
---- a/drivers/char/tty_io.c
-+++ b/drivers/char/tty_io.c
+--- a/drivers/tty/tty_io.c
++++ b/drivers/tty/tty_io.c
 @@ -2507,6 +2507,21 @@ long tty_ioctl(struct file *file, unsign
  	case TIOCSETD:
  		return tiocsetd(tty, p);
