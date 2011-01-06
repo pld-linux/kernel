@@ -30,21 +30,31 @@ diff -ruw linux-2.6.30.orig/fs/Kconfig linux-2.6.30/fs/Kconfig
 diff -ruw linux-2.6.30.orig/fs/ramfs/inode.c linux-2.6.30/fs/ramfs/inode.c
 --- linux-2.6.30.orig/fs/ramfs/inode.c	2009-02-12 17:51:15.000000000 +0000
 +++ linux-2.6.30/fs/ramfs/inode.c	2009-02-13 11:30:30.000000000 +0000
-@@ -255,6 +255,13 @@
+@@ -255,17 +255,18 @@
  	return err;
  }
  
-+static struct file_system_type ramfs_fs_type = {
-+	.name = "ramfs",
-+	.mount ramfs_mount,
-+	.kill_sb = kill_litter_super,
-+};
 +
-+#ifndef CONFIG_TMPFS_ROOT
  struct dentry *ramfs_mount(struct file_system_type *fs_type,
  	int flags, const char *dev_name, void *data)
  {
-@@ -273,30 +280,12 @@
+ 	return mount_nodev(fs_type, flags, data, ramfs_fill_super);
+ }
+ 
+-static struct dentry *rootfs_mount(struct file_system_type *fs_type,
+-	int flags, const char *dev_name, void *data)
+-{
+-	return mount_nodev(fs_type, flags|MS_NOUSER, data, ramfs_fill_super);
+-}
++static struct file_system_type ramfs_fs_type = {
++	.name = "ramfs",
++	.mount = ramfs_mount,
++	.kill_sb = kill_litter_super,
++};
+ 
+ static void ramfs_kill_sb(struct super_block *sb)
+ {
+@@ -273,30 +274,19 @@
  	kill_litter_super(sb);
  }
  
@@ -53,6 +63,13 @@ diff -ruw linux-2.6.30.orig/fs/ramfs/inode.c linux-2.6.30/fs/ramfs/inode.c
 -	.mount		= ramfs_mount,
 -	.kill_sb	= ramfs_kill_sb,
 -};
++#ifndef CONFIG_TMPFS_ROOT
++static struct dentry *rootfs_mount(struct file_system_type *fs_type,
++	int flags, const char *dev_name, void *data)
++{
++	return mount_nodev(fs_type, flags|MS_NOUSER, data, ramfs_fill_super);
++}
++
  static struct file_system_type rootfs_fs_type = {
  	.name		= "rootfs",
  	.mount		= rootfs_mount,
@@ -75,7 +92,7 @@ diff -ruw linux-2.6.30.orig/fs/ramfs/inode.c linux-2.6.30/fs/ramfs/inode.c
  int __init init_rootfs(void)
  {
  	int err;
-@@ -316,5 +305,19 @@
+@@ -311,5 +301,19 @@
  
  	return err;
  }
@@ -83,12 +100,12 @@ diff -ruw linux-2.6.30.orig/fs/ramfs/inode.c linux-2.6.30/fs/ramfs/inode.c
 +
 +static int __init init_ramfs_fs(void)
 +{
-+ return register_filesystem(&ramfs_fs_type);
++	return register_filesystem(&ramfs_fs_type);
 +}
 +
 +static void __exit exit_ramfs_fs(void)
 +{
-+ unregister_filesystem(&ramfs_fs_type);
++	unregister_filesystem(&ramfs_fs_type);
 +}
 +
 +module_init(init_ramfs_fs)
