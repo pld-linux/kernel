@@ -222,7 +222,7 @@ Patch57:	kernel-squashfs-lzma.patch
 Patch59:	kernel-rndis_host-wm5.patch
 
 # Project suspend2 renamed to tuxonice
-# http://tuxonice.net/files/tuxonice-3.2-rc2-for-2.6.36.patch.bz2
+# http://tuxonice.net/files/current-tuxonice-for-2.6.37.patch_0.bz2
 Patch69:	kernel-tuxonice.patch
 Patch70:	kernel-tuxonice-headers.patch
 
@@ -230,7 +230,7 @@ Patch70:	kernel-tuxonice-headers.patch
 # http://patches.aircrack-ng.org/hostap-kernel-2.6.18.patch
 Patch85:	kernel-hostap.patch
 
-# http://vserver.13thfloor.at/Experimental/patch-2.6.37-vs2.3.0.37-rc1.diff
+# http://vserver.13thfloor.at/Experimental/patch-2.6.37-vs2.3.0.37-rc2.diff
 Patch100:	kernel-vserver-2.3.patch
 Patch101:	kernel-vserver-fixes.patch
 
@@ -272,7 +272,7 @@ Patch250:	kernel-fix_256colors_menuconfig.patch
 # alternative routes, the reverse path protection (rp_filter),
 # the NAT processing to use correctly the routing when multiple
 # gateways are used.
-# http://www.ssi.bg/~ja/routes-2.6.36-16.diff
+# http://www.ssi.bg/~ja/routes-2.6.37-16.diff
 Patch300:	kernel-routes.patch
 
 Patch2000:	kernel-small_fixes.patch
