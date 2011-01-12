@@ -87,8 +87,8 @@
 %endif
 
 %define		basever		2.6.36
-%define		postver		.2
-%define		rel		2
+%define		postver		.3
+%define		rel		1
 
 %define		_enable_debug_packages			0
 
@@ -195,9 +195,6 @@ Patch41:	kernel-ipvs-nfct.patch
 
 ### End netfilter
 
-# http://marc.info/?l=dm-devel&m=129073232606808&q=raw
-Patch48:	kernel-scsi-corruption.patch
-
 # http://zph.bratcheda.org/linux-2.6.26.3-zph.patch
 Patch49:	kernel-zph.patch
 
@@ -298,7 +295,7 @@ Patch5000:	kernel-apparmor.patch
 # based on http://ftp.leg.uct.ac.za/pub/linux/rip/inittmpfs-2.6.14.diff.gz
 Patch7000:	kernel-inittmpfs.patch
 
-# based on http://www.grsecurity.net/~spender/grsecurity-2.2.1-2.6.36.2-201012192125.patch
+# based on http://www.grsecurity.net/~spender/grsecurity-2.2.1-2.6.36.3-201101120010.patch
 # NOTE: put raw upstream patches on kernel-grsec_full.patch:GRSECURITY_RAW for reference
 #       (since upstream deletes older patches)
 Patch9999:	kernel-grsec_full.patch
@@ -722,9 +719,6 @@ sed -i 's/-Werror//' arch/alpha/kernel/Makefile
 
 ##
 # end of netfilter
-
-# scsi
-%patch48 -p1
 
 # zph
 %patch49 -p1

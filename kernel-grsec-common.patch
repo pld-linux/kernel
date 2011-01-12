@@ -25,15 +25,16 @@
 ===
 === analogous as capable()
 ===
---- a/kernel/capability.c~	2007-12-11 00:46:02.000000000 +0100
-+++ a/kernel/capability.c	2007-12-11 01:35:00.244481500 +0100
-@@ -322,6 +322,8 @@
+--- linux-2.6.36/kernel/capability.c~	2011-01-12 08:08:07.438738432 +0100
++++ linux-2.6.36/kernel/capability.c	2011-01-12 08:11:34.230590260 +0100
+@@ -325,6 +325,9 @@
  
  int capable_nolog(int cap)
  {
 +	if (vs_check_bit(VXC_CAP_MASK, cap) && !vx_mcaps(1L << cap))
 +		return 0;
- 	if (security_capable(cap) == 0 && gr_is_capable_nolog(cap)) {
- 		current->flags |= PF_SUPERPRIV;
- 		return 1;
++
+ 	if (unlikely(!cap_valid(cap))) {
+ 		printk(KERN_CRIT "capable() called with invalid cap=%u\n", cap);
+ 		BUG();
 
