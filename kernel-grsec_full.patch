@@ -27514,6 +27514,19 @@ diff -urNp linux-2.6.37/drivers/serial/kgdboc.c linux-2.6.37/drivers/serial/kgdb
  static struct kgdb_io kgdboc_io_ops = {
  	.name			= "kgdboc",
  	.read_char		= kgdboc_get_char,
+diff -urNp linux-2.6.37/drivers/staging/autofs/root.c linux-2.6.37/drivers/staging/autofs/root.c
+--- linux-2.6.37/drivers/staging/autofs/root.c	2011-01-04 19:50:19.000000000 -0500
++++ linux-2.6.37/drivers/staging/autofs/root.c	2011-01-17 21:04:34.000000000 -0500
+@@ -308,7 +308,8 @@ static int autofs_root_symlink(struct in
+ 	set_bit(n,sbi->symlink_bitmap);
+ 	sl = &sbi->symlink[n];
+ 	sl->len = strlen(symname);
+-	sl->data = kmalloc(slsize = sl->len+1, GFP_KERNEL);
++	slsize = sl->len + 1;
++	sl->data = kmalloc(slsize, GFP_KERNEL);
+ 	if (!sl->data) {
+ 		clear_bit(n,sbi->symlink_bitmap);
+ 		unlock_kernel();
 diff -urNp linux-2.6.37/drivers/staging/bcm/Bcmchar.c linux-2.6.37/drivers/staging/bcm/Bcmchar.c
 --- linux-2.6.37/drivers/staging/bcm/Bcmchar.c	2011-01-04 19:50:19.000000000 -0500
 +++ linux-2.6.37/drivers/staging/bcm/Bcmchar.c	2011-01-17 02:41:01.000000000 -0500
@@ -31928,7 +31941,7 @@ diff -urNp linux-2.6.37/fs/locks.c linux-2.6.37/fs/locks.c
  	lock_flocks();
 diff -urNp linux-2.6.37/fs/namei.c linux-2.6.37/fs/namei.c
 --- linux-2.6.37/fs/namei.c	2011-01-04 19:50:19.000000000 -0500
-+++ linux-2.6.37/fs/namei.c	2011-01-17 02:46:52.000000000 -0500
++++ linux-2.6.37/fs/namei.c	2011-01-17 11:57:48.000000000 -0500
 @@ -221,14 +221,6 @@ int generic_permission(struct inode *ino
  		return ret;
  
@@ -32146,7 +32159,19 @@ diff -urNp linux-2.6.37/fs/namei.c linux-2.6.37/fs/namei.c
  	mutex_unlock(&dir->d_inode->i_mutex);
  	audit_inode(pathname, path->dentry);
  
-@@ -2013,6 +2064,17 @@ SYSCALL_DEFINE4(mknodat, int, dfd, const
+@@ -1838,6 +1889,11 @@ reval:
+ 		error = security_inode_follow_link(path.dentry, &nd);
+ 		if (error)
+ 			goto exit_dput;
++		if (gr_handle_follow_link(path.dentry->d_parent->d_inode,
++					  path.dentry->d_inode, path.dentry, nd.path.mnt)) {
++			error = -EACCES;
++			goto exit_dput;
++		}
+ 		error = __do_follow_link(&path, &nd, &cookie);
+ 		if (unlikely(error)) {
+ 			/* nd.path had been dropped */
+@@ -2013,6 +2069,17 @@ SYSCALL_DEFINE4(mknodat, int, dfd, const
  	error = may_mknod(mode);
  	if (error)
  		goto out_dput;
@@ -32164,7 +32189,7 @@ diff -urNp linux-2.6.37/fs/namei.c linux-2.6.37/fs/namei.c
  	error = mnt_want_write(nd.path.mnt);
  	if (error)
  		goto out_dput;
-@@ -2033,6 +2095,9 @@ SYSCALL_DEFINE4(mknodat, int, dfd, const
+@@ -2033,6 +2100,9 @@ SYSCALL_DEFINE4(mknodat, int, dfd, const
  	}
  out_drop_write:
  	mnt_drop_write(nd.path.mnt);
@@ -32174,7 +32199,7 @@ diff -urNp linux-2.6.37/fs/namei.c linux-2.6.37/fs/namei.c
  out_dput:
  	dput(dentry);
  out_unlock:
-@@ -2085,6 +2150,11 @@ SYSCALL_DEFINE3(mkdirat, int, dfd, const
+@@ -2085,6 +2155,11 @@ SYSCALL_DEFINE3(mkdirat, int, dfd, const
  	if (IS_ERR(dentry))
  		goto out_unlock;
  
@@ -32186,7 +32211,7 @@ diff -urNp linux-2.6.37/fs/namei.c linux-2.6.37/fs/namei.c
  	if (!IS_POSIXACL(nd.path.dentry->d_inode))
  		mode &= ~current_umask();
  	error = mnt_want_write(nd.path.mnt);
-@@ -2096,6 +2166,10 @@ SYSCALL_DEFINE3(mkdirat, int, dfd, const
+@@ -2096,6 +2171,10 @@ SYSCALL_DEFINE3(mkdirat, int, dfd, const
  	error = vfs_mkdir(nd.path.dentry->d_inode, dentry, mode);
  out_drop_write:
  	mnt_drop_write(nd.path.mnt);
@@ -32197,7 +32222,7 @@ diff -urNp linux-2.6.37/fs/namei.c linux-2.6.37/fs/namei.c
  out_dput:
  	dput(dentry);
  out_unlock:
-@@ -2177,6 +2251,8 @@ static long do_rmdir(int dfd, const char
+@@ -2177,6 +2256,8 @@ static long do_rmdir(int dfd, const char
  	char * name;
  	struct dentry *dentry;
  	struct nameidata nd;
@@ -32206,7 +32231,7 @@ diff -urNp linux-2.6.37/fs/namei.c linux-2.6.37/fs/namei.c
  
  	error = user_path_parent(dfd, pathname, &nd, &name);
  	if (error)
-@@ -2201,6 +2277,19 @@ static long do_rmdir(int dfd, const char
+@@ -2201,6 +2282,19 @@ static long do_rmdir(int dfd, const char
  	error = PTR_ERR(dentry);
  	if (IS_ERR(dentry))
  		goto exit2;
@@ -32226,7 +32251,7 @@ diff -urNp linux-2.6.37/fs/namei.c linux-2.6.37/fs/namei.c
  	error = mnt_want_write(nd.path.mnt);
  	if (error)
  		goto exit3;
-@@ -2208,6 +2297,8 @@ static long do_rmdir(int dfd, const char
+@@ -2208,6 +2302,8 @@ static long do_rmdir(int dfd, const char
  	if (error)
  		goto exit4;
  	error = vfs_rmdir(nd.path.dentry->d_inode, dentry);
@@ -32235,7 +32260,7 @@ diff -urNp linux-2.6.37/fs/namei.c linux-2.6.37/fs/namei.c
  exit4:
  	mnt_drop_write(nd.path.mnt);
  exit3:
-@@ -2270,6 +2361,8 @@ static long do_unlinkat(int dfd, const c
+@@ -2270,6 +2366,8 @@ static long do_unlinkat(int dfd, const c
  	struct dentry *dentry;
  	struct nameidata nd;
  	struct inode *inode = NULL;
@@ -32244,7 +32269,7 @@ diff -urNp linux-2.6.37/fs/namei.c linux-2.6.37/fs/namei.c
  
  	error = user_path_parent(dfd, pathname, &nd, &name);
  	if (error)
-@@ -2289,8 +2382,17 @@ static long do_unlinkat(int dfd, const c
+@@ -2289,8 +2387,17 @@ static long do_unlinkat(int dfd, const c
  		if (nd.last.name[nd.last.len])
  			goto slashes;
  		inode = dentry->d_inode;
@@ -32263,7 +32288,7 @@ diff -urNp linux-2.6.37/fs/namei.c linux-2.6.37/fs/namei.c
  		error = mnt_want_write(nd.path.mnt);
  		if (error)
  			goto exit2;
-@@ -2298,6 +2400,8 @@ static long do_unlinkat(int dfd, const c
+@@ -2298,6 +2405,8 @@ static long do_unlinkat(int dfd, const c
  		if (error)
  			goto exit3;
  		error = vfs_unlink(nd.path.dentry->d_inode, dentry);
@@ -32272,7 +32297,7 @@ diff -urNp linux-2.6.37/fs/namei.c linux-2.6.37/fs/namei.c
  exit3:
  		mnt_drop_write(nd.path.mnt);
  	exit2:
-@@ -2375,6 +2479,11 @@ SYSCALL_DEFINE3(symlinkat, const char __
+@@ -2375,6 +2484,11 @@ SYSCALL_DEFINE3(symlinkat, const char __
  	if (IS_ERR(dentry))
  		goto out_unlock;
  
@@ -32284,7 +32309,7 @@ diff -urNp linux-2.6.37/fs/namei.c linux-2.6.37/fs/namei.c
  	error = mnt_want_write(nd.path.mnt);
  	if (error)
  		goto out_dput;
-@@ -2382,6 +2491,8 @@ SYSCALL_DEFINE3(symlinkat, const char __
+@@ -2382,6 +2496,8 @@ SYSCALL_DEFINE3(symlinkat, const char __
  	if (error)
  		goto out_drop_write;
  	error = vfs_symlink(nd.path.dentry->d_inode, dentry, from);
@@ -32293,7 +32318,7 @@ diff -urNp linux-2.6.37/fs/namei.c linux-2.6.37/fs/namei.c
  out_drop_write:
  	mnt_drop_write(nd.path.mnt);
  out_dput:
-@@ -2474,6 +2585,20 @@ SYSCALL_DEFINE5(linkat, int, olddfd, con
+@@ -2474,6 +2590,20 @@ SYSCALL_DEFINE5(linkat, int, olddfd, con
  	error = PTR_ERR(new_dentry);
  	if (IS_ERR(new_dentry))
  		goto out_unlock;
@@ -32314,7 +32339,7 @@ diff -urNp linux-2.6.37/fs/namei.c linux-2.6.37/fs/namei.c
  	error = mnt_want_write(nd.path.mnt);
  	if (error)
  		goto out_dput;
-@@ -2481,6 +2606,8 @@ SYSCALL_DEFINE5(linkat, int, olddfd, con
+@@ -2481,6 +2611,8 @@ SYSCALL_DEFINE5(linkat, int, olddfd, con
  	if (error)
  		goto out_drop_write;
  	error = vfs_link(old_path.dentry, nd.path.dentry->d_inode, new_dentry);
@@ -32323,7 +32348,7 @@ diff -urNp linux-2.6.37/fs/namei.c linux-2.6.37/fs/namei.c
  out_drop_write:
  	mnt_drop_write(nd.path.mnt);
  out_dput:
-@@ -2714,6 +2841,12 @@ SYSCALL_DEFINE4(renameat, int, olddfd, c
+@@ -2714,6 +2846,12 @@ SYSCALL_DEFINE4(renameat, int, olddfd, c
  	if (new_dentry == trap)
  		goto exit5;
  
@@ -32336,7 +32361,7 @@ diff -urNp linux-2.6.37/fs/namei.c linux-2.6.37/fs/namei.c
  	error = mnt_want_write(oldnd.path.mnt);
  	if (error)
  		goto exit5;
-@@ -2723,6 +2856,9 @@ SYSCALL_DEFINE4(renameat, int, olddfd, c
+@@ -2723,6 +2861,9 @@ SYSCALL_DEFINE4(renameat, int, olddfd, c
  		goto exit6;
  	error = vfs_rename(old_dir->d_inode, old_dentry,
  				   new_dir->d_inode, new_dentry);
@@ -34763,7 +34788,7 @@ diff -urNp linux-2.6.37/grsecurity/gracl_alloc.c linux-2.6.37/grsecurity/gracl_a
 +}
 diff -urNp linux-2.6.37/grsecurity/gracl.c linux-2.6.37/grsecurity/gracl.c
 --- linux-2.6.37/grsecurity/gracl.c	1969-12-31 19:00:00.000000000 -0500
-+++ linux-2.6.37/grsecurity/gracl.c	2011-01-17 02:41:02.000000000 -0500
++++ linux-2.6.37/grsecurity/gracl.c	2011-01-17 20:20:28.000000000 -0500
 @@ -0,0 +1,3991 @@
 +#include <linux/kernel.h>
 +#include <linux/module.h>
@@ -37806,7 +37831,7 @@ diff -urNp linux-2.6.37/grsecurity/gracl.c linux-2.6.37/grsecurity/gracl.c
 +			gr_log_str(GR_DONT_AUDIT_GOOD, GR_RELOADI_ACL_MSG, GR_VERSION);
 +			error = -EAGAIN;
 +		} else if (!(chkpw(gr_usermode, gr_system_salt, gr_system_sum))) {
-+			lock_kernel();
++			preempt_disable();
 +
 +			pax_open_kernel();
 +			gr_status &= ~GR_READY;
@@ -37814,10 +37839,10 @@ diff -urNp linux-2.6.37/grsecurity/gracl.c linux-2.6.37/grsecurity/gracl.c
 +
 +			free_variables();
 +			if (!(error2 = gracl_init(gr_usermode))) {
-+				unlock_kernel();
++				preempt_enable();
 +				gr_log_str(GR_DONT_AUDIT_GOOD, GR_RELOAD_ACL_MSG, GR_VERSION);
 +			} else {
-+				unlock_kernel();
++				preempt_enable();
 +				error = error2;
 +				gr_log_str(GR_DONT_AUDIT, GR_RELOADF_ACL_MSG, GR_VERSION);
 +			}
