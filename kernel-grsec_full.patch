@@ -10759,7 +10759,7 @@ diff -urNp linux-2.6.37/arch/x86/kernel/cpu/Makefile linux-2.6.37/arch/x86/kerne
  obj-y			+= vmware.o hypervisor.o sched.o mshyperv.o
 diff -urNp linux-2.6.37/arch/x86/kernel/cpu/mcheck/mce.c linux-2.6.37/arch/x86/kernel/cpu/mcheck/mce.c
 --- linux-2.6.37/arch/x86/kernel/cpu/mcheck/mce.c	2011-01-04 19:50:19.000000000 -0500
-+++ linux-2.6.37/arch/x86/kernel/cpu/mcheck/mce.c	2011-01-17 02:41:01.000000000 -0500
++++ linux-2.6.37/arch/x86/kernel/cpu/mcheck/mce.c	2011-01-24 18:04:15.000000000 -0500
 @@ -219,7 +219,7 @@ static void print_mce(struct mce *m)
  			!(m->mcgstatus & MCG_STATUS_EIPV) ? " !INEXACT!" : "",
  				m->cs, m->ip);
@@ -10774,7 +10774,7 @@ diff -urNp linux-2.6.37/arch/x86/kernel/cpu/mcheck/mce.c linux-2.6.37/arch/x86/k
  
  static DEFINE_SPINLOCK(mce_state_lock);
 -static int		open_count;		/* #times opened */
-+static atomic_t		open_count;		/* #times opened */
++static local_t		open_count;		/* #times opened */
  static int		open_exclu;		/* already open exclusive? */
  
  static int mce_open(struct inode *inode, struct file *file)
@@ -10782,7 +10782,7 @@ diff -urNp linux-2.6.37/arch/x86/kernel/cpu/mcheck/mce.c linux-2.6.37/arch/x86/k
  	spin_lock(&mce_state_lock);
  
 -	if (open_exclu || (open_count && (file->f_flags & O_EXCL))) {
-+	if (open_exclu || (atomic_read(&open_count) && (file->f_flags & O_EXCL))) {
++	if (open_exclu || (local_read(&open_count) && (file->f_flags & O_EXCL))) {
  		spin_unlock(&mce_state_lock);
  
  		return -EBUSY;
@@ -10791,7 +10791,7 @@ diff -urNp linux-2.6.37/arch/x86/kernel/cpu/mcheck/mce.c linux-2.6.37/arch/x86/k
  	if (file->f_flags & O_EXCL)
  		open_exclu = 1;
 -	open_count++;
-+	atomic_inc(&open_count);
++	local_inc(&open_count);
  
  	spin_unlock(&mce_state_lock);
  
@@ -10800,7 +10800,7 @@ diff -urNp linux-2.6.37/arch/x86/kernel/cpu/mcheck/mce.c linux-2.6.37/arch/x86/k
  	spin_lock(&mce_state_lock);
  
 -	open_count--;
-+	atomic_dec(&open_count);
++	local_dec(&open_count);
  	open_exclu = 0;
  
  	spin_unlock(&mce_state_lock);
@@ -12777,7 +12777,7 @@ diff -urNp linux-2.6.37/arch/x86/kernel/ioport.c linux-2.6.37/arch/x86/kernel/io
  	}
 diff -urNp linux-2.6.37/arch/x86/kernel/irq_32.c linux-2.6.37/arch/x86/kernel/irq_32.c
 --- linux-2.6.37/arch/x86/kernel/irq_32.c	2011-01-04 19:50:19.000000000 -0500
-+++ linux-2.6.37/arch/x86/kernel/irq_32.c	2011-01-17 02:41:01.000000000 -0500
++++ linux-2.6.37/arch/x86/kernel/irq_32.c	2011-01-24 18:04:15.000000000 -0500
 @@ -91,7 +91,7 @@ execute_on_irq_stack(int overflow, struc
  		return 0;
  
@@ -12810,7 +12810,29 @@ diff -urNp linux-2.6.37/arch/x86/kernel/irq_32.c linux-2.6.37/arch/x86/kernel/ir
  	return 1;
  }
  
-@@ -171,9 +180,18 @@ asmlinkage void do_softirq(void)
+@@ -129,8 +138,7 @@ void __cpuinit irq_ctx_init(int cpu)
+ 	irqctx = page_address(alloc_pages_node(cpu_to_node(cpu),
+ 					       THREAD_FLAGS,
+ 					       THREAD_ORDER));
+-	irqctx->tinfo.task		= NULL;
+-	irqctx->tinfo.exec_domain	= NULL;
++	memset(&irqctx->tinfo, 0, sizeof(struct thread_info));
+ 	irqctx->tinfo.cpu		= cpu;
+ 	irqctx->tinfo.preempt_count	= HARDIRQ_OFFSET;
+ 	irqctx->tinfo.addr_limit	= MAKE_MM_SEG(0);
+@@ -140,10 +148,8 @@ void __cpuinit irq_ctx_init(int cpu)
+ 	irqctx = page_address(alloc_pages_node(cpu_to_node(cpu),
+ 					       THREAD_FLAGS,
+ 					       THREAD_ORDER));
+-	irqctx->tinfo.task		= NULL;
+-	irqctx->tinfo.exec_domain	= NULL;
++	memset(&irqctx->tinfo, 0, sizeof(struct thread_info));
+ 	irqctx->tinfo.cpu		= cpu;
+-	irqctx->tinfo.preempt_count	= 0;
+ 	irqctx->tinfo.addr_limit	= MAKE_MM_SEG(0);
+ 
+ 	per_cpu(softirq_ctx, cpu) = irqctx;
+@@ -171,9 +177,18 @@ asmlinkage void do_softirq(void)
  		irqctx->tinfo.previous_esp = current_stack_pointer;
  
  		/* build the stack frame on the softirq stack */
@@ -15934,16 +15956,20 @@ diff -urNp linux-2.6.37/arch/x86/lib/getuser.S linux-2.6.37/arch/x86/lib/getuser
  	ret
 diff -urNp linux-2.6.37/arch/x86/lib/insn.c linux-2.6.37/arch/x86/lib/insn.c
 --- linux-2.6.37/arch/x86/lib/insn.c	2011-01-04 19:50:19.000000000 -0500
-+++ linux-2.6.37/arch/x86/lib/insn.c	2011-01-17 02:41:01.000000000 -0500
-@@ -21,6 +21,7 @@
++++ linux-2.6.37/arch/x86/lib/insn.c	2011-01-24 18:04:15.000000000 -0500
+@@ -21,6 +21,11 @@
  #include <linux/string.h>
  #include <asm/inat.h>
  #include <asm/insn.h>
++#ifdef __KERNEL__
 +#include <asm/pgtable_types.h>
++#else
++#define ktla_ktva(addr) addr
++#endif
  
  #define get_next(t, insn)	\
  	({t r; r = *(t*)insn->next_byte; insn->next_byte += sizeof(t); r; })
-@@ -40,8 +41,8 @@
+@@ -40,8 +45,8 @@
  void insn_init(struct insn *insn, const void *kaddr, int x86_64)
  {
  	memset(insn, 0, sizeof(*insn));
@@ -23504,13 +23530,13 @@ diff -urNp linux-2.6.37/drivers/char/hvc_console.h linux-2.6.37/drivers/char/hvc
  
 diff -urNp linux-2.6.37/drivers/char/hvcs.c linux-2.6.37/drivers/char/hvcs.c
 --- linux-2.6.37/drivers/char/hvcs.c	2011-01-04 19:50:19.000000000 -0500
-+++ linux-2.6.37/drivers/char/hvcs.c	2011-01-17 02:41:01.000000000 -0500
++++ linux-2.6.37/drivers/char/hvcs.c	2011-01-24 18:04:15.000000000 -0500
 @@ -270,7 +270,7 @@ struct hvcs_struct {
  	unsigned int index;
  
  	struct tty_struct *tty;
 -	int open_count;
-+	atomic_t open_count;
++	local_t open_count;
  
  	/*
  	 * Used to tell the driver kernel_thread what operations need to take
@@ -23519,7 +23545,7 @@ diff -urNp linux-2.6.37/drivers/char/hvcs.c linux-2.6.37/drivers/char/hvcs.c
  	spin_lock_irqsave(&hvcsd->lock, flags);
  
 -	if (hvcsd->open_count > 0) {
-+	if (atomic_read(&hvcsd->open_count) > 0) {
++	if (local_read(&hvcsd->open_count) > 0) {
  		spin_unlock_irqrestore(&hvcsd->lock, flags);
  		printk(KERN_INFO "HVCS: vterm state unchanged.  "
  				"The hvcs device node is still in use.\n");
@@ -23528,7 +23554,7 @@ diff -urNp linux-2.6.37/drivers/char/hvcs.c linux-2.6.37/drivers/char/hvcs.c
  			goto error_release;
  
 -	hvcsd->open_count = 1;
-+	atomic_set(&hvcsd->open_count, 1);
++	local_set(&hvcsd->open_count, 1);
  	hvcsd->tty = tty;
  	tty->driver_data = hvcsd;
  
@@ -23537,7 +23563,7 @@ diff -urNp linux-2.6.37/drivers/char/hvcs.c linux-2.6.37/drivers/char/hvcs.c
  	spin_lock_irqsave(&hvcsd->lock, flags);
  	kref_get(&hvcsd->kref);
 -	hvcsd->open_count++;
-+	atomic_inc(&hvcsd->open_count);
++	local_inc(&hvcsd->open_count);
  	hvcsd->todo_mask |= HVCS_SCHED_READ;
  	spin_unlock_irqrestore(&hvcsd->lock, flags);
  
@@ -23546,7 +23572,7 @@ diff -urNp linux-2.6.37/drivers/char/hvcs.c linux-2.6.37/drivers/char/hvcs.c
  
  	spin_lock_irqsave(&hvcsd->lock, flags);
 -	if (--hvcsd->open_count == 0) {
-+	if (atomic_dec_and_test(&hvcsd->open_count)) {
++	if (local_dec_and_test(&hvcsd->open_count)) {
  
  		vio_disable_interrupts(hvcsd->vdev);
  
@@ -23555,11 +23581,11 @@ diff -urNp linux-2.6.37/drivers/char/hvcs.c linux-2.6.37/drivers/char/hvcs.c
  		kref_put(&hvcsd->kref, destroy_hvcs_struct);
  		return;
 -	} else if (hvcsd->open_count < 0) {
-+	} else if (atomic_read(&hvcsd->open_count) < 0) {
++	} else if (local_read(&hvcsd->open_count) < 0) {
  		printk(KERN_ERR "HVCS: vty-server@%X open_count: %d"
  				" is missmanaged.\n",
 -		hvcsd->vdev->unit_address, hvcsd->open_count);
-+		hvcsd->vdev->unit_address, atomic_read(&hvcsd->open_count));
++		hvcsd->vdev->unit_address, local_read(&hvcsd->open_count));
  	}
  
  	spin_unlock_irqrestore(&hvcsd->lock, flags);
@@ -23568,7 +23594,7 @@ diff -urNp linux-2.6.37/drivers/char/hvcs.c linux-2.6.37/drivers/char/hvcs.c
  	spin_lock_irqsave(&hvcsd->lock, flags);
  	/* Preserve this so that we know how many kref refs to put */
 -	temp_open_count = hvcsd->open_count;
-+	temp_open_count = atomic_read(&hvcsd->open_count);
++	temp_open_count = local_read(&hvcsd->open_count);
  
  	/*
  	 * Don't kref put inside the spinlock because the destruction
@@ -23577,7 +23603,7 @@ diff -urNp linux-2.6.37/drivers/char/hvcs.c linux-2.6.37/drivers/char/hvcs.c
  	hvcsd->tty = NULL;
  
 -	hvcsd->open_count = 0;
-+	atomic_set(&hvcsd->open_count, 0);
++	local_set(&hvcsd->open_count, 0);
  
  	/* This will drop any buffered data on the floor which is OK in a hangup
  	 * scenario. */
@@ -23586,7 +23612,7 @@ diff -urNp linux-2.6.37/drivers/char/hvcs.c linux-2.6.37/drivers/char/hvcs.c
  	 * but we want to keep it all in the spinlock.
  	 */
 -	if (hvcsd->open_count <= 0) {
-+	if (atomic_read(&hvcsd->open_count) <= 0) {
++	if (local_read(&hvcsd->open_count) <= 0) {
  		spin_unlock_irqrestore(&hvcsd->lock, flags);
  		return -ENODEV;
  	}
@@ -23595,7 +23621,7 @@ diff -urNp linux-2.6.37/drivers/char/hvcs.c linux-2.6.37/drivers/char/hvcs.c
  	struct hvcs_struct *hvcsd = tty->driver_data;
  
 -	if (!hvcsd || hvcsd->open_count <= 0)
-+	if (!hvcsd || atomic_read(&hvcsd->open_count) <= 0)
++	if (!hvcsd || local_read(&hvcsd->open_count) <= 0)
  		return 0;
  
  	return HVCS_BUFF_LEN - hvcsd->chars_in_buffer;
@@ -23900,13 +23926,13 @@ diff -urNp linux-2.6.37/drivers/char/nvram.c linux-2.6.37/drivers/char/nvram.c
  static int __init nvram_init(void)
 diff -urNp linux-2.6.37/drivers/char/pcmcia/ipwireless/tty.c linux-2.6.37/drivers/char/pcmcia/ipwireless/tty.c
 --- linux-2.6.37/drivers/char/pcmcia/ipwireless/tty.c	2011-01-04 19:50:19.000000000 -0500
-+++ linux-2.6.37/drivers/char/pcmcia/ipwireless/tty.c	2011-01-17 02:41:01.000000000 -0500
++++ linux-2.6.37/drivers/char/pcmcia/ipwireless/tty.c	2011-01-24 18:04:15.000000000 -0500
 @@ -51,7 +51,7 @@ struct ipw_tty {
  	int tty_type;
  	struct ipw_network *network;
  	struct tty_struct *linux_tty;
 -	int open_count;
-+	atomic_t open_count;
++	local_t open_count;
  	unsigned int control_lines;
  	struct mutex ipw_tty_mutex;
  	int tx_bytes_queued;
@@ -23915,11 +23941,11 @@ diff -urNp linux-2.6.37/drivers/char/pcmcia/ipwireless/tty.c linux-2.6.37/driver
  		return -ENODEV;
  	}
 -	if (tty->open_count == 0)
-+	if (atomic_read(&tty->open_count) == 0)
++	if (local_read(&tty->open_count) == 0)
  		tty->tx_bytes_queued = 0;
  
 -	tty->open_count++;
-+	atomic_inc(&tty->open_count);
++	local_inc(&tty->open_count);
  
  	tty->linux_tty = linux_tty;
  	linux_tty->driver_data = tty;
@@ -23930,7 +23956,7 @@ diff -urNp linux-2.6.37/drivers/char/pcmcia/ipwireless/tty.c linux-2.6.37/driver
 -	tty->open_count--;
 -
 -	if (tty->open_count == 0) {
-+	if (atomic_dec_return(&tty->open_count) == 0) {
++	if (local_dec_return(&tty->open_count) == 0) {
  		struct tty_struct *linux_tty = tty->linux_tty;
  
  		if (linux_tty != NULL) {
@@ -23939,7 +23965,7 @@ diff -urNp linux-2.6.37/drivers/char/pcmcia/ipwireless/tty.c linux-2.6.37/driver
  
  	mutex_lock(&tty->ipw_tty_mutex);
 -	if (tty->open_count == 0) {
-+	if (atomic_read(&tty->open_count) == 0) {
++	if (local_read(&tty->open_count) == 0) {
  		mutex_unlock(&tty->ipw_tty_mutex);
  		return;
  	}
@@ -23948,7 +23974,7 @@ diff -urNp linux-2.6.37/drivers/char/pcmcia/ipwireless/tty.c linux-2.6.37/driver
  	}
  
 -	if (!tty->open_count) {
-+	if (!atomic_read(&tty->open_count)) {
++	if (!local_read(&tty->open_count)) {
  		mutex_unlock(&tty->ipw_tty_mutex);
  		return;
  	}
@@ -23957,7 +23983,7 @@ diff -urNp linux-2.6.37/drivers/char/pcmcia/ipwireless/tty.c linux-2.6.37/driver
  
  	mutex_lock(&tty->ipw_tty_mutex);
 -	if (!tty->open_count) {
-+	if (!atomic_read(&tty->open_count)) {
++	if (!local_read(&tty->open_count)) {
  		mutex_unlock(&tty->ipw_tty_mutex);
  		return -EINVAL;
  	}
@@ -23966,7 +23992,7 @@ diff -urNp linux-2.6.37/drivers/char/pcmcia/ipwireless/tty.c linux-2.6.37/driver
  		return -ENODEV;
  
 -	if (!tty->open_count)
-+	if (!atomic_read(&tty->open_count))
++	if (!local_read(&tty->open_count))
  		return -EINVAL;
  
  	room = IPWIRELESS_TX_QUEUE_SIZE - tty->tx_bytes_queued;
@@ -23975,7 +24001,7 @@ diff -urNp linux-2.6.37/drivers/char/pcmcia/ipwireless/tty.c linux-2.6.37/driver
  		return 0;
  
 -	if (!tty->open_count)
-+	if (!atomic_read(&tty->open_count))
++	if (!local_read(&tty->open_count))
  		return 0;
  
  	return tty->tx_bytes_queued;
@@ -23984,7 +24010,7 @@ diff -urNp linux-2.6.37/drivers/char/pcmcia/ipwireless/tty.c linux-2.6.37/driver
  		return -ENODEV;
  
 -	if (!tty->open_count)
-+	if (!atomic_read(&tty->open_count))
++	if (!local_read(&tty->open_count))
  		return -EINVAL;
  
  	return get_control_lines(tty);
@@ -23993,7 +24019,7 @@ diff -urNp linux-2.6.37/drivers/char/pcmcia/ipwireless/tty.c linux-2.6.37/driver
  		return -ENODEV;
  
 -	if (!tty->open_count)
-+	if (!atomic_read(&tty->open_count))
++	if (!local_read(&tty->open_count))
  		return -EINVAL;
  
  	return set_control_lines(tty, set, clear);
@@ -24002,7 +24028,7 @@ diff -urNp linux-2.6.37/drivers/char/pcmcia/ipwireless/tty.c linux-2.6.37/driver
  		return -ENODEV;
  
 -	if (!tty->open_count)
-+	if (!atomic_read(&tty->open_count))
++	if (!local_read(&tty->open_count))
  		return -EINVAL;
  
  	/* FIXME: Exactly how is the tty object locked here .. */
@@ -24011,7 +24037,7 @@ diff -urNp linux-2.6.37/drivers/char/pcmcia/ipwireless/tty.c linux-2.6.37/driver
  				mutex_lock(&ttyj->ipw_tty_mutex);
  			}
 -			while (ttyj->open_count)
-+			while (atomic_read(&ttyj->open_count))
++			while (local_read(&ttyj->open_count))
  				do_ipw_close(ttyj);
  			ipwireless_disassociate_network_ttys(network,
  							     ttyj->channel_idx);
@@ -24070,13 +24096,13 @@ diff -urNp linux-2.6.37/drivers/char/random.c linux-2.6.37/drivers/char/random.c
  
 diff -urNp linux-2.6.37/drivers/char/sonypi.c linux-2.6.37/drivers/char/sonypi.c
 --- linux-2.6.37/drivers/char/sonypi.c	2011-01-04 19:50:19.000000000 -0500
-+++ linux-2.6.37/drivers/char/sonypi.c	2011-01-17 02:41:01.000000000 -0500
++++ linux-2.6.37/drivers/char/sonypi.c	2011-01-24 18:04:15.000000000 -0500
 @@ -491,7 +491,7 @@ static struct sonypi_device {
  	spinlock_t fifo_lock;
  	wait_queue_head_t fifo_proc_list;
  	struct fasync_struct *fifo_async;
 -	int open_count;
-+	atomic_t open_count;
++	local_t open_count;
  	int model;
  	struct input_dev *input_jog_dev;
  	struct input_dev *input_key_dev;
@@ -24085,7 +24111,7 @@ diff -urNp linux-2.6.37/drivers/char/sonypi.c linux-2.6.37/drivers/char/sonypi.c
  {
  	mutex_lock(&sonypi_device.lock);
 -	sonypi_device.open_count--;
-+	atomic_dec(&sonypi_device.open_count);
++	local_dec(&sonypi_device.open_count);
  	mutex_unlock(&sonypi_device.lock);
  	return 0;
  }
@@ -24094,10 +24120,10 @@ diff -urNp linux-2.6.37/drivers/char/sonypi.c linux-2.6.37/drivers/char/sonypi.c
  	mutex_lock(&sonypi_device.lock);
  	/* Flush input queue on first open */
 -	if (!sonypi_device.open_count)
-+	if (!atomic_read(&sonypi_device.open_count))
++	if (!local_read(&sonypi_device.open_count))
  		kfifo_reset(&sonypi_device.fifo);
 -	sonypi_device.open_count++;
-+	atomic_inc(&sonypi_device.open_count);
++	local_inc(&sonypi_device.open_count);
  	mutex_unlock(&sonypi_device.lock);
  
  	return 0;
@@ -24242,7 +24268,7 @@ diff -urNp linux-2.6.37/drivers/gpu/drm/drm_drv.c linux-2.6.37/drivers/gpu/drm/d
  	DRM_DEBUG("pid=%d, cmd=0x%02x, nr=0x%02x, dev 0x%lx, auth=%d\n",
 diff -urNp linux-2.6.37/drivers/gpu/drm/drm_fops.c linux-2.6.37/drivers/gpu/drm/drm_fops.c
 --- linux-2.6.37/drivers/gpu/drm/drm_fops.c	2011-01-04 19:50:19.000000000 -0500
-+++ linux-2.6.37/drivers/gpu/drm/drm_fops.c	2011-01-17 02:41:01.000000000 -0500
++++ linux-2.6.37/drivers/gpu/drm/drm_fops.c	2011-01-24 18:04:15.000000000 -0500
 @@ -70,7 +70,7 @@ static int drm_setup(struct drm_device *
  	}
  
@@ -24259,7 +24285,7 @@ diff -urNp linux-2.6.37/drivers/gpu/drm/drm_fops.c linux-2.6.37/drivers/gpu/drm/
 -		atomic_inc(&dev->counts[_DRM_STAT_OPENS]);
 -		if (!dev->open_count++)
 +		atomic_inc_unchecked(&dev->counts[_DRM_STAT_OPENS]);
-+		if (atomic_inc_return(&dev->open_count) == 1)
++		if (local_inc_return(&dev->open_count) == 1)
  			retcode = drm_setup(dev);
  	}
  	if (!retcode) {
@@ -24268,7 +24294,7 @@ diff -urNp linux-2.6.37/drivers/gpu/drm/drm_fops.c linux-2.6.37/drivers/gpu/drm/
  	mutex_lock(&drm_global_mutex);
  
 -	DRM_DEBUG("open_count = %d\n", dev->open_count);
-+	DRM_DEBUG("open_count = %d\n", atomic_read(&dev->open_count));
++	DRM_DEBUG("open_count = %d\n", local_read(&dev->open_count));
  
  	if (dev->driver->preclose)
  		dev->driver->preclose(dev, file_priv);
@@ -24277,7 +24303,7 @@ diff -urNp linux-2.6.37/drivers/gpu/drm/drm_fops.c linux-2.6.37/drivers/gpu/drm/
  		  task_pid_nr(current),
  		  (long)old_encode_dev(file_priv->minor->device),
 -		  dev->open_count);
-+		  atomic_read(&dev->open_count));
++		  local_read(&dev->open_count));
  
  	/* if the master has gone away we can't do anything with the lock */
  	if (file_priv->minor->master)
@@ -24288,7 +24314,7 @@ diff -urNp linux-2.6.37/drivers/gpu/drm/drm_fops.c linux-2.6.37/drivers/gpu/drm/
 -	atomic_inc(&dev->counts[_DRM_STAT_CLOSES]);
 -	if (!--dev->open_count) {
 +	atomic_inc_unchecked(&dev->counts[_DRM_STAT_CLOSES]);
-+	if (atomic_dec_and_test(&dev->open_count)) {
++	if (local_dec_and_test(&dev->open_count)) {
  		if (atomic_read(&dev->ioctl_count)) {
  			DRM_ERROR("Device busy: %d\n",
  				  atomic_read(&dev->ioctl_count));
@@ -24538,13 +24564,13 @@ diff -urNp linux-2.6.37/drivers/gpu/drm/i915/dvo_tfp410.c linux-2.6.37/drivers/g
  	.mode_valid = tfp410_mode_valid,
 diff -urNp linux-2.6.37/drivers/gpu/drm/i915/i915_dma.c linux-2.6.37/drivers/gpu/drm/i915/i915_dma.c
 --- linux-2.6.37/drivers/gpu/drm/i915/i915_dma.c	2011-01-04 19:50:19.000000000 -0500
-+++ linux-2.6.37/drivers/gpu/drm/i915/i915_dma.c	2011-01-17 02:41:01.000000000 -0500
++++ linux-2.6.37/drivers/gpu/drm/i915/i915_dma.c	2011-01-24 18:04:15.000000000 -0500
 @@ -1191,7 +1191,7 @@ static bool i915_switcheroo_can_switch(s
  	bool can_switch;
  
  	spin_lock(&dev->count_lock);
 -	can_switch = (dev->open_count == 0);
-+	can_switch = (atomic_read(&dev->open_count) == 0);
++	can_switch = (local_read(&dev->open_count) == 0);
  	spin_unlock(&dev->count_lock);
  	return can_switch;
  }
@@ -24594,13 +24620,13 @@ diff -urNp linux-2.6.37/drivers/gpu/drm/nouveau/nouveau_backlight.c linux-2.6.37
  	.update_status = nv50_set_intensity,
 diff -urNp linux-2.6.37/drivers/gpu/drm/nouveau/nouveau_state.c linux-2.6.37/drivers/gpu/drm/nouveau/nouveau_state.c
 --- linux-2.6.37/drivers/gpu/drm/nouveau/nouveau_state.c	2011-01-04 19:50:19.000000000 -0500
-+++ linux-2.6.37/drivers/gpu/drm/nouveau/nouveau_state.c	2011-01-17 02:41:01.000000000 -0500
++++ linux-2.6.37/drivers/gpu/drm/nouveau/nouveau_state.c	2011-01-24 18:04:15.000000000 -0500
 @@ -546,7 +546,7 @@ static bool nouveau_switcheroo_can_switc
  	bool can_switch;
  
  	spin_lock(&dev->count_lock);
 -	can_switch = (dev->open_count == 0);
-+	can_switch = (atomic_read(&dev->open_count) == 0);
++	can_switch = (local_read(&dev->open_count) == 0);
  	spin_unlock(&dev->count_lock);
  	return can_switch;
  }
@@ -24626,13 +24652,13 @@ diff -urNp linux-2.6.37/drivers/gpu/drm/radeon/mkregtable.c linux-2.6.37/drivers
  	    (&mask_rex, "(0x[0-9a-fA-F]*) *([_a-zA-Z0-9]*)", REG_EXTENDED)) {
 diff -urNp linux-2.6.37/drivers/gpu/drm/radeon/radeon_device.c linux-2.6.37/drivers/gpu/drm/radeon/radeon_device.c
 --- linux-2.6.37/drivers/gpu/drm/radeon/radeon_device.c	2011-01-04 19:50:19.000000000 -0500
-+++ linux-2.6.37/drivers/gpu/drm/radeon/radeon_device.c	2011-01-17 02:41:01.000000000 -0500
++++ linux-2.6.37/drivers/gpu/drm/radeon/radeon_device.c	2011-01-24 18:04:15.000000000 -0500
 @@ -659,7 +659,7 @@ static bool radeon_switcheroo_can_switch
  	bool can_switch;
  
  	spin_lock(&dev->count_lock);
 -	can_switch = (dev->open_count == 0);
-+	can_switch = (atomic_read(&dev->open_count) == 0);
++	can_switch = (local_read(&dev->open_count) == 0);
  	spin_unlock(&dev->count_lock);
  	return can_switch;
  }
@@ -25243,31 +25269,31 @@ diff -urNp linux-2.6.37/drivers/input/serio/serio_raw.c linux-2.6.37/drivers/inp
  MODULE_DEVICE_TABLE(serio, serio_raw_serio_ids);
 diff -urNp linux-2.6.37/drivers/isdn/gigaset/common.c linux-2.6.37/drivers/isdn/gigaset/common.c
 --- linux-2.6.37/drivers/isdn/gigaset/common.c	2011-01-04 19:50:19.000000000 -0500
-+++ linux-2.6.37/drivers/isdn/gigaset/common.c	2011-01-17 02:41:01.000000000 -0500
++++ linux-2.6.37/drivers/isdn/gigaset/common.c	2011-01-24 18:04:15.000000000 -0500
 @@ -723,7 +723,7 @@ struct cardstate *gigaset_initcs(struct 
  	cs->commands_pending = 0;
  	cs->cur_at_seq = 0;
  	cs->gotfwver = -1;
 -	cs->open_count = 0;
-+	atomic_set(&cs->open_count, 0);
++	local_set(&cs->open_count, 0);
  	cs->dev = NULL;
  	cs->tty = NULL;
  	cs->tty_dev = NULL;
 diff -urNp linux-2.6.37/drivers/isdn/gigaset/gigaset.h linux-2.6.37/drivers/isdn/gigaset/gigaset.h
 --- linux-2.6.37/drivers/isdn/gigaset/gigaset.h	2011-01-04 19:50:19.000000000 -0500
-+++ linux-2.6.37/drivers/isdn/gigaset/gigaset.h	2011-01-17 02:41:01.000000000 -0500
++++ linux-2.6.37/drivers/isdn/gigaset/gigaset.h	2011-01-24 18:04:15.000000000 -0500
 @@ -433,7 +433,7 @@ struct cardstate {
  	spinlock_t cmdlock;
  	unsigned curlen, cmdbytes;
  
 -	unsigned open_count;
-+	atomic_t open_count;
++	local_t open_count;
  	struct tty_struct *tty;
  	struct tasklet_struct if_wake_tasklet;
  	unsigned control_state;
 diff -urNp linux-2.6.37/drivers/isdn/gigaset/interface.c linux-2.6.37/drivers/isdn/gigaset/interface.c
 --- linux-2.6.37/drivers/isdn/gigaset/interface.c	2011-01-04 19:50:19.000000000 -0500
-+++ linux-2.6.37/drivers/isdn/gigaset/interface.c	2011-01-17 02:41:01.000000000 -0500
++++ linux-2.6.37/drivers/isdn/gigaset/interface.c	2011-01-24 18:04:15.000000000 -0500
 @@ -160,9 +160,7 @@ static int if_open(struct tty_struct *tt
  		return -ERESTARTSYS;
  	tty->driver_data = cs;
@@ -25275,7 +25301,7 @@ diff -urNp linux-2.6.37/drivers/isdn/gigaset/interface.c linux-2.6.37/drivers/is
 -	++cs->open_count;
 -
 -	if (cs->open_count == 1) {
-+	if (atomic_inc_return(&cs->open_count) == 1) {
++	if (local_inc_return(&cs->open_count) == 1) {
  		spin_lock_irqsave(&cs->lock, flags);
  		cs->tty = tty;
  		spin_unlock_irqrestore(&cs->lock, flags);
@@ -25284,11 +25310,11 @@ diff -urNp linux-2.6.37/drivers/isdn/gigaset/interface.c linux-2.6.37/drivers/is
  	if (!cs->connected)
  		gig_dbg(DEBUG_IF, "not connected");	/* nothing to do */
 -	else if (!cs->open_count)
-+	else if (!atomic_read(&cs->open_count))
++	else if (!local_read(&cs->open_count))
  		dev_warn(cs->dev, "%s: device not opened\n", __func__);
  	else {
 -		if (!--cs->open_count) {
-+		if (!atomic_dec_return(&cs->open_count)) {
++		if (!local_dec_return(&cs->open_count)) {
  			spin_lock_irqsave(&cs->lock, flags);
  			cs->tty = NULL;
  			spin_unlock_irqrestore(&cs->lock, flags);
@@ -25297,7 +25323,7 @@ diff -urNp linux-2.6.37/drivers/isdn/gigaset/interface.c linux-2.6.37/drivers/is
  		gig_dbg(DEBUG_IF, "not connected");
  		retval = -ENODEV;
 -	} else if (!cs->open_count)
-+	} else if (!atomic_read(&cs->open_count))
++	} else if (!local_read(&cs->open_count))
  		dev_warn(cs->dev, "%s: device not opened\n", __func__);
  	else {
  		retval = 0;
@@ -25306,7 +25332,7 @@ diff -urNp linux-2.6.37/drivers/isdn/gigaset/interface.c linux-2.6.37/drivers/is
  		goto done;
  	}
 -	if (!cs->open_count) {
-+	if (!atomic_read(&cs->open_count)) {
++	if (!local_read(&cs->open_count)) {
  		dev_warn(cs->dev, "%s: device not opened\n", __func__);
  		retval = -ENODEV;
  		goto done;
@@ -25315,7 +25341,7 @@ diff -urNp linux-2.6.37/drivers/isdn/gigaset/interface.c linux-2.6.37/drivers/is
  		gig_dbg(DEBUG_IF, "not connected");
  		retval = -ENODEV;
 -	} else if (!cs->open_count)
-+	} else if (!atomic_read(&cs->open_count))
++	} else if (!local_read(&cs->open_count))
  		dev_warn(cs->dev, "%s: device not opened\n", __func__);
  	else if (cs->mstate != MS_LOCKED) {
  		dev_warn(cs->dev, "can't write to unlocked device\n");
@@ -25324,7 +25350,7 @@ diff -urNp linux-2.6.37/drivers/isdn/gigaset/interface.c linux-2.6.37/drivers/is
  	if (!cs->connected)
  		gig_dbg(DEBUG_IF, "not connected");
 -	else if (!cs->open_count)
-+	else if (!atomic_read(&cs->open_count))
++	else if (!local_read(&cs->open_count))
  		dev_warn(cs->dev, "%s: device not opened\n", __func__);
  	else if (cs->mstate != MS_LOCKED)
  		dev_warn(cs->dev, "can't write to unlocked device\n");
@@ -25333,7 +25359,7 @@ diff -urNp linux-2.6.37/drivers/isdn/gigaset/interface.c linux-2.6.37/drivers/is
  	if (!cs->connected)
  		gig_dbg(DEBUG_IF, "not connected");	/* nothing to do */
 -	else if (!cs->open_count)
-+	else if (!atomic_read(&cs->open_count))
++	else if (!local_read(&cs->open_count))
  		dev_warn(cs->dev, "%s: device not opened\n", __func__);
  	else
  		gig_dbg(DEBUG_IF, "%s: not implemented\n", __func__);
@@ -25342,7 +25368,7 @@ diff -urNp linux-2.6.37/drivers/isdn/gigaset/interface.c linux-2.6.37/drivers/is
  	if (!cs->connected)
  		gig_dbg(DEBUG_IF, "not connected");	/* nothing to do */
 -	else if (!cs->open_count)
-+	else if (!atomic_read(&cs->open_count))
++	else if (!local_read(&cs->open_count))
  		dev_warn(cs->dev, "%s: device not opened\n", __func__);
  	else
  		gig_dbg(DEBUG_IF, "%s: not implemented\n", __func__);
@@ -25351,7 +25377,7 @@ diff -urNp linux-2.6.37/drivers/isdn/gigaset/interface.c linux-2.6.37/drivers/is
  	}
  
 -	if (!cs->open_count) {
-+	if (!atomic_read(&cs->open_count)) {
++	if (!local_read(&cs->open_count)) {
  		dev_warn(cs->dev, "%s: device not opened\n", __func__);
  		goto out;
  	}
@@ -25660,6 +25686,18 @@ diff -urNp linux-2.6.37/drivers/media/dvb/dvb-core/dvbdev.c linux-2.6.37/drivers
  	struct file_operations *dvbdevfops;
  	struct device *clsdev;
  	int minor;
+diff -urNp linux-2.6.37/drivers/media/dvb/ttpci/av7110_ca.c linux-2.6.37/drivers/media/dvb/ttpci/av7110_ca.c
+--- linux-2.6.37/drivers/media/dvb/ttpci/av7110_ca.c	2011-01-04 19:50:19.000000000 -0500
++++ linux-2.6.37/drivers/media/dvb/ttpci/av7110_ca.c	2011-01-24 18:13:05.000000000 -0500
+@@ -277,7 +277,7 @@ static int dvb_ca_ioctl(struct file *fil
+ 	{
+ 		ca_slot_info_t *info=(ca_slot_info_t *)parg;
+ 
+-		if (info->num > 1)
++		if (info->num < 0 || info->num > 1)
+ 			return -EINVAL;
+ 		av7110->ci_slot[info->num].num = info->num;
+ 		av7110->ci_slot[info->num].type = FW_CI_LL_SUPPORT(av7110->arm_app) ?
 diff -urNp linux-2.6.37/drivers/media/IR/ir-lirc-codec.c linux-2.6.37/drivers/media/IR/ir-lirc-codec.c
 --- linux-2.6.37/drivers/media/IR/ir-lirc-codec.c	2011-01-04 19:50:19.000000000 -0500
 +++ linux-2.6.37/drivers/media/IR/ir-lirc-codec.c	2011-01-17 02:41:01.000000000 -0500
@@ -26609,13 +26647,22 @@ diff -urNp linux-2.6.37/drivers/net/tulip/de4x5.c linux-2.6.37/drivers/net/tulip
      }
 diff -urNp linux-2.6.37/drivers/net/usb/hso.c linux-2.6.37/drivers/net/usb/hso.c
 --- linux-2.6.37/drivers/net/usb/hso.c	2011-01-04 19:50:19.000000000 -0500
-+++ linux-2.6.37/drivers/net/usb/hso.c	2011-01-17 02:41:01.000000000 -0500
++++ linux-2.6.37/drivers/net/usb/hso.c	2011-01-24 18:04:15.000000000 -0500
+@@ -71,7 +71,7 @@
+ #include <asm/byteorder.h>
+ #include <linux/serial_core.h>
+ #include <linux/serial.h>
+-
++#include <asm/local.h>
+ 
+ #define MOD_AUTHOR			"Option Wireless"
+ #define MOD_DESCRIPTION			"USB High Speed Option driver"
 @@ -257,7 +257,7 @@ struct hso_serial {
  
  	/* from usb_serial_port */
  	struct tty_struct *tty;
 -	int open_count;
-+	atomic_t open_count;
++	local_t open_count;
  	spinlock_t serial_lock;
  
  	int (*write_data) (struct hso_serial *serial);
@@ -26624,7 +26671,7 @@ diff -urNp linux-2.6.37/drivers/net/usb/hso.c linux-2.6.37/drivers/net/usb/hso.c
  
  	urb = serial->rx_urb[0];
 -	if (serial->open_count > 0) {
-+	if (atomic_read(&serial->open_count) > 0) {
++	if (local_read(&serial->open_count) > 0) {
  		count = put_rxbuf_data(urb, serial);
  		if (count == -1)
  			return;
@@ -26633,7 +26680,7 @@ diff -urNp linux-2.6.37/drivers/net/usb/hso.c linux-2.6.37/drivers/net/usb/hso.c
  
  	/* Anyone listening? */
 -	if (serial->open_count == 0)
-+	if (atomic_read(&serial->open_count) == 0)
++	if (local_read(&serial->open_count) == 0)
  		return;
  
  	if (status == 0) {
@@ -26643,7 +26690,7 @@ diff -urNp linux-2.6.37/drivers/net/usb/hso.c linux-2.6.37/drivers/net/usb/hso.c
  	/* check for port already opened, if not set the termios */
 -	serial->open_count++;
 -	if (serial->open_count == 1) {
-+	if (atomic_inc_return(&serial->open_count) == 1) {
++	if (local_inc_return(&serial->open_count) == 1) {
  		serial->rx_state = RX_IDLE;
  		/* Force default termio settings */
  		_hso_serial_set_termios(tty, NULL);
@@ -26652,7 +26699,7 @@ diff -urNp linux-2.6.37/drivers/net/usb/hso.c linux-2.6.37/drivers/net/usb/hso.c
  		if (result) {
  			hso_stop_serial_device(serial->parent);
 -			serial->open_count--;
-+			atomic_dec(&serial->open_count);
++			local_dec(&serial->open_count);
  			kref_put(&serial->parent->ref, hso_serial_ref_free);
  		}
  	} else {
@@ -26661,12 +26708,12 @@ diff -urNp linux-2.6.37/drivers/net/usb/hso.c linux-2.6.37/drivers/net/usb/hso.c
  	/* reset the rts and dtr */
  	/* do the actual close */
 -	serial->open_count--;
-+	atomic_dec(&serial->open_count);
++	local_dec(&serial->open_count);
  
 -	if (serial->open_count <= 0) {
 -		serial->open_count = 0;
-+	if (atomic_read(&serial->open_count) <= 0) {
-+		atomic_set(&serial->open_count,  0);
++	if (local_read(&serial->open_count) <= 0) {
++		local_set(&serial->open_count,  0);
  		spin_lock_irq(&serial->serial_lock);
  		if (serial->tty == tty) {
  			serial->tty->driver_data = NULL;
@@ -26675,7 +26722,7 @@ diff -urNp linux-2.6.37/drivers/net/usb/hso.c linux-2.6.37/drivers/net/usb/hso.c
  	/* the actual setup */
  	spin_lock_irqsave(&serial->serial_lock, flags);
 -	if (serial->open_count)
-+	if (atomic_read(&serial->open_count))
++	if (local_read(&serial->open_count))
  		_hso_serial_set_termios(tty, old);
  	else
  		tty->termios = old;
@@ -26684,7 +26731,7 @@ diff -urNp linux-2.6.37/drivers/net/usb/hso.c linux-2.6.37/drivers/net/usb/hso.c
  				spin_lock(&serial->serial_lock);
  				if (serial->rx_state == RX_IDLE &&
 -					serial->open_count > 0) {
-+					atomic_read(&serial->open_count) > 0) {
++					local_read(&serial->open_count) > 0) {
  					/* Setup and send a ctrl req read on
  					 * port i */
  					if (!serial->rx_urb_filled[0]) {
@@ -26693,7 +26740,7 @@ diff -urNp linux-2.6.37/drivers/net/usb/hso.c linux-2.6.37/drivers/net/usb/hso.c
  	for (i = 0; i < HSO_SERIAL_TTY_MINORS; i++) {
  		if (serial_table[i] && (serial_table[i]->interface == iface)) {
 -			if (dev2ser(serial_table[i])->open_count) {
-+			if (atomic_read(&dev2ser(serial_table[i])->open_count)) {
++			if (local_read(&dev2ser(serial_table[i])->open_count)) {
  				result =
  				    hso_start_serial_device(serial_table[i], GFP_NOIO);
  				hso_kick_transmit(dev2ser(serial_table[i]));
@@ -27516,7 +27563,7 @@ diff -urNp linux-2.6.37/drivers/serial/kgdboc.c linux-2.6.37/drivers/serial/kgdb
  	.read_char		= kgdboc_get_char,
 diff -urNp linux-2.6.37/drivers/staging/autofs/root.c linux-2.6.37/drivers/staging/autofs/root.c
 --- linux-2.6.37/drivers/staging/autofs/root.c	2011-01-04 19:50:19.000000000 -0500
-+++ linux-2.6.37/drivers/staging/autofs/root.c	2011-01-17 21:04:34.000000000 -0500
++++ linux-2.6.37/drivers/staging/autofs/root.c	2011-01-24 18:04:18.000000000 -0500
 @@ -308,7 +308,8 @@ static int autofs_root_symlink(struct in
  	set_bit(n,sbi->symlink_bitmap);
  	sl = &sbi->symlink[n];
@@ -27551,6 +27598,76 @@ diff -urNp linux-2.6.37/drivers/staging/bcm/InterfaceInit.c linux-2.6.37/drivers
      .open    =  usbbcm_open,
      .release =  usbbcm_release,
      .read    =  usbbcm_read,
+diff -urNp linux-2.6.37/drivers/staging/brcm80211/brcmfmac/dhd_linux.c linux-2.6.37/drivers/staging/brcm80211/brcmfmac/dhd_linux.c
+--- linux-2.6.37/drivers/staging/brcm80211/brcmfmac/dhd_linux.c	2011-01-04 19:50:19.000000000 -0500
++++ linux-2.6.37/drivers/staging/brcm80211/brcmfmac/dhd_linux.c	2011-01-24 18:04:18.000000000 -0500
+@@ -864,14 +864,14 @@ static void dhd_op_if(dhd_if_t *ifp)
+ 			free_netdev(ifp->net);
+ 		}
+ 		/* Allocate etherdev, including space for private structure */
+-		ifp->net = alloc_etherdev(sizeof(dhd));
++		ifp->net = alloc_etherdev(sizeof(*dhd));
+ 		if (!ifp->net) {
+ 			DHD_ERROR(("%s: OOM - alloc_etherdev\n", __func__));
+ 			ret = -ENOMEM;
+ 		}
+ 		if (ret == 0) {
+ 			strcpy(ifp->net->name, ifp->name);
+-			memcpy(netdev_priv(ifp->net), &dhd, sizeof(dhd));
++			memcpy(netdev_priv(ifp->net), dhd, sizeof(*dhd));
+ 			err = dhd_net_attach(&dhd->pub, ifp->idx);
+ 			if (err != 0) {
+ 				DHD_ERROR(("%s: dhd_net_attach failed, "
+@@ -1891,25 +1891,23 @@ dhd_pub_t *dhd_attach(osl_t *osh, struct
+ 		strcpy(nv_path, nvram_path);
+ 
+ 	/* Allocate etherdev, including space for private structure */
+-	net = alloc_etherdev(sizeof(dhd));
++	net = alloc_etherdev(sizeof(*dhd));
+ 	if (!net) {
+ 		DHD_ERROR(("%s: OOM - alloc_etherdev\n", __func__));
+ 		goto fail;
+ 	}
+ 
+ 	/* Allocate primary dhd_info */
+-	dhd = kmalloc(sizeof(dhd_info_t), GFP_ATOMIC);
++	dhd = kzalloc(sizeof(dhd_info_t), GFP_ATOMIC);
+ 	if (!dhd) {
+ 		DHD_ERROR(("%s: OOM - alloc dhd_info\n", __func__));
+ 		goto fail;
+ 	}
+ 
+-	memset(dhd, 0, sizeof(dhd_info_t));
+-
+ 	/*
+ 	 * Save the dhd_info into the priv
+ 	 */
+-	memcpy(netdev_priv(net), &dhd, sizeof(dhd));
++	memcpy(netdev_priv(net), dhd, sizeof(*dhd));
+ 	dhd->pub.osh = osh;
+ 
+ 	/* Set network interface name if it was provided as module parameter */
+@@ -2027,7 +2025,7 @@ dhd_pub_t *dhd_attach(osl_t *osh, struct
+ 	/*
+ 	 * Save the dhd_info into the priv
+ 	 */
+-	memcpy(netdev_priv(net), &dhd, sizeof(dhd));
++	memcpy(netdev_priv(net), dhd, sizeof(*dhd));
+ 
+ #if defined(CUSTOMER_HW2) && defined(CONFIG_WIFI_CONTROL_FUNC)
+ 	g_bus = bus;
+diff -urNp linux-2.6.37/drivers/staging/brcm80211/brcmfmac/wl_iw.c linux-2.6.37/drivers/staging/brcm80211/brcmfmac/wl_iw.c
+--- linux-2.6.37/drivers/staging/brcm80211/brcmfmac/wl_iw.c	2011-01-04 19:50:19.000000000 -0500
++++ linux-2.6.37/drivers/staging/brcm80211/brcmfmac/wl_iw.c	2011-01-24 18:04:18.000000000 -0500
+@@ -514,7 +514,7 @@ wl_iw_get_range(struct net_device *dev,
+ 	list = (wl_u32_list_t *) channels;
+ 
+ 	dwrq->length = sizeof(struct iw_range);
+-	memset(range, 0, sizeof(range));
++	memset(range, 0, sizeof(*range));
+ 
+ 	range->min_nwid = range->max_nwid = 0;
+ 
 diff -urNp linux-2.6.37/drivers/staging/comedi/comedi_fops.c linux-2.6.37/drivers/staging/comedi/comedi_fops.c
 --- linux-2.6.37/drivers/staging/comedi/comedi_fops.c	2011-01-04 19:50:19.000000000 -0500
 +++ linux-2.6.37/drivers/staging/comedi/comedi_fops.c	2011-01-17 02:41:01.000000000 -0500
@@ -28049,6 +28166,42 @@ diff -urNp linux-2.6.37/drivers/tty/vt/vt_ioctl.c linux-2.6.37/drivers/tty/vt/vt
  		if (!perm) {
  			ret = -EPERM;
  			goto reterr;
+diff -urNp linux-2.6.37/drivers/uio/uio.c linux-2.6.37/drivers/uio/uio.c
+--- linux-2.6.37/drivers/uio/uio.c	2011-01-04 19:50:19.000000000 -0500
++++ linux-2.6.37/drivers/uio/uio.c	2011-01-24 18:04:18.000000000 -0500
+@@ -25,6 +25,7 @@
+ #include <linux/kobject.h>
+ #include <linux/cdev.h>
+ #include <linux/uio_driver.h>
++#include <asm/local.h>
+ 
+ #define UIO_MAX_DEVICES		(1U << MINORBITS)
+ 
+@@ -35,7 +36,7 @@ struct uio_device {
+ 	atomic_t		event;
+ 	struct fasync_struct	*async_queue;
+ 	wait_queue_head_t	wait;
+-	int			vma_count;
++	local_t			vma_count;
+ 	struct uio_info		*info;
+ 	struct kobject		*map_dir;
+ 	struct kobject		*portio_dir;
+@@ -602,13 +603,13 @@ static int uio_find_mem_index(struct vm_
+ static void uio_vma_open(struct vm_area_struct *vma)
+ {
+ 	struct uio_device *idev = vma->vm_private_data;
+-	idev->vma_count++;
++	local_inc(&idev->vma_count);
+ }
+ 
+ static void uio_vma_close(struct vm_area_struct *vma)
+ {
+ 	struct uio_device *idev = vma->vm_private_data;
+-	idev->vma_count--;
++	local_dec(&idev->vma_count);
+ }
+ 
+ static int uio_vma_fault(struct vm_area_struct *vma, struct vm_fault *vmf)
 diff -urNp linux-2.6.37/drivers/usb/atm/cxacru.c linux-2.6.37/drivers/usb/atm/cxacru.c
 --- linux-2.6.37/drivers/usb/atm/cxacru.c	2011-01-04 19:50:19.000000000 -0500
 +++ linux-2.6.37/drivers/usb/atm/cxacru.c	2011-01-17 02:41:01.000000000 -0500
@@ -44970,8 +45123,16 @@ diff -urNp linux-2.6.37/include/drm/drm_pciids.h linux-2.6.37/include/drm/drm_pc
 +	{0, 0, 0, 0, 0, 0}
 diff -urNp linux-2.6.37/include/drm/drmP.h linux-2.6.37/include/drm/drmP.h
 --- linux-2.6.37/include/drm/drmP.h	2011-01-04 19:50:19.000000000 -0500
-+++ linux-2.6.37/include/drm/drmP.h	2011-01-17 02:41:02.000000000 -0500
-@@ -804,7 +804,7 @@ struct drm_driver {
++++ linux-2.6.37/include/drm/drmP.h	2011-01-24 18:04:18.000000000 -0500
+@@ -73,6 +73,7 @@
+ #include <linux/workqueue.h>
+ #include <linux/poll.h>
+ #include <asm/pgalloc.h>
++#include <asm/local.h>
+ #include "drm.h"
+ 
+ #include <linux/idr.h>
+@@ -804,7 +805,7 @@ struct drm_driver {
  	void (*vgaarb_irq)(struct drm_device *dev, bool state);
  
  	/* Driver private ops for this object */
@@ -44980,7 +45141,7 @@ diff -urNp linux-2.6.37/include/drm/drmP.h linux-2.6.37/include/drm/drmP.h
  
  	int major;
  	int minor;
-@@ -817,7 +817,7 @@ struct drm_driver {
+@@ -817,7 +818,7 @@ struct drm_driver {
  	int dev_priv_size;
  	struct drm_ioctl_desc *ioctls;
  	int num_ioctls;
@@ -44989,16 +45150,16 @@ diff -urNp linux-2.6.37/include/drm/drmP.h linux-2.6.37/include/drm/drmP.h
  	struct pci_driver pci_driver;
  	struct platform_device *platform_device;
  	/* List of devices hanging off this driver */
-@@ -914,7 +914,7 @@ struct drm_device {
+@@ -914,7 +915,7 @@ struct drm_device {
  
  	/** \name Usage Counters */
  	/*@{ */
 -	int open_count;			/**< Outstanding files open */
-+	atomic_t open_count;		/**< Outstanding files open */
++	local_t open_count;		/**< Outstanding files open */
  	atomic_t ioctl_count;		/**< Outstanding IOCTLs pending */
  	atomic_t vma_count;		/**< Outstanding vma areas open */
  	int buf_use;			/**< Buffers in use -- cannot alloc */
-@@ -925,7 +925,7 @@ struct drm_device {
+@@ -925,7 +926,7 @@ struct drm_device {
  	/*@{ */
  	unsigned long counters;
  	enum drm_stat_type types[15];
@@ -48352,15 +48513,15 @@ diff -urNp linux-2.6.37/include/net/inetpeer.h linux-2.6.37/include/net/inetpeer
  #endif /* _NET_INETPEER_H */
 diff -urNp linux-2.6.37/include/net/irda/ircomm_tty.h linux-2.6.37/include/net/irda/ircomm_tty.h
 --- linux-2.6.37/include/net/irda/ircomm_tty.h	2011-01-04 19:50:19.000000000 -0500
-+++ linux-2.6.37/include/net/irda/ircomm_tty.h	2011-01-17 02:41:02.000000000 -0500
++++ linux-2.6.37/include/net/irda/ircomm_tty.h	2011-01-24 18:04:18.000000000 -0500
 @@ -105,8 +105,8 @@ struct ircomm_tty_cb {
          unsigned short    close_delay;
          unsigned short    closing_wait; /* time to wait before closing */
  
 -	int  open_count;
 -	int  blocked_open;	/* # of blocked opens */
-+	atomic_t open_count;
-+	atomic_t blocked_open;	/* # of blocked opens */
++	local_t open_count;
++	local_t blocked_open;	/* # of blocked opens */
  
  	/* Protect concurent access to :
  	 *	o self->open_count
@@ -52830,7 +52991,7 @@ diff -urNp linux-2.6.37/mm/migrate.c linux-2.6.37/mm/migrate.c
  		goto out;
 diff -urNp linux-2.6.37/mm/mlock.c linux-2.6.37/mm/mlock.c
 --- linux-2.6.37/mm/mlock.c	2011-01-04 19:50:19.000000000 -0500
-+++ linux-2.6.37/mm/mlock.c	2011-01-17 02:41:02.000000000 -0500
++++ linux-2.6.37/mm/mlock.c	2011-01-24 18:04:18.000000000 -0500
 @@ -13,6 +13,7 @@
  #include <linux/pagemap.h>
  #include <linux/mempolicy.h>
@@ -52866,6 +53027,15 @@ diff -urNp linux-2.6.37/mm/mlock.c linux-2.6.37/mm/mlock.c
  	while (nr_pages > 0) {
  		int i;
  
+@@ -437,7 +425,7 @@ static int do_mlock(unsigned long start,
+ {
+ 	unsigned long nstart, end, tmp;
+ 	struct vm_area_struct * vma, * prev;
+-	int error;
++	int error = -EINVAL;
+ 
+ 	len = PAGE_ALIGN(len);
+ 	end = start + len;
 @@ -445,6 +433,9 @@ static int do_mlock(unsigned long start,
  		return -EINVAL;
  	if (end == start)
@@ -54687,7 +54857,7 @@ diff -urNp linux-2.6.37/mm/rmap.c linux-2.6.37/mm/rmap.c
  	struct anon_vma *anon_vma;
 diff -urNp linux-2.6.37/mm/shmem.c linux-2.6.37/mm/shmem.c
 --- linux-2.6.37/mm/shmem.c	2011-01-04 19:50:19.000000000 -0500
-+++ linux-2.6.37/mm/shmem.c	2011-01-17 02:41:02.000000000 -0500
++++ linux-2.6.37/mm/shmem.c	2011-01-24 18:04:18.000000000 -0500
 @@ -31,7 +31,7 @@
  #include <linux/percpu_counter.h>
  #include <linux/swap.h>
@@ -54697,6 +54867,15 @@ diff -urNp linux-2.6.37/mm/shmem.c linux-2.6.37/mm/shmem.c
  
  #ifdef CONFIG_SHMEM
  /*
+@@ -1070,6 +1070,8 @@ static int shmem_writepage(struct page *
+ 		goto unlock;
+ 	}
+ 	entry = shmem_swp_entry(info, index, NULL);
++	if (!entry)
++		goto unlock;
+ 	if (entry->val) {
+ 		/*
+ 		 * The more uptodate page coming down from a stacked
 diff -urNp linux-2.6.37/mm/slab.c linux-2.6.37/mm/slab.c
 --- linux-2.6.37/mm/slab.c	2011-01-04 19:50:19.000000000 -0500
 +++ linux-2.6.37/mm/slab.c	2011-01-17 02:41:02.000000000 -0500
@@ -56414,24 +56593,24 @@ diff -urNp linux-2.6.37/net/ipv6/udp.c linux-2.6.37/net/ipv6/udp.c
  
 diff -urNp linux-2.6.37/net/irda/ircomm/ircomm_tty.c linux-2.6.37/net/irda/ircomm/ircomm_tty.c
 --- linux-2.6.37/net/irda/ircomm/ircomm_tty.c	2011-01-04 19:50:19.000000000 -0500
-+++ linux-2.6.37/net/irda/ircomm/ircomm_tty.c	2011-01-17 02:41:02.000000000 -0500
++++ linux-2.6.37/net/irda/ircomm/ircomm_tty.c	2011-01-24 18:04:18.000000000 -0500
 @@ -281,16 +281,16 @@ static int ircomm_tty_block_til_ready(st
  	add_wait_queue(&self->open_wait, &wait);
  
  	IRDA_DEBUG(2, "%s(%d):block_til_ready before block on %s open_count=%d\n",
 -	      __FILE__,__LINE__, tty->driver->name, self->open_count );
-+	      __FILE__,__LINE__, tty->driver->name, atomic_read(&self->open_count) );
++	      __FILE__,__LINE__, tty->driver->name, local_read(&self->open_count) );
  
  	/* As far as I can see, we protect open_count - Jean II */
  	spin_lock_irqsave(&self->spinlock, flags);
  	if (!tty_hung_up_p(filp)) {
  		extra_count = 1;
 -		self->open_count--;
-+		atomic_dec(&self->open_count);
++		local_dec(&self->open_count);
  	}
  	spin_unlock_irqrestore(&self->spinlock, flags);
 -	self->blocked_open++;
-+	atomic_inc(&self->blocked_open);
++	local_inc(&self->blocked_open);
  
  	while (1) {
  		if (tty->termios->c_cflag & CBAUD) {
@@ -56440,7 +56619,7 @@ diff -urNp linux-2.6.37/net/irda/ircomm/ircomm_tty.c linux-2.6.37/net/irda/ircom
  
  		IRDA_DEBUG(1, "%s(%d):block_til_ready blocking on %s open_count=%d\n",
 -		      __FILE__,__LINE__, tty->driver->name, self->open_count );
-+		      __FILE__,__LINE__, tty->driver->name, atomic_read(&self->open_count) );
++		      __FILE__,__LINE__, tty->driver->name, local_read(&self->open_count) );
  
  		schedule();
  	}
@@ -56449,15 +56628,15 @@ diff -urNp linux-2.6.37/net/irda/ircomm/ircomm_tty.c linux-2.6.37/net/irda/ircom
  		/* ++ is not atomic, so this should be protected - Jean II */
  		spin_lock_irqsave(&self->spinlock, flags);
 -		self->open_count++;
-+		atomic_inc(&self->open_count);
++		local_inc(&self->open_count);
  		spin_unlock_irqrestore(&self->spinlock, flags);
  	}
 -	self->blocked_open--;
-+	atomic_dec(&self->blocked_open);
++	local_dec(&self->blocked_open);
  
  	IRDA_DEBUG(1, "%s(%d):block_til_ready after blocking on %s open_count=%d\n",
 -	      __FILE__,__LINE__, tty->driver->name, self->open_count);
-+	      __FILE__,__LINE__, tty->driver->name, atomic_read(&self->open_count));
++	      __FILE__,__LINE__, tty->driver->name, local_read(&self->open_count));
  
  	if (!retval)
  		self->flags |= ASYNC_NORMAL_ACTIVE;
@@ -56466,7 +56645,7 @@ diff -urNp linux-2.6.37/net/irda/ircomm/ircomm_tty.c linux-2.6.37/net/irda/ircom
  	/* ++ is not atomic, so this should be protected - Jean II */
  	spin_lock_irqsave(&self->spinlock, flags);
 -	self->open_count++;
-+	atomic_inc(&self->open_count);
++	local_inc(&self->open_count);
  
  	tty->driver_data = self;
  	self->tty = tty;
@@ -56474,7 +56653,7 @@ diff -urNp linux-2.6.37/net/irda/ircomm/ircomm_tty.c linux-2.6.37/net/irda/ircom
  
  	IRDA_DEBUG(1, "%s(), %s%d, count = %d\n", __func__ , tty->driver->name,
 -		   self->line, self->open_count);
-+		   self->line, atomic_read(&self->open_count));
++		   self->line, local_read(&self->open_count));
  
  	/* Not really used by us, but lets do it anyway */
  	self->tty->low_latency = (self->flags & ASYNC_LOW_LATENCY) ? 1 : 0;
@@ -56483,7 +56662,7 @@ diff -urNp linux-2.6.37/net/irda/ircomm/ircomm_tty.c linux-2.6.37/net/irda/ircom
  	}
  
 -	if ((tty->count == 1) && (self->open_count != 1)) {
-+	if ((tty->count == 1) && (atomic_read(&self->open_count) != 1)) {
++	if ((tty->count == 1) && (local_read(&self->open_count) != 1)) {
  		/*
  		 * Uh, oh.  tty->count is 1, which means that the tty
  		 * structure will be freed.  state->count should always
@@ -56493,20 +56672,20 @@ diff -urNp linux-2.6.37/net/irda/ircomm/ircomm_tty.c linux-2.6.37/net/irda/ircom
  			   "tty->count is 1, state->count is %d\n", __func__ ,
 -			   self->open_count);
 -		self->open_count = 1;
-+			   atomic_read(&self->open_count));
-+		atomic_set(&self->open_count, 1);
++			   local_read(&self->open_count));
++		local_set(&self->open_count, 1);
  	}
  
 -	if (--self->open_count < 0) {
-+	if (atomic_dec_return(&self->open_count) < 0) {
++	if (local_dec_return(&self->open_count) < 0) {
  		IRDA_ERROR("%s(), bad serial port count for ttys%d: %d\n",
 -			   __func__, self->line, self->open_count);
 -		self->open_count = 0;
-+			   __func__, self->line, atomic_read(&self->open_count));
-+		atomic_set(&self->open_count, 0);
++			   __func__, self->line, local_read(&self->open_count));
++		local_set(&self->open_count, 0);
  	}
 -	if (self->open_count) {
-+	if (atomic_read(&self->open_count)) {
++	if (local_read(&self->open_count)) {
  		spin_unlock_irqrestore(&self->spinlock, flags);
  
  		IRDA_DEBUG(0, "%s(), open count > 0\n", __func__ );
@@ -56515,7 +56694,7 @@ diff -urNp linux-2.6.37/net/irda/ircomm/ircomm_tty.c linux-2.6.37/net/irda/ircom
  	self->tty = NULL;
  
 -	if (self->blocked_open) {
-+	if (atomic_read(&self->blocked_open)) {
++	if (local_read(&self->blocked_open)) {
  		if (self->close_delay)
  			schedule_timeout_interruptible(self->close_delay);
  		wake_up_interruptible(&self->open_wait);
@@ -56524,7 +56703,7 @@ diff -urNp linux-2.6.37/net/irda/ircomm/ircomm_tty.c linux-2.6.37/net/irda/ircom
  	self->flags &= ~ASYNC_NORMAL_ACTIVE;
  	self->tty = NULL;
 -	self->open_count = 0;
-+	atomic_set(&self->open_count, 0);
++	local_set(&self->open_count, 0);
  	spin_unlock_irqrestore(&self->spinlock, flags);
  
  	wake_up_interruptible(&self->open_wait);
@@ -56533,7 +56712,7 @@ diff -urNp linux-2.6.37/net/irda/ircomm/ircomm_tty.c linux-2.6.37/net/irda/ircom
  
  	seq_printf(m, "Role: %s\n", self->client ? "client" : "server");
 -	seq_printf(m, "Open count: %d\n", self->open_count);
-+	seq_printf(m, "Open count: %d\n", atomic_read(&self->open_count));
++	seq_printf(m, "Open count: %d\n", local_read(&self->open_count));
  	seq_printf(m, "Max data size: %d\n", self->max_data_size);
  	seq_printf(m, "Max header size: %d\n", self->max_header_size);
  
@@ -56554,25 +56733,33 @@ diff -urNp linux-2.6.37/net/key/af_key.c linux-2.6.37/net/key/af_key.c
  			       sk_wmem_alloc_get(s),
 diff -urNp linux-2.6.37/net/mac80211/ieee80211_i.h linux-2.6.37/net/mac80211/ieee80211_i.h
 --- linux-2.6.37/net/mac80211/ieee80211_i.h	2011-01-04 19:50:19.000000000 -0500
-+++ linux-2.6.37/net/mac80211/ieee80211_i.h	2011-01-17 02:41:02.000000000 -0500
-@@ -704,7 +704,7 @@ struct ieee80211_local {
++++ linux-2.6.37/net/mac80211/ieee80211_i.h	2011-01-24 18:04:18.000000000 -0500
+@@ -26,6 +26,7 @@
+ #include <net/ieee80211_radiotap.h>
+ #include <net/cfg80211.h>
+ #include <net/mac80211.h>
++#include <asm/local.h>
+ #include "key.h"
+ #include "sta_info.h"
+ 
+@@ -704,7 +705,7 @@ struct ieee80211_local {
  	/* also used to protect ampdu_ac_queue and amdpu_ac_stop_refcnt */
  	spinlock_t queue_stop_reason_lock;
  
 -	int open_count;
-+	atomic_t open_count;
++	local_t open_count;
  	int monitors, cooked_mntrs;
  	/* number of interfaces with corresponding FIF_ flags */
  	int fif_fcsfail, fif_plcpfail, fif_control, fif_other_bss, fif_pspoll,
 diff -urNp linux-2.6.37/net/mac80211/iface.c linux-2.6.37/net/mac80211/iface.c
 --- linux-2.6.37/net/mac80211/iface.c	2011-01-04 19:50:19.000000000 -0500
-+++ linux-2.6.37/net/mac80211/iface.c	2011-01-17 02:41:02.000000000 -0500
++++ linux-2.6.37/net/mac80211/iface.c	2011-01-24 18:04:18.000000000 -0500
 @@ -216,7 +216,7 @@ static int ieee80211_do_open(struct net_
  		break;
  	}
  
 -	if (local->open_count == 0) {
-+	if (atomic_read(&local->open_count) == 0) {
++	if (local_read(&local->open_count) == 0) {
  		res = drv_start(local);
  		if (res)
  			goto err_del_bss;
@@ -56581,7 +56768,7 @@ diff -urNp linux-2.6.37/net/mac80211/iface.c linux-2.6.37/net/mac80211/iface.c
  
  		if (!is_valid_ether_addr(dev->dev_addr)) {
 -			if (!local->open_count)
-+			if (!atomic_read(&local->open_count))
++			if (!local_read(&local->open_count))
  				drv_stop(local);
  			return -EADDRNOTAVAIL;
  		}
@@ -56590,7 +56777,7 @@ diff -urNp linux-2.6.37/net/mac80211/iface.c linux-2.6.37/net/mac80211/iface.c
  
  	if (coming_up)
 -		local->open_count++;
-+		atomic_inc(&local->open_count);
++		local_inc(&local->open_count);
  
  	if (hw_reconf_flags) {
  		ieee80211_hw_config(local, hw_reconf_flags);
@@ -56599,7 +56786,7 @@ diff -urNp linux-2.6.37/net/mac80211/iface.c linux-2.6.37/net/mac80211/iface.c
  	drv_remove_interface(local, &sdata->vif);
   err_stop:
 -	if (!local->open_count)
-+	if (!atomic_read(&local->open_count))
++	if (!local_read(&local->open_count))
  		drv_stop(local);
   err_del_bss:
  	sdata->bss = NULL;
@@ -56608,7 +56795,7 @@ diff -urNp linux-2.6.37/net/mac80211/iface.c linux-2.6.37/net/mac80211/iface.c
  
  	if (going_down)
 -		local->open_count--;
-+		atomic_dec(&local->open_count);
++		local_dec(&local->open_count);
  
  	switch (sdata->vif.type) {
  	case NL80211_IFTYPE_AP_VLAN:
@@ -56617,43 +56804,43 @@ diff -urNp linux-2.6.37/net/mac80211/iface.c linux-2.6.37/net/mac80211/iface.c
  	ieee80211_recalc_ps(local, -1);
  
 -	if (local->open_count == 0) {
-+	if (atomic_read(&local->open_count) == 0) {
++	if (local_read(&local->open_count) == 0) {
  		if (local->ops->napi_poll)
  			napi_disable(&local->napi);
  		ieee80211_clear_tx_pending(local);
 diff -urNp linux-2.6.37/net/mac80211/main.c linux-2.6.37/net/mac80211/main.c
 --- linux-2.6.37/net/mac80211/main.c	2011-01-04 19:50:19.000000000 -0500
-+++ linux-2.6.37/net/mac80211/main.c	2011-01-17 02:41:02.000000000 -0500
++++ linux-2.6.37/net/mac80211/main.c	2011-01-24 18:04:18.000000000 -0500
 @@ -159,7 +159,7 @@ int ieee80211_hw_config(struct ieee80211
  		local->hw.conf.power_level = power;
  	}
  
 -	if (changed && local->open_count) {
-+	if (changed && atomic_read(&local->open_count)) {
++	if (changed && local_read(&local->open_count)) {
  		ret = drv_config(local, changed);
  		/*
  		 * Goal:
 diff -urNp linux-2.6.37/net/mac80211/pm.c linux-2.6.37/net/mac80211/pm.c
 --- linux-2.6.37/net/mac80211/pm.c	2011-01-04 19:50:19.000000000 -0500
-+++ linux-2.6.37/net/mac80211/pm.c	2011-01-17 02:41:02.000000000 -0500
++++ linux-2.6.37/net/mac80211/pm.c	2011-01-24 18:04:18.000000000 -0500
 @@ -95,7 +95,7 @@ int __ieee80211_suspend(struct ieee80211
  	}
  
  	/* stop hardware - this must stop RX */
 -	if (local->open_count)
-+	if (atomic_read(&local->open_count))
++	if (local_read(&local->open_count))
  		ieee80211_stop_device(local);
  
  	local->suspended = true;
 diff -urNp linux-2.6.37/net/mac80211/rate.c linux-2.6.37/net/mac80211/rate.c
 --- linux-2.6.37/net/mac80211/rate.c	2011-01-04 19:50:19.000000000 -0500
-+++ linux-2.6.37/net/mac80211/rate.c	2011-01-17 02:41:02.000000000 -0500
++++ linux-2.6.37/net/mac80211/rate.c	2011-01-24 18:04:18.000000000 -0500
 @@ -361,7 +361,7 @@ int ieee80211_init_rate_ctrl_alg(struct 
  
  	ASSERT_RTNL();
  
 -	if (local->open_count)
-+	if (atomic_read(&local->open_count))
++	if (local_read(&local->open_count))
  		return -EBUSY;
  
  	if (local->hw.flags & IEEE80211_HW_HAS_RATE_CONTROL) {
@@ -56683,13 +56870,13 @@ diff -urNp linux-2.6.37/net/mac80211/tx.c linux-2.6.37/net/mac80211/tx.c
  	return local == wdev_priv(dev->ieee80211_ptr);
 diff -urNp linux-2.6.37/net/mac80211/util.c linux-2.6.37/net/mac80211/util.c
 --- linux-2.6.37/net/mac80211/util.c	2011-01-04 19:50:19.000000000 -0500
-+++ linux-2.6.37/net/mac80211/util.c	2011-01-17 02:41:02.000000000 -0500
++++ linux-2.6.37/net/mac80211/util.c	2011-01-24 18:04:18.000000000 -0500
 @@ -1111,7 +1111,7 @@ int ieee80211_reconfig(struct ieee80211_
  		local->resuming = true;
  
  	/* restart hardware */
 -	if (local->open_count) {
-+	if (atomic_read(&local->open_count)) {
++	if (local_read(&local->open_count)) {
  		/*
  		 * Upon resume hardware can sometimes be goofy due to
  		 * various platform / driver / bus issues, so restarting
@@ -58274,13 +58461,13 @@ diff -urNp linux-2.6.37/security/tomoyo/tomoyo.c linux-2.6.37/security/tomoyo/to
  	.cred_prepare        = tomoyo_cred_prepare,
 diff -urNp linux-2.6.37/sound/aoa/codecs/onyx.c linux-2.6.37/sound/aoa/codecs/onyx.c
 --- linux-2.6.37/sound/aoa/codecs/onyx.c	2011-01-04 19:50:19.000000000 -0500
-+++ linux-2.6.37/sound/aoa/codecs/onyx.c	2011-01-17 02:41:02.000000000 -0500
++++ linux-2.6.37/sound/aoa/codecs/onyx.c	2011-01-24 18:04:18.000000000 -0500
 @@ -54,7 +54,7 @@ struct onyx {
  				spdif_locked:1,
  				analog_locked:1,
  				original_mute:2;
 -	int			open_count;
-+	atomic_t		open_count;
++	local_t			open_count;
  	struct codec_info	*codec_info;
  
  	/* mutex serializes concurrent access to the device
@@ -58289,7 +58476,7 @@ diff -urNp linux-2.6.37/sound/aoa/codecs/onyx.c linux-2.6.37/sound/aoa/codecs/on
  
  	mutex_lock(&onyx->mutex);
 -	onyx->open_count++;
-+	atomic_inc(&onyx->open_count);
++	local_inc(&onyx->open_count);
  	mutex_unlock(&onyx->mutex);
  
  	return 0;
@@ -58299,7 +58486,7 @@ diff -urNp linux-2.6.37/sound/aoa/codecs/onyx.c linux-2.6.37/sound/aoa/codecs/on
  	mutex_lock(&onyx->mutex);
 -	onyx->open_count--;
 -	if (!onyx->open_count)
-+	if (atomic_dec_and_test(&onyx->open_count))
++	if (local_dec_and_test(&onyx->open_count))
  		onyx->spdif_locked = onyx->analog_locked = 0;
  	mutex_unlock(&onyx->mutex);
  
@@ -58337,13 +58524,13 @@ diff -urNp linux-2.6.37/sound/core/seq/seq_lock.h linux-2.6.37/sound/core/seq/se
  
 diff -urNp linux-2.6.37/sound/drivers/mts64.c linux-2.6.37/sound/drivers/mts64.c
 --- linux-2.6.37/sound/drivers/mts64.c	2011-01-04 19:50:19.000000000 -0500
-+++ linux-2.6.37/sound/drivers/mts64.c	2011-01-17 02:41:02.000000000 -0500
++++ linux-2.6.37/sound/drivers/mts64.c	2011-01-24 18:04:18.000000000 -0500
 @@ -66,7 +66,7 @@ struct mts64 {
  	struct pardevice *pardev;
  	int pardev_claimed;
  
 -	int open_count;
-+	atomic_t open_count;
++	local_t open_count;
  	int current_midi_output_port;
  	int current_midi_input_port;
  	u8 mode[MTS64_NUM_INPUT_PORTS];
@@ -58352,7 +58539,7 @@ diff -urNp linux-2.6.37/sound/drivers/mts64.c linux-2.6.37/sound/drivers/mts64.c
  	struct mts64 *mts = substream->rmidi->private_data;
  
 -	if (mts->open_count == 0) {
-+	if (atomic_read(&mts->open_count) == 0) {
++	if (local_read(&mts->open_count) == 0) {
  		/* We don't need a spinlock here, because this is just called 
  		   if the device has not been opened before. 
  		   So there aren't any IRQs from the device */
@@ -58361,7 +58548,7 @@ diff -urNp linux-2.6.37/sound/drivers/mts64.c linux-2.6.37/sound/drivers/mts64.c
  		msleep(50);
  	}
 -	++(mts->open_count);
-+	atomic_inc(&mts->open_count);
++	local_inc(&mts->open_count);
  
  	return 0;
  }
@@ -58371,7 +58558,7 @@ diff -urNp linux-2.6.37/sound/drivers/mts64.c linux-2.6.37/sound/drivers/mts64.c
  
 -	--(mts->open_count);
 -	if (mts->open_count == 0) {
-+	if (atomic_dec_return(&mts->open_count) == 0) {
++	if (local_dec_return(&mts->open_count) == 0) {
  		/* We need the spinlock_irqsave here because we can still
  		   have IRQs at this point */
  		spin_lock_irqsave(&mts->lock, flags);
@@ -58381,20 +58568,20 @@ diff -urNp linux-2.6.37/sound/drivers/mts64.c linux-2.6.37/sound/drivers/mts64.c
  
 -	} else if (mts->open_count < 0)
 -		mts->open_count = 0;
-+	} else if (atomic_read(&mts->open_count) < 0)
-+		atomic_set(&mts->open_count, 0);
++	} else if (local_read(&mts->open_count) < 0)
++		local_set(&mts->open_count, 0);
  
  	return 0;
  }
 diff -urNp linux-2.6.37/sound/drivers/portman2x4.c linux-2.6.37/sound/drivers/portman2x4.c
 --- linux-2.6.37/sound/drivers/portman2x4.c	2011-01-04 19:50:19.000000000 -0500
-+++ linux-2.6.37/sound/drivers/portman2x4.c	2011-01-17 02:41:02.000000000 -0500
++++ linux-2.6.37/sound/drivers/portman2x4.c	2011-01-24 18:04:18.000000000 -0500
 @@ -84,7 +84,7 @@ struct portman {
  	struct pardevice *pardev;
  	int pardev_claimed;
  
 -	int open_count;
-+	atomic_t open_count;
++	local_t open_count;
  	int mode[PORTMAN_NUM_INPUT_PORTS];
  	struct snd_rawmidi_substream *midi_input[PORTMAN_NUM_INPUT_PORTS];
  };
@@ -58902,3 +59089,133 @@ diff -urNp linux-2.6.37/virt/kvm/kvm_main.c linux-2.6.37/virt/kvm/kvm_main.c
  		  struct module *module)
  {
  	int r;
+diff -u linux-2.6.37-pax/arch/x86/include/asm/futex.h linux-2.6.37-pax/arch/x86/include/asm/futex.h
+--- linux-2.6.37-pax/arch/x86/include/asm/futex.h	2011-01-07 02:12:38.000000000 +0100
++++ linux-2.6.37-pax/arch/x86/include/asm/futex.h	2011-01-25 18:00:49.000000000 +0100
+@@ -19,7 +19,7 @@
+ 		     "\tjmp\t2b\n"				\
+ 		     "\t.previous\n"				\
+ 		     _ASM_EXTABLE(1b, 3b)			\
+-		     : "=r" (oldval), "=r" (ret), "+m" (*____m(uaddr))\
++		     : "=r" (oldval), "=r" (ret), "+m" (*(u32 *)____m(uaddr))\
+ 		     : "i" (-EFAULT), "0" (oparg), "1" (0))
+ 
+ #define __futex_atomic_op2(insn, ret, oldval, uaddr, oparg)	\
+@@ -36,7 +36,7 @@
+ 		     _ASM_EXTABLE(1b, 4b)			\
+ 		     _ASM_EXTABLE(2b, 4b)			\
+ 		     : "=&a" (oldval), "=&r" (ret),		\
+-		       "+m" (*(____m(uaddr))), "=&r" (tem)	\
++		       "+m" (*(u32 *)____m(uaddr)), "=&r" (tem)	\
+ 		     : "r" (oparg), "i" (-EFAULT), "1" (0))
+ 
+ static inline int futex_atomic_op_inuser(int encoded_op, u32 __user *uaddr)
+@@ -130,7 +130,7 @@
+ 		     "\tjmp     2b\n"
+ 		     "\t.previous\n"
+ 		     _ASM_EXTABLE(1b, 3b)
+-		     : "=a" (oldval), "+m" (*____m(uaddr))
++		     : "=a" (oldval), "+m" (*(u32 *)____m(uaddr))
+ 		     : "i" (-EFAULT), "r" (newval), "0" (oldval)
+ 		     : "memory"
+ 	);
+diff -u linux-2.6.37-pax/arch/x86/kernel/cpu/mcheck/mce.c linux-2.6.37-pax/arch/x86/kernel/cpu/mcheck/mce.c
+--- linux-2.6.37-pax/arch/x86/kernel/cpu/mcheck/mce.c	2011-01-22 16:31:42.000000000 +0100
++++ linux-2.6.37-pax/arch/x86/kernel/cpu/mcheck/mce.c	2011-01-25 19:46:01.000000000 +0100
+@@ -45,6 +45,7 @@
+ #include <asm/ipi.h>
+ #include <asm/mce.h>
+ #include <asm/msr.h>
++#include <asm/local.h>
+ 
+ #include "mce-internal.h"
+ 
+diff -u linux-2.6.37-pax/arch/x86/kernel/head_32.S linux-2.6.37-pax/arch/x86/kernel/head_32.S
+--- linux-2.6.37-pax/arch/x86/kernel/head_32.S	2011-01-07 02:12:38.000000000 +0100
++++ linux-2.6.37-pax/arch/x86/kernel/head_32.S	2011-01-25 17:57:19.000000000 +0100
+@@ -699,6 +699,7 @@
+ ENTRY(initial_pg_pmd)
+ 	.fill 1024*KPMDS,4,0
+ #else
++.section .initial_page_table,"a",@progbits
+ ENTRY(initial_page_table)
+ 	.fill 1024,4,0
+ #endif
+diff -u linux-2.6.37-pax/drivers/char/hvcs.c linux-2.6.37-pax/drivers/char/hvcs.c
+--- linux-2.6.37-pax/drivers/char/hvcs.c	2011-01-22 16:31:42.000000000 +0100
++++ linux-2.6.37-pax/drivers/char/hvcs.c	2011-01-25 19:46:35.000000000 +0100
+@@ -83,6 +83,7 @@
+ #include <asm/hvcserver.h>
+ #include <asm/uaccess.h>
+ #include <asm/vio.h>
++#include <asm/local.h>
+ 
+ /*
+  * 1.3.0 -> 1.3.1 In hvcs_open memset(..,0x00,..) instead of memset(..,0x3F,00).
+diff -u linux-2.6.37-pax/drivers/char/pcmcia/ipwireless/tty.c linux-2.6.37-pax/drivers/char/pcmcia/ipwireless/tty.c
+--- linux-2.6.37-pax/drivers/char/pcmcia/ipwireless/tty.c	2011-01-22 16:31:42.000000000 +0100
++++ linux-2.6.37-pax/drivers/char/pcmcia/ipwireless/tty.c	2011-01-25 19:47:06.000000000 +0100
+@@ -29,6 +29,7 @@
+ #include <linux/tty_driver.h>
+ #include <linux/tty_flip.h>
+ #include <linux/uaccess.h>
++#include <asm/local.h>
+ 
+ #include "tty.h"
+ #include "network.h"
+diff -u linux-2.6.37-pax/drivers/char/sonypi.c linux-2.6.37-pax/drivers/char/sonypi.c
+--- linux-2.6.37-pax/drivers/char/sonypi.c	2011-01-22 16:31:42.000000000 +0100
++++ linux-2.6.37-pax/drivers/char/sonypi.c	2011-01-25 19:47:22.000000000 +0100
+@@ -55,6 +55,7 @@
+ #include <asm/uaccess.h>
+ #include <asm/io.h>
+ #include <asm/system.h>
++#include <asm/local.h>
+ 
+ #include <linux/sonypi.h>
+ 
+diff -u linux-2.6.37-pax/drivers/isdn/gigaset/gigaset.h linux-2.6.37-pax/drivers/isdn/gigaset/gigaset.h
+--- linux-2.6.37-pax/drivers/isdn/gigaset/gigaset.h	2011-01-22 16:31:42.000000000 +0100
++++ linux-2.6.37-pax/drivers/isdn/gigaset/gigaset.h	2011-01-25 19:47:36.000000000 +0100
+@@ -35,6 +35,7 @@
+ #include <linux/tty_driver.h>
+ #include <linux/list.h>
+ #include <asm/atomic.h>
++#include <asm/local.h>
+ 
+ #define GIG_VERSION {0, 5, 0, 0}
+ #define GIG_COMPAT  {0, 4, 0, 0}
+diff -u linux-2.6.37-pax/include/net/irda/ircomm_tty.h linux-2.6.37-pax/include/net/irda/ircomm_tty.h
+--- linux-2.6.37-pax/include/net/irda/ircomm_tty.h	2011-01-22 16:31:44.000000000 +0100
++++ linux-2.6.37-pax/include/net/irda/ircomm_tty.h	2011-01-25 19:48:10.000000000 +0100
+@@ -35,6 +35,7 @@
+ #include <linux/termios.h>
+ #include <linux/timer.h>
+ #include <linux/tty.h>		/* struct tty_struct */
++#include <asm/local.h>
+ 
+ #include <net/irda/irias_object.h>
+ #include <net/irda/ircomm_core.h>
+diff -u linux-2.6.37-pax/sound/drivers/portman2x4.c linux-2.6.37-pax/sound/drivers/portman2x4.c
+--- linux-2.6.37-pax/sound/drivers/portman2x4.c	2011-01-22 16:31:44.000000000 +0100
++++ linux-2.6.37-pax/sound/drivers/portman2x4.c	2011-01-25 19:49:14.000000000 +0100
+@@ -47,6 +47,7 @@
+ #include <sound/initval.h>
+ #include <sound/rawmidi.h>
+ #include <sound/control.h>
++#include <asm/local.h>
+ 
+ #define CARD_NAME "Portman 2x4"
+ #define DRIVER_NAME "portman"
+only in patch2:
+unchanged:
+--- linux-2.6.37/sound/aoa/codecs/onyx.h	2011-01-05 01:50:19.000000000 +0100
++++ linux-2.6.37-pax/sound/aoa/codecs/onyx.h	2011-01-25 19:48:28.000000000 +0100
+@@ -11,6 +11,7 @@
+ #include <linux/i2c.h>
+ #include <asm/pmac_low_i2c.h>
+ #include <asm/prom.h>
++#include <asm/local.h>
+ 
+ /* PCM3052 register definitions */
+ 
