@@ -88,7 +88,7 @@
 
 %define		basever		2.6.37
 %define		postver		%{nil}
-%define		rel		2
+%define		rel		3
 
 %define		_enable_debug_packages			0
 
@@ -230,7 +230,7 @@ Patch70:	kernel-tuxonice-headers.patch
 # http://patches.aircrack-ng.org/hostap-kernel-2.6.18.patch
 Patch85:	kernel-hostap.patch
 
-# http://vserver.13thfloor.at/Experimental/patch-2.6.37-vs2.3.0.37-rc2.diff
+# http://vserver.13thfloor.at/Experimental/patch-2.6.37-vs2.3.0.37-rc3.diff
 Patch100:	kernel-vserver-2.3.patch
 Patch101:	kernel-vserver-fixes.patch
 
@@ -292,7 +292,7 @@ Patch5000:	kernel-apparmor.patch
 # based on ftp://ftp.leg.uct.ac.za/pub/linux/rip/tmpfs_root-2.6.30.diff.gz
 Patch7000:	kernel-inittmpfs.patch
 
-# based on http://www.grsecurity.net/~spender/grsecurity-2.2.1-2.6.37-201101241824.patch
+# based on http://www.grsecurity.net/~spender/grsecurity-2.2.1-2.6.37-201101272240.patch
 # NOTE: put raw upstream patches on kernel-grsec_full.patch:GRSECURITY_RAW for reference
 #       (since upstream deletes older patches)
 Patch9999:	kernel-grsec_full.patch
