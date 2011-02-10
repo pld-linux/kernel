@@ -141,3 +141,32 @@ index f8e854b..9431c56 100644
  	}
  	mutex_unlock(&xfs_Gqm->qm_dqfrlist_lock);
  	return dqpout;
+commit aa5bd67dcfdf9af34c7fa36ebc87d4e1f7e91873
+Author: Kacper Kornet <kornet@camk.edu.pl>
+Date:   Sat Jan 29 00:21:04 2011 +0100
+
+    Fix prlimit64 for suid/sgid processes
+    
+    Since check_prlimit_permission always fails in the case of SUID/GUID
+    processes, such processes are not able to read or set their own limits.
+    This commit changes this by assuming that process can always read/change
+    its own limits.
+    
+    Signed-off-by: Kacper Kornet <kornet@camk.edu.pl>
+    Acked-by: Jiri Slaby <jslaby@suse.cz>
+    Signed-off-by: Linus Torvalds <torvalds@linux-foundation.org>
+
+diff --git a/kernel/sys.c b/kernel/sys.c
+index 31b71a2..18da702 100644
+--- a/kernel/sys.c
++++ b/kernel/sys.c
+@@ -1385,7 +1385,8 @@ static int check_prlimit_permission(struct task_struct *task)
+ 	const struct cred *cred = current_cred(), *tcred;
+ 
+ 	tcred = __task_cred(task);
+-	if ((cred->uid != tcred->euid ||
++	if (current != task &&
++	    (cred->uid != tcred->euid ||
+ 	     cred->uid != tcred->suid ||
+ 	     cred->uid != tcred->uid  ||
+ 	     cred->gid != tcred->egid ||
