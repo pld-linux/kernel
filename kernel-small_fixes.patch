@@ -170,3 +170,46 @@ index 31b71a2..18da702 100644
  	     cred->uid != tcred->suid ||
  	     cred->uid != tcred->uid  ||
  	     cred->gid != tcred->egid ||
+Subject: [PATCH -mm] swiotlb: fix wrong panic
+From: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
+
+swiotlb's map_page wrongly calls panic() when it can't find a buffer
+fit for device's dma mask. It should return an error instead.
+
+Devices with an odd dma mask (i.e. under 4G) like b44 network card hit
+this bug (the system crashes):
+
+http://marc.info/?l=linux-kernel&m=129648943830106&w=2
+
+If swiotlb returns an error, b44 driver can use the own bouncing
+mechanism.
+
+Reported-by: Chuck Ebbert <cebbert@redhat.com>
+Signed-off-by: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
+Tested-by: Arkadiusz Miskiewicz <arekm@maven.pl>
+Cc: stable@kernel.org
+---
+ lib/swiotlb.c |    6 ++++--
+ 1 files changed, 4 insertions(+), 2 deletions(-)
+
+diff --git a/lib/swiotlb.c b/lib/swiotlb.c
+index c47bbe1..93ca08b 100644
+--- a/lib/swiotlb.c
++++ b/lib/swiotlb.c
+@@ -686,8 +686,10 @@ dma_addr_t swiotlb_map_page(struct device *dev, struct page *page,
+ 	/*
+ 	 * Ensure that the address returned is DMA'ble
+ 	 */
+-	if (!dma_capable(dev, dev_addr, size))
+-		panic("map_single: bounce buffer is not DMA'ble");
++	if (!dma_capable(dev, dev_addr, size)) {
++		swiotlb_tbl_unmap_single(dev, map, size, dir);
++		dev_addr = swiotlb_virt_to_bus(dev, io_tlb_overflow_buffer);
++	}
+ 
+ 	return dev_addr;
+ }
+-- 
+1.7.2.3
+
+
