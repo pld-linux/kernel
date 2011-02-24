@@ -31,6 +31,7 @@
 %bcond_with	fbcondecor	# build fbcondecor (disable FB_TILEBLITTING and affected fb modules)
 %bcond_with	pae		# build PAE (HIGHMEM64G) support on uniprocessor
 %bcond_with	nfsroot		# build with root on NFS support
+%bcond_with	virtio_gl	# build with virtio_gl thats avaible under guest OS with patched qemu (qemu-gl.spec)
 
 %bcond_without	imq		# imq support
 %bcond_without	wrr		# wrr support
@@ -53,6 +54,10 @@
 %if %{with pax}
 %define		with_grsecurity		1
 %define		with_pax		1
+%endif
+
+%if %{with virtio_gl}
+%define		with_virtiogl		1
 %endif
 
 %define		have_drm	1
@@ -101,7 +106,7 @@
 %endif
 %else
 %if %{without rescuecd}
-%define		__alt_kernel	%{?with_pax:pax}%{!?with_grsecurity:nogrsecurity}%{?with_pae:pae}
+%define		__alt_kernel	%{?with_pax:pax}%{!?with_grsecurity:nogrsecurity}%{?with_pae:pae}%{?with_virtiogl:virtiogl}
 %if "%{__alt_kernel}" != ""
 %define		alt_kernel	%{__alt_kernel}
 %endif
@@ -304,6 +309,7 @@ Patch10002:	kernel-grsec_fixes.patch
 # Do not remove this line, please. It is easier for me to uncomment two lines, then patch
 # kernel.spec every time.
 #Patch50000:	kernel-usb_reset.patch
+Patch60000:	kernel-virtio-gl-accel.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 3:2.18
@@ -439,6 +445,7 @@ BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 %{?with_pax:PaX support - enabled}\
 %{?with_fbcondecor:Fbsplash/fbcondecor - enabled }\
 %{?with_nfsroot:Root on NFS - enabled}\
+%{?with_virtiogl:virtio_gl for qemu-gl guest OpenGL accel - enabled}\
 
 %define Features %(echo "%{__features}" | sed '/^$/d')
 
@@ -802,12 +809,13 @@ sed -i 's/-Werror//' arch/alpha/kernel/Makefile
 %patch300 -p1
 
 # Small fixes:
-%patch2000 -p1
+#%patch2000 -p1
 %patch2001 -p1
 #%patch2003 -p1
 
 # Do not remove this, please!
 #%patch50000 -p1
+%{?with_virtiogl:%patch60000 -p1}
 
 # Fix EXTRAVERSION in main Makefile
 sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{postver}%{?alt_kernel:_%{alt_kernel}}#g' Makefile
@@ -962,6 +970,10 @@ BuildConfig() {
 %if %{with nfsroot}
 		CONFIG_NFS_FS=y
 		CONFIG_ROOT_NFS=y
+%endif
+
+%if %{with virtio_gl}
+		CONFIG_VIRTIOGL=m
 %endif
 
 # Temporary disabled RELOCATABLE. Needed only on x86??
