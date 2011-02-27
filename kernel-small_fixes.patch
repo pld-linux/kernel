@@ -116,31 +116,6 @@ index 2494842..edf37aa 100644
  	/* block receiver */
  	sky2_write8(hw, SK_REG(port, RX_GMF_CTRL_T), GMF_RST_SET);
  }
-
-Commit 368e136 ("xfs: remove duplicate code from dquot reclaim") fails
-to unlock the dquot freelist when the number of loop restarts is
-exceeded in xfs_qm_dqreclaim_one(). This causes hangs in memory
-reclaim. Remove the bogus loop exit check that causes the problem.
-
-Reported-by: Malcolm Scott <lkml@malc.org.uk>
-Signed-off-by: Dave Chinner <dchinner@redhat.com>
----
- fs/xfs/quota/xfs_qm.c |    2 --
- 1 files changed, 0 insertions(+), 2 deletions(-)
-
-diff --git a/fs/xfs/quota/xfs_qm.c b/fs/xfs/quota/xfs_qm.c
-index f8e854b..9431c56 100644
---- a/fs/xfs/quota/xfs_qm.c
-+++ b/fs/xfs/quota/xfs_qm.c
-@@ -1992,8 +1992,6 @@ dqfunlock:
- 		xfs_dqunlock(dqp);
- 		if (dqpout)
- 			break;
--		if (restarts >= XFS_QM_RECLAIM_MAX_RESTARTS)
--			return NULL;
- 	}
- 	mutex_unlock(&xfs_Gqm->qm_dqfrlist_lock);
- 	return dqpout;
 Subject: [PATCH -mm] swiotlb: fix wrong panic
 From: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
 
