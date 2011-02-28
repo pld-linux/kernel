@@ -666,20 +666,6 @@ Verzeichniss vorgefunden werden kann.
 Pakiet zawiera dokumentację do jądra Linuksa pochodzącą z katalogu
 /usr/src/linux/Documentation.
 
-%package wanrouter
-Summary:	WAN Multiprotocol Router Module
-Summary(pl.UTF-8):	WAN Multiprotocol Router Module
-Group:		Base/Kernel
-Requires(postun):       %{name} = %{epoch}:%{version}-%{release}
-Requires:       %{name} = %{epoch}:%{version}-%{release}
-AutoReqProv:	no
-
-%description wanrouter
-WAN Multiprotocol Router Module.
-
-%description wanrouter -l pl.UTF-8
-WAN Multiprotocol Router Module.
-
 %prep
 %setup -qc
 ln -s %{SOURCE7} kernel-module-build.pl
@@ -1251,9 +1237,6 @@ ln -sf vmlinux-%{kernel_release} /boot/vmlinux
 %postun sound-oss
 %depmod %{kernel_release}
 
-%postun wanrouter
-%depmod %{kernel_release}
-
 %post headers
 ln -snf %{basename:%{_kernelsrcdir}} %{_prefix}/src/linux%{_alt_kernel}
 
@@ -1301,9 +1284,6 @@ fi
 /lib/modules/%{kernel_release}/kernel/lib
 /lib/modules/%{kernel_release}/kernel/net
 /lib/modules/%{kernel_release}/kernel/mm
-
-%exclude /lib/modules/%{kernel_release}/kernel/net/wanrouter/wanrouter.ko*
-
 %if %{have_sound}
 %dir /lib/modules/%{kernel_release}/kernel/sound
 /lib/modules/%{kernel_release}/kernel/sound/ac97_bus.ko*
@@ -1486,10 +1466,6 @@ fi
 %lang(ko) %{_docdir}/%{name}-%{version}/ko_KR
 %lang(zh_CN) %{_docdir}/%{name}-%{version}/zh_CN
 %endif
-
-%files wanrouter
-%defattr(644,root,root,755)
-/lib/modules/%{kernel_release}/kernel/net/wanrouter/wanrouter.ko*
 
 %if %{with source}
 %files source -f files.source_exclude_modulebuild_and_dirs
