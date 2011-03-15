@@ -1087,10 +1087,10 @@ diff -uNr linux-2.6.35/net/core/dev.c linux-2.6.35-imq-multiqueue-test1/net/core
  #include <linux/proc_fs.h>
  #include <linux/seq_file.h>
  #include <linux/stat.h>
-@@ -1931,7 +1934,11 @@
- 	int rc = NETDEV_TX_OK;
+@@ -2083,7 +2083,11 @@
+ 		if (dev->priv_flags & IFF_XMIT_DST_RELEASE)
+ 			skb_dst_drop(skb);
  
- 	if (likely(!skb->next)) {
 -		if (!list_empty(&ptype_all))
 +		if (!list_empty(&ptype_all)
 +#if defined(CONFIG_IMQ) || defined(CONFIG_IMQ_MODULE)
@@ -1099,7 +1099,7 @@ diff -uNr linux-2.6.35/net/core/dev.c linux-2.6.35-imq-multiqueue-test1/net/core
 +		   )
  			dev_queue_xmit_nit(skb, dev);
  
- 		/*
+ 		skb_orphan_try(skb);
 @@ -2027,8 +2034,7 @@
  	return queue_index;
  }
