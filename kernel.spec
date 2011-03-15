@@ -216,9 +216,6 @@ Patch54:	kernel-toshiba_acpi.patch
 Patch55:	kernel-atm-vbr.patch
 Patch56:	kernel-atmdd.patch
 
-# https://trac.pentoo.ch/pentoo/export/1600/kernel/trunk/2.6/2.6.34/4305_sqlzma.patch
-Patch57:	kernel-squashfs-lzma.patch
-
 # http://synce.svn.sourceforge.net/svnroot/synce/trunk/patches/linux-2.6.22-rndis_host-wm5.patch
 Patch59:	kernel-rndis_host-wm5.patch
 
@@ -745,9 +742,6 @@ sed -i 's/-Werror//' arch/alpha/kernel/Makefile
 
 %patch55 -p1
 %patch56 -p1
-
-# squashfs lzma support
-%patch57 -p1
 
 # kernel-rndis_host-wm5.patch
 %patch59 -p1
