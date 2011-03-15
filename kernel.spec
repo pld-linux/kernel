@@ -228,19 +228,13 @@ Patch70:	kernel-tuxonice-headers.patch
 # http://patches.aircrack-ng.org/hostap-kernel-2.6.18.patch
 Patch85:	kernel-hostap.patch
 
-# http://vserver.13thfloor.at/Experimental/patch-2.6.37-vs2.3.0.37-rc3.diff
+# http://vserver.13thfloor.at/Experimental/patch-2.6.38-rc8-vs2.3.0.37-rc6.diff
 Patch100:	kernel-vserver-2.3.patch
 Patch101:	kernel-vserver-fixes.patch
 
 # Wake-On-Lan fix for nForce drivers; using http://atlas.et.tudelft.nl/verwei90/nforce2/wol.html
 # Fix verified for that kernel version.
 Patch130:	kernel-forcedeth-WON.patch
-
-# add tty ioctl to figure physical device of the console. used by showconsole.spec (blogd)
-# raw from http://download.opensuse.org/update/11.2/rpm/src/kernel-source-2.6.31.12-0.2.1.src.rpm
-# from patches.fixes.tar.bz2
-# from patches.fixes/tiocgdev
-Patch131:	kernel-TIOCGDEV.patch
 
 # http://download.filesystems.org/unionfs/unionfs-2.x/unionfs-2.5.7_for_2.6.36.diff.gz
 Patch140:	kernel-unionfs.patch
@@ -757,8 +751,6 @@ sed -i 's/-Werror//' arch/alpha/kernel/Makefile
 
 # forcedeth
 %patch130 -p1
-
-%patch131 -p1
 
 # aufs2
 %if %{with reiser4}
