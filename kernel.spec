@@ -236,7 +236,7 @@ Patch101:	kernel-vserver-fixes.patch
 # Fix verified for that kernel version.
 Patch130:	kernel-forcedeth-WON.patch
 
-# http://download.filesystems.org/unionfs/unionfs-2.x/unionfs-2.5.7_for_2.6.36.diff.gz
+# http://download.filesystems.org/unionfs/unionfs-2.x/unionfs-2.5.8_for_2.6.38-rc7.diff.gz
 Patch140:	kernel-unionfs.patch
 
 # http://git.c3sl.ufpr.br/pub/scm/aufs/aufs2-standalone.git, read README
