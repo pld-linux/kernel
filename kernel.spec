@@ -221,6 +221,7 @@ Patch59:	kernel-rndis_host-wm5.patch
 
 # Project suspend2 renamed to tuxonice
 # http://tuxonice.net/files/current-tuxonice-for-2.6.37.patch_0.bz2
+# NOTE: use nofficial port until official 2.6.38 is announced - http://permalink.gmane.org/gmane.linux.swsusp.devel/13694
 Patch69:	kernel-tuxonice.patch
 Patch70:	kernel-tuxonice-headers.patch
 
