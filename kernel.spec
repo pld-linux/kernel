@@ -265,7 +265,7 @@ Patch250:	kernel-fix_256colors_menuconfig.patch
 # alternative routes, the reverse path protection (rp_filter),
 # the NAT processing to use correctly the routing when multiple
 # gateways are used.
-# http://www.ssi.bg/~ja/routes-2.6.37-16.diff
+# http://www.ssi.bg/~ja/routes-2.6.38-16.diff
 Patch300:	kernel-routes.patch
 
 # https://patchwork.kernel.org/patch/236261/
