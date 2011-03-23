@@ -1,8 +1,8 @@
 diff --git a/Documentation/filesystems/00-INDEX b/Documentation/filesystems/00-INDEX
-index 4303614..5ade4a8 100644
+index 8c624a1..4aa288b 100644
 --- a/Documentation/filesystems/00-INDEX
 +++ b/Documentation/filesystems/00-INDEX
-@@ -112,6 +112,8 @@ udf.txt
+@@ -110,6 +110,8 @@ udf.txt
  	- info and mount options for the UDF filesystem.
  ufs.txt
  	- info on the ufs filesystem.
@@ -532,10 +532,10 @@ index 0000000..1adde69
 +
 +For more information, see <http://unionfs.filesystems.org/>.
 diff --git a/MAINTAINERS b/MAINTAINERS
-index f2a2b8e..11d7f45 100644
+index 7585e9d..3a2bc77 100644
 --- a/MAINTAINERS
 +++ b/MAINTAINERS
-@@ -5917,6 +5917,14 @@ F:	Documentation/cdrom/
+@@ -6030,6 +6030,14 @@ F:	Documentation/cdrom/
  F:	drivers/cdrom/cdrom.c
  F:	include/linux/cdrom.h
  
@@ -551,10 +551,10 @@ index f2a2b8e..11d7f45 100644
  M:	Artem Bityutskiy <dedekind1@gmail.com>
  W:	http://www.linux-mtd.infradead.org/
 diff --git a/fs/Kconfig b/fs/Kconfig
-index 3d18530..65b6aa1 100644
+index 771f457..5d4c8c6 100644
 --- a/fs/Kconfig
 +++ b/fs/Kconfig
-@@ -169,6 +169,7 @@ if MISC_FILESYSTEMS
+@@ -171,6 +171,7 @@ if MISC_FILESYSTEMS
  source "fs/adfs/Kconfig"
  source "fs/affs/Kconfig"
  source "fs/ecryptfs/Kconfig"
@@ -563,10 +563,10 @@ index 3d18530..65b6aa1 100644
  source "fs/hfsplus/Kconfig"
  source "fs/befs/Kconfig"
 diff --git a/fs/Makefile b/fs/Makefile
-index e6ec1d3..787332e 100644
+index a7f7cef..672664b 100644
 --- a/fs/Makefile
 +++ b/fs/Makefile
-@@ -84,6 +84,7 @@ obj-$(CONFIG_ISO9660_FS)	+= isofs/
+@@ -81,6 +81,7 @@ obj-$(CONFIG_ISO9660_FS)	+= isofs/
  obj-$(CONFIG_HFSPLUS_FS)	+= hfsplus/ # Before hfs to find wrapped HFS+
  obj-$(CONFIG_HFS_FS)		+= hfs/
  obj-$(CONFIG_ECRYPT_FS)		+= ecryptfs/
@@ -575,7 +575,7 @@ index e6ec1d3..787332e 100644
  obj-$(CONFIG_NFS_FS)		+= nfs/
  obj-$(CONFIG_EXPORTFS)		+= exportfs/
 diff --git a/fs/namei.c b/fs/namei.c
-index 24896e8..db22420 100644
+index 4ff7ca5..24f1f62 100644
 --- a/fs/namei.c
 +++ b/fs/namei.c
 @@ -385,6 +385,7 @@ void release_open_intent(struct nameidata *nd)
@@ -587,7 +587,7 @@ index 24896e8..db22420 100644
  static inline struct dentry *
  do_revalidate(struct dentry *dentry, struct nameidata *nd)
 diff --git a/fs/splice.c b/fs/splice.c
-index 8f1dfae..7a57fab 100644
+index ce2f025..00ae6d9 100644
 --- a/fs/splice.c
 +++ b/fs/splice.c
 @@ -1092,8 +1092,8 @@ EXPORT_SYMBOL(generic_splice_sendpage);
@@ -647,7 +647,7 @@ index 8f1dfae..7a57fab 100644
  }
  
  /**
-@@ -1368,7 +1370,7 @@ static long do_splice(struct file *in, loff_t __user *off_in,
+@@ -1356,7 +1358,7 @@ static long do_splice(struct file *in, loff_t __user *off_in,
  		} else
  			off = &out->f_pos;
  
@@ -656,7 +656,7 @@ index 8f1dfae..7a57fab 100644
  
  		if (off_out && copy_to_user(off_out, off, sizeof(loff_t)))
  			ret = -EFAULT;
-@@ -1388,7 +1390,7 @@ static long do_splice(struct file *in, loff_t __user *off_in,
+@@ -1376,7 +1378,7 @@ static long do_splice(struct file *in, loff_t __user *off_in,
  		} else
  			off = &in->f_pos;
  
@@ -723,11 +723,11 @@ index 0000000..f3c1ac4
 +	  If you say Y here, you can turn on debugging output from Unionfs.
 diff --git a/fs/unionfs/Makefile b/fs/unionfs/Makefile
 new file mode 100644
-index 0000000..86c32ba
+index 0000000..2ae32e5
 --- /dev/null
 +++ b/fs/unionfs/Makefile
 @@ -0,0 +1,17 @@
-+UNIONFS_VERSION="2.5.7 (for 2.6.36)"
++UNIONFS_VERSION="2.5.8 (for 2.6.37.2)"
 +
 +EXTRA_CFLAGS += -DUNIONFS_VERSION=\"$(UNIONFS_VERSION)\"
 +
@@ -1492,9 +1492,9 @@ index 0000000..51ea65e
 +	if (lower_file->f_op->unlocked_ioctl) {
 +		err = lower_file->f_op->unlocked_ioctl(lower_file, cmd, arg);
 +#ifdef CONFIG_COMPAT
-+	} else if (lower_file->f_op->compat_ioctl) {
++	} else if (lower_file->f_op->ioctl) {
 +		err = lower_file->f_op->compat_ioctl(
-+
++			lower_file->f_path.dentry->d_inode,
 +			lower_file, cmd, arg);
 +#endif
 +	}
@@ -4764,10 +4764,10 @@ index 0000000..1c694c3
 +};
 diff --git a/fs/unionfs/inode.c b/fs/unionfs/inode.c
 new file mode 100644
-index 0000000..4c36f16
+index 0000000..cc994bd
 --- /dev/null
 +++ b/fs/unionfs/inode.c
-@@ -0,0 +1,1061 @@
+@@ -0,0 +1,1074 @@
 +/*
 + * Copyright (c) 2003-2010 Erez Zadok
 + * Copyright (c) 2003-2006 Charles P. Wright
@@ -5671,6 +5671,12 @@ index 0000000..4c36f16
 +	struct inode *lower_inode;
 +	int bstart, bend, bindex;
 +	loff_t size;
++	struct iattr lower_ia;
++
++	/* check if user has permission to change inode */
++	err = inode_change_ok(dentry->d_inode, ia);
++	if (err)
++		goto out_err;
 +
 +	unionfs_read_lock(dentry->d_sb, UNIONFS_SMUTEX_CHILD);
 +	parent = unionfs_lock_parent(dentry, UNIONFS_DMUTEX_PARENT);
@@ -5758,8 +5764,15 @@ index 0000000..4c36f16
 +	 * unlinked (no inode->i_sb and i_ino==0.  This happens if someone
 +	 * tries to open(), unlink(), then ftruncate() a file.
 +	 */
++	/* prepare our own lower struct iattr (with our own lower file) */
++	memcpy(&lower_ia, ia, sizeof(lower_ia));
++	if (ia->ia_valid & ATTR_FILE) {
++		lower_ia.ia_file = unionfs_lower_file(ia->ia_file);
++		BUG_ON(!lower_ia.ia_file); // XXX?
++	}
++
 +	mutex_lock(&lower_dentry->d_inode->i_mutex);
-+	err = notify_change(lower_dentry, ia);
++	err = notify_change(lower_dentry, &lower_ia);
 +	mutex_unlock(&lower_dentry->d_inode->i_mutex);
 +	if (err)
 +		goto out;
@@ -5787,7 +5800,7 @@ index 0000000..4c36f16
 +	unionfs_unlock_dentry(dentry);
 +	unionfs_unlock_parent(dentry, parent);
 +	unionfs_read_unlock(dentry->d_sb);
-+
++out_err:
 +	return err;
 +}
 +
@@ -6406,10 +6419,10 @@ index 0000000..b63c17e
 +}
 diff --git a/fs/unionfs/main.c b/fs/unionfs/main.c
 new file mode 100644
-index 0000000..258386e
+index 0000000..9ee58eb
 --- /dev/null
 +++ b/fs/unionfs/main.c
-@@ -0,0 +1,758 @@
+@@ -0,0 +1,762 @@
 +/*
 + * Copyright (c) 2003-2010 Erez Zadok
 + * Copyright (c) 2003-2006 Charles P. Wright
@@ -6699,7 +6712,7 @@ index 0000000..258386e
 +	if (options[0] == '\0') {
 +		printk(KERN_ERR "unionfs: no branches specified\n");
 +		err = -EINVAL;
-+		goto out;
++		goto out_return;
 +	}
 +
 +	/*
@@ -6715,14 +6728,17 @@ index 0000000..258386e
 +		kcalloc(branches, sizeof(struct unionfs_data), GFP_KERNEL);
 +	if (unlikely(!UNIONFS_SB(sb)->data)) {
 +		err = -ENOMEM;
-+		goto out;
++		goto out_return;
 +	}
 +
 +	lower_root_info->lower_paths =
 +		kcalloc(branches, sizeof(struct path), GFP_KERNEL);
 +	if (unlikely(!lower_root_info->lower_paths)) {
 +		err = -ENOMEM;
-+		goto out;
++		/* free the underlying pointer array */
++		kfree(UNIONFS_SB(sb)->data);
++		UNIONFS_SB(sb)->data = NULL;
++		goto out_return;
 +	}
 +
 +	/* now parsing a string such as "b1:b2=rw:b3=ro:b4" */
@@ -6839,6 +6855,7 @@ index 0000000..258386e
 +		lower_root_info->lower_paths = NULL;
 +		UNIONFS_SB(sb)->data = NULL;
 +	}
++out_return:
 +	return err;
 +}
 +
@@ -11171,7 +11188,7 @@ index da317c7..64f1ced 100644
   */
  
 diff --git a/include/linux/magic.h b/include/linux/magic.h
-index eb9800f..9770154 100644
+index ff690d0..37452a3 100644
 --- a/include/linux/magic.h
 +++ b/include/linux/magic.h
 @@ -47,6 +47,8 @@
@@ -11240,10 +11257,10 @@ index 0000000..c84d97e
 +#endif /* _LINUX_UNIONFS_H */
 +
 diff --git a/security/security.c b/security/security.c
-index c53949f..eb71394 100644
+index 8d57dbb..950a998 100644
 --- a/security/security.c
 +++ b/security/security.c
-@@ -528,6 +528,7 @@ int security_inode_permission(struct inode *inode, int mask)
+@@ -511,6 +511,7 @@ int security_inode_permission(struct inode *inode, int mask)
  		return 0;
  	return security_ops->inode_permission(inode, mask);
  }
