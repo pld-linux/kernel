@@ -17600,10 +17600,10 @@ diff -urNp linux-2.6.37.4/arch/x86/mm/fault.c linux-2.6.37.4/arch/x86/mm/fault.c
  DEFINE_SPINLOCK(pgd_lock);
  LIST_HEAD(pgd_list);
  
-@@ -231,18 +269,35 @@ void vmalloc_sync_all(void)
+@@ -231,19 +269,36 @@ void vmalloc_sync_all(void)
+ 	for (address = VMALLOC_START & PMD_MASK;
+ 	     address >= TASK_SIZE && address < FIXADDR_TOP;
  	     address += PMD_SIZE) {
- 
- 		unsigned long flags;
 +
 +#ifdef CONFIG_PAX_PER_CPU_PGD
 +		unsigned long cpu;
@@ -17611,7 +17611,7 @@ diff -urNp linux-2.6.37.4/arch/x86/mm/fault.c linux-2.6.37.4/arch/x86/mm/fault.c
  		struct page *page;
 +#endif
  
- 		spin_lock_irqsave(&pgd_lock, flags);
+ 		spin_lock(&pgd_lock);
 +
 +#ifdef CONFIG_PAX_PER_CPU_PGD
 +		for (cpu = 0; cpu < NR_CPUS; ++cpu) {
@@ -17623,6 +17623,7 @@ diff -urNp linux-2.6.37.4/arch/x86/mm/fault.c linux-2.6.37.4/arch/x86/mm/fault.c
  			spinlock_t *pgt_lock;
  			pmd_t *ret;
  
+ 			/* the pgt_lock only for Xen */
  			pgt_lock = &pgd_page_get_mm(page)->page_table_lock;
  
  			spin_lock(pgt_lock);
@@ -18711,9 +18712,9 @@ diff -urNp linux-2.6.37.4/arch/x86/mm/init_64.c linux-2.6.37.4/arch/x86/mm/init_
  
  int force_personality32;
 @@ -106,12 +106,22 @@ void sync_global_pgds(unsigned long star
+ 
  	for (address = start; address <= end; address += PGDIR_SIZE) {
  		const pgd_t *pgd_ref = pgd_offset_k(address);
- 		unsigned long flags;
 +
 +#ifdef CONFIG_PAX_PER_CPU_PGD
 +		unsigned long cpu;
@@ -18724,7 +18725,7 @@ diff -urNp linux-2.6.37.4/arch/x86/mm/init_64.c linux-2.6.37.4/arch/x86/mm/init_
  		if (pgd_none(*pgd_ref))
  			continue;
  
- 		spin_lock_irqsave(&pgd_lock, flags);
+ 		spin_lock(&pgd_lock);
 +
 +#ifdef CONFIG_PAX_PER_CPU_PGD
 +		for (cpu = 0; cpu < NR_CPUS; ++cpu) {
@@ -19391,7 +19392,7 @@ diff -urNp linux-2.6.37.4/arch/x86/mm/pgtable.c linux-2.6.37.4/arch/x86/mm/pgtab
  		return -ENOMEM;
  	}
  
-@@ -215,51 +267,56 @@ static int preallocate_pmds(pmd_t *pmds[
+@@ -215,51 +267,55 @@ static int preallocate_pmds(pmd_t *pmds[
   * preallocate which never got a corresponding vma will need to be
   * freed manually.
   */
@@ -19461,10 +19462,9 @@ diff -urNp linux-2.6.37.4/arch/x86/mm/pgtable.c linux-2.6.37.4/arch/x86/mm/pgtab
  	pgd_t *pgd;
 -	pmd_t *pmds[PREALLOCATED_PMDS];
 +	pxd_t *pxds[PREALLOCATED_PXDS];
-+
- 	unsigned long flags;
  
  	pgd = (pgd_t *)__get_free_page(PGALLOC_GFP);
+ 
 @@ -269,11 +326,11 @@ pgd_t *pgd_alloc(struct mm_struct *mm)
  
  	mm->pgd = pgd;
@@ -19480,13 +19480,13 @@ diff -urNp linux-2.6.37.4/arch/x86/mm/pgtable.c linux-2.6.37.4/arch/x86/mm/pgtab
  	/*
  	 * Make sure that pre-populating the pmds is atomic with
 @@ -283,14 +340,14 @@ pgd_t *pgd_alloc(struct mm_struct *mm)
- 	spin_lock_irqsave(&pgd_lock, flags);
+ 	spin_lock(&pgd_lock);
  
  	pgd_ctor(mm, pgd);
 -	pgd_prepopulate_pmd(mm, pgd, pmds);
 +	pgd_prepopulate_pxd(mm, pgd, pxds);
  
- 	spin_unlock_irqrestore(&pgd_lock, flags);
+ 	spin_unlock(&pgd_lock);
  
  	return pgd;
  
