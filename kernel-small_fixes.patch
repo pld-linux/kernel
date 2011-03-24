@@ -117,89 +117,73 @@ index 2494842..edf37aa 100644
  	sky2_write8(hw, SK_REG(port, RX_GMF_CTRL_T), GMF_RST_SET);
  }
 
-From: Gustavo F. Padovan <padovan@profusion.mobi>
-Date: Wed, 16 Mar 2011 18:36:29 +0000 (-0300)
-Subject: Bluetooth: Fix HCI_RESET command synchronization
-X-Git-Url: http://git.kernel.org/?p=linux%2Fkernel%2Fgit%2Fpadovan%2Fbluetooth-next-2.6.git;a=commitdiff_plain;h=b99faf1b798d6d0e33526fd2cef55a405c08ff09;hp=58b6e124aac64bebb2e9e1a136cbd21a5ab0485a
 
-Bluetooth: Fix HCI_RESET command synchronization
-
-We can't send new commands before a cmd_complete for the HCI_RESET command
-shows up.
-
-Reported-by: Mikko Vinni <mmvinni@yahoo.com>
-Reported-by: Justin P. Mattock <justinmattock@gmail.com>
-Reported-by: Ed Tomlinson <edt@aei.ca>
-Signed-off-by: Gustavo F. Padovan <padovan@profusion.mobi>
-Tested-by: Justin P. Mattock <justinmattock@gmail.com>
-Tested-by: Mikko Vinni <mmvinni@yahoo.com>
-Tested-by: Ed Tomlinson <edt@aei.ca>
----
-
-diff --git a/include/net/bluetooth/hci.h b/include/net/bluetooth/hci.h
-index ec6acf2..2c0d309 100644
---- a/include/net/bluetooth/hci.h
-+++ b/include/net/bluetooth/hci.h
-@@ -84,6 +84,8 @@ enum {
- 	HCI_SERVICE_CACHE,
- 	HCI_LINK_KEYS,
- 	HCI_DEBUG_KEYS,
+--- linux-2.6.37/fs//xfs/linux-2.6/xfs_super.c.org	2011-03-23 09:08:50.511734576 +0100
++++ linux-2.6.37/fs//xfs/linux-2.6/xfs_super.c	2011-03-23 09:13:58.385845623 +0100
+@@ -1566,13 +1566,17 @@
+ 	if (error)
+ 		goto out_free_sb;
+ 
+-	error = xfs_mountfs(mp);
+-	if (error)
+-		goto out_filestream_unmount;
+-
+ 	if (mp->m_flags & XFS_MOUNT_TAGGED)
+ 		sb->s_flags |= MS_TAGGED;
+ 
++	/*
++	 * we must configure the block size in the superblock before we run the
++	 * full mount process as the mount process can lookup and cache inodes.
++	 * For the same reason we must also initialise the syncd and register
++	 * the inode cache shrinker so that inodes can be reclaimed during
++	 * operations like a quotacheck that iterate all inodes in the
++	 * filesystem.
++	 */
+ 	sb->s_magic = XFS_SB_MAGIC;
+ 	sb->s_blocksize = mp->m_sb.sb_blocksize;
+ 	sb->s_blocksize_bits = ffs(sb->s_blocksize) - 1;
+@@ -1580,6 +1584,16 @@
+ 	sb->s_time_gran = 1;
+ 	set_posix_acl_flag(sb);
+ 
++	error = xfs_syncd_init(mp);
++	if (error)
++		goto out_filestream_unmount;
 +
-+	HCI_RESET,
- };
- 
- /* HCI ioctl defines */
-diff --git a/net/bluetooth/hci_core.c b/net/bluetooth/hci_core.c
-index b372fb8..92b48e2 100644
---- a/net/bluetooth/hci_core.c
-+++ b/net/bluetooth/hci_core.c
-@@ -186,6 +186,7 @@ static void hci_reset_req(struct hci_dev *hdev, unsigned long opt)
- 	BT_DBG("%s %ld", hdev->name, opt);
- 
- 	/* Reset device */
-+	set_bit(HCI_RESET, &hdev->flags);
- 	hci_send_cmd(hdev, HCI_OP_RESET, 0, NULL);
- }
- 
-@@ -213,8 +214,10 @@ static void hci_init_req(struct hci_dev *hdev, unsigned long opt)
- 	/* Mandatory initialization */
- 
- 	/* Reset */
--	if (!test_bit(HCI_QUIRK_NO_RESET, &hdev->quirks))
-+	if (!test_bit(HCI_QUIRK_NO_RESET, &hdev->quirks)) {
-+			set_bit(HCI_RESET, &hdev->flags);
- 			hci_send_cmd(hdev, HCI_OP_RESET, 0, NULL);
-+	}
- 
- 	/* Read Local Supported Features */
- 	hci_send_cmd(hdev, HCI_OP_READ_LOCAL_FEATURES, 0, NULL);
-@@ -1074,6 +1077,7 @@ static void hci_cmd_timer(unsigned long arg)
- 
- 	BT_ERR("%s command tx timeout", hdev->name);
- 	atomic_set(&hdev->cmd_cnt, 1);
-+	clear_bit(HCI_RESET, &hdev->flags);
- 	tasklet_schedule(&hdev->cmd_task);
- }
- 
-diff --git a/net/bluetooth/hci_event.c b/net/bluetooth/hci_event.c
-index 3fbfa50..cebe7588 100644
---- a/net/bluetooth/hci_event.c
-+++ b/net/bluetooth/hci_event.c
-@@ -183,6 +183,8 @@ static void hci_cc_reset(struct hci_dev *hdev, struct sk_buff *skb)
- 
- 	BT_DBG("%s status 0x%x", hdev->name, status);
- 
-+	clear_bit(HCI_RESET, &hdev->flags);
++	xfs_inode_shrinker_register(mp);
 +
- 	hci_req_complete(hdev, HCI_OP_RESET, status);
- }
++	error = xfs_mountfs(mp);
++	if (error)
++		goto out_syncd_stop;
++
+ 	root = igrab(VFS_I(mp->m_rootip));
+ 	if (!root) {
+ 		error = ENOENT;
+@@ -1595,14 +1609,11 @@
+ 		goto fail_vnrele;
+ 	}
  
-@@ -1847,7 +1849,7 @@ static inline void hci_cmd_status_evt(struct hci_dev *hdev, struct sk_buff *skb)
- 	if (ev->opcode != HCI_OP_NOP)
- 		del_timer(&hdev->cmd_timer);
+-	error = xfs_syncd_init(mp);
+-	if (error)
+-		goto fail_vnrele;
+-
+-	xfs_inode_shrinker_register(mp);
+-
+ 	return 0;
  
--	if (ev->ncmd) {
-+	if (ev->ncmd && !test_bit(HCI_RESET, &hdev->flags)) {
- 		atomic_set(&hdev->cmd_cnt, 1);
- 		if (!skb_queue_empty(&hdev->cmd_q))
- 			tasklet_schedule(&hdev->cmd_task);
++ out_syncd_stop:
++	xfs_inode_shrinker_unregister(mp);
++	xfs_syncd_stop(mp);
+  out_filestream_unmount:
+ 	xfs_filestream_unmount(mp);
+  out_free_sb:
+@@ -1626,6 +1637,9 @@
+ 	}
+ 
+  fail_unmount:
++	xfs_inode_shrinker_unregister(mp);
++	xfs_syncd_stop(mp);
++
+ 	/*
+ 	 * Blow away any referenced inode in the filestreams cache.
+ 	 * This can and will cause log traffic as inodes go inactive
