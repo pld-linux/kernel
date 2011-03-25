@@ -88,7 +88,7 @@
 
 %define		basever		2.6.38
 %define		postver		.1
-%define		rel		0.1
+%define		rel		0.2
 
 %define		_enable_debug_packages			0
 
@@ -1292,12 +1292,13 @@ fi
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/net/wireless/hostap/hostap_cs.ko*
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/net/wireless/libertas/*_cs.ko*
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/parport/parport_cs.ko*
-%exclude /lib/modules/%{kernel_release}/kernel/drivers/serial/serial_cs.ko*
+%exclude /lib/modules/%{kernel_release}/kernel/drivers/tty/serial/serial_cs.ko*
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/usb/host/sl811_cs.ko*
 %endif
 %if %{with myown}
 /lib/modules/%{kernel_release}/kernel/sound
 %endif
+/lib/modules/%{kernel_release}/kernel/security
 
 %dir %{_sysconfdir}/modprobe.d/%{kernel_release}
 
@@ -1356,7 +1357,7 @@ fi
 /lib/modules/%{kernel_release}/kernel/drivers/net/wireless/hostap/hostap_cs.ko*
 /lib/modules/%{kernel_release}/kernel/drivers/net/wireless/libertas/*_cs.ko*
 /lib/modules/%{kernel_release}/kernel/drivers/parport/parport_cs.ko*
-/lib/modules/%{kernel_release}/kernel/drivers/serial/serial_cs.ko*
+/lib/modules/%{kernel_release}/kernel/drivers/tty/serial/serial_cs.ko*
 /lib/modules/%{kernel_release}/kernel/drivers/usb/host/sl811_cs.ko*
 %endif
 
