@@ -47127,18 +47127,18 @@ diff -urNp linux-2.6.38.1/include/linux/mm.h linux-2.6.38.1-new/include/linux/mm
 +++ linux-2.6.38.1-new/include/linux/mm.h	2011-03-21 18:31:35.000000000 -0400
 @@ -113,7 +113,14 @@ extern unsigned int kobjsize(const void 
  
- #define VM_CAN_NONLINEAR 0x10000000	/* Has ->fault & does nonlinear pages */
- #define VM_MIXEDMAP	0x20000000	/* Can contain "struct page" and pure PFN pages */
+ #define VM_CAN_NONLINEAR 0x08000000	/* Has ->fault & does nonlinear pages */
+ #define VM_MIXEDMAP	0x10000000	/* Can contain "struct page" and pure PFN pages */
 +
 +#if defined(CONFIG_PAX_PAGEEXEC) && defined(CONFIG_X86_32)
 +#define VM_SAO		0x00000000	/* Strong Access Ordering (powerpc) */
-+#define VM_PAGEEXEC	0x40000000	/* vma->vm_page_prot needs special handling */
++#define VM_PAGEEXEC	0x20000000	/* vma->vm_page_prot needs special handling */
 +#else
- #define VM_SAO		0x40000000	/* Strong Access Ordering (powerpc) */
+ #define VM_SAO		0x20000000	/* Strong Access Ordering (powerpc) */
 +#endif
 +
- #define VM_PFN_AT_MMAP	0x80000000	/* PFNMAP vma that is fully mapped at mmap time */
- #define VM_MERGEABLE	0x100000000	/* KSM may merge identical pages */
+ #define VM_PFN_AT_MMAP	0x40000000	/* PFNMAP vma that is fully mapped at mmap time */
+ #define VM_MERGEABLE	0x80000000	/* KSM may merge identical pages */
  
 @@ -985,12 +992,6 @@ int set_page_dirty(struct page *page);
  int set_page_dirty_lock(struct page *page);

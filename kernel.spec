@@ -244,13 +244,11 @@ Patch140:	kernel-unionfs.patch
 # Patch creation:
 # git clone http://git.c3sl.ufpr.br/pub/scm/aufs/aufs2-standalone.git
 # cd aufs2-standalone
-# git checkout -b aufs2.1-35 origin/aufs2.1-35
+# git checkout -b aufs2.1 origin/aufs2.1
 # cat aufs2-kbuild.patch aufs2-base.patch aufs2-standalone.patch > ~/rpm/packages/kernel/kernel-aufs2.patch
 # mkdir linux
 # cp -a Documentation fs include linux
 # diff -urN /usr/share/empty linux >> ~/rpm/packages/kernel/kernel-aufs2.patch 
-#
-# NOTE: temporaily from http://livenet.selfip.com/ftp/debian/aufs2.1-36/ until upstream catches up with 2.6.36
 #
 Patch145:	kernel-aufs2.patch
 Patch146:	kernel-aufs2-unionfs.patch
