@@ -88,7 +88,7 @@
 
 %define		basever		2.6.38
 %define		postver		.1
-%define		rel		0.2
+%define		rel		1
 
 %define		_enable_debug_packages			0
 
@@ -221,7 +221,7 @@ Patch59:	kernel-rndis_host-wm5.patch
 
 # Project suspend2 renamed to tuxonice
 # http://tuxonice.net/files/current-tuxonice-for-2.6.37.patch_0.bz2
-# NOTE: use nofficial port until official 2.6.38 is announced - http://permalink.gmane.org/gmane.linux.swsusp.devel/13694
+# NOTE: currently using own diff from tuxonice git tree until official patch is released
 Patch69:	kernel-tuxonice.patch
 Patch70:	kernel-tuxonice-headers.patch
 
@@ -229,7 +229,7 @@ Patch70:	kernel-tuxonice-headers.patch
 # http://patches.aircrack-ng.org/hostap-kernel-2.6.18.patch
 Patch85:	kernel-hostap.patch
 
-# http://vserver.13thfloor.at/Experimental/patch-2.6.38-rc8-vs2.3.0.37-rc6.diff
+# http://vserver.13thfloor.at/Experimental/patch-2.6.38.1-vs2.3.0.37-rc9.diff
 Patch100:	kernel-vserver-2.3.patch
 Patch101:	kernel-vserver-fixes.patch
 
@@ -286,7 +286,7 @@ Patch5000:	kernel-apparmor.patch
 # based on ftp://ftp.leg.uct.ac.za/pub/linux/rip/tmpfs_root-2.6.30.diff.gz
 Patch7000:	kernel-inittmpfs.patch
 
-# based on http://grsecurity.net/~spender/grsec-2.2.1-2.6.38.1-test2.patch
+# based on http://www.grsecurity.net/~spender/grsecurity-2.2.2-2.6.38.1-201103262052.patch
 # NOTE: put raw upstream patches on kernel-grsec_full.patch:GRSECURITY_RAW for reference
 #       (since upstream deletes older patches)
 Patch9999:	kernel-grsec_full.patch
