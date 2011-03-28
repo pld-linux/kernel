@@ -7774,16 +7774,18 @@ diff -NurpP --minimal linux-2.6.38.1/fs/super.c linux-2.6.38.1-vs2.3.0.37-rc9/fs
  	error = -ENOMEM;
  	mnt = alloc_vfsmnt(name);
  	if (!mnt)
-@@ -1001,11 +1010,19 @@ vfs_kern_mount(struct file_system_type *
+@@ -1001,12 +1010,20 @@ vfs_kern_mount(struct file_system_type *
  		if (error < 0)
  			goto out_free_secdata;
  	}
 -	BUG_ON(!mnt->mnt_sb);
 -	WARN_ON(!mnt->mnt_sb->s_bdi);
+-	WARN_ON(mnt->mnt_sb->s_bdi == &default_backing_dev_info);
 +
 +	sb = mnt->mnt_sb;
 +	BUG_ON(!sb);
 +	WARN_ON(!sb->s_bdi);
++	WARN_ON(sb->s_bdi == &default_backing_dev_info);
  	mnt->mnt_sb->s_flags |= MS_BORN;
  
 -	error = security_sb_kern_mount(mnt->mnt_sb, flags, secdata);
@@ -24412,9 +24414,9 @@ diff -NurpP --minimal linux-2.6.38.1/mm/oom_kill.c linux-2.6.38.1-vs2.3.0.37-rc9
 --- linux-2.6.38.1/mm/oom_kill.c	2011-01-05 21:50:40.000000000 +0100
 +++ linux-2.6.38.1-vs2.3.0.37-rc9/mm/oom_kill.c	2011-01-29 02:01:07.000000000 +0100
 @@ -31,6 +31,9 @@
- #include <linux/memcontrol.h>
  #include <linux/mempolicy.h>
  #include <linux/security.h>
+ #include <linux/ptrace.h>
 +#include <linux/reboot.h>
 +#include <linux/vs_memory.h>
 +#include <linux/vs_context.h>

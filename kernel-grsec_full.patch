@@ -33470,12 +33470,12 @@ diff -urNp linux-2.6.38.1/fs/proc/array.c linux-2.6.38.1/fs/proc/array.c
  		mm ? get_mm_rss(mm) : 0,
  		rsslim,
 +#ifdef CONFIG_GRKERNSEC_PROC_MEMMAP
-+		PAX_RAND_FLAGS(mm) ? 1 : (mm ? mm->start_code : 0),
-+		PAX_RAND_FLAGS(mm) ? 1 : (mm ? mm->end_code : 0),
++		PAX_RAND_FLAGS(mm) ? 1 : (mm ? (permitted ? mm->start_code : 1) : 0),
++		PAX_RAND_FLAGS(mm) ? 1 : (mm ? (permitted ? mm->end_code : 1) : 0),
 +		PAX_RAND_FLAGS(mm) ? 0 : ((permitted && mm) ? mm->start_stack : 0),
 +#else
- 		mm ? mm->start_code : 0,
- 		mm ? mm->end_code : 0,
+ 		mm ? (permitted ? mm->start_code : 1) : 0,
+ 		mm ? (permitted ? mm->end_code : 1) : 0,
  		(permitted && mm) ? mm->start_stack : 0,
 +#endif
  		esp,
@@ -34274,8 +34274,8 @@ diff -urNp linux-2.6.38.1/fs/proc/task_mmu.c linux-2.6.38.1/fs/proc/task_mmu.c
  		const char *name = arch_vma_name(vma);
  		if (!name) {
  			if (mm) {
--				if (vma->vm_start <= mm->start_brk &&
--						vma->vm_end >= mm->brk) {
+-				if (vma->vm_start <= mm->brk &&
+-						vma->vm_end >= mm->start_brk) {
 +				if (vma->vm_start <= mm->brk && vma->vm_end >= mm->start_brk) {
  					name = "[heap]";
 -				} else if (vma->vm_start <= mm->start_stack &&
@@ -51736,7 +51736,7 @@ diff -urNp linux-2.6.38.1/kernel/sysctl.c linux-2.6.38.1/kernel/sysctl.c
  		.data		= &kptr_restrict,
  		.maxlen		= sizeof(int),
  		.mode		= 0644,
- 		.proc_handler	= proc_dointvec_minmax,
+ 		.proc_handler	= proc_dmesg_restrict,
 +#ifdef CONFIG_GRKERNSEC_HIDESYM
 +		.extra1		= &two,
 +#else
