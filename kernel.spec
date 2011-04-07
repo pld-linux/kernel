@@ -273,6 +273,8 @@ Patch2000:	kernel-small_fixes.patch
 Patch2001:	kernel-pwc-uncompress.patch
 Patch2003:	kernel-regressions.patch
 
+Patch2200:	kernel-xfs-delaylog.patch
+
 # kill some thousands of warnings
 # (only warnings, so just remove parts of this patch if conflics)
 Patch2500:	kernel-warnings.patch
@@ -760,6 +762,8 @@ sed -i 's/-Werror//' arch/alpha/kernel/Makefile
 
 # unionfs
 %patch140 -p1
+
+%patch2200 -p1
 
 %patch2500 -p1
 
