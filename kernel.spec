@@ -88,7 +88,7 @@
 
 %define		basever		2.6.37
 %define		postver		.6
-%define		rel		1
+%define		rel		2
 
 %define		_enable_debug_packages			0
 
@@ -282,6 +282,9 @@ Patch400:	kernel-virtio-gl-accel.patch
 Patch2000:	kernel-small_fixes.patch
 Patch2001:	kernel-pwc-uncompress.patch
 Patch2003:	kernel-regressions.patch
+
+# backport delaylog fixes and make it default
+Patch2200:	kernel-xfs-delaylog.patch
 
 # kill some thousands of warnings
 # (only warnings, so just remove parts of this patch if conflics)
@@ -775,6 +778,8 @@ sed -i 's/-Werror//' arch/alpha/kernel/Makefile
 
 # unionfs
 %patch140 -p1
+
+%patch2200 -p1
 
 %patch2500 -p1
 
