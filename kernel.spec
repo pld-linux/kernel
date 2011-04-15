@@ -275,6 +275,8 @@ Patch2003:	kernel-regressions.patch
 
 Patch2200:	kernel-xfs-delaylog.patch
 
+Patch2300:	kernel-drm-intel-2011Q1.patch
+
 # kill some thousands of warnings
 # (only warnings, so just remove parts of this patch if conflics)
 Patch2500:	kernel-warnings.patch
@@ -764,6 +766,8 @@ sed -i 's/-Werror//' arch/alpha/kernel/Makefile
 %patch140 -p1
 
 %patch2200 -p1
+
+%patch2300 -p1
 
 %patch2500 -p1
 
