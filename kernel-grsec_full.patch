@@ -26392,22 +26392,6 @@ diff -urNp linux-2.6.38.3/drivers/media/rc/lirc_dev.c linux-2.6.38.3/drivers/med
  	.owner		= THIS_MODULE,
  	.read		= lirc_dev_fop_read,
  	.write		= lirc_dev_fop_write,
-diff -urNp linux-2.6.38.3/drivers/media/video/sn9c102/sn9c102_core.c linux-2.6.38.3/drivers/media/video/sn9c102/sn9c102_core.c
---- linux-2.6.38.3/drivers/media/video/sn9c102/sn9c102_core.c	2011-03-14 21:20:32.000000000 -0400
-+++ linux-2.6.38.3/drivers/media/video/sn9c102/sn9c102_core.c	2011-04-17 15:57:32.000000000 -0400
-@@ -1430,9 +1430,9 @@ static DEVICE_ATTR(i2c_reg, S_IRUGO | S_
- 		   sn9c102_show_i2c_reg, sn9c102_store_i2c_reg);
- static DEVICE_ATTR(i2c_val, S_IRUGO | S_IWUSR,
- 		   sn9c102_show_i2c_val, sn9c102_store_i2c_val);
--static DEVICE_ATTR(green, S_IWUGO, NULL, sn9c102_store_green);
--static DEVICE_ATTR(blue, S_IWUGO, NULL, sn9c102_store_blue);
--static DEVICE_ATTR(red, S_IWUGO, NULL, sn9c102_store_red);
-+static DEVICE_ATTR(green, S_IWUSR, NULL, sn9c102_store_green);
-+static DEVICE_ATTR(blue, S_IWUSR, NULL, sn9c102_store_blue);
-+static DEVICE_ATTR(red, S_IWUSR, NULL, sn9c102_store_red);
- static DEVICE_ATTR(frame_header, S_IRUGO, sn9c102_show_frame_header, NULL);
- 
- 
 diff -urNp linux-2.6.38.3/drivers/message/fusion/mptbase.c linux-2.6.38.3/drivers/message/fusion/mptbase.c
 --- linux-2.6.38.3/drivers/message/fusion/mptbase.c	2011-03-14 21:20:32.000000000 -0400
 +++ linux-2.6.38.3/drivers/message/fusion/mptbase.c	2011-04-17 15:57:32.000000000 -0400
@@ -34665,8 +34649,8 @@ diff -urNp linux-2.6.38.3/fs/proc/base.c linux-2.6.38.3/fs/proc/base.c
  	return result;
 @@ -3068,6 +3191,11 @@ int proc_pid_readdir(struct file * filp,
  {
- 	unsigned int nr = filp->f_pos - FIRST_PROCESS_ENTRY;
- 	struct task_struct *reaper = get_proc_task_real(filp->f_path.dentry->d_inode);
+ 	unsigned int nr;
+ 	struct task_struct *reaper;
 +#if defined(CONFIG_GRKERNSEC_PROC_USER) || defined(CONFIG_GRKERNSEC_PROC_USERGROUP)
 +	const struct cred *tmpcred = current_cred();
 +	const struct cred *itercred;
@@ -35547,32 +35531,6 @@ diff -urNp linux-2.6.38.3/fs/sysfs/symlink.c linux-2.6.38.3/fs/sysfs/symlink.c
  	if (!IS_ERR(page))
  		free_page((unsigned long)page);
  }
-diff -urNp linux-2.6.38.3/fs/ubifs/debug.c linux-2.6.38.3/fs/ubifs/debug.c
---- linux-2.6.38.3/fs/ubifs/debug.c	2011-04-17 16:53:01.000000000 -0400
-+++ linux-2.6.38.3/fs/ubifs/debug.c	2011-04-17 16:53:48.000000000 -0400
-@@ -2844,19 +2844,19 @@ int dbg_debugfs_init_fs(struct ubifs_inf
- 	}
- 
- 	fname = "dump_lprops";
--	dent = debugfs_create_file(fname, S_IWUGO, d->dfs_dir, c, &dfs_fops);
-+	dent = debugfs_create_file(fname, S_IWUSR, d->dfs_dir, c, &dfs_fops);
- 	if (IS_ERR(dent))
- 		goto out_remove;
- 	d->dfs_dump_lprops = dent;
- 
- 	fname = "dump_budg";
--	dent = debugfs_create_file(fname, S_IWUGO, d->dfs_dir, c, &dfs_fops);
-+	dent = debugfs_create_file(fname, S_IWUSR, d->dfs_dir, c, &dfs_fops);
- 	if (IS_ERR(dent))
- 		goto out_remove;
- 	d->dfs_dump_budg = dent;
- 
- 	fname = "dump_tnc";
--	dent = debugfs_create_file(fname, S_IWUGO, d->dfs_dir, c, &dfs_fops);
-+	dent = debugfs_create_file(fname, S_IWUSR, d->dfs_dir, c, &dfs_fops);
- 	if (IS_ERR(dent))
- 		goto out_remove;
- 	d->dfs_dump_tnc = dent;
 diff -urNp linux-2.6.38.3/fs/udf/misc.c linux-2.6.38.3/fs/udf/misc.c
 --- linux-2.6.38.3/fs/udf/misc.c	2011-03-14 21:20:32.000000000 -0400
 +++ linux-2.6.38.3/fs/udf/misc.c	2011-04-17 15:57:32.000000000 -0400
@@ -54677,33 +54635,6 @@ diff -urNp linux-2.6.38.3/mm/mlock.c linux-2.6.38.3/mm/mlock.c
  #include <linux/sched.h>
  #include <linux/module.h>
  #include <linux/rmap.h>
-@@ -135,13 +136,6 @@ void munlock_vma_page(struct page *page)
- 	}
- }
- 
--static inline int stack_guard_page(struct vm_area_struct *vma, unsigned long addr)
--{
--	return (vma->vm_flags & VM_GROWSDOWN) &&
--		(vma->vm_start == addr) &&
--		!vma_stack_continue(vma->vm_prev, addr);
--}
--
- /**
-  * __mlock_vma_pages_range() -  mlock a range of pages in the vma.
-  * @vma:   target vma
-@@ -188,12 +182,6 @@ static long __mlock_vma_pages_range(stru
- 	if (vma->vm_flags & VM_LOCKED)
- 		gup_flags |= FOLL_MLOCK;
- 
--	/* We don't try to access the guard page of a stack vma */
--	if (stack_guard_page(vma, start)) {
--		addr += PAGE_SIZE;
--		nr_pages--;
--	}
--
- 	return __get_user_pages(current, mm, addr, nr_pages, gup_flags,
- 				NULL, NULL, nonblocking);
- }
 @@ -393,6 +381,9 @@ static int do_mlock(unsigned long start,
  		return -EINVAL;
  	if (end == start)
@@ -55554,20 +55485,21 @@ diff -urNp linux-2.6.38.3/mm/mmap.c linux-2.6.38.3/mm/mmap.c
  		size = vma->vm_end - address;
  		grow = (vma->vm_start - address) >> PAGE_SHIFT;
  
-@@ -1818,10 +2100,21 @@ static int expand_downwards(struct vm_ar
- 		if (!error) {
- 			vma->vm_start = address;
- 			vma->vm_pgoff -= grow;
-+			track_exec_limit(vma->vm_mm, vma->vm_start, vma->vm_end, vma->vm_flags);
+@@ -1818,11 +2100,22 @@ static int expand_downwards(struct vm_ar
+ 			if (!error) {
+ 				vma->vm_start = address;
+ 				vma->vm_pgoff -= grow;
++				track_exec_limit(vma->vm_mm, vma->vm_start, vma->vm_end, vma->vm_flags);
 +
 +#ifdef CONFIG_PAX_SEGMEXEC
-+			if (vma_m) {
-+				vma_m->vm_start -= grow << PAGE_SHIFT;
-+				vma_m->vm_pgoff -= grow;
-+			}
++				if (vma_m) {
++					vma_m->vm_start -= grow << PAGE_SHIFT;
++					vma_m->vm_pgoff -= grow;
++				}
 +#endif
 +
- 			perf_event_mmap(vma);
+ 				perf_event_mmap(vma);
+ 			}
  		}
  	}
  	vma_unlock_anon_vma(vma);

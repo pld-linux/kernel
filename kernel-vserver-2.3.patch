@@ -7030,13 +7030,13 @@ diff -NurpP --minimal linux-2.6.38.3/fs/proc/base.c linux-2.6.38.3-vs2.3.0.37-rc
  				proc_pid_instantiate, iter.task, NULL);
  }
 @@ -3067,7 +3098,7 @@ static int proc_pid_fill_cache(struct fi
- int proc_pid_readdir(struct file * filp, void * dirent, filldir_t filldir)
- {
- 	unsigned int nr = filp->f_pos - FIRST_PROCESS_ENTRY;
--	struct task_struct *reaper = get_proc_task(filp->f_path.dentry->d_inode);
-+	struct task_struct *reaper = get_proc_task_real(filp->f_path.dentry->d_inode);
- 	struct tgid_iter iter;
- 	struct pid_namespace *ns;
+ 		goto out_no_task;
+ 	nr = filp->f_pos - FIRST_PROCESS_ENTRY;
+ 
+-	reaper = get_proc_task(filp->f_path.dentry->d_inode);
++	reaper = get_proc_task_real(filp->f_path.dentry->d_inode);
+ 	if (!reaper)
+ 		goto out_no_task;
  
 @@ -3087,6 +3118,8 @@ int proc_pid_readdir(struct file * filp,
  	     iter.task;
@@ -24780,14 +24780,14 @@ diff -NurpP --minimal linux-2.6.38.3/net/bridge/br_multicast.c linux-2.6.38.3-vs
 --- linux-2.6.38.3/net/bridge/br_multicast.c	2011-03-15 18:07:44.000000000 +0100
 +++ linux-2.6.38.3-vs2.3.0.37-rc14/net/bridge/br_multicast.c	2011-03-10 16:51:08.000000000 +0100
 @@ -446,7 +446,7 @@ static struct sk_buff *br_ip6_multicast_
- 	ip6h->nexthdr = IPPROTO_HOPOPTS;
  	ip6h->hop_limit = 1;
+ 	ipv6_addr_set(&ip6h->daddr, htonl(0xff020000), 0, 0, htonl(1));
  	ipv6_dev_get_saddr(dev_net(br->dev), br->dev, &ip6h->daddr, 0,
 -			   &ip6h->saddr);
 +			   &ip6h->saddr, NULL);
- 	ipv6_addr_set(&ip6h->daddr, htonl(0xff020000), 0, 0, htonl(1));
  	ipv6_eth_mc_map(&ip6h->daddr, eth->h_dest);
  
+ 	hopopt = (u8 *)(ip6h + 1);
 diff -NurpP --minimal linux-2.6.38.3/net/core/dev.c linux-2.6.38.3-vs2.3.0.37-rc14/net/core/dev.c
 --- linux-2.6.38.3/net/core/dev.c	2011-03-15 18:07:44.000000000 +0100
 +++ linux-2.6.38.3-vs2.3.0.37-rc14/net/core/dev.c	2011-03-15 18:15:06.000000000 +0100
