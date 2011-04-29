@@ -6970,14 +6970,14 @@ diff -NurpP --minimal linux-2.6.35.7/fs/proc/base.c linux-2.6.35.7-vs2.3.0.36.33
  	return proc_fill_cache(filp, dirent, filldir, name, len,
  				proc_pid_instantiate, iter.task, NULL);
  }
-@@ -2868,7 +2890,7 @@ static int proc_pid_fill_cache(struct fi
- int proc_pid_readdir(struct file * filp, void * dirent, filldir_t filldir)
- {
- 	unsigned int nr = filp->f_pos - FIRST_PROCESS_ENTRY;
--	struct task_struct *reaper = get_proc_task(filp->f_path.dentry->d_inode);
-+	struct task_struct *reaper = get_proc_task_real(filp->f_path.dentry->d_inode);
- 	struct tgid_iter iter;
- 	struct pid_namespace *ns;
+@@ -2876,7 +2898,7 @@
+ 		goto out_no_task;
+ 	nr = filp->f_pos - FIRST_PROCESS_ENTRY;
+ 
+-	reaper = get_proc_task(filp->f_path.dentry->d_inode);
++	reaper = get_proc_task_real(filp->f_path.dentry->d_inode);
+ 	if (!reaper)
+ 		goto out_no_task;
  
 @@ -2888,6 +2910,8 @@ int proc_pid_readdir(struct file * filp,
  	     iter.task;
