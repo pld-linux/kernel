@@ -48,8 +48,8 @@
 %bcond_without	tuxonice	# support for tuxonice (ex-suspend2) (enabled by default)
 %bcond_without	apparmor	# build kernel with apparmor (exerimental mix)
 
+%bcond_with	vanilla		# don't include any patches
 %bcond_with	rescuecd	# build kernel for our rescue
-
 %bcond_with	myown		# build with your own config (kernel-myown.config)
 
 %{?debug:%define with_verbose 1}
@@ -701,6 +701,8 @@ sed -i 's/-Werror//' arch/alpha/kernel/Makefile
 %{__bzip2} -dc %{SOURCE1} | patch -p1 -s
 %endif
 
+%if %{without vanilla}
+
 # tuxonice:
 %if %{with tuxonice}
 %patch69 -p1
@@ -851,6 +853,8 @@ sed -i 's/-Werror//' arch/alpha/kernel/Makefile
 
 # routes
 %patch300 -p1
+
+%endif # vanilla
 
 # Small fixes:
 %patch2000 -p1
@@ -1040,6 +1044,7 @@ EOCONFIG
 		$RPM_SOURCE_DIR/kernel-%{alt_kernel}.config \
 %endif
 		important.config \
+%if %{without vanilla}
 %if %{with rescuecd}
 		%{SOURCE58} \
 		%{SOURCE59} \
@@ -1078,8 +1083,9 @@ EOCONFIG
 		%{SOURCE42} \
 %endif
 %endif
-		%{SOURCE40} %{?0:netfilter} \
 		%{SOURCE41} %{?0:patches} \
+%endif
+		%{SOURCE40} %{?0:netfilter} \
 		%{SOURCE20} \
 		$RPM_SOURCE_DIR/$Config
 }
