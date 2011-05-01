@@ -129,16 +129,20 @@
 %if "%{_alt_kernel}" == ""
 %define		alt_kernel	myown
 %endif
-%else
-%if %{without rescuecd}
+%else # not myown:
+%if %{with vanilla}
+%define		alt_kernel	vanilla
+%else # not vanilla:
+%if %{with rescuecd}
+%define		alt_kernel	rescuecd
+%else # not rescuecd:
 %define		__alt_kernel	%{?with_pax:pax}%{!?with_grsec_full:nogrsecurity}%{!?with_apparmor:noaa}%{?with_pae:pae}
 %if "%{__alt_kernel}" != ""
 %define		alt_kernel	%{__alt_kernel}
 %endif
-%else
-%define		alt_kernel	rescuecd
-%endif
-%endif
+%endif # not rescuecd
+%endif # not vanilla
+%endif # not myown
 
 # kernel release (used in filesystem and eventually in uname -r)
 # modules will be looked from /lib/modules/%{kernel_release}
