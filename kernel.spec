@@ -54,6 +54,10 @@
 
 %{?debug:%define with_verbose 1}
 
+%if %{with vanilla}
+%unglobal	with_grsecurity
+%endif
+
 %if %{without grsecurity}
 %unglobal	with_grsec_full
 %unglobal	with_grsec_minimal
