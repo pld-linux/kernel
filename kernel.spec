@@ -1021,9 +1021,9 @@ EOCONFIG
 		%{SOURCE42} \
 %endif
 %endif
-		%{SOURCE40} %{?0:netfilter} \
 		%{SOURCE41} %{?0:patches} \
 %endif
+		%{SOURCE40} %{?0:netfilter} \
 		%{SOURCE20} \
 		$RPM_SOURCE_DIR/$Config
 }
