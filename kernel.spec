@@ -91,8 +91,8 @@
 %endif
 
 %define		basever		2.6.38
-%define		postver		.4
-%define		rel		2
+%define		postver		.5
+%define		rel		0.1
 
 %define		_enable_debug_packages			0
 
@@ -139,7 +139,7 @@ Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{basever}.tar.bz2
 # Source0-md5:	7d471477bfa67546f902da62227fa976
 %if "%{postver}" != "%{nil}"
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
-# Source1-md5:	6ef1279c7bd0078fc0fd50aa83e86203
+# Source1-md5:	c8f233d1d31030eb019ab391071e65c2
 %endif
 
 Source3:	kernel-autoconf.h
@@ -789,12 +789,12 @@ sed -i 's/-Werror//' arch/alpha/kernel/Makefile
 #
 
 %if %{with grsecurity}
-%patch9999 -p1
+### %patch9999 -p1
 # aufs2 needs to modify those pointers
-%patch147 -p1
-%{?with_vserver:%patch10000 -p1}
-%{?with_vserver:%patch10001 -p1}
-%{?with_vserver:%patch10002 -p1}
+### %patch147 -p1
+### %{?with_vserver:%patch10000 -p1}
+### %{?with_vserver:%patch10001 -p1}
+### %{?with_vserver:%patch10002 -p1}
 %endif
 #
 # end of grsecurity & pax stuff
