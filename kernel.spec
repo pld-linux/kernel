@@ -110,7 +110,7 @@
 %if %{with rescuecd}
 %define		alt_kernel	rescuecd
 %else # not rescuecd:
-%define		__alt_kernel	%{?with_pax:pax}%{!?with_grsec_full:nogrsecurity}%{?with_pae:pae}
+%define		__alt_kernel	%{?with_pax:pax}%{!?with_grsecurity:nogrsecurity}%{?with_pae:pae}
 %if "%{__alt_kernel}" != ""
 %define		alt_kernel	%{__alt_kernel}
 %endif
@@ -789,12 +789,12 @@ sed -i 's/-Werror//' arch/alpha/kernel/Makefile
 #
 
 %if %{with grsecurity}
-### %patch9999 -p1
+%patch9999 -p1
 # aufs2 needs to modify those pointers
-### %patch147 -p1
-### %{?with_vserver:%patch10000 -p1}
-### %{?with_vserver:%patch10001 -p1}
-### %{?with_vserver:%patch10002 -p1}
+%patch147 -p1
+%{?with_vserver:%patch10000 -p1}
+%{?with_vserver:%patch10001 -p1}
+%{?with_vserver:%patch10002 -p1}
 %endif
 #
 # end of grsecurity & pax stuff
