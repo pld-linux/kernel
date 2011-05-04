@@ -110,7 +110,7 @@
 %if %{with rescuecd}
 %define		alt_kernel	rescuecd
 %else # not rescuecd:
-%define		__alt_kernel	%{?with_pax:pax}%{!?with_grsec_full:nogrsecurity}%{!?with_apparmor:noaa}%{?with_pae:pae}
+%define		__alt_kernel	%{?with_pax:pax}%{!?with_grsec_full:nogrsecurity}%{?with_pae:pae}
 %if "%{__alt_kernel}" != ""
 %define		alt_kernel	%{__alt_kernel}
 %endif
