@@ -94,7 +94,7 @@
 
 %define		basever		2.6.38
 %define		postver		.6
-%define		rel		5
+%define		rel		6
 
 %define		_enable_debug_packages			0
 
@@ -785,6 +785,8 @@ sed -i 's/-Werror//' arch/alpha/kernel/Makefile
 %patch2300 -p1
 
 %patch2500 -p1
+
+%patch2600 -p1
 
 %if %{with rescuecd}
 %patch7000 -p1
