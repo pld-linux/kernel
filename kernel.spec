@@ -94,7 +94,7 @@
 
 %define		basever		2.6.38
 %define		postver		.6
-%define		rel		4
+%define		rel		5
 
 %define		_enable_debug_packages			0
 
@@ -290,6 +290,9 @@ Patch2300:	kernel-drm-intel-2011Q1.patch
 # kill some thousands of warnings
 # (only warnings, so just remove parts of this patch if conflics)
 Patch2500:	kernel-warnings.patch
+
+# from ipset.spec (already in 2.6.39)
+Patch2600:	ipset-netlink.patch
 
 # 0001-AppArmor-compatibility-patch-for-v5-network-controll.patch
 # 0002-AppArmor-compatibility-patch-for-v5-interface.patch
