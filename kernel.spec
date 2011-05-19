@@ -92,9 +92,9 @@
 %define		have_pcmcia	0
 %endif
 
-%define		basever		2.6.38
-%define		postver		.6
-%define		rel		8
+%define		basever		2.6.39
+%define		postver		%{nil}
+%define		rel		0.1
 
 %define		_enable_debug_packages			0
 
@@ -138,7 +138,7 @@ Epoch:		3
 License:	GPL v2
 Group:		Base/Kernel
 Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{basever}.tar.bz2
-# Source0-md5:	7d471477bfa67546f902da62227fa976
+# Source0-md5:	1aab7a741abe08d42e8eccf20de61e05
 %if "%{postver}" != "%{nil}"
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
 # Source1-md5:	527fab8162c682ad849eb21fc30d28ef
