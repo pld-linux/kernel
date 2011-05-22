@@ -6907,9 +6907,8 @@ diff -NurpP --minimal linux-2.6.27.55/fs/open.c linux-2.6.27.55-vs2.3.0.36.9/fs/
  }
  
  void put_unused_fd(unsigned int fd)
-diff -NurpP --minimal linux-2.6.27.55/fs/proc/array.c linux-2.6.27.55-vs2.3.0.36.9/fs/proc/array.c
---- linux-2.6.27.55/fs/proc/array.c	2010-11-01 13:29:16.000000000 +0100
-+++ linux-2.6.27.55-vs2.3.0.36.9/fs/proc/array.c	2009-05-20 02:14:39.000000000 +0200
+--- linux-2.6.27.59/fs/proc/array.c~	2011-05-22 16:29:53.000000000 +0300
++++ linux-2.6.27.59/fs/proc/array.c	2011-05-22 17:25:44.551412044 +0300
 @@ -82,6 +82,8 @@
  #include <linux/pid_namespace.h>
  #include <linux/ptrace.h>
@@ -7011,14 +7010,14 @@ diff -NurpP --minimal linux-2.6.27.55/fs/proc/array.c linux-2.6.27.55-vs2.3.0.36
  int proc_pid_status(struct seq_file *m, struct pid_namespace *ns,
  			struct pid *pid, struct task_struct *task)
  {
-@@ -331,6 +376,7 @@ int proc_pid_status(struct seq_file *m, 
+@@ -376,6 +376,7 @@
  	task_sig(m, task);
  	task_cap(m, task);
  	cpuset_task_status_allowed(m, task);
 +	task_vs_id(m, task);
- #if defined(CONFIG_S390)
- 	task_show_regs(m, task);
- #endif
+ 	task_context_switch_counts(m, task);
+ 	return 0;
+ }
 @@ -447,6 +493,17 @@ static int do_task_stat(struct seq_file 
  	/* convert nsec -> ticks */
  	start_time = nsec_to_clock_t(start_time);
@@ -7037,9 +7036,8 @@ diff -NurpP --minimal linux-2.6.27.55/fs/proc/array.c linux-2.6.27.55-vs2.3.0.36
  	seq_printf(m, "%d (%s) %c %d %d %d %d %d %u %lu \
  %lu %lu %lu %lu %lu %ld %ld %ld %ld %d 0 %llu %lu %ld %lu %lu %lu %lu %lu \
  %lu %lu %lu %lu %lu %lu %lu %lu %d %d %u %u %llu %lu %ld\n",
-diff -NurpP --minimal linux-2.6.27.55/fs/proc/base.c linux-2.6.27.55-vs2.3.0.36.9/fs/proc/base.c
---- linux-2.6.27.55/fs/proc/base.c	2010-11-01 13:29:16.000000000 +0100
-+++ linux-2.6.27.55-vs2.3.0.36.9/fs/proc/base.c	2009-10-23 15:07:04.000000000 +0200
+--- kernel-ltm-2.6.27.59/fs/proc/base.c~	2011-05-22 18:08:45.000000000 +0300
++++ kernel-ltm-2.6.27.59/fs/proc/base.c	2011-05-22 18:08:53.083946545 +0300
 @@ -79,6 +79,8 @@
  #include <linux/oom.h>
  #include <linux/elf.h>
@@ -7152,13 +7150,13 @@ diff -NurpP --minimal linux-2.6.27.55/fs/proc/base.c linux-2.6.27.55-vs2.3.0.36.
  				proc_pid_instantiate, iter.task, NULL);
  }
 @@ -2735,7 +2756,7 @@ static int proc_pid_fill_cache(struct fi
- int proc_pid_readdir(struct file * filp, void * dirent, filldir_t filldir)
- {
- 	unsigned int nr = filp->f_pos - FIRST_PROCESS_ENTRY;
--	struct task_struct *reaper = get_proc_task(filp->f_path.dentry->d_inode);
-+	struct task_struct *reaper = get_proc_task_real(filp->f_path.dentry->d_inode);
- 	struct tgid_iter iter;
- 	struct pid_namespace *ns;
+ 		goto out_no_task;
+ 	nr = filp->f_pos - FIRST_PROCESS_ENTRY;
+ 
+-	reaper = get_proc_task(filp->f_path.dentry->d_inode);
++	reaper = get_proc_task_real(filp->f_path.dentry->d_inode);
+ 	if (!reaper)
+ 		goto out_no_task;
  
 @@ -2755,6 +2776,8 @@ int proc_pid_readdir(struct file * filp,
  	     iter.task;
