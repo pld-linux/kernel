@@ -1450,10 +1450,10 @@ index 0000000..3bf0575
 +   testing. His efforts have contributed as much to TuxOnIce as any of the
 +   names above.
 diff --git a/MAINTAINERS b/MAINTAINERS
-index f1bc3dc..04365d6 100644
+index 80540e3..f0785ed 100644
 --- a/MAINTAINERS
 +++ b/MAINTAINERS
-@@ -6208,6 +6208,13 @@ S:	Maintained
+@@ -6207,6 +6207,13 @@ S:	Maintained
  F:	drivers/tc/
  F:	include/linux/tc.h
  
@@ -2595,7 +2595,7 @@ index 8ec406d..e7391db 100644
  /**
   * pm_get_wakeup_count - Read the number of registered wakeup events.
 diff --git a/drivers/gpu/drm/drm_gem.c b/drivers/gpu/drm/drm_gem.c
-index ea1c4b0..625abb0 100644
+index c3c78ee..b5b66e9 100644
 --- a/drivers/gpu/drm/drm_gem.c
 +++ b/drivers/gpu/drm/drm_gem.c
 @@ -137,7 +137,8 @@ int drm_gem_object_init(struct drm_device *dev,
@@ -2683,6 +2683,87 @@ index 818313e..d8a4e78 100644
 +
  	if (mddev->bitmap)
  		bitmap_daemon_work(mddev);
+ 
+diff --git a/drivers/staging/zram/zram_drv.c b/drivers/staging/zram/zram_drv.c
+index 4bd8cbd..d2f1012 100644
+--- a/drivers/staging/zram/zram_drv.c
++++ b/drivers/staging/zram/zram_drv.c
+@@ -28,6 +28,7 @@
+ #include <linux/lzo.h>
+ #include <linux/string.h>
+ #include <linux/vmalloc.h>
++#include <linux/tuxonice.h>
+ 
+ #include "zram_drv.h"
+ 
+@@ -661,6 +662,50 @@ static void destroy_device(struct zram *zram)
+ 		blk_cleanup_queue(zram->queue);
+ }
+ 
++#ifdef CONFIG_TOI
++static int zram_toi_flag_disk(struct zram *zram)
++{
++	int index, t = 0;
++
++	for (index = 0; index < zram->disksize >> PAGE_SHIFT; index++) {
++		struct page *page = zram->table[index].page;
++
++		if (page) {
++			SetPagePrecompressed(page);
++			t++;
++		}
++	}
++
++	return t;
++}
++
++int zram_toi_flag_disks(void)
++{
++	int i, t = 0;
++	struct zram *zram;
++
++	for (i = 0; i < num_devices; i++) {
++		zram = &devices[i];
++
++		t += zram_toi_flag_disk(zram);
++	}
++
++	return t;
++}
++
++void set_toi_hook(void)
++{
++	toi_flag_zram_disks = zram_toi_flag_disks;
++}
++
++void clear_toi_hook(void)
++{
++	toi_flag_zram_disks = NULL;
++}
++#else
++#define set_toi_hook() { }
++#define clear_toi_hook() { }
++#endif
+ static int __init zram_init(void)
+ {
+ 	int ret, dev_id;
+@@ -698,6 +743,8 @@ static int __init zram_init(void)
+ 			goto free_devices;
+ 	}
+ 
++	set_toi_hook();
++
+ 	return 0;
+ 
+ free_devices:
+@@ -715,6 +762,8 @@ static void __exit zram_exit(void)
+ 	int i;
+ 	struct zram *zram;
+ 
++	clear_toi_hook();
++
+ 	for (i = 0; i < num_devices; i++) {
+ 		zram = &devices[i];
  
 diff --git a/drivers/tty/vt/vt.c b/drivers/tty/vt/vt.c
 index 147ede3..c454da5 100644
@@ -3156,10 +3237,10 @@ index 9e3f68c..39d357d 100644
  
  static inline int register_fuseblk(void)
 diff --git a/fs/namei.c b/fs/namei.c
-index a4689eb..97e4f22 100644
+index 3095ca8..1000e50 100644
 --- a/fs/namei.c
 +++ b/fs/namei.c
-@@ -2924,6 +2924,8 @@ int vfs_unlink(struct inode *dir, struct dentry *dentry)
+@@ -2925,6 +2925,8 @@ int vfs_unlink(struct inode *dir, struct dentry *dentry)
  	if (!dir->i_op->unlink)
  		return -EPERM;
  
@@ -3169,7 +3250,7 @@ index a4689eb..97e4f22 100644
  	if (d_mountpoint(dentry))
  		error = -EBUSY;
 diff --git a/fs/super.c b/fs/super.c
-index 7e9dd4c..84010bb 100644
+index 0d89e93..715ddb7 100644
 --- a/fs/super.c
 +++ b/fs/super.c
 @@ -35,6 +35,8 @@
@@ -3337,10 +3418,10 @@ index 0000000..3234135
 +struct block_device *next_bdev_of_type(struct block_device *last,
 +	const char *key);
 diff --git a/include/linux/mm.h b/include/linux/mm.h
-index f6385fc..f6470fc 100644
+index c67adb4..435f43f 100644
 --- a/include/linux/mm.h
 +++ b/include/linux/mm.h
-@@ -855,7 +855,8 @@ extern void pagefault_out_of_memory(void);
+@@ -862,7 +862,8 @@ extern void pagefault_out_of_memory(void);
  extern void show_free_areas(void);
  
  int shmem_lock(struct file *file, int lock, struct user_struct *user);
@@ -3350,7 +3431,7 @@ index f6385fc..f6470fc 100644
  int shmem_zero_setup(struct vm_area_struct *);
  
  #ifndef CONFIG_MMU
-@@ -1581,6 +1582,7 @@ int drop_caches_sysctl_handler(struct ctl_table *, int,
+@@ -1588,6 +1589,7 @@ int drop_caches_sysctl_handler(struct ctl_table *, int,
  					void __user *, size_t *, loff_t *);
  unsigned long shrink_slab(unsigned long scanned, gfp_t gfp_mask,
  			unsigned long lru_pages);
@@ -3483,6 +3564,39 @@ index 4d55932..f4296f1 100644
  
  /* linux/mm/thrash.c */
  extern struct mm_struct *swap_token_mm;
+diff --git a/include/linux/tuxonice.h b/include/linux/tuxonice.h
+new file mode 100644
+index 0000000..72a87c9
+--- /dev/null
++++ b/include/linux/tuxonice.h
+@@ -0,0 +1,27 @@
++/*
++ * include/linux/tuxonice.h
++ *
++ * Copyright (C) 2011 Nigel Cunningham (nigel at tuxonice net)
++ *
++ * This file is released under the GPLv2.
++ */
++
++#ifndef LINUX_TUXONICE_H
++#define LINUX_TUXONICE_H
++
++extern struct memory_bitmap *precompressed_map;
++
++#ifdef CONFIG_TOI_ZRAM_SUPPORT
++extern void memory_bm_set_bit(struct memory_bitmap *bm, unsigned long pfn);
++#define PagePrecompressed(page) (precompressed_map ? \
++		memory_bm_test_bit(precompressed_map, page_to_pfn(page)) : 0)
++#define SetPagePrecompressed(page) \
++	(memory_bm_set_bit(precompressed_map, page_to_pfn(page)))
++#define ClearPagePrecompressed(page) \
++	(memory_bm_clear_bit(precompressed_map, page_to_pfn(page)))
++extern int (*toi_flag_zram_disks) (void);
++#else
++#define PagePrecompressed(page) (0)
++#define toi_flag_zram_disks (0)
++#endif
++#endif
 diff --git a/init/do_mounts.c b/init/do_mounts.c
 index 2b54bef..aa4b723 100644
 --- a/init/do_mounts.c
@@ -3594,10 +3708,10 @@ index 9cd0591..7310e51 100644
  static void helper_lock(void)
  {
 diff --git a/kernel/pid.c b/kernel/pid.c
-index 39b65b6..38e2c1a 100644
+index 6aeebc2..efe6dd2 100644
 --- a/kernel/pid.c
 +++ b/kernel/pid.c
-@@ -419,6 +419,7 @@ struct task_struct *find_task_by_pid_ns(pid_t nr, struct pid_namespace *ns)
+@@ -422,6 +422,7 @@ struct task_struct *find_task_by_pid_ns(pid_t nr, struct pid_namespace *ns)
  	rcu_lockdep_assert(rcu_read_lock_held());
  	return pid_task(find_pid_ns(nr, ns), PIDTYPE_PID);
  }
@@ -3606,7 +3720,7 @@ index 39b65b6..38e2c1a 100644
  struct task_struct *find_task_by_vpid(pid_t vnr)
  {
 diff --git a/kernel/power/Kconfig b/kernel/power/Kconfig
-index 2657299..b5a856e 100644
+index 2657299..51acc70 100644
 --- a/kernel/power/Kconfig
 +++ b/kernel/power/Kconfig
 @@ -47,6 +47,13 @@ config CAN_PM_TRACE
@@ -3623,7 +3737,18 @@ index 2657299..b5a856e 100644
  config PM_TRACE
  	bool
  	help
-@@ -196,6 +203,238 @@ config PM_STD_PARTITION
+@@ -90,6 +97,10 @@ config PM_SLEEP_SMP
+ 	select HOTPLUG_CPU
+ 	default y
+ 
++config TOI_ZRAM_SUPPORT
++	def_bool y
++	depends on TOI && ZRAM!=n
++
+ config PM_SLEEP
+ 	bool
+ 	depends on SUSPEND || HIBERNATION || XEN_SAVE_RESTORE
+@@ -196,6 +207,247 @@ config PM_STD_PARTITION
  	  suspended image to. It will simply pick the first available swap 
  	  device.
  
@@ -3692,6 +3817,15 @@ index 2657299..b5a856e 100644
 +		depends on TOI_USERUI
 +		---help---
 +		  This entry allows you to specify a default path to the userui binary.
++
++	config TOI_DEFAULT_IMAGE_SIZE_LIMIT
++		int "Default image size limit"
++		range -2 65536 
++		default "-2"
++		depends on TOI_CORE
++		---help---
++		  This entry allows you to specify a default image size limit. It can
++		  be overridden at run-time using /sys/power/tuxonice/image_size_limit.
 +
 +	config TOI_KEEP_IMAGE
 +		bool "Allow Keep Image Mode"
@@ -4362,7 +4496,7 @@ index 0cf3a27..835dcd7 100644
 + */
 +EXPORT_SYMBOL_GPL(thaw_kernel_threads);
 diff --git a/kernel/power/snapshot.c b/kernel/power/snapshot.c
-index 64db648..8ac0199 100644
+index 64db648..08755d5 100644
 --- a/kernel/power/snapshot.c
 +++ b/kernel/power/snapshot.c
 @@ -35,6 +35,8 @@
@@ -4636,7 +4770,7 @@ index 64db648..8ac0199 100644
  
  static bool memory_bm_pfn_present(struct memory_bitmap *bm, unsigned long pfn)
  {
-@@ -557,43 +612,184 @@ static bool memory_bm_pfn_present(struct memory_bitmap *bm, unsigned long pfn)
+@@ -557,43 +612,185 @@ static bool memory_bm_pfn_present(struct memory_bitmap *bm, unsigned long pfn)
   *	this function.
   */
  
@@ -4734,6 +4868,7 @@ index 64db648..8ac0199 100644
 +DEFINE_MEMORY_BITMAP(io_map);
 +DEFINE_MEMORY_BITMAP(nosave_map);
 +DEFINE_MEMORY_BITMAP(free_map);
++DEFINE_MEMORY_BITMAP(precompressed_map);
 +
 +int memory_bm_write(struct memory_bitmap *bm, int (*rw_chunk)
 +	(int rw, struct toi_module_ops *owner, char *buffer, int buffer_size))
@@ -4838,7 +4973,7 @@ index 64db648..8ac0199 100644
  
  /**
   *	register_nosave_region - register a range of page frames the contents
-@@ -829,7 +1025,7 @@ static unsigned int count_free_highmem_pages(void)
+@@ -829,7 +1026,7 @@ static unsigned int count_free_highmem_pages(void)
   *	We should save the page if it isn't Nosave or NosaveFree, or Reserved,
   *	and it isn't a part of a free chunk of pages.
   */
@@ -4847,7 +4982,7 @@ index 64db648..8ac0199 100644
  {
  	struct page *page;
  
-@@ -848,6 +1044,7 @@ static struct page *saveable_highmem_page(struct zone *zone, unsigned long pfn)
+@@ -848,6 +1045,7 @@ static struct page *saveable_highmem_page(struct zone *zone, unsigned long pfn)
  
  	return page;
  }
@@ -4855,7 +4990,7 @@ index 64db648..8ac0199 100644
  
  /**
   *	count_highmem_pages - compute the total number of saveable highmem
-@@ -873,11 +1070,6 @@ static unsigned int count_highmem_pages(void)
+@@ -873,11 +1071,6 @@ static unsigned int count_highmem_pages(void)
  	}
  	return n;
  }
@@ -4867,7 +5002,7 @@ index 64db648..8ac0199 100644
  #endif /* CONFIG_HIGHMEM */
  
  /**
-@@ -888,7 +1080,7 @@ static inline void *saveable_highmem_page(struct zone *z, unsigned long p)
+@@ -888,7 +1081,7 @@ static inline void *saveable_highmem_page(struct zone *z, unsigned long p)
   *	of pages statically defined as 'unsaveable', and it isn't a part of
   *	a free chunk of pages.
   */
@@ -4876,7 +5011,7 @@ index 64db648..8ac0199 100644
  {
  	struct page *page;
  
-@@ -910,6 +1102,7 @@ static struct page *saveable_page(struct zone *zone, unsigned long pfn)
+@@ -910,6 +1103,7 @@ static struct page *saveable_page(struct zone *zone, unsigned long pfn)
  
  	return page;
  }
@@ -4884,7 +5019,7 @@ index 64db648..8ac0199 100644
  
  /**
   *	count_data_pages - compute the total number of saveable non-highmem
-@@ -1550,6 +1743,9 @@ asmlinkage int swsusp_save(void)
+@@ -1550,6 +1744,9 @@ asmlinkage int swsusp_save(void)
  {
  	unsigned int nr_pages, nr_highmem;
  
@@ -4894,7 +5029,7 @@ index 64db648..8ac0199 100644
  	printk(KERN_INFO "PM: Creating hibernation image:\n");
  
  	drain_local_pages(NULL);
-@@ -1590,14 +1786,14 @@ asmlinkage int swsusp_save(void)
+@@ -1590,14 +1787,14 @@ asmlinkage int swsusp_save(void)
  }
  
  #ifndef CONFIG_ARCH_HIBERNATION_HEADER
@@ -4911,7 +5046,7 @@ index 64db648..8ac0199 100644
  {
  	if (info->version_code != LINUX_VERSION_CODE)
  		return "kernel version";
-@@ -1611,6 +1807,7 @@ static char *check_image_kernel(struct swsusp_info *info)
+@@ -1611,6 +1808,7 @@ static char *check_image_kernel(struct swsusp_info *info)
  		return "machine";
  	return NULL;
  }
@@ -4919,7 +5054,7 @@ index 64db648..8ac0199 100644
  #endif /* CONFIG_ARCH_HIBERNATION_HEADER */
  
  unsigned long snapshot_get_image_size(void)
-@@ -1618,7 +1815,7 @@ unsigned long snapshot_get_image_size(void)
+@@ -1618,7 +1816,7 @@ unsigned long snapshot_get_image_size(void)
  	return nr_copy_pages + nr_meta_pages + 1;
  }
  
@@ -4928,7 +5063,7 @@ index 64db648..8ac0199 100644
  {
  	memset(info, 0, sizeof(struct swsusp_info));
  	info->num_physpages = num_physpages;
-@@ -1628,6 +1825,7 @@ static int init_header(struct swsusp_info *info)
+@@ -1628,6 +1826,7 @@ static int init_header(struct swsusp_info *info)
  	info->size <<= PAGE_SHIFT;
  	return init_header_complete(info);
  }
@@ -4950,10 +5085,10 @@ index de6f86b..810eb9a 100644
   *	suspend_finish - Do final work before exiting suspend sequence.
 diff --git a/kernel/power/tuxonice.h b/kernel/power/tuxonice.h
 new file mode 100644
-index 0000000..f6ffff3
+index 0000000..b6409cf
 --- /dev/null
 +++ b/kernel/power/tuxonice.h
-@@ -0,0 +1,219 @@
+@@ -0,0 +1,220 @@
 +/*
 + * kernel/power/tuxonice.h
 + *
@@ -4973,11 +5108,12 @@ index 0000000..f6ffff3
 +#include <linux/suspend.h>
 +#include <linux/fs.h>
 +#include <linux/kmod.h>
++#include <linux/tuxonice.h>
 +#include <asm/setup.h>
 +#include "tuxonice_pageflags.h"
 +#include "power.h"
 +
-+#define TOI_CORE_VERSION "3.2-rc2"
++#define TOI_CORE_VERSION "3.2"
 +#define	TOI_HEADER_VERSION 3
 +#define MY_BOOT_KERNEL_DATA_VERSION 3
 +
@@ -9525,10 +9661,10 @@ index 0000000..2ebee7e
 +}
 diff --git a/kernel/power/tuxonice_builtin.c b/kernel/power/tuxonice_builtin.c
 new file mode 100644
-index 0000000..c0c6d30
+index 0000000..53fd49f
 --- /dev/null
 +++ b/kernel/power/tuxonice_builtin.c
-@@ -0,0 +1,432 @@
+@@ -0,0 +1,443 @@
 +/*
 + * Copyright (C) 2004-2010 Nigel Cunningham (nigel at tuxonice net)
 + *
@@ -9847,6 +9983,17 @@ index 0000000..c0c6d30
 +}
 +EXPORT_SYMBOL_GPL(toi_read_unlock_tasklist);
 +
++#ifdef CONFIG_TOI_ZRAM_SUPPORT
++int (*toi_flag_zram_disks) (void);
++EXPORT_SYMBOL_GPL(toi_flag_zram_disks);
++
++int toi_do_flag_zram_disks(void)
++{
++	return toi_flag_zram_disks ? (*toi_flag_zram_disks)() : 0;
++}
++EXPORT_SYMBOL_GPL(toi_do_flag_zram_disks);
++#endif
++
 +static int __init toi_wait_setup(char *str)
 +{
 +	int value;
@@ -9963,10 +10110,10 @@ index 0000000..c0c6d30
 +__setup("toi_no_readahead", toi_disable_readahead_setup);
 diff --git a/kernel/power/tuxonice_builtin.h b/kernel/power/tuxonice_builtin.h
 new file mode 100644
-index 0000000..ab67d31
+index 0000000..3179bfa
 --- /dev/null
 +++ b/kernel/power/tuxonice_builtin.h
-@@ -0,0 +1,32 @@
+@@ -0,0 +1,38 @@
 +/*
 + * Copyright (C) 2004-2010 Nigel Cunningham (nigel at tuxonice net)
 + *
@@ -9999,6 +10146,12 @@ index 0000000..ab67d31
 +extern int toi_force_no_multithreaded;
 +extern void toi_read_lock_tasklist(void);
 +extern void toi_read_unlock_tasklist(void);
++
++#ifdef CONFIG_TOI_ZRAM_SUPPORT
++extern int toi_do_flag_zram_disks(void);
++#else
++#define toi_do_flag_zram_disks() (0)
++#endif
 diff --git a/kernel/power/tuxonice_checksum.c b/kernel/power/tuxonice_checksum.c
 new file mode 100644
 index 0000000..2d7b2f1
@@ -11527,10 +11680,10 @@ index 0000000..051feb3
 +
 diff --git a/kernel/power/tuxonice_compress.c b/kernel/power/tuxonice_compress.c
 new file mode 100644
-index 0000000..fb40e1b
+index 0000000..4f06ab6
 --- /dev/null
 +++ b/kernel/power/tuxonice_compress.c
-@@ -0,0 +1,454 @@
+@@ -0,0 +1,455 @@
 +/*
 + * kernel/power/compression.c
 + *
@@ -11546,6 +11699,7 @@ index 0000000..fb40e1b
 +#include <linux/highmem.h>
 +#include <linux/vmalloc.h>
 +#include <linux/crypto.h>
++#include <linux/tuxonice.h>
 +
 +#include "tuxonice_builtin.h"
 +#include "tuxonice.h"
@@ -11707,7 +11861,7 @@ index 0000000..fb40e1b
 +	int ret, cpu = smp_processor_id();
 +	struct cpu_context *ctx = &per_cpu(contexts, cpu);
 +
-+	if (!ctx->transform)
++	if (!ctx->transform || PagePrecompressed((struct page *) buffer_page))
 +		return next_driver->write_page(index, TOI_PAGE, buffer_page,
 +				buf_size);
 +
@@ -12669,10 +12823,10 @@ index 0000000..4b817c4
 +#endif
 diff --git a/kernel/power/tuxonice_highlevel.c b/kernel/power/tuxonice_highlevel.c
 new file mode 100644
-index 0000000..7d609ca
+index 0000000..f603583
 --- /dev/null
 +++ b/kernel/power/tuxonice_highlevel.c
-@@ -0,0 +1,1329 @@
+@@ -0,0 +1,1345 @@
 +/*
 + * kernel/power/tuxonice_highlevel.c
 + */
@@ -12751,6 +12905,7 @@ index 0000000..7d609ca
 +#include <linux/uaccess.h> /* for get/set_fs & KERNEL_DS on i386 */
 +#include <linux/bio.h>
 +#include <linux/kgdb.h>
++#include <linux/tuxonice.h>
 +
 +#include "tuxonice.h"
 +#include "tuxonice_modules.h"
@@ -12772,7 +12927,7 @@ index 0000000..7d609ca
 +
 +static mm_segment_t oldfs;
 +static DEFINE_MUTEX(tuxonice_in_use);
-+static int block_dump_save;
++static int block_dump_save, nr_precompressed;
 +
 +/* Binary signature if an image is present */
 +char tuxonice_signature[9] = "\xed\xc3\x02\xe9\x98\x56\xe5\x0c";
@@ -12999,6 +13154,7 @@ index 0000000..7d609ca
 +	toi_free_bitmap(&nosave_map);
 +	toi_free_bitmap(&free_map);
 +	toi_free_bitmap(&page_resave_map);
++	toi_free_bitmap(&precompressed_map);
 +}
 +
 +/**
@@ -13079,6 +13235,8 @@ index 0000000..7d609ca
 +					result_strings[i]);
 +			first_result = 0;
 +		}
++	if (nr_precompressed)
++		SNPRINTF("- ZRAM pages     : %d.\n", nr_precompressed);
 +	if (first_result)
 +		SNPRINTF("- Result         : %s.\n", nr_hibernates ?
 +			"Succeeded" :
@@ -13481,6 +13639,18 @@ index 0000000..7d609ca
 +	if (toi_init(restarting) && !toi_prepare_image() &&
 +			!test_result_state(TOI_ABORTED))
 +		return 0;
++
++	/* 
++	 * ZRAM disks can be marked now as there's no race with userspace
++	 * potentially resizing a disk.
++	 */
++	nr_precompressed = 0;
++	if (toi_flag_zram_disks) {
++		if (toi_alloc_bitmap(&precompressed_map))
++			return 1;
++
++		nr_precompressed = toi_do_flag_zram_disks();
++	}
 +
 +	trap_non_toi_io = 1;
 +
@@ -17969,7 +18139,7 @@ index 0000000..9aa0ea8
 +extern void platform_restore_cleanup(int platform_mode);
 diff --git a/kernel/power/tuxonice_prepare_image.c b/kernel/power/tuxonice_prepare_image.c
 new file mode 100644
-index 0000000..4f4b70d
+index 0000000..d0b34ee
 --- /dev/null
 +++ b/kernel/power/tuxonice_prepare_image.c
 @@ -0,0 +1,1111 @@
@@ -18018,7 +18188,7 @@ index 0000000..4f4b70d
 +	    header_storage_needed;
 +unsigned long extra_pd1_pages_allowance =
 +	CONFIG_TOI_DEFAULT_EXTRA_PAGES_ALLOWANCE;
-+long image_size_limit;
++long image_size_limit = CONFIG_TOI_DEFAULT_IMAGE_SIZE_LIMIT;
 +static int no_ps2_needed;
 +
 +struct attention_list {
@@ -19469,10 +19639,10 @@ index 0000000..8c6b5a7
 +};
 diff --git a/kernel/power/tuxonice_swap.c b/kernel/power/tuxonice_swap.c
 new file mode 100644
-index 0000000..27f8a94
+index 0000000..a6c0d76
 --- /dev/null
 +++ b/kernel/power/tuxonice_swap.c
-@@ -0,0 +1,456 @@
+@@ -0,0 +1,463 @@
 +/*
 + * kernel/power/tuxonice_swap.c
 + *
@@ -19511,6 +19681,15 @@ index 0000000..27f8a94
 +static unsigned long swap_allocated;
 +
 +static struct sysinfo swapinfo;
++
++static int is_ram_backed(struct swap_info_struct *si)
++{
++	if (!strncmp(si->bdev->bd_disk->disk_name, "ram", 3) ||
++	    !strncmp(si->bdev->bd_disk->disk_name, "zram", 4))
++		return 1;
++
++	return 0;
++}
 +
 +/**
 + * enable_swapfile: Swapon the user specified swapfile prior to hibernating.
@@ -19628,8 +19807,7 @@ index 0000000..27f8a94
 +
 +	for (i = 0; i < MAX_SWAPFILES; i++) {
 +		struct swap_info_struct *si = get_swap_info_struct(i);
-+		if (si && (si->flags & SWP_WRITEOK) &&
-+		    (strncmp(si->bdev->bd_disk->disk_name, "ram", 3))) {
++		if (si && (si->flags & SWP_WRITEOK) && !is_ram_backed(si)) {
 +			swapinfo.totalswap += si->inuse_pages;
 +			swapinfo.freeswap += si->pages - si->inuse_pages;
 +		}
@@ -19736,8 +19914,7 @@ index 0000000..27f8a94
 +		unsigned char buf[256];
 +		struct fs_info *fs_info;
 +
-+		if (!si || !(si->flags & SWP_WRITEOK) ||
-+		    !strncmp(si->bdev->bd_disk->disk_name, "ram", 3))
++		if (!si || !(si->flags & SWP_WRITEOK) || is_ram_backed(si))
 +			continue;
 +
 +		devinfo = toi_kzalloc(39, sizeof(struct toi_bdev_info),
@@ -21519,7 +21696,7 @@ index 693394d..f357566 100644
  static int pkmap_count[LAST_PKMAP];
  static unsigned int last_pkmap_nr;
 diff --git a/mm/memory.c b/mm/memory.c
-index 5823698..bb1a3fc 100644
+index f17746a..0f73b19 100644
 --- a/mm/memory.c
 +++ b/mm/memory.c
 @@ -1409,6 +1409,7 @@ no_page_table:
@@ -21528,8 +21705,8 @@ index 5823698..bb1a3fc 100644
  }
 +EXPORT_SYMBOL_GPL(follow_page);
  
- int __get_user_pages(struct task_struct *tsk, struct mm_struct *mm,
- 		     unsigned long start, int nr_pages, unsigned int gup_flags,
+ static inline int stack_guard_page(struct vm_area_struct *vma, unsigned long addr)
+ {
 diff --git a/mm/mmzone.c b/mm/mmzone.c
 index f5b7d17..72a6770 100644
 --- a/mm/mmzone.c
@@ -21571,7 +21748,7 @@ index 2cb01f6..338be28 100644
  /*
   * Flag that puts the machine in "laptop mode". Doubles as a timeout in jiffies:
 diff --git a/mm/page_alloc.c b/mm/page_alloc.c
-index cdef1d4..6807532 100644
+index 2828037..d1244bc 100644
 --- a/mm/page_alloc.c
 +++ b/mm/page_alloc.c
 @@ -115,6 +115,7 @@ void pm_restore_gfp_mask(void)
@@ -21634,7 +21811,7 @@ index cdef1d4..6807532 100644
   */
  unsigned int nr_free_pagecache_pages(void)
 diff --git a/mm/shmem.c b/mm/shmem.c
-index 5ee67c9..6bba730 100644
+index 5ac23d5..2240457 100644
 --- a/mm/shmem.c
 +++ b/mm/shmem.c
 @@ -1575,7 +1575,8 @@ static int shmem_mmap(struct file *file, struct vm_area_struct *vma)
@@ -21736,7 +21913,7 @@ index 5c8cfab..b3a12b7 100644
  #define INC_CACHE_INFO(x)	do { swap_cache_info.x++; } while (0)
  
 diff --git a/mm/swapfile.c b/mm/swapfile.c
-index 0341c57..017e52f 100644
+index 6d6d28c..35587a8 100644
 --- a/mm/swapfile.c
 +++ b/mm/swapfile.c
 @@ -40,7 +40,6 @@
@@ -21845,7 +22022,7 @@ index 0341c57..017e52f 100644
  
  #ifdef CONFIG_PROC_FS
  struct proc_swaps {
-@@ -2165,6 +2218,7 @@ out:
+@@ -2170,6 +2223,7 @@ out:
  	}
  	return error;
  }
@@ -21853,7 +22030,7 @@ index 0341c57..017e52f 100644
  
  void si_swapinfo(struct sysinfo *val)
  {
-@@ -2182,6 +2236,7 @@ void si_swapinfo(struct sysinfo *val)
+@@ -2187,6 +2241,7 @@ void si_swapinfo(struct sysinfo *val)
  	val->totalswap = total_swap_pages + nr_to_be_unused;
  	spin_unlock(&swap_lock);
  }
@@ -21861,7 +22038,7 @@ index 0341c57..017e52f 100644
  
  /*
   * Verify that a swap entry is valid and increment its swap map count.
-@@ -2293,6 +2348,13 @@ int swapcache_prepare(swp_entry_t entry)
+@@ -2298,6 +2353,13 @@ int swapcache_prepare(swp_entry_t entry)
  	return __swap_duplicate(entry, SWAP_HAS_CACHE);
  }
  
@@ -21876,10 +22053,10 @@ index 0341c57..017e52f 100644
   * swap_lock prevents swap_map being freed. Don't grab an extra
   * reference on the swaphandle, it doesn't matter if it becomes unused.
 diff --git a/mm/vmscan.c b/mm/vmscan.c
-index 6771ea7..2195aa8 100644
+index 0665520..a93a0bd 100644
 --- a/mm/vmscan.c
 +++ b/mm/vmscan.c
-@@ -2718,6 +2718,9 @@ void wakeup_kswapd(struct zone *zone, int order, enum zone_type classzone_idx)
+@@ -2704,6 +2704,9 @@ void wakeup_kswapd(struct zone *zone, int order, enum zone_type classzone_idx)
  	if (!populated_zone(zone))
  		return;
  
@@ -21889,7 +22066,7 @@ index 6771ea7..2195aa8 100644
  	if (!cpuset_zone_allowed_hardwall(zone, GFP_KERNEL))
  		return;
  	pgdat = zone->zone_pgdat;
-@@ -2778,11 +2781,11 @@ unsigned long zone_reclaimable_pages(struct zone *zone)
+@@ -2764,11 +2767,11 @@ unsigned long zone_reclaimable_pages(struct zone *zone)
   * LRU order by reclaiming preferentially
   * inactive > active > active referenced > active mapped
   */
@@ -21903,7 +22080,7 @@ index 6771ea7..2195aa8 100644
  		.may_swap = 1,
  		.may_unmap = 1,
  		.may_writepage = 1,
-@@ -2808,6 +2811,13 @@ unsigned long shrink_all_memory(unsigned long nr_to_reclaim)
+@@ -2794,6 +2797,13 @@ unsigned long shrink_all_memory(unsigned long nr_to_reclaim)
  
  	return nr_reclaimed;
  }

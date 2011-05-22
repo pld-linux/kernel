@@ -93,8 +93,8 @@
 %endif
 
 %define		basever		2.6.38
-%define		postver		.6
-%define		rel		8
+%define		postver		.7
+%define		rel		1
 
 %define		_enable_debug_packages			0
 
@@ -141,7 +141,7 @@ Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{basever}.tar.bz2
 # Source0-md5:	7d471477bfa67546f902da62227fa976
 %if "%{postver}" != "%{nil}"
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
-# Source1-md5:	527fab8162c682ad849eb21fc30d28ef
+# Source1-md5:	2639b4b98a2dcfc8b7f091543f289205
 %endif
 
 Source3:	kernel-autoconf.h
@@ -230,8 +230,7 @@ Patch56:	kernel-atmdd.patch
 Patch59:	kernel-rndis_host-wm5.patch
 
 # Project suspend2 renamed to tuxonice
-# http://tuxonice.net/files/current-tuxonice-for-2.6.37.patch_0.bz2
-# NOTE: currently using own diff from tuxonice git tree until official patch is released
+# http://tuxonice.net/files/tuxonice-3.2-for-2.6.38.patch.bz2
 Patch69:	kernel-tuxonice.patch
 Patch70:	kernel-tuxonice-headers.patch
 
