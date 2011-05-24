@@ -23007,15 +23007,6 @@ diff -urNp linux-2.6.38.6/drivers/ata/libata-eh.c linux-2.6.38.6/drivers/ata/lib
  	ata_for_each_link(link, ap, HOST_FIRST)
  		ata_eh_link_report(link);
  }
-@@ -3276,7 +3278,7 @@ static int ata_eh_set_lpm(struct ata_lin
- 	struct ata_eh_context *ehc = &link->eh_context;
- 	struct ata_device *dev, *link_dev = NULL, *lpm_dev = NULL;
- 	enum ata_lpm_policy old_policy = link->lpm_policy;
--	bool no_dipm = ap->flags & ATA_FLAG_NO_DIPM;
-+	bool no_dipm = link->ap->flags & ATA_FLAG_NO_DIPM;
- 	unsigned int hints = ATA_LPM_EMPTY | ATA_LPM_HIPM;
- 	unsigned int err_mask;
- 	int rc;
 @@ -3882,7 +3884,7 @@ void ata_do_eh(struct ata_port *ap, ata_
   */
  void ata_std_error_handler(struct ata_port *ap)
@@ -41905,32 +41896,35 @@ diff -urNp linux-2.6.38.6/fs/proc/task_mmu.c linux-2.6.38.6/fs/proc/task_mmu.c
  static void show_map_vma(struct seq_file *m, struct vm_area_struct *vma)
  {
  	struct mm_struct *mm = vma->vm_mm;
-@@ -211,7 +229,6 @@ static void show_map_vma(struct seq_file
+@@ -229,7 +229,6 @@ static void show_map_vma(struct seq_file
  	int flags = vma->vm_flags;
  	unsigned long ino = 0;
  	unsigned long long pgoff = 0;
--	unsigned long start;
+-	unsigned long start, end;
  	dev_t dev = 0;
  	int len;
  
-@@ -222,20 +239,23 @@ static void show_map_vma(struct seq_file
+@@ -240,22 +239,23 @@ static void show_map_vma(struct seq_file
  		pgoff = ((loff_t)vma->vm_pgoff) << PAGE_SHIFT;
  	}
  
 -	/* We don't show the stack guard page in /proc/maps */
 -	start = vma->vm_start;
--	if (vma->vm_flags & VM_GROWSDOWN)
--		if (!vma_stack_continue(vma->vm_prev, vma->vm_start))
--			start += PAGE_SIZE;
+-	if (stack_guard_page_start(vma, start))
+-		start += PAGE_SIZE;
+-	end = vma->vm_end;
+-	if (stack_guard_page_end(vma, end))
+-		end -= PAGE_SIZE;
 -
  	seq_printf(m, "%08lx-%08lx %c%c%c%c %08llx %02x:%02x %lu %n",
 -			start,
+-			end,
 +#ifdef CONFIG_GRKERNSEC_PROC_MEMMAP
 +			PAX_RAND_FLAGS(mm) ? 0UL : vma->vm_start,
 +			PAX_RAND_FLAGS(mm) ? 0UL : vma->vm_end,
 +#else
 +			vma->vm_start,
- 			vma->vm_end,
++			vma->vm_end,
 +#endif
  			flags & VM_READ ? 'r' : '-',
  			flags & VM_WRITE ? 'w' : '-',
@@ -55205,19 +55199,6 @@ diff -urNp linux-2.6.38.6/include/linux/mm.h linux-2.6.38.6/include/linux/mm.h
  #define VM_PFN_AT_MMAP	0x40000000	/* PFNMAP vma that is fully mapped at mmap time */
  #define VM_MERGEABLE	0x80000000	/* KSM may merge identical pages */
  
-@@ -993,12 +1000,6 @@ int set_page_dirty(struct page *page);
- int set_page_dirty_lock(struct page *page);
- int clear_page_dirty_for_io(struct page *page);
- 
--/* Is the vma a continuation of the stack vma above it? */
--static inline int vma_stack_continue(struct vm_area_struct *vma, unsigned long addr)
--{
--	return vma && (vma->vm_end == addr) && (vma->vm_flags & VM_GROWSDOWN);
--}
--
- extern unsigned long move_page_tables(struct vm_area_struct *vma,
- 		unsigned long old_addr, struct vm_area_struct *new_vma,
- 		unsigned long new_addr, unsigned long len);
 @@ -1150,6 +1151,15 @@ struct shrinker {
  extern void register_shrinker(struct shrinker *);
  extern void unregister_shrinker(struct shrinker *);
@@ -62272,15 +62253,15 @@ diff -urNp linux-2.6.38.6/mm/memory.c linux-2.6.38.6/mm/memory.c
  }
  
  /*
-@@ -1410,13 +1417,6 @@ no_page_table:
- 	return page;
+
+@@ -1418,12 +1418,6 @@
  }
+ EXPORT_SYMBOL_GPL(follow_page);
  
 -static inline int stack_guard_page(struct vm_area_struct *vma, unsigned long addr)
 -{
--	return (vma->vm_flags & VM_GROWSDOWN) &&
--		(vma->vm_start == addr) &&
--		!vma_stack_continue(vma->vm_prev, addr);
+-	return stack_guard_page_start(vma, addr) ||
+-	       stack_guard_page_end(vma, addr+PAGE_SIZE);
 -}
 -
  int __get_user_pages(struct task_struct *tsk, struct mm_struct *mm,
@@ -62308,19 +62289,18 @@ diff -urNp linux-2.6.38.6/mm/memory.c linux-2.6.38.6/mm/memory.c
  		    (vma->vm_flags & (VM_IO | VM_PFNMAP)) ||
  		    !(vm_flags & vma->vm_flags))
  			return i ? : -EFAULT;
-@@ -1502,12 +1502,6 @@ int __get_user_pages(struct task_struct 
- 			continue;
- 		}
+@@ -1519,11 +1519,6 @@
+ 				int ret;
+ 				unsigned int fault_flags = 0;
  
--		/*
--		 * For mlock, just skip the stack guard page.
--		 */
--		if ((gup_flags & FOLL_MLOCK) && stack_guard_page(vma, start))
--			goto next_page;
--
- 		do {
- 			struct page *page;
- 			unsigned int foll_flags = gup_flags;
+-				/* For mlock, just skip the stack guard page. */
+-				if (foll_flags & FOLL_MLOCK) {
+-					if (stack_guard_page(vma, start))
+-						goto next_page;
+-				}
+ 				if (foll_flags & FOLL_WRITE)
+ 					fault_flags |= FAULT_FLAG_WRITE;
+ 				if (nonblocking)
 @@ -1584,7 +1578,7 @@ next_page:
  			start += PAGE_SIZE;
  			nr_pages--;
