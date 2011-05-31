@@ -285,15 +285,6 @@ Patch2003:	kernel-regressions.patch
 
 Patch2200:	kernel-xfs-delaylog.patch
 
-Patch2300:	kernel-drm-intel-2011Q1.patch
-
-# kill some thousands of warnings
-# (only warnings, so just remove parts of this patch if conflics)
-Patch2500:	kernel-warnings.patch
-
-# from ipset.spec (already in 2.6.39)
-Patch2600:	ipset-netlink.patch
-
 # 0001-AppArmor-compatibility-patch-for-v5-network-controll.patch
 # 0002-AppArmor-compatibility-patch-for-v5-interface.patch
 # from http://kernel.org/pub/linux/security/apparmor/apparmor-2.6.36-patches.tgz
@@ -781,12 +772,6 @@ sed -i 's/-Werror//' arch/alpha/kernel/Makefile
 %patch140 -p1
 
 %patch2200 -p1
-
-%patch2300 -p1
-
-%patch2500 -p1
-
-%patch2600 -p1
 
 %if %{with rescuecd}
 %patch7000 -p1
