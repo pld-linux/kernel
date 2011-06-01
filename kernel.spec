@@ -328,7 +328,7 @@ BuildRequires:	xz >= 1:4.999.7
 AutoReqProv:	no
 # for hostname command
 BuildRequires:	module-init-tools >= 3.5
-BuildRequires:	net-tools
+BuildRequires:	hostname
 BuildRequires:	perl-base
 BuildRequires:	rpm-build >= 4.5-24
 BuildRequires:	rpmbuild(macros) >= 1.217
