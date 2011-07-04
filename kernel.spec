@@ -206,7 +206,7 @@ Patch40:	kernel-layer7.patch
 # http://zph.bratcheda.org/linux-2.6.26.3-zph.patch
 Patch49:	kernel-zph.patch
 
-# based on http://www.linuximq.net/patchs/linux-2.6.35-imq-multiqueue-test1.diff
+# based on http://www.linuximq.net/patchs/linux-2.6.39-imq-multiqueue-test1.diff.bz2
 Patch50:	kernel-imq.patch
 
 # http://www.kernel.org/pub/linux/kernel/people/edward/reiser4/reiser4-for-2.6/reiser4-for-2.6.35.patch.bz2
