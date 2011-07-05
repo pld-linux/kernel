@@ -279,7 +279,6 @@ Patch300:	kernel-routes.patch
 # https://patchwork.kernel.org/patch/236261/
 Patch400:	kernel-virtio-gl-accel.patch
 
-Patch2000:	kernel-small_fixes.patch
 Patch2001:	kernel-pwc-uncompress.patch
 Patch2003:	kernel-regressions.patch
 
@@ -805,7 +804,6 @@ sed -i 's/-Werror//' arch/alpha/kernel/Makefile
 %endif # vanilla
 
 # Small fixes:
-%patch2000 -p1
 %patch2001 -p1
 #%patch2003 -p1
 
