@@ -1,4 +1,4 @@
-From 6ab924a333c81d552eb92900509113bdf2fccb2e Mon Sep 17 00:00:00 2001
+From 0ae314bc92d8b22250f04f85e4bd36ee9ed30890 Mon Sep 17 00:00:00 2001
 From: John Johansen <john.johansen@canonical.com>
 Date: Mon, 4 Oct 2010 15:03:36 -0700
 Subject: [PATCH 1/3] AppArmor: compatibility patch for v5 network controll
@@ -8,14 +8,14 @@ Add compatibility for v5 network rules.
 Signed-off-by: John Johansen <john.johansen@canonical.com>
 ---
  include/linux/lsm_audit.h          |    4 +
- security/apparmor/Makefile         |    6 +-
+ security/apparmor/Makefile         |   19 ++++-
  security/apparmor/include/net.h    |   40 +++++++++
  security/apparmor/include/policy.h |    3 +
  security/apparmor/lsm.c            |  112 +++++++++++++++++++++++
  security/apparmor/net.c            |  170 ++++++++++++++++++++++++++++++++++++
  security/apparmor/policy.c         |    1 +
  security/apparmor/policy_unpack.c  |   48 ++++++++++-
- 8 files changed, 382 insertions(+), 2 deletions(-)
+ 8 files changed, 394 insertions(+), 3 deletions(-)
  create mode 100644 security/apparmor/include/net.h
  create mode 100644 security/apparmor/net.c
 
@@ -35,32 +35,47 @@ index 112a550..d5f3dd7 100644
  		} apparmor_audit_data;
  #endif
 diff --git a/security/apparmor/Makefile b/security/apparmor/Makefile
-index f204869..a9a1db0 100644
+index 2dafe50..7cefef9 100644
 --- a/security/apparmor/Makefile
 +++ b/security/apparmor/Makefile
-@@ -4,17 +4,21 @@ obj-$(CONFIG_SECURITY_APPARMOR) += apparmor.o
+@@ -4,9 +4,9 @@ obj-$(CONFIG_SECURITY_APPARMOR) += apparmor.o
  
  apparmor-y := apparmorfs.o audit.o capability.o context.o ipc.o lib.o match.o \
                path.o domain.o policy.o policy_unpack.o procattr.o lsm.o \
 -              resource.o sid.o file.o
 +              resource.o sid.o file.o net.o
  
- clean-files: capability_names.h af_names.h
+-clean-files := capability_names.h rlim_names.h
++clean-files := capability_names.h rlim_names.h af_names.h
  
- quiet_cmd_make-caps = GEN     $@
- cmd_make-caps = echo "static const char *capability_names[] = {" > $@ ; sed -n -e "/CAP_FS_MASK/d" -e "s/^\#define[ \\t]\\+CAP_\\([A-Z0-9_]\\+\\)[ \\t]\\+\\([0-9]\\+\\)\$$/[\\2]  = \"\\1\",/p" $< | tr A-Z a-z >> $@ ; echo "};" >> $@
  
+ # Build a lower case string table of capability names
+@@ -44,9 +44,24 @@ cmd_make-rlim = echo "static const char *rlim_names[] = {" > $@ ;\
+ 	sed -r -n "s/^\# ?define[ \t]+(RLIMIT_[A-Z0-9_]+).*/\1,/p" $< >> $@ ;\
+ 	echo "};" >> $@
+ 
++# Build a lower case string table of address family names.
++# Transform lines from
++# #define AF_INET		2	/* Internet IP Protocol 	*/
++# to
++# [2] = "inet",
 +quiet_cmd_make-af = GEN     $@
-+cmd_make-af = echo "static const char *address_family_names[] = {" > $@ ; sed -n -e "/AF_MAX/d" -e "/AF_LOCAL/d" -e "s/^\#define[ \\t]\\+AF_\\([A-Z0-9_]\\+\\)[ \\t]\\+\\([0-9]\\+\\)\\(.*\\)\$$/[\\2]  = \"\\1\",/p" $< | tr A-Z a-z >> $@ ; echo "};" >> $@
++cmd_make-af = echo "static const char *address_family_names[] = {" > $@ ;\
++	sed $< >> $@ -r -n -e "/AF_MAX/d" -e "/AF_LOCAL/d" -e \
++	  's/^\#define[ \t]+AF_([A-Z0-9_]+)[ \t]+([0-9]+).*/[\2] = "\L\1",/p';\
++	echo "};" >> $@
 +
- quiet_cmd_make-rlim = GEN     $@
- cmd_make-rlim = echo "static const char *rlim_names[] = {" > $@ ; sed -n --e "/AF_MAX/d" -e "s/^\# \\?define[ \\t]\\+RLIMIT_\\([A-Z0-9_]\\+\\)[ \\t]\\+\\([0-9]\\+\\)\\(.*\\)\$$/[\\2]  = \"\\1\",/p" $< | tr A-Z a-z >> $@ ; echo "};" >> $@ ; echo "static const int rlim_map[] = {" >> $@ ; sed -n -e "/AF_MAX/d" -e "s/^\# \\?define[ \\t]\\+\\(RLIMIT_[A-Z0-9_]\\+\\)[ \\t]\\+\\([0-9]\\+\\)\\(.*\\)\$$/\\1,/p" $< >> $@ ; echo "};" >> $@
- 
++
  $(obj)/capability.o : $(obj)/capability_names.h
-+$(obj)/net.o : $(obj)/af_names.h
  $(obj)/resource.o : $(obj)/rlim_names.h
++$(obj)/net.o : $(obj)/af_names.h
  $(obj)/capability_names.h : $(srctree)/include/linux/capability.h
  	$(call cmd,make-caps)
+ $(obj)/rlim_names.h : $(srctree)/include/asm-generic/resource.h
+ 	$(call cmd,make-rlim)
++$(obj)/af_names.h : $(srctree)/include/linux/socket.h
++	$(call cmd,make-af)
+\ No newline at end of file
 diff --git a/security/apparmor/include/net.h b/security/apparmor/include/net.h
 new file mode 100644
 index 0000000..3c7d599
@@ -136,10 +151,10 @@ index aeda5cf..6776929 100644
  };
  
 diff --git a/security/apparmor/lsm.c b/security/apparmor/lsm.c
-index cf1de44..324ab91 100644
+index ae3a698..05c018b 100644
 --- a/security/apparmor/lsm.c
 +++ b/security/apparmor/lsm.c
-@@ -31,6 +31,7 @@
+@@ -32,6 +32,7 @@
  #include "include/context.h"
  #include "include/file.h"
  #include "include/ipc.h"
@@ -147,7 +162,7 @@ index cf1de44..324ab91 100644
  #include "include/path.h"
  #include "include/policy.h"
  #include "include/procattr.h"
-@@ -607,6 +608,103 @@ static int apparmor_setprocattr(struct t
+@@ -620,6 +621,104 @@ static int apparmor_task_setrlimit(struct task_struct *task,
  	return error;
  }
  
@@ -248,10 +263,11 @@ index cf1de44..324ab91 100644
 +
 +	return aa_revalidate_sk(OP_SOCK_SHUTDOWN, sk);
 +}
- static int apparmor_task_setrlimit(struct task_struct *task,
- 		unsigned int resource, struct rlimit *new_rlim)
- {
-@@ -650,6 +749,19 @@ static struct security_operations apparmor_ops = {
++
+ static struct security_operations apparmor_ops = {
+ 	.name =				"apparmor",
+ 
+@@ -651,6 +750,19 @@ static struct security_operations apparmor_ops = {
  	.getprocattr =			apparmor_getprocattr,
  	.setprocattr =			apparmor_setprocattr,
  
@@ -448,7 +464,7 @@ index 0000000..1765901
 +	return error;
 +}
 diff --git a/security/apparmor/policy.c b/security/apparmor/policy.c
-index 52cc865..3b5da44 100644
+index 4f0eade..4d5ce13 100644
 --- a/security/apparmor/policy.c
 +++ b/security/apparmor/policy.c
 @@ -745,6 +745,7 @@ static void free_profile(struct aa_profile *profile)
@@ -460,7 +476,7 @@ index 52cc865..3b5da44 100644
  
  	aa_free_sid(profile->sid);
 diff --git a/security/apparmor/policy_unpack.c b/security/apparmor/policy_unpack.c
-index eb3700e..c2b6225 100644
+index e33aaf7..fa3f1b4 100644
 --- a/security/apparmor/policy_unpack.c
 +++ b/security/apparmor/policy_unpack.c
 @@ -190,6 +190,19 @@ fail:
@@ -533,9 +549,9 @@ index eb3700e..c2b6225 100644
  	profile->file.dfa = unpack_dfa(e);
  	if (IS_ERR(profile->file.dfa)) {
 -- 
-1.7.1
+1.7.0.4
 
-From 5f034900aa447abea213c434d6d262d28fd168e7 Mon Sep 17 00:00:00 2001
+From cdc6b35345e5bcfe92bb2b52ef003f94ceedd40d Mon Sep 17 00:00:00 2001
 From: John Johansen <john.johansen@canonical.com>
 Date: Thu, 22 Jul 2010 02:32:02 -0700
 Subject: [PATCH 2/3] AppArmor: compatibility patch for v5 interface
@@ -543,11 +559,11 @@ Subject: [PATCH 2/3] AppArmor: compatibility patch for v5 interface
 Signed-off-by: John Johansen <john.johansen@canonical.com>
 ---
  security/apparmor/Kconfig              |    9 +
- security/apparmor/Makefile             |    2 +
+ security/apparmor/Makefile             |    1 +
  security/apparmor/apparmorfs-24.c      |  287 ++++++++++++++++++++++++++++++++
  security/apparmor/apparmorfs.c         |   18 ++-
  security/apparmor/include/apparmorfs.h |    6 +
- 5 files changed, 320 insertions(+), 2 deletions(-)
+ 5 files changed, 319 insertions(+), 2 deletions(-)
  create mode 100644 security/apparmor/apparmorfs-24.c
 
 diff --git a/security/apparmor/Kconfig b/security/apparmor/Kconfig
@@ -568,18 +584,17 @@ index 9b9013b..51ebf96 100644
 +          recommended if compatability with older versions of AppArmor
 +          is desired.
 diff --git a/security/apparmor/Makefile b/security/apparmor/Makefile
-index a9a1db0..e5e8968 100644
+index 7cefef9..0bb604b 100644
 --- a/security/apparmor/Makefile
 +++ b/security/apparmor/Makefile
-@@ -6,6 +6,8 @@ apparmor-y := apparmorfs.o audit.o capability.o context.o ipc.o lib.o match.o \
+@@ -5,6 +5,7 @@ obj-$(CONFIG_SECURITY_APPARMOR) += apparmor.o
+ apparmor-y := apparmorfs.o audit.o capability.o context.o ipc.o lib.o match.o \
                path.o domain.o policy.o policy_unpack.o procattr.o lsm.o \
                resource.o sid.o file.o net.o
- 
 +apparmor-$(CONFIG_SECURITY_APPARMOR_COMPAT_24) += apparmorfs-24.o
-+
- clean-files: capability_names.h af_names.h
  
- quiet_cmd_make-caps = GEN     $@
+ clean-files := capability_names.h rlim_names.h af_names.h
+ 
 diff --git a/security/apparmor/apparmorfs-24.c b/security/apparmor/apparmorfs-24.c
 new file mode 100644
 index 0000000..dc8c744
@@ -874,10 +889,10 @@ index 0000000..dc8c744
 +	.release = profiles_release,
 +};
 diff --git a/security/apparmor/apparmorfs.c b/security/apparmor/apparmorfs.c
-index 7320331..0e27449 100644
+index 0848292..28c52ac 100644
 --- a/security/apparmor/apparmorfs.c
 +++ b/security/apparmor/apparmorfs.c
-@@ -182,7 +182,11 @@ void __init aa_destroy_aafs(void)
+@@ -187,7 +187,11 @@ void __init aa_destroy_aafs(void)
  		aafs_remove(".remove");
  		aafs_remove(".replace");
  		aafs_remove(".load");
@@ -890,7 +905,7 @@ index 7320331..0e27449 100644
  		securityfs_remove(aa_fs_dentry);
  		aa_fs_dentry = NULL;
  	}
-@@ -213,7 +217,17 @@ int __init aa_create_aafs(void)
+@@ -218,7 +222,17 @@ int __init aa_create_aafs(void)
  		aa_fs_dentry = NULL;
  		goto error;
  	}
@@ -925,5 +940,73 @@ index cb1e93a..14f955c 100644
 +
  #endif /* __AA_APPARMORFS_H */
 -- 
-1.7.1
+1.7.0.4
+
+From f17b28f64b963c47e76737f7bb7f58ce3a7c5249 Mon Sep 17 00:00:00 2001
+From: John Johansen <john.johansen@canonical.com>
+Date: Tue, 20 Jul 2010 06:57:08 -0700
+Subject: [PATCH 3/3] AppArmor: Allow dfa backward compatibility with broken userspace
+
+The apparmor_parser when compiling policy could generate invalid dfas
+that did not have sufficient padding to avoid invalid references, when
+used by the kernel.  The kernels check to verify the next/check table
+size was broken meaning invalid dfas were being created by userspace
+and not caught.
+
+To remain compatible with old tools that are not fixed, pad the loaded
+dfas next/check table.  The dfa's themselves are valid except for the
+high padding for potentially invalid transitions (high bounds error),
+which have a maximimum is 256 entries.  So just allocate an extra null filled
+256 entries for the next/check tables.  This will guarentee all bounds
+are good and invalid transitions go to the null (0) state.
+
+Signed-off-by: John Johansen <john.johansen@canonical.com>
+---
+ security/apparmor/match.c |   17 +++++++++++++++++
+ 1 files changed, 17 insertions(+), 0 deletions(-)
+
+diff --git a/security/apparmor/match.c b/security/apparmor/match.c
+index 06d764c..cf92856 100644
+--- a/security/apparmor/match.c
++++ b/security/apparmor/match.c
+@@ -57,8 +57,17 @@ static struct table_header *unpack_table(char *blob, size_t bsize)
+ 	if (bsize < tsize)
+ 		goto out;
+ 
++	/* Pad table allocation for next/check by 256 entries to remain
++	 * backwards compatible with old (buggy) tools and remain safe without
++	 * run time checks
++	 */
++	if (th.td_id == YYTD_ID_NXT || th.td_id == YYTD_ID_CHK)
++		tsize += 256 * th.td_flags;
++
+ 	table = kvmalloc(tsize);
+ 	if (table) {
++		/* ensure the pad is clear, else there will be errors */
++		memset(table, 0, tsize);
+ 		*table = th;
+ 		if (th.td_flags == YYTD_DATA8)
+ 			UNPACK_ARRAY(table->td_data, blob, th.td_lolen,
+@@ -134,11 +143,19 @@ static int verify_dfa(struct aa_dfa *dfa, int flags)
+ 		goto out;
+ 
+ 	if (flags & DFA_FLAG_VERIFY_STATES) {
++		int warning = 0;
+ 		for (i = 0; i < state_count; i++) {
+ 			if (DEFAULT_TABLE(dfa)[i] >= state_count)
+ 				goto out;
+ 			/* TODO: do check that DEF state recursion terminates */
+ 			if (BASE_TABLE(dfa)[i] + 255 >= trans_count) {
++				if (warning)
++					continue;
++				printk(KERN_WARNING "AppArmor DFA next/check "
++				       "upper bounds error fixed, upgrade "
++				       "user space tools \n");
++				warning = 1;
++			} else if (BASE_TABLE(dfa)[i] >= trans_count) {
+ 				printk(KERN_ERR "AppArmor DFA next/check upper "
+ 				       "bounds error\n");
+ 				goto out;
+-- 
+1.7.0.4
 
