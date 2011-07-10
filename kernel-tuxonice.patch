@@ -2681,8 +2681,8 @@ index 818313e..d8a4e78 100644
 +	if (unlikely(freezer_is_on()))
 +		return;
 +
- 	if (mddev->bitmap)
- 		bitmap_daemon_work(mddev);
+ 	if (mddev->suspended)
+ 		return;
  
 diff --git a/drivers/tty/vt/vt.c b/drivers/tty/vt/vt.c
 index 147ede3..c454da5 100644
@@ -3203,13 +3203,13 @@ index 46ad519..92c89c9 100644
  	__REQ_MIXED_MERGE,	/* merge of different types, fail separately */
  	__REQ_SECURE,		/* secure discard (used with __REQ_DISCARD) */
 +	__REQ_TOI,		/* TuxOnIce I/O */
- 	__REQ_ON_PLUG,		/* on plug list */
  	__REQ_NR_BITS,		/* stops here */
  };
+ 
 @@ -191,5 +192,6 @@ enum rq_flag_bits {
+ #define REQ_IO_STAT		(1 << __REQ_IO_STAT)
  #define REQ_MIXED_MERGE		(1 << __REQ_MIXED_MERGE)
- #define REQ_SECURE		(1 << __REQ_SECURE
- #define REQ_ON_PLUG		(1 << __REQ_ON_PLUG)
+ #define REQ_SECURE		(1 << __REQ_SECURE)
 +#define REQ_TOI			(1 << __REQ_TOI)
  
  #endif /* __LINUX_BLK_TYPES_H */
@@ -3263,14 +3263,14 @@ index e38b50a..d13e0c1 100644
  #define MS_I_VERSION	(1<<23) /* Update inode I_version field */
  #define MS_STRICTATIME	(1<<24) /* Always perform atime updates */
 +#define MS_FROZEN	(1<<25)	/* Frozen by freeze_filesystems() */
+ #define MS_NOSEC	(1<<28)
  #define MS_BORN		(1<<29)
  #define MS_ACTIVE	(1<<30)
- #define MS_NOUSER	(1<<31)
 @@ -243,6 +245,8 @@ struct inodes_stat_t {
- #define S_PRIVATE	512	/* Inode is fs-internal */
  #define S_IMA		1024	/* Inode has an associated IMA struct */
  #define S_AUTOMOUNT	2048	/* Automount/referral quasi-directory */
-+#define S_ATOMIC_COPY	4096	/* Pages mapped with this inode need to be
+ #define S_NOSEC		4096	/* no suid or xattr security attributes */
++#define S_ATOMIC_COPY	8192	/* Pages mapped with this inode need to be
 +				   atomically copied (gem) */
  
  /*
@@ -3351,9 +3351,9 @@ index f6385fc..f6470fc 100644
  
  #ifndef CONFIG_MMU
 @@ -1581,6 +1582,7 @@ int drop_caches_sysctl_handler(struct ctl_table *, int,
- 					void __user *, size_t *, loff_t *);
- unsigned long shrink_slab(unsigned long scanned, gfp_t gfp_mask,
- 			unsigned long lru_pages);
+ unsigned long shrink_slab(struct shrink_control *shrink,
+ 			  unsigned long nr_pages_scanned,
+ 			  unsigned long lru_pages);
 +void drop_pagecache(void);
  
  #ifndef CONFIG_MMU
@@ -3363,11 +3363,11 @@ index e2b9e63..3c5c8dd 100644
 --- a/include/linux/netlink.h
 +++ b/include/linux/netlink.h
 @@ -24,6 +24,8 @@
- /* leave room for NETLINK_DM (DM Events) */
  #define NETLINK_SCSITRANSPORT	18	/* SCSI Transports */
  #define NETLINK_ECRYPTFS	19
-+#define NETLINK_TOI_USERUI	20	/* TuxOnIce's userui */
-+#define NETLINK_TOI_USM		21	/* Userspace storage manager */
+ #define NETLINK_RDMA		20
++#define NETLINK_TOI_USERUI	21	/* TuxOnIce's userui */
++#define NETLINK_TOI_USM		22	/* Userspace storage manager */
  
  #define MAX_LINKS 32		
  
@@ -3939,10 +3939,10 @@ index 1832bd2..434f5ba 100644
  dev_t swsusp_resume_device;
  sector_t swsusp_resume_block;
  int in_suspend __nosavedata = 0;
-@@ -118,55 +119,60 @@ static int hibernation_test(int level) { return 0; }
-  *	hibernation
+@@ -118,65 +119,70 @@ static int hibernation_test(int level) { return 0; }
+  * platform_begin - Call platform to start hibernation.
+  * @platform_mode: Whether or not to use the platform driver.
   */
- 
 -static int platform_begin(int platform_mode)
 +int platform_begin(int platform_mode)
  {
@@ -3952,10 +3952,9 @@ index 1832bd2..434f5ba 100644
 +EXPORT_SYMBOL_GPL(platform_begin);
  
  /**
-  *	platform_end - tell the platform driver that we've entered the
-  *	working state
+  * platform_end - Call platform to finish transition to the working state.
+  * @platform_mode: Whether or not to use the platform driver.
   */
- 
 -static void platform_end(int platform_mode)
 +void platform_end(int platform_mode)
  {
@@ -3965,8 +3964,11 @@ index 1832bd2..434f5ba 100644
 +EXPORT_SYMBOL_GPL(platform_end);
  
  /**
-  *	platform_pre_snapshot - prepare the machine for hibernation using the
-  *	platform driver if so configured and return an error code if it fails
+  * platform_pre_snapshot - Call platform to prepare the machine for hibernation.
+  * @platform_mode: Whether or not to use the platform driver.
+  *
+  * Use the platform driver to prepare the system for creating a hibernate image,
+  * if so configured, and return an error code if that fails.
   */
  
 -static int platform_pre_snapshot(int platform_mode)
@@ -3978,10 +3980,14 @@ index 1832bd2..434f5ba 100644
 +EXPORT_SYMBOL_GPL(platform_pre_snapshot);
  
  /**
-  *	platform_leave - prepare the machine for switching to the normal mode
-  *	of operation using the platform driver (called with interrupts disabled)
+  * platform_leave - Call platform to prepare a transition to the working state.
+  * @platform_mode: Whether or not to use the platform driver.
+  *
+  * Use the platform driver prepare to prepare the machine for switching to the
+  * normal mode of operation.
+  *
+  * This routine is called on one CPU with interrupts disabled.
   */
- 
 -static void platform_leave(int platform_mode)
 +void platform_leave(int platform_mode)
  {
@@ -3991,10 +3997,14 @@ index 1832bd2..434f5ba 100644
 +EXPORT_SYMBOL_GPL(platform_leave);
  
  /**
-  *	platform_finish - switch the machine to the normal mode of operation
-  *	using the platform driver (must be called after platform_prepare())
+  * platform_finish - Call platform to switch the system to the working state.
+  * @platform_mode: Whether or not to use the platform driver.
+  *
+  * Use the platform driver to switch the machine to the normal mode of
+  * operation.
+  *
+  * This routine must be called after platform_prepare().
   */
- 
 -static void platform_finish(int platform_mode)
 +void platform_finish(int platform_mode)
  {
@@ -4004,11 +4014,11 @@ index 1832bd2..434f5ba 100644
 +EXPORT_SYMBOL_GPL(platform_finish);
  
  /**
-  *	platform_pre_restore - prepare the platform for the restoration from a
+  * platform_pre_restore - Prepare for hibernate image restoration.
 @@ -174,11 +180,12 @@ static void platform_finish(int platform_mode)
-  *	called, platform_restore_cleanup() must be called.
+  * If the restore fails after this function has been called,
+  * platform_restore_cleanup() must be called.
   */
- 
 -static int platform_pre_restore(int platform_mode)
 +int platform_pre_restore(int platform_mode)
  {
@@ -4018,11 +4028,11 @@ index 1832bd2..434f5ba 100644
 +EXPORT_SYMBOL_GPL(platform_pre_restore);
  
  /**
-  *	platform_restore_cleanup - switch the platform to the normal mode of
-@@ -187,22 +194,24 @@ static int platform_pre_restore(int platform_mode)
-  *	regardless of the result of platform_pre_restore().
+  * platform_restore_cleanup - Switch to the working state after failing restore.
+@@ -187,21 +194,23 @@ static int platform_pre_restore(int platform_mode)
+  * function must be called too, regardless of the result of
+  * platform_pre_restore().
   */
- 
 -static void platform_restore_cleanup(int platform_mode)
 +void platform_restore_cleanup(int platform_mode)
  {
@@ -4032,10 +4042,9 @@ index 1832bd2..434f5ba 100644
 +EXPORT_SYMBOL_GPL(platform_restore_cleanup);
  
  /**
-  *	platform_recover - recover the platform from a failure to suspend
-  *	devices.
+  * platform_recover - Recover from a failure to suspend devices.
+  * @platform_mode: Whether or not to use the platform driver.
   */
- 
 -static void platform_recover(int platform_mode)
 +void platform_recover(int platform_mode)
  {
@@ -4045,7 +4054,7 @@ index 1832bd2..434f5ba 100644
 +EXPORT_SYMBOL_GPL(platform_recover);
  
  /**
-  *	swsusp_show_speed - print the time elapsed between two events.
+  * swsusp_show_speed - Print time elapsed between two events during hibernation.
 @@ -545,6 +554,7 @@ int hibernation_platform_enter(void)
  
  	return error;
@@ -4065,9 +4074,9 @@ index 1832bd2..434f5ba 100644
  	/* The snapshot device should not be opened while we're running */
  	if (!atomic_add_unless(&snapshot_device_available, -1, 0)) {
 @@ -680,11 +693,19 @@ int hibernate(void)
-  *
+  * attempts to recover gracefully and make the kernel return to the normal mode
+  * of operation.
   */
- 
 -static int software_resume(void)
 +int software_resume(void)
  {
