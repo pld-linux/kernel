@@ -92,9 +92,9 @@
 %define		have_pcmcia	0
 %endif
 
-%define		basever		2.6.39
-%define		postver		.2
-%define		rel		0.1
+%define		basever		3.0
+%define		postver		%{nil}
+%define		rel		0.rc6.1
 
 %define		_enable_debug_packages			0
 
@@ -137,10 +137,11 @@ Release:	%{rel}
 Epoch:		3
 License:	GPL v2
 Group:		Base/Kernel
-Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{basever}.tar.bz2
-# Source0-md5:	1aab7a741abe08d42e8eccf20de61e05
+#Source0:	http://www.kernel.org/pub/linux/kernel/v3.0/linux-%{basever}.tar.bz2
+Source0:	http://www.kernel.org/pub/linux/kernel/v3.0/testing/linux-%{basever}-rc6.tar.bz2
+# Source0-md5:	d34fc8bbce141244d2dceb6c23d50ca
 %if "%{postver}" != "%{nil}"
-Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
+Source1:	http://www.kernel.org/pub/linux/kernel/v3.0/patch-%{version}.bz2
 # Source1-md5:	6f81e64e790eb7847773eec4f7cbf207
 %endif
 
@@ -397,7 +398,7 @@ BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 %endif
 
 %define		topdir		%{_builddir}/%{name}-%{version}
-%define		srcdir		%{topdir}/linux-%{basever}
+%define		srcdir		%{topdir}/linux-%{basever}-rc6
 %define		objdir		%{topdir}/%{targetobj}
 %define		targetobj	%{_target_base_arch}-gcc-%(%{kgcc} -dumpversion)
 
@@ -664,7 +665,7 @@ Pakiet zawiera dokumentację do jądra Linuksa pochodzącą z katalogu
 %setup -qc
 ln -s %{SOURCE7} kernel-module-build.pl
 ln -s %{SOURCE10} Makefile
-cd linux-%{basever}
+cd linux-%{basever}-rc6
 
 # hack against warning in pax/grsec
 sed -i 's/-Werror//' arch/alpha/kernel/Makefile
