@@ -5567,7 +5567,7 @@ new file mode 100644
 index 0000000..1d5ff49
 --- /dev/null
 +++ b/kernel/power/tuxonice_atomic_copy.c
-@@ -0,0 +1,450 @@
+@@ -0,0 +1,437 @@
 +/*
 + * kernel/power/tuxonice_atomic_copy.c
 + *
@@ -5923,12 +5923,6 @@ index 0000000..1d5ff49
 +		return 1;
 +	}
 +
-+	if (suspend_time && arch_prepare_suspend()) {
-+		set_abort_result(TOI_ARCH_PREPARE_FAILED);
-+		toi_end_atomic(ATOMIC_STEP_DEVICE_RESUME, suspend_time, 1);
-+		return 1;
-+	}
-+
 +	/* At this point, dpm_suspend_start() has been called, but *not*
 +	 * dpm_suspend_noirq(). We *must* dpm_suspend_noirq() now.
 +	 * Otherwise, drivers for some devices (e.g. interrupt controllers)
@@ -5965,12 +5959,6 @@ index 0000000..1d5ff49
 +
 +	local_irq_disable();
 +
-+	if (sysdev_suspend(state)) {
-+		set_abort_result(TOI_SYSDEV_REFUSED);
-+		toi_end_atomic(ATOMIC_STEP_IRQS, suspend_time, 1);
-+		return 1;
-+	}
-+
 +	if (pm_wakeup_pending()) {
 +		set_abort_result(TOI_WAKEUP_EVENT);
 +		toi_end_atomic(ATOMIC_STEP_SYSDEV_RESUME, suspend_time, 1);
@@ -5994,7 +5982,6 @@ index 0000000..1d5ff49
 +			platform_leave(1);
 +		}
 +	case ATOMIC_STEP_SYSDEV_RESUME:
-+		sysdev_resume();
 +	case ATOMIC_STEP_IRQS:
 +		local_irq_enable();
 +	case ATOMIC_STEP_CPU_HOTPLUG:
