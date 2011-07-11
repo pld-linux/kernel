@@ -99,7 +99,6 @@
 %define		_enable_debug_packages			0
 
 %define		tuxonice_version	3.2
-%define		netfilter_snap		20070806
 
 %if %{with myown}
 %if "%{_alt_kernel}" == ""
@@ -161,7 +160,6 @@ Source23:	kernel-alpha.config
 Source24:	kernel-powerpc.config
 Source25:	kernel-ia64.config
 
-Source40:	kernel-netfilter.config
 Source41:	kernel-patches.config
 Source42:	kernel-tuxonice.config
 Source43:	kernel-vserver.config
@@ -174,7 +172,6 @@ Source56:	kernel-reiser4.config
 Source57:	kernel-wrr.config
 
 Source58:	kernel-inittmpfs.config
-Source59:	kernel-bzip2-lzma.config
 
 # http://dev.gentoo.org/~spock/projects/fbcondecor/archive/fbcondecor-0.9.4-2.6.25-rc6.patch
 Patch3:		kernel-fbcondecor.patch
@@ -331,7 +328,7 @@ Requires:	coreutils
 Requires:	geninitrd >= 10000-3
 Requires:	module-init-tools >= 0.9.9
 Suggests:	keyutils
-Provides:	%{name}(netfilter) = %{netfilter_snap}
+Provides:	%{name}(netfilter) = 20070806
 Provides:	%{name}(vermagic) = %{kernel_release}
 Obsoletes:	kernel%{_alt_kernel}-isdn-mISDN
 Obsoletes:	kernel-firmware
@@ -434,7 +431,7 @@ BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 %endif
 %define MakeOpts %{CrossOpts} HOSTCC="%{__cc}"
 
-%define __features Netfilter module dated: %{netfilter_snap}\
+%define __features \
 %{?with_grsecurity:Grsecurity support - enabled}\
 %{?with_pax:PaX support - enabled}\
 %{?with_fbcondecor:Fbsplash/fbcondecor - enabled }\
@@ -571,7 +568,7 @@ Summary:	Header files for the Linux kernel
 Summary(de.UTF-8):	Header Dateien für den Linux-Kernel
 Summary(pl.UTF-8):	Pliki nagłówkowe jądra Linuksa
 Group:		Development/Building
-Provides:	%{name}-headers(netfilter) = %{netfilter_snap}
+Provides:	%{name}-headers(netfilter) = 20070806
 AutoReqProv:	no
 
 %description headers
@@ -986,7 +983,6 @@ EOCONFIG
 %if %{without vanilla}
 %if %{with rescuecd}
 		%{SOURCE58} \
-		%{SOURCE59} \
 		rescue.config \
 %endif
 		\
@@ -1020,7 +1016,6 @@ EOCONFIG
 %endif
 		%{SOURCE41} %{?0:patches} \
 %endif
-		%{SOURCE40} %{?0:netfilter} \
 		%{SOURCE20} \
 		$RPM_SOURCE_DIR/$Config
 }
