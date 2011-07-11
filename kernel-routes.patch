@@ -34,9 +34,9 @@ diff -urp v2.6.39/linux/include/net/ip_fib.h linux/include/net/ip_fib.h
  
  /* Exported by fib_frontend.c */
 @@ -230,7 +232,8 @@ extern void		ip_fib_init(void);
- extern int fib_validate_source(__be32 src, __be32 dst, u8 tos, int oif,
- 			       struct net_device *dev, __be32 *spec_dst,
- 			       u32 *itag, u32 mark);
+ extern int fib_validate_source(struct sk_buff *skb, __be32 src, __be32 dst,
+ 			       u8 tos, int oif, struct net_device *dev,
+ 			       __be32 *spec_dst, u32 *itag);
 -extern void fib_select_default(struct fib_result *res);
 +extern void fib_select_default(const struct flowi4 *flp,
 +			       struct fib_result *res);
@@ -94,9 +94,9 @@ diff -urp v2.6.39/linux/include/net/route.h linux/include/net/route.h
  }
  
 +extern int		ip_route_input_lookup(struct sk_buff*, __be32 dst, __be32 src, u8 tos, struct net_device *devin, __be32 lsrc);
- extern unsigned short	ip_rt_frag_needed(struct net *net, struct iphdr *iph, unsigned short new_mtu, struct net_device *dev);
+ extern unsigned short	ip_rt_frag_needed(struct net *net, const struct iphdr *iph,
+ 					  unsigned short new_mtu, struct net_device *dev);
  extern void		ip_rt_send_redirect(struct sk_buff *skb);
- 
 diff -urp v2.6.39/linux/net/bridge/br_netfilter.c linux/net/bridge/br_netfilter.c
 --- v2.6.39/linux/net/bridge/br_netfilter.c	2011-05-15 14:05:57.000000000 +0300
 +++ linux/net/bridge/br_netfilter.c	2011-05-15 14:07:59.980246190 +0300
@@ -896,7 +896,7 @@ diff -urp v2.6.39/linux/net/ipv4/route.c linux/net/ipv4/route.c
  		(rt1->rt_mark ^ rt2->rt_mark) |
 +		((__force u32)rt1->rt_key_lsrc ^ (__force u32)rt2->rt_key_lsrc) |
 +		((__force u32)rt1->rt_key_gw ^ (__force u32)rt2->rt_key_gw) |
- 		(rt1->rt_tos ^ rt2->rt_tos) |
+ 		(rt1->rt_key_tos ^ rt2->rt_key_tos) |
  		(rt1->rt_oif ^ rt2->rt_oif) |
  		(rt1->rt_iif ^ rt2->rt_iif)) == 0;
 @@ -1614,6 +1616,8 @@ static int check_peer_redir(struct dst_e
@@ -918,21 +918,21 @@ diff -urp v2.6.39/linux/net/ipv4/route.c linux/net/ipv4/route.c
  		}
  	} else {
 @@ -1887,6 +1893,7 @@ static int ip_route_input_mc(struct sk_b
- 	rth->rt_tos	= tos;
- 	rth->rt_mark    = skb->mark;
+ 
+ 	rth->rt_key_dst	= daddr;
  	rth->rt_key_src	= saddr;
 +	rth->rt_key_lsrc = 0;
- 	rth->rt_src	= saddr;
- #ifdef CONFIG_IP_ROUTE_CLASSID
- 	rth->dst.tclassid = itag;
+ 	rth->rt_genid	= rt_genid(dev_net(dev));
+ 	rth->rt_flags	= RTCF_MULTICAST;
+ 	rth->rt_type	= RTN_MULTICAST;
 @@ -1896,6 +1903,7 @@ static int ip_route_input_mc(struct sk_b
- 	rth->dst.dev	= init_net.loopback_dev;
- 	dev_hold(rth->dst.dev);
+ 	rth->rt_route_iif = dev->ifindex;
+ 	rth->rt_iif	= dev->ifindex;
  	rth->rt_oif	= 0;
 +	rth->rt_key_gw	= daddr;
+ 	rth->rt_mark    = skb->mark;
  	rth->rt_gateway	= daddr;
  	rth->rt_spec_dst= spec_dst;
- 	rth->rt_genid	= rt_genid(dev_net(dev));
 @@ -1962,7 +1970,7 @@ static int __mkroute_input(struct sk_buf
  			   const struct fib_result *res,
  			   struct in_device *in_dev,
@@ -950,17 +950,22 @@ diff -urp v2.6.39/linux/net/ipv4/route.c linux/net/ipv4/route.c
  	    (IN_DEV_SHARED_MEDIA(out_dev) ||
  	     inet_addr_onlink(out_dev, saddr, FIB_RES_GW(*res))))
  		flags |= RTCF_DOREDIRECT;
-@@ -2025,8 +2034,10 @@ static int __mkroute_input(struct sk_buf
- 	rth->rt_tos	= tos;
- 	rth->rt_mark    = skb->mark;
+@@ -2025,6 +2034,7 @@ static int __mkroute_input(struct sk_buf
+ 
+ 	rth->rt_key_dst	= daddr;
  	rth->rt_key_src	= saddr;
 +	rth->rt_key_lsrc = lsrc;
- 	rth->rt_src	= saddr;
+ 	rth->rt_genid = rt_genid(dev_net(rth->dst.dev));
+ 	rth->rt_flags = flags;
+ 	rth->rt_type = res->type;
+@@ -2035,6 +2044,7 @@ static int __mkroute_input(struct sk_buf
+ 	rth->rt_oif 	= 0;
+ 	rth->rt_mark    = skb->mark;
  	rth->rt_gateway	= daddr;
 +	rth->rt_key_gw	= 0;
- 	rth->rt_route_iif = in_dev->dev->ifindex;
- 	rth->rt_iif 	= in_dev->dev->ifindex;
- 	rth->dst.dev	= (out_dev)->dev;
+ 	rth->rt_spec_dst= spec_dst;
+ 	rth->rt_peer_genid = 0;
+ 	rth->peer = NULL;
 @@ -2050,21 +2061,23 @@ static int __mkroute_input(struct sk_buf
  
  static int ip_mkroute_input(struct sk_buff *skb,
@@ -1051,12 +1056,12 @@ diff -urp v2.6.39/linux/net/ipv4/route.c linux/net/ipv4/route.c
  		spec_dst = inet_select_addr(dev, 0, RT_SCOPE_LINK);
 @@ -2208,6 +2234,7 @@ local_input:
  	rth->rt_iif	= dev->ifindex;
- 	rth->dst.dev	= net->loopback_dev;
- 	dev_hold(rth->dst.dev);
+ 	rth->rt_oif	= 0;
+ 	rth->rt_mark    = skb->mark;
 +	rth->rt_key_gw	= 0;
  	rth->rt_gateway	= daddr;
  	rth->rt_spec_dst= spec_dst;
- 	rth->dst.input= ip_local_deliver;
+ 	rth->rt_peer_genid = 0;
 @@ -2263,8 +2290,9 @@ martian_source_keep_err:
  	goto out;
  }
@@ -1105,53 +1110,47 @@ diff -urp v2.6.39/linux/net/ipv4/route.c linux/net/ipv4/route.c
  static struct rtable *__mkroute_output(const struct fib_result *res,
  				       const struct flowi4 *fl4,
 @@ -2401,6 +2443,7 @@ static struct rtable *__mkroute_output(c
- 	rth->rt_tos	= tos;
- 	rth->rt_key_src	= oldflp4->saddr;
- 	rth->rt_oif	= oldflp4->flowi4_oif;
-+	rth->rt_key_gw	= oldflp4->fl4_gw;
- 	rth->rt_mark    = oldflp4->flowi4_mark;
+ 	rth->rt_key_tos	= tos;
  	rth->rt_dst	= fl4->daddr;
  	rth->rt_src	= fl4->saddr;
-@@ -2471,6 +2514,7 @@ static struct rtable *ip_route_output_sl
- 	fl4.flowi4_mark = oldflp4->flowi4_mark;
- 	fl4.daddr = oldflp4->daddr;
- 	fl4.saddr = oldflp4->saddr;
-+	fl4.fl4_gw = oldflp4->fl4_gw;
- 	fl4.flowi4_tos = tos & IPTOS_RT_MASK;
- 	fl4.flowi4_scope = ((tos & RTO_ONLINK) ?
- 			RT_SCOPE_LINK : RT_SCOPE_UNIVERSE);
++	rth->rt_key_gw	= fl4->fl4_gw;
+ 	rth->rt_route_iif = 0;
+ 	rth->rt_iif	= orig_oif ? : dev_out->ifindex;
+ 	rth->rt_oif	= orig_oif;
 @@ -2560,6 +2604,7 @@ static struct rtable *ip_route_output_sl
- 			fl4.daddr = fl4.saddr = htonl(INADDR_LOOPBACK);
+ 			fl4->daddr = fl4->saddr = htonl(INADDR_LOOPBACK);
  		dev_out = net->loopback_dev;
- 		fl4.flowi4_oif = net->loopback_dev->ifindex;
-+		fl4.fl4_gw = 0;
+ 		fl4->flowi4_oif = net->loopback_dev->ifindex;
++		fl4->fl4_gw = 0;
  		res.type = RTN_LOCAL;
  		flags |= RTCF_LOCAL;
  		goto make_route;
-@@ -2605,18 +2650,18 @@ static struct rtable *ip_route_output_sl
+@@ -2605,20 +2650,18 @@ static struct rtable *ip_route_output_sl
  		}
  		dev_out = net->loopback_dev;
- 		fl4.flowi4_oif = dev_out->ifindex;
-+		fl4.fl4_gw = 0;
+ 		fl4->flowi4_oif = dev_out->ifindex;
++		fl4->fl4_gw = 0;
  		res.fi = NULL;
  		flags |= RTCF_LOCAL;
  		goto make_route;
  	}
  
 +	if (res.type == RTN_UNICAST)
-+		fib_select_default(&fl4, &res);
++		fib_select_default(fl4, &res);
  #ifdef CONFIG_IP_ROUTE_MULTIPATH
--	if (res.fi->fib_nhs > 1 && fl4.flowi4_oif == 0)
+-	if (res.fi->fib_nhs > 1 && fl4->flowi4_oif == 0)
 -		fib_select_multipath(&res);
 -	else
 +	if (res.fi->fib_nhs > 1)
-+		fib_select_multipath(&fl4, &res);
++		fib_select_multipath(fl4, &res);
  #endif
--	if (!res.prefixlen && res.type == RTN_UNICAST && !fl4.flowi4_oif)
+-	if (!res.prefixlen &&
+-	    res.table->tb_num_default > 1 &&
+-	    res.type == RTN_UNICAST && !fl4->flowi4_oif)
 -		fib_select_default(&res);
  
- 	if (!fl4.saddr)
- 		fl4.saddr = FIB_RES_PREFSRC(net, res);
+ 	if (!fl4->saddr)
+ 		fl4->saddr = FIB_RES_PREFSRC(net, res);
 @@ -2657,6 +2702,7 @@ struct rtable *__ip_route_output_key(str
  		    rth->rt_key_src == flp4->saddr &&
  		    rt_is_output_route(rth) &&
