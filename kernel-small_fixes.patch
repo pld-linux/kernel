@@ -59,3 +59,102 @@ index 2494842..edf37aa 100644
  	/* block receiver */
  	sky2_write8(hw, SK_REG(port, RX_GMF_CTRL_T), GMF_RST_SET);
  }
+Date: Mon, 11 Jul 2011 09:59:57 -0400
+From: Christoph Hellwig <hch@infradead.org>
+To: xfs@oss.sgi.com
+Cc: arekm@maven.pl
+Subject: [PATCH] xfs: start periodic workers later
+Message-ID: <20110711135957.GA23737@infradead.org>
+MIME-Version: 1.0
+Content-Type: text/plain;
+  charset=us-ascii
+Content-Disposition: inline
+User-Agent: Mutt/1.5.21 (2010-09-15)
+
+Start the periodic sync workers only after we have finished xfs_mountfs
+and thus fully set up the filesystem structures.  Without this we can
+call into xfs_qm_sync before the quotainfo strucute is set up if the
+mount takes unusually long, and probably hit other incomplete states
+as well.
+
+Also clean up the xfs_fs_fill_super error path by using consistent
+label names, and removing an impossible to reach case.
+
+Reported-by: Arkadiusz Miskiewicz <arekm@maven.pl>
+Signed-off-by: Christoph Hellwig <hch@lst.de>
+
+Index: xfs/fs/xfs/linux-2.6/xfs_super.c
+===================================================================
+--- xfs.orig/fs/xfs/linux-2.6/xfs_super.c	2011-07-11 12:02:56.762758869 +0200
++++ xfs/fs/xfs/linux-2.6/xfs_super.c	2011-07-11 12:09:20.817344934 +0200
+@@ -1411,37 +1411,35 @@ xfs_fs_fill_super(
+ 	sb->s_time_gran = 1;
+ 	set_posix_acl_flag(sb);
+ 
+-	error = xfs_syncd_init(mp);
+-	if (error)
+-		goto out_filestream_unmount;
+-
+ 	xfs_inode_shrinker_register(mp);
+ 
+ 	error = xfs_mountfs(mp);
+ 	if (error)
+-		goto out_syncd_stop;
++		goto out_filestream_unmount;
++
++	error = xfs_syncd_init(mp);
++	if (error)
++		goto out_unmount;
+ 
+ 	root = igrab(VFS_I(mp->m_rootip));
+ 	if (!root) {
+ 		error = ENOENT;
+-		goto fail_unmount;
++		goto out_syncd_stop;
+ 	}
+ 	if (is_bad_inode(root)) {
+ 		error = EINVAL;
+-		goto fail_vnrele;
++		goto out_syncd_stop;
+ 	}
+ 	sb->s_root = d_alloc_root(root);
+ 	if (!sb->s_root) {
+ 		error = ENOMEM;
+-		goto fail_vnrele;
++		goto out_iput;
+ 	}
+ 
+ 	return 0;
+ 
+- out_syncd_stop:
+-	xfs_inode_shrinker_unregister(mp);
+-	xfs_syncd_stop(mp);
+  out_filestream_unmount:
++	xfs_inode_shrinker_unregister(mp);
+ 	xfs_filestream_unmount(mp);
+  out_free_sb:
+ 	xfs_freesb(mp);
+@@ -1455,17 +1453,12 @@ xfs_fs_fill_super(
+  out:
+ 	return -error;
+ 
+- fail_vnrele:
+-	if (sb->s_root) {
+-		dput(sb->s_root);
+-		sb->s_root = NULL;
+-	} else {
+-		iput(root);
+-	}
+-
+- fail_unmount:
+-	xfs_inode_shrinker_unregister(mp);
++ out_iput:
++	iput(root);
++ out_syncd_stop:
+ 	xfs_syncd_stop(mp);
++ out_unmount:
++	xfs_inode_shrinker_unregister(mp);
+ 
+ 	/*
+ 	 * Blow away any referenced inode in the filestreams cache.
+
