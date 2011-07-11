@@ -26002,13 +26002,13 @@ diff -NurpP --minimal linux-3.0-rc5/netfilter/ipvs/ip_vs_xmit.c linux-3.0-rc5-vs
 +++ linux-3.0-rc5-vs2.3.1-pre3/net/netfilter/ipvs/ip_vs_xmit.c
 @@ -213,7 +213,7 @@ __ip_vs_route_output_v6(struct net *net,
 		return dst;
-	if (ipv6_addr_any(&fl.fl6_src) &&
+	if (ipv6_addr_any(&fl6.saddr) &&
 	    ipv6_dev_get_saddr(net, ip6_dst_idev(dst)->dev,
--			       &fl.fl6_dst, 0, &fl.fl6_src) < 0)
-+			       &fl.fl6_dst, 0, &fl.fl6_src, NULL) < 0)
+-			       &fl6.daddr, 0, &fl6.saddr) < 0)
++			       &fl6.daddr, 0, &fl6.saddr, NULL) < 0)
 		goto out_err;
-	if (do_xfrm && xfrm_lookup(net, &dst, &fl, NULL, 0) < 0)
-		goto out_err;
+ 	if (do_xfrm) {
+ 		dst = xfrm_lookup(net, dst, flowi6_to_flowi(&fl6), NULL, 0);
 diff -NurpP --minimal linux-3.0-rc5/net/netlink/af_netlink.c linux-3.0-rc5-vs2.3.1-pre3/net/netlink/af_netlink.c
 --- linux-3.0-rc5/net/netlink/af_netlink.c	2011-07-01 11:14:27.000000000 +0200
 +++ linux-3.0-rc5-vs2.3.1-pre3/net/netlink/af_netlink.c	2011-06-10 22:11:24.000000000 +0200
