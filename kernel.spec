@@ -230,6 +230,7 @@ Patch59:	kernel-rndis_host-wm5.patch
 # Project suspend2 renamed to tuxonice
 # http://tuxonice.net/files/current-tuxonice-for-2.6.37.patch_0.bz2
 # NOTE: currently using own diff from tuxonice git tree until official patch is released
+# git://git.kernel.org/pub/scm/linux/kernel/git/nigelc/tuxonice-head.git
 Patch69:	kernel-tuxonice.patch
 Patch70:	kernel-tuxonice-headers.patch
 
