@@ -139,7 +139,7 @@ License:	GPL v2
 Group:		Base/Kernel
 #Source0:	http://www.kernel.org/pub/linux/kernel/v3.0/linux-%{basever}.tar.bz2
 Source0:	http://www.kernel.org/pub/linux/kernel/v3.0/testing/linux-%{basever}-rc6.tar.bz2
-# Source0-md5:	d34fc8bbce141244d2dceb6c23d50ca
+# Source0-md5:	d34fc8bbce141244d2dceb6c23d50ca 8
 %if "%{postver}" != "%{nil}"
 Source1:	http://www.kernel.org/pub/linux/kernel/v3.0/patch-%{version}.bz2
 # Source1-md5:	6f81e64e790eb7847773eec4f7cbf207
@@ -274,7 +274,7 @@ Patch250:	kernel-fix_256colors_menuconfig.patch
 # alternative routes, the reverse path protection (rp_filter),
 # the NAT processing to use correctly the routing when multiple
 # gateways are used.
-# http://www.ssi.bg/~ja/routes-2.6.38-16.diff
+# http://www.ssi.bg/~ja/routes-2.6.39-16.diff
 Patch300:	kernel-routes.patch
 
 # https://patchwork.kernel.org/patch/236261/
@@ -283,8 +283,6 @@ Patch400:	kernel-virtio-gl-accel.patch
 Patch2000:	kernel-small_fixes.patch
 Patch2001:	kernel-pwc-uncompress.patch
 Patch2003:	kernel-regressions.patch
-
-Patch2200:	kernel-xfs-delaylog.patch
 
 # 0001-AppArmor-compatibility-patch-for-v5-network-controll.patch
 # 0002-AppArmor-compatibility-patch-for-v5-interface.patch
@@ -771,8 +769,6 @@ sed -i 's/-Werror//' arch/alpha/kernel/Makefile
 
 # unionfs
 %patch140 -p1
-
-%patch2200 -p1
 
 %if %{with rescuecd}
 %patch7000 -p1
