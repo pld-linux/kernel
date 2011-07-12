@@ -40,7 +40,7 @@
 %bcond_without	ipv6		# ipv6 support
 
 %bcond_without	vserver		# support for VServer (enabled by default)
-%bcond_without	tuxonice	# support for tuxonice (ex-suspend2) (enabled by default)
+%bcond_with	tuxonice	# support for tuxonice (ex-suspend2) (enabled by default)
 
 %bcond_with	vanilla		# don't include any patches
 %bcond_with	rescuecd	# build kernel for our rescue
@@ -94,7 +94,7 @@
 
 %define		basever		3.0
 %define		postver		%{nil}
-%define		rel		0.rc6.1
+%define		rel		0.rc7.1
 
 %define		_enable_debug_packages			0
 
@@ -137,8 +137,8 @@ Epoch:		3
 License:	GPL v2
 Group:		Base/Kernel
 #Source0:	http://www.kernel.org/pub/linux/kernel/v3.0/linux-%{basever}.tar.bz2
-Source0:	http://www.kernel.org/pub/linux/kernel/v3.0/testing/linux-%{basever}-rc6.tar.bz2
-# Source0-md5:	d34fc8bbce141244d2dceb6c23d50ca 8
+Source0:	http://www.kernel.org/pub/linux/kernel/v3.0/testing/linux-%{basever}-rc7.tar.bz2
+# Source0-md5:	a1c1c1c6158f22936a4763afbd339f5 a
 %if "%{postver}" != "%{nil}"
 Source1:	http://www.kernel.org/pub/linux/kernel/v3.0/patch-%{version}.bz2
 # Source1-md5:	6f81e64e790eb7847773eec4f7cbf207
@@ -394,7 +394,7 @@ BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 %endif
 
 %define		topdir		%{_builddir}/%{name}-%{version}
-%define		srcdir		%{topdir}/linux-%{basever}-rc6
+%define		srcdir		%{topdir}/linux-%{basever}-rc7
 %define		objdir		%{topdir}/%{targetobj}
 %define		targetobj	%{_target_base_arch}-gcc-%(%{kgcc} -dumpversion)
 
@@ -661,7 +661,7 @@ Pakiet zawiera dokumentację do jądra Linuksa pochodzącą z katalogu
 %setup -qc
 ln -s %{SOURCE7} kernel-module-build.pl
 ln -s %{SOURCE10} Makefile
-cd linux-%{basever}-rc6
+cd linux-%{basever}-rc7
 
 # hack against warning in pax/grsec
 sed -i 's/-Werror//' arch/alpha/kernel/Makefile
