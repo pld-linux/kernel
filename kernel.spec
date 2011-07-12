@@ -317,8 +317,8 @@ BuildRequires:	gcc >= 5:3.2
 BuildRequires:	xz >= 1:4.999.7
 AutoReqProv:	no
 # for hostname command
+BuildRequires:	hostname
 BuildRequires:	module-init-tools >= %{module_init_tools_ver}
-BuildRequires:	net-tools
 BuildRequires:	perl-base
 BuildRequires:	rpm-build >= 4.5-24
 BuildRequires:	rpmbuild(macros) >= 1.217
