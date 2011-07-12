@@ -4652,15 +4652,20 @@ diff -NurpP --minimal linux-3.0-rc5/fs/locks.c linux-3.0-rc5-vs2.3.1-pre3/fs/loc
  
  #include <asm/uaccess.h>
  
-@@ -163,6 +165,8 @@ static struct kmem_cache *filelock_cache
+@@ -163,7 +165,12 @@ static struct kmem_cache *filelock_cache
  /* Allocate an empty lock structure. */
  struct file_lock *locks_alloc_lock(void)
  {
+-	struct file_lock *fl = kmem_cache_alloc(filelock_cache, GFP_KERNEL);
++	struct file_lock *fl;
++
 +	if (!vx_locks_avail(1))
 +		return NULL;
- 	return kmem_cache_alloc(filelock_cache, GFP_KERNEL);
- }
- EXPORT_SYMBOL_GPL(locks_alloc_lock);
++
++	fl = kmem_cache_alloc(filelock_cache, GFP_KERNEL);
+ 
+ 	if (fl)
+ 		locks_init_lock_always(fl);
 @@ -190,6 +194,7 @@ void locks_free_lock(struct file_lock *f
  	BUG_ON(!list_empty(&fl->fl_block));
  	BUG_ON(!list_empty(&fl->fl_link));
@@ -4670,13 +4675,13 @@ diff -NurpP --minimal linux-3.0-rc5/fs/locks.c linux-3.0-rc5-vs2.3.1-pre3/fs/loc
  	kmem_cache_free(filelock_cache, fl);
  }
 @@ -211,6 +216,7 @@ void locks_init_lock(struct file_lock *f
+ 	fl->fl_flags = 0;
+ 	fl->fl_type = 0;
  	fl->fl_start = fl->fl_end = 0;
- 	fl->fl_ops = NULL;
- 	fl->fl_lmops = NULL;
 +	fl->fl_xid = -1;
  }
  
- EXPORT_SYMBOL(locks_init_lock);
+ /* Allocate an empty lock structure. */
 @@ -262,6 +268,7 @@ void locks_copy_lock(struct file_lock *n
  	new->fl_file = fl->fl_file;
  	new->fl_ops = fl->fl_ops;
