@@ -1406,7 +1406,6 @@ fi
 %ifarch ppc ppc64
 %{_kernelsrcdir}/arch/powerpc/lib/crtsavres.*
 %endif
-%exclude %dir %{_kernelsrcdir}/arch/m68knommu
 %exclude %dir %{_kernelsrcdir}/arch/um
 %{_kernelsrcdir}/arch/*/kernel/asm-offsets*
 %{_kernelsrcdir}/arch/*/kernel/sigframe*.h
@@ -1444,7 +1443,6 @@ fi
 %{_docdir}/%{name}-%{version}/[jkz]*.txt
 %{_docdir}/%{name}-%{version}/kbuild
 %{_docdir}/%{name}-%{version}/kdump
-%{_docdir}/%{name}-%{version}/kvm
 %lang(ja) %{_docdir}/%{name}-%{version}/ja_JP
 %lang(ko) %{_docdir}/%{name}-%{version}/ko_KR
 %lang(zh_CN) %{_docdir}/%{name}-%{version}/zh_CN
