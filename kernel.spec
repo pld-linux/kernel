@@ -100,6 +100,8 @@
 
 %define		tuxonice_version	3.2
 
+%define		module_init_tools_ver	3.16
+
 %if %{with myown}
 %if "%{_alt_kernel}" == ""
 %define		alt_kernel	myown
@@ -315,18 +317,18 @@ BuildRequires:	gcc >= 5:3.2
 BuildRequires:	xz >= 1:4.999.7
 AutoReqProv:	no
 # for hostname command
-BuildRequires:	module-init-tools >= 3.5
+BuildRequires:	module-init-tools >= %{module_init_tools_ver}
 BuildRequires:	net-tools
 BuildRequires:	perl-base
 BuildRequires:	rpm-build >= 4.5-24
 BuildRequires:	rpmbuild(macros) >= 1.217
 Requires(post):	coreutils
 Requires(post):	geninitrd >= 10000-3
-Requires(post):	module-init-tools >= 0.9.9
+Requires(post):	module-init-tools >= %{module_init_tools_ver}
 Requires:	/sbin/depmod
 Requires:	coreutils
 Requires:	geninitrd >= 10000-3
-Requires:	module-init-tools >= 0.9.9
+Requires:	module-init-tools >= %{module_init_tools_ver}
 Suggests:	keyutils
 Provides:	%{name}(netfilter) = 20070806
 Provides:	%{name}(vermagic) = %{kernel_release}
@@ -346,7 +348,6 @@ Conflicts:	e2fsprogs < 1.29
 Conflicts:	isdn4k-utils < 3.1pre1
 Conflicts:	jfsutils < 1.1.3
 Conflicts:	lvm2 < 2.02.40
-Conflicts:	module-init-tools < 0.9.10
 Conflicts:	nfs-utils < 1.0.5
 Conflicts:	oprofile < 0.9
 Conflicts:	ppp < 1:2.4.0
