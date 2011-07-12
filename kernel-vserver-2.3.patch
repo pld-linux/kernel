@@ -4652,7 +4652,15 @@ diff -NurpP --minimal linux-3.0-rc5/fs/locks.c linux-3.0-rc5-vs2.3.1-pre3/fs/loc
  
  #include <asm/uaccess.h>
  
-@@ -163,7 +165,12 @@ static struct kmem_cache *filelock_cache
+@@ -163,6 +168,7 @@ static void locks_init_lock_always(struc
+ 	fl->fl_flags = 0;
+ 	fl->fl_type = 0;
+ 	fl->fl_start = fl->fl_end = 0;
++	fl->fl_xid = -1;
+ }
+ 
+ /* Allocate an empty lock structure. */
+@@ -173,7 +175,12 @@ static struct kmem_cache *filelock_cache
  /* Allocate an empty lock structure. */
  struct file_lock *locks_alloc_lock(void)
  {
@@ -4674,14 +4682,6 @@ diff -NurpP --minimal linux-3.0-rc5/fs/locks.c linux-3.0-rc5-vs2.3.1-pre3/fs/loc
  	locks_release_private(fl);
  	kmem_cache_free(filelock_cache, fl);
  }
-@@ -211,6 +216,7 @@ void locks_init_lock(struct file_lock *f
- 	fl->fl_flags = 0;
- 	fl->fl_type = 0;
- 	fl->fl_start = fl->fl_end = 0;
-+	fl->fl_xid = -1;
- }
- 
- /* Allocate an empty lock structure. */
 @@ -262,6 +268,7 @@ void locks_copy_lock(struct file_lock *n
  	new->fl_file = fl->fl_file;
  	new->fl_ops = fl->fl_ops;
