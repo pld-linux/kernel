@@ -183,7 +183,6 @@ Patch5:		linux-wistron-amilo8210.patch
 # were ported to nf_conntrack.
 
 Patch10:	kernel-pom-ng-IPV4OPTSSTRIP.patch
-Patch11:	kernel-pom-ng-ipv4options.patch
 
 Patch16:	kernel-pom-ng-mms-conntrack-nat.patch
 Patch22:	kernel-pom-ng-rsh.patch
@@ -689,9 +688,6 @@ sed -i 's/-Werror//' arch/alpha/kernel/Makefile
 
 # kernel-pom-ng-IPV4OPTSSTRIP.patch
 %patch10 -p1
-
-# kernel-pom-ng-ipv4options.patch
-%patch11 -p1
 
 # kernel-pom-ng-mms-conntrack-nat.patch
 %patch16 -p1
