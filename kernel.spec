@@ -140,7 +140,7 @@ License:	GPL v2
 Group:		Base/Kernel
 #Source0:	http://www.kernel.org/pub/linux/kernel/v3.0/linux-%{basever}.tar.bz2
 Source0:	http://www.kernel.org/pub/linux/kernel/v3.0/testing/linux-%{basever}-rc7.tar.bz2
-# Source0-md5:	a1c1c1c6158f22936a4763afbd339f5 a
+# Source0-md5:	a1c1c1c6158f22936a4763afbd339f5a
 %if "%{postver}" != ".0"
 Source1:	http://www.kernel.org/pub/linux/kernel/v3.0/patch-%{version}.bz2
 # Source1-md5:	6f81e64e790eb7847773eec4f7cbf207
@@ -665,7 +665,7 @@ cd linux-%{basever}-rc7
 # hack against warning in pax/grsec
 sed -i 's/-Werror//' arch/alpha/kernel/Makefile
 
-%if "%{postver}" != "%{nil}"
+%if "%{postver}" != ".0"
 %{__bzip2} -dc %{SOURCE1} | patch -p1 -s
 %endif
 
@@ -804,7 +804,7 @@ sed -i 's/-Werror//' arch/alpha/kernel/Makefile
 #%patch50000 -p1
 
 # Fix EXTRAVERSION in main Makefile
-sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{postver}%{?alt_kernel:_%{alt_kernel}}#g' Makefile
+sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{?alt_kernel:_%{alt_kernel}}#g' Makefile
 
 # cleanup backups after patching
 find '(' -name '*~' -o -name '*.orig' -o -name '.gitignore' ')' -print0 | xargs -0 -r -l512 rm -f
