@@ -93,7 +93,7 @@
 %endif
 
 %define		basever		3.0
-%define		postver		%{nil}
+%define		postver		.0
 %define		rel		0.rc7.1
 
 %define		_enable_debug_packages			0
@@ -141,7 +141,7 @@ Group:		Base/Kernel
 #Source0:	http://www.kernel.org/pub/linux/kernel/v3.0/linux-%{basever}.tar.bz2
 Source0:	http://www.kernel.org/pub/linux/kernel/v3.0/testing/linux-%{basever}-rc7.tar.bz2
 # Source0-md5:	a1c1c1c6158f22936a4763afbd339f5 a
-%if "%{postver}" != "%{nil}"
+%if "%{postver}" != ".0"
 Source1:	http://www.kernel.org/pub/linux/kernel/v3.0/patch-%{version}.bz2
 # Source1-md5:	6f81e64e790eb7847773eec4f7cbf207
 %endif
