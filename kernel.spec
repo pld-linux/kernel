@@ -270,14 +270,6 @@ Patch148:	kernel-aufs2-reiser4.patch
 # Show normal colors in menuconfig with ncurses ABI 6
 Patch250:	kernel-fix_256colors_menuconfig.patch
 
-# The following patch extend the routing functionality in Linux
-# to support static routes (defined by user), new way to use the
-# alternative routes, the reverse path protection (rp_filter),
-# the NAT processing to use correctly the routing when multiple
-# gateways are used.
-# http://www.ssi.bg/~ja/routes-2.6.39-16.diff
-Patch300:	kernel-routes.patch
-
 # https://patchwork.kernel.org/patch/236261/
 Patch400:	kernel-virtio-gl-accel.patch
 
@@ -788,9 +780,6 @@ sed -i 's/-Werror//' arch/alpha/kernel/Makefile
 %patch5000 -p1
 
 %patch250 -p1
-
-# routes
-%patch300 -p1
 
 # virtio-gl
 %patch400 -p1
