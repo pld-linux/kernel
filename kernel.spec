@@ -94,7 +94,7 @@
 
 %define		basever		2.6.38
 %define		postver		.8
-%define		rel		1
+%define		rel		2
 
 %define		_enable_debug_packages			0
 
@@ -285,6 +285,10 @@ Patch2003:	kernel-regressions.patch
 Patch2200:	kernel-xfs-delaylog.patch
 
 Patch2300:	kernel-drm-intel-2011Q1.patch
+
+# two CVE fixes
+Patch1581:	kernel-CVE-2011-1581.patch
+Patch2484:	kernel-CVE-2011-2484.patch
 
 # kill some thousands of warnings
 # (only warnings, so just remove parts of this patch if conflics)
@@ -822,6 +826,11 @@ sed -i 's/-Werror//' arch/alpha/kernel/Makefile
 %patch2000 -p1
 %patch2001 -p1
 #%patch2003 -p1
+
+# two CVE fixes
+%patch1581 -p1
+%patch2484 -p1
+
 
 # Do not remove this, please!
 #%patch50000 -p1
