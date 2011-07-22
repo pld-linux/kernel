@@ -240,7 +240,7 @@ Patch70:	kernel-tuxonice-headers.patch
 # http://patches.aircrack-ng.org/hostap-kernel-2.6.18.patch
 Patch85:	kernel-hostap.patch
 
-# http://vserver.13thfloor.at/Experimental/patch-2.6.38.6-vs2.3.0.37-rc15.diff
+# http://vserver.13thfloor.at/Experimental/patch-3.0-rc7-vs2.3.1-pre5.diff
 Patch100:	kernel-vserver-2.3.patch
 Patch101:	kernel-vserver-fixes.patch
 
