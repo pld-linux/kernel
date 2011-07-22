@@ -94,7 +94,7 @@
 
 %define		basever		3.0
 %define		postver		.0
-%define		rel		0.rc7.1
+%define		rel		0.1
 
 %define		_enable_debug_packages			0
 
@@ -138,9 +138,8 @@ Release:	%{rel}
 Epoch:		3
 License:	GPL v2
 Group:		Base/Kernel
-#Source0:	http://www.kernel.org/pub/linux/kernel/v3.0/linux-%{basever}.tar.bz2
-Source0:	http://www.kernel.org/pub/linux/kernel/v3.0/testing/linux-%{basever}-rc7.tar.bz2
-# Source0-md5:	a1c1c1c6158f22936a4763afbd339f5a
+Source0:	http://www.kernel.org/pub/linux/kernel/v3.0/linux-%{basever}.tar.bz2
+# Source0-md5:	398e95866794def22b12dfbc15ce89c0
 %if "%{postver}" != ".0"
 Source1:	http://www.kernel.org/pub/linux/kernel/v3.0/patch-%{version}.bz2
 # Source1-md5:	6f81e64e790eb7847773eec4f7cbf207
@@ -387,7 +386,7 @@ BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 %endif
 
 %define		topdir		%{_builddir}/%{name}-%{version}
-%define		srcdir		%{topdir}/linux-%{basever}-rc7
+%define		srcdir		%{topdir}/linux-%{basever}
 %define		objdir		%{topdir}/%{targetobj}
 %define		targetobj	%{_target_base_arch}-gcc-%(%{kgcc} -dumpversion)
 
@@ -654,7 +653,7 @@ Pakiet zawiera dokumentację do jądra Linuksa pochodzącą z katalogu
 %setup -qc
 ln -s %{SOURCE7} kernel-module-build.pl
 ln -s %{SOURCE10} Makefile
-cd linux-%{basever}-rc7
+cd linux-%{basever}
 
 # hack against warning in pax/grsec
 sed -i 's/-Werror//' arch/alpha/kernel/Makefile
