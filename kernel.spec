@@ -94,7 +94,7 @@
 
 %define		basever		3.0
 %define		postver		.0
-%define		rel		0.1
+%define		rel		0.2
 
 %define		_enable_debug_packages			0
 
@@ -240,7 +240,7 @@ Patch70:	kernel-tuxonice-headers.patch
 # http://patches.aircrack-ng.org/hostap-kernel-2.6.18.patch
 Patch85:	kernel-hostap.patch
 
-# http://vserver.13thfloor.at/Experimental/patch-3.0-rc7-vs2.3.1-pre5.diff
+# http://vserver.13thfloor.at/Experimental/patch-3.0-vs2.3.1-pre6.diff
 Patch100:	kernel-vserver-2.3.patch
 Patch101:	kernel-vserver-fixes.patch
 
