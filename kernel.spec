@@ -94,7 +94,7 @@
 
 %define		basever		2.6.38
 %define		postver		.8
-%define		rel		3
+%define		rel		4
 
 %define		_enable_debug_packages			0
 
@@ -289,6 +289,9 @@ Patch2300:	kernel-drm-intel-2011Q1.patch
 # two CVE fixes
 Patch1581:	kernel-CVE-2011-1581.patch
 Patch2484:	kernel-CVE-2011-2484.patch
+
+# buffer overflow CVE fix
+Patch2700:	kernel-CVE-2011-2700.patch	
 
 # kill some thousands of warnings
 # (only warnings, so just remove parts of this patch if conflics)
@@ -831,6 +834,8 @@ sed -i 's/-Werror//' arch/alpha/kernel/Makefile
 %patch1581 -p1
 %patch2484 -p1
 
+# buffer overflow CVE patch
+%patch2700 -p1
 
 # Do not remove this, please!
 #%patch50000 -p1
