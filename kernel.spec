@@ -278,6 +278,9 @@ Patch300:	kernel-routes.patch
 # https://patchwork.kernel.org/patch/236261/
 Patch400:	kernel-virtio-gl-accel.patch
 
+# https://www.linuxant.com/alsa-driver/
+Patch500:	alsa-driver-linuxant.patch
+
 Patch2000:	kernel-small_fixes.patch
 Patch2001:	kernel-pwc-uncompress.patch
 Patch2003:	kernel-regressions.patch
@@ -822,6 +825,10 @@ sed -i 's/-Werror//' arch/alpha/kernel/Makefile
 
 # virtio-gl
 %patch400 -p1
+
+cd sound
+%patch500 -p2
+cd ..
 
 %endif # vanilla
 
