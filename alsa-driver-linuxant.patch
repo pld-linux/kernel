@@ -169,9 +169,8 @@ diff -urN --show-c-function alsa-driver-git20100411/alsa-kernel/pci/hda/hda_inte
  	snd_card_free(pci_get_drvdata(pci));
  	pci_set_drvdata(pci, NULL);
  }
-diff -urN --show-c-function alsa-driver-git20100411/alsa-kernel/pci/hda/patch_conexant.c alsa-driver-git20100411-hda/alsa-kernel/pci/hda/patch_conexant.c
---- alsa-driver-git20100411/alsa-kernel/pci/hda/patch_conexant.c	2010-04-11 13:42:02.000000000 -0400
-+++ alsa-driver-git20100411-hda/alsa-kernel/pci/hda/patch_conexant.c	2010-04-13 20:41:48.000000000 -0400
+--- kernel-2.6.38.8/sound/pci/hda/patch_conexant.c	2011-08-13 17:43:26.302928790 +0300
++++ kernel-2.6.38.8/sound/pci/hda/patch_conexant.c	2011-08-13 17:42:03.552387527 +0300
 @@ -1,10 +1,12 @@
  /*
 - * HD audio interface patch for Conexant HDA audio codec
@@ -201,7 +200,7 @@ diff -urN --show-c-function alsa-driver-git20100411/alsa-kernel/pci/hda/patch_co
  struct conexant_jack {
  
  	hda_nid_t nid;
-@@ -99,7 +109,7 @@
+@@ -107,7 +117,7 @@
  	int num_channel_mode;
  
  	/* PCM information */
@@ -210,10 +209,10 @@ diff -urN --show-c-function alsa-driver-git20100411/alsa-kernel/pci/hda/patch_co
  
  	unsigned int spdif_route;
  
-@@ -131,6 +141,14 @@
- 	unsigned int dc_enable;
- 	unsigned int dc_input_bias; /* offset into cxt5066_olpc_dc_bias */
+@@ -146,6 +156,14 @@
  	unsigned int mic_boost; /* offset into cxt5066_analog_mic_boost */
+ 
+ 	unsigned int beep_amp;
 +
 +	/* HSF modem */
 +	void *modem_devnode;
@@ -225,7 +224,7 @@ diff -urN --show-c-function alsa-driver-git20100411/alsa-kernel/pci/hda/patch_co
  };
  
  static int conexant_playback_pcm_open(struct hda_pcm_stream *hinfo,
-@@ -221,6 +239,42 @@
+@@ -236,6 +254,42 @@
  	return 0;
  }
  
@@ -268,7 +267,7 @@ diff -urN --show-c-function alsa-driver-git20100411/alsa-kernel/pci/hda/patch_co
  
  
  static struct hda_pcm_stream conexant_pcm_analog_playback = {
-@@ -301,33 +355,50 @@
+@@ -316,33 +370,50 @@
  	},
  };
  
@@ -336,9 +335,9 @@ diff -urN --show-c-function alsa-driver-git20100411/alsa-kernel/pci/hda/patch_co
  		info->pcm_type = HDA_PCM_TYPE_SPDIF;
  		info->stream[SNDRV_PCM_STREAM_PLAYBACK] =
  			conexant_pcm_digital_playback;
-@@ -339,6 +410,23 @@
- 			info->stream[SNDRV_PCM_STREAM_CAPTURE].nid =
- 				spec->dig_in_nid;
+@@ -453,6 +524,23 @@
+ 			}
+ 			jacks++;
  		}
 +
 +		info++;
@@ -358,9 +357,9 @@ diff -urN --show-c-function alsa-driver-git20100411/alsa-kernel/pci/hda/patch_co
 +		info++;
 +		codec->num_pcms++;
  	}
+ }
  
- 	return 0;
-@@ -476,20 +564,68 @@
+@@ -499,20 +587,68 @@
  }
  #endif
  
@@ -431,7 +430,7 @@ diff -urN --show-c-function alsa-driver-git20100411/alsa-kernel/pci/hda/patch_co
  	if (spec->jacks.list) {
  		struct conexant_jack *jacks = spec->jacks.list;
  		int i;
-@@ -501,9 +637,114 @@
+@@ -524,9 +660,114 @@
  	}
  #endif
  	snd_hda_detach_beep_device(codec);
@@ -547,18 +546,24 @@ diff -urN --show-c-function alsa-driver-git20100411/alsa-kernel/pci/hda/patch_co
  static struct snd_kcontrol_new cxt_capture_mixers[] = {
  	{
  		.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
-@@ -587,9 +828,46 @@
+@@ -644,11 +885,14 @@
  	.build_controls = conexant_build_controls,
  	.build_pcms = conexant_build_pcms,
  	.init = conexant_init,
 +	.exit = conexant_exit,
  	.free = conexant_free,
-+	.unsol_event = conexant_unsol_event,
-+#ifdef CONFIG_PM
-+	.suspend = conexant_suspend,
+ #ifdef CONFIG_SND_HDA_POWER_SAVE
+ 	.suspend = conexant_suspend,
 +	.resume = conexant_resume,
-+#endif
+ #endif
+ 	.reboot_notify = snd_hda_shutup_pins,
++	.unsol_event = conexant_unsol_event,
  };
+ 
+ #ifdef CONFIG_SND_HDA_INPUT_BEEP
+@@ -658,6 +902,37 @@
+ #define set_beep_amp(spec, nid, idx, dir) /* NOP */
+ #endif
  
 +static int patch_cxthsfmodem(struct hda_codec *codec)
 +{
@@ -594,7 +599,7 @@ diff -urN --show-c-function alsa-driver-git20100411/alsa-kernel/pci/hda/patch_co
  /*
   * EAPD control
   * the private value = nid | (invert << 8)
-@@ -762,13 +1040,15 @@
+@@ -830,13 +1105,15 @@
  static void cxt5045_hp_automic(struct hda_codec *codec)
  {
  	static struct hda_verb mic_jack_on[] = {
@@ -614,7 +619,7 @@ diff -urN --show-c-function alsa-driver-git20100411/alsa-kernel/pci/hda/patch_co
  		{}
  	};
  	unsigned int present;
-@@ -798,14 +1078,19 @@
+@@ -866,14 +1143,19 @@
  static void cxt5045_hp_unsol_event(struct hda_codec *codec,
  				   unsigned int res)
  {
@@ -636,23 +641,7 @@ diff -urN --show-c-function alsa-driver-git20100411/alsa-kernel/pci/hda/patch_co
  
  	}
  }
-@@ -1209,6 +1494,15 @@
- 		break;
- 	}
- 
-+	if(codec->mfg) {
-+		int (*cnxthwhda_probe)(void *codec, struct device *hwDev, void **ppDevNode);
-+		cnxthwhda_probe = (void*)symbol_request(cnxthwhda_probe);
-+		if(cnxthwhda_probe)
-+			symbol_put(cnxthwhda_probe);
-+		else
-+			printk(KERN_ERR"%s: Conexant HSF modem detected but driver not present\n", __FUNCTION__);
-+	}
-+
- 	return 0;
- }
- 
-@@ -1247,7 +1541,7 @@
+@@ -1321,7 +1603,7 @@
  	 * the headphone jack
  	 */
  	bits = (!spec->hp_present && spec->cur_eapd) ? 0 : HDA_AMP_MUTE;
@@ -661,7 +650,7 @@ diff -urN --show-c-function alsa-driver-git20100411/alsa-kernel/pci/hda/patch_co
  	 * pin widgets unlike other codecs.  In this case, we need to
  	 * set index 0x01 for the volume from the mixer amp 0x19.
  	 */
-@@ -1591,6 +1885,16 @@
+@@ -1665,6 +1947,16 @@
  		codec->patch_ops.unsol_event = cxt5047_hp_unsol_event;
  #endif	
  	}
@@ -678,25 +667,7 @@ diff -urN --show-c-function alsa-driver-git20100411/alsa-kernel/pci/hda/patch_co
  	spec->vmaster_nid = 0x13;
  
  	switch (codec->subsystem_id >> 16) {
-@@ -1707,6 +2011,9 @@
- 	case CXT5051_PORTC_EVENT:
- 		cxt5051_portc_automic(codec);
- 		break;
-+	default:
-+		conexant_unsol_event(codec, res);
-+		break;
- 	}
- 	conexant_report_jack(codec, nid);
- }
-@@ -1902,6 +2209,7 @@
- 		cxt5051_portb_automic(codec);
- 		cxt5051_portc_automic(codec);
- 	}
-+
- 	return 0;
- }
- 
-@@ -1997,6 +2305,15 @@
+@@ -1681,6 +1973,15 @@
  		break;
  	}
  
@@ -712,7 +683,41 @@ diff -urN --show-c-function alsa-driver-git20100411/alsa-kernel/pci/hda/patch_co
  	return 0;
  }
  
-@@ -3100,6 +3417,423 @@
+@@ -1786,6 +2087,9 @@
+ 	case CXT5051_PORTC_EVENT:
+ 		cxt5051_portc_automic(codec);
+ 		break;
++	default:
++		conexant_unsol_event(codec, res);
++		break;
+ 	}
+ 	conexant_report_jack(codec, nid);
+ }
+@@ -1990,6 +2294,7 @@
+ 		cxt5051_portb_automic(codec);
+ 		cxt5051_portc_automic(codec);
+ 	}
++
+ 	return 0;
+ }
+ 
+@@ -2102,6 +2407,15 @@
+ 	if (spec->beep_amp)
+ 		snd_hda_attach_beep_device(codec, spec->beep_amp);
+ 
++	if(codec->mfg) {
++		int (*cnxthwhda_probe)(void *codec, struct device *hwDev, void **ppDevNode);
++		cnxthwhda_probe = (void*)symbol_request(cnxthwhda_probe);
++		if(cnxthwhda_probe)
++			symbol_put(cnxthwhda_probe);
++		else
++			printk(KERN_ERR"%s: Conexant HSF modem detected but driver not present\n", __FUNCTION__);
++	}
++
+ 	return 0;
+ }
+ 
+@@ -3927,6 +4241,423 @@
  /*
   */
  
@@ -1136,10 +1141,10 @@ diff -urN --show-c-function alsa-driver-git20100411/alsa-kernel/pci/hda/patch_co
  static struct hda_codec_preset snd_hda_preset_conexant[] = {
  	{ .id = 0x14f15045, .name = "CX20549 (Venice)",
  	  .patch = patch_cxt5045 },
-@@ -3113,18 +3847,28 @@
- 	  .patch = patch_cxt5066 },
- 	{ .id = 0x14f15069, .name = "CX20585",
- 	  .patch = patch_cxt5066 },
+@@ -3960,6 +4691,12 @@
+ 	  .patch = patch_conexant_auto },
+ 	{ .id = 0x14f150b9, .name = "CX20665",
+ 	  .patch = patch_conexant_auto },
 +	{ .id = 0x14f12bfa, .mfg = 2, .name = "HSF",
 +	  .patch = patch_cxthsfmodem },
 +	{ .id = 0x14f12c06, .mfg = 2, .name = "HSF",
@@ -1149,13 +1154,10 @@ diff -urN --show-c-function alsa-driver-git20100411/alsa-kernel/pci/hda/patch_co
  	{} /* terminator */
  };
  
-+
- MODULE_ALIAS("snd-hda-codec-id:14f15045");
- MODULE_ALIAS("snd-hda-codec-id:14f15047");
- MODULE_ALIAS("snd-hda-codec-id:14f15051");
- MODULE_ALIAS("snd-hda-codec-id:14f15066");
- MODULE_ALIAS("snd-hda-codec-id:14f15067");
- MODULE_ALIAS("snd-hda-codec-id:14f15069");
+@@ -3979,9 +4716,12 @@
+ MODULE_ALIAS("snd-hda-codec-id:14f150ac");
+ MODULE_ALIAS("snd-hda-codec-id:14f150b8");
+ MODULE_ALIAS("snd-hda-codec-id:14f150b9");
 +MODULE_ALIAS("snd-hda-codec-id:14f12bfa");
 +MODULE_ALIAS("snd-hda-codec-id:14f12c06");
 +MODULE_ALIAS("snd-hda-codec-id:14f1*");
