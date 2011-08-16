@@ -234,41 +234,6 @@ To unsubscribe from this list: send the line "unsubscribe linux-kernel" in
 the body of a message to majordomo@vger.kernel.org
 More majordomo info at  http://vger.kernel.org/majordomo-info.html
 Please read the FAQ at  http://www.tux.org/lkml/
-As reported by Ben Greer and Froncois Romieu. The code path in 
-the netif_carrier code leads it to try and disable
-a late workqueue to reenable it immediately
-netif_carrier_on
--> linkwatch_fire_event
-   -> linkwatch_schedule_work
-      -> cancel_delayed_work
-         -> del_timer_sync  
-
-If __cancel_delayed_work is used instead then there is no
-problem of waiting for running linkwatch_event.
-
-There is a race between linkwatch_event running re-scheduling
-but it is harmless to schedule an extra scan of the linkwatch queue.
-
-Signed-off-by: Stephen Hemminger <shemminger@vyatta.com>
-
-
---- a/net/core/link_watch.c	2011-07-22 15:25:31.027533604 -0700
-+++ b/net/core/link_watch.c	2011-07-22 15:31:27.531520028 -0700
-@@ -126,7 +126,7 @@ static void linkwatch_schedule_work(int
- 		return;
- 
- 	/* It's already running which is good enough. */
--	if (!cancel_delayed_work(&linkwatch_work))
-+	if (!__cancel_delayed_work(&linkwatch_work))
- 		return;
- 
- 	/* Otherwise we reschedule it again for immediate execution. */
-
---
-To unsubscribe from this list: send the line "unsubscribe linux-kernel" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
-Please read the FAQ at  http://www.tux.org/lkml/
 commit 3326c784c9f492e988617d93f647ae0cfd4c8d09
 Author: Jiri Pirko <jpirko@redhat.com>
 Date:   Wed Jul 20 04:54:38 2011 +0000
