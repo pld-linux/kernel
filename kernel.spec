@@ -142,7 +142,7 @@ Source0:	http://www.kernel.org/pub/linux/kernel/v3.0/linux-%{basever}.tar.bz2
 # Source0-md5:	398e95866794def22b12dfbc15ce89c0
 %if "%{postver}" != ".0"
 Source1:	http://www.kernel.org/pub/linux/kernel/v3.0/patch-%{version}.bz2
-# Source1-md5:	ac49f7907f1fc85fbab92d0f1aa1552a
+# Source1-md5:	f5743283e6075282cebfbde62e65240b
 %endif
 
 Source3:	kernel-autoconf.h
