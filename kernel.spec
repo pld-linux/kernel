@@ -263,7 +263,7 @@ Patch140:	kernel-unionfs.patch
 #
 Patch145:	kernel-aufs2.patch
 Patch146:	kernel-aufs2-unionfs.patch
-
+Patch147:	kernel-aufs2-no-const-grsec.patch
 Patch148:	kernel-aufs2-reiser4.patch
 
 # Show normal colors in menuconfig with ncurses ABI 6
@@ -766,6 +766,8 @@ sed -i 's/-Werror//' arch/alpha/kernel/Makefile
 
 %if %{with grsecurity}
 %patch9999 -p1
+# aufs needs this
+%patch -p147
 %{?with_vserver:%patch10000 -p1}
 %{?with_vserver:%patch10001 -p1}
 %{?with_vserver:%patch10002 -p1}
