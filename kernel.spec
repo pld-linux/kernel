@@ -767,7 +767,7 @@ sed -i 's/-Werror//' arch/alpha/kernel/Makefile
 %if %{with grsecurity}
 %patch9999 -p1
 # aufs needs this
-%patch -p147
+%patch147 -p1
 %{?with_vserver:%patch10000 -p1}
 %{?with_vserver:%patch10001 -p1}
 %{?with_vserver:%patch10002 -p1}
