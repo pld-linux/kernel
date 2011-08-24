@@ -70,3 +70,25 @@
  #endif
  
  #ifdef CONFIG_SYSFS
+--- linux-3.0/fs/aufs/f_op_sp.c~	2011-08-24 14:41:55.000000000 +0200
++++ linux-3.0/fs/aufs/f_op_sp.c	2011-08-24 14:54:22.072544774 +0200
+@@ -108,7 +108,7 @@
+ static int aufs_open_sp(struct inode *inode, struct file *file);
+ static struct au_sp_fop {
+ 	int			done;
+-	struct file_operations	fop;	/* not 'const' */
++	file_operations_no_const	fop;	/* not 'const' */
+ 	spinlock_t		spin;
+ } au_sp_fop[AuSp_Last] = {
+ 	[AuSp_FIFO] = {
+@@ -161,7 +161,9 @@ static void au_init_fop_sp(struct file *
+ 		h_file = au_hf_top(file);
+ 		spin_lock(&p->spin);
+ 		if (!p->done) {
+-			p->fop = *h_file->f_op;
++			pax_open_kernel();
++			memcpy((void *)&p->fop, h_file->f_op, sizeof(p->fop));
+ 			p->fop.owner = THIS_MODULE;
++			pax_close_kernel();
+ 			if (p->fop.aio_read)
+ 				p->fop.aio_read = aufs_aio_read_sp;
