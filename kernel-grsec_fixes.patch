@@ -23,52 +23,6 @@ diff -upr a/grsecurity/gracl_cap.c c/grsecurity/gracl_cap.c
 +	}
 +	return;
 +}
---- a/grsecurity/grsec_sock.c	2008-03-24 00:24:22.482633101 +0100
-+++ c/grsecurity/grsec_sock.c	2008-03-24 00:27:01.971671763 +0100
-@@ -247,25 +247,26 @@
- gr_cap_rtnetlink(struct sock *sock)
- {
- #ifdef CONFIG_GRKERNSEC
-+	struct acl_subject_label *curracl;
-+	kernel_cap_t cap_dropp = __cap_empty_set, cap_mask = __cap_empty_set;
-+
- 	if (!gr_acl_is_enabled())
- 		return current_cap();
--	else if (sock->sk_protocol == NETLINK_ISCSI &&
--		 cap_raised(current_cap(), CAP_SYS_ADMIN) &&
--		 gr_is_capable(CAP_SYS_ADMIN))
--		return current_cap();
--	else if (sock->sk_protocol == NETLINK_AUDIT &&
--		 cap_raised(current_cap(), CAP_AUDIT_WRITE) &&
--		 gr_is_capable(CAP_AUDIT_WRITE) &&
--		 cap_raised(current_cap(), CAP_AUDIT_CONTROL) &&
--		 gr_is_capable(CAP_AUDIT_CONTROL))
--		return current_cap();
--	else if (cap_raised(current_cap(), CAP_NET_ADMIN) &&
--		 ((sock->sk_protocol == NETLINK_ROUTE) ? 
--		  gr_is_capable_nolog(CAP_NET_ADMIN) : 
--		  gr_is_capable(CAP_NET_ADMIN)))
--		return current_cap();
--	else
--		return __cap_empty_set;
-+	else {
-+		curracl = current->acl;
-+
-+		cap_dropp  = curracl->cap_lower;
-+		cap_mask = curracl->cap_mask;
-+
-+		while ((curracl = curracl->parent_subject)) {
-+			cap_dropp = cap_combine(cap_dropp,
-+					cap_intersect(curracl->cap_lower,
-+						cap_drop(cap_mask, curracl->cap_mask)));
-+			cap_mask = cap_combine(cap_mask, curracl->cap_mask);
-+		}
-+		return cap_drop(current_cap(),
-+				cap_intersect(cap_dropp, cap_mask));
-+	}
- #else
- 	return current_cap();
- #endif
 --- linux-2.6.35/include/linux/grsecurity.h~	2010-10-20 21:01:00.758532744 +0200
 +++ linux-2.6.35/include/linux/grsecurity.h	2010-10-20 21:03:27.556754795 +0200
 @@ -78,6 +78,7 @@
@@ -86,8 +40,8 @@ diff -upr a/security/commoncap.c c/security/commoncap.c
  
  int cap_netlink_recv(struct sk_buff *skb, int cap)
  {
--	if (!cap_raised(NETLINK_CB(skb).eff_cap, cap))
-+	if (!cap_raised(NETLINK_CB(skb).eff_cap, cap)) {
+-	if (!cap_raised(current_cap(), cap) || !gr_is_capable(cap))
++	if (!cap_raised(current_cap(), cap) || !gr_is_capable(cap)) {
 +#ifdef CONFIG_GRKERNSEC
 +		gr_log_cap_pid(cap, NETLINK_CREDS(skb)->pid);
 +#endif

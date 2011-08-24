@@ -263,7 +263,7 @@ Patch140:	kernel-unionfs.patch
 #
 Patch145:	kernel-aufs2.patch
 Patch146:	kernel-aufs2-unionfs.patch
-Patch147:	kernel-aufs2-no-const-grsec.patch
+
 Patch148:	kernel-aufs2-reiser4.patch
 
 # Show normal colors in menuconfig with ncurses ABI 6
@@ -285,7 +285,7 @@ Patch5000:	kernel-apparmor.patch
 # based on ftp://ftp.leg.uct.ac.za/pub/linux/rip/tmpfs_root-2.6.30.diff.gz
 Patch7000:	kernel-inittmpfs.patch
 
-# based on http://grsecurity.net/~spender/grsecurity-2.2.2-2.6.38.6-201105171931.patch
+# based on http://grsecurity.net/~spender/grsecurity-2.2.2-3.0.3-201108232250.patch
 # NOTE: put raw upstream patches on kernel-grsec_full.patch:GRSECURITY_RAW for reference
 #       (since upstream deletes older patches)
 Patch9999:	kernel-grsec_full.patch
@@ -766,8 +766,6 @@ sed -i 's/-Werror//' arch/alpha/kernel/Makefile
 
 %if %{with grsecurity}
 %patch9999 -p1
-# aufs2 needs to modify those pointers
-%patch147 -p1
 %{?with_vserver:%patch10000 -p1}
 %{?with_vserver:%patch10001 -p1}
 %{?with_vserver:%patch10002 -p1}
