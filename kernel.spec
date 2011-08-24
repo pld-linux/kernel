@@ -251,17 +251,17 @@ Patch130:	kernel-forcedeth-WON.patch
 # http://download.filesystems.org/unionfs/unionfs-2.x/unionfs-2.5.8_for_2.6.38-rc7.diff.gz
 Patch140:	kernel-unionfs.patch
 
-# http://git.c3sl.ufpr.br/pub/scm/aufs/aufs2-standalone.git, read README
+# git://aufs.git.sourceforge.net/gitroot/aufs/aufs3-standalone.git, read README
 # Patch creation:
-# git clone http://git.c3sl.ufpr.br/pub/scm/aufs/aufs2-standalone.git
-# cd aufs2-standalone
-# git checkout -b aufs2.1 origin/aufs2.1
-# cat aufs2-kbuild.patch aufs2-base.patch aufs2-standalone.patch > ~/rpm/packages/kernel/kernel-aufs2.patch
+# git clone git://aufs.git.sourceforge.net/gitroot/aufs/aufs3-standalone.git
+# cd aufs3-standalone
+# git checkout -b aufs3.0 origin/aufs3.0
+# cat aufs3-kbuild.patch aufs3-base.patch aufs3-standalone.patch > ~/rpm/packages/kernel/kernel-aufs3.patch
 # mkdir linux
 # cp -a Documentation fs include linux
-# diff -urN /usr/share/empty linux >> ~/rpm/packages/kernel/kernel-aufs2.patch 
+# diff -urN /usr/share/empty linux >> ~/rpm/packages/kernel/kernel-aufs3.patch 
 #
-Patch145:	kernel-aufs2.patch
+Patch145:	kernel-aufs3.patch
 Patch146:	kernel-aufs2-unionfs.patch
 Patch147:	kernel-aufs2-no-const-grsec.patch
 Patch148:	kernel-aufs2-reiser4.patch
