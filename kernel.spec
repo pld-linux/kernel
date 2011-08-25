@@ -94,7 +94,7 @@
 
 %define		basever		3.0
 %define		postver		.3
-%define		rel		0.3
+%define		rel		0.4
 
 %define		_enable_debug_packages			0
 
@@ -584,7 +584,7 @@ Summary(de.UTF-8):	Development Dateien die beim Kernel Modul kompilationen gebra
 Summary(pl.UTF-8):	Pliki służące do budowania modułów jądra
 Group:		Development/Building
 Requires:	%{name}-headers = %{epoch}:%{version}-%{release}
-Conflicts:	rpmbuild(macros) < 1.550
+Conflicts:	rpmbuild(macros) < 1.618
 AutoReqProv:	no
 
 %description module-build
@@ -1427,6 +1427,7 @@ fi
 %{_kernelsrcdir}/scripts/selinux/mdp/*.c
 %exclude %dir %{_kernelsrcdir}/security
 %exclude %dir %{_kernelsrcdir}/security/selinux
+%{_kernelsrcdir}/tools/gcc/*.c
 
 %if %{with doc}
 %files doc
@@ -1503,7 +1504,8 @@ fi
 %{_kernelsrcdir}/sound
 %{_kernelsrcdir}/security
 %exclude %{_kernelsrcdir}/security/selinux/include
-%{_kernelsrcdir}/tools
+%{_kernelsrcdir}/tools/*
+%exclude %{_kernelsrcdir}/tools/gcc/*.c
 %{_kernelsrcdir}/usr
 %{_kernelsrcdir}/COPYING
 %{_kernelsrcdir}/CREDITS
