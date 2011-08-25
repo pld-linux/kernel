@@ -285,7 +285,7 @@ Patch5000:	kernel-apparmor.patch
 # based on ftp://ftp.leg.uct.ac.za/pub/linux/rip/tmpfs_root-2.6.30.diff.gz
 Patch7000:	kernel-inittmpfs.patch
 
-# based on http://grsecurity.net/~spender/grsecurity-2.2.2-3.0.3-201108232250.patch
+# based on http://grsecurity.net/~spender/grsecurity-2.2.2-3.0.3-201108241901.patch
 # NOTE: put raw upstream patches on kernel-grsec_full.patch:GRSECURITY_RAW for reference
 #       (since upstream deletes older patches)
 Patch9999:	kernel-grsec_full.patch

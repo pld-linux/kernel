@@ -13561,6 +13561,17 @@ diff -urNp linux-3.0.3/arch/x86/kernel/kprobes.c linux-3.0.3/arch/x86/kernel/kpr
  	       RELATIVE_ADDR_SIZE);
  
  	insn_buf[0] = RELATIVEJUMP_OPCODE;
+diff -urNp linux-3.0.3/arch/x86/kernel/kvm.c linux-3.0.3/arch/x86/kernel/kvm.c
+--- linux-3.0.3/arch/x86/kernel/kvm.c	2011-07-21 22:17:23.000000000 -0400
++++ linux-3.0.3/arch/x86/kernel/kvm.c	2011-08-24 18:10:12.000000000 -0400
+@@ -426,6 +426,7 @@ static void __init paravirt_ops_setup(vo
+ 		pv_mmu_ops.set_pud = kvm_set_pud;
+ #if PAGETABLE_LEVELS == 4
+ 		pv_mmu_ops.set_pgd = kvm_set_pgd;
++		pv_mmu_ops.set_pgd_batched = kvm_set_pgd;
+ #endif
+ #endif
+ 		pv_mmu_ops.flush_tlb_user = kvm_flush_tlb;
 diff -urNp linux-3.0.3/arch/x86/kernel/ldt.c linux-3.0.3/arch/x86/kernel/ldt.c
 --- linux-3.0.3/arch/x86/kernel/ldt.c	2011-07-21 22:17:23.000000000 -0400
 +++ linux-3.0.3/arch/x86/kernel/ldt.c	2011-08-23 21:47:55.000000000 -0400
@@ -21380,7 +21391,7 @@ diff -urNp linux-3.0.3/arch/x86/xen/enlighten.c linux-3.0.3/arch/x86/xen/enlight
  #ifdef CONFIG_ACPI_NUMA
 diff -urNp linux-3.0.3/arch/x86/xen/mmu.c linux-3.0.3/arch/x86/xen/mmu.c
 --- linux-3.0.3/arch/x86/xen/mmu.c	2011-07-21 22:17:23.000000000 -0400
-+++ linux-3.0.3/arch/x86/xen/mmu.c	2011-08-23 21:47:55.000000000 -0400
++++ linux-3.0.3/arch/x86/xen/mmu.c	2011-08-24 18:10:12.000000000 -0400
 @@ -1679,6 +1679,8 @@ pgd_t * __init xen_setup_kernel_pagetabl
  	convert_pfn_mfn(init_level4_pgt);
  	convert_pfn_mfn(level3_ident_pgt);
@@ -21401,6 +21412,22 @@ diff -urNp linux-3.0.3/arch/x86/xen/mmu.c linux-3.0.3/arch/x86/xen/mmu.c
  	set_page_prot(level2_kernel_pgt, PAGE_KERNEL_RO);
  	set_page_prot(level2_fixmap_pgt, PAGE_KERNEL_RO);
  
+@@ -1909,6 +1914,7 @@ static void __init xen_post_allocator_in
+ 	pv_mmu_ops.set_pud = xen_set_pud;
+ #if PAGETABLE_LEVELS == 4
+ 	pv_mmu_ops.set_pgd = xen_set_pgd;
++	pv_mmu_ops.set_pgd_batched = xen_set_pgd;
+ #endif
+ 
+ 	/* This will work as long as patching hasn't happened yet
+@@ -1990,6 +1996,7 @@ static const struct pv_mmu_ops xen_mmu_o
+ 	.pud_val = PV_CALLEE_SAVE(xen_pud_val),
+ 	.make_pud = PV_CALLEE_SAVE(xen_make_pud),
+ 	.set_pgd = xen_set_pgd_hyper,
++	.set_pgd_batched = xen_set_pgd_hyper,
+ 
+ 	.alloc_pud = xen_alloc_pmd_init,
+ 	.release_pud = xen_release_pmd_init,
 diff -urNp linux-3.0.3/arch/x86/xen/smp.c linux-3.0.3/arch/x86/xen/smp.c
 --- linux-3.0.3/arch/x86/xen/smp.c	2011-07-21 22:17:23.000000000 -0400
 +++ linux-3.0.3/arch/x86/xen/smp.c	2011-08-23 21:47:55.000000000 -0400
@@ -21829,6 +21856,58 @@ diff -urNp linux-3.0.3/drivers/acpi/apei/cper.c linux-3.0.3/drivers/acpi/apei/cp
  }
  EXPORT_SYMBOL_GPL(cper_next_record_id);
  
+diff -urNp linux-3.0.3/drivers/acpi/ec_sys.c linux-3.0.3/drivers/acpi/ec_sys.c
+--- linux-3.0.3/drivers/acpi/ec_sys.c	2011-07-21 22:17:23.000000000 -0400
++++ linux-3.0.3/drivers/acpi/ec_sys.c	2011-08-24 19:06:55.000000000 -0400
+@@ -11,6 +11,7 @@
+ #include <linux/kernel.h>
+ #include <linux/acpi.h>
+ #include <linux/debugfs.h>
++#include <asm/uaccess.h>
+ #include "internal.h"
+ 
+ MODULE_AUTHOR("Thomas Renninger <trenn@suse.de>");
+@@ -39,7 +40,7 @@ static ssize_t acpi_ec_read_io(struct fi
+ 	 * struct acpi_ec *ec = ((struct seq_file *)f->private_data)->private;
+ 	 */
+ 	unsigned int size = EC_SPACE_SIZE;
+-	u8 *data = (u8 *) buf;
++	u8 data;
+ 	loff_t init_off = *off;
+ 	int err = 0;
+ 
+@@ -52,9 +53,11 @@ static ssize_t acpi_ec_read_io(struct fi
+ 		size = count;
+ 
+ 	while (size) {
+-		err = ec_read(*off, &data[*off - init_off]);
++		err = ec_read(*off, &data);
+ 		if (err)
+ 			return err;
++		if (put_user(data, &buf[*off - init_off]))
++			return -EFAULT;
+ 		*off += 1;
+ 		size--;
+ 	}
+@@ -70,7 +73,6 @@ static ssize_t acpi_ec_write_io(struct f
+ 
+ 	unsigned int size = count;
+ 	loff_t init_off = *off;
+-	u8 *data = (u8 *) buf;
+ 	int err = 0;
+ 
+ 	if (*off >= EC_SPACE_SIZE)
+@@ -81,7 +83,9 @@ static ssize_t acpi_ec_write_io(struct f
+ 	}
+ 
+ 	while (size) {
+-		u8 byte_write = data[*off - init_off];
++		u8 byte_write;
++		if (get_user(byte_write, &buf[*off - init_off]))
++			return -EFAULT;
+ 		err = ec_write(*off, byte_write);
+ 		if (err)
+ 			return err;
 diff -urNp linux-3.0.3/drivers/acpi/proc.c linux-3.0.3/drivers/acpi/proc.c
 --- linux-3.0.3/drivers/acpi/proc.c	2011-07-21 22:17:23.000000000 -0400
 +++ linux-3.0.3/drivers/acpi/proc.c	2011-08-23 21:47:55.000000000 -0400
@@ -27197,6 +27276,48 @@ diff -urNp linux-3.0.3/drivers/media/dvb/dvb-core/dvb_ca_en50221.c linux-3.0.3/d
  	dprintk("%s\n", __func__);
  
  	/* Incoming packet has a 2 byte header. hdr[0] = slot_id, hdr[1] = connection_id */
+diff -urNp linux-3.0.3/drivers/media/dvb/dvb-core/dvb_demux.h linux-3.0.3/drivers/media/dvb/dvb-core/dvb_demux.h
+--- linux-3.0.3/drivers/media/dvb/dvb-core/dvb_demux.h	2011-07-21 22:17:23.000000000 -0400
++++ linux-3.0.3/drivers/media/dvb/dvb-core/dvb_demux.h	2011-08-24 18:24:40.000000000 -0400
+@@ -68,12 +68,12 @@ struct dvb_demux_feed {
+ 	union {
+ 		struct dmx_ts_feed ts;
+ 		struct dmx_section_feed sec;
+-	} feed;
++	} __no_const feed;
+ 
+ 	union {
+ 		dmx_ts_cb ts;
+ 		dmx_section_cb sec;
+-	} cb;
++	} __no_const cb;
+ 
+ 	struct dvb_demux *demux;
+ 	void *priv;
+diff -urNp linux-3.0.3/drivers/media/dvb/dvb-core/dvbdev.c linux-3.0.3/drivers/media/dvb/dvb-core/dvbdev.c
+--- linux-3.0.3/drivers/media/dvb/dvb-core/dvbdev.c	2011-07-21 22:17:23.000000000 -0400
++++ linux-3.0.3/drivers/media/dvb/dvb-core/dvbdev.c	2011-08-24 18:24:19.000000000 -0400
+@@ -192,7 +192,7 @@ int dvb_register_device(struct dvb_adapt
+ 			const struct dvb_device *template, void *priv, int type)
+ {
+ 	struct dvb_device *dvbdev;
+-	struct file_operations *dvbdevfops;
++	file_operations_no_const *dvbdevfops;
+ 	struct device *clsdev;
+ 	int minor;
+ 	int id;
+diff -urNp linux-3.0.3/drivers/media/dvb/dvb-usb/cxusb.c linux-3.0.3/drivers/media/dvb/dvb-usb/cxusb.c
+--- linux-3.0.3/drivers/media/dvb/dvb-usb/cxusb.c	2011-07-21 22:17:23.000000000 -0400
++++ linux-3.0.3/drivers/media/dvb/dvb-usb/cxusb.c	2011-08-24 18:26:33.000000000 -0400
+@@ -1059,7 +1059,7 @@ static struct dib0070_config dib7070p_di
+ struct dib0700_adapter_state {
+ 	int (*set_param_save) (struct dvb_frontend *,
+ 			       struct dvb_frontend_parameters *);
+-};
++} __no_const;
+ 
+ static int dib7070_set_param_override(struct dvb_frontend *fe,
+ 				      struct dvb_frontend_parameters *fep)
 diff -urNp linux-3.0.3/drivers/media/dvb/dvb-usb/dib0700_core.c linux-3.0.3/drivers/media/dvb/dvb-usb/dib0700_core.c
 --- linux-3.0.3/drivers/media/dvb/dvb-usb/dib0700_core.c	2011-07-21 22:17:23.000000000 -0400
 +++ linux-3.0.3/drivers/media/dvb/dvb-usb/dib0700_core.c	2011-08-23 21:48:14.000000000 -0400
@@ -27209,6 +27330,30 @@ diff -urNp linux-3.0.3/drivers/media/dvb/dvb-usb/dib0700_core.c linux-3.0.3/driv
  	while ((ret = dvb_usb_get_hexline(fw, &hx, &pos)) > 0) {
  		deb_fwdata("writing to address 0x%08x (buffer: 0x%02x %02x)\n",
  				hx.addr, hx.len, hx.chk);
+diff -urNp linux-3.0.3/drivers/media/dvb/dvb-usb/dibusb.h linux-3.0.3/drivers/media/dvb/dvb-usb/dibusb.h
+--- linux-3.0.3/drivers/media/dvb/dvb-usb/dibusb.h	2011-07-21 22:17:23.000000000 -0400
++++ linux-3.0.3/drivers/media/dvb/dvb-usb/dibusb.h	2011-08-24 18:27:27.000000000 -0400
+@@ -97,7 +97,7 @@
+ #define DIBUSB_IOCTL_CMD_DISABLE_STREAM	0x02
+ 
+ struct dibusb_state {
+-	struct dib_fe_xfer_ops ops;
++	dib_fe_xfer_ops_no_const ops;
+ 	int mt2060_present;
+ 	u8 tuner_addr;
+ };
+diff -urNp linux-3.0.3/drivers/media/dvb/dvb-usb/dw2102.c linux-3.0.3/drivers/media/dvb/dvb-usb/dw2102.c
+--- linux-3.0.3/drivers/media/dvb/dvb-usb/dw2102.c	2011-07-21 22:17:23.000000000 -0400
++++ linux-3.0.3/drivers/media/dvb/dvb-usb/dw2102.c	2011-08-24 18:27:45.000000000 -0400
+@@ -95,7 +95,7 @@ struct su3000_state {
+ 
+ struct s6x0_state {
+ 	int (*old_set_voltage)(struct dvb_frontend *f, fe_sec_voltage_t v);
+-};
++} __no_const;
+ 
+ /* debug */
+ static int dvb_usb_dw2102_debug;
 diff -urNp linux-3.0.3/drivers/media/dvb/dvb-usb/lmedm04.c linux-3.0.3/drivers/media/dvb/dvb-usb/lmedm04.c
 --- linux-3.0.3/drivers/media/dvb/dvb-usb/lmedm04.c	2011-07-21 22:17:23.000000000 -0400
 +++ linux-3.0.3/drivers/media/dvb/dvb-usb/lmedm04.c	2011-08-23 21:48:14.000000000 -0400
@@ -27229,6 +27374,34 @@ diff -urNp linux-3.0.3/drivers/media/dvb/dvb-usb/lmedm04.c linux-3.0.3/drivers/m
  	data[0] = 0x0a;
  	len_in = 1;
  	info("FRM Firmware Cold Reset");
+diff -urNp linux-3.0.3/drivers/media/dvb/frontends/dib3000.h linux-3.0.3/drivers/media/dvb/frontends/dib3000.h
+--- linux-3.0.3/drivers/media/dvb/frontends/dib3000.h	2011-07-21 22:17:23.000000000 -0400
++++ linux-3.0.3/drivers/media/dvb/frontends/dib3000.h	2011-08-24 18:28:18.000000000 -0400
+@@ -40,10 +40,11 @@ struct dib_fe_xfer_ops
+ 	int (*pid_ctrl)(struct dvb_frontend *fe, int index, int pid, int onoff);
+ 	int (*tuner_pass_ctrl)(struct dvb_frontend *fe, int onoff, u8 pll_ctrl);
+ };
++typedef struct dib_fe_xfer_ops __no_const dib_fe_xfer_ops_no_const;
+ 
+ #if defined(CONFIG_DVB_DIB3000MB) || (defined(CONFIG_DVB_DIB3000MB_MODULE) && defined(MODULE))
+ extern struct dvb_frontend* dib3000mb_attach(const struct dib3000_config* config,
+-					     struct i2c_adapter* i2c, struct dib_fe_xfer_ops *xfer_ops);
++					     struct i2c_adapter* i2c, dib_fe_xfer_ops_no_const *xfer_ops);
+ #else
+ static inline struct dvb_frontend* dib3000mb_attach(const struct dib3000_config* config,
+ 					     struct i2c_adapter* i2c, struct dib_fe_xfer_ops *xfer_ops)
+diff -urNp linux-3.0.3/drivers/media/dvb/frontends/dib3000mb.c linux-3.0.3/drivers/media/dvb/frontends/dib3000mb.c
+--- linux-3.0.3/drivers/media/dvb/frontends/dib3000mb.c	2011-07-21 22:17:23.000000000 -0400
++++ linux-3.0.3/drivers/media/dvb/frontends/dib3000mb.c	2011-08-24 18:28:42.000000000 -0400
+@@ -756,7 +756,7 @@ static int dib3000mb_tuner_pass_ctrl(str
+ static struct dvb_frontend_ops dib3000mb_ops;
+ 
+ struct dvb_frontend* dib3000mb_attach(const struct dib3000_config* config,
+-				      struct i2c_adapter* i2c, struct dib_fe_xfer_ops *xfer_ops)
++				      struct i2c_adapter* i2c, dib_fe_xfer_ops_no_const *xfer_ops)
+ {
+ 	struct dib3000_state* state = NULL;
+ 
 diff -urNp linux-3.0.3/drivers/media/dvb/frontends/mb86a16.c linux-3.0.3/drivers/media/dvb/frontends/mb86a16.c
 --- linux-3.0.3/drivers/media/dvb/frontends/mb86a16.c	2011-07-21 22:17:23.000000000 -0400
 +++ linux-3.0.3/drivers/media/dvb/frontends/mb86a16.c	2011-08-23 21:48:14.000000000 -0400
@@ -27322,6 +27495,18 @@ diff -urNp linux-3.0.3/drivers/media/video/saa7164/saa7164-cmd.c linux-3.0.3/dri
  	while (loop) {
  
  		struct tmComResInfo tRsp = { 0, 0, 0, 0, 0, 0 };
+diff -urNp linux-3.0.3/drivers/media/video/timblogiw.c linux-3.0.3/drivers/media/video/timblogiw.c
+--- linux-3.0.3/drivers/media/video/timblogiw.c	2011-07-21 22:17:23.000000000 -0400
++++ linux-3.0.3/drivers/media/video/timblogiw.c	2011-08-24 18:29:20.000000000 -0400
+@@ -745,7 +745,7 @@ static int timblogiw_mmap(struct file *f
+ 
+ /* Platform device functions */
+ 
+-static __devinitconst struct v4l2_ioctl_ops timblogiw_ioctl_ops = {
++static __devinitconst v4l2_ioctl_ops_no_const timblogiw_ioctl_ops = {
+ 	.vidioc_querycap		= timblogiw_querycap,
+ 	.vidioc_enum_fmt_vid_cap	= timblogiw_enum_fmt,
+ 	.vidioc_g_fmt_vid_cap		= timblogiw_g_fmt,
 diff -urNp linux-3.0.3/drivers/media/video/usbvision/usbvision-core.c linux-3.0.3/drivers/media/video/usbvision/usbvision-core.c
 --- linux-3.0.3/drivers/media/video/usbvision/usbvision-core.c	2011-07-21 22:17:23.000000000 -0400
 +++ linux-3.0.3/drivers/media/video/usbvision/usbvision-core.c	2011-08-23 21:48:14.000000000 -0400
@@ -32024,7 +32209,7 @@ diff -urNp linux-3.0.3/drivers/staging/rtl8712/rtl871x_io.h linux-3.0.3/drivers/
  	struct list_head list;
 diff -urNp linux-3.0.3/drivers/staging/sbe-2t3e3/netdev.c linux-3.0.3/drivers/staging/sbe-2t3e3/netdev.c
 --- linux-3.0.3/drivers/staging/sbe-2t3e3/netdev.c	2011-07-21 22:17:23.000000000 -0400
-+++ linux-3.0.3/drivers/staging/sbe-2t3e3/netdev.c	2011-08-23 21:48:14.000000000 -0400
++++ linux-3.0.3/drivers/staging/sbe-2t3e3/netdev.c	2011-08-24 18:21:41.000000000 -0400
 @@ -51,7 +51,7 @@ int t3e3_ioctl(struct net_device *dev, s
  	t3e3_if_config(sc, cmd_2t3e3, (char *)&param, &resp, &rlen);
  
@@ -51686,6 +51871,18 @@ diff -urNp linux-3.0.3/include/linux/fs.h linux-3.0.3/include/linux/fs.h
  
  #define IPERM_FLAG_RCU	0x0001
  
+diff -urNp linux-3.0.3/include/linux/fsnotify.h linux-3.0.3/include/linux/fsnotify.h
+--- linux-3.0.3/include/linux/fsnotify.h	2011-07-21 22:17:23.000000000 -0400
++++ linux-3.0.3/include/linux/fsnotify.h	2011-08-24 18:10:29.000000000 -0400
+@@ -314,7 +314,7 @@ static inline void fsnotify_change(struc
+  */
+ static inline const unsigned char *fsnotify_oldname_init(const unsigned char *name)
+ {
+-	return kstrdup(name, GFP_KERNEL);
++	return (const unsigned char *)kstrdup((const char *)name, GFP_KERNEL);
+ }
+ 
+ /*
 diff -urNp linux-3.0.3/include/linux/fs_struct.h linux-3.0.3/include/linux/fs_struct.h
 --- linux-3.0.3/include/linux/fs_struct.h	2011-07-21 22:17:23.000000000 -0400
 +++ linux-3.0.3/include/linux/fs_struct.h	2011-08-23 21:47:56.000000000 -0400
@@ -54639,6 +54836,29 @@ diff -urNp linux-3.0.3/include/linux/vmstat.h linux-3.0.3/include/linux/vmstat.h
  }
  
  static inline void __dec_zone_page_state(struct page *page,
+diff -urNp linux-3.0.3/include/media/saa7146_vv.h linux-3.0.3/include/media/saa7146_vv.h
+--- linux-3.0.3/include/media/saa7146_vv.h	2011-07-21 22:17:23.000000000 -0400
++++ linux-3.0.3/include/media/saa7146_vv.h	2011-08-24 18:26:09.000000000 -0400
+@@ -163,7 +163,7 @@ struct saa7146_ext_vv
+ 	int (*std_callback)(struct saa7146_dev*, struct saa7146_standard *);
+ 
+ 	/* the extension can override this */
+-	struct v4l2_ioctl_ops ops;
++	v4l2_ioctl_ops_no_const ops;
+ 	/* pointer to the saa7146 core ops */
+ 	const struct v4l2_ioctl_ops *core_ops;
+ 
+diff -urNp linux-3.0.3/include/media/v4l2-ioctl.h linux-3.0.3/include/media/v4l2-ioctl.h
+--- linux-3.0.3/include/media/v4l2-ioctl.h	2011-07-21 22:17:23.000000000 -0400
++++ linux-3.0.3/include/media/v4l2-ioctl.h	2011-08-24 18:25:45.000000000 -0400
+@@ -272,6 +272,7 @@ struct v4l2_ioctl_ops {
+ 	long (*vidioc_default)	       (struct file *file, void *fh,
+ 					bool valid_prio, int cmd, void *arg);
+ };
++typedef struct v4l2_ioctl_ops __no_const v4l2_ioctl_ops_no_const;
+ 
+ 
+ /* v4l debugging and diagnostics */
 diff -urNp linux-3.0.3/include/net/caif/cfctrl.h linux-3.0.3/include/net/caif/cfctrl.h
 --- linux-3.0.3/include/net/caif/cfctrl.h	2011-07-21 22:17:23.000000000 -0400
 +++ linux-3.0.3/include/net/caif/cfctrl.h	2011-08-23 21:47:56.000000000 -0400
@@ -56606,7 +56826,7 @@ diff -urNp linux-3.0.3/kernel/fork.c linux-3.0.3/kernel/fork.c
 +	gr_set_chroot_entries(tsk, &tsk->fs->root);
  	return 0;
  }
-
+ 
 @@ -1156,13 +1156,15 @@ static struct task_struct *copy_process(
  	init_vx_info(&p->vx_info, current_vx_info());
  	init_nx_info(&p->nx_info, current_nx_info());
@@ -60158,7 +60378,7 @@ diff -urNp linux-3.0.3/localversion-grsec linux-3.0.3/localversion-grsec
 +-grsec
 diff -urNp linux-3.0.3/Makefile linux-3.0.3/Makefile
 --- linux-3.0.3/Makefile	2011-08-23 21:44:40.000000000 -0400
-+++ linux-3.0.3/Makefile	2011-08-23 22:01:23.000000000 -0400
++++ linux-3.0.3/Makefile	2011-08-24 18:10:12.000000000 -0400
 @@ -245,8 +245,9 @@ CONFIG_SHELL := $(shell if [ -x "$$BASH"
  
  HOSTCC       = gcc
@@ -60198,7 +60418,7 @@ diff -urNp linux-3.0.3/Makefile linux-3.0.3/Makefile
  
  # To avoid any implicit rule to kick in, define an empty command.
  scripts/basic/%: scripts_basic ;
-@@ -564,6 +568,25 @@ else
+@@ -564,6 +568,24 @@ else
  KBUILD_CFLAGS	+= -O2
  endif
  
@@ -60207,7 +60427,6 @@ diff -urNp linux-3.0.3/Makefile linux-3.0.3/Makefile
 +ifdef CONFIG_PAX_MEMORY_STACKLEAK
 +STACKLEAK_PLUGIN := -fplugin=$(objtree)/tools/gcc/stackleak_plugin.so -fplugin-arg-stackleak_plugin-track-lowest-sp=100
 +endif
-+KBUILD_CFLAGS += $(CONSTIFY_PLUGIN) $(STACKLEAK_PLUGIN)
 +export CONSTIFY_PLUGIN STACKLEAK_PLUGIN
 +gcc-plugins:
 +	$(Q)$(MAKE) $(build)=tools/gcc
@@ -60224,7 +60443,7 @@ diff -urNp linux-3.0.3/Makefile linux-3.0.3/Makefile
  include $(srctree)/arch/$(SRCARCH)/Makefile
  
  ifneq ($(CONFIG_FRAME_WARN),0)
-@@ -708,7 +731,7 @@ export mod_strip_cmd
+@@ -708,7 +730,7 @@ export mod_strip_cmd
  
  
  ifeq ($(KBUILD_EXTMOD),)
@@ -60233,6 +60452,14 @@ diff -urNp linux-3.0.3/Makefile linux-3.0.3/Makefile
  
  vmlinux-dirs	:= $(patsubst %/,%,$(filter %/, $(init-y) $(init-m) \
  		     $(core-y) $(core-m) $(drivers-y) $(drivers-m) \
+@@ -907,6 +929,7 @@ define rule_vmlinux-modpost
+ endef
+ 
+ # vmlinux image - including updated kernel symbols
++vmlinux: KBUILD_CFLAGS += $(CONSTIFY_PLUGIN) $(STACKLEAK_PLUGIN)
+ vmlinux: $(vmlinux-lds) $(vmlinux-init) $(vmlinux-main) vmlinux.o $(kallsyms.o) FORCE
+ ifdef CONFIG_HEADERS_CHECK
+ 	$(Q)$(MAKE) -f $(srctree)/Makefile headers_check
 @@ -973,7 +996,7 @@ ifneq ($(KBUILD_SRC),)
  endif
  
@@ -60242,7 +60469,15 @@ diff -urNp linux-3.0.3/Makefile linux-3.0.3/Makefile
  
  prepare1: prepare2 include/linux/version.h include/generated/utsrelease.h \
                     include/config/auto.conf
-@@ -1198,7 +1221,7 @@ distclean: mrproper
+@@ -1087,6 +1110,7 @@ all: modules
+ #	using awk while concatenating to the final file.
+ 
+ PHONY += modules
++modules: KBUILD_CFLAGS += $(CONSTIFY_PLUGIN) $(STACKLEAK_PLUGIN)
+ modules: $(vmlinux-dirs) $(if $(KBUILD_BUILTIN),vmlinux) modules.builtin
+ 	$(Q)$(AWK) '!x[$$0]++' $(vmlinux-dirs:%=$(objtree)/%/modules.order) > $(objtree)/modules.order
+ 	@$(kecho) '  Building modules, stage 2.';
+@@ -1198,7 +1222,7 @@ distclean: mrproper
  	@find $(srctree) $(RCS_FIND_IGNORE) \
  		\( -name '*.orig' -o -name '*.rej' -o -name '*~' \
  		-o -name '*.bak' -o -name '#*#' -o -name '.*.orig' \
@@ -60251,7 +60486,7 @@ diff -urNp linux-3.0.3/Makefile linux-3.0.3/Makefile
  		-o -name '*%' -o -name '.*.cmd' -o -name 'core' \) \
  		-type f -print | xargs rm -f
  
-@@ -1404,7 +1427,7 @@ clean: $(clean-dirs)
+@@ -1404,7 +1428,7 @@ clean: $(clean-dirs)
  	$(call cmd,rmdirs)
  	$(call cmd,rmfiles)
  	@find $(if $(KBUILD_EXTMOD), $(KBUILD_EXTMOD), .) $(RCS_FIND_IGNORE) \
@@ -69350,8 +69585,8 @@ diff -urNp linux-3.0.3/sound/usb/card.h linux-3.0.3/sound/usb/card.h
  struct snd_usb_stream {
 diff -urNp linux-3.0.3/tools/gcc/constify_plugin.c linux-3.0.3/tools/gcc/constify_plugin.c
 --- linux-3.0.3/tools/gcc/constify_plugin.c	1969-12-31 19:00:00.000000000 -0500
-+++ linux-3.0.3/tools/gcc/constify_plugin.c	2011-08-23 22:35:28.000000000 -0400
-@@ -0,0 +1,258 @@
++++ linux-3.0.3/tools/gcc/constify_plugin.c	2011-08-24 18:13:06.000000000 -0400
+@@ -0,0 +1,259 @@
 +/*
 + * Copyright 2011 by Emese Revfy <re.emese@gmail.com>
 + * Licensed under the GPL v2, or (at your option) v3
@@ -69376,26 +69611,30 @@ diff -urNp linux-3.0.3/tools/gcc/constify_plugin.c linux-3.0.3/tools/gcc/constif
 +#include "function.h"
 +#include "tree-flow.h"
 +#include "plugin.h"
++//#include "c-tree.h"
++
++#define C_TYPE_FIELDS_READONLY(TYPE) TREE_LANG_FLAG_1 (TYPE)
 +
 +int plugin_is_GPL_compatible;
 +
 +static struct plugin_info const_plugin_info = {
-+	.version	= "20110817",
++	.version	= "20110824",
 +	.help		= "no-constify\tturn off constification\n",
 +};
 +
 +static bool walk_struct(tree node);
 +
-+static void deconstify_node(tree node)
++static void deconstify_node(tree type)
 +{
 +	tree field;
 +
-+	for (field = TYPE_FIELDS(node); field; field = TREE_CHAIN(field)) {
++	C_TYPE_FIELDS_READONLY(type) = 0;
++	for (field = TYPE_FIELDS(type); field; field = TREE_CHAIN(field)) {
 +		enum tree_code code = TREE_CODE(TREE_TYPE(field));
 +		if (code == RECORD_TYPE || code == UNION_TYPE)
 +			deconstify_node(TREE_TYPE(field));
 +		TREE_READONLY(field) = 0;
-+		TREE_READONLY(TREE_TYPE(field)) = 0;
++		TYPE_READONLY(TREE_TYPE(field)) = 0;
 +	}
 +}
 +
@@ -69434,7 +69673,7 @@ diff -urNp linux-3.0.3/tools/gcc/constify_plugin.c linux-3.0.3/tools/gcc/constif
 +		return NULL_TREE;
 +	}
 +
-+	if (TREE_CODE(*node) == TYPE_DECL && !TREE_READONLY(type)) {
++	if (TREE_CODE(*node) == TYPE_DECL && !TYPE_READONLY(type)) {
 +		error("%qE attribute used on type that is not constified", name);
 +		return NULL_TREE;
 +	}
@@ -69511,9 +69750,6 @@ diff -urNp linux-3.0.3/tools/gcc/constify_plugin.c linux-3.0.3/tools/gcc/constif
 +	if (TREE_READONLY(node))
 +		return;
 +
-+	if (TYPE_FIELDS(node) == NULL_TREE)
-+		return;
-+
 +	if (walk_struct(node))
 +		constify_node(node);
 +}
@@ -69543,10 +69779,10 @@ diff -urNp linux-3.0.3/tools/gcc/constify_plugin.c linux-3.0.3/tools/gcc/constif
 +	tree var;
 +	referenced_var_iterator rvi;
 +
-+#if __GNUC_MINOR__ >= 6
-+	FOR_EACH_REFERENCED_VAR(cfun, var, rvi) {
-+#else
++#if __GNUC__ == 4 && __GNUC_MINOR__ == 5
 +	FOR_EACH_REFERENCED_VAR(var, rvi) {
++#else
++	FOR_EACH_REFERENCED_VAR(cfun, var, rvi) {
 +#endif
 +		tree type = TREE_TYPE(var);
 +
@@ -69556,7 +69792,7 @@ diff -urNp linux-3.0.3/tools/gcc/constify_plugin.c linux-3.0.3/tools/gcc/constif
 +		if (TREE_CODE(type) != RECORD_TYPE && TREE_CODE(type) != UNION_TYPE)
 +			continue;
 +
-+		if (!TREE_READONLY(type))
++		if (!TYPE_READONLY(type))
 +			continue;
 +
 +//		if (lookup_attribute("no_const", DECL_ATTRIBUTES(var)))
