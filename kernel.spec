@@ -1427,7 +1427,9 @@ fi
 %{_kernelsrcdir}/scripts/selinux/mdp/*.c
 %exclude %dir %{_kernelsrcdir}/security
 %exclude %dir %{_kernelsrcdir}/security/selinux
+%if %{with grsecurity}
 %{_kernelsrcdir}/tools/gcc/*.c
+%endif
 
 %if %{with doc}
 %files doc
@@ -1505,7 +1507,9 @@ fi
 %{_kernelsrcdir}/security
 %exclude %{_kernelsrcdir}/security/selinux/include
 %{_kernelsrcdir}/tools/*
+%if %{with grsecurity}
 %exclude %{_kernelsrcdir}/tools/gcc/*.c
+%endif
 %{_kernelsrcdir}/usr
 %{_kernelsrcdir}/COPYING
 %{_kernelsrcdir}/CREDITS
