@@ -9898,17 +9898,6 @@ diff -urNp linux-3.0.4/arch/x86/include/asm/uaccess.h linux-3.0.4/arch/x86/inclu
  } while (0)
  
  #ifdef CONFIG_X86_WP_WORKS_OK
-diff -urNp linux-3.0.4/arch/x86/include/asm/vgtod.h linux-3.0.4/arch/x86/include/asm/vgtod.h
---- linux-3.0.4/arch/x86/include/asm/vgtod.h	2011-07-21 22:17:23.000000000 -0400
-+++ linux-3.0.4/arch/x86/include/asm/vgtod.h	2011-08-23 21:47:55.000000000 -0400
-@@ -14,6 +14,7 @@ struct vsyscall_gtod_data {
- 	int		sysctl_enabled;
- 	struct timezone sys_tz;
- 	struct { /* extract of a clocksource struct */
-+		char	name[8];
- 		cycle_t (*vread)(void);
- 		cycle_t	cycle_last;
- 		cycle_t	mask;
 diff -urNp linux-3.0.4/arch/x86/include/asm/x86_init.h linux-3.0.4/arch/x86/include/asm/x86_init.h
 --- linux-3.0.4/arch/x86/include/asm/x86_init.h	2011-07-21 22:17:23.000000000 -0400
 +++ linux-3.0.4/arch/x86/include/asm/x86_init.h	2011-08-23 21:47:55.000000000 -0400
@@ -11239,7 +11228,7 @@ diff -urNp linux-3.0.4/arch/x86/kernel/early_printk.c linux-3.0.4/arch/x86/kerne
  	early_console->write(early_console, buf, n);
 diff -urNp linux-3.0.4/arch/x86/kernel/entry_32.S linux-3.0.4/arch/x86/kernel/entry_32.S
 --- linux-3.0.4/arch/x86/kernel/entry_32.S	2011-07-21 22:17:23.000000000 -0400
-+++ linux-3.0.4/arch/x86/kernel/entry_32.S	2011-08-23 21:48:14.000000000 -0400
++++ linux-3.0.4/arch/x86/kernel/entry_32.S	2011-08-30 18:23:52.000000000 -0400
 @@ -185,13 +185,146 @@
  	/*CFI_REL_OFFSET gs, PT_GS*/
  .endm
@@ -11476,13 +11465,14 @@ diff -urNp linux-3.0.4/arch/x86/kernel/entry_32.S linux-3.0.4/arch/x86/kernel/en
  	movl %ebp,PT_EBP(%esp)
  .section __ex_table,"a"
  	.align 4
-@@ -433,12 +594,23 @@ sysenter_do_call:
+@@ -433,12 +594,24 @@ sysenter_do_call:
  	testl $_TIF_ALLWORK_MASK, %ecx
  	jne sysexit_audit
  sysenter_exit:
 +
 +#ifdef CONFIG_PAX_RANDKSTACK
 +	pushl_cfi %eax
++	movl %esp, %eax
 +	call pax_randomize_kstack
 +	popl_cfi %eax
 +#endif
@@ -11500,7 +11490,7 @@ diff -urNp linux-3.0.4/arch/x86/kernel/entry_32.S linux-3.0.4/arch/x86/kernel/en
  	PTGS_TO_GS
  	ENABLE_INTERRUPTS_SYSEXIT
  
-@@ -455,6 +627,9 @@ sysenter_audit:
+@@ -455,6 +628,9 @@ sysenter_audit:
  	movl %eax,%edx			/* 2nd arg: syscall number */
  	movl $AUDIT_ARCH_I386,%eax	/* 1st arg: audit arch */
  	call audit_syscall_entry
@@ -11510,7 +11500,7 @@ diff -urNp linux-3.0.4/arch/x86/kernel/entry_32.S linux-3.0.4/arch/x86/kernel/en
  	pushl_cfi %ebx
  	movl PT_EAX(%esp),%eax		/* reload syscall number */
  	jmp sysenter_do_call
-@@ -481,11 +656,17 @@ sysexit_audit:
+@@ -481,11 +657,17 @@ sysexit_audit:
  
  	CFI_ENDPROC
  .pushsection .fixup,"ax"
@@ -11530,13 +11520,14 @@ diff -urNp linux-3.0.4/arch/x86/kernel/entry_32.S linux-3.0.4/arch/x86/kernel/en
  .popsection
  	PTGS_TO_GS_EX
  ENDPROC(ia32_sysenter_target)
-@@ -518,6 +699,14 @@ syscall_exit:
+@@ -518,6 +700,15 @@ syscall_exit:
  	testl $_TIF_ALLWORK_MASK, %ecx	# current->work
  	jne syscall_exit_work
  
 +restore_all_pax:
 +
 +#ifdef CONFIG_PAX_RANDKSTACK
++	movl %esp, %eax
 +	call pax_randomize_kstack
 +#endif
 +
@@ -11545,7 +11536,7 @@ diff -urNp linux-3.0.4/arch/x86/kernel/entry_32.S linux-3.0.4/arch/x86/kernel/en
  restore_all:
  	TRACE_IRQS_IRET
  restore_all_notrace:
-@@ -577,14 +766,34 @@ ldt_ss:
+@@ -577,14 +768,34 @@ ldt_ss:
   * compensating for the offset by changing to the ESPFIX segment with
   * a base address that matches for the difference.
   */
@@ -11583,7 +11574,7 @@ diff -urNp linux-3.0.4/arch/x86/kernel/entry_32.S linux-3.0.4/arch/x86/kernel/en
  	pushl_cfi $__ESPFIX_SS
  	pushl_cfi %eax			/* new kernel esp */
  	/* Disable interrupts, but do not irqtrace this section: we
-@@ -613,29 +822,23 @@ work_resched:
+@@ -613,29 +824,23 @@ work_resched:
  	movl TI_flags(%ebp), %ecx
  	andl $_TIF_WORK_MASK, %ecx	# is there any work to be done other
  					# than syscall tracing?
@@ -11617,7 +11608,7 @@ diff -urNp linux-3.0.4/arch/x86/kernel/entry_32.S linux-3.0.4/arch/x86/kernel/en
  #endif
  	xorl %edx, %edx
  	call do_notify_resume
-@@ -648,6 +851,9 @@ syscall_trace_entry:
+@@ -648,6 +853,9 @@ syscall_trace_entry:
  	movl $-ENOSYS,PT_EAX(%esp)
  	movl %esp, %eax
  	call syscall_trace_enter
@@ -11627,7 +11618,7 @@ diff -urNp linux-3.0.4/arch/x86/kernel/entry_32.S linux-3.0.4/arch/x86/kernel/en
  	/* What it returned is what we'll actually use.  */
  	cmpl $(nr_syscalls), %eax
  	jnae syscall_call
-@@ -670,6 +876,10 @@ END(syscall_exit_work)
+@@ -670,6 +878,10 @@ END(syscall_exit_work)
  
  	RING0_INT_FRAME			# can't unwind into user space anyway
  syscall_fault:
@@ -11638,7 +11629,7 @@ diff -urNp linux-3.0.4/arch/x86/kernel/entry_32.S linux-3.0.4/arch/x86/kernel/en
  	GET_THREAD_INFO(%ebp)
  	movl $-EFAULT,PT_EAX(%esp)
  	jmp resume_userspace
-@@ -752,6 +962,36 @@ ptregs_clone:
+@@ -752,6 +964,36 @@ ptregs_clone:
  	CFI_ENDPROC
  ENDPROC(ptregs_clone)
  
@@ -11675,7 +11666,7 @@ diff -urNp linux-3.0.4/arch/x86/kernel/entry_32.S linux-3.0.4/arch/x86/kernel/en
  .macro FIXUP_ESPFIX_STACK
  /*
   * Switch back for ESPFIX stack to the normal zerobased stack
-@@ -761,8 +1001,15 @@ ENDPROC(ptregs_clone)
+@@ -761,8 +1003,15 @@ ENDPROC(ptregs_clone)
   * normal stack and adjusts ESP with the matching offset.
   */
  	/* fixup the stack */
@@ -11693,7 +11684,7 @@ diff -urNp linux-3.0.4/arch/x86/kernel/entry_32.S linux-3.0.4/arch/x86/kernel/en
  	shl $16, %eax
  	addl %esp, %eax			/* the adjusted stack pointer */
  	pushl_cfi $__KERNEL_DS
-@@ -1213,7 +1460,6 @@ return_to_handler:
+@@ -1213,7 +1462,6 @@ return_to_handler:
  	jmp *%ecx
  #endif
  
@@ -11701,7 +11692,7 @@ diff -urNp linux-3.0.4/arch/x86/kernel/entry_32.S linux-3.0.4/arch/x86/kernel/en
  #include "syscall_table_32.S"
  
  syscall_table_size=(.-sys_call_table)
-@@ -1259,9 +1505,12 @@ error_code:
+@@ -1259,9 +1507,12 @@ error_code:
  	movl $-1, PT_ORIG_EAX(%esp)	# no syscall to restart
  	REG_TO_PTGS %ecx
  	SET_KERNEL_GS %ecx
@@ -11715,7 +11706,7 @@ diff -urNp linux-3.0.4/arch/x86/kernel/entry_32.S linux-3.0.4/arch/x86/kernel/en
  	TRACE_IRQS_OFF
  	movl %esp,%eax			# pt_regs pointer
  	call *%edi
-@@ -1346,6 +1595,9 @@ nmi_stack_correct:
+@@ -1346,6 +1597,9 @@ nmi_stack_correct:
  	xorl %edx,%edx		# zero error code
  	movl %esp,%eax		# pt_regs pointer
  	call do_nmi
@@ -11725,7 +11716,7 @@ diff -urNp linux-3.0.4/arch/x86/kernel/entry_32.S linux-3.0.4/arch/x86/kernel/en
  	jmp restore_all_notrace
  	CFI_ENDPROC
  
-@@ -1382,6 +1634,9 @@ nmi_espfix_stack:
+@@ -1382,6 +1636,9 @@ nmi_espfix_stack:
  	FIXUP_ESPFIX_STACK		# %eax == %esp
  	xorl %edx,%edx			# zero error code
  	call do_nmi
@@ -14175,7 +14166,7 @@ diff -urNp linux-3.0.4/arch/x86/kernel/process_64.c linux-3.0.4/arch/x86/kernel/
  		if (!in_sched_functions(ip))
 diff -urNp linux-3.0.4/arch/x86/kernel/process.c linux-3.0.4/arch/x86/kernel/process.c
 --- linux-3.0.4/arch/x86/kernel/process.c	2011-07-21 22:17:23.000000000 -0400
-+++ linux-3.0.4/arch/x86/kernel/process.c	2011-08-23 21:47:55.000000000 -0400
++++ linux-3.0.4/arch/x86/kernel/process.c	2011-08-30 18:23:52.000000000 -0400
 @@ -48,16 +48,33 @@ void free_thread_xstate(struct task_stru
  
  void free_thread_info(struct thread_info *ti)
@@ -14265,13 +14256,13 @@ diff -urNp linux-3.0.4/arch/x86/kernel/process.c linux-3.0.4/arch/x86/kernel/pro
  {
  	local_irq_disable();
  	/*
-@@ -668,16 +688,34 @@ static int __init idle_setup(char *str)
+@@ -668,16 +688,37 @@ static int __init idle_setup(char *str)
  }
  early_param("idle", idle_setup);
  
 -unsigned long arch_align_stack(unsigned long sp)
 +#ifdef CONFIG_PAX_RANDKSTACK
-+asmlinkage void pax_randomize_kstack(void)
++void pax_randomize_kstack(struct pt_regs *regs)
  {
 -	if (!(current->personality & ADDR_NO_RANDOMIZE) && randomize_va_space)
 -		sp -= get_random_int() % 8192;
@@ -14288,6 +14279,9 @@ diff -urNp linux-3.0.4/arch/x86/kernel/process.c linux-3.0.4/arch/x86/kernel/pro
 +	if (!randomize_va_space)
 +		return;
 +
++	if (v8086_mode(regs))
++		return;
+ 
 +	rdtscl(time);
 +
 +	/* P4 seems to return a 0 LSB, ignore it */
@@ -14304,7 +14298,7 @@ diff -urNp linux-3.0.4/arch/x86/kernel/process.c linux-3.0.4/arch/x86/kernel/pro
 +
 +	thread->sp0 ^= time;
 +	load_sp0(init_tss + smp_processor_id(), thread);
- 
++
 +#ifdef CONFIG_X86_64
 +	percpu_write(kernel_stack, thread->sp0);
 +#endif
@@ -21082,18 +21076,6 @@ diff -urNp linux-3.0.4/arch/x86/platform/mrst/mrst.c linux-3.0.4/arch/x86/platfo
  }
  
  /*
-diff -urNp linux-3.0.4/arch/x86/platform/olpc/olpc_dt.c linux-3.0.4/arch/x86/platform/olpc/olpc_dt.c
---- linux-3.0.4/arch/x86/platform/olpc/olpc_dt.c	2011-07-21 22:17:23.000000000 -0400
-+++ linux-3.0.4/arch/x86/platform/olpc/olpc_dt.c	2011-08-29 22:31:19.000000000 -0400
-@@ -163,7 +163,7 @@ static struct of_pdt_ops prom_olpc_ops _
- 	.getchild = olpc_dt_getchild,
- 	.getsibling = olpc_dt_getsibling,
- 	.pkg2path = olpc_dt_pkg2path,
--};
-+} __no_const;
- 
- void __init olpc_dt_build_devicetree(void)
- {
 diff -urNp linux-3.0.4/arch/x86/platform/uv/tlb_uv.c linux-3.0.4/arch/x86/platform/uv/tlb_uv.c
 --- linux-3.0.4/arch/x86/platform/uv/tlb_uv.c	2011-07-21 22:17:23.000000000 -0400
 +++ linux-3.0.4/arch/x86/platform/uv/tlb_uv.c	2011-08-23 21:48:14.000000000 -0400
@@ -56485,6 +56467,18 @@ diff -urNp linux-3.0.4/include/linux/netfilter/xt_gradm.h linux-3.0.4/include/li
 +};
 +
 +#endif
+diff -urNp linux-3.0.4/include/linux/of_pdt.h linux-3.0.4/include/linux/of_pdt.h
+--- linux-3.0.4/include/linux/of_pdt.h	2011-07-21 22:17:23.000000000 -0400
++++ linux-3.0.4/include/linux/of_pdt.h	2011-08-30 06:20:11.000000000 -0400
+@@ -32,7 +32,7 @@ struct of_pdt_ops {
+ 
+ 	/* return 0 on success; fill in 'len' with number of bytes in path */
+ 	int (*pkg2path)(phandle node, char *buf, const int buflen, int *len);
+-};
++} __no_const;
+ 
+ extern void *prom_early_alloc(unsigned long size);
+ 
 diff -urNp linux-3.0.4/include/linux/oprofile.h linux-3.0.4/include/linux/oprofile.h
 --- linux-3.0.4/include/linux/oprofile.h	2011-07-21 22:17:23.000000000 -0400
 +++ linux-3.0.4/include/linux/oprofile.h	2011-08-23 21:47:56.000000000 -0400
@@ -57809,16 +57803,8 @@ diff -urNp linux-3.0.4/include/net/lapb.h linux-3.0.4/include/net/lapb.h
  	struct lapb_frame	frmr_data;
 diff -urNp linux-3.0.4/include/net/neighbour.h linux-3.0.4/include/net/neighbour.h
 --- linux-3.0.4/include/net/neighbour.h	2011-07-21 22:17:23.000000000 -0400
-+++ linux-3.0.4/include/net/neighbour.h	2011-08-26 19:49:56.000000000 -0400
-@@ -117,14 +117,14 @@ struct neighbour {
- };
- 
- struct neigh_ops {
--	int			family;
-+	const int		family;
- 	void			(*solicit)(struct neighbour *, struct sk_buff*);
- 	void			(*error_report)(struct neighbour *, struct sk_buff*);
- 	int			(*output)(struct sk_buff*);
++++ linux-3.0.4/include/net/neighbour.h	2011-08-31 18:39:25.000000000 -0400
+@@ -124,7 +124,7 @@ struct neigh_ops {
  	int			(*connected_output)(struct sk_buff*);
  	int			(*hh_output)(struct sk_buff*);
  	int			(*queue_xmit)(struct sk_buff*);
@@ -63158,7 +63144,7 @@ diff -urNp linux-3.0.4/localversion-grsec linux-3.0.4/localversion-grsec
 +-grsec
 diff -urNp linux-3.0.4/Makefile linux-3.0.4/Makefile
 --- linux-3.0.4/Makefile	2011-08-29 23:26:13.000000000 -0400
-+++ linux-3.0.4/Makefile	2011-08-29 23:26:21.000000000 -0400
++++ linux-3.0.4/Makefile	2011-09-01 17:26:49.000000000 -0400
 @@ -245,8 +245,9 @@ CONFIG_SHELL := $(shell if [ -x "$$BASH"
  
  HOSTCC       = gcc
@@ -63184,7 +63170,15 @@ diff -urNp linux-3.0.4/Makefile linux-3.0.4/Makefile
  KBUILD_AFLAGS_KERNEL :=
  KBUILD_CFLAGS_KERNEL :=
  KBUILD_AFLAGS   := -D__ASSEMBLY__
-@@ -564,6 +567,25 @@ else
+@@ -408,6 +411,7 @@ export RCS_TAR_IGNORE := --exclude SCCS 
+ 
+ # Basic helpers built in scripts/
+ PHONY += scripts_basic
++scripts_basic: KBUILD_CFLAGS := $(filter-out $(CONSTIFY_PLUGIN) $(STACKLEAK_PLUGIN),$(KBUILD_CFLAGS))
+ scripts_basic:
+ 	$(Q)$(MAKE) $(build)=scripts/basic
+ 	$(Q)rm -f .tmp_quiet_recordmcount
+@@ -564,6 +568,24 @@ else
  KBUILD_CFLAGS	+= -O2
  endif
  
@@ -63194,9 +63188,8 @@ diff -urNp linux-3.0.4/Makefile linux-3.0.4/Makefile
 +STACKLEAK_PLUGIN := -fplugin=$(objtree)/tools/gcc/stackleak_plugin.so -fplugin-arg-stackleak_plugin-track-lowest-sp=100
 +endif
 +export CONSTIFY_PLUGIN STACKLEAK_PLUGIN
-+gcc-plugins0:
++gcc-plugins:
 +	$(Q)$(MAKE) $(build)=tools/gcc
-+gcc-plugins: scripts_basic gcc-plugins0
 +else
 +gcc-plugins:
 +ifeq ($(call cc-ifversion, -ge, 0405, y), y)
@@ -63219,32 +63212,52 @@ diff -urNp linux-3.0.4/Makefile linux-3.0.4/Makefile
  
  vmlinux-dirs	:= $(patsubst %/,%,$(filter %/, $(init-y) $(init-m) \
  		     $(core-y) $(core-m) $(drivers-y) $(drivers-m) \
-@@ -907,6 +929,7 @@ define rule_vmlinux-modpost
+@@ -907,6 +929,8 @@ define rule_vmlinux-modpost
  endef
  
  # vmlinux image - including updated kernel symbols
-+vmlinux: KBUILD_CFLAGS += $(CONSTIFY_PLUGIN) $(STACKLEAK_PLUGIN)
++$(vmlinux-all): KBUILD_CFLAGS += $(CONSTIFY_PLUGIN) $(STACKLEAK_PLUGIN)
++$(vmlinux-all): gcc-plugins
  vmlinux: $(vmlinux-lds) $(vmlinux-init) $(vmlinux-main) vmlinux.o $(kallsyms.o) FORCE
  ifdef CONFIG_HEADERS_CHECK
  	$(Q)$(MAKE) -f $(srctree)/Makefile headers_check
-@@ -973,7 +996,7 @@ ifneq ($(KBUILD_SRC),)
- endif
+@@ -941,7 +965,8 @@ $(sort $(vmlinux-init) $(vmlinux-main)) 
+ # Error messages still appears in the original language
  
- # prepare2 creates a makefile if using a separate output directory
--prepare2: prepare3 outputmakefile asm-generic
-+prepare2: prepare3 outputmakefile asm-generic gcc-plugins
+ PHONY += $(vmlinux-dirs)
+-$(vmlinux-dirs): prepare scripts
++$(vmlinux-dirs): KBUILD_CFLAGS += $(CONSTIFY_PLUGIN) $(STACKLEAK_PLUGIN)
++$(vmlinux-dirs): gcc-plugins prepare scripts
+ 	$(Q)$(MAKE) $(build)=$@
  
- prepare1: prepare2 include/linux/version.h include/generated/utsrelease.h \
-                    include/config/auto.conf
-@@ -1087,6 +1110,7 @@ all: modules
- #	using awk while concatenating to the final file.
+ # Store (new) KERNELRELASE string in include/config/kernel.release
+@@ -986,6 +1011,7 @@ prepare0: archprepare FORCE
+ 	$(Q)$(MAKE) $(build)=. missing-syscalls
  
- PHONY += modules
-+modules: KBUILD_CFLAGS += $(CONSTIFY_PLUGIN) $(STACKLEAK_PLUGIN)
- modules: $(vmlinux-dirs) $(if $(KBUILD_BUILTIN),vmlinux) modules.builtin
- 	$(Q)$(AWK) '!x[$$0]++' $(vmlinux-dirs:%=$(objtree)/%/modules.order) > $(objtree)/modules.order
- 	@$(kecho) '  Building modules, stage 2.';
-@@ -1359,6 +1383,7 @@ PHONY += $(module-dirs) modules
+ # All the preparing..
++prepare: KBUILD_CFLAGS := $(filter-out $(CONSTIFY_PLUGIN) $(STACKLEAK_PLUGIN),$(KBUILD_CFLAGS))
+ prepare: prepare0
+ 
+ # Generate some files
+@@ -1102,7 +1128,7 @@ modules.builtin: $(vmlinux-dirs:%=%/modu
+ 
+ # Target to prepare building external modules
+ PHONY += modules_prepare
+-modules_prepare: prepare scripts
++modules_prepare: gcc-plugins prepare scripts
+ 
+ # Target to install modules
+ PHONY += modules_install
+@@ -1198,7 +1224,7 @@ distclean: mrproper
+ 	@find $(srctree) $(RCS_FIND_IGNORE) \
+ 		\( -name '*.orig' -o -name '*.rej' -o -name '*~' \
+ 		-o -name '*.bak' -o -name '#*#' -o -name '.*.orig' \
+-		-o -name '.*.rej' -o -size 0 \
++		-o -name '.*.rej' -o -name '*.so' -o -size 0 \
+ 		-o -name '*%' -o -name '.*.cmd' -o -name 'core' \) \
+ 		-type f -print | xargs rm -f
+ 
+@@ -1359,6 +1385,7 @@ PHONY += $(module-dirs) modules
  $(module-dirs): crmodverdir $(objtree)/Module.symvers
  	$(Q)$(MAKE) $(build)=$(patsubst _module_%,%,$@)
  
@@ -63252,15 +63265,46 @@ diff -urNp linux-3.0.4/Makefile linux-3.0.4/Makefile
  modules: $(module-dirs)
  	@$(kecho) '  Building modules, stage 2.';
  	$(Q)$(MAKE) -f $(srctree)/scripts/Makefile.modpost
-@@ -1404,7 +1429,7 @@ clean: $(clean-dirs)
- 	$(call cmd,rmdirs)
- 	$(call cmd,rmfiles)
- 	@find $(if $(KBUILD_EXTMOD), $(KBUILD_EXTMOD), .) $(RCS_FIND_IGNORE) \
--		\( -name '*.[oas]' -o -name '*.ko' -o -name '.*.cmd' \
-+		\( -name '*.[oas]' -o -name '*.[ks]o' -o -name '.*.cmd' \
- 		-o -name '.*.d' -o -name '.*.tmp' -o -name '*.mod.c' \
- 		-o -name '*.symtypes' -o -name 'modules.order' \
- 		-o -name modules.builtin -o -name '.tmp_*.o.*' \
+@@ -1485,17 +1512,19 @@ else
+         target-dir = $(if $(KBUILD_EXTMOD),$(dir $<),$(dir $@))
+ endif
+ 
+-%.s: %.c prepare scripts FORCE
++%.s: KBUILD_CFLAGS += $(CONSTIFY_PLUGIN) $(STACKLEAK_PLUGIN)
++%.s: %.c gcc-plugins prepare scripts FORCE
+ 	$(Q)$(MAKE) $(build)=$(build-dir) $(target-dir)$(notdir $@)
+ %.i: %.c prepare scripts FORCE
+ 	$(Q)$(MAKE) $(build)=$(build-dir) $(target-dir)$(notdir $@)
+-%.o: %.c prepare scripts FORCE
++%.o: KBUILD_CFLAGS += $(CONSTIFY_PLUGIN) $(STACKLEAK_PLUGIN)
++%.o: %.c gcc-plugins prepare scripts FORCE
+ 	$(Q)$(MAKE) $(build)=$(build-dir) $(target-dir)$(notdir $@)
+ %.lst: %.c prepare scripts FORCE
+ 	$(Q)$(MAKE) $(build)=$(build-dir) $(target-dir)$(notdir $@)
+-%.s: %.S prepare scripts FORCE
++%.s: %.S gcc-plugins prepare scripts FORCE
+ 	$(Q)$(MAKE) $(build)=$(build-dir) $(target-dir)$(notdir $@)
+-%.o: %.S prepare scripts FORCE
++%.o: %.S gcc-plugins prepare scripts FORCE
+ 	$(Q)$(MAKE) $(build)=$(build-dir) $(target-dir)$(notdir $@)
+ %.symtypes: %.c prepare scripts FORCE
+ 	$(Q)$(MAKE) $(build)=$(build-dir) $(target-dir)$(notdir $@)
+@@ -1505,11 +1534,13 @@ endif
+ 	$(cmd_crmodverdir)
+ 	$(Q)$(MAKE) KBUILD_MODULES=$(if $(CONFIG_MODULES),1) \
+ 	$(build)=$(build-dir)
+-%/: prepare scripts FORCE
++%/: KBUILD_CFLAGS += $(CONSTIFY_PLUGIN) $(STACKLEAK_PLUGIN)
++%/: gcc-plugins prepare scripts FORCE
+ 	$(cmd_crmodverdir)
+ 	$(Q)$(MAKE) KBUILD_MODULES=$(if $(CONFIG_MODULES),1) \
+ 	$(build)=$(build-dir)
+-%.ko: prepare scripts FORCE
++%.ko: KBUILD_CFLAGS += $(CONSTIFY_PLUGIN) $(STACKLEAK_PLUGIN)
++%.ko: gcc-plugins prepare scripts FORCE
+ 	$(cmd_crmodverdir)
+ 	$(Q)$(MAKE) KBUILD_MODULES=$(if $(CONFIG_MODULES),1)   \
+ 	$(build)=$(build-dir) $(@:.ko=.o)
 diff -urNp linux-3.0.4/mm/filemap.c linux-3.0.4/mm/filemap.c
 --- linux-3.0.4/mm/filemap.c	2011-07-21 22:17:23.000000000 -0400
 +++ linux-3.0.4/mm/filemap.c	2011-08-23 21:48:14.000000000 -0400
@@ -70853,10 +70897,10 @@ diff -urNp linux-3.0.4/scripts/basic/fixdep.c linux-3.0.4/scripts/basic/fixdep.c
  		fprintf(stderr, "fixdep: sizeof(int) != 4 or wrong endianess? %#x\n",
 diff -urNp linux-3.0.4/scripts/gcc-plugin.sh linux-3.0.4/scripts/gcc-plugin.sh
 --- linux-3.0.4/scripts/gcc-plugin.sh	1969-12-31 19:00:00.000000000 -0500
-+++ linux-3.0.4/scripts/gcc-plugin.sh	2011-08-23 21:47:56.000000000 -0400
++++ linux-3.0.4/scripts/gcc-plugin.sh	2011-08-31 18:39:25.000000000 -0400
 @@ -0,0 +1,2 @@
 +#!/bin/sh
-+echo "#include \"gcc-plugin.h\"" | $* -x c -shared - -o /dev/null -I`$* -print-file-name=plugin`/include >/dev/null 2>&1 && echo "y"
++echo "#include \"gcc-plugin.h\"\n#include \"rtl.h\"" | $* -x c -shared - -o /dev/null -I`$* -print-file-name=plugin`/include >/dev/null 2>&1 && echo "y"
 diff -urNp linux-3.0.4/scripts/Makefile.build linux-3.0.4/scripts/Makefile.build
 --- linux-3.0.4/scripts/Makefile.build	2011-07-21 22:17:23.000000000 -0400
 +++ linux-3.0.4/scripts/Makefile.build	2011-08-23 21:47:56.000000000 -0400
@@ -72351,17 +72395,21 @@ diff -urNp linux-3.0.4/sound/usb/card.h linux-3.0.4/sound/usb/card.h
  struct snd_usb_stream {
 diff -urNp linux-3.0.4/tools/gcc/constify_plugin.c linux-3.0.4/tools/gcc/constify_plugin.c
 --- linux-3.0.4/tools/gcc/constify_plugin.c	1969-12-31 19:00:00.000000000 -0500
-+++ linux-3.0.4/tools/gcc/constify_plugin.c	2011-08-29 22:01:36.000000000 -0400
-@@ -0,0 +1,289 @@
++++ linux-3.0.4/tools/gcc/constify_plugin.c	2011-08-30 18:23:52.000000000 -0400
+@@ -0,0 +1,293 @@
 +/*
 + * Copyright 2011 by Emese Revfy <re.emese@gmail.com>
++ * Copyright 2011 by PaX Team <pageexec@freemail.hu>
 + * Licensed under the GPL v2, or (at your option) v3
 + *
-+ * This gcc plugin constifies all structures which contain only function pointers and const fields.
++ * This gcc plugin constifies all structures which contain only function pointers or are explicitly marked for constification.
++ *
++ * Homepage:
++ * http://www.grsecurity.net/~ephox/const_plugin/
 + *
 + * Usage:
 + * $ gcc -I`gcc -print-file-name=plugin`/include -fPIC -shared -O2 -o constify_plugin.so constify_plugin.c
-+ * $ gcc -fplugin=constify_plugin.so test.c  -O2
++ * $ gcc -fplugin=constify_plugin.so test.c -O2
 + */
 +
 +#include "gcc-plugin.h"
