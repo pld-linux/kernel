@@ -269,3 +269,112 @@ Index: xfs/fs/xfs/linux-2.6/xfs_super.c
  	/*
  	 * Blow away any referenced inode in the filestreams cache.
 
+commit 1316d4da3f632d5843d5a446203e73067dc40f09
+Author: Dave Chinner <dchinner@redhat.com>
+Date:   Mon Jul 4 05:27:36 2011 +0000
+
+    xfs: unpin stale inodes directly in IOP_COMMITTED
+    
+    When inodes are marked stale in a transaction, they are treated
+    specially when the inode log item is being inserted into the AIL.
+    It tries to avoid moving the log item forward in the AIL due to a
+    race condition with the writing the underlying buffer back to disk.
+    The was "fixed" in commit de25c18 ("xfs: avoid moving stale inodes
+    in the AIL").
+    
+    To avoid moving the item forward, we return a LSN smaller than the
+    commit_lsn of the completing transaction, thereby trying to trick
+    the commit code into not moving the inode forward at all. I'm not
+    sure this ever worked as intended - it assumes the inode is already
+    in the AIL, but I don't think the returned LSN would have been small
+    enough to prevent moving the inode. It appears that the reason it
+    worked is that the lower LSN of the inodes meant they were inserted
+    into the AIL and flushed before the inode buffer (which was moved to
+    the commit_lsn of the transaction).
+    
+    The big problem is that with delayed logging, the returning of the
+    different LSN means insertion takes the slow, non-bulk path.  Worse
+    yet is that insertion is to a position -before- the commit_lsn so it
+    is doing a AIL traversal on every insertion, and has to walk over
+    all the items that have already been inserted into the AIL. It's
+    expensive.
+    
+    To compound the matter further, with delayed logging inodes are
+    likely to go from clean to stale in a single checkpoint, which means
+    they aren't even in the AIL at all when we come across them at AIL
+    insertion time. Hence these were all getting inserted into the AIL
+    when they simply do not need to be as inodes marked XFS_ISTALE are
+    never written back.
+    
+    Transactional/recovery integrity is maintained in this case by the
+    other items in the unlink transaction that were modified (e.g. the
+    AGI btree blocks) and committed in the same checkpoint.
+    
+    So to fix this, simply unpin the stale inodes directly in
+    xfs_inode_item_committed() and return -1 to indicate that the AIL
+    insertion code does not need to do any further processing of these
+    inodes.
+    
+    Signed-off-by: Dave Chinner <dchinner@redhat.com>
+    Reviewed-by: Christoph Hellwig <hch@lst.de>
+    Signed-off-by: Alex Elder <aelder@sgi.com>
+
+diff --git a/fs/xfs/xfs_inode_item.c b/fs/xfs/xfs_inode_item.c
+index 09983a3..b1e88d5 100644
+--- a/fs/xfs/xfs_inode_item.c
++++ b/fs/xfs/xfs_inode_item.c
+@@ -681,15 +681,15 @@ xfs_inode_item_unlock(
+  * where the cluster buffer may be unpinned before the inode is inserted into
+  * the AIL during transaction committed processing. If the buffer is unpinned
+  * before the inode item has been committed and inserted, then it is possible
+- * for the buffer to be written and IO completions before the inode is inserted
++ * for the buffer to be written and IO completes before the inode is inserted
+  * into the AIL. In that case, we'd be inserting a clean, stale inode into the
+  * AIL which will never get removed. It will, however, get reclaimed which
+  * triggers an assert in xfs_inode_free() complaining about freein an inode
+  * still in the AIL.
+  *
+- * To avoid this, return a lower LSN than the one passed in so that the
+- * transaction committed code will not move the inode forward in the AIL but
+- * will still unpin it properly.
++ * To avoid this, just unpin the inode directly and return a LSN of -1 so the
++ * transaction committed code knows that it does not need to do any further
++ * processing on the item.
+  */
+ STATIC xfs_lsn_t
+ xfs_inode_item_committed(
+@@ -699,8 +699,10 @@ xfs_inode_item_committed(
+ 	struct xfs_inode_log_item *iip = INODE_ITEM(lip);
+ 	struct xfs_inode	*ip = iip->ili_inode;
+ 
+-	if (xfs_iflags_test(ip, XFS_ISTALE))
+-		return lsn - 1;
++	if (xfs_iflags_test(ip, XFS_ISTALE)) {
++		xfs_inode_item_unpin(lip, 0);
++		return -1;
++	}
+ 	return lsn;
+ }
+ 
+diff --git a/fs/xfs/xfs_trans.c b/fs/xfs/xfs_trans.c
+index 7c7bc2b..c83f63b 100644
+--- a/fs/xfs/xfs_trans.c
++++ b/fs/xfs/xfs_trans.c
+@@ -1361,7 +1361,7 @@ xfs_trans_item_committed(
+ 		lip->li_flags |= XFS_LI_ABORTED;
+ 	item_lsn = IOP_COMMITTED(lip, commit_lsn);
+ 
+-	/* If the committed routine returns -1, item has been freed. */
++	/* item_lsn of -1 means the item needs no further processing */
+ 	if (XFS_LSN_CMP(item_lsn, (xfs_lsn_t)-1) == 0)
+ 		return;
+ 
+@@ -1474,7 +1474,7 @@ xfs_trans_committed_bulk(
+ 			lip->li_flags |= XFS_LI_ABORTED;
+ 		item_lsn = IOP_COMMITTED(lip, commit_lsn);
+ 
+-		/* item_lsn of -1 means the item was freed */
++		/* item_lsn of -1 means the item needs no further processing */
+ 		if (XFS_LSN_CMP(item_lsn, (xfs_lsn_t)-1) == 0)
+ 			continue;
+ 
