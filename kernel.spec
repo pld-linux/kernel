@@ -325,6 +325,7 @@ Suggests:	keyutils
 Provides:	%{name}(netfilter) = 20070806
 Provides:	%{name}(vermagic) = %{kernel_release}
 Obsoletes:	kernel%{_alt_kernel}-isdn-mISDN
+Obsoletes:	kernel%{_alt_kernel}-char-lirc-ene0100
 Obsoletes:	kernel-firmware
 Obsoletes:	kernel-misc-acer_acpi
 Obsoletes:	kernel-misc-fuse
