@@ -1409,6 +1409,7 @@ fi
 %{_kernelsrcdir}/arch/*/kernel/asm-offsets*
 %{_kernelsrcdir}/arch/*/kernel/sigframe*.h
 %{_kernelsrcdir}/drivers/lguest/lg.h
+%{_kernelsrcdir}/drivers/media/video/bt8xx/bttv.h
 %{_kernelsrcdir}/kernel/bounds.c
 %dir %{_kernelsrcdir}/scripts
 %{_kernelsrcdir}/scripts/Kbuild.include
@@ -1471,6 +1472,7 @@ fi
 %exclude %{_kernelsrcdir}/arch/*/kernel/asm-offsets*
 %exclude %{_kernelsrcdir}/arch/*/kernel/sigframe*.h
 %exclude %{_kernelsrcdir}/drivers/lguest/lg.h
+%exclude %{_kernelsrcdir}/drivers/media/video/bt8xx/bttv.h
 %{_kernelsrcdir}/block
 %{_kernelsrcdir}/crypto
 %{_kernelsrcdir}/drivers
