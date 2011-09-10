@@ -328,6 +328,7 @@ Obsoletes:	kernel%{_alt_kernel}-isdn-mISDN
 Obsoletes:	kernel%{_alt_kernel}-char-lirc-ene0100
 Obsoletes:	kernel%{_alt_kernel}-char-lirc-it87
 Obsoletes:	kernel%{_alt_kernel}-char-lirc-ite8709
+Obsoletes:	kernel%{_alt_kernel}-char-lirc-mceusb
 Obsoletes:	kernel-firmware
 Obsoletes:	kernel-misc-acer_acpi
 Obsoletes:	kernel-misc-fuse
