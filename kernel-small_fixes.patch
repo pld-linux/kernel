@@ -743,3 +743,61 @@ index 6b164e9..c0cb408 100644
  					struct xfs_ail_cursor *cur);
  void			xfs_trans_ail_cursor_done(struct xfs_ail *ailp,
  					struct xfs_ail_cursor *cur);
+commit 37b652ec6445be99d0193047d1eda129a1a315d3
+Author: Dave Chinner <dchinner@redhat.com>
+Date:   Thu Aug 25 07:17:01 2011 +0000
+
+    xfs: don't serialise direct IO reads on page cache checks
+    
+    There is no need to grab the i_mutex of the IO lock in exclusive
+    mode if we don't need to invalidate the page cache. Taking these
+    locks on every direct IO effective serialises them as taking the IO
+    lock in exclusive mode has to wait for all shared holders to drop
+    the lock. That only happens when IO is complete, so effective it
+    prevents dispatch of concurrent direct IO reads to the same inode.
+    
+    Fix this by taking the IO lock shared to check the page cache state,
+    and only then drop it and take the IO lock exclusively if there is
+    work to be done. Hence for the normal direct IO case, no exclusive
+    locking will occur.
+    
+    Signed-off-by: Dave Chinner <dchinner@redhat.com>
+    Tested-by: Joern Engel <joern@logfs.org>
+    Reviewed-by: Christoph Hellwig <hch@lst.de>
+    Signed-off-by: Alex Elder <aelder@sgi.com>
+
+diff --git a/fs/xfs/linux-2.6/xfs_file.c b/fs/xfs/linux-2.6/xfs_file.c
+index 7f7b424..8fd4a07 100644
+--- a/fs/xfs/linux-2.6/xfs_file.c
++++ b/fs/xfs/linux-2.6/xfs_file.c
+@@ -317,7 +317,19 @@ xfs_file_aio_read(
+ 	if (XFS_FORCED_SHUTDOWN(mp))
+ 		return -EIO;
+ 
+-	if (unlikely(ioflags & IO_ISDIRECT)) {
++	/*
++	 * Locking is a bit tricky here. If we take an exclusive lock
++	 * for direct IO, we effectively serialise all new concurrent
++	 * read IO to this file and block it behind IO that is currently in
++	 * progress because IO in progress holds the IO lock shared. We only
++	 * need to hold the lock exclusive to blow away the page cache, so
++	 * only take lock exclusively if the page cache needs invalidation.
++	 * This allows the normal direct IO case of no page cache pages to
++	 * proceeed concurrently without serialisation.
++	 */
++	xfs_rw_ilock(ip, XFS_IOLOCK_SHARED);
++	if ((ioflags & IO_ISDIRECT) && inode->i_mapping->nrpages) {
++		xfs_rw_iunlock(ip, XFS_IOLOCK_SHARED);
+ 		xfs_rw_ilock(ip, XFS_IOLOCK_EXCL);
+ 
+ 		if (inode->i_mapping->nrpages) {
+@@ -330,8 +342,7 @@ xfs_file_aio_read(
+ 			}
+ 		}
+ 		xfs_rw_ilock_demote(ip, XFS_IOLOCK_EXCL);
+-	} else
+-		xfs_rw_ilock(ip, XFS_IOLOCK_SHARED);
++	}
+ 
+ 	trace_xfs_file_read(ip, size, iocb->ki_pos, ioflags);
+ 
