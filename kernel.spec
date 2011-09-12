@@ -94,7 +94,7 @@
 
 %define		basever		3.0
 %define		postver		.4
-%define		rel		2
+%define		rel		3
 
 %define		_enable_debug_packages			0
 
@@ -1107,7 +1107,6 @@ touch $RPM_BUILD_ROOT/lib/modules/%{kernel_release}/modules.dep
 install -d $RPM_BUILD_ROOT%{_sysconfdir}/modprobe.d/%{kernel_release}
 
 # /usr/src/linux
-install -d $RPM_BUILD_ROOT%{_kernelsrcdir}/include/generated
 # test if we can hardlink -- %{_builddir} and $RPM_BUILD_ROOT on same partition
 if cp -al %{srcdir}/COPYING $RPM_BUILD_ROOT/COPYING 2>/dev/null; then
 	l=l
@@ -1117,8 +1116,8 @@ fi
 cp -a$l %{srcdir}/* $RPM_BUILD_ROOT%{_kernelsrcdir}
 cp -a %{objdir}/Module.symvers $RPM_BUILD_ROOT%{_kernelsrcdir}/Module.symvers-dist
 cp -aL %{objdir}/.config $RPM_BUILD_ROOT%{_kernelsrcdir}/config-dist
-cp -a %{objdir}/include/generated/autoconf.h $RPM_BUILD_ROOT%{_kernelsrcdir}/include/generated/autoconf-dist.h
-cp -a %{objdir}/include/generated/utsrelease.h $RPM_BUILD_ROOT%{_kernelsrcdir}/include/generated
+cp -a %{objdir}/include/generated $RPM_BUILD_ROOT%{_kernelsrcdir}/include
+mv $RPM_BUILD_ROOT%{_kernelsrcdir}/include/generated/autoconf{,-dist}.h
 cp -a %{objdir}/include/linux/version.h $RPM_BUILD_ROOT%{_kernelsrcdir}/include/linux
 cp -a %{SOURCE3} $RPM_BUILD_ROOT%{_kernelsrcdir}/include/generated/autoconf.h
 cp -a %{SOURCE4} $RPM_BUILD_ROOT%{_kernelsrcdir}/include/linux/config.h
