@@ -94,7 +94,7 @@
 
 %define		basever		3.0
 %define		postver		.4
-%define		rel		3
+%define		rel		3.1
 
 %define		_enable_debug_packages			0
 
@@ -285,7 +285,7 @@ Patch5000:	kernel-apparmor.patch
 # based on ftp://ftp.leg.uct.ac.za/pub/linux/rip/tmpfs_root-2.6.30.diff.gz
 Patch7000:	kernel-inittmpfs.patch
 
-# based on http://grsecurity.net/~spender/grsecurity-2.2.2-3.0.4-201109011725.patch
+# based on http://grsecurity.net/~spender/grsecurity-2.2.2-3.0.4-201109150655.patch
 # NOTE: put raw upstream patches on kernel-grsec_full.patch:GRSECURITY_RAW for reference
 #       (since upstream deletes older patches)
 Patch9999:	kernel-grsec_full.patch
@@ -1107,6 +1107,8 @@ touch $RPM_BUILD_ROOT/lib/modules/%{kernel_release}/modules.dep
 install -d $RPM_BUILD_ROOT%{_sysconfdir}/modprobe.d/%{kernel_release}
 
 # /usr/src/linux
+install -d $RPM_BUILD_ROOT%{_kernelsrcdir}
+
 # test if we can hardlink -- %{_builddir} and $RPM_BUILD_ROOT on same partition
 if cp -al %{srcdir}/COPYING $RPM_BUILD_ROOT/COPYING 2>/dev/null; then
 	l=l
