@@ -378,3 +378,79 @@ index 7c7bc2b..c83f63b 100644
  		if (XFS_LSN_CMP(item_lsn, (xfs_lsn_t)-1) == 0)
  			continue;
  
+commit 778e24bb6dd8682318bb496d4bfdc32b501a6420
+Author: Dave Chinner <dchinner@redhat.com>
+Date:   Thu Jun 23 01:34:59 2011 +0000
+
+    xfs: reset inode per-lifetime state when recycling it
+    
+    XFS inodes has several per-lifetime state fields that determine the
+    behaviour of the inode. These state fields are not all reset when an
+    inode is reused from the reclaimable state.
+    
+    This can lead to unexpected behaviour of the new inode such as
+    speculative preallocation not being truncated away in the expected
+    manner for local files until the inode is subsequently truncated,
+    freed or cycles out of the cache. It can also lead to an inode being
+    considered to be a filestream inode or having been truncated when
+    that is not the case.
+    
+    Rework the reinitialisation of the inode when it is recycled to
+    ensure that it is pristine before it is reused. While there, also
+    fix the resetting of state flags in the recycling error paths so the
+    inode does not become unreclaimable.
+    
+    Signed-off-by: Dave Chinner <dchinner@redhat.com>
+    Signed-off-by: Alex Elder <aelder@sgi.com>
+
+diff --git a/fs/xfs/xfs_iget.c b/fs/xfs/xfs_iget.c
+index cb9b6d1..3631783 100644
+--- a/fs/xfs/xfs_iget.c
++++ b/fs/xfs/xfs_iget.c
+@@ -253,16 +253,21 @@ xfs_iget_cache_hit(
+ 			rcu_read_lock();
+ 			spin_lock(&ip->i_flags_lock);
+ 
+-			ip->i_flags &= ~XFS_INEW;
+-			ip->i_flags |= XFS_IRECLAIMABLE;
+-			__xfs_inode_set_reclaim_tag(pag, ip);
++			ip->i_flags &= ~(XFS_INEW | XFS_IRECLAIM);
++			ASSERT(ip->i_flags & XFS_IRECLAIMABLE);
+ 			trace_xfs_iget_reclaim_fail(ip);
+ 			goto out_error;
+ 		}
+ 
+ 		spin_lock(&pag->pag_ici_lock);
+ 		spin_lock(&ip->i_flags_lock);
+-		ip->i_flags &= ~(XFS_IRECLAIMABLE | XFS_IRECLAIM);
++
++		/*
++		 * Clear the per-lifetime state in the inode as we are now
++		 * effectively a new inode and need to return to the initial
++		 * state before reuse occurs.
++		 */
++		ip->i_flags &= ~XFS_IRECLAIM_RESET_FLAGS;
+ 		ip->i_flags |= XFS_INEW;
+ 		__xfs_inode_clear_reclaim_tag(mp, pag, ip);
+ 		inode->i_state = I_NEW;
+diff --git a/fs/xfs/xfs_inode.h b/fs/xfs/xfs_inode.h
+index 3ae6d58..964cfea 100644
+--- a/fs/xfs/xfs_inode.h
++++ b/fs/xfs/xfs_inode.h
+@@ -384,6 +384,16 @@ static inline void xfs_ifunlock(xfs_inode_t *ip)
+ #define XFS_IDIRTY_RELEASE	0x0040	/* dirty release already seen */
+ 
+ /*
++ * Per-lifetime flags need to be reset when re-using a reclaimable inode during
++ * inode lookup. Thi prevents unintended behaviour on the new inode from
++ * ocurring.
++ */
++#define XFS_IRECLAIM_RESET_FLAGS	\
++	(XFS_IRECLAIMABLE | XFS_IRECLAIM | \
++	 XFS_IDIRTY_RELEASE | XFS_ITRUNCATED | \
++	 XFS_IFILESTREAM);
++
++/*
+  * Flags for inode locking.
+  * Bit ranges:	1<<1  - 1<<16-1 -- iolock/ilock modes (bitfield)
+  *		1<<16 - 1<<32-1 -- lockdep annotation (integers)
