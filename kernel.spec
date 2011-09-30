@@ -93,7 +93,7 @@
 %endif
 
 %define		basever		2.6.39
-%define		postver		.2
+%define		postver		.4
 %define		rel		0.1
 
 %define		_enable_debug_packages			0
@@ -141,7 +141,7 @@ Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{basever}.tar.bz2
 # Source0-md5:	1aab7a741abe08d42e8eccf20de61e05
 %if "%{postver}" != "%{nil}"
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
-# Source1-md5:	6f81e64e790eb7847773eec4f7cbf207
+# Source1-md5:	ff5eb7323c054a128d2922bde3297ed5
 %endif
 
 Source3:	kernel-autoconf.h
@@ -230,8 +230,7 @@ Patch56:	kernel-atmdd.patch
 Patch59:	kernel-rndis_host-wm5.patch
 
 # Project suspend2 renamed to tuxonice
-# http://tuxonice.net/files/current-tuxonice-for-2.6.37.patch_0.bz2
-# NOTE: currently using own diff from tuxonice git tree until official patch is released
+# http://tuxonice.net/files/current-tuxonice-for-2.6.39.patch.bz2
 Patch69:	kernel-tuxonice.patch
 Patch70:	kernel-tuxonice-headers.patch
 
@@ -247,7 +246,7 @@ Patch101:	kernel-vserver-fixes.patch
 # Fix verified for that kernel version.
 Patch130:	kernel-forcedeth-WON.patch
 
-# http://download.filesystems.org/unionfs/unionfs-2.x/unionfs-2.5.8_for_2.6.38-rc7.diff.gz
+# http://download.filesystems.org/unionfs/unionfs-2.x/unionfs-2.5.9.2_for_2.6.39.2.diff.gz
 Patch140:	kernel-unionfs.patch
 
 # http://git.c3sl.ufpr.br/pub/scm/aufs/aufs2-standalone.git, read README
@@ -273,7 +272,7 @@ Patch250:	kernel-fix_256colors_menuconfig.patch
 # alternative routes, the reverse path protection (rp_filter),
 # the NAT processing to use correctly the routing when multiple
 # gateways are used.
-# http://www.ssi.bg/~ja/routes-2.6.38-16.diff
+# http://www.ssi.bg/~ja/routes-2.6.39-17.diff
 Patch300:	kernel-routes.patch
 
 # https://patchwork.kernel.org/patch/236261/
@@ -283,11 +282,9 @@ Patch2000:	kernel-small_fixes.patch
 Patch2001:	kernel-pwc-uncompress.patch
 Patch2003:	kernel-regressions.patch
 
-Patch2200:	kernel-xfs-delaylog.patch
-
 # 0001-AppArmor-compatibility-patch-for-v5-network-controll.patch
 # 0002-AppArmor-compatibility-patch-for-v5-interface.patch
-# from http://kernel.org/pub/linux/security/apparmor/apparmor-2.6.36-patches.tgz
+# from http://kernel.org/pub/linux/security/apparmor/apparmor-2.6.39-patches.tgz
 Patch5000:	kernel-apparmor.patch
 
 # for rescuecd
@@ -770,8 +767,6 @@ sed -i 's/-Werror//' arch/alpha/kernel/Makefile
 
 # unionfs
 %patch140 -p1
-
-%patch2200 -p1
 
 %if %{with rescuecd}
 %patch7000 -p1
@@ -1417,7 +1412,7 @@ fi
 %ifarch ppc ppc64
 %{_kernelsrcdir}/arch/powerpc/lib/crtsavres.*
 %endif
-%exclude %dir %{_kernelsrcdir}/arch/m68knommu
+%exclude %dir %{_kernelsrcdir}/arch/m68k
 %exclude %dir %{_kernelsrcdir}/arch/um
 %{_kernelsrcdir}/arch/*/kernel/asm-offsets*
 %{_kernelsrcdir}/arch/*/kernel/sigframe*.h
