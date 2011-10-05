@@ -257,7 +257,7 @@ Patch140:	kernel-unionfs.patch
 # cat aufs2-kbuild.patch aufs2-base.patch aufs2-standalone.patch > ~/rpm/packages/kernel/kernel-aufs2.patch
 # mkdir linux
 # cp -a Documentation fs include linux
-# diff -urN /usr/share/empty linux >> ~/rpm/packages/kernel/kernel-aufs2.patch 
+# diff -urN /usr/share/empty linux >> ~/rpm/packages/kernel/kernel-aufs2.patch
 #
 Patch145:	kernel-aufs2.patch
 Patch146:	kernel-aufs2-unionfs.patch
@@ -294,7 +294,7 @@ Patch1581:	kernel-CVE-2011-1581.patch
 Patch2484:	kernel-CVE-2011-2484.patch
 
 # buffer overflow CVE fix
-Patch2700:	kernel-CVE-2011-2700.patch	
+Patch2700:	kernel-CVE-2011-2700.patch
 
 # kill some thousands of warnings
 # (only warnings, so just remove parts of this patch if conflics)
@@ -336,9 +336,9 @@ BuildRequires:	/sbin/depmod
 BuildRequires:	gcc >= 5:3.2
 BuildRequires:	xz >= 1:4.999.7
 AutoReqProv:	no
-# for hostname command
-BuildRequires:	module-init-tools >= 3.5
 BuildRequires:	hostname
+BuildRequires:	module-init-tools >= 3.5
+BuildRequires:	patch >= 2.6.0
 BuildRequires:	perl-base
 BuildRequires:	rpm-build >= 4.5-24
 BuildRequires:	rpmbuild(macros) >= 1.217
