@@ -1,28 +1,6 @@
---- kernel-grsec_full.patch.org	2011-10-08 14:36:50.000000000 +0200
-+++ kernel-grsec_full.patch	2011-10-11 22:22:52.036764166 +0200
-@@ -3057,7 +3057,7 @@
- diff -urNp linux-3.0.4/arch/sparc/include/asm/elf_64.h linux-3.0.4/arch/sparc/include/asm/elf_64.h
- --- linux-3.0.4/arch/sparc/include/asm/elf_64.h	2011-09-02 18:11:21.000000000 -0400
- +++ linux-3.0.4/arch/sparc/include/asm/elf_64.h	2011-08-23 21:47:55.000000000 -0400
--@@ -180,6 +180,13 @@ typedef struct {
-+@@ -162,6 +162,12 @@ typedef struct {
-  #define ELF_ET_DYN_BASE		0x0000010000000000UL
-  #define COMPAT_ELF_ET_DYN_BASE	0x0000000070000000UL
-  
-@@ -3067,10 +3067,9 @@
- +#define PAX_DELTA_MMAP_LEN	(test_thread_flag(TIF_32BIT) ? 14 : 28)
- +#define PAX_DELTA_STACK_LEN	(test_thread_flag(TIF_32BIT) ? 15 : 29)
- +#endif
--+
-- extern unsigned long sparc64_elf_hwcap;
-- #define ELF_HWCAP	sparc64_elf_hwcap
-  
-+ /* This yields a mask that user programs can use to figure out what
-+    instruction set this cpu supports.  */
- diff -urNp linux-3.0.4/arch/sparc/include/asm/pgtable_32.h linux-3.0.4/arch/sparc/include/asm/pgtable_32.h
- --- linux-3.0.4/arch/sparc/include/asm/pgtable_32.h	2011-07-21 22:17:23.000000000 -0400
- +++ linux-3.0.4/arch/sparc/include/asm/pgtable_32.h	2011-08-23 21:47:55.000000000 -0400
-@@ -11390,9 +11389,9 @@
+--- kernel-grsec_full.patch.org	2011-10-12 19:05:00.186703410 +0200
++++ kernel-grsec_full.patch	2011-10-12 19:06:28.808560776 +0200
+@@ -11390,9 +11390,9 @@
  @@ -186,7 +186,7 @@ void dump_stack(void)
   
   	bp = stack_frame(current, NULL);
@@ -35,7 +13,7 @@
   		init_utsname()->release,
   		(int)strcspn(init_utsname()->version, " "),
   		init_utsname()->version);
-@@ -14572,9 +14571,9 @@
+@@ -14572,9 +14572,9 @@
  @@ -106,7 +123,7 @@ void show_regs_common(void)
   
   	printk(KERN_CONT "\n");
@@ -48,73 +26,7 @@
   		init_utsname()->release,
   		(int)strcspn(init_utsname()->version, " "),
   		init_utsname()->version);
-@@ -21448,13 +21447,12 @@
- diff -urNp linux-3.0.4/arch/x86/oprofile/backtrace.c linux-3.0.4/arch/x86/oprofile/backtrace.c
- --- linux-3.0.4/arch/x86/oprofile/backtrace.c	2011-09-02 18:11:21.000000000 -0400
- +++ linux-3.0.4/arch/x86/oprofile/backtrace.c	2011-10-06 04:17:55.000000000 -0400
--@@ -83,11 +83,11 @@ dump_user_backtrace_32(struct stack_fram
-- 	struct stack_frame_ia32 *fp;
-- 	unsigned long bytes;
-- 
---	bytes = copy_from_user_nmi(bufhead, head, sizeof(bufhead));
--+	bytes = copy_from_user_nmi(bufhead, (const char __force_user *)head, sizeof(bufhead));
-- 	if (bytes != sizeof(bufhead))
-+@@ -46,10 +46,10 @@ dump_user_backtrace_32(struct stack_fram
-+ 	/* Also check accessibility of one struct frame_head beyond */
-+ 	if (!access_ok(VERIFY_READ, head, sizeof(bufhead)))
-+ 		return NULL;
-+-	if (__copy_from_user_inatomic(bufhead, head, sizeof(bufhead)))
-++	if (__copy_from_user_inatomic(bufhead, (const char __force_user *)head, sizeof(bufhead)))
-  		return NULL;
-  
- -	fp = (struct stack_frame_ia32 *) compat_ptr(bufhead[0].next_frame);
-@@ -21462,15 +21460,6 @@
-  
-  	oprofile_add_trace(bufhead[0].return_address);
-  
--@@ -129,7 +129,7 @@ static struct stack_frame *dump_user_bac
-- 	struct stack_frame bufhead[2];
-- 	unsigned long bytes;
-- 
---	bytes = copy_from_user_nmi(bufhead, head, sizeof(bufhead));
--+	bytes = copy_from_user_nmi(bufhead, (const char __force_user *)head, sizeof(bufhead));
-- 	if (bytes != sizeof(bufhead))
-- 		return NULL;
-- 
- @@ -148,7 +148,7 @@ x86_backtrace(struct pt_regs * const reg
-  {
-  	struct stack_frame *head = (struct stack_frame *)frame_pointer(regs);
-@@ -39696,21 +39685,21 @@
- diff -urNp linux-3.0.4/fs/ecryptfs/read_write.c linux-3.0.4/fs/ecryptfs/read_write.c
- --- linux-3.0.4/fs/ecryptfs/read_write.c	2011-09-02 18:11:21.000000000 -0400
- +++ linux-3.0.4/fs/ecryptfs/read_write.c	2011-10-06 04:17:55.000000000 -0400
--@@ -48,7 +48,7 @@ int ecryptfs_write_lower(struct inode *e
-- 		return -EIO;
-+@@ -47,7 +47,7 @@ int ecryptfs_write_lower(struct inode *e
-+ 	BUG_ON(!inode_info->lower_file);
-  	fs_save = get_fs();
-  	set_fs(get_ds());
---	rc = vfs_write(lower_file, data, size, &offset);
--+	rc = vfs_write(lower_file, (const char __force_user *)data, size, &offset);
-+-	rc = vfs_write(inode_info->lower_file, data, size, &offset);
-++	rc = vfs_write(inode_info->lower_file, (const char __force_user *)data, size, &offset);
-  	set_fs(fs_save);
-  	mark_inode_dirty_sync(ecryptfs_inode);
-  	return rc;
--@@ -235,7 +235,7 @@ int ecryptfs_read_lower(char *data, loff
-- 		return -EIO;
-+@@ -233,7 +233,7 @@ int ecryptfs_read_lower(char *data, loff
-+ 	BUG_ON(!inode_info->lower_file);
-  	fs_save = get_fs();
-  	set_fs(get_ds());
---	rc = vfs_read(lower_file, data, size, &offset);
--+	rc = vfs_read(lower_file, (char __force_user *)data, size, &offset);
-+-	rc = vfs_read(inode_info->lower_file, data, size, &offset);
-++	rc = vfs_read(inode_info->lower_file, (char __force_user *)data, size, &offset);
-  	set_fs(fs_save);
-  	return rc;
-  }
-@@ -42135,9 +42124,9 @@
+@@ -42135,9 +42135,9 @@
   #include <linux/slab.h>
   #include <linux/fs_struct.h>
  +#include <linux/grsecurity.h>
@@ -125,7 +37,7 @@
  @@ -31,6 +32,7 @@ void set_fs_root(struct fs_struct *fs, s
   	old_root = fs->root;
   	fs->root = *path;
-@@ -44228,9 +44217,9 @@
+@@ -44228,9 +44228,9 @@
   #endif
   #ifdef CONFIG_SCHEDSTATS
  @@ -2857,6 +2972,9 @@ static const struct pid_entry tgid_base_
@@ -136,7 +48,7 @@
  +#ifdef CONFIG_GRKERNSEC_PROC_IPADDR
  +	INF("ipaddr",	  S_IRUSR, proc_pid_ipaddr),
  +#endif
-@@ -44300,11 +44289,11 @@
+@@ -44300,11 +44300,11 @@
  +	rcu_read_unlock();
  +#endif
   		filp->f_pos = iter.tgid + TGID_OFFSET;
@@ -150,7 +62,7 @@
  @@ -3141,7 +3294,7 @@ static const struct pid_entry tid_base_s
   	REG("sched",     S_IRUGO|S_IWUSR, proc_pid_sched_operations),
   #endif
-@@ -44382,9 +44371,9 @@
+@@ -44382,9 +44382,9 @@
  +#ifdef CONFIG_GRKERNSEC_PROC_IPADDR
  +extern int proc_pid_ipaddr(struct task_struct *task, char *buffer);
  +#endif
@@ -162,7 +74,7 @@
  diff -urNp linux-3.0.4/fs/proc/Kconfig linux-3.0.4/fs/proc/Kconfig
  --- linux-3.0.4/fs/proc/Kconfig	2011-07-21 22:17:23.000000000 -0400
  +++ linux-3.0.4/fs/proc/Kconfig	2011-08-23 21:48:14.000000000 -0400
-@@ -58275,10 +58264,10 @@
+@@ -58275,10 +58275,10 @@
   static inline struct proc_dir_entry *create_proc_read_entry(const char *name,
   	mode_t mode, struct proc_dir_entry *base, 
   	read_proc_t *read_proc, void * data)
@@ -177,7 +89,7 @@
  -};
  +} __no_const;
   
-@@ -60839,15 +60828,15 @@
+@@ -60839,15 +60839,15 @@
   	new = kmem_cache_zalloc(cred_jar, GFP_KERNEL);
   	if (!new)
   		return NULL;
@@ -197,7 +109,7 @@
  @@ -333,6 +343,8 @@ struct cred *prepare_exec_creds(void)
   	struct thread_group_cred *tgcred = NULL;
   	struct cred *new;
-@@ -61484,13 +61473,15 @@
+@@ -61484,13 +61484,15 @@
   	return 0;
   }
   
@@ -218,7 +130,7 @@
   	if (atomic_read(&p->real_cred->user->processes) >=
   			task_rlimit(p, RLIMIT_NPROC)) {
  -		if (!capable(CAP_SYS_ADMIN) && !capable(CAP_SYS_RESOURCE) &&
-@@ -62934,8 +62925,8 @@
+@@ -62934,8 +62936,8 @@
  +	struct task_struct *task;
  +
   	rcu_lockdep_assert(rcu_read_lock_held());
@@ -229,7 +141,7 @@
  +
  +	if (gr_pid_is_chrooted(task))
  +		return NULL;
-@@ -63161,7 +63152,7 @@
+@@ -63161,7 +63163,7 @@
  +#endif
  +
   	if (syslog_action_restricted(type)) {
@@ -238,7 +150,7 @@
   			return 0;
   		/* For historical reasons, accept CAP_SYS_ADMIN too, with a warning */
   		if (capable(CAP_SYS_ADMIN)) {
-@@ -63905,7 +63896,7 @@
+@@ -63905,7 +63907,7 @@
  -	if (increment < 0 && !can_nice(current, nice))
  +	if (increment < 0 && (!can_nice(current, nice) ||
  +			      gr_handle_chroot_nice()))
@@ -247,7 +159,7 @@
   
   	retval = security_task_setnice(current, nice);
  @@ -5111,6 +5116,7 @@ recheck:
-@@ -63974,10 +63965,11 @@
+@@ -63974,10 +63976,11 @@
   	if (is_global_init(tsk))
   		return 1;
   	if (handler != SIG_IGN && handler != SIG_DFL)
@@ -262,7 +174,7 @@
  +	/* allow glibc communication via tgkill to other threads in our
  +	   thread group */
  +	if ((info == SEND_SIG_NOINFO || info->si_code != SI_TKILL ||
-@@ -63985,9 +63977,9 @@
+@@ -63985,9 +63988,9 @@
  +	    && gr_handle_signal(t, sig))
  +		return -EPERM;
  +
@@ -273,19 +185,10 @@
  @@ -1092,7 +1102,7 @@ __group_send_sig_info(int sig, struct si
   	return send_signal(sig, info, p, 1);
   }
-@@ -70713,6 +70705,7 @@
- --- linux-3.0.4/net/ipv4/inet_hashtables.c	2011-09-02 18:11:21.000000000 -0400
- +++ linux-3.0.4/net/ipv4/inet_hashtables.c	2011-08-23 21:55:24.000000000 -0400
- @@ -18,12 +18,15 @@
-+ #include <linux/random.h>
-  #include <linux/sched.h>
-  #include <linux/slab.h>
-  #include <linux/wait.h>
-@@ -70720,14 +70713,13 @@
-  
+@@ -70721,13 +70724,13 @@
   #include <net/inet_connection_sock.h>
   #include <net/inet_hashtables.h>
-- #include <net/secure_seq.h>
+  #include <net/secure_seq.h>
 + #include <net/route.h>
   #include <net/ip.h>
   
@@ -297,7 +200,7 @@
  @@ -530,6 +533,8 @@ ok:
   			twrefcnt += inet_twsk_bind_unhash(tw, hinfo);
   		spin_unlock(&head->lock);
-@@ -71533,9 +71525,9 @@
+@@ -71533,9 +71536,9 @@
  +extern int grsec_enable_blackhole;
  +#endif
  +
