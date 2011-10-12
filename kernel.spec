@@ -141,11 +141,11 @@ Group:		Base/Kernel
 Source0:	http://www.kernel.org/pub/linux/kernel/v3.0/linux-%{basever}.tar.bz2
 # Source0-md5:	398e95866794def22b12dfbc15ce89c0
 %if "%{postver}" != ".0"
-#Source1:	http://www.kernel.org/pub/linux/kernel/v3.0/patch-%{version}.bz2
+#Patch0:	http://www.kernel.org/pub/linux/kernel/v3.0/patch-%{version}.bz2
 
-# for now: ftp://ftp.archlinux.org/other/linux/patch-3.0.6.gz
-Source1:	patch-%{version}
-# Source1-md5:	89dfaaa8791cdceef874ed5eda43930b
+# for now while kernel.org is not operational
+Patch0:		ftp://ftp.archlinux.org/other/linux/patch-3.0.6.gz
+# Patch0-md5:	792f01cc8874d03a84e47fd0e7065df8
 %endif
 
 Source3:	kernel-autoconf.h
@@ -666,8 +666,9 @@ cd linux-%{basever}
 # hack against warning in pax/grsec
 sed -i 's/-Werror//' arch/alpha/kernel/Makefile
 
+
 %if "%{postver}" != ".0"
-%{__bzip2} -dc %{SOURCE1} | patch -p1 -s
+%patch0 -p1
 %endif
 
 %if %{without vanilla}
