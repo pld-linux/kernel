@@ -3057,19 +3057,20 @@ diff -urNp linux-3.0.4/arch/sparc/include/asm/elf_32.h linux-3.0.4/arch/sparc/in
 diff -urNp linux-3.0.4/arch/sparc/include/asm/elf_64.h linux-3.0.4/arch/sparc/include/asm/elf_64.h
 --- linux-3.0.4/arch/sparc/include/asm/elf_64.h	2011-09-02 18:11:21.000000000 -0400
 +++ linux-3.0.4/arch/sparc/include/asm/elf_64.h	2011-08-23 21:47:55.000000000 -0400
-@@ -162,6 +162,12 @@ typedef struct {
+@@ -180,6 +180,13 @@ typedef struct {
  #define ELF_ET_DYN_BASE		0x0000010000000000UL
  #define COMPAT_ELF_ET_DYN_BASE	0x0000000070000000UL
  
 +#ifdef CONFIG_PAX_ASLR
-+#define PAX_ELF_ET_DYN_BASE    (test_thread_flag(TIF_32BIT) ? 0x10000UL : 0x100000UL)
++#define PAX_ELF_ET_DYN_BASE	(test_thread_flag(TIF_32BIT) ? 0x10000UL : 0x100000UL)
 +
-+#define PAX_DELTA_MMAP_LEN     (test_thread_flag(TIF_32BIT) ? 14 : 28)
-+#define PAX_DELTA_STACK_LEN    (test_thread_flag(TIF_32BIT) ? 15 : 29)
++#define PAX_DELTA_MMAP_LEN	(test_thread_flag(TIF_32BIT) ? 14 : 28)
++#define PAX_DELTA_STACK_LEN	(test_thread_flag(TIF_32BIT) ? 15 : 29)
 +#endif
++
+ extern unsigned long sparc64_elf_hwcap;
+ #define ELF_HWCAP	sparc64_elf_hwcap
  
- /* This yields a mask that user programs can use to figure out what
-    instruction set this cpu supports.  */
 diff -urNp linux-3.0.4/arch/sparc/include/asm/pgtable_32.h linux-3.0.4/arch/sparc/include/asm/pgtable_32.h
 --- linux-3.0.4/arch/sparc/include/asm/pgtable_32.h	2011-07-21 22:17:23.000000000 -0400
 +++ linux-3.0.4/arch/sparc/include/asm/pgtable_32.h	2011-08-23 21:47:55.000000000 -0400
@@ -21447,18 +21448,28 @@ diff -urNp linux-3.0.4/arch/x86/net/bpf_jit.S linux-3.0.4/arch/x86/net/bpf_jit.S
 diff -urNp linux-3.0.4/arch/x86/oprofile/backtrace.c linux-3.0.4/arch/x86/oprofile/backtrace.c
 --- linux-3.0.4/arch/x86/oprofile/backtrace.c	2011-09-02 18:11:21.000000000 -0400
 +++ linux-3.0.4/arch/x86/oprofile/backtrace.c	2011-10-06 04:17:55.000000000 -0400
-@@ -46,10 +46,10 @@ dump_user_backtrace_32(struct stack_fram
- 	/* Also check accessibility of one struct frame_head beyond */
- 	if (!access_ok(VERIFY_READ, head, sizeof(bufhead)))
- 		return NULL;
--	if (__copy_from_user_inatomic(bufhead, head, sizeof(bufhead)))
-+	if (__copy_from_user_inatomic(bufhead, (const char __force_user *)head, sizeof(bufhead)))
+@@ -83,11 +83,11 @@ dump_user_backtrace_32(struct stack_fram
+ 	struct stack_frame_ia32 *fp;
+ 	unsigned long bytes;
+ 
+-	bytes = copy_from_user_nmi(bufhead, head, sizeof(bufhead));
++	bytes = copy_from_user_nmi(bufhead, (const char __force_user *)head, sizeof(bufhead));
+ 	if (bytes != sizeof(bufhead))
  		return NULL;
  
 -	fp = (struct stack_frame_ia32 *) compat_ptr(bufhead[0].next_frame);
 +	fp = (struct stack_frame_ia32 __force_kernel *) compat_ptr(bufhead[0].next_frame);
  
  	oprofile_add_trace(bufhead[0].return_address);
+ 
+@@ -129,7 +129,7 @@ static struct stack_frame *dump_user_bac
+ 	struct stack_frame bufhead[2];
+ 	unsigned long bytes;
+ 
+-	bytes = copy_from_user_nmi(bufhead, head, sizeof(bufhead));
++	bytes = copy_from_user_nmi(bufhead, (const char __force_user *)head, sizeof(bufhead));
+ 	if (bytes != sizeof(bufhead))
+ 		return NULL;
  
 @@ -148,7 +148,7 @@ x86_backtrace(struct pt_regs * const reg
  {
@@ -39685,21 +39696,21 @@ diff -urNp linux-3.0.4/fs/ecryptfs/miscdev.c linux-3.0.4/fs/ecryptfs/miscdev.c
 diff -urNp linux-3.0.4/fs/ecryptfs/read_write.c linux-3.0.4/fs/ecryptfs/read_write.c
 --- linux-3.0.4/fs/ecryptfs/read_write.c	2011-09-02 18:11:21.000000000 -0400
 +++ linux-3.0.4/fs/ecryptfs/read_write.c	2011-10-06 04:17:55.000000000 -0400
-@@ -47,7 +47,7 @@ int ecryptfs_write_lower(struct inode *e
- 	BUG_ON(!inode_info->lower_file);
+@@ -48,7 +48,7 @@ int ecryptfs_write_lower(struct inode *e
+ 		return -EIO;
  	fs_save = get_fs();
  	set_fs(get_ds());
--	rc = vfs_write(inode_info->lower_file, data, size, &offset);
-+	rc = vfs_write(inode_info->lower_file, (const char __force_user *)data, size, &offset);
+-	rc = vfs_write(lower_file, data, size, &offset);
++	rc = vfs_write(lower_file, (const char __force_user *)data, size, &offset);
  	set_fs(fs_save);
  	mark_inode_dirty_sync(ecryptfs_inode);
  	return rc;
-@@ -233,7 +233,7 @@ int ecryptfs_read_lower(char *data, loff
- 	BUG_ON(!inode_info->lower_file);
+@@ -235,7 +235,7 @@ int ecryptfs_read_lower(char *data, loff
+ 		return -EIO;
  	fs_save = get_fs();
  	set_fs(get_ds());
--	rc = vfs_read(inode_info->lower_file, data, size, &offset);
-+	rc = vfs_read(inode_info->lower_file, (char __force_user *)data, size, &offset);
+-	rc = vfs_read(lower_file, data, size, &offset);
++	rc = vfs_read(lower_file, (char __force_user *)data, size, &offset);
  	set_fs(fs_save);
  	return rc;
  }
@@ -60278,13 +60289,13 @@ diff -urNp linux-3.0.4/ipc/mqueue.c linux-3.0.4/ipc/mqueue.c
 --- linux-3.0.4/ipc/mqueue.c	2011-07-21 22:17:23.000000000 -0400
 +++ linux-3.0.4/ipc/mqueue.c	2011-08-23 21:48:14.000000000 -0400
 @@ -154,6 +154,7 @@ static struct inode *mqueue_get_inode(st
- 			mq_bytes = (mq_msg_tblsz +
- 				(info->attr.mq_maxmsg * info->attr.mq_msgsize));
+ 		mq_bytes = (mq_msg_tblsz +
+ 			(info->attr.mq_maxmsg * info->attr.mq_msgsize));
  
-+			gr_learn_resource(current, RLIMIT_MSGQUEUE, u->mq_bytes + mq_bytes, 1);
- 			spin_lock(&mq_lock);
- 			if (u->mq_bytes + mq_bytes < u->mq_bytes ||
- 		 	    u->mq_bytes + mq_bytes >
++		gr_learn_resource(current, RLIMIT_MSGQUEUE, u->mq_bytes + mq_bytes, 1);
+ 		spin_lock(&mq_lock);
+ 		if (u->mq_bytes + mq_bytes < u->mq_bytes ||
+ 		    u->mq_bytes + mq_bytes >
 diff -urNp linux-3.0.4/ipc/msg.c linux-3.0.4/ipc/msg.c
 --- linux-3.0.4/ipc/msg.c	2011-07-21 22:17:23.000000000 -0400
 +++ linux-3.0.4/ipc/msg.c	2011-08-23 21:47:56.000000000 -0400
@@ -70705,7 +70716,6 @@ diff -urNp linux-3.0.4/net/ipv4/inet_hashtables.c linux-3.0.4/net/ipv4/inet_hash
 --- linux-3.0.4/net/ipv4/inet_hashtables.c	2011-09-02 18:11:21.000000000 -0400
 +++ linux-3.0.4/net/ipv4/inet_hashtables.c	2011-08-23 21:55:24.000000000 -0400
 @@ -18,12 +18,15 @@
- #include <linux/random.h>
  #include <linux/sched.h>
  #include <linux/slab.h>
  #include <linux/wait.h>
@@ -70713,6 +70723,7 @@ diff -urNp linux-3.0.4/net/ipv4/inet_hashtables.c linux-3.0.4/net/ipv4/inet_hash
  
  #include <net/inet_connection_sock.h>
  #include <net/inet_hashtables.h>
+ #include <net/secure_seq.h>
  #include <net/route.h>
  #include <net/ip.h>
  
