@@ -35,3 +35,207 @@ Missing header for routes patch, caused vs2.3 route.h mixing
  		init_utsname()->release,
  		(int)strcspn(init_utsname()->version, " "),
  		init_utsname()->version);
+diff -NurpP --minimal linux-3.0.4-vs2.3.1-pre10.3/kernel/vserver/limit.c linux-3.0.4-vs2.3.1-pre10.4/kernel/vserver/limit.c
+--- linux-3.0.4-vs2.3.1-pre10.3/kernel/vserver/limit.c	2011-06-10 22:11:24.000000000 +0200
++++ linux-3.0.4-vs2.3.1-pre10.4/kernel/vserver/limit.c	2011-10-11 20:48:08.000000000 +0200
+@@ -304,14 +304,20 @@ void vx_vsi_swapinfo(struct sysinfo *val
+ 	memsw_limit = mem_cgroup_memsw_read_u64(mcg, RES_LIMIT);
+ 	memsw_usage = mem_cgroup_memsw_read_u64(mcg, RES_USAGE);
+ 
++	/* memory unlimited */
+ 	if (res_limit == RESOURCE_MAX)
+ 		return;
+ 
+ 	swap_limit = memsw_limit - res_limit;
++	/* we have a swap limit? */
+ 	if (memsw_limit != RESOURCE_MAX)
+ 		val->totalswap = swap_limit >> PAGE_SHIFT;
+ 
+-	swap_usage = memsw_usage - res_usage;
++	/* calculate swap part */
++	swap_usage = (memsw_usage > res_usage) ?
++		memsw_usage - res_usage : 0;
++
++	/* total shown minus usage gives free swap */
+ 	val->freeswap = (swap_usage < swap_limit) ?
+ 		val->totalswap - (swap_usage >> PAGE_SHIFT) : 0;
+ #else	/* !CONFIG_CGROUP_MEM_RES_CTLR_SWAP */
+--- linux-3.0.4-vs2.3.1-pre10.1/fs/namei.c	2011-10-03 20:49:18.000000000 +0200
++++ devon-3.0.4/fs/namei.c	2011-10-03 23:24:26.323655073 +0200
+@@ -2307,6 +2307,16 @@ ok:
+ 	}
+ common:
+ 	error = may_open(&nd->path, acc_mode, open_flag);
++#ifdef	CONFIG_VSERVER_COWBL
++	if (error == -EMLINK) {
++		struct dentry *dentry;
++		dentry = cow_break_link(pathname);
++		if (IS_ERR(dentry))
++			error = PTR_ERR(dentry);
++		else
++			dput(dentry);
++	}
++#endif
+ 	if (error)
+ 		goto exit;
+ 	filp = nameidata_to_filp(nd);
+@@ -2349,6 +2359,7 @@ static struct file *path_openat(int dfd,
+ 	struct path path;
+ 	int error;
+ 
++restart:
+ 	filp = get_empty_filp();
+ 	if (!filp)
+ 		return ERR_PTR(-ENFILE);
+@@ -2386,6 +2397,17 @@ static struct file *path_openat(int dfd,
+ 			filp = do_last(nd, &path, op, pathname);
+ 		put_link(nd, &link, cookie);
+ 	}
++
++#ifdef	CONFIG_VSERVER_COWBL
++	if (filp == ERR_PTR(-EMLINK)) {
++		if (nd->root.mnt && !(nd->flags & LOOKUP_ROOT))
++			path_put(&nd->root);
++		if (base)
++			fput(base);
++		release_open_intent(nd);
++		goto restart;
++	}
++#endif
+ out:
+ 	if (nd->root.mnt && !(nd->flags & LOOKUP_ROOT))
+ 		path_put(&nd->root);
+@@ -3356,8 +3378,6 @@ int vfs_follow_link(struct nameidata *nd
+ 
+ #ifdef	CONFIG_VSERVER_COWBL
+ 
+-#include <linux/file.h>
+-
+ static inline
+ long do_cow_splice(struct file *in, struct file *out, size_t len)
+ {
+diff -NurpP --minimal linux-3.0.4-vs2.3.1-pre10.3/fs/nfs/inode.c linux-3.0.4-vs2.3.1-pre10.4/fs/nfs/inode.c
+--- linux-3.0.4-vs2.3.1-pre10.3/fs/nfs/inode.c	2011-07-01 11:35:34.000000000 +0200
++++ linux-3.0.4-vs2.3.1-pre10.4/fs/nfs/inode.c	2011-09-30 00:22:02.000000000 +0200
+@@ -1333,9 +1341,9 @@ static int nfs_update_inode(struct inode
+ 				| NFS_INO_REVAL_PAGECACHE
+ 				| NFS_INO_REVAL_FORCED);
+ 
+-	uid = INOTAG_UID(DX_TAG(inode), fattr->uid, fattr->gid);
+-	gid = INOTAG_GID(DX_TAG(inode), fattr->uid, fattr->gid);
+-	tag = INOTAG_TAG(DX_TAG(inode), fattr->uid, fattr->gid, 0);
++	uid = TAGINO_UID(DX_TAG(inode), inode->i_uid, inode->i_tag);
++	gid = TAGINO_GID(DX_TAG(inode), inode->i_gid, inode->i_tag);
++	tag = inode->i_tag;
+ 
+ 	if (fattr->valid & NFS_ATTR_FATTR_ATIME)
+ 		memcpy(&inode->i_atime, &fattr->atime, sizeof(inode->i_atime));
+@@ -1378,9 +1386,9 @@ static int nfs_update_inode(struct inode
+ 				| NFS_INO_INVALID_ACL
+ 				| NFS_INO_REVAL_FORCED);
+ 
+-	inode->i_uid = uid;
+-	inode->i_gid = gid;
+-	inode->i_tag = tag;
++	inode->i_uid = INOTAG_UID(DX_TAG(inode), uid, gid);
++	inode->i_gid = INOTAG_GID(DX_TAG(inode), uid, gid);
++	inode->i_tag = INOTAG_TAG(DX_TAG(inode), uid, gid, tag);
+ 
+ 	if (fattr->valid & NFS_ATTR_FATTR_NLINK) {
+ 		if (inode->i_nlink != fattr->nlink) {
+diff -NurpP --minimal linux-3.0.4-vs2.3.1-pre10.2/net/ipv4/tcp_ipv4.c linux-3.0.4-vs2.3.1-pre10.3/net/ipv4/tcp_ipv4.c
+--- linux-3.0.4-vs2.3.1-pre10.2/net/ipv4/tcp_ipv4.c	2011-08-29 03:45:10.000000000 +0200
++++ linux-3.0.4-vs2.3.1-pre10.3/net/ipv4/tcp_ipv4.c	2011-09-29 16:44:29.000000000 +0200
+@@ -2426,8 +2426,8 @@ static void get_tcp4_sock(struct sock *s
+ 	struct tcp_sock *tp = tcp_sk(sk);
+ 	const struct inet_connection_sock *icsk = inet_csk(sk);
+ 	struct inet_sock *inet = inet_sk(sk);
+-	__be32 dest = inet->inet_daddr;
+-	__be32 src = inet->inet_rcv_saddr;
++	__be32 dest = nx_map_sock_lback(current_nx_info(), inet->inet_daddr);
++	__be32 src = nx_map_sock_lback(current_nx_info(), inet->inet_rcv_saddr);
+ 	__u16 destp = ntohs(inet->inet_dport);
+ 	__u16 srcp = ntohs(inet->inet_sport);
+ 	int rx_queue;
+@@ -2484,8 +2484,8 @@ static void get_timewait4_sock(struct in
+ 	if (ttd < 0)
+ 		ttd = 0;
+ 
+-	dest  = tw->tw_daddr;
+-	src   = tw->tw_rcv_saddr;
++	dest  = nx_map_sock_lback(current_nx_info(), tw->tw_daddr);
++	src   = nx_map_sock_lback(current_nx_info(), tw->tw_rcv_saddr);
+ 	destp = ntohs(tw->tw_dport);
+ 	srcp  = ntohs(tw->tw_sport);
+ 
+diff -NurpP --minimal linux-3.0.4-vs2.3.1-pre10.1/include/linux/netdevice.h linux-3.0.4-vs2.3.1-pre10.2/include/linux/netdevice.h
+--- linux-3.0.4-vs2.3.1-pre10.1/include/linux/netdevice.h	2011-08-08 23:04:47.000000000 +0200
++++ linux-3.0.4-vs2.3.1-pre10.2/include/linux/netdevice.h	2011-09-17 19:22:49.000000000 +0200
+@@ -1650,6 +1650,7 @@ extern void		netdev_resync_ops(struct ne
+ extern int call_netdevice_notifiers(unsigned long val, struct net_device *dev);
+ extern struct net_device	*dev_get_by_index(struct net *net, int ifindex);
+ extern struct net_device	*__dev_get_by_index(struct net *net, int ifindex);
++extern struct net_device	*dev_get_by_index_real_rcu(struct net *net, int ifindex);
+ extern struct net_device	*dev_get_by_index_rcu(struct net *net, int ifindex);
+ extern int		dev_restart(struct net_device *dev);
+ #ifdef CONFIG_NETPOLL_TRAP
+diff -NurpP --minimal linux-3.0.4-vs2.3.1-pre10.1/net/core/dev.c linux-3.0.4-vs2.3.1-pre10.2/net/core/dev.c
+--- linux-3.0.4-vs2.3.1-pre10.1/net/core/dev.c	2011-06-15 02:40:14.000000000 +0200
++++ linux-3.0.4-vs2.3.1-pre10.2/net/core/dev.c	2011-09-17 19:20:44.000000000 +0200
+@@ -708,19 +708,28 @@ EXPORT_SYMBOL(__dev_get_by_index);
+  *	about locking. The caller must hold RCU lock.
+  */
+ 
+-struct net_device *dev_get_by_index_rcu(struct net *net, int ifindex)
++struct net_device *dev_get_by_index_real_rcu(struct net *net, int ifindex)
+ {
+ 	struct hlist_node *p;
+ 	struct net_device *dev;
+ 	struct hlist_head *head = dev_index_hash(net, ifindex);
+ 
+ 	hlist_for_each_entry_rcu(dev, p, head, index_hlist)
+-		if ((dev->ifindex == ifindex) &&
+-		    nx_dev_visible(current_nx_info(), dev))
++		if (dev->ifindex == ifindex)
+ 			return dev;
+ 
+ 	return NULL;
+ }
++EXPORT_SYMBOL(dev_get_by_index_real_rcu);
++
++struct net_device *dev_get_by_index_rcu(struct net *net, int ifindex)
++{
++	struct net_device *dev = dev_get_by_index_real_rcu(net, ifindex);
++
++	if (nx_dev_visible(current_nx_info(), dev))
++		return dev;
++	return NULL;
++}
+ EXPORT_SYMBOL(dev_get_by_index_rcu);
+ 
+ 
+diff -NurpP --minimal linux-3.0.4-vs2.3.1-pre10.1/net/ipv4/route.c linux-3.0.4-vs2.3.1-pre10.2/net/ipv4/route.c
+--- linux-3.0.4-vs2.3.1-pre10.1/net/ipv4/route.c	2011-08-29 03:45:10.000000000 +0200
++++ linux-3.0.4-vs2.3.1-pre10.2/net/ipv4/route.c	2011-09-17 19:23:37.000000000 +0200
+@@ -2525,7 +2525,7 @@ static struct rtable *ip_route_output_sl
+ 
+ 
+ 	if (fl4->flowi4_oif) {
+-		dev_out = dev_get_by_index_rcu(net, fl4->flowi4_oif);
++		dev_out = dev_get_by_index_real_rcu(net, fl4->flowi4_oif);
+ 		rth = ERR_PTR(-ENODEV);
+ 		if (dev_out == NULL)
+ 			goto out;
+diff -NurpP --minimal linux-3.0.4-vs2.3.1-pre10.1/net/ipv6/datagram.c linux-3.0.4-vs2.3.1-pre10.2/net/ipv6/datagram.c
+--- linux-3.0.4-vs2.3.1-pre10.1/net/ipv6/datagram.c	2011-05-22 16:18:00.000000000 +0200
++++ linux-3.0.4-vs2.3.1-pre10.2/net/ipv6/datagram.c	2011-09-17 19:24:15.000000000 +0200
+@@ -639,7 +639,7 @@ int datagram_send_ctl(struct net *net,
+ 
+ 			rcu_read_lock();
+ 			if (fl6->flowi6_oif) {
+-				dev = dev_get_by_index_rcu(net, fl6->flowi6_oif);
++				dev = dev_get_by_index_real_rcu(net, fl6->flowi6_oif);
+ 				if (!dev) {
+ 					rcu_read_unlock();
+ 					return -ENODEV;
+

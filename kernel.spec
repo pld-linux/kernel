@@ -93,8 +93,8 @@
 %endif
 
 %define		basever		3.0
-%define		postver		.4
-%define		rel		3.2
+%define		postver		.6
+%define		rel		1
 
 %define		_enable_debug_packages			0
 
@@ -141,8 +141,11 @@ Group:		Base/Kernel
 Source0:	http://www.kernel.org/pub/linux/kernel/v3.0/linux-%{basever}.tar.bz2
 # Source0-md5:	398e95866794def22b12dfbc15ce89c0
 %if "%{postver}" != ".0"
-Source1:	http://www.kernel.org/pub/linux/kernel/v3.0/patch-%{version}.bz2
-# Source1-md5:	62ca5f3caed233617127b2b3b7a87d15
+#Source1:	http://www.kernel.org/pub/linux/kernel/v3.0/patch-%{version}.bz2
+
+# for now: ftp://ftp.archlinux.org/other/linux/patch-3.0.6.gz
+Source1:	patch-%{version}
+# Source1-md5:	89dfaaa8791cdceef874ed5eda43930b
 %endif
 
 Source3:	kernel-autoconf.h
@@ -285,7 +288,7 @@ Patch5000:	kernel-apparmor.patch
 # based on ftp://ftp.leg.uct.ac.za/pub/linux/rip/tmpfs_root-2.6.30.diff.gz
 Patch7000:	kernel-inittmpfs.patch
 
-# based on http://grsecurity.net/~spender/grsecurity-2.2.2-3.0.4-201109190917.patch
+# based on http://grsecurity.net/~spender/grsecurity-2.2.2-3.0.4-201110080819.patch
 # NOTE: put raw upstream patches on kernel-grsec_full.patch:GRSECURITY_RAW for reference
 #       (since upstream deletes older patches)
 Patch9999:	kernel-grsec_full.patch
