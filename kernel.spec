@@ -93,8 +93,8 @@
 %endif
 
 %define		basever		3.0
-%define		postver		.6
-%define		rel		2
+%define		postver		.7
+%define		rel		1
 
 %define		_enable_debug_packages			0
 
@@ -146,6 +146,9 @@ Source0:	http://www.kernel.org/pub/linux/kernel/v3.0/linux-%{basever}.tar.bz2
 # for now while kernel.org is not operational
 Patch0:		ftp://ftp.archlinux.org/other/linux/patch-3.0.6.gz
 # Patch0-md5:	792f01cc8874d03a84e47fd0e7065df8
+
+# 3.0.7 incremental
+Patch1:		patch-3.0.6-7
 %endif
 
 Source3:	kernel-autoconf.h
@@ -288,7 +291,7 @@ Patch5000:	kernel-apparmor.patch
 # based on ftp://ftp.leg.uct.ac.za/pub/linux/rip/tmpfs_root-2.6.30.diff.gz
 Patch7000:	kernel-inittmpfs.patch
 
-# based on http://grsecurity.net/~spender/grsecurity-2.2.2-3.0.4-201110080819.patch
+# based on http://grsecurity.net/~spender/grsecurity-2.2.2-3.0.7-201110172337.patch
 # NOTE: put raw upstream patches on kernel-grsec_full.patch:GRSECURITY_RAW for reference
 #       (since upstream deletes older patches)
 Patch9999:	kernel-grsec_full.patch
@@ -669,6 +672,7 @@ sed -i 's/-Werror//' arch/alpha/kernel/Makefile
 
 %if "%{postver}" != ".0"
 %patch0 -p1
+%patch1 -p1
 %endif
 
 %if %{without vanilla}
