@@ -138,17 +138,11 @@ Release:	%{rel}
 Epoch:		3
 License:	GPL v2
 Group:		Base/Kernel
-Source0:	http://www.kernel.org/pub/linux/kernel/v3.0/linux-%{basever}.tar.bz2
-# Source0-md5:	398e95866794def22b12dfbc15ce89c0
+Source0:	http://www.kernel.org/pub/linux/kernel/v3.0/linux-%{basever}.tar.xz
+# Source0-md5:	ecf932280e2441bdd992423ef3d55f8f
 %if "%{postver}" != ".0"
-#Patch0:	http://www.kernel.org/pub/linux/kernel/v3.0/patch-%{version}.bz2
-
-# for now while kernel.org is not operational
-Patch0:		ftp://ftp.archlinux.org/other/linux/patch-3.0.6.gz
-# Patch0-md5:	792f01cc8874d03a84e47fd0e7065df8
-
-# 3.0.7 incremental
-Patch1:		patch-3.0.6-7
+Patch0:		http://www.kernel.org/pub/linux/kernel/v3.0/patch-%{version}.bz2
+# Patch0-md5:	451412dc3b25c60fed80ddd5c49cb855
 %endif
 
 Source3:	kernel-autoconf.h
@@ -672,7 +666,6 @@ sed -i 's/-Werror//' arch/alpha/kernel/Makefile
 
 %if "%{postver}" != ".0"
 %patch0 -p1
-%patch1 -p1
 %endif
 
 %if %{without vanilla}
