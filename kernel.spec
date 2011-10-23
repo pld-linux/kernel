@@ -94,7 +94,7 @@
 
 %define		basever		3.0
 %define		postver		.7
-%define		rel		1
+%define		rel		2
 
 %define		_enable_debug_packages			0
 
@@ -291,7 +291,7 @@ Patch5000:	kernel-apparmor.patch
 # based on ftp://ftp.leg.uct.ac.za/pub/linux/rip/tmpfs_root-2.6.30.diff.gz
 Patch7000:	kernel-inittmpfs.patch
 
-# based on http://grsecurity.net/~spender/grsecurity-2.2.2-3.0.7-201110172337.patch
+# based on http://grsecurity.net/~spender/grsecurity-2.2.2-3.0.7-201110200052.patch
 # NOTE: put raw upstream patches on kernel-grsec_full.patch:GRSECURITY_RAW for reference
 #       (since upstream deletes older patches)
 Patch9999:	kernel-grsec_full.patch
