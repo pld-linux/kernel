@@ -92,9 +92,9 @@
 %define		have_pcmcia	0
 %endif
 
-%define		basever		3.0
-%define		postver		.7
-%define		rel		2
+%define		basever		3.1
+%define		postver		%{nil}
+%define		rel		0.1
 
 %define		_enable_debug_packages			0
 
@@ -138,11 +138,11 @@ Release:	%{rel}
 Epoch:		3
 License:	GPL v2
 Group:		Base/Kernel
-Source0:	http://www.kernel.org/pub/linux/kernel/v3.0/linux-%{basever}.tar.xz
-# Source0-md5:	ecf932280e2441bdd992423ef3d55f8f
+Source0:	http://www.kernel.org/pub/linux/kernel/v3.x/linux-%{basever}.tar.xz
+# Source0-md5:	edbdc798f23ae0f8045c82f6fa22c536
 %if "%{postver}" != ".0"
-Patch0:		http://www.kernel.org/pub/linux/kernel/v3.0/patch-%{version}.bz2
-# Patch0-md5:	451412dc3b25c60fed80ddd5c49cb855
+Patch0:		http://www.kernel.org/pub/linux/kernel/v3.x/patch-%{version}.bz2
+# Patch0-md5:	7526abc1f3df0506c71e0918ffaedb11
 %endif
 
 Source3:	kernel-autoconf.h
