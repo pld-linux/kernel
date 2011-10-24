@@ -93,7 +93,7 @@
 %endif
 
 %define		basever		3.1
-%define		postver		%{nil}
+%define		postver		.0
 %define		rel		0.1
 
 %define		_enable_debug_packages			0
