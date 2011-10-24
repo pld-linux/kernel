@@ -88,21 +88,20 @@ index eba45ea..21ed6c9 100644
  extern struct dentry *lookup_one_len(const char *, struct dentry *, int);
  
  extern int follow_down_one(struct path *);
-diff --git a/include/linux/splice.h b/include/linux/splice.h
-index 997c3b4..be9a153 100644
---- a/include/linux/splice.h
-+++ b/include/linux/splice.h
-@@ -89,4 +89,10 @@ extern int splice_grow_spd(struct pipe_inode_info *, struct splice_pipe_desc *);
+--- linux-3.1/include/linux/splice.h~	2011-10-24 09:10:05.000000000 +0200
++++ linux-3.1/include/linux/splice.h	2011-10-24 16:01:13.962765332 +0200
+@@ -88,6 +88,11 @@
+ extern int splice_grow_spd(struct pipe_inode_info *, struct splice_pipe_desc *);
  extern void splice_shrink_spd(struct pipe_inode_info *,
  				struct splice_pipe_desc *);
- 
 +extern long do_splice_from(struct pipe_inode_info *pipe, struct file *out,
-+			   loff_t *ppos, size_t len, unsigned int flags);
++			loff_t *ppos, size_t len, unsigned int flags);
 +extern long do_splice_to(struct file *in, loff_t *ppos,
-+			 struct pipe_inode_info *pipe, size_t len,
-+			 unsigned int flags);
-+
- #endif
++			struct pipe_inode_info *pipe, size_t len,
++			unsigned int flags);
+ extern void spd_release_page(struct splice_pipe_desc *, unsigned int);
+ 
+ extern const struct pipe_buf_operations page_cache_pipe_buf_ops;
 aufs3.0 standalone patch
 
 diff --git a/fs/file_table.c b/fs/file_table.c
@@ -118,18 +117,16 @@ index 01e4c1e..0e800e2 100644
  #ifdef CONFIG_SMP
  
  /*
-diff --git a/fs/inode.c b/fs/inode.c
-index 43566d1..4291eae 100644
---- a/fs/inode.c
-+++ b/fs/inode.c
-@@ -69,6 +69,7 @@ static DEFINE_SPINLOCK(inode_lru_lock);
+--- linux-3.1/fs/inode.c~	2011-10-24 09:10:05.000000000 +0200
++++ linux-3.1/fs/inode.c	2011-10-24 15:59:01.446189509 +0200
+@@ -65,6 +65,7 @@
+ static __cacheline_aligned_in_smp DEFINE_SPINLOCK(inode_hash_lock);
  
  __cacheline_aligned_in_smp DEFINE_SPINLOCK(inode_sb_list_lock);
- __cacheline_aligned_in_smp DEFINE_SPINLOCK(inode_wb_list_lock);
 +EXPORT_SYMBOL(inode_sb_list_lock);
  
  /*
-  * iprune_sem provides exclusion between the icache shrinking and the
+  * Empty aops. Can be used for the cases where the user does not
 diff --git a/fs/namei.c b/fs/namei.c
 index eb4aef1..66d04c6 100644
 --- a/fs/namei.c
