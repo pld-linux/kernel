@@ -532,10 +532,10 @@ index 0000000..1adde69
 +
 +For more information, see <http://unionfs.filesystems.org/>.
 diff --git a/MAINTAINERS b/MAINTAINERS
-index f0358cd..7ae0669 100644
+index 28f65c2..512f312 100644
 --- a/MAINTAINERS
 +++ b/MAINTAINERS
-@@ -6375,6 +6375,14 @@ F:	Documentation/cdrom/
+@@ -6612,6 +6612,14 @@ F:	Documentation/cdrom/
  F:	drivers/cdrom/cdrom.c
  F:	include/linux/cdrom.h
  
@@ -551,10 +551,10 @@ index f0358cd..7ae0669 100644
  M:	Artem Bityutskiy <dedekind1@gmail.com>
  W:	http://www.linux-mtd.infradead.org/
 diff --git a/fs/Kconfig b/fs/Kconfig
-index 19891aa..ac8a074 100644
+index 9fe0b34..e863a66 100644
 --- a/fs/Kconfig
 +++ b/fs/Kconfig
-@@ -187,6 +187,7 @@ if MISC_FILESYSTEMS
+@@ -194,6 +194,7 @@ if MISC_FILESYSTEMS
  source "fs/adfs/Kconfig"
  source "fs/affs/Kconfig"
  source "fs/ecryptfs/Kconfig"
@@ -563,10 +563,10 @@ index 19891aa..ac8a074 100644
  source "fs/hfsplus/Kconfig"
  source "fs/befs/Kconfig"
 diff --git a/fs/Makefile b/fs/Makefile
-index fb68c2b..8ca9290 100644
+index afc1096..2c0627b 100644
 --- a/fs/Makefile
 +++ b/fs/Makefile
-@@ -83,6 +83,7 @@ obj-$(CONFIG_ISO9660_FS)	+= isofs/
+@@ -82,6 +82,7 @@ obj-$(CONFIG_ISO9660_FS)	+= isofs/
  obj-$(CONFIG_HFSPLUS_FS)	+= hfsplus/ # Before hfs to find wrapped HFS+
  obj-$(CONFIG_HFS_FS)		+= hfs/
  obj-$(CONFIG_ECRYPT_FS)		+= ecryptfs/
@@ -575,10 +575,10 @@ index fb68c2b..8ca9290 100644
  obj-$(CONFIG_NFS_FS)		+= nfs/
  obj-$(CONFIG_EXPORTFS)		+= exportfs/
 diff --git a/fs/namei.c b/fs/namei.c
-index 0223c41..5d0261e 100644
+index 2826db3..38628ef 100644
 --- a/fs/namei.c
 +++ b/fs/namei.c
-@@ -484,6 +484,7 @@ void release_open_intent(struct nameidata *nd)
+@@ -490,6 +490,7 @@ void release_open_intent(struct nameidata *nd)
  			fput(file);
  	}
  }
@@ -586,7 +586,7 @@ index 0223c41..5d0261e 100644
  
  static inline int d_revalidate(struct dentry *dentry, struct nameidata *nd)
  {
-@@ -1740,6 +1741,42 @@ struct dentry *lookup_one_len(const char *name, struct dentry *base, int len)
+@@ -1807,6 +1808,42 @@ struct dentry *lookup_one_len(const char *name, struct dentry *base, int len)
  	return __lookup_hash(&this, base, NULL);
  }
  
@@ -629,7 +629,7 @@ index 0223c41..5d0261e 100644
  int user_path_at(int dfd, const char __user *name, unsigned flags,
  		 struct path *path)
  {
-@@ -3339,6 +3376,7 @@ EXPORT_SYMBOL(get_write_access); /* binfmt_aout */
+@@ -3369,6 +3406,7 @@ EXPORT_SYMBOL(get_write_access); /* binfmt_aout */
  EXPORT_SYMBOL(getname);
  EXPORT_SYMBOL(lock_rename);
  EXPORT_SYMBOL(lookup_one_len);
@@ -638,7 +638,7 @@ index 0223c41..5d0261e 100644
  EXPORT_SYMBOL(page_put_link);
  EXPORT_SYMBOL(page_readlink);
 diff --git a/fs/splice.c b/fs/splice.c
-index aa866d3..421ab86 100644
+index fa2defa..ba17a96 100644
 --- a/fs/splice.c
 +++ b/fs/splice.c
 @@ -1085,8 +1085,8 @@ EXPORT_SYMBOL(generic_splice_sendpage);
@@ -717,7 +717,7 @@ index aa866d3..421ab86 100644
  		if (off_in && copy_to_user(off_in, off, sizeof(loff_t)))
  			ret = -EFAULT;
 diff --git a/fs/stack.c b/fs/stack.c
-index 4a6f7f4..7eeef12 100644
+index b4f2ab4..7c61d05 100644
 --- a/fs/stack.c
 +++ b/fs/stack.c
 @@ -1,8 +1,20 @@
@@ -774,11 +774,11 @@ index 0000000..f3c1ac4
 +	  If you say Y here, you can turn on debugging output from Unionfs.
 diff --git a/fs/unionfs/Makefile b/fs/unionfs/Makefile
 new file mode 100644
-index 0000000..0ece303
+index 0000000..623e2b5
 --- /dev/null
 +++ b/fs/unionfs/Makefile
 @@ -0,0 +1,17 @@
-+UNIONFS_VERSION="2.5.9.2 (for 3.0.0-rc4)"
++UNIONFS_VERSION="2.5.10 (for 3.1.0-rc4)"
 +
 +EXTRA_CFLAGS += -DUNIONFS_VERSION=\"$(UNIONFS_VERSION)\"
 +
@@ -797,10 +797,10 @@ index 0000000..0ece303
 +endif
 diff --git a/fs/unionfs/commonfops.c b/fs/unionfs/commonfops.c
 new file mode 100644
-index 0000000..0a271f4
+index 0000000..71cacfe
 --- /dev/null
 +++ b/fs/unionfs/commonfops.c
-@@ -0,0 +1,896 @@
+@@ -0,0 +1,901 @@
 +/*
 + * Copyright (c) 2003-2011 Erez Zadok
 + * Copyright (c) 2003-2006 Charles P. Wright
@@ -1115,7 +1115,7 @@ index 0000000..0a271f4
 +	 * someone has copied up this file from underneath us, we also need
 +	 * to refresh things.
 +	 */
-+	if ((d_deleted(dentry) && dbstart(dentry) >= fbstart(file)) ||
++	if (d_deleted(dentry) ||
 +	    (sbgen <= fgen &&
 +	     dbstart(dentry) == fbstart(file) &&
 +	     unionfs_lower_file(file)))
@@ -1241,31 +1241,36 @@ index 0000000..0a271f4
 +}
 +
 +/* unionfs_open helper function: open a directory */
-+static int __open_dir(struct inode *inode, struct file *file)
++static int __open_dir(struct inode *inode, struct file *file,
++		      struct dentry *parent)
 +{
 +	struct dentry *lower_dentry;
 +	struct file *lower_file;
 +	int bindex, bstart, bend;
-+	struct vfsmount *mnt;
++	struct vfsmount *lower_mnt;
++	struct dentry *dentry = file->f_path.dentry;
 +
-+	bstart = fbstart(file) = dbstart(file->f_path.dentry);
-+	bend = fbend(file) = dbend(file->f_path.dentry);
++	bstart = fbstart(file) = dbstart(dentry);
++	bend = fbend(file) = dbend(dentry);
 +
 +	for (bindex = bstart; bindex <= bend; bindex++) {
 +		lower_dentry =
-+			unionfs_lower_dentry_idx(file->f_path.dentry, bindex);
++			unionfs_lower_dentry_idx(dentry, bindex);
 +		if (!lower_dentry)
 +			continue;
 +
 +		dget(lower_dentry);
-+		unionfs_mntget(file->f_path.dentry, bindex);
-+		mnt = unionfs_lower_mnt_idx(file->f_path.dentry, bindex);
-+		lower_file = dentry_open(lower_dentry, mnt, file->f_flags,
++		lower_mnt = unionfs_mntget(dentry, bindex);
++		if (!lower_mnt)
++			lower_mnt = unionfs_mntget(parent, bindex);
++		lower_file = dentry_open(lower_dentry, lower_mnt, file->f_flags,
 +					 current_cred());
 +		if (IS_ERR(lower_file))
 +			return PTR_ERR(lower_file);
 +
 +		unionfs_set_lower_file_idx(file, bindex, lower_file);
++		if (!unionfs_lower_mnt_idx(dentry, bindex))
++			unionfs_set_lower_mnt_idx(dentry, bindex, lower_mnt);
 +
 +		/*
 +		 * The branchget goes after the open, because otherwise
@@ -1285,18 +1290,20 @@ index 0000000..0a271f4
 +	struct file *lower_file;
 +	int lower_flags;
 +	int bindex, bstart, bend;
++	struct dentry *dentry = file->f_path.dentry;
++	struct vfsmount *lower_mnt;
 +
-+	lower_dentry = unionfs_lower_dentry(file->f_path.dentry);
++	lower_dentry = unionfs_lower_dentry(dentry);
 +	lower_flags = file->f_flags;
 +
-+	bstart = fbstart(file) = dbstart(file->f_path.dentry);
-+	bend = fbend(file) = dbend(file->f_path.dentry);
++	bstart = fbstart(file) = dbstart(dentry);
++	bend = fbend(file) = dbend(dentry);
 +
 +	/*
 +	 * check for the permission for lower file.  If the error is
 +	 * COPYUP_ERR, copyup the file.
 +	 */
-+	if (lower_dentry->d_inode && is_robranch(file->f_path.dentry)) {
++	if (lower_dentry->d_inode && is_robranch(dentry)) {
 +		/*
 +		 * if the open will change the file, copy it up otherwise
 +		 * defer it.
@@ -1331,11 +1338,9 @@ index 0000000..0a271f4
 +	 * dentry_open will decrement mnt refcnt if err.
 +	 * otherwise fput() will do an mntput() for us upon file close.
 +	 */
-+	unionfs_mntget(file->f_path.dentry, bstart);
-+	lower_file =
-+		dentry_open(lower_dentry,
-+			    unionfs_lower_mnt_idx(file->f_path.dentry, bstart),
-+			    lower_flags, current_cred());
++	lower_mnt = unionfs_mntget(dentry, bstart);
++	lower_file = dentry_open(lower_dentry, lower_mnt, lower_flags,
++				 current_cred());
 +	if (IS_ERR(lower_file))
 +		return PTR_ERR(lower_file);
 +
@@ -1404,7 +1409,7 @@ index 0000000..0a271f4
 +	 * these lower file structs
 +	 */
 +	if (S_ISDIR(inode->i_mode))
-+		err = __open_dir(inode, file);	/* open a dir */
++		err = __open_dir(inode, file, parent); /* open a dir */
 +	else
 +		err = __open_file(inode, file, parent);	/* open a file */
 +
@@ -1699,10 +1704,10 @@ index 0000000..0a271f4
 +}
 diff --git a/fs/unionfs/copyup.c b/fs/unionfs/copyup.c
 new file mode 100644
-index 0000000..37c2654
+index 0000000..078ca27
 --- /dev/null
 +++ b/fs/unionfs/copyup.c
-@@ -0,0 +1,896 @@
+@@ -0,0 +1,899 @@
 +/*
 + * Copyright (c) 2003-2011 Erez Zadok
 + * Copyright (c) 2003-2006 Charles P. Wright
@@ -2030,8 +2035,11 @@ index 0000000..37c2654
 +
 +	kfree(buf);
 +
++#if 0
++	/* XXX: code no longer needed? */
 +	if (!err)
 +		err = output_file->f_op->fsync(output_file, 0);
++#endif
 +
 +	if (err)
 +		goto out_close_out;
@@ -2601,10 +2609,10 @@ index 0000000..37c2654
 +}
 diff --git a/fs/unionfs/debug.c b/fs/unionfs/debug.c
 new file mode 100644
-index 0000000..6092e69
+index 0000000..c07f697
 --- /dev/null
 +++ b/fs/unionfs/debug.c
-@@ -0,0 +1,548 @@
+@@ -0,0 +1,549 @@
 +/*
 + * Copyright (c) 2003-2011 Erez Zadok
 + * Copyright (c) 2005-2007 Josef 'Jeff' Sipek
@@ -2969,12 +2977,13 @@ index 0000000..6092e69
 +		pr_debug(" CF0: file/dentry=%p:%p fstart/end=%d:%d\n",
 +			 file, dentry, fstart, fend);
 +	}
-+	if (unlikely(fstart != dstart)) {
++	/* d_deleted dentries can be ignored for this test */
++	if (unlikely(fstart != dstart) && !d_deleted(dentry)) {
 +		PRINT_CALLER(fname, fxn, line);
 +		pr_debug(" CF1: file/dentry=%p:%p fstart=%d dstart=%d\n",
 +			 file, dentry, fstart, dstart);
 +	}
-+	if (unlikely(fend != dend)) {
++	if (unlikely(fend != dend) && !d_deleted(dentry)) {
 +		PRINT_CALLER(fname, fxn, line);
 +		pr_debug(" CF2: file/dentry=%p:%p fend=%d dend=%d\n",
 +			 file, dentry, fend, dend);
@@ -3155,10 +3164,10 @@ index 0000000..6092e69
 +}
 diff --git a/fs/unionfs/dentry.c b/fs/unionfs/dentry.c
 new file mode 100644
-index 0000000..c0205a4
+index 0000000..1628dad
 --- /dev/null
 +++ b/fs/unionfs/dentry.c
-@@ -0,0 +1,406 @@
+@@ -0,0 +1,409 @@
 +/*
 + * Copyright (c) 2003-2011 Erez Zadok
 + * Copyright (c) 2003-2006 Charles P. Wright
@@ -3476,11 +3485,14 @@ index 0000000..c0205a4
 +}
 +
 +static int unionfs_d_revalidate(struct dentry *dentry,
-+				struct nameidata *nd_unused)
++				struct nameidata *nd)
 +{
 +	bool valid = true;
 +	int err = 1;		/* 1 means valid for the VFS */
 +	struct dentry *parent;
++
++	if (nd && nd->flags & LOOKUP_RCU)
++		return -ECHILD;
 +
 +	unionfs_read_lock(dentry->d_sb, UNIONFS_SMUTEX_CHILD);
 +	parent = unionfs_lock_parent(dentry, UNIONFS_DMUTEX_PARENT);
@@ -4452,10 +4464,10 @@ index 0000000..ae1b86a
 +#endif	/* not _FANOUT_H */
 diff --git a/fs/unionfs/file.c b/fs/unionfs/file.c
 new file mode 100644
-index 0000000..416c52f
+index 0000000..f583c8f
 --- /dev/null
 +++ b/fs/unionfs/file.c
-@@ -0,0 +1,382 @@
+@@ -0,0 +1,386 @@
 +/*
 + * Copyright (c) 2003-2011 Erez Zadok
 + * Copyright (c) 2003-2006 Charles P. Wright
@@ -4646,7 +4658,7 @@ index 0000000..416c52f
 +	return err;
 +}
 +
-+int unionfs_fsync(struct file *file, int datasync)
++int unionfs_fsync(struct file *file, loff_t start, loff_t end, int datasync)
 +{
 +	int bindex, bstart, bend;
 +	struct file *lower_file;
@@ -4656,6 +4668,7 @@ index 0000000..416c52f
 +	struct inode *lower_inode, *inode;
 +	int err = -EINVAL;
 +
++	lockdep_off();
 +	unionfs_read_lock(dentry->d_sb, UNIONFS_SMUTEX_PARENT);
 +	parent = unionfs_lock_parent(dentry, UNIONFS_DMUTEX_PARENT);
 +	unionfs_lock_dentry(dentry, UNIONFS_DMUTEX_CHILD);
@@ -4664,6 +4677,10 @@ index 0000000..416c52f
 +	if (unlikely(err))
 +		goto out;
 +	unionfs_check_file(file);
++
++	err = generic_file_fsync(file, start, end, datasync);
++	if (err)
++		goto out;
 +
 +	bstart = fbstart(file);
 +	bend = fbend(file);
@@ -4682,11 +4699,9 @@ index 0000000..416c52f
 +			continue;
 +		lower_file = unionfs_lower_file_idx(file, bindex);
 +		lower_dentry = unionfs_lower_dentry_idx(dentry, bindex);
-+		mutex_lock(&lower_inode->i_mutex);
-+		err = lower_inode->i_fop->fsync(lower_file, datasync);
++		err = vfs_fsync_range(lower_file, start, end, datasync);
 +		if (!err && bindex == bstart)
 +			fsstack_copy_attr_times(inode, lower_inode);
-+		mutex_unlock(&lower_inode->i_mutex);
 +		if (err)
 +			goto out;
 +	}
@@ -4697,6 +4712,7 @@ index 0000000..416c52f
 +	unionfs_unlock_dentry(dentry);
 +	unionfs_unlock_parent(dentry, parent);
 +	unionfs_read_unlock(dentry->d_sb);
++	lockdep_on();
 +	return err;
 +}
 +
@@ -4840,10 +4856,10 @@ index 0000000..416c52f
 +};
 diff --git a/fs/unionfs/inode.c b/fs/unionfs/inode.c
 new file mode 100644
-index 0000000..b207c13
+index 0000000..83cb681
 --- /dev/null
 +++ b/fs/unionfs/inode.c
-@@ -0,0 +1,1099 @@
+@@ -0,0 +1,1084 @@
 +/*
 + * Copyright (c) 2003-2011 Erez Zadok
 + * Copyright (c) 2003-2006 Charles P. Wright
@@ -5589,7 +5605,7 @@ index 0000000..b207c13
 + * This is a variant of fs/namei.c:permission() or inode_permission() which
 + * skips over EROFS tests (because we perform copyup on EROFS).
 + */
-+static int __inode_permission(struct inode *inode, int mask, unsigned int flags)
++static int __inode_permission(struct inode *inode, int mask)
 +{
 +	int retval;
 +
@@ -5599,7 +5615,7 @@ index 0000000..b207c13
 +
 +	/* Ordinary permission routines do not understand MAY_APPEND. */
 +	if (inode->i_op && inode->i_op->permission) {
-+		retval = inode->i_op->permission(inode, mask, flags);
++		retval = inode->i_op->permission(inode, mask);
 +		if (!retval) {
 +			/*
 +			 * Exec permission on a regular file is denied if none
@@ -5613,7 +5629,7 @@ index 0000000..b207c13
 +				return -EACCES;
 +		}
 +	} else {
-+		retval = generic_permission(inode, mask, flags, NULL);
++		retval = generic_permission(inode, mask);
 +	}
 +	if (retval)
 +		return retval;
@@ -5630,7 +5646,7 @@ index 0000000..b207c13
 + * unionfs_permission, or anything it calls, will use stale branch
 + * information.
 + */
-+static int unionfs_permission(struct inode *inode, int mask, unsigned int flags)
++static int unionfs_permission(struct inode *inode, int mask)
 +{
 +	struct inode *lower_inode = NULL;
 +	int err = 0;
@@ -5638,16 +5654,6 @@ index 0000000..b207c13
 +	int is_file;
 +	const int write_mask = (mask & MAY_WRITE) && !(mask & MAY_READ);
 +	struct inode *inode_grabbed;
-+	struct dentry *dentry;
-+
-+	if (flags & IPERM_FLAG_RCU) {
-+		err = -ECHILD;
-+		goto out_nograb;
-+	}
-+
-+	dentry = d_find_alias(inode);
-+	if (dentry)
-+		unionfs_lock_dentry(dentry, UNIONFS_DMUTEX_CHILD);
 +
 +	inode_grabbed = igrab(inode);
 +	is_file = !S_ISDIR(inode->i_mode);
@@ -5692,7 +5698,7 @@ index 0000000..b207c13
 +		 * copyup taking place later on.  However, if user never had
 +		 * access to the file, then no copyup could ever take place.
 +		 */
-+		err = __inode_permission(lower_inode, mask, flags);
++		err = __inode_permission(lower_inode, mask);
 +		if (err && err != -EACCES && err != EPERM && bindex > 0) {
 +			umode_t mode = lower_inode->i_mode;
 +			if ((is_robranch_super(inode->i_sb, bindex) ||
@@ -5715,7 +5721,7 @@ index 0000000..b207c13
 +		if (err && err == -EACCES &&
 +		    is_robranch_super(inode->i_sb, bindex) &&
 +		    lower_inode->i_sb->s_magic == NFS_SUPER_MAGIC)
-+			err = generic_permission(lower_inode, mask, flags, NULL);
++			err = generic_permission(lower_inode, mask);
 +
 +		/*
 +		 * The permissions are an intersection of the overall directory
@@ -5739,12 +5745,7 @@ index 0000000..b207c13
 +
 +out:
 +	unionfs_check_inode(inode);
-+	if (dentry) {
-+		unionfs_unlock_dentry(dentry);
-+		dput(dentry);
-+	}
 +	iput(inode_grabbed);
-+out_nograb:
 +	return err;
 +}
 +
@@ -5945,10 +5946,10 @@ index 0000000..b207c13
 +};
 diff --git a/fs/unionfs/lookup.c b/fs/unionfs/lookup.c
 new file mode 100644
-index 0000000..3cbde56
+index 0000000..041d674
 --- /dev/null
 +++ b/fs/unionfs/lookup.c
-@@ -0,0 +1,569 @@
+@@ -0,0 +1,570 @@
 +/*
 + * Copyright (c) 2003-2011 Erez Zadok
 + * Copyright (c) 2003-2006 Charles P. Wright
@@ -5981,17 +5982,17 @@ index 0000000..3cbde56
 +			    const char *name, struct vfsmount **new_mnt)
 +{
 +	struct dentry *dentry = NULL;
-+	struct nameidata lower_nd;
++	struct path lower_path = {NULL, NULL};
 +	int err;
 +
 +	/* we use flags=0 to get basic lookup */
-+	err = vfs_path_lookup(base, mnt, name, 0, &lower_nd);
++	err = vfs_path_lookup(base, mnt, name, 0, &lower_path);
 +
 +	switch (err) {
 +	case 0: /* no error */
-+		dentry = lower_nd.path.dentry;
++		dentry = lower_path.dentry;
 +		if (new_mnt)
-+			*new_mnt = lower_nd.path.mnt; /* rc already inc'ed */
++			*new_mnt = lower_path.mnt; /* rc already inc'ed */
 +		break;
 +	case -ENOENT:
 +		 /*
@@ -6003,7 +6004,7 @@ index 0000000..3cbde56
 +		  */
 +		dentry = lookup_lck_len(name, base, strlen(name));
 +		if (new_mnt)
-+			*new_mnt = mntget(lower_nd.path.mnt);
++			*new_mnt = mntget(lower_path.mnt);
 +		break;
 +	default: /* all other real errors */
 +		dentry = ERR_PTR(err);
@@ -6262,7 +6263,8 @@ index 0000000..3cbde56
 +	verify_locked(parent);
 +
 +	/* must initialize dentry operations */
-+	dentry->d_op = &unionfs_dops;
++	if (lookupmode == INTERPOSE_LOOKUP)
++		d_set_d_op(dentry, &unionfs_dops);
 +
 +	/* We never partial lookup the root directory. */
 +	if (IS_ROOT(dentry))
@@ -6520,10 +6522,10 @@ index 0000000..3cbde56
 +}
 diff --git a/fs/unionfs/main.c b/fs/unionfs/main.c
 new file mode 100644
-index 0000000..fa52f61
+index 0000000..87cd1fc
 --- /dev/null
 +++ b/fs/unionfs/main.c
-@@ -0,0 +1,763 @@
+@@ -0,0 +1,752 @@
 +/*
 + * Copyright (c) 2003-2011 Erez Zadok
 + * Copyright (c) 2003-2006 Charles P. Wright
@@ -6671,7 +6673,7 @@ index 0000000..fa52f61
 +			 * properly.  Finally we must return this new
 +			 * dentry.
 +			 */
-+			spliced->d_op = &unionfs_dops;
++			d_set_d_op(spliced, &unionfs_dops);
 +			spliced->d_fsdata = dentry->d_fsdata;
 +			dentry->d_fsdata = NULL;
 +			dentry = spliced;
@@ -7052,32 +7054,6 @@ index 0000000..fa52f61
 +}
 +
 +/*
-+ * our custom d_alloc_root work-alike
-+ *
-+ * we can't use d_alloc_root if we want to use our own interpose function
-+ * unchanged, so we simply call our own "fake" d_alloc_root
-+ */
-+static struct dentry *unionfs_d_alloc_root(struct super_block *sb)
-+{
-+	struct dentry *ret = NULL;
-+
-+	if (sb) {
-+		static const struct qstr name = {
-+			.name = "/",
-+			.len = 1
-+		};
-+
-+		ret = d_alloc(NULL, &name);
-+		if (likely(ret)) {
-+			ret->d_op = &unionfs_dops;
-+			ret->d_sb = sb;
-+			ret->d_parent = ret;
-+		}
-+	}
-+	return ret;
-+}
-+
-+/*
 + * There is no need to lock the unionfs_super_info's rwsem as there is no
 + * way anyone can have a reference to the superblock at this point in time.
 + */
@@ -7087,6 +7063,7 @@ index 0000000..fa52f61
 +	int err = 0;
 +	struct unionfs_dentry_info *lower_root_info = NULL;
 +	int bindex, bstart, bend;
++	struct inode *inode = NULL;
 +
 +	if (!raw_data) {
 +		printk(KERN_ERR
@@ -7144,18 +7121,26 @@ index 0000000..fa52f61
 +
 +	sb->s_op = &unionfs_sops;
 +
-+	/* See comment next to the definition of unionfs_d_alloc_root */
-+	sb->s_root = unionfs_d_alloc_root(sb);
-+	if (unlikely(!sb->s_root)) {
-+		err = -ENOMEM;
++	/* get a new inode and allocate our root dentry */
++	inode = unionfs_iget(sb, iunique(sb, UNIONFS_ROOT_INO));
++	if (IS_ERR(inode)) {
++		err = PTR_ERR(inode);
 +		goto out_dput;
 +	}
++	sb->s_root = d_alloc_root(inode);
++	if (unlikely(!sb->s_root)) {
++		err = -ENOMEM;
++		goto out_iput;
++	}
++	d_set_d_op(sb->s_root, &unionfs_dops);
 +
 +	/* link the upper and lower dentries */
 +	sb->s_root->d_fsdata = NULL;
 +	err = new_dentry_private_data(sb->s_root, UNIONFS_DMUTEX_ROOT);
 +	if (unlikely(err))
 +		goto out_freedpd;
++
++	/* if get here: cannot have error */
 +
 +	/* Set the lower dentries for s_root */
 +	for (bindex = bstart; bindex <= bend; bindex++) {
@@ -7174,15 +7159,18 @@ index 0000000..fa52f61
 +	/* Set the generation number to one, since this is for the mount. */
 +	atomic_set(&UNIONFS_D(sb->s_root)->generation, 1);
 +
++	if (atomic_read(&inode->i_count) <= 1)
++		unionfs_fill_inode(sb->s_root, inode);
++
 +	/*
-+	 * Call interpose to create the upper level inode.  Only
-+	 * INTERPOSE_LOOKUP can return a value other than 0 on err.
++	 * No need to call interpose because we already have a positive
++	 * dentry, which was instantiated by d_alloc_root.  Just need to
++	 * d_rehash it.
 +	 */
-+	err = PTR_ERR(unionfs_interpose(sb->s_root, sb, 0));
++	d_rehash(sb->s_root);
++
 +	unionfs_unlock_dentry(sb->s_root);
-+	if (!err)
-+		goto out;
-+	/* else fall through */
++	goto out; /* all is well */
 +
 +out_freedpd:
 +	if (UNIONFS_D(sb->s_root)) {
@@ -7190,6 +7178,9 @@ index 0000000..fa52f61
 +		free_dentry_private_data(sb->s_root);
 +	}
 +	dput(sb->s_root);
++
++out_iput:
++	iput(inode);
 +
 +out_dput:
 +	if (lower_root_info && !IS_ERR(lower_root_info)) {
@@ -9544,10 +9535,10 @@ index 0000000..c3ac814
 +};
 diff --git a/fs/unionfs/union.h b/fs/unionfs/union.h
 new file mode 100644
-index 0000000..1821705
+index 0000000..8e7fcfb
 --- /dev/null
 +++ b/fs/unionfs/union.h
-@@ -0,0 +1,679 @@
+@@ -0,0 +1,681 @@
 +/*
 + * Copyright (c) 2003-2011 Erez Zadok
 + * Copyright (c) 2003-2006 Charles P. Wright
@@ -9966,7 +9957,8 @@ index 0000000..1821705
 +extern int unionfs_flush(struct file *file, fl_owner_t id);
 +extern long unionfs_ioctl(struct file *file, unsigned int cmd,
 +			  unsigned long arg);
-+extern int unionfs_fsync(struct file *file, int datasync);
++extern int unionfs_fsync(struct file *file, loff_t start, loff_t end,
++			 int datasync);
 +extern int unionfs_fasync(int fd, struct file *file, int flag);
 +
 +/* Inode operations */
@@ -10223,6 +10215,7 @@ index 0000000..1821705
 +#define show_inode_times(i)		do { } while (0)
 +#define show_dinode_times(d)		do { } while (0)
 +#define show_inode_counts(i)		do { } while (0)
++#define UDBG				do { } while (0)
 +
 +#endif /* not CONFIG_UNION_FS_DEBUG */
 +
@@ -11336,10 +11329,10 @@ index 1e5df2a..01ee54d 100644
  #define USBDEVICE_SUPER_MAGIC	0x9fa2
  #define CGROUP_SUPER_MAGIC	0x27e0eb
 diff --git a/include/linux/namei.h b/include/linux/namei.h
-index eba45ea..8e19e9c 100644
+index 76fe2c6..7230829 100644
 --- a/include/linux/namei.h
 +++ b/include/linux/namei.h
-@@ -81,8 +81,11 @@ extern int vfs_path_lookup(struct dentry *, struct vfsmount *,
+@@ -82,8 +82,11 @@ extern int vfs_path_lookup(struct dentry *, struct vfsmount *,
  
  extern struct file *lookup_instantiate_filp(struct nameidata *nd, struct dentry *dentry,
  		int (*open)(struct inode *, struct file *));
@@ -11352,7 +11345,7 @@ index eba45ea..8e19e9c 100644
  extern int follow_down_one(struct path *);
  extern int follow_down(struct path *);
 diff --git a/include/linux/splice.h b/include/linux/splice.h
-index 997c3b4..54f5501 100644
+index 26e5b61..28213e6 100644
 --- a/include/linux/splice.h
 +++ b/include/linux/splice.h
 @@ -81,6 +81,11 @@ extern ssize_t splice_to_pipe(struct pipe_inode_info *,
@@ -11396,14 +11389,14 @@ index 0000000..c84d97e
 +#endif /* _LINUX_UNIONFS_H */
 +
 diff --git a/security/security.c b/security/security.c
-index 4ba6d4c..093d8b4 100644
+index 0e4fccf..4d1b37d 100644
 --- a/security/security.c
 +++ b/security/security.c
 @@ -520,6 +520,7 @@ int security_inode_permission(struct inode *inode, int mask)
  		return 0;
- 	return security_ops->inode_permission(inode, mask, 0);
+ 	return security_ops->inode_permission(inode, mask);
  }
 +EXPORT_SYMBOL(security_inode_permission);
  
- int security_inode_exec_permission(struct inode *inode, unsigned int flags)
+ int security_inode_setattr(struct dentry *dentry, struct iattr *attr)
  {
