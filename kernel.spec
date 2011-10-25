@@ -92,14 +92,11 @@
 %define		have_pcmcia	0
 %endif
 
+%define		rel		0.1
 %define		basever		3.1
 %define		postver		.0
-%define		rel		0.1
-
-%define		_enable_debug_packages			0
 
 %define		tuxonice_version	3.2
-
 %define		module_init_tools_ver	3.16
 
 %define		__alt_kernel	%{?with_pax:pax}%{!?with_grsecurity:nogrsecurity}%{?with_pae:pae}
@@ -380,6 +377,7 @@ BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 # No ELF objects there to strip (skips processing 27k files)
 %define		_noautostrip	\\(.*%{_kernelsrcdir}/.*\\|.*/vmlinux.*\\)
 %define		_noautochrpath	.*%{_kernelsrcdir}/.*
+%define		_enable_debug_packages	0
 
 %ifarch ia64
 %define		initrd_dir	/boot/efi
