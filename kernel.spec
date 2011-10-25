@@ -102,24 +102,21 @@
 
 %define		module_init_tools_ver	3.16
 
-%if %{with myown}
-%if "%{_alt_kernel}" == ""
-%define		alt_kernel	myown
-%endif
-%else # not myown:
-%if %{with vanilla}
-%define		alt_kernel	vanilla
-%else # not vanilla:
-%if %{with rescuecd}
-%define		alt_kernel	rescuecd
-%else # not rescuecd:
 %define		__alt_kernel	%{?with_pax:pax}%{!?with_grsecurity:nogrsecurity}%{?with_pae:pae}
 %if "%{__alt_kernel}" != ""
-%define		alt_kernel	%{__alt_kernel}
+	%define		alt_kernel	%{__alt_kernel}
 %endif
-%endif # not rescuecd
-%endif # not vanilla
-%endif # not myown
+
+# these override whatever name was picked from bconds
+%if %{with myown} && "%{_alt_kernel}" == ""
+%define		alt_kernel	myown
+%endif
+%if %{with rescuecd}
+%define		alt_kernel	rescuecd
+%endif
+%if %{with vanilla}
+%define		alt_kernel	vanilla
+%else
 
 # kernel release (used in filesystem and eventually in uname -r)
 # modules will be looked from /lib/modules/%{kernel_release}
