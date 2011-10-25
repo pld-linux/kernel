@@ -127,14 +127,14 @@
 %define		alt_kernel	myown
 %endif
 %else
-%if %{without rescuecd}
 %define		__alt_kernel	%{?with_pax:pax}%{!?with_grsec_full:nogrsecurity}%{!?with_apparmor:noaa}%{?with_pae:pae}
 %if "%{__alt_kernel}" != ""
 %define		alt_kernel	%{__alt_kernel}
 %endif
-%else
-%define		alt_kernel	rescuecd
 %endif
+
+%if %{with rescuecd}
+%define		alt_kernel	rescuecd
 %endif
 
 # kernel release (used in filesystem and eventually in uname -r)
@@ -339,6 +339,7 @@ BuildRequires:	elftoaout
 BuildRequires:	uboot-mkimage
 %endif
 BuildRequires:	/sbin/depmod
+BuildRequires:	gcc < 6:4.6
 BuildRequires:	gcc >= 5:3.2
 BuildRequires:	xz >= 1:4.999.7
 AutoReqProv:	no
@@ -356,8 +357,8 @@ Requires:	geninitrd >= 10000-3
 Requires:	module-init-tools >= 0.9.9
 Provides:	%{name}(netfilter) = %{netfilter_snap}
 Provides:	%{name}(vermagic) = %{kernel_release}
-Obsoletes:	kernel-firmware
 Obsoletes:	kernel%{_alt_kernel}-isdn-mISDN
+Obsoletes:	kernel-firmware
 Obsoletes:	kernel-misc-acer_acpi
 Obsoletes:	kernel-misc-fuse
 Obsoletes:	kernel-misc-uvc
