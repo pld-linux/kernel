@@ -126,7 +126,7 @@ Summary(de.UTF-8):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(et.UTF-8):	Linuxi kernel (ehk operatsioonisüsteemi tuum)
 Summary(fr.UTF-8):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl.UTF-8):	Jądro Linuksa
-Name:		kernel%{_alt_kernel}
+Name:		kernel%{?alt_kernel:_%{alt_kernel}}
 Version:	%{basever}%{postver}
 Release:	%{rel}
 Epoch:		3
@@ -318,12 +318,12 @@ Requires:	module-init-tools >= %{module_init_tools_ver}
 Suggests:	keyutils
 Provides:	%{name}(netfilter) = 20070806
 Provides:	%{name}(vermagic) = %{kernel_release}
-Obsoletes:	kernel%{_alt_kernel}-isdn-mISDN
-Obsoletes:	kernel%{_alt_kernel}-char-lirc-ene0100
-Obsoletes:	kernel%{_alt_kernel}-char-lirc-it87
-Obsoletes:	kernel%{_alt_kernel}-char-lirc-ite8709
-Obsoletes:	kernel%{_alt_kernel}-char-lirc-mceusb
-Obsoletes:	kernel%{_alt_kernel}-char-lirc-streamzap
+Obsoletes:	kernel%{?alt_kernel:_%{alt_kernel}}-isdn-mISDN
+Obsoletes:	kernel%{?alt_kernel:_%{alt_kernel}}-char-lirc-ene0100
+Obsoletes:	kernel%{?alt_kernel:_%{alt_kernel}}-char-lirc-it87
+Obsoletes:	kernel%{?alt_kernel:_%{alt_kernel}}-char-lirc-ite8709
+Obsoletes:	kernel%{?alt_kernel:_%{alt_kernel}}-char-lirc-mceusb
+Obsoletes:	kernel%{?alt_kernel:_%{alt_kernel}}-char-lirc-streamzap
 Obsoletes:	kernel-firmware
 Obsoletes:	kernel-misc-acer_acpi
 Obsoletes:	kernel-misc-fuse
@@ -390,7 +390,7 @@ BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 %define		objdir		%{topdir}/%{targetobj}
 %define		targetobj	%{_target_base_arch}-gcc-%(%{kgcc} -dumpversion)
 
-%define		_kernelsrcdir	/usr/src/linux%{_alt_kernel}-%{version}
+%define		_kernelsrcdir	/usr/src/linux%{?alt_kernel:_%{alt_kernel}}-%{version}
 
 %if "%{_target_base_arch}" != "%{_arch}"
 	%define CrossOpts ARCH=%{_target_base_arch} CROSS_COMPILE=%{_target_cpu}-pld-linux-
@@ -1147,18 +1147,18 @@ fi
 %post
 %ifarch ia64
 mv -f /boot/efi/vmlinuz{,.old} 2> /dev/null
-%{?alt_kernel:mv -f /boot/efi/vmlinuz%{_alt_kernel}{,.old} 2> /dev/null}
+%{?alt_kernel:mv -f /boot/efi/vmlinuz_%{alt_kernel}{,.old} 2> /dev/null}
 ln -sf vmlinuz-%{kernel_release} /boot/efi/vmlinuz
-%{?alt_kernel:ln -sf vmlinuz-%{kernel_release} /boot/efi/vmlinuz%{_alt_kernel}}
+%{?alt_kernel:ln -sf vmlinuz-%{kernel_release} /boot/efi/vmlinuz_%{alt_kernel}}
 %endif
 mv -f /boot/vmlinuz{,.old} 2> /dev/null
-%{?alt_kernel:mv -f /boot/vmlinuz%{_alt_kernel}{,.old} 2> /dev/null}
+%{?alt_kernel:mv -f /boot/vmlinuz_%{alt_kernel}{,.old} 2> /dev/null}
 mv -f /boot/System.map{,.old} 2> /dev/null
-%{?alt_kernel:mv -f /boot/System%{_alt_kernel}.map{,.old} 2> /dev/null}
+%{?alt_kernel:mv -f /boot/System_%{alt_kernel}.map{,.old} 2> /dev/null}
 ln -sf vmlinuz-%{kernel_release} /boot/vmlinuz
-%{?alt_kernel:ln -sf vmlinuz-%{kernel_release} /boot/vmlinuz%{_alt_kernel}}
+%{?alt_kernel:ln -sf vmlinuz-%{kernel_release} /boot/vmlinuz_%{alt_kernel}}
 ln -sf System.map-%{kernel_release} /boot/System.map
-%{?alt_kernel:ln -sf System.map-%{kernel_release} /boot/System.map%{_alt_kernel}}
+%{?alt_kernel:ln -sf System.map-%{kernel_release} /boot/System.map_%{alt_kernel}}
 
 %depmod %{kernel_release}
 
@@ -1166,9 +1166,9 @@ ln -sf System.map-%{kernel_release} /boot/System.map
 # generate initrd after all dependant modules are installed
 /sbin/geninitrd -f --initrdfs=rom %{initrd_dir}/initrd-%{kernel_release}.gz %{kernel_release}
 mv -f %{initrd_dir}/initrd{,.old} 2> /dev/null
-%{?alt_kernel:mv -f %{initrd_dir}/initrd%{_alt_kernel}{,.old} 2> /dev/null}
+%{?alt_kernel:mv -f %{initrd_dir}/initrd_%{alt_kernel}{,.old} 2> /dev/null}
 ln -sf initrd-%{kernel_release}.gz %{initrd_dir}/initrd
-%{?alt_kernel:ln -sf initrd-%{kernel_release}.gz %{initrd_dir}/initrd%{_alt_kernel}}
+%{?alt_kernel:ln -sf initrd-%{kernel_release}.gz %{initrd_dir}/initrd_%{alt_kernel}}
 
 # update boot loaders when old package files are gone from filesystem
 if [ -x /sbin/update-grub -a -f /etc/sysconfig/grub ]; then
@@ -1214,13 +1214,13 @@ ln -sf vmlinux-%{kernel_release} /boot/vmlinux
 %depmod %{kernel_release}
 
 %post headers
-ln -snf %{basename:%{_kernelsrcdir}} %{_prefix}/src/linux%{_alt_kernel}
+ln -snf %{basename:%{_kernelsrcdir}} %{_prefix}/src/linux%{?alt_kernel:_%{alt_kernel}}
 
 %postun headers
 if [ "$1" = "0" ]; then
-	if [ -L %{_prefix}/src/linux%{_alt_kernel} ]; then
-		if [ "$(readlink %{_prefix}/src/linux%{_alt_kernel})" = "linux%{_alt_kernel}-%{version}" ]; then
-			rm -f %{_prefix}/src/linux%{_alt_kernel}
+	if [ -L %{_prefix}/src/linux%{?alt_kernel:_%{alt_kernel}} ]; then
+		if [ "$(readlink %{_prefix}/src/linux%{?alt_kernel:_%{alt_kernel}})" = "linux%{?alt_kernel:_%{alt_kernel}}-%{version}" ]; then
+			rm -f %{_prefix}/src/linux%{?alt_kernel:_%{alt_kernel}}
 		fi
 	fi
 fi
