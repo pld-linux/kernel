@@ -202,7 +202,7 @@ Patch40:	kernel-layer7.patch
 # http://zph.bratcheda.org/linux-2.6.26.3-zph.patch
 Patch49:	kernel-zph.patch
 
-# based on http://www.linuximq.net/patchs/linux-2.6.39-imq-multiqueue-test1.diff.bz2
+# based on http://www.linuximq.net/patchs/patch-imqmq-3.0.diff.bz2
 Patch50:	kernel-imq.patch
 
 # http://www.kernel.org/pub/linux/kernel/people/edward/reiser4/reiser4-for-2.6/reiser4-for-2.6.35.patch.bz2
@@ -238,13 +238,9 @@ Patch70:	kernel-tuxonice-headers.patch
 # http://patches.aircrack-ng.org/hostap-kernel-2.6.18.patch
 Patch85:	kernel-hostap.patch
 
-# http://vserver.13thfloor.at/Experimental/patch-3.0.4-vs2.3.1.diff
+# http://vserver.13thfloor.at/Experimental/patch-3.1-vs2.3.1-rc2.diff
 Patch100:	kernel-vserver-2.3.patch
 Patch101:	kernel-vserver-fixes.patch
-
-# Wake-On-Lan fix for nForce drivers; using http://atlas.et.tudelft.nl/verwei90/nforce2/wol.html
-# Fix verified for that kernel version.
-Patch130:	kernel-forcedeth-WON.patch
 
 # http://download.filesystems.org/unionfs/unionfs-2.x/unionfs-2.5.10_for_3.1.0-rc4.diff.gz
 Patch140:	kernel-unionfs.patch
@@ -748,9 +744,6 @@ sed -i 's/-Werror//' arch/alpha/kernel/Makefile
 %patch100 -p1
 %patch101 -p1
 %endif
-
-# forcedeth
-%patch130 -p1
 
 # aufs2
 %if %{with reiser4}
