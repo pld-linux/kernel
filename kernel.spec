@@ -275,6 +275,7 @@ Patch400:	kernel-virtio-gl-accel.patch
 Patch2000:	kernel-small_fixes.patch
 Patch2001:	kernel-pwc-uncompress.patch
 Patch2003:	kernel-regressions.patch
+Patch2004:	kernel-radeon-hp-fix.patch
 
 # 0001-AppArmor-compatibility-patch-for-v5-network-controll.patch
 # 0002-AppArmor-compatibility-patch-for-v5-interface.patch
@@ -795,6 +796,7 @@ sed -i 's/-Werror//' arch/alpha/kernel/Makefile
 %patch2000 -p1
 %patch2001 -p1
 #%patch2003 -p1
+%patch2004 -p1
 
 # Do not remove this, please!
 #%patch50000 -p1
