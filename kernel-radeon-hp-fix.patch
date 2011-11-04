@@ -1,0 +1,100 @@
+From 54c24ee4c20162789ba732bd38f2d1e43a15f254 Mon Sep 17 00:00:00 2001
+From: Alex Deucher <alexander.deucher@amd.com>
+Date: Tue, 25 Oct 2011 14:58:49 -0400
+Subject: [PATCH 1/2] drm/radeon/kms: split MSI check into a separate function
+
+This makes it easier to add quirks for certain systems.
+
+Signed-off-by: Alex Deucher <alexander.deucher@amd.com>
+Cc: stable@kernel.org
+---
+ drivers/gpu/drm/radeon/radeon_irq_kms.c |   29 +++++++++++++++++++++++------
+ 1 files changed, 23 insertions(+), 6 deletions(-)
+
+diff --git a/drivers/gpu/drm/radeon/radeon_irq_kms.c b/drivers/gpu/drm/radeon/radeon_irq_kms.c
+index 9ec830c..f0e660b 100644
+--- a/drivers/gpu/drm/radeon/radeon_irq_kms.c
++++ b/drivers/gpu/drm/radeon/radeon_irq_kms.c
+@@ -108,6 +108,27 @@ void radeon_driver_irq_uninstall_kms(struct drm_device *dev)
+ 	radeon_irq_set(rdev);
+ }
+ 
++static bool radeon_msi_ok(struct radeon_device *rdev)
++{
++	/* RV370/RV380 was first asic with MSI support */
++	if (rdev->family < CHIP_RV380)
++		return false;
++
++	/* MSIs don't work on AGP */
++	if (rdev->flags & RADEON_IS_AGP)
++		return false;
++
++	if (rdev->flags & RADEON_IS_IGP) {
++		/* APUs work fine with MSIs */
++		if (rdev->family >= CHIP_PALM)
++			return true;
++		/* lots of IGPs have problems with MSIs */
++		return false;
++	}
++
++	return true;
++}
++
+ int radeon_irq_kms_init(struct radeon_device *rdev)
+ {
+ 	int i;
+@@ -124,12 +145,8 @@ int radeon_irq_kms_init(struct radeon_device *rdev)
+ 	}
+ 	/* enable msi */
+ 	rdev->msi_enabled = 0;
+-	/* MSIs don't seem to work reliably on all IGP
+-	 * chips.  Disable MSI on them for now.
+-	 */
+-	if ((rdev->family >= CHIP_RV380) &&
+-	    ((!(rdev->flags & RADEON_IS_IGP)) || (rdev->family >= CHIP_PALM)) &&
+-	    (!(rdev->flags & RADEON_IS_AGP))) {
++
++	if (radeon_msi_ok(rdev)) {
+ 		int ret = pci_enable_msi(rdev->pdev);
+ 		if (!ret) {
+ 			rdev->msi_enabled = 1;
+-- 
+1.7.1.1
+
+From d9252aa81d3b066ed41638c779376b3639baa3d9 Mon Sep 17 00:00:00 2001
+From: Alex Deucher <alexander.deucher@amd.com>
+Date: Tue, 25 Oct 2011 15:11:08 -0400
+Subject: [PATCH 2/2] drm/radeon/kms: Add MSI quirk for HP RS690
+
+Some HP laptops only seem to work with MSIs.  This
+looks like a platform/bios bug.
+
+Fixes:
+https://bugs.freedesktop.org/show_bug.cgi?id=37679
+
+Signed-off-by: Alex Deucher <alexander.deucher@amd.com>
+---
+ drivers/gpu/drm/radeon/radeon_irq_kms.c |    7 +++++++
+ 1 files changed, 7 insertions(+), 0 deletions(-)
+
+diff --git a/drivers/gpu/drm/radeon/radeon_irq_kms.c b/drivers/gpu/drm/radeon/radeon_irq_kms.c
+index f0e660b..b0ed0e1 100644
+--- a/drivers/gpu/drm/radeon/radeon_irq_kms.c
++++ b/drivers/gpu/drm/radeon/radeon_irq_kms.c
+@@ -118,6 +118,13 @@ static bool radeon_msi_ok(struct radeon_device *rdev)
+ 	if (rdev->flags & RADEON_IS_AGP)
+ 		return false;
+ 
++	/* Quirks */
++	/* HP RS690 only seems to work with MSIs. */
++	if ((rdev->pdev->device == 0x791f) &&
++	    (rdev->pdev->subsystem_vendor == 0x103c) &&
++	    (rdev->pdev->subsystem_device == 0x30c2))
++		return true;
++
+ 	if (rdev->flags & RADEON_IS_IGP) {
+ 		/* APUs work fine with MSIs */
+ 		if (rdev->family >= CHIP_PALM)
+-- 
+1.7.1.1
+
