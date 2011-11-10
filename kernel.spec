@@ -94,7 +94,7 @@
 
 %define		basever		2.6.38
 %define		postver		.8
-%define		rel		5
+%define		rel		6
 
 %define		_enable_debug_packages			0
 
