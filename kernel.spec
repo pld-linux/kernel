@@ -40,7 +40,6 @@
 %bcond_without	ipv6		# ipv6 support
 
 %bcond_without	vserver		# support for VServer (enabled by default)
-%bcond_with	tuxonice	# support for tuxonice (ex-suspend2) (enabled by default)
 
 %bcond_with	vanilla		# don't include any patches
 %bcond_with	rescuecd	# build kernel for our rescue
@@ -67,7 +66,6 @@
 %define		have_pcmcia	1
 
 %if %{with rescuecd}
-%unglobal	with_tuxonice
 %unglobal	with_grsecurity
 %unglobal	with_pax
 %unglobal	with_vserver
@@ -96,7 +94,6 @@
 %define		basever		3.1
 %define		postver		.0
 
-%define		tuxonice_version	3.2
 %define		module_init_tools_ver	3.16
 
 # __alt_kernel is list of features, empty string if none set
@@ -160,7 +157,6 @@ Source24:	kernel-powerpc.config
 Source25:	kernel-ia64.config
 
 Source41:	kernel-patches.config
-Source42:	kernel-tuxonice.config
 Source43:	kernel-vserver.config
 Source45:	kernel-grsec.config
 
@@ -224,15 +220,6 @@ Patch56:	kernel-atmdd.patch
 
 # http://synce.svn.sourceforge.net/svnroot/synce/trunk/patches/linux-2.6.22-rndis_host-wm5.patch
 Patch59:	kernel-rndis_host-wm5.patch
-
-# Project suspend2 renamed to tuxonice
-# http://tuxonice.net/files/current-tuxonice-for-2.6.37.patch_0.bz2
-# NOTE: currently using own diff from tuxonice git tree until official patch is released
-# git://git.kernel.org/pub/scm/linux/kernel/git/nigelc/tuxonice-head.git
-# git://git.kernel.org/pub/scm/linux/kernel/git/nigelc/tuxonice-<basever>.git
-# To produce patch: git diff upstream/master...tuxonice/combined
-Patch69:	kernel-tuxonice.patch
-Patch70:	kernel-tuxonice-headers.patch
 
 # adds some ids for hostap suported cards and monitor_enable from/for aircrack-ng
 # http://patches.aircrack-ng.org/hostap-kernel-2.6.18.patch
@@ -665,12 +652,6 @@ sed -i 's/-Werror//' arch/alpha/kernel/Makefile
 
 %if %{without vanilla}
 
-# tuxonice:
-%if %{with tuxonice}
-%patch69 -p1
-%patch70 -p1
-%endif
-
 %if %{with fbcondecor}
 %patch3 -p1
 %endif
@@ -993,11 +974,6 @@ EOCONFIG
 %endif
 %if %{with vserver}
 		%{SOURCE43} \
-%endif
-%if %{with tuxonice}
-%ifarch %{ix86} %{x8664} ia64 ppc ppc64
-		%{SOURCE42} \
-%endif
 %endif
 		%{SOURCE41} %{?0:patches} \
 %endif
