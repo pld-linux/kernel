@@ -7034,12 +7034,13 @@ diff -NurpP --minimal linux-3.0.7/fs/namespace.c linux-3.0.7-vs2.3.1/fs/namespac
  	seq_printf(m, "%i %i %u:%u ", mnt->mnt_id, mnt->mnt_parent->mnt_id,
  		   MAJOR(sb->s_dev), MINOR(sb->s_dev));
  	if (sb->s_op->show_path)
-@@ -1107,21 +1159,31 @@ static int show_vfsstat(struct seq_file 
+@@ -1107,22 +1159,32 @@ static int show_vfsstat(struct seq_file 
  	struct path mnt_path = { .dentry = mnt->mnt_root, .mnt = mnt };
  	int err = 0;
  
 -	/* device */
 -	if (mnt->mnt_sb->s_op->show_devname) {
+-		seq_puts(m, "device ");
 -		err = mnt->mnt_sb->s_op->show_devname(m, mnt);
 +	if (vx_flags(VXF_HIDE_MOUNT, 0))
 +		return SEQ_SKIP;
@@ -7058,6 +7059,7 @@ diff -NurpP --minimal linux-3.0.7/fs/namespace.c linux-3.0.7-vs2.3.1/fs/namespac
 -	}
 +		/* device */
 +		if (mnt->mnt_sb->s_op->show_devname) {
++			seq_puts(m, "device ");
 +			err = mnt->mnt_sb->s_op->show_devname(m, mnt);
 +		} else {
 +			if (mnt->mnt_devname) {

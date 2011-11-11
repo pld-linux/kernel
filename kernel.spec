@@ -93,8 +93,8 @@
 %endif
 
 %define		basever		3.0
-%define		postver		.8
-%define		rel		1.1
+%define		postver		.9
+%define		rel		1
 
 %define		_enable_debug_packages			0
 
@@ -142,7 +142,7 @@ Source0:	http://www.kernel.org/pub/linux/kernel/v3.x/linux-%{basever}.tar.xz
 # Source0-md5:	ecf932280e2441bdd992423ef3d55f8f
 %if "%{postver}" != ".0"
 Patch0:		http://www.kernel.org/pub/linux/kernel/v3.x/patch-%{version}.bz2
-# Patch0-md5:	49618d8c7a71549c8870eb709c7d3f81
+# Patch0-md5:	0154d21e63d3f14fc1084cdb130fab2d
 %endif
 
 Source3:	kernel-autoconf.h
@@ -275,7 +275,6 @@ Patch400:	kernel-virtio-gl-accel.patch
 Patch2000:	kernel-small_fixes.patch
 Patch2001:	kernel-pwc-uncompress.patch
 Patch2003:	kernel-regressions.patch
-Patch2004:	kernel-radeon-hp-fix.patch
 
 # 0001-AppArmor-compatibility-patch-for-v5-network-controll.patch
 # 0002-AppArmor-compatibility-patch-for-v5-interface.patch
@@ -796,7 +795,6 @@ sed -i 's/-Werror//' arch/alpha/kernel/Makefile
 %patch2000 -p1
 %patch2001 -p1
 #%patch2003 -p1
-%patch2004 -p1
 
 # Do not remove this, please!
 #%patch50000 -p1
