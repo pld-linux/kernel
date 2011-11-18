@@ -909,3 +909,76 @@ index a58bbeb..3c9f3aa 100644
  }
  
  static int do_linear_fault(struct mm_struct *mm, struct vm_area_struct *vma,
+commit 23751be0094012eb6b4756fa80ca54b3eb83069f
+Author: Johannes Weiner <jweiner@redhat.com>
+Date:   Thu Aug 25 15:59:16 2011 -0700
+
+    memcg: fix hierarchical oom locking
+    
+    Commit 79dfdaccd1d5 ("memcg: make oom_lock 0 and 1 based rather than
+    counter") tried to oom lock the hierarchy and roll back upon
+    encountering an already locked memcg.
+    
+    The code is confused when it comes to detecting a locked memcg, though,
+    so it would fail and rollback after locking one memcg and encountering
+    an unlocked second one.
+    
+    The result is that oom-locking hierarchies fails unconditionally and
+    that every oom killer invocation simply goes to sleep on the oom
+    waitqueue forever.  The tasks practically hang forever without anyone
+    intervening, possibly holding locks that trip up unrelated tasks, too.
+    
+    Signed-off-by: Johannes Weiner <jweiner@redhat.com>
+    Acked-by: Michal Hocko <mhocko@suse.cz>
+    Acked-by: KAMEZAWA Hiroyuki <kamezawa.hiroyu@jp.fujitsu.com>
+    Signed-off-by: Andrew Morton <akpm@linux-foundation.org>
+    Signed-off-by: Linus Torvalds <torvalds@linux-foundation.org>
+
+diff --git a/mm/memcontrol.c b/mm/memcontrol.c
+index 0e40f02..ebd1e86 100644
+--- a/mm/memcontrol.c
++++ b/mm/memcontrol.c
+@@ -1841,29 +1841,23 @@ static int mem_cgroup_hierarchical_reclaim(struct mem_cgroup *root_mem,
+  */
+ static bool mem_cgroup_oom_lock(struct mem_cgroup *mem)
+ {
+-	int lock_count = -1;
+ 	struct mem_cgroup *iter, *failed = NULL;
+ 	bool cond = true;
+ 
+ 	for_each_mem_cgroup_tree_cond(iter, mem, cond) {
+-		bool locked = iter->oom_lock;
+-
+-		iter->oom_lock = true;
+-		if (lock_count == -1)
+-			lock_count = iter->oom_lock;
+-		else if (lock_count != locked) {
++		if (iter->oom_lock) {
+ 			/*
+ 			 * this subtree of our hierarchy is already locked
+ 			 * so we cannot give a lock.
+ 			 */
+-			lock_count = 0;
+ 			failed = iter;
+ 			cond = false;
+-		}
++		} else
++			iter->oom_lock = true;
+ 	}
+ 
+ 	if (!failed)
+-		goto done;
++		return true;
+ 
+ 	/*
+ 	 * OK, we failed to lock the whole subtree so we have to clean up
+@@ -1877,8 +1871,7 @@ static bool mem_cgroup_oom_lock(struct mem_cgroup *mem)
+ 		}
+ 		iter->oom_lock = false;
+ 	}
+-done:
+-	return lock_count;
++	return false;
+ }
+ 
+ /*
