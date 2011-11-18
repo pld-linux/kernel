@@ -269,6 +269,8 @@ Patch7000:	kernel-inittmpfs.patch
 # based on http://grsecurity.net/~spender/grsecurity-2.2.2-3.1.1-201111170037.patch
 # NOTE: put raw upstream patches on kernel-grsec_full.patch:GRSECURITY_RAW for reference
 #       (since upstream deletes older patches)
+# NOTE: mirror of old grsecurity patches:
+#	https://github.com/slashbeast/grsecurity-scrape/tree/master/test
 Patch9999:	kernel-grsec_full.patch
 Patch10000:	kernel-grsec-caps.patch
 Patch10001:	kernel-grsec-common.patch
