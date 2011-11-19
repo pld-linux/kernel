@@ -5689,7 +5689,7 @@ diff -urNp linux-3.1.1/arch/x86/ia32/ia32_aout.c linux-3.1.1/arch/x86/ia32/ia32_
  	has_dumped = 1;
 diff -urNp linux-3.1.1/arch/x86/ia32/ia32entry.S linux-3.1.1/arch/x86/ia32/ia32entry.S
 --- linux-3.1.1/arch/x86/ia32/ia32entry.S	2011-11-11 15:19:27.000000000 -0500
-+++ linux-3.1.1/arch/x86/ia32/ia32entry.S	2011-11-16 18:40:08.000000000 -0500
++++ linux-3.1.1/arch/x86/ia32/ia32entry.S	2011-11-17 18:27:57.000000000 -0500
 @@ -13,7 +13,9 @@
  #include <asm/thread_info.h>	
  #include <asm/segment.h>
@@ -5721,11 +5721,11 @@ diff -urNp linux-3.1.1/arch/x86/ia32/ia32entry.S linux-3.1.1/arch/x86/ia32/ia32e
 +#endif
 +	.endm
 +
-+	.macro pax_erase_kstack
++.macro pax_erase_kstack
 +#ifdef CONFIG_PAX_MEMORY_STACKLEAK
 +	call pax_erase_kstack
 +#endif
-+	.endm
++.endm
 +
  /*
   * 32bit SYSENTER instruction entry.
@@ -12370,7 +12370,7 @@ diff -urNp linux-3.1.1/arch/x86/kernel/entry_32.S linux-3.1.1/arch/x86/kernel/en
  /*
 diff -urNp linux-3.1.1/arch/x86/kernel/entry_64.S linux-3.1.1/arch/x86/kernel/entry_64.S
 --- linux-3.1.1/arch/x86/kernel/entry_64.S	2011-11-11 15:19:27.000000000 -0500
-+++ linux-3.1.1/arch/x86/kernel/entry_64.S	2011-11-16 18:40:08.000000000 -0500
++++ linux-3.1.1/arch/x86/kernel/entry_64.S	2011-11-17 18:28:56.000000000 -0500
 @@ -55,6 +55,8 @@
  #include <asm/paravirt.h>
  #include <asm/ftrace.h>
@@ -12653,11 +12653,11 @@ diff -urNp linux-3.1.1/arch/x86/kernel/entry_64.S linux-3.1.1/arch/x86/kernel/en
 +ENDPROC(pax_exit_kernel_user)
 +#endif
 +
-+	.macro pax_erase_kstack
++.macro pax_erase_kstack
 +#ifdef CONFIG_PAX_MEMORY_STACKLEAK
 +	call pax_erase_kstack
 +#endif
-+	.endm
++.endm
 +
 +#ifdef CONFIG_PAX_MEMORY_STACKLEAK
 +/*
@@ -14811,7 +14811,7 @@ diff -urNp linux-3.1.1/arch/x86/kernel/module.c linux-3.1.1/arch/x86/kernel/modu
  				goto overflow;
 diff -urNp linux-3.1.1/arch/x86/kernel/paravirt.c linux-3.1.1/arch/x86/kernel/paravirt.c
 --- linux-3.1.1/arch/x86/kernel/paravirt.c	2011-11-11 15:19:27.000000000 -0500
-+++ linux-3.1.1/arch/x86/kernel/paravirt.c	2011-11-16 18:40:08.000000000 -0500
++++ linux-3.1.1/arch/x86/kernel/paravirt.c	2011-11-17 18:29:42.000000000 -0500
 @@ -53,6 +53,9 @@ u64 _paravirt_ident_64(u64 x)
  {
  	return x;
@@ -14822,15 +14822,6 @@ diff -urNp linux-3.1.1/arch/x86/kernel/paravirt.c linux-3.1.1/arch/x86/kernel/pa
  
  void __init default_banner(void)
  {
-@@ -122,7 +125,7 @@ unsigned paravirt_patch_jmp(void *insnbu
-  * corresponding structure. */
- static void *get_call_destination(u8 type)
- {
--	struct paravirt_patch_template tmpl = {
-+	const struct paravirt_patch_template tmpl = {
- 		.pv_init_ops = pv_init_ops,
- 		.pv_time_ops = pv_time_ops,
- 		.pv_cpu_ops = pv_cpu_ops,
 @@ -133,6 +136,9 @@ static void *get_call_destination(u8 typ
  		.pv_lock_ops = pv_lock_ops,
  #endif
@@ -19809,15 +19800,15 @@ diff -urNp linux-3.1.1/arch/x86/lib/usercopy_64.c linux-3.1.1/arch/x86/lib/userc
  	unsigned zero_len;
 diff -urNp linux-3.1.1/arch/x86/Makefile linux-3.1.1/arch/x86/Makefile
 --- linux-3.1.1/arch/x86/Makefile	2011-11-11 15:19:27.000000000 -0500
-+++ linux-3.1.1/arch/x86/Makefile	2011-11-16 18:40:08.000000000 -0500
-@@ -44,6 +44,7 @@ ifeq ($(CONFIG_X86_32),y)
- else
-         BITS := 64
++++ linux-3.1.1/arch/x86/Makefile	2011-11-17 18:30:30.000000000 -0500
+@@ -46,6 +46,7 @@ else
          UTS_MACHINE := x86_64
-+        biarch := $(call cc-option,-m64)
          CHECKFLAGS += -D__x86_64__ -m64
  
++        biarch := $(call cc-option,-m64)
          KBUILD_AFLAGS += -m64
+         KBUILD_CFLAGS += -m64
+ 
 @@ -195,3 +196,12 @@ define archhelp
    echo  '                  FDARGS="..."  arguments for the booted kernel'
    echo  '                  FDINITRD=file initrd for the booted kernel'
@@ -21168,7 +21159,7 @@ diff -urNp linux-3.1.1/arch/x86/mm/init_64.c linux-3.1.1/arch/x86/mm/init_64.c
  		return "[vsyscall]";
 diff -urNp linux-3.1.1/arch/x86/mm/init.c linux-3.1.1/arch/x86/mm/init.c
 --- linux-3.1.1/arch/x86/mm/init.c	2011-11-11 15:19:27.000000000 -0500
-+++ linux-3.1.1/arch/x86/mm/init.c	2011-11-16 18:40:08.000000000 -0500
++++ linux-3.1.1/arch/x86/mm/init.c	2011-11-17 18:31:28.000000000 -0500
 @@ -31,7 +31,7 @@ int direct_gbpages
  static void __init find_early_table_space(unsigned long end, int use_pse,
  					  int use_gbpages)
@@ -21178,7 +21169,7 @@ diff -urNp linux-3.1.1/arch/x86/mm/init.c linux-3.1.1/arch/x86/mm/init.c
  	phys_addr_t base;
  
  	puds = (end + PUD_SIZE - 1) >> PUD_SHIFT;
-@@ -312,12 +312,34 @@ unsigned long __init_refok init_memory_m
+@@ -312,8 +312,29 @@ unsigned long __init_refok init_memory_m
   */
  int devmem_is_allowed(unsigned long pagenr)
  {
@@ -21209,12 +21200,7 @@ diff -urNp linux-3.1.1/arch/x86/mm/init.c linux-3.1.1/arch/x86/mm/init.c
  	if (iomem_is_exclusive(pagenr << PAGE_SHIFT))
  		return 0;
  	if (!page_is_ram(pagenr))
- 		return 1;
-+
- 	return 0;
- }
- 
-@@ -372,6 +394,86 @@ void free_init_pages(char *what, unsigne
+@@ -372,6 +393,86 @@ void free_init_pages(char *what, unsigne
  
  void free_initmem(void)
  {
@@ -21987,9 +21973,13 @@ diff -urNp linux-3.1.1/arch/x86/mm/tlb.c linux-3.1.1/arch/x86/mm/tlb.c
  
 diff -urNp linux-3.1.1/arch/x86/net/bpf_jit_comp.c linux-3.1.1/arch/x86/net/bpf_jit_comp.c
 --- linux-3.1.1/arch/x86/net/bpf_jit_comp.c	2011-11-11 15:19:27.000000000 -0500
-+++ linux-3.1.1/arch/x86/net/bpf_jit_comp.c	2011-11-16 18:39:07.000000000 -0500
-@@ -589,7 +589,9 @@ cond_branch:			f_offset = addrs[i + filt
- 					module_free(NULL, image);
++++ linux-3.1.1/arch/x86/net/bpf_jit_comp.c	2011-11-18 17:57:33.000000000 -0500
+@@ -586,10 +586,12 @@ cond_branch:			f_offset = addrs[i + filt
+ 				if (unlikely(proglen + ilen > oldproglen)) {
+ 					pr_err("bpb_jit_compile fatal error\n");
+ 					kfree(addrs);
+-					module_free(NULL, image);
++					module_free_exec(NULL, image);
  					return;
  				}
 +				pax_open_kernel();
@@ -22007,6 +21997,20 @@ diff -urNp linux-3.1.1/arch/x86/net/bpf_jit_comp.c linux-3.1.1/arch/x86/net/bpf_
  						   proglen,
  						   sizeof(struct work_struct)));
  			if (!image)
+@@ -637,11 +639,11 @@ out:
+ 
+ static void jit_free_defer(struct work_struct *arg)
+ {
+-	module_free(NULL, arg);
++	module_free_exec(NULL, arg);
+ }
+ 
+ /* run from softirq, we must use a work_struct to call
+- * module_free() from process context
++ * module_free_exec() from process context
+  */
+ void bpf_jit_free(struct sk_filter *fp)
+ {
 diff -urNp linux-3.1.1/arch/x86/net/bpf_jit.S linux-3.1.1/arch/x86/net/bpf_jit.S
 --- linux-3.1.1/arch/x86/net/bpf_jit.S	2011-11-11 15:19:27.000000000 -0500
 +++ linux-3.1.1/arch/x86/net/bpf_jit.S	2011-11-16 18:39:07.000000000 -0500
@@ -25478,7 +25482,7 @@ diff -urNp linux-3.1.1/drivers/char/mbcs.c linux-3.1.1/drivers/char/mbcs.c
  	 .mfg_num = MBCS_MFG_NUM,
 diff -urNp linux-3.1.1/drivers/char/mem.c linux-3.1.1/drivers/char/mem.c
 --- linux-3.1.1/drivers/char/mem.c	2011-11-11 15:19:27.000000000 -0500
-+++ linux-3.1.1/drivers/char/mem.c	2011-11-16 18:40:10.000000000 -0500
++++ linux-3.1.1/drivers/char/mem.c	2011-11-17 18:31:56.000000000 -0500
 @@ -18,6 +18,7 @@
  #include <linux/raw.h>
  #include <linux/tty.h>
@@ -25492,7 +25496,7 @@ diff -urNp linux-3.1.1/drivers/char/mem.c linux-3.1.1/drivers/char/mem.c
  #endif
  
 +#if defined(CONFIG_GRKERNSEC) && !defined(CONFIG_GRKERNSEC_NO_RBAC)
-+extern struct file_operations grsec_fops;
++extern const struct file_operations grsec_fops;
 +#endif
 +
  static inline unsigned long size_inside_page(unsigned long start,
@@ -29898,14 +29902,8 @@ diff -urNp linux-3.1.1/drivers/media/dvb/dvb-core/dvb_ca_en50221.c linux-3.1.1/d
  	/* Incoming packet has a 2 byte header. hdr[0] = slot_id, hdr[1] = connection_id */
 diff -urNp linux-3.1.1/drivers/media/dvb/dvb-core/dvb_demux.h linux-3.1.1/drivers/media/dvb/dvb-core/dvb_demux.h
 --- linux-3.1.1/drivers/media/dvb/dvb-core/dvb_demux.h	2011-11-11 15:19:27.000000000 -0500
-+++ linux-3.1.1/drivers/media/dvb/dvb-core/dvb_demux.h	2011-11-16 18:40:10.000000000 -0500
-@@ -68,12 +68,12 @@ struct dvb_demux_feed {
- 	union {
- 		struct dmx_ts_feed ts;
- 		struct dmx_section_feed sec;
--	} feed;
-+	} __no_const feed;
- 
++++ linux-3.1.1/drivers/media/dvb/dvb-core/dvb_demux.h	2011-11-17 18:34:32.000000000 -0500
+@@ -73,7 +73,7 @@ struct dvb_demux_feed {
  	union {
  		dmx_ts_cb ts;
  		dmx_section_cb sec;
@@ -29950,18 +29948,6 @@ diff -urNp linux-3.1.1/drivers/media/dvb/dvb-usb/dib0700_core.c linux-3.1.1/driv
  	while ((ret = dvb_usb_get_hexline(fw, &hx, &pos)) > 0) {
  		deb_fwdata("writing to address 0x%08x (buffer: 0x%02x %02x)\n",
  				hx.addr, hx.len, hx.chk);
-diff -urNp linux-3.1.1/drivers/media/dvb/dvb-usb/dibusb.h linux-3.1.1/drivers/media/dvb/dvb-usb/dibusb.h
---- linux-3.1.1/drivers/media/dvb/dvb-usb/dibusb.h	2011-11-11 15:19:27.000000000 -0500
-+++ linux-3.1.1/drivers/media/dvb/dvb-usb/dibusb.h	2011-11-16 18:40:10.000000000 -0500
-@@ -97,7 +97,7 @@
- #define DIBUSB_IOCTL_CMD_DISABLE_STREAM	0x02
- 
- struct dibusb_state {
--	struct dib_fe_xfer_ops ops;
-+	dib_fe_xfer_ops_no_const ops;
- 	int mt2060_present;
- 	u8 tuner_addr;
- };
 diff -urNp linux-3.1.1/drivers/media/dvb/dvb-usb/dw2102.c linux-3.1.1/drivers/media/dvb/dvb-usb/dw2102.c
 --- linux-3.1.1/drivers/media/dvb/dvb-usb/dw2102.c	2011-11-11 15:19:27.000000000 -0500
 +++ linux-3.1.1/drivers/media/dvb/dvb-usb/dw2102.c	2011-11-16 18:39:07.000000000 -0500
@@ -29996,32 +29982,16 @@ diff -urNp linux-3.1.1/drivers/media/dvb/dvb-usb/lmedm04.c linux-3.1.1/drivers/m
  	info("FRM Firmware Cold Reset");
 diff -urNp linux-3.1.1/drivers/media/dvb/frontends/dib3000.h linux-3.1.1/drivers/media/dvb/frontends/dib3000.h
 --- linux-3.1.1/drivers/media/dvb/frontends/dib3000.h	2011-11-11 15:19:27.000000000 -0500
-+++ linux-3.1.1/drivers/media/dvb/frontends/dib3000.h	2011-11-16 18:40:10.000000000 -0500
-@@ -40,10 +40,11 @@ struct dib_fe_xfer_ops
++++ linux-3.1.1/drivers/media/dvb/frontends/dib3000.h	2011-11-17 18:38:05.000000000 -0500
+@@ -39,7 +39,7 @@ struct dib_fe_xfer_ops
+ 	int (*fifo_ctrl)(struct dvb_frontend *fe, int onoff);
  	int (*pid_ctrl)(struct dvb_frontend *fe, int index, int pid, int onoff);
  	int (*tuner_pass_ctrl)(struct dvb_frontend *fe, int onoff, u8 pll_ctrl);
- };
-+typedef struct dib_fe_xfer_ops __no_const dib_fe_xfer_ops_no_const;
+-};
++} __no_const;
  
  #if defined(CONFIG_DVB_DIB3000MB) || (defined(CONFIG_DVB_DIB3000MB_MODULE) && defined(MODULE))
  extern struct dvb_frontend* dib3000mb_attach(const struct dib3000_config* config,
--					     struct i2c_adapter* i2c, struct dib_fe_xfer_ops *xfer_ops);
-+					     struct i2c_adapter* i2c, dib_fe_xfer_ops_no_const *xfer_ops);
- #else
- static inline struct dvb_frontend* dib3000mb_attach(const struct dib3000_config* config,
- 					     struct i2c_adapter* i2c, struct dib_fe_xfer_ops *xfer_ops)
-diff -urNp linux-3.1.1/drivers/media/dvb/frontends/dib3000mb.c linux-3.1.1/drivers/media/dvb/frontends/dib3000mb.c
---- linux-3.1.1/drivers/media/dvb/frontends/dib3000mb.c	2011-11-11 15:19:27.000000000 -0500
-+++ linux-3.1.1/drivers/media/dvb/frontends/dib3000mb.c	2011-11-16 18:40:10.000000000 -0500
-@@ -756,7 +756,7 @@ static int dib3000mb_tuner_pass_ctrl(str
- static struct dvb_frontend_ops dib3000mb_ops;
- 
- struct dvb_frontend* dib3000mb_attach(const struct dib3000_config* config,
--				      struct i2c_adapter* i2c, struct dib_fe_xfer_ops *xfer_ops)
-+				      struct i2c_adapter* i2c, dib_fe_xfer_ops_no_const *xfer_ops)
- {
- 	struct dib3000_state* state = NULL;
- 
 diff -urNp linux-3.1.1/drivers/media/dvb/frontends/mb86a16.c linux-3.1.1/drivers/media/dvb/frontends/mb86a16.c
 --- linux-3.1.1/drivers/media/dvb/frontends/mb86a16.c	2011-11-11 15:19:27.000000000 -0500
 +++ linux-3.1.1/drivers/media/dvb/frontends/mb86a16.c	2011-11-16 18:40:10.000000000 -0500
@@ -30177,7 +30147,7 @@ diff -urNp linux-3.1.1/drivers/media/video/saa7164/saa7164-cmd.c linux-3.1.1/dri
  		struct tmComResInfo tRsp = { 0, 0, 0, 0, 0, 0 };
 diff -urNp linux-3.1.1/drivers/media/video/timblogiw.c linux-3.1.1/drivers/media/video/timblogiw.c
 --- linux-3.1.1/drivers/media/video/timblogiw.c	2011-11-11 15:19:27.000000000 -0500
-+++ linux-3.1.1/drivers/media/video/timblogiw.c	2011-11-16 18:40:10.000000000 -0500
++++ linux-3.1.1/drivers/media/video/timblogiw.c	2011-11-17 18:36:32.000000000 -0500
 @@ -744,7 +744,7 @@ static int timblogiw_mmap(struct file *f
  
  /* Platform device functions */
@@ -30187,6 +30157,15 @@ diff -urNp linux-3.1.1/drivers/media/video/timblogiw.c linux-3.1.1/drivers/media
  	.vidioc_querycap		= timblogiw_querycap,
  	.vidioc_enum_fmt_vid_cap	= timblogiw_enum_fmt,
  	.vidioc_g_fmt_vid_cap		= timblogiw_g_fmt,
+@@ -766,7 +766,7 @@ static __devinitconst struct v4l2_ioctl_
+ 	.vidioc_enum_framesizes		= timblogiw_enum_framesizes,
+ };
+ 
+-static __devinitconst struct v4l2_file_operations timblogiw_fops = {
++static __devinitconst v4l2_file_operations_no_const timblogiw_fops = {
+ 	.owner		= THIS_MODULE,
+ 	.open		= timblogiw_open,
+ 	.release	= timblogiw_close,
 diff -urNp linux-3.1.1/drivers/media/video/usbvision/usbvision-core.c linux-3.1.1/drivers/media/video/usbvision/usbvision-core.c
 --- linux-3.1.1/drivers/media/video/usbvision/usbvision-core.c	2011-11-11 15:19:27.000000000 -0500
 +++ linux-3.1.1/drivers/media/video/usbvision/usbvision-core.c	2011-11-16 18:40:10.000000000 -0500
@@ -34962,6 +34941,27 @@ diff -urNp linux-3.1.1/drivers/staging/iio/ring_generic.h linux-3.1.1/drivers/st
  
  struct iio_ring_setup_ops {
  	int				(*preenable)(struct iio_dev *);
+diff -urNp linux-3.1.1/drivers/staging/mei/interface.c linux-3.1.1/drivers/staging/mei/interface.c
+--- linux-3.1.1/drivers/staging/mei/interface.c	2011-11-11 15:19:27.000000000 -0500
++++ linux-3.1.1/drivers/staging/mei/interface.c	2011-11-17 18:39:18.000000000 -0500
+@@ -332,7 +332,7 @@ int mei_send_flow_control(struct mei_dev
+ 	mei_hdr->reserved = 0;
+ 
+ 	mei_flow_control = (struct hbm_flow_control *) &dev->wr_msg_buf[1];
+-	memset(mei_flow_control, 0, sizeof(mei_flow_control));
++	memset(mei_flow_control, 0, sizeof(*mei_flow_control));
+ 	mei_flow_control->host_addr = cl->host_client_id;
+ 	mei_flow_control->me_addr = cl->me_client_id;
+ 	mei_flow_control->cmd.cmd = MEI_FLOW_CONTROL_CMD;
+@@ -396,7 +396,7 @@ int mei_disconnect(struct mei_device *de
+ 
+ 	mei_cli_disconnect =
+ 	    (struct hbm_client_disconnect_request *) &dev->wr_msg_buf[1];
+-	memset(mei_cli_disconnect, 0, sizeof(mei_cli_disconnect));
++	memset(mei_cli_disconnect, 0, sizeof(*mei_cli_disconnect));
+ 	mei_cli_disconnect->host_addr = cl->host_client_id;
+ 	mei_cli_disconnect->me_addr = cl->me_client_id;
+ 	mei_cli_disconnect->cmd.cmd = CLIENT_DISCONNECT_REQ_CMD;
 diff -urNp linux-3.1.1/drivers/staging/octeon/ethernet.c linux-3.1.1/drivers/staging/octeon/ethernet.c
 --- linux-3.1.1/drivers/staging/octeon/ethernet.c	2011-11-11 15:19:27.000000000 -0500
 +++ linux-3.1.1/drivers/staging/octeon/ethernet.c	2011-11-16 18:39:07.000000000 -0500
@@ -40501,7 +40501,7 @@ diff -urNp linux-3.1.1/fs/btrfs/ctree.c linux-3.1.1/fs/btrfs/ctree.c
  		WARN_ON(trans->transid != btrfs_header_generation(parent));
 diff -urNp linux-3.1.1/fs/btrfs/inode.c linux-3.1.1/fs/btrfs/inode.c
 --- linux-3.1.1/fs/btrfs/inode.c	2011-11-11 15:19:27.000000000 -0500
-+++ linux-3.1.1/fs/btrfs/inode.c	2011-11-16 18:40:29.000000000 -0500
++++ linux-3.1.1/fs/btrfs/inode.c	2011-11-17 18:12:11.000000000 -0500
 @@ -6922,7 +6922,7 @@ fail:
  	return -ENOMEM;
  }
@@ -40519,7 +40519,7 @@ diff -urNp linux-3.1.1/fs/btrfs/inode.c linux-3.1.1/fs/btrfs/inode.c
 +
 +dev_t get_btrfs_dev_from_inode(struct inode *inode)
 +{
-+	return BTRFS_I(inode)->root->anon_super.s_dev;
++	return BTRFS_I(inode)->root->anon_dev;
 +}
 +EXPORT_SYMBOL(get_btrfs_dev_from_inode);
 +
@@ -41341,7 +41341,7 @@ diff -urNp linux-3.1.1/fs/ecryptfs/read_write.c linux-3.1.1/fs/ecryptfs/read_wri
  }
 diff -urNp linux-3.1.1/fs/exec.c linux-3.1.1/fs/exec.c
 --- linux-3.1.1/fs/exec.c	2011-11-11 15:19:27.000000000 -0500
-+++ linux-3.1.1/fs/exec.c	2011-11-16 23:41:58.000000000 -0500
++++ linux-3.1.1/fs/exec.c	2011-11-17 18:40:47.000000000 -0500
 @@ -55,12 +55,24 @@
  #include <linux/pipe_fs_i.h>
  #include <linux/oom.h>
@@ -41694,7 +41694,7 @@ diff -urNp linux-3.1.1/fs/exec.c linux-3.1.1/fs/exec.c
  	cn->corename = kmalloc(cn->size, GFP_KERNEL);
  	cn->used = 0;
  
-@@ -1816,6 +1889,219 @@ out:
+@@ -1816,6 +1889,218 @@ out:
  	return ispipe;
  }
  
@@ -41885,7 +41885,6 @@ diff -urNp linux-3.1.1/fs/exec.c linux-3.1.1/fs/exec.c
 +#endif
 +}
 +
-+
 +NORET_TYPE void pax_report_usercopy(const void *ptr, unsigned long len, bool to, const char *type)
 +{
 +	if (current->signal->curr_ip)
@@ -41914,7 +41913,7 @@ diff -urNp linux-3.1.1/fs/exec.c linux-3.1.1/fs/exec.c
  static int zap_process(struct task_struct *start, int exit_code)
  {
  	struct task_struct *t;
-@@ -2027,17 +2313,17 @@ static void wait_for_dump_helpers(struct
+@@ -2027,17 +2312,17 @@ static void wait_for_dump_helpers(struct
  	pipe = file->f_path.dentry->d_inode->i_pipe;
  
  	pipe_lock(pipe);
@@ -41937,7 +41936,7 @@ diff -urNp linux-3.1.1/fs/exec.c linux-3.1.1/fs/exec.c
  	pipe_unlock(pipe);
  
  }
-@@ -2098,7 +2384,7 @@ void do_coredump(long signr, int exit_co
+@@ -2098,7 +2383,7 @@ void do_coredump(long signr, int exit_co
  	int retval = 0;
  	int flag = 0;
  	int ispipe;
@@ -41946,7 +41945,7 @@ diff -urNp linux-3.1.1/fs/exec.c linux-3.1.1/fs/exec.c
  	struct coredump_params cprm = {
  		.signr = signr,
  		.regs = regs,
-@@ -2113,6 +2399,9 @@ void do_coredump(long signr, int exit_co
+@@ -2113,6 +2398,9 @@ void do_coredump(long signr, int exit_co
  
  	audit_core_dumps(signr);
  
@@ -41956,7 +41955,7 @@ diff -urNp linux-3.1.1/fs/exec.c linux-3.1.1/fs/exec.c
  	binfmt = mm->binfmt;
  	if (!binfmt || !binfmt->core_dump)
  		goto fail;
-@@ -2180,7 +2469,7 @@ void do_coredump(long signr, int exit_co
+@@ -2180,7 +2468,7 @@ void do_coredump(long signr, int exit_co
  		}
  		cprm.limit = RLIM_INFINITY;
  
@@ -41965,7 +41964,7 @@ diff -urNp linux-3.1.1/fs/exec.c linux-3.1.1/fs/exec.c
  		if (core_pipe_limit && (core_pipe_limit < dump_count)) {
  			printk(KERN_WARNING "Pid %d(%s) over core_pipe_limit\n",
  			       task_tgid_vnr(current), current->comm);
-@@ -2207,6 +2496,8 @@ void do_coredump(long signr, int exit_co
+@@ -2207,6 +2495,8 @@ void do_coredump(long signr, int exit_co
  	} else {
  		struct inode *inode;
  
@@ -41974,7 +41973,7 @@ diff -urNp linux-3.1.1/fs/exec.c linux-3.1.1/fs/exec.c
  		if (cprm.limit < binfmt->min_coredump)
  			goto fail_unlock;
  
-@@ -2250,7 +2541,7 @@ close_fail:
+@@ -2250,7 +2540,7 @@ close_fail:
  		filp_close(cprm.file, NULL);
  fail_dropcount:
  	if (ispipe)
@@ -41983,7 +41982,7 @@ diff -urNp linux-3.1.1/fs/exec.c linux-3.1.1/fs/exec.c
  fail_unlock:
  	kfree(cn.corename);
  fail_corename:
-@@ -2269,7 +2560,7 @@ fail:
+@@ -2269,7 +2559,7 @@ fail:
   */
  int dump_write(struct file *file, const void *addr, int nr)
  {
@@ -43843,6 +43842,61 @@ diff -urNp linux-3.1.1/fs/gfs2/inode.c linux-3.1.1/fs/gfs2/inode.c
  	if (!IS_ERR(s))
  		kfree(s);
  }
+diff -urNp linux-3.1.1/fs/hfs/btree.c linux-3.1.1/fs/hfs/btree.c
+--- linux-3.1.1/fs/hfs/btree.c	2011-11-11 15:19:27.000000000 -0500
++++ linux-3.1.1/fs/hfs/btree.c	2011-11-18 18:48:11.000000000 -0500
+@@ -46,11 +46,27 @@ struct hfs_btree *hfs_btree_open(struct 
+ 	case HFS_EXT_CNID:
+ 		hfs_inode_read_fork(tree->inode, mdb->drXTExtRec, mdb->drXTFlSize,
+ 				    mdb->drXTFlSize, be32_to_cpu(mdb->drXTClpSiz));
++
++		if (HFS_I(tree->inode)->alloc_blocks >
++					HFS_I(tree->inode)->first_blocks) {
++			printk(KERN_ERR "hfs: invalid btree extent records\n");
++			unlock_new_inode(tree->inode);
++			goto free_inode;
++		}
++
+ 		tree->inode->i_mapping->a_ops = &hfs_btree_aops;
+ 		break;
+ 	case HFS_CAT_CNID:
+ 		hfs_inode_read_fork(tree->inode, mdb->drCTExtRec, mdb->drCTFlSize,
+ 				    mdb->drCTFlSize, be32_to_cpu(mdb->drCTClpSiz));
++
++		if (!HFS_I(tree->inode)->first_blocks) {
++			printk(KERN_ERR "hfs: invalid btree extent records "
++								"(0 size).\n");
++			unlock_new_inode(tree->inode);
++			goto free_inode;
++		}
++
+ 		tree->inode->i_mapping->a_ops = &hfs_btree_aops;
+ 		break;
+ 	default:
+@@ -59,11 +75,6 @@ struct hfs_btree *hfs_btree_open(struct 
+ 	}
+ 	unlock_new_inode(tree->inode);
+ 
+-	if (!HFS_I(tree->inode)->first_blocks) {
+-		printk(KERN_ERR "hfs: invalid btree extent records (0 size).\n");
+-		goto free_inode;
+-	}
+-
+ 	mapping = tree->inode->i_mapping;
+ 	page = read_mapping_page(mapping, 0, NULL);
+ 	if (IS_ERR(page))
+diff -urNp linux-3.1.1/fs/hfs/trans.c linux-3.1.1/fs/hfs/trans.c
+--- linux-3.1.1/fs/hfs/trans.c	2011-11-11 15:19:27.000000000 -0500
++++ linux-3.1.1/fs/hfs/trans.c	2011-11-18 18:37:38.000000000 -0500
+@@ -40,6 +40,8 @@ int hfs_mac2asc(struct super_block *sb, 
+ 
+ 	src = in->name;
+ 	srclen = in->len;
++	if (srclen > HFS_NAMELEN)
++		srclen = HFS_NAMELEN;
+ 	dst = out;
+ 	dstlen = HFS_MAX_NAMELEN;
+ 	if (nls_io) {
 diff -urNp linux-3.1.1/fs/hfsplus/catalog.c linux-3.1.1/fs/hfsplus/catalog.c
 --- linux-3.1.1/fs/hfsplus/catalog.c	2011-11-11 15:19:27.000000000 -0500
 +++ linux-3.1.1/fs/hfsplus/catalog.c	2011-11-16 19:23:09.000000000 -0500
@@ -45059,7 +45113,7 @@ diff -urNp linux-3.1.1/fs/ocfs2/symlink.c linux-3.1.1/fs/ocfs2/symlink.c
  }
 diff -urNp linux-3.1.1/fs/open.c linux-3.1.1/fs/open.c
 --- linux-3.1.1/fs/open.c	2011-11-11 15:19:27.000000000 -0500
-+++ linux-3.1.1/fs/open.c	2011-11-16 23:40:57.000000000 -0500
++++ linux-3.1.1/fs/open.c	2011-11-17 19:07:55.000000000 -0500
 @@ -112,6 +112,10 @@ static long do_sys_truncate(const char _
  	error = locks_verify_truncate(inode, NULL, length);
  	if (!error)
@@ -45145,28 +45199,10 @@ diff -urNp linux-3.1.1/fs/open.c linux-3.1.1/fs/open.c
  	newattrs.ia_valid =  ATTR_CTIME;
  	if (user != (uid_t) -1) {
  		newattrs.ia_valid |= ATTR_UID;
-@@ -976,7 +1011,8 @@ long do_sys_open(int dfd, const char __u
- 	if (!IS_ERR(tmp)) {
- 		fd = get_unused_fd_flags(flags);
- 		if (fd >= 0) {
--			struct file *f = do_filp_open(dfd, tmp, &op, lookup);
-+			struct file *f;
-+			f = do_filp_open(dfd, tmp, &op, lookup);
- 			if (IS_ERR(f)) {
- 				put_unused_fd(fd);
- 				fd = PTR_ERR(f);
 diff -urNp linux-3.1.1/fs/partitions/ldm.c linux-3.1.1/fs/partitions/ldm.c
 --- linux-3.1.1/fs/partitions/ldm.c	2011-11-11 15:19:27.000000000 -0500
-+++ linux-3.1.1/fs/partitions/ldm.c	2011-11-16 18:40:29.000000000 -0500
-@@ -1311,6 +1311,7 @@ static bool ldm_frag_add (const u8 *data
- 		ldm_error ("A VBLK claims to have %d parts.", num);
- 		return false;
- 	}
-+
- 	if (rec >= num) {
- 		ldm_error("REC value (%d) exceeds NUM value (%d)", rec, num);
- 		return false;
-@@ -1322,7 +1323,7 @@ static bool ldm_frag_add (const u8 *data
++++ linux-3.1.1/fs/partitions/ldm.c	2011-11-17 19:08:15.000000000 -0500
+@@ -1322,7 +1322,7 @@ static bool ldm_frag_add (const u8 *data
  			goto found;
  	}
  
@@ -45303,7 +45339,7 @@ diff -urNp linux-3.1.1/fs/pipe.c linux-3.1.1/fs/pipe.c
  	/*
 diff -urNp linux-3.1.1/fs/proc/array.c linux-3.1.1/fs/proc/array.c
 --- linux-3.1.1/fs/proc/array.c	2011-11-11 15:19:27.000000000 -0500
-+++ linux-3.1.1/fs/proc/array.c	2011-11-16 18:40:29.000000000 -0500
++++ linux-3.1.1/fs/proc/array.c	2011-11-17 18:42:02.000000000 -0500
 @@ -60,6 +60,7 @@
  #include <linux/tty.h>
  #include <linux/string.h>
@@ -45359,12 +45395,8 @@ diff -urNp linux-3.1.1/fs/proc/array.c linux-3.1.1/fs/proc/array.c
  static int do_task_stat(struct seq_file *m, struct pid_namespace *ns,
  			struct pid *pid, struct task_struct *task, int whole)
  {
-@@ -375,9 +406,11 @@ static int do_task_stat(struct seq_file 
- 	cputime_t cutime, cstime, utime, stime;
- 	cputime_t cgtime, gtime;
- 	unsigned long rsslim = 0;
--	char tcomm[sizeof(task->comm)];
-+	char tcomm[sizeof(task->comm)] = { 0 };
+@@ -378,6 +409,8 @@ static int do_task_stat(struct seq_file 
+ 	char tcomm[sizeof(task->comm)];
  	unsigned long flags;
  
 +	pax_track_stack();
@@ -45429,7 +45461,7 @@ diff -urNp linux-3.1.1/fs/proc/array.c linux-3.1.1/fs/proc/array.c
 +#endif
 diff -urNp linux-3.1.1/fs/proc/base.c linux-3.1.1/fs/proc/base.c
 --- linux-3.1.1/fs/proc/base.c	2011-11-11 15:19:27.000000000 -0500
-+++ linux-3.1.1/fs/proc/base.c	2011-11-16 19:25:48.000000000 -0500
++++ linux-3.1.1/fs/proc/base.c	2011-11-17 18:43:19.000000000 -0500
 @@ -107,6 +107,22 @@ struct pid_entry {
  	union proc_op op;
  };
@@ -45645,12 +45677,12 @@ diff -urNp linux-3.1.1/fs/proc/base.c linux-3.1.1/fs/proc/base.c
 +#else
  			stat->gid = cred->egid;
 +#endif
-+		}
+ 		}
 +#if defined(CONFIG_GRKERNSEC_PROC_USER) || defined(CONFIG_GRKERNSEC_PROC_USERGROUP)
 +		} else {
 +			rcu_read_unlock();
 +			return -ENOENT;
- 		}
++		}
 +#endif
  	}
  	rcu_read_unlock();
@@ -45739,15 +45771,7 @@ diff -urNp linux-3.1.1/fs/proc/base.c linux-3.1.1/fs/proc/base.c
  	if (!IS_ERR(s))
  		__putname(s);
  }
-@@ -2663,6 +2778,7 @@ static struct dentry *proc_base_instanti
- 	if (p->fop)
- 		inode->i_fop = p->fop;
- 	ei->op = p->op;
-+
- 	d_add(dentry, inode);
- 	error = NULL;
- out:
-@@ -2802,7 +2918,7 @@ static const struct pid_entry tgid_base_
+@@ -2802,7 +2917,7 @@ static const struct pid_entry tgid_base_
  	REG("autogroup",  S_IRUGO|S_IWUSR, proc_pid_sched_autogroup_operations),
  #endif
  	REG("comm",      S_IRUGO|S_IWUSR, proc_pid_set_comm_operations),
@@ -45756,7 +45780,7 @@ diff -urNp linux-3.1.1/fs/proc/base.c linux-3.1.1/fs/proc/base.c
  	INF("syscall",    S_IRUGO, proc_pid_syscall),
  #endif
  	INF("cmdline",    S_IRUGO, proc_pid_cmdline),
-@@ -2827,10 +2943,10 @@ static const struct pid_entry tgid_base_
+@@ -2827,10 +2942,10 @@ static const struct pid_entry tgid_base_
  #ifdef CONFIG_SECURITY
  	DIR("attr",       S_IRUGO|S_IXUGO, proc_attr_dir_inode_operations, proc_attr_dir_operations),
  #endif
@@ -45769,7 +45793,7 @@ diff -urNp linux-3.1.1/fs/proc/base.c linux-3.1.1/fs/proc/base.c
  	ONE("stack",      S_IRUGO, proc_pid_stack),
  #endif
  #ifdef CONFIG_SCHEDSTATS
-@@ -2864,6 +2980,9 @@ static const struct pid_entry tgid_base_
+@@ -2864,6 +2979,9 @@ static const struct pid_entry tgid_base_
  #ifdef CONFIG_HARDWALL
  	INF("hardwall",   S_IRUGO, proc_pid_hardwall),
  #endif
@@ -45779,7 +45803,7 @@ diff -urNp linux-3.1.1/fs/proc/base.c linux-3.1.1/fs/proc/base.c
  };
  
  static int proc_tgid_base_readdir(struct file * filp,
-@@ -2989,7 +3108,14 @@ static struct dentry *proc_pid_instantia
+@@ -2989,7 +3107,14 @@ static struct dentry *proc_pid_instantia
  	if (!inode)
  		goto out;
  
@@ -45794,7 +45818,7 @@ diff -urNp linux-3.1.1/fs/proc/base.c linux-3.1.1/fs/proc/base.c
  	inode->i_op = &proc_tgid_base_inode_operations;
  	inode->i_fop = &proc_tgid_base_operations;
  	inode->i_flags|=S_IMMUTABLE;
-@@ -3031,7 +3157,14 @@ struct dentry *proc_pid_lookup(struct in
+@@ -3031,7 +3156,14 @@ struct dentry *proc_pid_lookup(struct in
  	if (!task)
  		goto out;
  
@@ -45809,7 +45833,7 @@ diff -urNp linux-3.1.1/fs/proc/base.c linux-3.1.1/fs/proc/base.c
  	put_task_struct(task);
  out:
  	return result;
-@@ -3096,6 +3229,11 @@ int proc_pid_readdir(struct file * filp,
+@@ -3096,6 +3228,11 @@ int proc_pid_readdir(struct file * filp,
  {
  	unsigned int nr;
  	struct task_struct *reaper;
@@ -45821,7 +45845,7 @@ diff -urNp linux-3.1.1/fs/proc/base.c linux-3.1.1/fs/proc/base.c
  	struct tgid_iter iter;
  	struct pid_namespace *ns;
  
-@@ -3119,8 +3257,27 @@ int proc_pid_readdir(struct file * filp,
+@@ -3119,8 +3256,27 @@ int proc_pid_readdir(struct file * filp,
  	for (iter = next_tgid(ns, iter);
  	     iter.task;
  	     iter.tgid += 1, iter = next_tgid(ns, iter)) {
@@ -45850,7 +45874,7 @@ diff -urNp linux-3.1.1/fs/proc/base.c linux-3.1.1/fs/proc/base.c
  			put_task_struct(iter.task);
  			goto out;
  		}
-@@ -3148,7 +3305,7 @@ static const struct pid_entry tid_base_s
+@@ -3148,7 +3304,7 @@ static const struct pid_entry tid_base_s
  	REG("sched",     S_IRUGO|S_IWUSR, proc_pid_sched_operations),
  #endif
  	REG("comm",      S_IRUGO|S_IWUSR, proc_pid_set_comm_operations),
@@ -45859,7 +45883,7 @@ diff -urNp linux-3.1.1/fs/proc/base.c linux-3.1.1/fs/proc/base.c
  	INF("syscall",   S_IRUGO, proc_pid_syscall),
  #endif
  	INF("cmdline",   S_IRUGO, proc_pid_cmdline),
-@@ -3172,10 +3329,10 @@ static const struct pid_entry tid_base_s
+@@ -3172,10 +3328,10 @@ static const struct pid_entry tid_base_s
  #ifdef CONFIG_SECURITY
  	DIR("attr",      S_IRUGO|S_IXUGO, proc_attr_dir_inode_operations, proc_attr_dir_operations),
  #endif
@@ -46119,7 +46143,7 @@ diff -urNp linux-3.1.1/fs/proc/proc_net.c linux-3.1.1/fs/proc/proc_net.c
  	task = pid_task(proc_pid(dir), PIDTYPE_PID);
 diff -urNp linux-3.1.1/fs/proc/proc_sysctl.c linux-3.1.1/fs/proc/proc_sysctl.c
 --- linux-3.1.1/fs/proc/proc_sysctl.c	2011-11-11 15:19:27.000000000 -0500
-+++ linux-3.1.1/fs/proc/proc_sysctl.c	2011-11-16 18:40:29.000000000 -0500
++++ linux-3.1.1/fs/proc/proc_sysctl.c	2011-11-18 18:45:33.000000000 -0500
 @@ -8,11 +8,13 @@
  #include <linux/namei.h>
  #include "internal.h"
@@ -46181,7 +46205,12 @@ diff -urNp linux-3.1.1/fs/proc/proc_sysctl.c linux-3.1.1/fs/proc/proc_sysctl.c
  	generic_fillattr(inode, stat);
  	if (table)
  		stat->mode = (stat->mode & S_IFMT) | table->mode;
-@@ -374,13 +391,13 @@ static const struct file_operations proc
+@@ -370,17 +387,18 @@ static const struct file_operations proc
+ };
+ 
+ static const struct file_operations proc_sys_dir_file_operations = {
++	.read		= generic_read_dir,
+ 	.readdir	= proc_sys_readdir,
  	.llseek		= generic_file_llseek,
  };
  
@@ -47147,6 +47176,30 @@ diff -urNp linux-3.1.1/fs/xfs/xfs_iops.c linux-3.1.1/fs/xfs/xfs_iops.c
  
  	if (!IS_ERR(s))
  		kfree(s);
+diff -urNp linux-3.1.1/fs/xfs/xfs_vnodeops.c linux-3.1.1/fs/xfs/xfs_vnodeops.c
+--- linux-3.1.1/fs/xfs/xfs_vnodeops.c	2011-11-11 15:19:27.000000000 -0500
++++ linux-3.1.1/fs/xfs/xfs_vnodeops.c	2011-11-18 18:54:56.000000000 -0500
+@@ -123,13 +123,17 @@ xfs_readlink(
+ 
+ 	xfs_ilock(ip, XFS_ILOCK_SHARED);
+ 
+-	ASSERT(S_ISLNK(ip->i_d.di_mode));
+-	ASSERT(ip->i_d.di_size <= MAXPATHLEN);
+-
+ 	pathlen = ip->i_d.di_size;
+ 	if (!pathlen)
+ 		goto out;
+ 
++	if (pathlen > MAXPATHLEN) {
++		xfs_alert(mp, "%s: inode (%llu) symlink length (%d) too long",
++			 __func__, (unsigned long long)ip->i_ino, pathlen);
++		ASSERT(0);
++		return XFS_ERROR(EFSCORRUPTED);
++	}
++
+ 	if (ip->i_df.if_flags & XFS_IFINLINE) {
+ 		memcpy(link, ip->i_df.if_u1.if_data, pathlen);
+ 		link[pathlen] = '\0';
 diff -urNp linux-3.1.1/grsecurity/gracl_alloc.c linux-3.1.1/grsecurity/gracl_alloc.c
 --- linux-3.1.1/grsecurity/gracl_alloc.c	1969-12-31 19:00:00.000000000 -0500
 +++ linux-3.1.1/grsecurity/gracl_alloc.c	2011-11-16 18:40:31.000000000 -0500
@@ -61025,15 +61078,16 @@ diff -urNp linux-3.1.1/include/media/v4l2-dev.h linux-3.1.1/include/media/v4l2-d
   * Newer version of video_device, handled by videodev2.c
 diff -urNp linux-3.1.1/include/media/v4l2-ioctl.h linux-3.1.1/include/media/v4l2-ioctl.h
 --- linux-3.1.1/include/media/v4l2-ioctl.h	2011-11-11 15:19:27.000000000 -0500
-+++ linux-3.1.1/include/media/v4l2-ioctl.h	2011-11-16 18:40:44.000000000 -0500
-@@ -272,6 +272,7 @@ struct v4l2_ioctl_ops {
++++ linux-3.1.1/include/media/v4l2-ioctl.h	2011-11-17 18:44:20.000000000 -0500
+@@ -272,7 +272,7 @@ struct v4l2_ioctl_ops {
  	long (*vidioc_default)	       (struct file *file, void *fh,
  					bool valid_prio, int cmd, void *arg);
  };
+-
 +typedef struct v4l2_ioctl_ops __no_const v4l2_ioctl_ops_no_const;
  
- 
  /* v4l debugging and diagnostics */
+ 
 diff -urNp linux-3.1.1/include/net/caif/caif_hsi.h linux-3.1.1/include/net/caif/caif_hsi.h
 --- linux-3.1.1/include/net/caif/caif_hsi.h	2011-11-11 15:19:27.000000000 -0500
 +++ linux-3.1.1/include/net/caif/caif_hsi.h	2011-11-16 18:39:08.000000000 -0500
@@ -66967,7 +67021,7 @@ diff -urNp linux-3.1.1/localversion-grsec linux-3.1.1/localversion-grsec
 +-grsec
 diff -urNp linux-3.1.1/Makefile linux-3.1.1/Makefile
 --- linux-3.1.1/Makefile	2011-11-11 15:19:27.000000000 -0500
-+++ linux-3.1.1/Makefile	2011-11-16 18:45:38.000000000 -0500
++++ linux-3.1.1/Makefile	2011-11-17 18:56:01.000000000 -0500
 @@ -245,8 +245,9 @@ CONFIG_SHELL := $(shell if [ -x "$$BASH"
  
  HOSTCC       = gcc
@@ -66975,25 +67029,12 @@ diff -urNp linux-3.1.1/Makefile linux-3.1.1/Makefile
 -HOSTCFLAGS   = -Wall -Wmissing-prototypes -Wstrict-prototypes -O2 -fomit-frame-pointer
 -HOSTCXXFLAGS = -O2
 +HOSTCFLAGS   = -Wall -W -Wmissing-prototypes -Wstrict-prototypes -Wno-unused-parameter -Wno-missing-field-initializers -O2 -fomit-frame-pointer -fno-delete-null-pointer-checks
-+HOSTCFLAGS  += $(call cc-option, -Wno-empty-body)
-+HOSTCXXFLAGS = -O2 -fno-delete-null-pointer-checks
++HOSTCLFAGS  += $(call cc-option, -Wno-empty-body)
++HOSTCXXFLAGS = -O2 -Wall -W -fno-delete-null-pointer-checks
  
  # Decide whether to build built-in, modular, or both.
  # Normally, just do built-in.
-@@ -365,10 +366,12 @@ LINUXINCLUDE    := -I$(srctree)/arch/$(h
- KBUILD_CPPFLAGS := -D__KERNEL__
- 
- KBUILD_CFLAGS   := -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs \
-+		   -W -Wno-unused-parameter -Wno-missing-field-initializers \
- 		   -fno-strict-aliasing -fno-common \
- 		   -Werror-implicit-function-declaration \
- 		   -Wno-format-security \
- 		   -fno-delete-null-pointer-checks
-+KBUILD_CFLAGS   += $(call cc-option, -Wno-empty-body)
- KBUILD_AFLAGS_KERNEL :=
- KBUILD_CFLAGS_KERNEL :=
- KBUILD_AFLAGS   := -D__ASSEMBLY__
-@@ -407,8 +410,8 @@ export RCS_TAR_IGNORE := --exclude SCCS 
+@@ -407,8 +408,8 @@ export RCS_TAR_IGNORE := --exclude SCCS 
  # Rules shared between *config targets and build targets
  
  # Basic helpers built in scripts/
@@ -67004,7 +67045,7 @@ diff -urNp linux-3.1.1/Makefile linux-3.1.1/Makefile
  	$(Q)$(MAKE) $(build)=scripts/basic
  	$(Q)rm -f .tmp_quiet_recordmcount
  
-@@ -564,6 +567,37 @@ else
+@@ -564,6 +565,37 @@ else
  KBUILD_CFLAGS	+= -O2
  endif
  
@@ -67036,13 +67077,13 @@ diff -urNp linux-3.1.1/Makefile linux-3.1.1/Makefile
 +else
 +	$(Q)echo "warning, your gcc version does not support plugins, you should upgrade it to gcc 4.5 at least"
 +endif
-+	$(Q)echo "PAX_MEMORY_STACKLEAK and constification will be less secure"
++	$(Q)echo "PAX_MEMORY_STACKLEAK and other features will be less secure"
 +endif
 +
  include $(srctree)/arch/$(SRCARCH)/Makefile
  
  ifneq ($(CONFIG_FRAME_WARN),0)
-@@ -708,7 +742,7 @@ export mod_strip_cmd
+@@ -708,7 +740,7 @@ export mod_strip_cmd
  
  
  ifeq ($(KBUILD_EXTMOD),)
@@ -67051,7 +67092,7 @@ diff -urNp linux-3.1.1/Makefile linux-3.1.1/Makefile
  
  vmlinux-dirs	:= $(patsubst %/,%,$(filter %/, $(init-y) $(init-m) \
  		     $(core-y) $(core-m) $(drivers-y) $(drivers-m) \
-@@ -932,6 +966,7 @@ vmlinux.o: $(modpost-init) $(vmlinux-mai
+@@ -932,6 +964,7 @@ vmlinux.o: $(modpost-init) $(vmlinux-mai
  
  # The actual objects are generated when descending, 
  # make sure no implicit rule kicks in
@@ -67059,7 +67100,7 @@ diff -urNp linux-3.1.1/Makefile linux-3.1.1/Makefile
  $(sort $(vmlinux-init) $(vmlinux-main)) $(vmlinux-lds): $(vmlinux-dirs) ;
  
  # Handle descending into subdirectories listed in $(vmlinux-dirs)
-@@ -941,7 +976,7 @@ $(sort $(vmlinux-init) $(vmlinux-main)) 
+@@ -941,7 +974,7 @@ $(sort $(vmlinux-init) $(vmlinux-main)) 
  # Error messages still appears in the original language
  
  PHONY += $(vmlinux-dirs)
@@ -67068,7 +67109,7 @@ diff -urNp linux-3.1.1/Makefile linux-3.1.1/Makefile
  	$(Q)$(MAKE) $(build)=$@
  
  # Store (new) KERNELRELASE string in include/config/kernel.release
-@@ -986,6 +1021,7 @@ prepare0: archprepare FORCE
+@@ -986,6 +1019,7 @@ prepare0: archprepare FORCE
  	$(Q)$(MAKE) $(build)=. missing-syscalls
  
  # All the preparing..
@@ -67076,7 +67117,7 @@ diff -urNp linux-3.1.1/Makefile linux-3.1.1/Makefile
  prepare: prepare0
  
  # Generate some files
-@@ -1087,6 +1123,7 @@ all: modules
+@@ -1087,6 +1121,7 @@ all: modules
  #	using awk while concatenating to the final file.
  
  PHONY += modules
@@ -67084,7 +67125,7 @@ diff -urNp linux-3.1.1/Makefile linux-3.1.1/Makefile
  modules: $(vmlinux-dirs) $(if $(KBUILD_BUILTIN),vmlinux) modules.builtin
  	$(Q)$(AWK) '!x[$$0]++' $(vmlinux-dirs:%=$(objtree)/%/modules.order) > $(objtree)/modules.order
  	@$(kecho) '  Building modules, stage 2.';
-@@ -1102,7 +1139,7 @@ modules.builtin: $(vmlinux-dirs:%=%/modu
+@@ -1102,7 +1137,7 @@ modules.builtin: $(vmlinux-dirs:%=%/modu
  
  # Target to prepare building external modules
  PHONY += modules_prepare
@@ -67093,7 +67134,7 @@ diff -urNp linux-3.1.1/Makefile linux-3.1.1/Makefile
  
  # Target to install modules
  PHONY += modules_install
-@@ -1198,7 +1235,7 @@ distclean: mrproper
+@@ -1198,7 +1233,7 @@ distclean: mrproper
  	@find $(srctree) $(RCS_FIND_IGNORE) \
  		\( -name '*.orig' -o -name '*.rej' -o -name '*~' \
  		-o -name '*.bak' -o -name '#*#' -o -name '.*.orig' \
@@ -67102,7 +67143,7 @@ diff -urNp linux-3.1.1/Makefile linux-3.1.1/Makefile
  		-o -name '*%' -o -name '.*.cmd' -o -name 'core' \) \
  		-type f -print | xargs rm -f
  
-@@ -1360,6 +1397,7 @@ PHONY += $(module-dirs) modules
+@@ -1360,6 +1395,7 @@ PHONY += $(module-dirs) modules
  $(module-dirs): crmodverdir $(objtree)/Module.symvers
  	$(Q)$(MAKE) $(build)=$(patsubst _module_%,%,$@)
  
@@ -67110,7 +67151,7 @@ diff -urNp linux-3.1.1/Makefile linux-3.1.1/Makefile
  modules: $(module-dirs)
  	@$(kecho) '  Building modules, stage 2.';
  	$(Q)$(MAKE) -f $(srctree)/scripts/Makefile.modpost
-@@ -1486,17 +1524,19 @@ else
+@@ -1486,17 +1522,19 @@ else
          target-dir = $(if $(KBUILD_EXTMOD),$(dir $<),$(dir $@))
  endif
  
@@ -67134,7 +67175,7 @@ diff -urNp linux-3.1.1/Makefile linux-3.1.1/Makefile
  	$(Q)$(MAKE) $(build)=$(build-dir) $(target-dir)$(notdir $@)
  %.symtypes: %.c prepare scripts FORCE
  	$(Q)$(MAKE) $(build)=$(build-dir) $(target-dir)$(notdir $@)
-@@ -1506,11 +1546,13 @@ endif
+@@ -1506,11 +1544,13 @@ endif
  	$(cmd_crmodverdir)
  	$(Q)$(MAKE) KBUILD_MODULES=$(if $(CONFIG_MODULES),1) \
  	$(build)=$(build-dir)
@@ -67330,16 +67371,21 @@ diff -urNp linux-3.1.1/mm/internal.h linux-3.1.1/mm/internal.h
  extern bool is_free_buddy_page(struct page *page);
 diff -urNp linux-3.1.1/mm/Kconfig linux-3.1.1/mm/Kconfig
 --- linux-3.1.1/mm/Kconfig	2011-11-11 15:19:27.000000000 -0500
-+++ linux-3.1.1/mm/Kconfig	2011-11-16 18:40:44.000000000 -0500
-@@ -240,7 +240,7 @@ config KSM
++++ linux-3.1.1/mm/Kconfig	2011-11-17 18:57:00.000000000 -0500
+@@ -238,10 +238,10 @@ config KSM
+ 	  root has set /sys/kernel/mm/ksm/run to 1 (if CONFIG_SYSFS is set).
+ 
  config DEFAULT_MMAP_MIN_ADDR
-         int "Low address space to protect from user allocation"
+-        int "Low address space to protect from user allocation"
++	int "Low address space to protect from user allocation"
  	depends on MMU
 -        default 4096
-+        default 65536
-         help
+-        help
++	default 65536
++	help
  	  This is the portion of low virtual memory which should be protected
  	  from userspace allocation.  Keeping a user from writing to low pages
+ 	  can help reduce the impact of kernel NULL pointer bugs.
 diff -urNp linux-3.1.1/mm/kmemleak.c linux-3.1.1/mm/kmemleak.c
 --- linux-3.1.1/mm/kmemleak.c	2011-11-11 15:19:27.000000000 -0500
 +++ linux-3.1.1/mm/kmemleak.c	2011-11-16 18:40:44.000000000 -0500
@@ -69957,6 +70003,18 @@ diff -urNp linux-3.1.1/mm/nommu.c linux-3.1.1/mm/nommu.c
  	*region = *vma->vm_region;
  	new->vm_region = region;
  
+diff -urNp linux-3.1.1/mm/oom_kill.c linux-3.1.1/mm/oom_kill.c
+--- linux-3.1.1/mm/oom_kill.c	2011-11-11 15:19:27.000000000 -0500
++++ linux-3.1.1/mm/oom_kill.c	2011-11-18 18:44:21.000000000 -0500
+@@ -162,7 +162,7 @@ static bool oom_unkillable_task(struct t
+ unsigned int oom_badness(struct task_struct *p, struct mem_cgroup *mem,
+ 		      const nodemask_t *nodemask, unsigned long totalpages)
+ {
+-	int points;
++	long points;
+ 
+ 	if (oom_unkillable_task(p, mem, nodemask))
+ 		return 0;
 diff -urNp linux-3.1.1/mm/page_alloc.c linux-3.1.1/mm/page_alloc.c
 --- linux-3.1.1/mm/page_alloc.c	2011-11-11 15:19:27.000000000 -0500
 +++ linux-3.1.1/mm/page_alloc.c	2011-11-16 18:40:44.000000000 -0500
@@ -72519,7 +72577,7 @@ diff -urNp linux-3.1.1/net/ipv4/ping.c linux-3.1.1/net/ipv4/ping.c
  static int ping_seq_show(struct seq_file *seq, void *v)
 diff -urNp linux-3.1.1/net/ipv4/raw.c linux-3.1.1/net/ipv4/raw.c
 --- linux-3.1.1/net/ipv4/raw.c	2011-11-11 15:19:27.000000000 -0500
-+++ linux-3.1.1/net/ipv4/raw.c	2011-11-16 18:40:44.000000000 -0500
++++ linux-3.1.1/net/ipv4/raw.c	2011-11-17 18:58:40.000000000 -0500
 @@ -302,7 +302,7 @@ static int raw_rcv_skb(struct sock * sk,
  int raw_rcv(struct sock *sk, struct sk_buff *skb)
  {
@@ -72551,19 +72609,18 @@ diff -urNp linux-3.1.1/net/ipv4/raw.c linux-3.1.1/net/ipv4/raw.c
  
  	if (get_user(len, optlen))
  		goto out;
-@@ -756,8 +760,9 @@ static int raw_geticmpfilter(struct sock
+@@ -756,8 +760,8 @@ static int raw_geticmpfilter(struct sock
  	if (len > sizeof(struct icmp_filter))
  		len = sizeof(struct icmp_filter);
  	ret = -EFAULT;
 -	if (put_user(len, optlen) ||
 -	    copy_to_user(optval, &raw_sk(sk)->filter, len))
 +	filter = raw_sk(sk)->filter;
-+	if (put_user(len, optlen) || len > sizeof filter ||
-+	    copy_to_user(optval, &filter, len))
++	if (put_user(len, optlen) || len > sizeof filter || copy_to_user(optval, &filter, len))
  		goto out;
  	ret = 0;
  out:	return ret;
-@@ -985,7 +990,13 @@ static void raw_sock_seq_show(struct seq
+@@ -985,7 +989,13 @@ static void raw_sock_seq_show(struct seq
  		sk_wmem_alloc_get(sp),
  		sk_rmem_alloc_get(sp),
  		0, 0L, 0, sock_i_uid(sp), 0, sock_i_ino(sp),
@@ -73390,6 +73447,17 @@ diff -urNp linux-3.1.1/net/iucv/af_iucv.c linux-3.1.1/net/iucv/af_iucv.c
  	}
  
  	write_unlock_bh(&iucv_sk_list.lock);
+diff -urNp linux-3.1.1/net/Kconfig linux-3.1.1/net/Kconfig
+--- linux-3.1.1/net/Kconfig	2011-11-11 15:19:27.000000000 -0500
++++ linux-3.1.1/net/Kconfig	2011-11-18 19:02:18.000000000 -0500
+@@ -239,6 +239,7 @@ config BPF_JIT
+ 	bool "enable BPF Just In Time compiler"
+ 	depends on HAVE_BPF_JIT
+ 	depends on MODULES
++	depends on !GRKERNSEC
+ 	---help---
+ 	  Berkeley Packet Filter filtering capabilities are normally handled
+ 	  by an interpreter. This option allows kernel to generate a native
 diff -urNp linux-3.1.1/net/key/af_key.c linux-3.1.1/net/key/af_key.c
 --- linux-3.1.1/net/key/af_key.c	2011-11-11 15:19:27.000000000 -0500
 +++ linux-3.1.1/net/key/af_key.c	2011-11-16 18:40:44.000000000 -0500
@@ -76365,6 +76433,19 @@ diff -urNp linux-3.1.1/security/keys/keyring.c linux-3.1.1/security/keys/keyring
  					goto error;
  
  				buflen -= tmp;
+diff -urNp linux-3.1.1/security/keys/user_defined.c linux-3.1.1/security/keys/user_defined.c
+--- linux-3.1.1/security/keys/user_defined.c	2011-11-11 15:19:27.000000000 -0500
++++ linux-3.1.1/security/keys/user_defined.c	2011-11-18 18:38:28.000000000 -0500
+@@ -102,7 +102,8 @@ int user_update(struct key *key, const v
+ 		key->expiry = 0;
+ 	}
+ 
+-	kfree_rcu(zap, rcu);
++	if (zap)
++		kfree_rcu(zap, rcu);
+ 
+ error:
+ 	return ret;
 diff -urNp linux-3.1.1/security/min_addr.c linux-3.1.1/security/min_addr.c
 --- linux-3.1.1/security/min_addr.c	2011-11-11 15:19:27.000000000 -0500
 +++ linux-3.1.1/security/min_addr.c	2011-11-16 18:40:44.000000000 -0500
@@ -77677,7 +77758,7 @@ diff -urNp linux-3.1.1/tools/gcc/kallocstat_plugin.c linux-3.1.1/tools/gcc/kallo
 +}
 diff -urNp linux-3.1.1/tools/gcc/kernexec_plugin.c linux-3.1.1/tools/gcc/kernexec_plugin.c
 --- linux-3.1.1/tools/gcc/kernexec_plugin.c	1969-12-31 19:00:00.000000000 -0500
-+++ linux-3.1.1/tools/gcc/kernexec_plugin.c	2011-11-16 18:39:08.000000000 -0500
++++ linux-3.1.1/tools/gcc/kernexec_plugin.c	2011-11-18 17:57:07.000000000 -0500
 @@ -0,0 +1,275 @@
 +/*
 + * Copyright 2011 by the PaX Team <pageexec@freemail.hu>
@@ -77883,7 +77964,7 @@ diff -urNp linux-3.1.1/tools/gcc/kernexec_plugin.c linux-3.1.1/tools/gcc/kernexe
 +	line = expand_location(RTL_LOCATION(insn)).line;
 +	btsq = gen_rtx_ASM_OPERANDS(VOIDmode, "btsq $63,(%%rsp)", empty_string, 0, argvec, constraintvec, labelvec, line);
 +	MEM_VOLATILE_P(btsq) = 1;
-+	RTX_FRAME_RELATED_P(btsq) = 1;
++//	RTX_FRAME_RELATED_P(btsq) = 1; // not for ASM_OPERANDS
 +	emit_insn_before(btsq, insn);
 +}
 +
