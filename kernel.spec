@@ -90,7 +90,7 @@
 %define		have_pcmcia	0
 %endif
 
-%define		rel		0.1
+%define		rel		0.2
 %define		basever		3.1
 %define		postver		.1
 
@@ -266,7 +266,7 @@ Patch5000:	kernel-apparmor.patch
 # based on ftp://ftp.leg.uct.ac.za/pub/linux/rip/tmpfs_root-2.6.30.diff.gz
 Patch7000:	kernel-inittmpfs.patch
 
-# based on http://grsecurity.net/~spender/grsecurity-2.2.2-3.1.1-201111170037.patch
+# based on http://grsecurity.net/~spender/grsecurity-2.2.2-3.1.1-201111181902.patch
 # NOTE: put raw upstream patches on kernel-grsec_full.patch:GRSECURITY_RAW for reference
 #       (since upstream deletes older patches)
 # NOTE: mirror of old grsecurity patches:
