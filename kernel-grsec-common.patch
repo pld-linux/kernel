@@ -25,15 +25,4 @@
 ===
 === analogous as capable()
 ===
---- linux-2.6.37/kernel/capability.c~	2011-02-23 10:36:01.806613056 +0100
-+++ linux-2.6.37/kernel/capability.c	2011-02-23 10:53:44.781787616 +0100
-@@ -325,6 +325,9 @@
- 
- int capable_nolog(int cap)
- {
-+	/* here for now so we don't require task locking */
-+	if (vs_check_bit(VXC_CAP_MASK, cap) && !vx_mcaps(1L << cap))
-+		return 0;
- 	if (unlikely(!cap_valid(cap))) {
- 		printk(KERN_CRIT "capable() called with invalid cap=%u\n", cap);
- 		BUG();
+

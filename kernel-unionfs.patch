@@ -532,10 +532,10 @@ index 0000000..1adde69
 +
 +For more information, see <http://unionfs.filesystems.org/>.
 diff --git a/MAINTAINERS b/MAINTAINERS
-index f0358cd..7ae0669 100644
+index 187282d..f77de31 100644
 --- a/MAINTAINERS
 +++ b/MAINTAINERS
-@@ -6375,6 +6375,14 @@ F:	Documentation/cdrom/
+@@ -6386,6 +6386,14 @@ F:	Documentation/cdrom/
  F:	drivers/cdrom/cdrom.c
  F:	include/linux/cdrom.h
  
@@ -575,10 +575,10 @@ index fb68c2b..8ca9290 100644
  obj-$(CONFIG_NFS_FS)		+= nfs/
  obj-$(CONFIG_EXPORTFS)		+= exportfs/
 diff --git a/fs/namei.c b/fs/namei.c
-index 0223c41..5d0261e 100644
+index 14ab8d3..9b73afa 100644
 --- a/fs/namei.c
 +++ b/fs/namei.c
-@@ -484,6 +484,7 @@ void release_open_intent(struct nameidata *nd)
+@@ -486,6 +486,7 @@ void release_open_intent(struct nameidata *nd)
  			fput(file);
  	}
  }
@@ -586,7 +586,7 @@ index 0223c41..5d0261e 100644
  
  static inline int d_revalidate(struct dentry *dentry, struct nameidata *nd)
  {
-@@ -1740,6 +1741,42 @@ struct dentry *lookup_one_len(const char *name, struct dentry *base, int len)
+@@ -1747,6 +1748,42 @@ struct dentry *lookup_one_len(const char *name, struct dentry *base, int len)
  	return __lookup_hash(&this, base, NULL);
  }
  
@@ -629,7 +629,7 @@ index 0223c41..5d0261e 100644
  int user_path_at(int dfd, const char __user *name, unsigned flags,
  		 struct path *path)
  {
-@@ -3339,6 +3376,7 @@ EXPORT_SYMBOL(get_write_access); /* binfmt_aout */
+@@ -3346,6 +3383,7 @@ EXPORT_SYMBOL(get_write_access); /* binfmt_aout */
  EXPORT_SYMBOL(getname);
  EXPORT_SYMBOL(lock_rename);
  EXPORT_SYMBOL(lookup_one_len);
@@ -774,11 +774,11 @@ index 0000000..f3c1ac4
 +	  If you say Y here, you can turn on debugging output from Unionfs.
 diff --git a/fs/unionfs/Makefile b/fs/unionfs/Makefile
 new file mode 100644
-index 0000000..0ece303
+index 0000000..a1e4354
 --- /dev/null
 +++ b/fs/unionfs/Makefile
 @@ -0,0 +1,17 @@
-+UNIONFS_VERSION="2.5.9.2 (for 3.0.0-rc4)"
++UNIONFS_VERSION="2.5.10 (for 3.0.4)"
 +
 +EXTRA_CFLAGS += -DUNIONFS_VERSION=\"$(UNIONFS_VERSION)\"
 +
@@ -797,7 +797,7 @@ index 0000000..0ece303
 +endif
 diff --git a/fs/unionfs/commonfops.c b/fs/unionfs/commonfops.c
 new file mode 100644
-index 0000000..0a271f4
+index 0000000..cd5c304
 --- /dev/null
 +++ b/fs/unionfs/commonfops.c
 @@ -0,0 +1,896 @@
@@ -1115,7 +1115,7 @@ index 0000000..0a271f4
 +	 * someone has copied up this file from underneath us, we also need
 +	 * to refresh things.
 +	 */
-+	if ((d_deleted(dentry) && dbstart(dentry) >= fbstart(file)) ||
++	if (d_deleted(dentry) ||
 +	    (sbgen <= fgen &&
 +	     dbstart(dentry) == fbstart(file) &&
 +	     unionfs_lower_file(file)))
@@ -2601,10 +2601,10 @@ index 0000000..37c2654
 +}
 diff --git a/fs/unionfs/debug.c b/fs/unionfs/debug.c
 new file mode 100644
-index 0000000..6092e69
+index 0000000..c07f697
 --- /dev/null
 +++ b/fs/unionfs/debug.c
-@@ -0,0 +1,548 @@
+@@ -0,0 +1,549 @@
 +/*
 + * Copyright (c) 2003-2011 Erez Zadok
 + * Copyright (c) 2005-2007 Josef 'Jeff' Sipek
@@ -2969,12 +2969,13 @@ index 0000000..6092e69
 +		pr_debug(" CF0: file/dentry=%p:%p fstart/end=%d:%d\n",
 +			 file, dentry, fstart, fend);
 +	}
-+	if (unlikely(fstart != dstart)) {
++	/* d_deleted dentries can be ignored for this test */
++	if (unlikely(fstart != dstart) && !d_deleted(dentry)) {
 +		PRINT_CALLER(fname, fxn, line);
 +		pr_debug(" CF1: file/dentry=%p:%p fstart=%d dstart=%d\n",
 +			 file, dentry, fstart, dstart);
 +	}
-+	if (unlikely(fend != dend)) {
++	if (unlikely(fend != dend) && !d_deleted(dentry)) {
 +		PRINT_CALLER(fname, fxn, line);
 +		pr_debug(" CF2: file/dentry=%p:%p fend=%d dend=%d\n",
 +			 file, dentry, fend, dend);
@@ -3155,10 +3156,10 @@ index 0000000..6092e69
 +}
 diff --git a/fs/unionfs/dentry.c b/fs/unionfs/dentry.c
 new file mode 100644
-index 0000000..c0205a4
+index 0000000..1628dad
 --- /dev/null
 +++ b/fs/unionfs/dentry.c
-@@ -0,0 +1,406 @@
+@@ -0,0 +1,409 @@
 +/*
 + * Copyright (c) 2003-2011 Erez Zadok
 + * Copyright (c) 2003-2006 Charles P. Wright
@@ -3476,11 +3477,14 @@ index 0000000..c0205a4
 +}
 +
 +static int unionfs_d_revalidate(struct dentry *dentry,
-+				struct nameidata *nd_unused)
++				struct nameidata *nd)
 +{
 +	bool valid = true;
 +	int err = 1;		/* 1 means valid for the VFS */
 +	struct dentry *parent;
++
++	if (nd && nd->flags & LOOKUP_RCU)
++		return -ECHILD;
 +
 +	unionfs_read_lock(dentry->d_sb, UNIONFS_SMUTEX_CHILD);
 +	parent = unionfs_lock_parent(dentry, UNIONFS_DMUTEX_PARENT);
@@ -5945,10 +5949,10 @@ index 0000000..b207c13
 +};
 diff --git a/fs/unionfs/lookup.c b/fs/unionfs/lookup.c
 new file mode 100644
-index 0000000..3cbde56
+index 0000000..9040394
 --- /dev/null
 +++ b/fs/unionfs/lookup.c
-@@ -0,0 +1,569 @@
+@@ -0,0 +1,570 @@
 +/*
 + * Copyright (c) 2003-2011 Erez Zadok
 + * Copyright (c) 2003-2006 Charles P. Wright
@@ -6262,7 +6266,8 @@ index 0000000..3cbde56
 +	verify_locked(parent);
 +
 +	/* must initialize dentry operations */
-+	dentry->d_op = &unionfs_dops;
++	if (lookupmode == INTERPOSE_LOOKUP)
++		d_set_d_op(dentry, &unionfs_dops);
 +
 +	/* We never partial lookup the root directory. */
 +	if (IS_ROOT(dentry))
@@ -6520,7 +6525,7 @@ index 0000000..3cbde56
 +}
 diff --git a/fs/unionfs/main.c b/fs/unionfs/main.c
 new file mode 100644
-index 0000000..fa52f61
+index 0000000..f4bcd89
 --- /dev/null
 +++ b/fs/unionfs/main.c
 @@ -0,0 +1,763 @@
@@ -6671,7 +6676,7 @@ index 0000000..fa52f61
 +			 * properly.  Finally we must return this new
 +			 * dentry.
 +			 */
-+			spliced->d_op = &unionfs_dops;
++			d_set_d_op(spliced, &unionfs_dops);
 +			spliced->d_fsdata = dentry->d_fsdata;
 +			dentry->d_fsdata = NULL;
 +			dentry = spliced;
@@ -7069,7 +7074,7 @@ index 0000000..fa52f61
 +
 +		ret = d_alloc(NULL, &name);
 +		if (likely(ret)) {
-+			ret->d_op = &unionfs_dops;
++			d_set_d_op(ret, &unionfs_dops);
 +			ret->d_sb = sb;
 +			ret->d_parent = ret;
 +		}
@@ -9544,10 +9549,10 @@ index 0000000..c3ac814
 +};
 diff --git a/fs/unionfs/union.h b/fs/unionfs/union.h
 new file mode 100644
-index 0000000..1821705
+index 0000000..16df291
 --- /dev/null
 +++ b/fs/unionfs/union.h
-@@ -0,0 +1,679 @@
+@@ -0,0 +1,680 @@
 +/*
 + * Copyright (c) 2003-2011 Erez Zadok
 + * Copyright (c) 2003-2006 Charles P. Wright
@@ -10223,6 +10228,7 @@ index 0000000..1821705
 +#define show_inode_times(i)		do { } while (0)
 +#define show_dinode_times(d)		do { } while (0)
 +#define show_inode_counts(i)		do { } while (0)
++#define UDBG				do { } while (0)
 +
 +#endif /* not CONFIG_UNION_FS_DEBUG */
 +

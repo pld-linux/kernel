@@ -93,8 +93,8 @@
 %endif
 
 %define		basever		3.0
-%define		postver		.9
-%define		rel		3
+%define		postver		.10
+%define		rel		1
 
 %define		_enable_debug_packages			0
 
@@ -142,7 +142,7 @@ Source0:	http://www.kernel.org/pub/linux/kernel/v3.x/linux-%{basever}.tar.xz
 # Source0-md5:	ecf932280e2441bdd992423ef3d55f8f
 %if "%{postver}" != ".0"
 Patch0:		http://www.kernel.org/pub/linux/kernel/v3.x/patch-%{version}.bz2
-# Patch0-md5:	0154d21e63d3f14fc1084cdb130fab2d
+# Patch0-md5:	8e0391dd935d838ee3023ab9daa6b447
 %endif
 
 Source3:	kernel-autoconf.h
@@ -240,7 +240,7 @@ Patch70:	kernel-tuxonice-headers.patch
 # http://patches.aircrack-ng.org/hostap-kernel-2.6.18.patch
 Patch85:	kernel-hostap.patch
 
-# http://vserver.13thfloor.at/Experimental/patch-3.0.7-vs2.3.1.diff
+# http://vserver.13thfloor.at/Experimental/patch-3.0.9-vs2.3.2.1.diff
 Patch100:	kernel-vserver-2.3.patch
 Patch101:	kernel-vserver-fixes.patch
 
@@ -248,7 +248,7 @@ Patch101:	kernel-vserver-fixes.patch
 # Fix verified for that kernel version.
 Patch130:	kernel-forcedeth-WON.patch
 
-# http://download.filesystems.org/unionfs/unionfs-2.x/unionfs-2.5.8_for_2.6.38-rc7.diff.gz
+# http://download.filesystems.org/unionfs/unionfs-2.x/unionfs-2.5.10_for_3.0.4.diff.gz
 Patch140:	kernel-unionfs.patch
 
 # git://aufs.git.sourceforge.net/gitroot/aufs/aufs3-standalone.git, read README
