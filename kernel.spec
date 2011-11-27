@@ -90,9 +90,9 @@
 %define		have_pcmcia	0
 %endif
 
-%define		rel		0.2
+%define		rel		0.1
 %define		basever		3.1
-%define		postver		.1
+%define		postver		.2
 
 %define		module_init_tools_ver	3.16
 
@@ -137,7 +137,7 @@ Source0:	http://www.kernel.org/pub/linux/kernel/v3.x/linux-%{basever}.tar.xz
 # Source0-md5:	edbdc798f23ae0f8045c82f6fa22c536
 %if "%{postver}" != ".0"
 Patch0:		http://www.kernel.org/pub/linux/kernel/v3.x/patch-%{version}.bz2
-# Patch0-md5:	8eb92cc70e7f8d1d18a349ba8c029d7d
+# Patch0-md5:	7487d8e6f00c077f6e15d6f4f9947c30
 %endif
 
 Source3:	kernel-autoconf.h
