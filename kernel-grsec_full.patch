@@ -45929,13 +45929,10 @@ diff -urNp linux-3.0.9/fs/proc/base.c linux-3.0.9/fs/proc/base.c
  	inode->i_op = &proc_tgid_base_inode_operations;
  	inode->i_fop = &proc_tgid_base_operations;
  	inode->i_flags|=S_IMMUTABLE;
-@@ -3032,7 +3158,14 @@ struct dentry *proc_pid_lookup(struct in
+@@ -3032,7 +3158,11 @@ struct dentry *proc_pid_lookup(struct in
  	if (!task)
  		goto out;
  
-+	if (!has_group_leader_pid(task))
-+		goto out_put_task;
-+
 +	if (gr_pid_is_chrooted(task) || gr_check_hidden_task(task))
 +		goto out_put_task;
 +
