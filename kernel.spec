@@ -135,7 +135,7 @@ Summary(pl.UTF-8):	Jądro Linuksa
 Name:		kernel%{_alt_kernel}
 Version:	%{basever}%{postver}
 Release:	%{rel}
-Epoch:		3
+Epoch:		4
 License:	GPL v2
 Group:		Base/Kernel
 Source0:	http://www.kernel.org/pub/linux/kernel/v3.x/linux-%{basever}.tar.xz
