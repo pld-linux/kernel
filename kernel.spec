@@ -31,7 +31,7 @@
 %bcond_with	pax		# build pax and grsecurity (ie. grsecurity && pax)
 
 %bcond_with	fbcondecor	# build fbcondecor (disable FB_TILEBLITTING and affected fb modules)
-%bcond_with	pae		# build PAE (HIGHMEM64G) support on uniprocessor
+%bcond_without	pae		# build PAE (HIGHMEM64G) support on 32bit i686 athlon pentium3 pentium4
 %bcond_with	nfsroot		# build with root on NFS support
 
 %bcond_without	imq		# imq support
@@ -99,7 +99,7 @@
 # __alt_kernel is list of features, empty string if none set
 # _alt kernel is defined as: %{nil}%{?alt_kernel:-%{?alt_kernel}} (defined in rpm.macros)
 # alt_kernel should be defined if __alt_kernel has non-empty value (for %{?alt_kernel:foo} constructs)
-%define		__alt_kernel	%{?with_pax:pax}%{!?with_grsecurity:nogrsecurity}%{?with_pae:pae}
+%define		__alt_kernel	%{?with_pax:pax}%{!?with_grsecurity:nogrsecurity}
 
 %if "%{__alt_kernel}" != ""
 %define		alt_kernel	%{__alt_kernel}
@@ -304,6 +304,11 @@ Requires:	/sbin/depmod
 Requires:	coreutils
 Requires:	geninitrd >= 10000-3
 Requires:	module-init-tools >= %{module_init_tools_ver}
+%if %{with pae}
+%ifarch i686 athlon pentium3 pentium4
+Requires:	cpuinfo(pae)
+%endif
+%endif
 Suggests:	keyutils
 Provides:	%{name}(netfilter) = 20070806
 Provides:	%{name}(vermagic) = %{kernel_release}
@@ -340,11 +345,7 @@ Conflicts:	udev < 1:081
 Conflicts:	util-linux < 2.10o
 Conflicts:	util-vserver < 0.30.216
 Conflicts:	xfsprogs < 2.6.0
-%if %{with pae}
-ExcludeArch:	i386 i486 i586
-%else
 ExclusiveArch:	%{ix86} %{x8664} alpha arm ia64 ppc ppc64 sparc sparc64
-%endif
 ExclusiveOS:	Linux
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 
