@@ -1110,3 +1110,84 @@ _______________________________________________
 xfs mailing list
 xfs@oss.sgi.com
 http://oss.sgi.com/mailman/listinfo/xfs
+commit 33b8f7c2479dfcbc5c27174e44b5f659d9f33c70
+Author: Christoph Hellwig <hch@lst.de>
+Date:   Fri Jul 8 14:34:39 2011 +0200
+
+    xfs: improve sync behaviour in the face of aggressive dirtying
+    
+    The following script from Wu Fengguang shows very bad behaviour in XFS
+    when aggressively dirtying data during a sync on XFS, with sync times
+    up to almost 10 times as long as ext4.
+    
+    A large part of the issue is that XFS writes data out itself two times
+    in the ->sync_fs method, overriding the livelock protection in the core
+    writeback code, and another issue is the lock-less xfs_ioend_wait call,
+    which doesn't prevent new ioend from being queue up while waiting for
+    the count to reach zero.
+    
+    This patch removes the XFS-internal sync calls and relies on the VFS
+    to do it's work just like all other filesystems do.  Note that the
+    i_iocount wait which is rather suboptimal is simply removed here.
+    We already do it in ->write_inode, which keeps the current supoptimal
+    behaviour.  We'll eventually need to remove that as well, but that's
+    material for a separate commit.
+    
+    ------------------------------ snip ------------------------------
+    #!/bin/sh
+    
+    umount /dev/sda7
+    mkfs.xfs -f /dev/sda7
+    # mkfs.ext4 /dev/sda7
+    # mkfs.btrfs /dev/sda7
+    mount /dev/sda7 /fs
+    
+    echo $((50<<20)) > /proc/sys/vm/dirty_bytes
+    
+    pid=
+    for i in `seq 10`
+    do
+    	dd if=/dev/zero of=/fs/zero-$i bs=1M count=1000 &
+    	pid="$pid $!"
+    done
+    
+    sleep 1
+    
+    tic=$(date +'%s')
+    sync
+    tac=$(date +'%s')
+    
+    echo
+    echo sync time: $((tac-tic))
+    egrep '(Dirty|Writeback|NFS_Unstable)' /proc/meminfo
+    
+    pidof dd > /dev/null && { kill -9 $pid; echo sync NOT livelocked; }
+    ------------------------------ snip ------------------------------
+    
+    Signed-off-by: Christoph Hellwig <hch@lst.de>
+    Reported-by: Wu Fengguang <fengguang.wu@intel.com>
+    Reviewed-by: Alex Elder <aelder@sgi.com>
+    Reviewed-by: Dave Chinner <dchinner@redhat.com>
+
+diff --git a/fs/xfs/linux-2.6/xfs_sync.c b/fs/xfs/linux-2.6/xfs_sync.c
+index 8ecad5f..f54e8ee 100644
+--- a/fs/xfs/linux-2.6/xfs_sync.c
++++ b/fs/xfs/linux-2.6/xfs_sync.c
+@@ -359,14 +359,12 @@ xfs_quiesce_data(
+ {
+ 	int			error, error2 = 0;
+ 
+-	/* push non-blocking */
+-	xfs_sync_data(mp, 0);
+ 	xfs_qm_sync(mp, SYNC_TRYLOCK);
+-
+-	/* push and block till complete */
+-	xfs_sync_data(mp, SYNC_WAIT);
+ 	xfs_qm_sync(mp, SYNC_WAIT);
+ 
++	/* force out the newly dirtied log buffers */
++	xfs_log_force(mp, XFS_LOG_SYNC);
++
+ 	/* write superblock and hoover up shutdown errors */
+ 	error = xfs_sync_fsdata(mp);
+ 
