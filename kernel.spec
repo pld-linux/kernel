@@ -226,7 +226,7 @@ Patch59:	kernel-rndis_host-wm5.patch
 Patch85:	kernel-hostap.patch
 
 # http://vserver.13thfloor.at/Experimental/patch-3.1.1-vs2.3.2.diff
-Patch100:	kernel-vserver-2.3.2.5.patch
+Patch100:	kernel-vserver-2.3.patch
 Patch101:	kernel-vserver-fixes.patch
 
 # http://download.filesystems.org/unionfs/unionfs-2.x/unionfs-2.5.10_for_3.1.0-rc4.diff.gz
