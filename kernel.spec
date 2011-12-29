@@ -92,7 +92,7 @@
 
 %define		rel		0.1
 %define		basever		3.1
-%define		postver		.2
+%define		postver		.6
 
 %define		module_init_tools_ver	3.16
 
@@ -137,7 +137,7 @@ Source0:	http://www.kernel.org/pub/linux/kernel/v3.x/linux-%{basever}.tar.xz
 # Source0-md5:	edbdc798f23ae0f8045c82f6fa22c536
 %if "%{postver}" != ".0"
 Patch0:		http://www.kernel.org/pub/linux/kernel/v3.x/patch-%{version}.bz2
-# Patch0-md5:	7487d8e6f00c077f6e15d6f4f9947c30
+# Patch0-md5:	b815dda0a05f7774a0ed0b705b8cfd4c
 %endif
 
 Source3:	kernel-autoconf.h
@@ -226,7 +226,7 @@ Patch59:	kernel-rndis_host-wm5.patch
 Patch85:	kernel-hostap.patch
 
 # http://vserver.13thfloor.at/Experimental/patch-3.1.1-vs2.3.2.diff
-Patch100:	kernel-vserver-2.3.patch
+Patch100:	kernel-vserver-2.3.2.5.patch
 Patch101:	kernel-vserver-fixes.patch
 
 # http://download.filesystems.org/unionfs/unionfs-2.x/unionfs-2.5.10_for_3.1.0-rc4.diff.gz
