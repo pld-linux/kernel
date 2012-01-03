@@ -93,7 +93,7 @@
 %endif
 
 %define		basever		3.0
-%define		postver		.14
+%define		postver		.15
 %define		rel		1
 
 %define		_enable_debug_packages			0
@@ -142,7 +142,7 @@ Source0:	http://www.kernel.org/pub/linux/kernel/v3.x/linux-%{basever}.tar.xz
 # Source0-md5:	ecf932280e2441bdd992423ef3d55f8f
 %if "%{postver}" != ".0"
 Patch0:		http://www.kernel.org/pub/linux/kernel/v3.x/patch-%{version}.bz2
-# Patch0-md5:	f2745bd4dcb3267414713adff403b54c
+# Patch0-md5:	759f5efe7eb8e8672041c1fe388d1ebe
 %endif
 
 Source3:	kernel-autoconf.h
@@ -240,7 +240,7 @@ Patch70:	kernel-tuxonice-headers.patch
 # http://patches.aircrack-ng.org/hostap-kernel-2.6.18.patch
 Patch85:	kernel-hostap.patch
 
-# http://vserver.13thfloor.at/Experimental/patch-3.0.13-vs2.3.2.1.diff
+# http://vserver.13thfloor.at/Experimental/patch-3.0.14-vs2.3.2.1.diff
 Patch100:	kernel-vserver-2.3.patch
 Patch101:	kernel-vserver-fixes.patch
 
