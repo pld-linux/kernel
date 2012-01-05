@@ -232,30 +232,30 @@
  /* proc and module init
   */
  
-@@ -555,6 +758,8 @@
- 	if (toshiba_proc_dir)
- 		remove_proc_entry(PROC_TOSHIBA, acpi_root_dir);
+@@ -1287,7 +1287,7 @@
  
-+	old_driver_emulation_exit();
-+
- 	return;
- }
- 
-@@ -562,6 +767,7 @@
+ static int __init toshiba_acpi_init(void)
  {
- 	acpi_status status = AE_OK;
- 	u32 hci_result;
-+	int status2;
- 	bool bt_present;
- 	bool bt_on;
-	bool radio_on;
-@@ -578,6 +784,9 @@
- 	       TOSHIBA_ACPI_VERSION);
- 	pr_info("    HCI method: %s\n", method_hci);
+-	int ret;
++	int ret, status2;
+ 
+ 	toshiba_proc_dir = proc_mkdir(PROC_TOSHIBA, acpi_root_dir);
+ 	if (!toshiba_proc_dir) {
+@@ -1301,6 +1301,9 @@
+ 		remove_proc_entry(PROC_TOSHIBA, acpi_root_dir);
+ 	}
  
 +	if ((status2 = old_driver_emulation_init()))
 +		return status2;
 +
- 	force_fan = 0;
- 	key_event_valid = 0;
+ 	return ret;
+ }
  
+@@ -1309,6 +1312,7 @@
+ 	acpi_bus_unregister_driver(&toshiba_acpi_driver);
+ 	if (toshiba_proc_dir)
+ 		remove_proc_entry(PROC_TOSHIBA, acpi_root_dir);
++	old_driver_emulation_exit();
+ }
+ 
+ module_init(toshiba_acpi_init);
