@@ -745,7 +745,7 @@ sed -i 's/-Werror//' arch/alpha/kernel/Makefile
 
 # grsecurity & pax stuff
 #
-exit 0
+
 %if %{with grsecurity}
 %patch9999 -p1
 # aufs needs this
