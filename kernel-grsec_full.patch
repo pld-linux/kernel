@@ -186,7 +186,7 @@ index d6e6724..a024ce8 100644
  
  	pcd.		[PARIDE]
 diff --git a/Makefile b/Makefile
-index 2d6e0a8..d1d2564 100644
+index 96c48df..f811964 100644
 --- a/Makefile
 +++ b/Makefile
 @@ -245,8 +245,9 @@ CONFIG_SHELL := $(shell if [ -x "$$BASH" ]; then echo $$BASH; \
@@ -29074,6 +29074,30 @@ index e92298a..f68f2d6 100644
  	ret = 0;
  
  	for (;;) {
+diff --git a/drivers/gpu/drm/vmwgfx/vmwgfx_kms.c b/drivers/gpu/drm/vmwgfx/vmwgfx_kms.c
+index dfe32e6..dd18a00 100644
+--- a/drivers/gpu/drm/vmwgfx/vmwgfx_kms.c
++++ b/drivers/gpu/drm/vmwgfx/vmwgfx_kms.c
+@@ -843,7 +843,6 @@ static struct drm_framebuffer *vmw_kms_fb_create(struct drm_device *dev,
+ 	struct vmw_framebuffer *vfb = NULL;
+ 	struct vmw_surface *surface = NULL;
+ 	struct vmw_dma_buffer *bo = NULL;
+-	u64 required_size;
+ 	int ret;
+ 
+ 	/**
+@@ -852,8 +851,9 @@ static struct drm_framebuffer *vmw_kms_fb_create(struct drm_device *dev,
+ 	 * requested framebuffer.
+ 	 */
+ 
+-	required_size = mode_cmd->pitch * mode_cmd->height;
+-	if (unlikely(required_size > (u64) dev_priv->vram_size)) {
++	if (!vmw_kms_validate_mode_vram(dev_priv,
++					mode_cmd->pitch,
++					mode_cmd->height)) {
+ 		DRM_ERROR("VRAM size is too small for requested mode.\n");
+ 		return NULL;
+ 	}
 diff --git a/drivers/gpu/vga/vgaarb.c b/drivers/gpu/vga/vgaarb.c
 index c72f1c0..18376f1 100644
 --- a/drivers/gpu/vga/vgaarb.c
@@ -29941,6 +29965,30 @@ index fc0f2bd..ac2f8a5 100644
  }
  
  static const struct sysfs_ops cm_counter_ops = {
+diff --git a/drivers/infiniband/core/cma.c b/drivers/infiniband/core/cma.c
+index ca4c5dc..572d1ae 100644
+--- a/drivers/infiniband/core/cma.c
++++ b/drivers/infiniband/core/cma.c
+@@ -2492,6 +2492,9 @@ static int cma_resolve_ib_udp(struct rdma_id_private *id_priv,
+ 
+ 	req.private_data_len = sizeof(struct cma_hdr) +
+ 			       conn_param->private_data_len;
++	if (req.private_data_len < conn_param->private_data_len)
++		return -EINVAL;
++
+ 	req.private_data = kzalloc(req.private_data_len, GFP_ATOMIC);
+ 	if (!req.private_data)
+ 		return -ENOMEM;
+@@ -2541,6 +2544,9 @@ static int cma_connect_ib(struct rdma_id_private *id_priv,
+ 	memset(&req, 0, sizeof req);
+ 	offset = cma_user_data_offset(id_priv->id.ps);
+ 	req.private_data_len = offset + conn_param->private_data_len;
++	if (req.private_data_len < conn_param->private_data_len)
++		return -EINVAL;
++
+ 	private_data = kzalloc(req.private_data_len, GFP_ATOMIC);
+ 	if (!private_data)
+ 		return -ENOMEM;
 diff --git a/drivers/infiniband/core/fmr_pool.c b/drivers/infiniband/core/fmr_pool.c
 index 4507043..14ad522 100644
 --- a/drivers/infiniband/core/fmr_pool.c
@@ -30565,6 +30613,21 @@ index d728875..844c89b 100644
  
  	snprintf(led->name, sizeof(led->name), "xpad%ld", led_no);
  	led->xpad = xpad;
+diff --git a/drivers/input/misc/cma3000_d0x.c b/drivers/input/misc/cma3000_d0x.c
+index 1633b63..09f8f20 100644
+--- a/drivers/input/misc/cma3000_d0x.c
++++ b/drivers/input/misc/cma3000_d0x.c
+@@ -114,8 +114,8 @@ static void decode_mg(struct cma3000_accl_data *data, int *datax,
+ static irqreturn_t cma3000_thread_irq(int irq, void *dev_id)
+ {
+ 	struct cma3000_accl_data *data = dev_id;
+-	int datax, datay, dataz;
+-	u8 ctrl, mode, range, intr_status;
++	int datax, datay, dataz, intr_status;
++	u8 ctrl, mode, range;
+ 
+ 	intr_status = CMA3000_READ(data, CMA3000_INTSTATUS, "interrupt status");
+ 	if (intr_status < 0)
 diff --git a/drivers/input/mousedev.c b/drivers/input/mousedev.c
 index 0110b5a..d3ad144 100644
 --- a/drivers/input/mousedev.c
@@ -44554,13 +44617,13 @@ index 78b519c..212c0d0 100644
 --- a/fs/fs_struct.c
 +++ b/fs/fs_struct.c
 @@ -4,6 +4,7 @@
+ #include <linux/path.h>
  #include <linux/slab.h>
  #include <linux/fs_struct.h>
- #include <linux/vserver/global.h>
 +#include <linux/grsecurity.h>
+ #include <linux/vserver/global.h>
  #include "internal.h"
  
- static inline void path_get_longterm(struct path *path)
 @@ -31,6 +32,7 @@ void set_fs_root(struct fs_struct *fs, struct path *path)
  	old_root = fs->root;
  	fs->root = *path;
@@ -47191,6 +47254,20 @@ index acf88ae..4fd6245 100644
  	set_fs(oldfs);
  
  	if (host_err < 0)
+diff --git a/fs/nilfs2/ioctl.c b/fs/nilfs2/ioctl.c
+index 41d6743..b805df9 100644
+--- a/fs/nilfs2/ioctl.c
++++ b/fs/nilfs2/ioctl.c
+@@ -625,6 +625,9 @@ static int nilfs_ioctl_clean_segments(struct inode *inode, struct file *filp,
+ 		if (argv[n].v_nmembs > nsegs * nilfs->ns_blocks_per_segment)
+ 			goto out_free;
+ 
++		if (argv[n].v_nmembs >= UINT_MAX / argv[n].v_size)
++			goto out_free;
++
+ 		len = argv[n].v_size * argv[n].v_nmembs;
+ 		base = (void __user *)(unsigned long)argv[n].v_base;
+ 		if (len == 0) {
 diff --git a/fs/notify/fanotify/fanotify_user.c b/fs/notify/fanotify/fanotify_user.c
 index 9fde1c0..14e8827 100644
 --- a/fs/notify/fanotify/fanotify_user.c
@@ -63919,6 +63996,28 @@ index 6a72a58..e6a127d 100644
  #define SCTP_ENABLE_DEBUG
  #define SCTP_DISABLE_DEBUG
  #define SCTP_ASSERT(expr, str, func)
+diff --git a/include/net/sctp/structs.h b/include/net/sctp/structs.h
+index f7d9c3f..ec86952 100644
+--- a/include/net/sctp/structs.h
++++ b/include/net/sctp/structs.h
+@@ -241,6 +241,9 @@ extern struct sctp_globals {
+ 	 * bits is an indicator of when to send and window update SACK.
+ 	 */
+ 	int rwnd_update_shift;
++
++	/* Threshold for autoclose timeout, in seconds. */
++	unsigned long max_autoclose;
+ } sctp_globals;
+ 
+ #define sctp_rto_initial		(sctp_globals.rto_initial)
+@@ -281,6 +284,7 @@ extern struct sctp_globals {
+ #define sctp_auth_enable		(sctp_globals.auth_enable)
+ #define sctp_checksum_disable		(sctp_globals.checksum_disable)
+ #define sctp_rwnd_upd_shift		(sctp_globals.rwnd_update_shift)
++#define sctp_max_autoclose		(sctp_globals.max_autoclose)
+ 
+ /* SCTP Socket type: UDP or TCP style. */
+ typedef enum {
 diff --git a/include/net/sock.h b/include/net/sock.h
 index 8e4062f..77b041e 100644
 --- a/include/net/sock.h
@@ -68977,7 +69076,7 @@ index 11d65b5..6957b37 100644
  EXPORT_SYMBOL(proc_doulongvec_ms_jiffies_minmax);
  EXPORT_SYMBOL(register_sysctl_table);
 diff --git a/kernel/sysctl_binary.c b/kernel/sysctl_binary.c
-index e8bffbe..2344401 100644
+index e8bffbe..82bf0a4 100644
 --- a/kernel/sysctl_binary.c
 +++ b/kernel/sysctl_binary.c
 @@ -989,7 +989,7 @@ static ssize_t bin_intvec(struct file *file,
@@ -69043,6 +69142,15 @@ index e8bffbe..2344401 100644
  		set_fs(old_fs);
  		if (result < 0)
  			goto out;
+@@ -1354,7 +1354,7 @@ static ssize_t binary_sysctl(const int *name, int nlen,
+ 
+ 	fput(file);
+ out_putname:
+-	putname(pathname);
++	__putname(pathname);
+ out:
+ 	return result;
+ }
 diff --git a/kernel/sysctl_check.c b/kernel/sysctl_check.c
 index 362da65..ab8ef8c 100644
 --- a/kernel/sysctl_check.c
@@ -70844,10 +70952,14 @@ index b2b8731..6080174 100644
  	 * Make sure the vDSO gets into every core dump.
  	 * Dumping its contents makes post-mortem fully interpretable later
 diff --git a/mm/mempolicy.c b/mm/mempolicy.c
-index 9c51f9f..a9416cf 100644
+index 9c51f9f..f2b1c49 100644
 --- a/mm/mempolicy.c
 +++ b/mm/mempolicy.c
-@@ -639,6 +639,10 @@ static int mbind_range(struct mm_struct *mm, unsigned long start,
+@@ -636,20 +636,33 @@ static int mbind_range(struct mm_struct *mm, unsigned long start,
+ 	struct vm_area_struct *prev;
+ 	struct vm_area_struct *vma;
+ 	int err = 0;
++	pgoff_t pgoff;
  	unsigned long vmstart;
  	unsigned long vmend;
  
@@ -70858,7 +70970,27 @@ index 9c51f9f..a9416cf 100644
  	vma = find_vma_prev(mm, start, &prev);
  	if (!vma || vma->vm_start > start)
  		return -EFAULT;
-@@ -669,6 +673,16 @@ static int mbind_range(struct mm_struct *mm, unsigned long start,
+ 
++	if (start > vma->vm_start)
++		prev = vma;
++
+ 	for (; vma && vma->vm_start < end; prev = vma, vma = next) {
+ 		next = vma->vm_next;
+ 		vmstart = max(start, vma->vm_start);
+ 		vmend   = min(end, vma->vm_end);
+ 
++		if (mpol_equal(vma_policy(vma), new_pol))
++			continue;
++
++		pgoff = vma->vm_pgoff +
++			((vmstart - vma->vm_start) >> PAGE_SHIFT);
+ 		prev = vma_merge(mm, prev, vmstart, vmend, vma->vm_flags,
+-				  vma->anon_vma, vma->vm_file, vma->vm_pgoff,
++				  vma->anon_vma, vma->vm_file, pgoff,
+ 				  new_pol);
+ 		if (prev) {
+ 			vma = prev;
+@@ -669,6 +682,16 @@ static int mbind_range(struct mm_struct *mm, unsigned long start,
  		err = policy_vma(vma, new_pol);
  		if (err)
  			goto out;
@@ -70875,7 +71007,7 @@ index 9c51f9f..a9416cf 100644
  	}
  
   out:
-@@ -1102,6 +1116,17 @@ static long do_mbind(unsigned long start, unsigned long len,
+@@ -1102,6 +1125,17 @@ static long do_mbind(unsigned long start, unsigned long len,
  
  	if (end < start)
  		return -EINVAL;
@@ -70893,7 +71025,7 @@ index 9c51f9f..a9416cf 100644
  	if (end == start)
  		return 0;
  
-@@ -1320,6 +1345,14 @@ SYSCALL_DEFINE4(migrate_pages, pid_t, pid, unsigned long, maxnode,
+@@ -1320,6 +1354,14 @@ SYSCALL_DEFINE4(migrate_pages, pid_t, pid, unsigned long, maxnode,
  	if (!mm)
  		goto out;
  
@@ -70908,7 +71040,7 @@ index 9c51f9f..a9416cf 100644
  	/*
  	 * Check if this process has the right to modify the specified
  	 * process. The right exists if the process has administrative
-@@ -1329,8 +1362,7 @@ SYSCALL_DEFINE4(migrate_pages, pid_t, pid, unsigned long, maxnode,
+@@ -1329,8 +1371,7 @@ SYSCALL_DEFINE4(migrate_pages, pid_t, pid, unsigned long, maxnode,
  	rcu_read_lock();
  	tcred = __task_cred(task);
  	if (cred->euid != tcred->suid && cred->euid != tcred->uid &&
@@ -73836,7 +73968,7 @@ index 88ea1bd..0f1dfdb 100644
  	mm->unmap_area = arch_unmap_area;
  }
 diff --git a/mm/vmalloc.c b/mm/vmalloc.c
-index 3a65d6f7..862c072 100644
+index 3a65d6f7..39d5e33 100644
 --- a/mm/vmalloc.c
 +++ b/mm/vmalloc.c
 @@ -39,8 +39,19 @@ static void vunmap_pte_range(pmd_t *pmd, unsigned long addr, unsigned long end)
@@ -73942,7 +74074,12 @@ index 3a65d6f7..862c072 100644
  			if (!pmd_none(*pmd)) {
  				pte_t *ptep, pte;
  
-@@ -1294,6 +1334,16 @@ static struct vm_struct *__get_vm_area_node(unsigned long size,
+@@ -1290,10 +1330,20 @@ static struct vm_struct *__get_vm_area_node(unsigned long size,
+ 		unsigned long align, unsigned long flags, unsigned long start,
+ 		unsigned long end, int node, gfp_t gfp_mask, void *caller)
+ {
+-	static struct vmap_area *va;
++	struct vmap_area *va;
  	struct vm_struct *area;
  
  	BUG_ON(in_interrupt());
@@ -74896,6 +75033,28 @@ index c40f27e..7f49254 100644
  		return -EFAULT;
  
  	m->msg_iov = iov;
+diff --git a/net/core/net-sysfs.c b/net/core/net-sysfs.c
+index 1683e5d..f3621f6 100644
+--- a/net/core/net-sysfs.c
++++ b/net/core/net-sysfs.c
+@@ -664,11 +664,14 @@ static ssize_t store_rps_dev_flow_table_cnt(struct netdev_rx_queue *queue,
+ 	if (count) {
+ 		int i;
+ 
+-		if (count > 1<<30) {
+-			/* Enforce a limit to prevent overflow */
++		if (count > INT_MAX)
+ 			return -EINVAL;
+-		}
+ 		count = roundup_pow_of_two(count);
++		if (count > (ULONG_MAX - sizeof(struct rps_dev_flow_table))
++				/ sizeof(struct rps_dev_flow)) {
++			/* Enforce a limit to prevent overflow */
++			return -EINVAL;
++		}
+ 		table = vmalloc(RPS_DEV_FLOW_TABLE_SIZE(count));
+ 		if (!table)
+ 			return -ENOMEM;
 diff --git a/net/core/rtnetlink.c b/net/core/rtnetlink.c
 index 99d9e95..209bae2 100644
 --- a/net/core/rtnetlink.c
@@ -76710,6 +76869,28 @@ index ee319a4..8a285ee 100644
  		goto out;
  	}
  
+diff --git a/net/netfilter/nf_conntrack_netlink.c b/net/netfilter/nf_conntrack_netlink.c
+index 7dec88a..0996ce3 100644
+--- a/net/netfilter/nf_conntrack_netlink.c
++++ b/net/netfilter/nf_conntrack_netlink.c
+@@ -135,7 +135,7 @@ nla_put_failure:
+ static inline int
+ ctnetlink_dump_timeout(struct sk_buff *skb, const struct nf_conn *ct)
+ {
+-	long timeout = (ct->timeout.expires - jiffies) / HZ;
++	long timeout = ((long)ct->timeout.expires - (long)jiffies) / HZ;
+ 
+ 	if (timeout < 0)
+ 		timeout = 0;
+@@ -1638,7 +1638,7 @@ ctnetlink_exp_dump_expect(struct sk_buff *skb,
+ 			  const struct nf_conntrack_expect *exp)
+ {
+ 	struct nf_conn *master = exp->master;
+-	long timeout = (exp->timeout.expires - jiffies) / HZ;
++	long timeout = ((long)exp->timeout.expires - (long)jiffies) / HZ;
+ 	struct nf_conn_help *help;
+ 
+ 	if (timeout < 0)
 diff --git a/net/netfilter/nfnetlink_log.c b/net/netfilter/nfnetlink_log.c
 index 2d8158a..5dca296 100644
 --- a/net/netfilter/nfnetlink_log.c
@@ -76866,7 +77047,7 @@ index 732152f..60bb09e 100644
  		*uaddr_len = sizeof(struct sockaddr_ax25);
  	}
 diff --git a/net/packet/af_packet.c b/net/packet/af_packet.c
-index fabb4fa..e146b73 100644
+index fabb4fa..37aaea0 100644
 --- a/net/packet/af_packet.c
 +++ b/net/packet/af_packet.c
 @@ -954,7 +954,7 @@ static int packet_rcv(struct sk_buff *skb, struct net_device *dev,
@@ -76887,7 +77068,21 @@ index fabb4fa..e146b73 100644
  	spin_unlock(&sk->sk_receive_queue.lock);
  
  drop_n_restore:
-@@ -2479,7 +2479,7 @@ static int packet_getsockopt(struct socket *sock, int level, int optname,
+@@ -1691,8 +1691,12 @@ static int packet_do_bind(struct sock *sk, struct net_device *dev, __be16 protoc
+ {
+ 	struct packet_sock *po = pkt_sk(sk);
+ 
+-	if (po->fanout)
++	if (po->fanout) {
++		if (dev)
++			dev_put(dev);
++
+ 		return -EINVAL;
++	}
+ 
+ 	lock_sock(sk);
+ 
+@@ -2479,7 +2483,7 @@ static int packet_getsockopt(struct socket *sock, int level, int optname,
  	case PACKET_HDRLEN:
  		if (len > sizeof(int))
  			len = sizeof(int);
@@ -76896,7 +77091,7 @@ index fabb4fa..e146b73 100644
  			return -EFAULT;
  		switch (val) {
  		case TPACKET_V1:
-@@ -2526,7 +2526,7 @@ static int packet_getsockopt(struct socket *sock, int level, int optname,
+@@ -2526,7 +2530,7 @@ static int packet_getsockopt(struct socket *sock, int level, int optname,
  
  	if (put_user(len, optlen))
  		return -EFAULT;
@@ -77431,6 +77626,19 @@ index 7635107..5000b71 100644
  	_proto("Tx RESPONSE %%%u", ntohl(hdr->serial));
  
  	ret = kernel_sendmsg(conn->trans->local->socket, &msg, iov, 3, len);
+diff --git a/net/sctp/associola.c b/net/sctp/associola.c
+index dc16b90..4981482 100644
+--- a/net/sctp/associola.c
++++ b/net/sctp/associola.c
+@@ -173,7 +173,7 @@ static struct sctp_association *sctp_association_init(struct sctp_association *a
+ 	asoc->timeouts[SCTP_EVENT_TIMEOUT_HEARTBEAT] = 0;
+ 	asoc->timeouts[SCTP_EVENT_TIMEOUT_SACK] = asoc->sackdelay;
+ 	asoc->timeouts[SCTP_EVENT_TIMEOUT_AUTOCLOSE] =
+-		(unsigned long)sp->autoclose * HZ;
++		min_t(unsigned long, sp->autoclose, sctp_max_autoclose) * HZ;
+ 
+ 	/* Initializes the timers */
+ 	for (i = SCTP_EVENT_TIMEOUT_NONE; i < SCTP_NUM_TIMEOUT_TYPES; ++i)
 diff --git a/net/sctp/auth.c b/net/sctp/auth.c
 index 865e68f..bf81204 100644
 --- a/net/sctp/auth.c
@@ -77458,11 +77666,34 @@ index 05a6ce2..c8bf836 100644
  			   assoc->state, hash,
  			   assoc->assoc_id,
  			   assoc->sndbuf_used,
+diff --git a/net/sctp/protocol.c b/net/sctp/protocol.c
+index 91784f4..48cb7b9 100644
+--- a/net/sctp/protocol.c
++++ b/net/sctp/protocol.c
+@@ -1285,6 +1285,9 @@ SCTP_STATIC __init int sctp_init(void)
+ 	sctp_max_instreams    		= SCTP_DEFAULT_INSTREAMS;
+ 	sctp_max_outstreams   		= SCTP_DEFAULT_OUTSTREAMS;
+ 
++	/* Initialize maximum autoclose timeout. */
++	sctp_max_autoclose		= INT_MAX / HZ;
++
+ 	/* Initialize handle used for association ids. */
+ 	idr_init(&sctp_assocs_id);
+ 
 diff --git a/net/sctp/socket.c b/net/sctp/socket.c
-index 836aa63..d779d7b 100644
+index 836aa63..e44d3fb 100644
 --- a/net/sctp/socket.c
 +++ b/net/sctp/socket.c
-@@ -4575,7 +4575,7 @@ static int sctp_getsockopt_peer_addrs(struct sock *sk, int len,
+@@ -2199,8 +2199,6 @@ static int sctp_setsockopt_autoclose(struct sock *sk, char __user *optval,
+ 		return -EINVAL;
+ 	if (copy_from_user(&sp->autoclose, optval, optlen))
+ 		return -EFAULT;
+-	/* make sure it won't exceed MAX_SCHEDULE_TIMEOUT */
+-	sp->autoclose = min_t(long, sp->autoclose, MAX_SCHEDULE_TIMEOUT / HZ);
+ 
+ 	return 0;
+ }
+@@ -4575,7 +4573,7 @@ static int sctp_getsockopt_peer_addrs(struct sock *sk, int len,
  		addrlen = sctp_get_af_specific(temp.sa.sa_family)->sockaddr_len;
  		if (space_left < addrlen)
  			return -ENOMEM;
@@ -77471,6 +77702,37 @@ index 836aa63..d779d7b 100644
  			return -EFAULT;
  		to += addrlen;
  		cnt++;
+diff --git a/net/sctp/sysctl.c b/net/sctp/sysctl.c
+index 6b39529..60ffbd0 100644
+--- a/net/sctp/sysctl.c
++++ b/net/sctp/sysctl.c
+@@ -53,6 +53,10 @@ static int sack_timer_min = 1;
+ static int sack_timer_max = 500;
+ static int addr_scope_max = 3; /* check sctp_scope_policy_t in include/net/sctp/constants.h for max entries */
+ static int rwnd_scale_max = 16;
++static unsigned long max_autoclose_min = 0;
++static unsigned long max_autoclose_max =
++	(MAX_SCHEDULE_TIMEOUT / HZ > UINT_MAX)
++	? UINT_MAX : MAX_SCHEDULE_TIMEOUT / HZ;
+ 
+ extern long sysctl_sctp_mem[3];
+ extern int sysctl_sctp_rmem[3];
+@@ -258,6 +262,15 @@ static ctl_table sctp_table[] = {
+ 		.extra1		= &one,
+ 		.extra2		= &rwnd_scale_max,
+ 	},
++	{
++		.procname	= "max_autoclose",
++		.data		= &sctp_max_autoclose,
++		.maxlen		= sizeof(unsigned long),
++		.mode		= 0644,
++		.proc_handler	= &proc_doulongvec_minmax,
++		.extra1		= &max_autoclose_min,
++		.extra2		= &max_autoclose_max,
++	},
+ 
+ 	{ /* sentinel */ }
+ };
 diff --git a/net/socket.c b/net/socket.c
 index ffe92ca..8057b85 100644
 --- a/net/socket.c
