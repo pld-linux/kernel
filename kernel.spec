@@ -92,7 +92,7 @@
 
 %define		rel		0.1
 %define		basever		3.1
-%define		postver		.6
+%define		postver		.7
 
 %define		module_init_tools_ver	3.16
 
@@ -137,7 +137,7 @@ Source0:	http://www.kernel.org/pub/linux/kernel/v3.x/linux-%{basever}.tar.xz
 # Source0-md5:	edbdc798f23ae0f8045c82f6fa22c536
 %if "%{postver}" != ".0"
 Patch0:		http://www.kernel.org/pub/linux/kernel/v3.x/patch-%{version}.bz2
-# Patch0-md5:	b815dda0a05f7774a0ed0b705b8cfd4c
+# Patch0-md5:	13ea1e611a0a580138b8203e6f1353ed
 %endif
 
 Source3:	kernel-autoconf.h
@@ -745,7 +745,7 @@ sed -i 's/-Werror//' arch/alpha/kernel/Makefile
 
 # grsecurity & pax stuff
 #
-
+exit 0
 %if %{with grsecurity}
 %patch9999 -p1
 # aufs needs this
