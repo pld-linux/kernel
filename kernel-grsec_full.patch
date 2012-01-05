@@ -48236,9 +48236,9 @@ index 5eb0206..fe01db4 100644
 +#ifdef CONFIG_GRKERNSEC_PROC_IPADDR
 +	INF("ipaddr",	  S_IRUSR, proc_pid_ipaddr),
 +#endif
+ 	ONE("nsproxy",	S_IRUGO, proc_pid_nsproxy),
  };
  
- static int proc_tgid_base_readdir(struct file * filp,
 @@ -2989,7 +3107,14 @@ static struct dentry *proc_pid_instantiate(struct inode *dir,
  	if (!inode)
  		goto out;
@@ -48254,18 +48254,16 @@ index 5eb0206..fe01db4 100644
  	inode->i_op = &proc_tgid_base_inode_operations;
  	inode->i_fop = &proc_tgid_base_operations;
  	inode->i_flags|=S_IMMUTABLE;
-@@ -3031,7 +3156,11 @@ struct dentry *proc_pid_lookup(struct inode *dir, struct dentry * dentry, struct
- 	if (!task)
- 		goto out;
+@@ -3031,6 +3156,9 @@ struct dentry *proc_pid_lookup(struct inode *dir, struct dentry * dentry, struct
+ 	if (!same_thread_group(leader, task))
+ 		goto out_drop_task;
  
 +	if (gr_pid_is_chrooted(task) || gr_check_hidden_task(task))
-+		goto out_put_task;
++		goto out_drop_task;
 +
  	result = proc_pid_instantiate(dir, dentry, task, NULL);
-+out_put_task:
+ out_drop_task:
  	put_task_struct(task);
- out:
- 	return result;
 @@ -3096,6 +3225,11 @@ int proc_pid_readdir(struct file * filp, void * dirent, filldir_t filldir)
  {
  	unsigned int nr;
@@ -48278,7 +48276,7 @@ index 5eb0206..fe01db4 100644
  	struct tgid_iter iter;
  	struct pid_namespace *ns;
  
-@@ -3119,8 +3253,27 @@ int proc_pid_readdir(struct file * filp, void * dirent, filldir_t filldir)
+@@ -3119,10 +3253,29 @@ int proc_pid_readdir(struct file * filp, void * dirent, filldir_t filldir)
  	for (iter = next_tgid(ns, iter);
  	     iter.task;
  	     iter.tgid += 1, iter = next_tgid(ns, iter)) {
@@ -48302,6 +48300,8 @@ index 5eb0206..fe01db4 100644
 +	rcu_read_unlock();
 +#endif
  		filp->f_pos = iter.tgid + TGID_OFFSET;
+ 		if (!vx_proc_task_visible(iter.task))
+ 			continue;
 -		if (proc_pid_fill_cache(filp, dirent, filldir, iter) < 0) {
 +		if (proc_pid_fill_cache(filp, dirent, __filldir, iter) < 0) {
  			put_task_struct(iter.task);
@@ -48415,9 +48415,9 @@ index 7838e5c..ff92cbc 100644
 --- a/fs/proc/internal.h
 +++ b/fs/proc/internal.h
 @@ -51,6 +51,9 @@ extern int proc_pid_status(struct seq_file *m, struct pid_namespace *ns,
+ extern int proc_pid_nsproxy(struct seq_file *m, struct pid_namespace *ns,
  				struct pid *pid, struct task_struct *task);
- extern int proc_pid_statm(struct seq_file *m, struct pid_namespace *ns,
- 				struct pid *pid, struct task_struct *task);
+ 
 +#ifdef CONFIG_GRKERNSEC_PROC_IPADDR
 +extern int proc_pid_ipaddr(struct task_struct *task, char *buffer);
 +#endif
@@ -62634,9 +62634,9 @@ index 643b96c..ef55a9c 100644
  	mode_t mode, struct proc_dir_entry *base, 
  	read_proc_t *read_proc, void * data)
 @@ -258,7 +271,7 @@ union proc_op {
- 	int (*proc_show)(struct seq_file *m,
- 		struct pid_namespace *ns, struct pid *pid,
- 		struct task_struct *task);
+ 	int (*proc_vs_read)(char *page);
+ 	int (*proc_vxi_read)(struct vx_info *vxi, char *page);
+ 	int (*proc_nxi_read)(struct nx_info *nxi, char *page);
 -};
 +} __no_const;
  
@@ -66009,15 +66009,15 @@ index 8e6b6f4..9dccf00 100644
  }
  
 @@ -1105,6 +1143,9 @@ static struct task_struct *copy_process(unsigned long clone_flags,
- 	DEBUG_LOCKS_WARN_ON(!p->softirqs_enabled);
- #endif
+ 	init_nx_info(&p->nx_info, current_nx_info());
+ 
  	retval = -EAGAIN;
 +
 +	gr_learn_resource(p, RLIMIT_NPROC, atomic_read(&p->real_cred->user->processes), 0);
 +
- 	if (atomic_read(&p->real_cred->user->processes) >=
- 			task_rlimit(p, RLIMIT_NPROC)) {
- 		if (!capable(CAP_SYS_ADMIN) && !capable(CAP_SYS_RESOURCE) &&
+ 	if (!vx_nproc_avail(1))
+ 		goto bad_fork_free;
+ 	if (atomic_read(&p->real_cred->user->process) >=
 @@ -1264,6 +1305,8 @@ static struct task_struct *copy_process(unsigned long clone_flags,
  	if (clone_flags & CLONE_THREAD)
  		p->tgid = current->tgid;
@@ -67463,8 +67463,8 @@ index e432057..a2b2ac5 100644
 +	struct task_struct *task;
 +
  	rcu_lockdep_assert(rcu_read_lock_held());
--	return pid_task(find_pid_ns(nr, ns), PIDTYPE_PID);
-+	task = pid_task(find_pid_ns(nr, ns), PIDTYPE_PID);
+-	return pid_task(find_pid_ns(vx_rmap_pid(nr), ns), PIDTYPE_PID);
++	task = pid_task(find_pid_ns(vx_rmap_pid(nr), ns), PIDTYPE_PID);
 +
 +	if (gr_pid_is_chrooted(task))
 +		return NULL;
@@ -68453,7 +68453,7 @@ index b50b0f0..1c6c591 100644
 -	if (increment < 0 && !can_nice(current, nice))
 +	if (increment < 0 && (!can_nice(current, nice) ||
 +			      gr_handle_chroot_nice()))
- 		return -EPERM;
+ 		return vx_flags(VXF_IGNEG_NICE, 0) ? 0 : -EPERM;
  
  	retval = security_task_setnice(current, nice);
 @@ -5127,6 +5132,7 @@ recheck:
@@ -68547,9 +68547,9 @@ index 291c970..304bd03 100644
  		return 1;
  	if (handler != SIG_IGN && handler != SIG_DFL)
 @@ -815,6 +818,13 @@ static int check_kill_permission(int sig, struct siginfo *info,
- 		}
+ 		return error;
  	}
- 
+ /* skip: */
 +	/* allow glibc communication via tgkill to other threads in our
 +	   thread group */
 +	if ((info == SEND_SIG_NOINFO || info->si_code != SI_TKILL ||
@@ -75351,7 +75351,7 @@ diff --git a/net/ipv4/inet_hashtables.c b/net/ipv4/inet_hashtables.c
 index 984ec65..97ac518 100644
 --- a/net/ipv4/inet_hashtables.c
 +++ b/net/ipv4/inet_hashtables.c
-@@ -18,12 +18,15 @@
+@@ -18,13 +18,16 @@
  #include <linux/sched.h>
  #include <linux/slab.h>
  #include <linux/wait.h>
@@ -75360,6 +75360,7 @@ index 984ec65..97ac518 100644
  #include <net/inet_connection_sock.h>
  #include <net/inet_hashtables.h>
  #include <net/secure_seq.h>
+ #include <net/route.h>
  #include <net/ip.h>
  
 +extern void gr_update_task_in_ip_table(struct task_struct *task, const struct inet_sock *inet);
@@ -76192,9 +76193,9 @@ index bb95e8e..ae0ee80 100644
 +extern int grsec_enable_blackhole;
 +#endif
 +
- int ipv6_rcv_saddr_equal(const struct sock *sk, const struct sock *sk2)
+ int ipv6_rcv_saddr_equal(const struct sock *sk1, const struct sock *sk2)
  {
- 	const struct in6_addr *sk_rcv_saddr6 = &inet6_sk(sk)->rcv_saddr;
+ 	const struct in6_addr *sk1_rcv_saddr6 = &inet6_sk(sk1)->rcv_saddr;
 @@ -548,7 +552,7 @@ int udpv6_queue_rcv_skb(struct sock * sk, struct sk_buff *skb)
  
  	return 0;
