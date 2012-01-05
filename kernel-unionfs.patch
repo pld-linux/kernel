@@ -5004,7 +5004,7 @@ index 0000000..83cb681
 +			fsstack_copy_inode_size(dir,
 +						lower_parent_dentry->d_inode);
 +			/* update no. of links on parent directory */
-+			dir->i_nlink = unionfs_get_nlinks(dir);
++			set_nlink(dir, unionfs_get_nlinks(dir));
 +		}
 +	}
 +
@@ -5115,7 +5115,7 @@ index 0000000..83cb681
 +		lower_dir_dentry = dget_parent(lower_new_dentry);
 +		fsstack_copy_attr_times(dir, lower_dir_dentry->d_inode);
 +		dput(lower_dir_dentry);
-+		dir->i_nlink = unionfs_get_nlinks(dir);
++		set_nlink(dir, unionfs_get_nlinks(dir));
 +		err = 0;
 +	}
 +	if (err)
@@ -5190,7 +5190,7 @@ index 0000000..83cb681
 +	fsstack_copy_inode_size(dir, lower_new_dentry->d_parent->d_inode);
 +
 +	/* propagate number of hard-links */
-+	old_dentry->d_inode->i_nlink = unionfs_get_nlinks(old_dentry->d_inode);
++	set_nlink(old_dentry->d_inode, unionfs_get_nlinks(old_dentry->d_inode));
 +	/* new dentry's ctime may have changed due to hard-link counts */
 +	unionfs_copy_attr_times(new_dentry->d_inode);
 +
@@ -5264,7 +5264,7 @@ index 0000000..83cb681
 +			fsstack_copy_inode_size(dir,
 +						lower_parent_dentry->d_inode);
 +			/* update no. of links on parent directory */
-+			dir->i_nlink = unionfs_get_nlinks(dir);
++			set_nlink(dir), unionfs_get_nlinks(dir));
 +		}
 +	}
 +
@@ -5376,7 +5376,7 @@ index 0000000..83cb681
 +						lower_parent_dentry->d_inode);
 +
 +			/* update number of links on parent directory */
-+			dir->i_nlink = unionfs_get_nlinks(dir);
++			set_nlink(dir, unionfs_get_nlinks(dir));
 +		}
 +
 +		err = make_dir_opaque(dentry, dbstart(dentry));
@@ -5456,7 +5456,7 @@ index 0000000..83cb681
 +			fsstack_copy_inode_size(dir,
 +						lower_parent_dentry->d_inode);
 +			/* update no. of links on parent directory */
-+			dir->i_nlink = unionfs_get_nlinks(dir);
++			set_nlink(dir, unionfs_get_nlinks(dir));
 +		}
 +	}
 +
@@ -7884,8 +7884,8 @@ index 0000000..c8ab910
 +		fsstack_copy_attr_times(new_parent->d_inode,
 +					unlink_dir_dentry->d_inode);
 +		/* propagate number of hard-links */
-+		new_parent->d_inode->i_nlink =
-+			unionfs_get_nlinks(new_parent->d_inode);
++		set_nlink(new_parent->d_inode,
++			unionfs_get_nlinks(new_parent->d_inode));
 +
 +		unlock_dir(unlink_dir_dentry);
 +		if (!err) {
@@ -8495,7 +8495,7 @@ index 0000000..bdca2f7
 +	 * Update the nlinks AFTER updating the above fields, because the
 +	 * get_links callback may depend on them.
 +	 */
-+	dest->i_nlink = unionfs_get_nlinks(dest);
++	set_nlink(dest, unionfs_get_nlinks(dest));
 +}
 diff --git a/fs/unionfs/super.c b/fs/unionfs/super.c
 new file mode 100644
@@ -10418,7 +10418,7 @@ index 0000000..bf447bb
 +
 +	fsstack_copy_attr_times(dir, lower_dir_dentry->d_inode);
 +	/* propagate number of hard-links */
-+	dentry->d_inode->i_nlink = unionfs_get_nlinks(dentry->d_inode);
++	set_nlink(dentry->d_inode, unionfs_get_nlinks(dentry->d_inode));
 +
 +out:
 +	if (lower_dir_dentry)
