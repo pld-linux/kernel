@@ -210,9 +210,6 @@ Patch52:	kernel-wrr.patch
 # http://fatooh.org/esfq-2.6/sfq-2.6.24.1.tar.bz2
 Patch53:	kernel-esfq.patch
 
-# http://memebeam.org/free-software/toshiba_acpi/toshiba_acpi-dev_toshiba_test5-linux_2.6.26.patch
-Patch54:	kernel-toshiba_acpi.patch
-
 # by Baggins request:
 # derived from ftp://ftp.cmf.nrl.navy.mil/pub/chas/linux-atm/vbr/vbr-kernel-diffs
 Patch55:	kernel-atm-vbr.patch
@@ -710,9 +707,6 @@ sed -i 's/-Werror//' arch/alpha/kernel/Makefile
 %if %{with wrr}
 %patch52 -p1
 %endif
-
-# toshiba_acpi
-%patch54 -p1
 
 %patch55 -p1
 %patch56 -p1
