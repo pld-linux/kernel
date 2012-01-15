@@ -92,7 +92,7 @@
 
 %define		rel		0.1
 %define		basever		3.2
-%define		postver		.0
+%define		postver		.1
 
 %define		module_init_tools_ver	3.16
 
@@ -137,7 +137,7 @@ Source0:	http://www.kernel.org/pub/linux/kernel/v3.x/linux-%{basever}.tar.xz
 # Source0-md5:	364066fa18767ec0ae5f4e4abcf9dc51
 %if "%{postver}" != ".0"
 Patch0:		http://www.kernel.org/pub/linux/kernel/v3.x/patch-%{version}.bz2
-# Patch0-md5:	13ea1e611a0a580138b8203e6f1353ed
+# Patch0-md5:	31fc34340f11118873463a1d59d47b7f
 %endif
 
 Source3:	kernel-autoconf.h
