@@ -114,7 +114,7 @@
 %endif
 
 %define		basever		2.6.32
-%define		postver		.39
+%define		postver		.54
 %define		rel		1
 
 %define		_enable_debug_packages			0
@@ -158,7 +158,7 @@ Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{basever}.tar.bz2
 # Source0-md5:	260551284ac224c3a43c4adac7df4879
 %if "%{postver}" != "%{nil}"
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/longterm/v%{basever}/patch-%{version}.bz2
-# Source1-md5:	6cd1e135751b51946f56a2fb49ed05a3
+# Source1-md5:	4f8b279df893d617a30663c055667883
 %endif
 
 Source3:	kernel-autoconf.h
@@ -339,7 +339,7 @@ BuildRequires:	elftoaout
 BuildRequires:	uboot-mkimage
 %endif
 BuildRequires:	/sbin/depmod
-BuildRequires:	gcc < 6:4.6
+##BuildRequires:	gcc < 6:4.6
 BuildRequires:	gcc >= 5:3.2
 BuildRequires:	xz >= 1:4.999.7
 AutoReqProv:	no
@@ -795,7 +795,7 @@ sed -i 's/-Werror//' arch/alpha/kernel/Makefile
 
 # vserver
 %if %{with vserver}
-%patch100 -p1
+%patch100 -p2
 %patch101 -p1
 %endif
 
