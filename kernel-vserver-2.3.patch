@@ -156,18 +156,6 @@ diff -NurpP --minimal linux-3.0.17/Documentation/vserver/debug.txt linux-3.0.17-
 + m 2^m	"vx_acc_page[%5d,%s,%2d]: %5d%s"
 +	"vx_acc_pages[%5d,%s,%2d]: %5d += %5d"
 +	"vx_pages_avail[%5d,%s,%2d]: %5ld > %5d + %5d"
-diff -NurpP --minimal linux-3.0.17/Makefile linux-3.0.17-vs2.3.2.1/Makefile
---- linux-3.0.17/Makefile	2012-01-18 02:55:56.000000000 +0100
-+++ linux-3.0.17-vs2.3.2.1/Makefile	2012-01-18 03:23:37.000000000 +0100
-@@ -1,7 +1,7 @@
- VERSION = 3
- PATCHLEVEL = 0
- SUBLEVEL = 17
--EXTRAVERSION =
-+EXTRAVERSION = -vs2.3.2.1
- NAME = Sneaky Weasel
- 
- # *DOCUMENTATION*
 diff -NurpP --minimal linux-3.0.17/arch/alpha/Kconfig linux-3.0.17-vs2.3.2.1/arch/alpha/Kconfig
 --- linux-3.0.17/arch/alpha/Kconfig	2011-07-22 11:17:32.000000000 +0200
 +++ linux-3.0.17-vs2.3.2.1/arch/alpha/Kconfig	2011-06-10 22:11:24.000000000 +0200
@@ -6813,28 +6801,19 @@ diff -NurpP --minimal linux-3.0.17/fs/proc/root.c linux-3.0.17-vs2.3.2.1/fs/proc
 diff -NurpP --minimal linux-3.0.17/fs/proc/uptime.c linux-3.0.17-vs2.3.2.1/fs/proc/uptime.c
 --- linux-3.0.17/fs/proc/uptime.c	2009-12-03 20:02:53.000000000 +0100
 +++ linux-3.0.17-vs2.3.2.1/fs/proc/uptime.c	2011-06-10 22:11:24.000000000 +0200
-@@ -4,22 +4,22 @@
- #include <linux/sched.h>
+@@ -5,6 +5,7 @@
  #include <linux/seq_file.h>
  #include <linux/time.h>
--#include <linux/kernel_stat.h>
+ #include <linux/kernel_stat.h>
 +#include <linux/vserver/cvirt.h>
  #include <asm/cputime.h>
  
  static int uptime_proc_show(struct seq_file *m, void *v)
- {
- 	struct timespec uptime;
- 	struct timespec idle;
--	int i;
--	cputime_t idletime = cputime_zero;
--
--	for_each_possible_cpu(i)
--		idletime = cputime64_add(idletime, kstat_cpu(i).cpustat.idle);
-+	cputime_t idletime = cputime_add(init_task.utime, init_task.stime);
- 
- 	do_posix_clock_monotonic_gettime(&uptime);
+@@ -16,7 +16,11 @@
  	monotonic_to_bootbased(&uptime);
- 	cputime_to_timespec(idletime, &idle);
+ 	nsec = cputime64_to_jiffies64(idletime) * TICK_NSEC;
+ 	idle.tv_sec = div_u64_rem(nsec, NSEC_PER_SEC, &rem);
+ 	idle.tv_nsec = rem;
 +
 +	if (vx_flags(VXF_VIRT_UPTIME, 0))
 +		vx_vsi_uptime(&uptime, &idle);

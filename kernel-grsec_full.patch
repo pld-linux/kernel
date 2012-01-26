@@ -45589,16 +45589,23 @@ diff -urNp linux-3.0.9/fs/proc/base.c linux-3.0.9/fs/proc/base.c
  #define NOD(NAME, MODE, IOP, FOP, OP) {			\
  	.name = (NAME),					\
  	.len  = sizeof(NAME) - 1,			\
-@@ -209,6 +225,9 @@ static struct mm_struct *__check_mem_per
- 	if (task == current)
- 		return mm;
+@@ -222,10 +222,12 @@
+ 		return ERR_PTR(err);
  
-+	if (gr_handle_proc_ptrace(task) || gr_acl_handle_procpidmem(task))
-+		return ERR_PTR(-EPERM);
-+
- 	/*
- 	 * If current is actively ptrace'ing, and would also be
- 	 * permitted to freshly attach with ptrace now, permit it.
+ 	mm = get_task_mm(task);
+-	if (mm && mm != current->mm &&
+-			!ptrace_may_access(task, mode)) {
+-		mmput(mm);
+-		mm = ERR_PTR(-EACCES);
++	if (mm) {
++		if ((mm != current->mm && !ptrace_may_access(task, mode)) ||
++		    (mode == PTRACE_MODE_ATTACH && (gr_handle_proc_ptrace(task) || gr_acl_handle_procpidmem(task)))) {
++			mmput(mm);
++			mm = ERR_PTR(-EACCES);
++		}
+ 	}
+ 	mutex_unlock(&task->signal->cred_guard_mutex);
+ 
 @@ -282,6 +301,9 @@ static int proc_pid_cmdline(struct task_
  	if (!mm->arg_end)
  		goto out_mm;	/* Shh! No looking before we're done */
