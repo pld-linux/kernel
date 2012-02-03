@@ -237,7 +237,7 @@ Patch140:	kernel-unionfs.patch
 # cat aufs3-kbuild.patch aufs3-base.patch aufs3-standalone.patch > ~/rpm/packages/kernel/kernel-aufs3.patch
 # mkdir linux
 # cp -a Documentation fs include linux
-# diff -urN /usr/share/empty linux >> ~/rpm/packages/kernel/kernel-aufs3.patch 
+# diff -urN /usr/share/empty linux >> ~/rpm/packages/kernel/kernel-aufs3.patch
 #
 Patch145:	kernel-aufs3.patch
 Patch146:	kernel-aufs2-unionfs.patch
@@ -307,14 +307,15 @@ Requires:	cpuinfo(pae)
 %endif
 %endif
 Suggests:	keyutils
+Suggests:	linux-firmware
 Provides:	%{name}(netfilter) = 20070806
 Provides:	%{name}(vermagic) = %{kernel_release}
-Obsoletes:	kernel%{_alt_kernel}-isdn-mISDN
 Obsoletes:	kernel%{_alt_kernel}-char-lirc-ene0100
 Obsoletes:	kernel%{_alt_kernel}-char-lirc-it87
 Obsoletes:	kernel%{_alt_kernel}-char-lirc-ite8709
 Obsoletes:	kernel%{_alt_kernel}-char-lirc-mceusb
 Obsoletes:	kernel%{_alt_kernel}-char-lirc-streamzap
+Obsoletes:	kernel%{_alt_kernel}-isdn-mISDN
 Obsoletes:	kernel-firmware
 Obsoletes:	kernel-misc-acer_acpi
 Obsoletes:	kernel-misc-fuse
