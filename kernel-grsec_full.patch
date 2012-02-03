@@ -45589,7 +45589,7 @@ diff -urNp linux-3.0.9/fs/proc/base.c linux-3.0.9/fs/proc/base.c
  #define NOD(NAME, MODE, IOP, FOP, OP) {			\
  	.name = (NAME),					\
  	.len  = sizeof(NAME) - 1,			\
-@@ -222,10 +222,12 @@
+@@ -222,10 +238,12 @@
  		return ERR_PTR(err);
  
  	mm = get_task_mm(task);
@@ -45606,7 +45606,7 @@ diff -urNp linux-3.0.9/fs/proc/base.c linux-3.0.9/fs/proc/base.c
  	}
  	mutex_unlock(&task->signal->cred_guard_mutex);
  
-@@ -282,6 +301,9 @@ static int proc_pid_cmdline(struct task_
+@@ -282,6 +300,9 @@ static int proc_pid_cmdline(struct task_
  	if (!mm->arg_end)
  		goto out_mm;	/* Shh! No looking before we're done */
  
@@ -45616,7 +45616,7 @@ diff -urNp linux-3.0.9/fs/proc/base.c linux-3.0.9/fs/proc/base.c
   	len = mm->arg_end - mm->arg_start;
   
  	if (len > PAGE_SIZE)
-@@ -309,12 +331,28 @@ out:
+@@ -309,12 +330,28 @@ out:
  	return res;
  }
  
@@ -45645,7 +45645,7 @@ diff -urNp linux-3.0.9/fs/proc/base.c linux-3.0.9/fs/proc/base.c
  		do {
  			nwords += 2;
  		} while (mm->saved_auxv[nwords - 2] != 0); /* AT_NULL */
-@@ -328,7 +366,7 @@ static int proc_pid_auxv(struct task_str
+@@ -328,7 +365,7 @@ static int proc_pid_auxv(struct task_str
  }
  
  
@@ -45654,7 +45654,7 @@ diff -urNp linux-3.0.9/fs/proc/base.c linux-3.0.9/fs/proc/base.c
  /*
   * Provides a wchan file via kallsyms in a proper one-value-per-file format.
   * Returns the resolved symbol.  If that fails, simply return the address.
-@@ -367,7 +405,7 @@ static void unlock_trace(struct task_str
+@@ -367,7 +404,7 @@ static void unlock_trace(struct task_str
  	mutex_unlock(&task->signal->cred_guard_mutex);
  }
  
@@ -45663,7 +45663,7 @@ diff -urNp linux-3.0.9/fs/proc/base.c linux-3.0.9/fs/proc/base.c
  
  #define MAX_STACK_TRACE_DEPTH	64
  
-@@ -558,7 +596,7 @@ static int proc_pid_limits(struct task_s
+@@ -558,7 +595,7 @@ static int proc_pid_limits(struct task_s
  	return count;
  }
  
@@ -45672,7 +45672,7 @@ diff -urNp linux-3.0.9/fs/proc/base.c linux-3.0.9/fs/proc/base.c
  static int proc_pid_syscall(struct task_struct *task, char *buffer)
  {
  	long nr;
-@@ -587,7 +625,7 @@ static int proc_pid_syscall(struct task_
+@@ -587,7 +624,7 @@ static int proc_pid_syscall(struct task_
  /************************************************************************/
  
  /* permission checks */
@@ -45681,7 +45681,7 @@ diff -urNp linux-3.0.9/fs/proc/base.c linux-3.0.9/fs/proc/base.c
  {
  	struct task_struct *task;
  	int allowed = 0;
-@@ -597,7 +635,10 @@ static int proc_fd_access_allowed(struct
+@@ -597,7 +634,10 @@ static int proc_fd_access_allowed(struct
  	 */
  	task = get_proc_task(inode);
  	if (task) {
@@ -45693,7 +45693,7 @@ diff -urNp linux-3.0.9/fs/proc/base.c linux-3.0.9/fs/proc/base.c
  		put_task_struct(task);
  	}
  	return allowed;
-@@ -978,6 +1019,9 @@ static ssize_t environ_read(struct file 
+@@ -978,6 +1018,9 @@ static ssize_t environ_read(struct file 
  	if (!task)
  		goto out_no_task;
  
@@ -45703,7 +45703,7 @@ diff -urNp linux-3.0.9/fs/proc/base.c linux-3.0.9/fs/proc/base.c
  	ret = -ENOMEM;
  	page = (char *)__get_free_page(GFP_TEMPORARY);
  	if (!page)
-@@ -1614,7 +1658,7 @@ static void *proc_pid_follow_link(struct
+@@ -1614,7 +1657,7 @@ static void *proc_pid_follow_link(struct
  	path_put(&nd->path);
  
  	/* Are we allowed to snoop on the tasks file descriptors? */
@@ -45712,7 +45712,7 @@ diff -urNp linux-3.0.9/fs/proc/base.c linux-3.0.9/fs/proc/base.c
  		goto out;
  
  	error = PROC_I(inode)->op.proc_get_link(inode, &nd->path);
-@@ -1653,8 +1697,18 @@ static int proc_pid_readlink(struct dent
+@@ -1653,8 +1696,18 @@ static int proc_pid_readlink(struct dent
  	struct path path;
  
  	/* Are we allowed to snoop on the tasks file descriptors? */
@@ -45733,7 +45733,7 @@ diff -urNp linux-3.0.9/fs/proc/base.c linux-3.0.9/fs/proc/base.c
  
  	error = PROC_I(inode)->op.proc_get_link(inode, &path);
  	if (error)
-@@ -1719,7 +1773,11 @@ struct inode *proc_pid_make_inode(struct
+@@ -1719,7 +1772,11 @@ struct inode *proc_pid_make_inode(struct
  		rcu_read_lock();
  		cred = __task_cred(task);
  		inode->i_uid = cred->euid;
@@ -45745,7 +45745,7 @@ diff -urNp linux-3.0.9/fs/proc/base.c linux-3.0.9/fs/proc/base.c
  		rcu_read_unlock();
  	}
  	security_task_to_inode(task, inode);
-@@ -1737,6 +1795,9 @@ int pid_getattr(struct vfsmount *mnt, st
+@@ -1737,6 +1794,9 @@ int pid_getattr(struct vfsmount *mnt, st
  	struct inode *inode = dentry->d_inode;
  	struct task_struct *task;
  	const struct cred *cred;
@@ -45755,7 +45755,7 @@ diff -urNp linux-3.0.9/fs/proc/base.c linux-3.0.9/fs/proc/base.c
  
  	generic_fillattr(inode, stat);
  
-@@ -1744,13 +1805,41 @@ int pid_getattr(struct vfsmount *mnt, st
+@@ -1744,13 +1804,41 @@ int pid_getattr(struct vfsmount *mnt, st
  	stat->uid = 0;
  	stat->gid = 0;
  	task = pid_task(proc_pid(inode), PIDTYPE_PID);
@@ -45798,7 +45798,7 @@ diff -urNp linux-3.0.9/fs/proc/base.c linux-3.0.9/fs/proc/base.c
  	}
  	rcu_read_unlock();
  	return 0;
-@@ -1787,11 +1876,20 @@ int pid_revalidate(struct dentry *dentry
+@@ -1787,11 +1875,20 @@ int pid_revalidate(struct dentry *dentry
  
  	if (task) {
  		if ((inode->i_mode == (S_IFDIR|S_IRUGO|S_IXUGO)) ||
@@ -45819,7 +45819,7 @@ diff -urNp linux-3.0.9/fs/proc/base.c linux-3.0.9/fs/proc/base.c
  			rcu_read_unlock();
  		} else {
  			inode->i_uid = 0;
-@@ -1909,7 +2007,8 @@ static int proc_fd_info(struct inode *in
+@@ -1909,7 +2006,8 @@ static int proc_fd_info(struct inode *in
  	int fd = proc_fd(inode);
  
  	if (task) {
@@ -45829,7 +45829,7 @@ diff -urNp linux-3.0.9/fs/proc/base.c linux-3.0.9/fs/proc/base.c
  		put_task_struct(task);
  	}
  	if (files) {
-@@ -2177,11 +2276,21 @@ static const struct file_operations proc
+@@ -2177,11 +2275,21 @@ static const struct file_operations proc
   */
  static int proc_fd_permission(struct inode *inode, int mask, unsigned int flags)
  {
@@ -45853,7 +45853,7 @@ diff -urNp linux-3.0.9/fs/proc/base.c linux-3.0.9/fs/proc/base.c
  	return rv;
  }
  
-@@ -2291,6 +2400,9 @@ static struct dentry *proc_pident_lookup
+@@ -2291,6 +2399,9 @@ static struct dentry *proc_pident_lookup
  	if (!task)
  		goto out_no_task;
  
@@ -45863,7 +45863,7 @@ diff -urNp linux-3.0.9/fs/proc/base.c linux-3.0.9/fs/proc/base.c
  	/*
  	 * Yes, it does not scale. And it should not. Don't add
  	 * new entries into /proc/<tgid>/ without very good reasons.
-@@ -2335,6 +2447,9 @@ static int proc_pident_readdir(struct fi
+@@ -2335,6 +2446,9 @@ static int proc_pident_readdir(struct fi
  	if (!task)
  		goto out_no_task;
  
@@ -45873,7 +45873,7 @@ diff -urNp linux-3.0.9/fs/proc/base.c linux-3.0.9/fs/proc/base.c
  	ret = 0;
  	i = filp->f_pos;
  	switch (i) {
-@@ -2605,7 +2720,7 @@ static void *proc_self_follow_link(struc
+@@ -2605,7 +2719,7 @@ static void *proc_self_follow_link(struc
  static void proc_self_put_link(struct dentry *dentry, struct nameidata *nd,
  				void *cookie)
  {
@@ -45882,7 +45882,7 @@ diff -urNp linux-3.0.9/fs/proc/base.c linux-3.0.9/fs/proc/base.c
  	if (!IS_ERR(s))
  		__putname(s);
  }
-@@ -2664,6 +2779,7 @@ static struct dentry *proc_base_instanti
+@@ -2664,6 +2778,7 @@ static struct dentry *proc_base_instanti
  	if (p->fop)
  		inode->i_fop = p->fop;
  	ei->op = p->op;
@@ -45890,7 +45890,7 @@ diff -urNp linux-3.0.9/fs/proc/base.c linux-3.0.9/fs/proc/base.c
  	d_add(dentry, inode);
  	error = NULL;
  out:
-@@ -2803,7 +2919,7 @@ static const struct pid_entry tgid_base_
+@@ -2803,7 +2918,7 @@ static const struct pid_entry tgid_base_
  	REG("autogroup",  S_IRUGO|S_IWUSR, proc_pid_sched_autogroup_operations),
  #endif
  	REG("comm",      S_IRUGO|S_IWUSR, proc_pid_set_comm_operations),
@@ -45899,7 +45899,7 @@ diff -urNp linux-3.0.9/fs/proc/base.c linux-3.0.9/fs/proc/base.c
  	INF("syscall",    S_IRUGO, proc_pid_syscall),
  #endif
  	INF("cmdline",    S_IRUGO, proc_pid_cmdline),
-@@ -2828,10 +2944,10 @@ static const struct pid_entry tgid_base_
+@@ -2828,10 +2943,10 @@ static const struct pid_entry tgid_base_
  #ifdef CONFIG_SECURITY
  	DIR("attr",       S_IRUGO|S_IXUGO, proc_attr_dir_inode_operations, proc_attr_dir_operations),
  #endif
@@ -45912,7 +45912,7 @@ diff -urNp linux-3.0.9/fs/proc/base.c linux-3.0.9/fs/proc/base.c
  	ONE("stack",      S_IRUGO, proc_pid_stack),
  #endif
  #ifdef CONFIG_SCHEDSTATS
-@@ -2865,6 +2981,9 @@ static const struct pid_entry tgid_base_
+@@ -2865,6 +2980,9 @@ static const struct pid_entry tgid_base_
  	INF("hardwall",   S_IRUGO, proc_pid_hardwall),
  #endif
  	ONE("nsproxy",	S_IRUGO, proc_pid_nsproxy),
@@ -45922,7 +45922,7 @@ diff -urNp linux-3.0.9/fs/proc/base.c linux-3.0.9/fs/proc/base.c
  };
  
  static int proc_tgid_base_readdir(struct file * filp,
-@@ -2990,7 +3109,14 @@ static struct dentry *proc_pid_instantia
+@@ -2990,7 +3108,14 @@ static struct dentry *proc_pid_instantia
  	if (!inode)
  		goto out;
  
@@ -45937,7 +45937,7 @@ diff -urNp linux-3.0.9/fs/proc/base.c linux-3.0.9/fs/proc/base.c
  	inode->i_op = &proc_tgid_base_inode_operations;
  	inode->i_fop = &proc_tgid_base_operations;
  	inode->i_flags|=S_IMMUTABLE;
-@@ -3032,7 +3158,11 @@ struct dentry *proc_pid_lookup(struct in
+@@ -3032,7 +3157,11 @@ struct dentry *proc_pid_lookup(struct in
  	if (!task)
  		goto out;
  
@@ -45949,7 +45949,7 @@ diff -urNp linux-3.0.9/fs/proc/base.c linux-3.0.9/fs/proc/base.c
  	put_task_struct(task);
  out:
  	return result;
-@@ -3097,6 +3230,11 @@ int proc_pid_readdir(struct file * filp,
+@@ -3097,6 +3226,11 @@ int proc_pid_readdir(struct file * filp,
  {
  	unsigned int nr;
  	struct task_struct *reaper;
@@ -45961,7 +45961,7 @@ diff -urNp linux-3.0.9/fs/proc/base.c linux-3.0.9/fs/proc/base.c
  	struct tgid_iter iter;
  	struct pid_namespace *ns;
  
-@@ -3120,8 +3258,27 @@ int proc_pid_readdir(struct file * filp,
+@@ -3120,8 +3254,27 @@ int proc_pid_readdir(struct file * filp,
  	for (iter = next_tgid(ns, iter);
  	     iter.task;
  	     iter.tgid += 1, iter = next_tgid(ns, iter)) {
@@ -45990,7 +45990,7 @@ diff -urNp linux-3.0.9/fs/proc/base.c linux-3.0.9/fs/proc/base.c
 -		if (proc_pid_fill_cache(filp, dirent, filldir, iter) < 0) {
 +		if (proc_pid_fill_cache(filp, dirent, __filldir, iter) < 0) {
  			put_task_struct(iter.task);
-@@ -3149,7 +3306,7 @@ static const struct pid_entry tid_base_s
+@@ -3149,7 +3302,7 @@ static const struct pid_entry tid_base_s
  	REG("sched",     S_IRUGO|S_IWUSR, proc_pid_sched_operations),
  #endif
  	REG("comm",      S_IRUGO|S_IWUSR, proc_pid_set_comm_operations),
@@ -45999,7 +45999,7 @@ diff -urNp linux-3.0.9/fs/proc/base.c linux-3.0.9/fs/proc/base.c
  	INF("syscall",   S_IRUGO, proc_pid_syscall),
  #endif
  	INF("cmdline",   S_IRUGO, proc_pid_cmdline),
-@@ -3173,10 +3330,10 @@ static const struct pid_entry tid_base_s
+@@ -3173,10 +3326,10 @@ static const struct pid_entry tid_base_s
  #ifdef CONFIG_SECURITY
  	DIR("attr",      S_IRUGO|S_IXUGO, proc_attr_dir_inode_operations, proc_attr_dir_operations),
  #endif
@@ -60097,7 +60097,7 @@ diff -urNp linux-3.0.9/include/linux/proc_fs.h linux-3.0.9/include/linux/proc_fs
  static inline struct proc_dir_entry *create_proc_read_entry(const char *name,
  	mode_t mode, struct proc_dir_entry *base, 
  	read_proc_t *read_proc, void * data)
-@@ -278,7 +278,7 @@ union proc_op {
+@@ -278,7 +291,7 @@ union proc_op {
  	int (*proc_vs_read)(char *page);
  	int (*proc_vxi_read)(struct vx_info *vxi, char *page);
  	int (*proc_nxi_read)(struct nx_info *nxi, char *page);
@@ -62661,7 +62661,7 @@ diff -urNp linux-3.0.9/kernel/cred.c linux-3.0.9/kernel/cred.c
  	new = kmem_cache_zalloc(cred_jar, GFP_KERNEL);
  	if (!new)
  		return NULL;
-@@ -268,6 +268,8 @@ struct cred *__prepare_creds(const struc
+@@ -268,6 +276,8 @@ struct cred *__prepare_creds(const struc
  {
  	struct cred *new;
  
@@ -63306,7 +63306,7 @@ diff -urNp linux-3.0.9/kernel/fork.c linux-3.0.9/kernel/fork.c
  	return 0;
  }
  
-@@ -1156,15 +1156,18 @@ static struct task_struct *copy_process(
+@@ -1156,15 +1194,18 @@ static struct task_struct *copy_process(
  	init_vx_info(&p->vx_info, current_vx_info());
  	init_nx_info(&p->nx_info, current_nx_info());
  
@@ -63327,7 +63327,7 @@ diff -urNp linux-3.0.9/kernel/fork.c linux-3.0.9/kernel/fork.c
  
  	retval = copy_creds(p, clone_flags);
  	if (retval < 0)
-@@ -1250,6 +1292,8 @@ static struct task_struct *copy_process(
+@@ -1250,6 +1291,8 @@ static struct task_struct *copy_process(
  	if (clone_flags & CLONE_THREAD)
  		p->tgid = current->tgid;
  
@@ -63336,7 +63336,7 @@ diff -urNp linux-3.0.9/kernel/fork.c linux-3.0.9/kernel/fork.c
  	p->set_child_tid = (clone_flags & CLONE_CHILD_SETTID) ? child_tidptr : NULL;
  	/*
  	 * Clear TID on mm_release()?
-@@ -1414,6 +1458,8 @@ bad_fork_cleanup_count:
+@@ -1414,6 +1457,8 @@ bad_fork_cleanup_count:
  bad_fork_free:
  	free_task(p);
  fork_out:
@@ -63345,7 +63345,7 @@ diff -urNp linux-3.0.9/kernel/fork.c linux-3.0.9/kernel/fork.c
  	return ERR_PTR(retval);
  }
  
-@@ -1502,6 +1548,8 @@ long do_fork(unsigned long clone_flags,
+@@ -1502,6 +1547,8 @@ long do_fork(unsigned long clone_flags,
  		if (clone_flags & CLONE_PARENT_SETTID)
  			put_user(nr, parent_tidptr);
  
@@ -63354,7 +63354,7 @@ diff -urNp linux-3.0.9/kernel/fork.c linux-3.0.9/kernel/fork.c
  		if (clone_flags & CLONE_VFORK) {
  			p->vfork_done = &vfork;
  			init_completion(&vfork);
-@@ -1610,7 +1658,7 @@ static int unshare_fs(unsigned long unsh
+@@ -1610,7 +1657,7 @@ static int unshare_fs(unsigned long unsh
  		return 0;
  
  	/* don't need lock here; in the worst case we'll do useless copy */
@@ -63363,7 +63363,7 @@ diff -urNp linux-3.0.9/kernel/fork.c linux-3.0.9/kernel/fork.c
  		return 0;
  
  	*new_fsp = copy_fs_struct(fs);
-@@ -1697,7 +1745,8 @@ SYSCALL_DEFINE1(unshare, unsigned long, 
+@@ -1697,7 +1744,8 @@ SYSCALL_DEFINE1(unshare, unsigned long, 
  			fs = current->fs;
  			spin_lock(&fs->lock);
  			current->fs = new_fs;
@@ -64975,7 +64975,7 @@ diff -urNp linux-3.0.9/kernel/power/process.c linux-3.0.9/kernel/power/process.c
 diff -urNp linux-3.0.9/kernel/printk.c linux-3.0.9/kernel/printk.c
 --- linux-3.0.9/kernel/printk.c	2011-11-11 13:12:24.000000000 -0500
 +++ linux-3.0.9/kernel/printk.c	2011-11-15 20:03:00.000000000 -0500
-@@ -313,12 +313,17 @@ static int check_syslog_permissions(int 
+@@ -313,7 +313,12 @@ static int check_syslog_permissions(int 
  	if (from_file && type != SYSLOG_ACTION_OPEN)
  		return 0;
  
@@ -64988,12 +64988,6 @@ diff -urNp linux-3.0.9/kernel/printk.c linux-3.0.9/kernel/printk.c
  		if (vx_capable(CAP_SYSLOG, VXC_SYSLOG))
  			return 0;
  		/* For historical reasons, accept CAP_SYS_ADMIN too, with a warning */
- 		if (capable(CAP_SYS_ADMIN)) {
--			WARN_ONCE(1, "Attempt to access syslog with CAP_SYS_ADMIN "
-+			printk_once(KERN_WARNING "Attempt to access syslog with CAP_SYS_ADMIN "
- 				 "but no CAP_SYSLOG (deprecated).\n");
- 			return 0;
- 		}
 diff -urNp linux-3.0.9/kernel/profile.c linux-3.0.9/kernel/profile.c
 --- linux-3.0.9/kernel/profile.c	2011-11-11 13:12:24.000000000 -0500
 +++ linux-3.0.9/kernel/profile.c	2011-11-15 20:03:00.000000000 -0500
@@ -65798,7 +65792,7 @@ diff -urNp linux-3.0.9/kernel/signal.c linux-3.0.9/kernel/signal.c
  	if (is_global_init(tsk))
  		return 1;
  	if (handler != SIG_IGN && handler != SIG_DFL)
-@@ -797,6 +797,14 @@
+@@ -797,6 +800,14 @@
  			sig, info, t, vx_task_xid(t), t->pid, current->xid);
  		return error;
  	}
@@ -65813,7 +65807,7 @@ diff -urNp linux-3.0.9/kernel/signal.c linux-3.0.9/kernel/signal.c
  /* skip: */
  	return security_task_kill(t, info, sig, 0);
  }
-@@ -1092,7 +1102,7 @@ __group_send_sig_info(int sig, struct si
+@@ -1092,7 +1103,7 @@ __group_send_sig_info(int sig, struct si
  	return send_signal(sig, info, p, 1);
  }
  
@@ -65822,7 +65816,7 @@ diff -urNp linux-3.0.9/kernel/signal.c linux-3.0.9/kernel/signal.c
  specific_send_sig_info(int sig, struct siginfo *info, struct task_struct *t)
  {
  	return send_signal(sig, info, t, 0);
-@@ -1129,6 +1139,7 @@ force_sig_info(int sig, struct siginfo *
+@@ -1129,6 +1140,7 @@ force_sig_info(int sig, struct siginfo *
  	unsigned long int flags;
  	int ret, blocked, ignored;
  	struct k_sigaction *action;
@@ -65830,7 +65824,7 @@ diff -urNp linux-3.0.9/kernel/signal.c linux-3.0.9/kernel/signal.c
  
  	spin_lock_irqsave(&t->sighand->siglock, flags);
  	action = &t->sighand->action[sig-1];
-@@ -1143,9 +1154,18 @@ force_sig_info(int sig, struct siginfo *
+@@ -1143,9 +1155,18 @@ force_sig_info(int sig, struct siginfo *
  	}
  	if (action->sa.sa_handler == SIG_DFL)
  		t->signal->flags &= ~SIGNAL_UNKILLABLE;
@@ -65849,7 +65843,7 @@ diff -urNp linux-3.0.9/kernel/signal.c linux-3.0.9/kernel/signal.c
  	return ret;
  }
  
-@@ -1212,8 +1232,11 @@ int group_send_sig_info(int sig, struct 
+@@ -1212,8 +1233,11 @@ int group_send_sig_info(int sig, struct 
  	ret = check_kill_permission(sig, info, p);
  	rcu_read_unlock();
  
@@ -65862,7 +65856,7 @@ diff -urNp linux-3.0.9/kernel/signal.c linux-3.0.9/kernel/signal.c
  
  	return ret;
  }
-@@ -1839,6 +1862,8 @@ void ptrace_notify(int exit_code)
+@@ -1839,6 +1863,8 @@ void ptrace_notify(int exit_code)
  {
  	siginfo_t info;
  
@@ -65871,7 +65865,7 @@ diff -urNp linux-3.0.9/kernel/signal.c linux-3.0.9/kernel/signal.c
  	BUG_ON((exit_code & (0x7f | ~0xffff)) != SIGTRAP);
  
  	memset(&info, 0, sizeof info);
-@@ -2637,7 +2662,15 @@ do_send_specific(pid_t tgid, pid_t pid, 
+@@ -2637,7 +2663,15 @@ do_send_specific(pid_t tgid, pid_t pid, 
  	int error = -ESRCH;
  
  	rcu_read_lock();
