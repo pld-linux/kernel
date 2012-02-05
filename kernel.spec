@@ -100,8 +100,6 @@
 
 %define		tuxonice_version	3.2
 
-%define		module_init_tools_ver	3.16
-
 %if %{with myown}
 %if "%{_alt_kernel}" == ""
 %define		alt_kernel	myown
@@ -310,17 +308,17 @@ BuildRequires:	gcc >= 5:3.2
 BuildRequires:	xz >= 1:4.999.7
 AutoReqProv:	no
 BuildRequires:	hostname
-BuildRequires:	module-init-tools >= %{module_init_tools_ver}
+BuildRequires:	virtual(module-tools)
 BuildRequires:	perl-base
 BuildRequires:	rpm-build >= 4.5-24
 BuildRequires:	rpmbuild(macros) >= 1.217
 Requires(post):	coreutils
 Requires(post):	geninitrd >= 10000-3
-Requires(post):	module-init-tools >= %{module_init_tools_ver}
+Requires(post):	virtual(module-tools)
 Requires:	/sbin/depmod
 Requires:	coreutils
 Requires:	geninitrd >= 10000-3
-Requires:	module-init-tools >= %{module_init_tools_ver}
+Requires:	virtual(module-tools)
 %if %{with pae}
 %ifarch i686 athlon pentium3 pentium4
 Requires:	cpuinfo(pae)
@@ -350,6 +348,7 @@ Conflicts:	e2fsprogs < 1.29
 Conflicts:	isdn4k-utils < 3.1pre1
 Conflicts:	jfsutils < 1.1.3
 Conflicts:	lvm2 < 2.02.40
+Conflicts:	module-init-tools < 3.16
 Conflicts:	nfs-utils < 1.0.5
 Conflicts:	oprofile < 0.9
 Conflicts:	ppp < 1:2.4.0
