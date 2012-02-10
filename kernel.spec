@@ -1121,6 +1121,9 @@ cp -a %{objdir}/Module.symvers $RPM_BUILD_ROOT%{_kernelsrcdir}
 cp -aL %{objdir}/.config $RPM_BUILD_ROOT%{_kernelsrcdir}
 cp -a %{objdir}/include $RPM_BUILD_ROOT%{_kernelsrcdir}
 
+# disable this here, causes a lot of build-time problems and our rpm-build disables it anyway
+%{__sed} -i -e 's|\(CONSTIFY_PLUGIN.*:=.*\)|# \1|' $RPM_BUILD_ROOT%{_kernelsrcdir}/Makefile
+
 # collect module-build files and directories
 # Usage: kernel-module-build.pl $rpmdir $fileoutdir
 fileoutdir=$(pwd)
@@ -1420,25 +1423,31 @@ fi
 %{_kernelsrcdir}/drivers/lguest/lg.h
 %{_kernelsrcdir}/drivers/media/video/bt8xx/bttv.h
 %{_kernelsrcdir}/kernel/bounds.c
-%dir %{_kernelsrcdir}/scripts
-%{_kernelsrcdir}/scripts/basic
-%{_kernelsrcdir}/scripts/kconfig
-%{_kernelsrcdir}/scripts/mod
-%{_kernelsrcdir}/scripts/Kbuild.include
-%{_kernelsrcdir}/scripts/Makefile*
+%{_kernelsrcdir}/scripts/basic/*.c
+%attr(755,root,root) %{_kernelsrcdir}/scripts/kconfig/*.sh
+%{_kernelsrcdir}/scripts/kconfig/*.in
+%{_kernelsrcdir}/scripts/kconfig/*_shipped
+%{_kernelsrcdir}/scripts/kconfig/*.pl
+%{_kernelsrcdir}/scripts/kconfig/*.glade
+%{_kernelsrcdir}/scripts/kconfig/*.gperf
+%{_kernelsrcdir}/scripts/kconfig/*.cc
+%{_kernelsrcdir}/scripts/kconfig/*.y
+%{_kernelsrcdir}/scripts/kconfig/*.l
+%{_kernelsrcdir}/scripts/kconfig/[c-k]*.c
+%{_kernelsrcdir}/scripts/kconfig/[c-k]*.h
+%{_kernelsrcdir}/scripts/kconfig/l*.h
+%{_kernelsrcdir}/scripts/kconfig/[m-u]*.c
+%{_kernelsrcdir}/scripts/kconfig/[m-u]*.h
+%{_kernelsrcdir}/scripts/kconfig/lxdialog
+%{_kernelsrcdir}/scripts/mod/*.c
+%{_kernelsrcdir}/scripts/mod/[^e]*.h
 %attr(755,root,root) %{_kernelsrcdir}/scripts/mkcompile_h
 %{_kernelsrcdir}/scripts/mkmakefile
 %{_kernelsrcdir}/scripts/module-common.lds
 %attr(755,root,root) %{_kernelsrcdir}/scripts/setlocalversion
 %{_kernelsrcdir}/scripts/*.c
 %attr(755,root,root) %{_kernelsrcdir}/scripts/*.sh
-%dir %{_kernelsrcdir}/scripts/selinux
-%{_kernelsrcdir}/scripts/selinux/Makefile
-%dir %{_kernelsrcdir}/scripts/selinux/genheaders
-%{_kernelsrcdir}/scripts/selinux/genheaders/Makefile
 %{_kernelsrcdir}/scripts/selinux/genheaders/*.c
-%dir %{_kernelsrcdir}/scripts/selinux/mdp
-%{_kernelsrcdir}/scripts/selinux/mdp/Makefile
 %{_kernelsrcdir}/scripts/selinux/mdp/*.c
 %exclude %dir %{_kernelsrcdir}/security
 %exclude %dir %{_kernelsrcdir}/security/selinux
