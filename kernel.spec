@@ -92,7 +92,7 @@
 
 %define		rel		0.1
 %define		basever		3.2
-%define		postver		.1
+%define		postver		.5
 
 # __alt_kernel is list of features, empty string if none set
 # _alt kernel is defined as: %{nil}%{?alt_kernel:-%{?alt_kernel}} (defined in rpm.macros)
@@ -739,8 +739,8 @@ sed -i 's/-Werror//' arch/alpha/kernel/Makefile
 
 # grsecurity & pax stuff
 #
-exit 0
 %if %{with grsecurity}
+exit 0
 %patch9999 -p1
 # aufs needs this
 %patch147 -p1
