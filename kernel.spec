@@ -1117,13 +1117,9 @@ if cp -al %{srcdir}/COPYING $RPM_BUILD_ROOT/COPYING 2>/dev/null; then
 fi
 
 cp -a$l %{srcdir}/* $RPM_BUILD_ROOT%{_kernelsrcdir}
-cp -a %{objdir}/Module.symvers $RPM_BUILD_ROOT%{_kernelsrcdir}/Module.symvers-dist
-cp -aL %{objdir}/.config $RPM_BUILD_ROOT%{_kernelsrcdir}/config-dist
-cp -a %{objdir}/include/generated $RPM_BUILD_ROOT%{_kernelsrcdir}/include
-mv $RPM_BUILD_ROOT%{_kernelsrcdir}/include/generated/autoconf{,-dist}.h
-cp -a %{objdir}/include/linux/version.h $RPM_BUILD_ROOT%{_kernelsrcdir}/include/linux
-cp -a %{SOURCE3} $RPM_BUILD_ROOT%{_kernelsrcdir}/include/generated/autoconf.h
-cp -a %{SOURCE4} $RPM_BUILD_ROOT%{_kernelsrcdir}/include/linux/config.h
+cp -a %{objdir}/Module.symvers $RPM_BUILD_ROOT%{_kernelsrcdir}
+cp -aL %{objdir}/.config $RPM_BUILD_ROOT%{_kernelsrcdir}
+cp -a %{objdir}/include $RPM_BUILD_ROOT%{_kernelsrcdir}
 
 # collect module-build files and directories
 # Usage: kernel-module-build.pl $rpmdir $fileoutdir
@@ -1131,6 +1127,17 @@ fileoutdir=$(pwd)
 cd $RPM_BUILD_ROOT%{_kernelsrcdir}
 %{__perl} %{topdir}/kernel-module-build.pl %{_kernelsrcdir} $fileoutdir
 cd -
+
+for f in `find %{objdir}/scripts -type f -print | grep -v "/\.\|\.o$"` ; do
+	ff=${f##%{objdir}/}
+	if [ -x "$f" ]; then
+		echo "%attr(755,root,root) %{_kernelsrcdir}/$ff" >>files.mb_include_modulebuild_and_dirs
+	else
+		echo "%{_kernelsrcdir}/$ff" >>files.mb_include_modulebuild_and_dirs
+	fi
+	echo "%exclude %{_kernelsrcdir}/$ff" >>files.source_exclude_modulebuild_and_dirs
+	cp -a "$f" "$RPM_BUILD_ROOT%{_kernelsrcdir}/$ff"
+done
 
 # move to %{_docdir} so we wouldn't depend on any kernel package for dirs
 install -d $RPM_BUILD_ROOT%{_docdir}
@@ -1399,8 +1406,8 @@ fi
 %dir %{_kernelsrcdir}/security
 %dir %{_kernelsrcdir}/security/selinux
 %{_kernelsrcdir}/security/selinux/include
-%{_kernelsrcdir}/config-dist
-%{_kernelsrcdir}/Module.symvers-dist
+%{_kernelsrcdir}/.config
+%{_kernelsrcdir}/Module.symvers
 
 %files module-build -f files.mb_include_modulebuild_and_dirs
 %defattr(644,root,root,755)
@@ -1414,17 +1421,17 @@ fi
 %{_kernelsrcdir}/drivers/media/video/bt8xx/bttv.h
 %{_kernelsrcdir}/kernel/bounds.c
 %dir %{_kernelsrcdir}/scripts
-%{_kernelsrcdir}/scripts/Kbuild.include
-%{_kernelsrcdir}/scripts/Makefile*
 %{_kernelsrcdir}/scripts/basic
 %{_kernelsrcdir}/scripts/kconfig
-%{_kernelsrcdir}/scripts/mkcompile_h
-%{_kernelsrcdir}/scripts/mkmakefile
 %{_kernelsrcdir}/scripts/mod
+%{_kernelsrcdir}/scripts/Kbuild.include
+%{_kernelsrcdir}/scripts/Makefile*
+%attr(755,root,root) %{_kernelsrcdir}/scripts/mkcompile_h
+%{_kernelsrcdir}/scripts/mkmakefile
 %{_kernelsrcdir}/scripts/module-common.lds
-%{_kernelsrcdir}/scripts/setlocalversion
+%attr(755,root,root) %{_kernelsrcdir}/scripts/setlocalversion
 %{_kernelsrcdir}/scripts/*.c
-%{_kernelsrcdir}/scripts/*.sh
+%attr(755,root,root) %{_kernelsrcdir}/scripts/*.sh
 %dir %{_kernelsrcdir}/scripts/selinux
 %{_kernelsrcdir}/scripts/selinux/Makefile
 %dir %{_kernelsrcdir}/scripts/selinux/genheaders
