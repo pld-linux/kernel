@@ -32,7 +32,7 @@ sub wanted
 	return unless -f;
 	return unless /^Kconfig/ or /^Makefile/ or /^Kbuild/;
 	#return if /\.orig$/;
-	return if $File::Find::name =~ /(Documentation|scripts)/;
+	return if $File::Find::name =~ /Documentation/;
 	(my $file = $File::Find::name) =~ s#^\./##;
 	$file =~ m#^(.*)/#;
 	my $dir = $1 || "";
