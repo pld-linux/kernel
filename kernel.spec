@@ -111,7 +111,7 @@
 %if %{with rescuecd}
 %define		alt_kernel	rescuecd
 %else # not rescuecd:
-%define		__alt_kernel	%{?with_pax:pax}%{!?with_grsecurity:nogrsecurity}
+%define		__alt_kernel	longterm%{?with_pax:pax}%{!?with_grsecurity:nogrsecurity}
 %if "%{__alt_kernel}" != ""
 %define		alt_kernel	%{__alt_kernel}
 %endif
