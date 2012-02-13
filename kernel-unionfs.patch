@@ -532,7 +532,7 @@ index 0000000..1adde69
 +
 +For more information, see <http://unionfs.filesystems.org/>.
 diff --git a/MAINTAINERS b/MAINTAINERS
-index 187282d..f77de31 100644
+index de85391..aacd198 100644
 --- a/MAINTAINERS
 +++ b/MAINTAINERS
 @@ -6386,6 +6386,14 @@ F:	Documentation/cdrom/
@@ -575,10 +575,10 @@ index fb68c2b..8ca9290 100644
  obj-$(CONFIG_NFS_FS)		+= nfs/
  obj-$(CONFIG_EXPORTFS)		+= exportfs/
 diff --git a/fs/namei.c b/fs/namei.c
-index 14ab8d3..9b73afa 100644
+index f7593c0..c988d59 100644
 --- a/fs/namei.c
 +++ b/fs/namei.c
-@@ -486,6 +486,7 @@ void release_open_intent(struct nameidata *nd)
+@@ -488,6 +488,7 @@ void release_open_intent(struct nameidata *nd)
  			fput(file);
  	}
  }
@@ -586,7 +586,7 @@ index 14ab8d3..9b73afa 100644
  
  static inline int d_revalidate(struct dentry *dentry, struct nameidata *nd)
  {
-@@ -1747,6 +1748,42 @@ struct dentry *lookup_one_len(const char *name, struct dentry *base, int len)
+@@ -1755,6 +1756,42 @@ struct dentry *lookup_one_len(const char *name, struct dentry *base, int len)
  	return __lookup_hash(&this, base, NULL);
  }
  
@@ -626,10 +626,10 @@ index 14ab8d3..9b73afa 100644
 +	return __lookup_hash(&this, base, nd);
 +}
 +
- int user_path_at(int dfd, const char __user *name, unsigned flags,
- 		 struct path *path)
+ int user_path_at_empty(int dfd, const char __user *name, unsigned flags,
+ 		 struct path *path, int *empty)
  {
-@@ -3346,6 +3383,7 @@ EXPORT_SYMBOL(get_write_access); /* binfmt_aout */
+@@ -3375,6 +3412,7 @@ EXPORT_SYMBOL(get_write_access); /* binfmt_aout */
  EXPORT_SYMBOL(getname);
  EXPORT_SYMBOL(lock_rename);
  EXPORT_SYMBOL(lookup_one_len);
@@ -774,11 +774,11 @@ index 0000000..f3c1ac4
 +	  If you say Y here, you can turn on debugging output from Unionfs.
 diff --git a/fs/unionfs/Makefile b/fs/unionfs/Makefile
 new file mode 100644
-index 0000000..a1e4354
+index 0000000..16ce225
 --- /dev/null
 +++ b/fs/unionfs/Makefile
 @@ -0,0 +1,17 @@
-+UNIONFS_VERSION="2.5.10 (for 3.0.4)"
++UNIONFS_VERSION="2.5.11 (for 3.0.18)"
 +
 +EXTRA_CFLAGS += -DUNIONFS_VERSION=\"$(UNIONFS_VERSION)\"
 +
@@ -6525,7 +6525,7 @@ index 0000000..9040394
 +}
 diff --git a/fs/unionfs/main.c b/fs/unionfs/main.c
 new file mode 100644
-index 0000000..f4bcd89
+index 0000000..99aab4c
 --- /dev/null
 +++ b/fs/unionfs/main.c
 @@ -0,0 +1,763 @@
@@ -7231,7 +7231,7 @@ index 0000000..f4bcd89
 +	struct dentry *dentry;
 +
 +	dentry = mount_nodev(fs_type, flags, raw_data, unionfs_read_super);
-+	if (!PTR_ERR(dentry))
++	if (!IS_ERR(dentry))
 +		UNIONFS_SB(dentry->d_sb)->dev_name =
 +			kstrdup(dev_name, GFP_KERNEL);
 +	return dentry;
@@ -11342,10 +11342,10 @@ index 1e5df2a..01ee54d 100644
  #define USBDEVICE_SUPER_MAGIC	0x9fa2
  #define CGROUP_SUPER_MAGIC	0x27e0eb
 diff --git a/include/linux/namei.h b/include/linux/namei.h
-index eba45ea..8e19e9c 100644
+index 82ab16b..0afd70b 100644
 --- a/include/linux/namei.h
 +++ b/include/linux/namei.h
-@@ -81,8 +81,11 @@ extern int vfs_path_lookup(struct dentry *, struct vfsmount *,
+@@ -83,8 +83,11 @@ extern int vfs_path_lookup(struct dentry *, struct vfsmount *,
  
  extern struct file *lookup_instantiate_filp(struct nameidata *nd, struct dentry *dentry,
  		int (*open)(struct inode *, struct file *));
