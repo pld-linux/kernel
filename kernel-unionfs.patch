@@ -532,10 +532,10 @@ index 0000000..1adde69
 +
 +For more information, see <http://unionfs.filesystems.org/>.
 diff --git a/MAINTAINERS b/MAINTAINERS
-index 28f65c2..512f312 100644
+index f986e7d..d162994 100644
 --- a/MAINTAINERS
 +++ b/MAINTAINERS
-@@ -6612,6 +6612,14 @@ F:	Documentation/cdrom/
+@@ -6755,6 +6755,14 @@ F:	Documentation/cdrom/
  F:	drivers/cdrom/cdrom.c
  F:	include/linux/cdrom.h
  
@@ -551,7 +551,7 @@ index 28f65c2..512f312 100644
  M:	Artem Bityutskiy <dedekind1@gmail.com>
  W:	http://www.linux-mtd.infradead.org/
 diff --git a/fs/Kconfig b/fs/Kconfig
-index 9fe0b34..e863a66 100644
+index 6ad58a5..4699ff1 100644
 --- a/fs/Kconfig
 +++ b/fs/Kconfig
 @@ -194,6 +194,7 @@ if MISC_FILESYSTEMS
@@ -563,7 +563,7 @@ index 9fe0b34..e863a66 100644
  source "fs/hfsplus/Kconfig"
  source "fs/befs/Kconfig"
 diff --git a/fs/Makefile b/fs/Makefile
-index afc1096..2c0627b 100644
+index d2c3353..6fb7641 100644
 --- a/fs/Makefile
 +++ b/fs/Makefile
 @@ -82,6 +82,7 @@ obj-$(CONFIG_ISO9660_FS)	+= isofs/
@@ -575,10 +575,10 @@ index afc1096..2c0627b 100644
  obj-$(CONFIG_NFS_FS)		+= nfs/
  obj-$(CONFIG_EXPORTFS)		+= exportfs/
 diff --git a/fs/namei.c b/fs/namei.c
-index 2826db3..38628ef 100644
+index 5008f01..411dbaa 100644
 --- a/fs/namei.c
 +++ b/fs/namei.c
-@@ -490,6 +490,7 @@ void release_open_intent(struct nameidata *nd)
+@@ -492,6 +492,7 @@ void release_open_intent(struct nameidata *nd)
  			fput(file);
  	}
  }
@@ -586,7 +586,7 @@ index 2826db3..38628ef 100644
  
  static inline int d_revalidate(struct dentry *dentry, struct nameidata *nd)
  {
-@@ -1807,6 +1808,42 @@ struct dentry *lookup_one_len(const char *name, struct dentry *base, int len)
+@@ -1803,6 +1804,42 @@ struct dentry *lookup_one_len(const char *name, struct dentry *base, int len)
  	return __lookup_hash(&this, base, NULL);
  }
  
@@ -626,10 +626,10 @@ index 2826db3..38628ef 100644
 +	return __lookup_hash(&this, base, nd);
 +}
 +
- int user_path_at(int dfd, const char __user *name, unsigned flags,
- 		 struct path *path)
+ int user_path_at_empty(int dfd, const char __user *name, unsigned flags,
+ 		 struct path *path, int *empty)
  {
-@@ -3369,6 +3406,7 @@ EXPORT_SYMBOL(get_write_access); /* binfmt_aout */
+@@ -3383,6 +3420,7 @@ EXPORT_SYMBOL(get_write_access); /* binfmt_aout */
  EXPORT_SYMBOL(getname);
  EXPORT_SYMBOL(lock_rename);
  EXPORT_SYMBOL(lookup_one_len);
@@ -717,7 +717,7 @@ index fa2defa..ba17a96 100644
  		if (off_in && copy_to_user(off_in, off, sizeof(loff_t)))
  			ret = -EFAULT;
 diff --git a/fs/stack.c b/fs/stack.c
-index b4f2ab4..7c61d05 100644
+index 9c11519..9e7dbfe 100644
 --- a/fs/stack.c
 +++ b/fs/stack.c
 @@ -1,8 +1,20 @@
@@ -774,11 +774,11 @@ index 0000000..f3c1ac4
 +	  If you say Y here, you can turn on debugging output from Unionfs.
 diff --git a/fs/unionfs/Makefile b/fs/unionfs/Makefile
 new file mode 100644
-index 0000000..623e2b5
+index 0000000..d45ae17
 --- /dev/null
 +++ b/fs/unionfs/Makefile
 @@ -0,0 +1,17 @@
-+UNIONFS_VERSION="2.5.10 (for 3.1.0-rc4)"
++UNIONFS_VERSION="2.5.11 (for 3.2.2)"
 +
 +EXTRA_CFLAGS += -DUNIONFS_VERSION=\"$(UNIONFS_VERSION)\"
 +
@@ -4856,10 +4856,10 @@ index 0000000..f583c8f
 +};
 diff --git a/fs/unionfs/inode.c b/fs/unionfs/inode.c
 new file mode 100644
-index 0000000..83cb681
+index 0000000..afc9a2d
 --- /dev/null
 +++ b/fs/unionfs/inode.c
-@@ -0,0 +1,1084 @@
+@@ -0,0 +1,1085 @@
 +/*
 + * Copyright (c) 2003-2011 Erez Zadok
 + * Copyright (c) 2003-2006 Charles P. Wright
@@ -5190,7 +5190,8 @@ index 0000000..83cb681
 +	fsstack_copy_inode_size(dir, lower_new_dentry->d_parent->d_inode);
 +
 +	/* propagate number of hard-links */
-+	set_nlink(old_dentry->d_inode, unionfs_get_nlinks(old_dentry->d_inode));
++	set_nlink(old_dentry->d_inode,
++		  unionfs_get_nlinks(old_dentry->d_inode));
 +	/* new dentry's ctime may have changed due to hard-link counts */
 +	unionfs_copy_attr_times(new_dentry->d_inode);
 +
@@ -6522,7 +6523,7 @@ index 0000000..041d674
 +}
 diff --git a/fs/unionfs/main.c b/fs/unionfs/main.c
 new file mode 100644
-index 0000000..87cd1fc
+index 0000000..ee78f1d
 --- /dev/null
 +++ b/fs/unionfs/main.c
 @@ -0,0 +1,752 @@
@@ -7217,7 +7218,7 @@ index 0000000..87cd1fc
 +	struct dentry *dentry;
 +
 +	dentry = mount_nodev(fs_type, flags, raw_data, unionfs_read_super);
-+	if (!PTR_ERR(dentry))
++	if (!IS_ERR(dentry))
 +		UNIONFS_SB(dentry->d_sb)->dev_name =
 +			kstrdup(dev_name, GFP_KERNEL);
 +	return dentry;
@@ -7666,7 +7667,7 @@ index 0000000..59b7333
 +}
 diff --git a/fs/unionfs/rename.c b/fs/unionfs/rename.c
 new file mode 100644
-index 0000000..c8ab910
+index 0000000..ce85b84
 --- /dev/null
 +++ b/fs/unionfs/rename.c
 @@ -0,0 +1,522 @@
@@ -7885,7 +7886,7 @@ index 0000000..c8ab910
 +					unlink_dir_dentry->d_inode);
 +		/* propagate number of hard-links */
 +		set_nlink(new_parent->d_inode,
-+			unionfs_get_nlinks(new_parent->d_inode));
++			  unionfs_get_nlinks(new_parent->d_inode));
 +
 +		unlock_dir(unlink_dir_dentry);
 +		if (!err) {
@@ -8398,7 +8399,7 @@ index 0000000..c2dfb94
 +#endif /* not _SIOQ_H */
 diff --git a/fs/unionfs/subr.c b/fs/unionfs/subr.c
 new file mode 100644
-index 0000000..bdca2f7
+index 0000000..e7fc5a5
 --- /dev/null
 +++ b/fs/unionfs/subr.c
 @@ -0,0 +1,95 @@
@@ -10222,7 +10223,7 @@ index 0000000..8e7fcfb
 +#endif	/* not _UNION_H_ */
 diff --git a/fs/unionfs/unlink.c b/fs/unionfs/unlink.c
 new file mode 100644
-index 0000000..bf447bb
+index 0000000..25943a5
 --- /dev/null
 +++ b/fs/unionfs/unlink.c
 @@ -0,0 +1,278 @@
@@ -11316,7 +11317,7 @@ index da317c7..64f1ced 100644
   */
  
 diff --git a/include/linux/magic.h b/include/linux/magic.h
-index 1e5df2a..01ee54d 100644
+index 2d4beab..39f5798 100644
 --- a/include/linux/magic.h
 +++ b/include/linux/magic.h
 @@ -50,6 +50,8 @@
@@ -11329,10 +11330,10 @@ index 1e5df2a..01ee54d 100644
  #define USBDEVICE_SUPER_MAGIC	0x9fa2
  #define CGROUP_SUPER_MAGIC	0x27e0eb
 diff --git a/include/linux/namei.h b/include/linux/namei.h
-index 76fe2c6..7230829 100644
+index ffc0213..99802c3 100644
 --- a/include/linux/namei.h
 +++ b/include/linux/namei.h
-@@ -82,8 +82,11 @@ extern int vfs_path_lookup(struct dentry *, struct vfsmount *,
+@@ -84,8 +84,11 @@ extern int vfs_path_lookup(struct dentry *, struct vfsmount *,
  
  extern struct file *lookup_instantiate_filp(struct nameidata *nd, struct dentry *dentry,
  		int (*open)(struct inode *, struct file *));
@@ -11389,10 +11390,10 @@ index 0000000..c84d97e
 +#endif /* _LINUX_UNIONFS_H */
 +
 diff --git a/security/security.c b/security/security.c
-index 0e4fccf..4d1b37d 100644
+index e2f684a..23ab419 100644
 --- a/security/security.c
 +++ b/security/security.c
-@@ -520,6 +520,7 @@ int security_inode_permission(struct inode *inode, int mask)
+@@ -558,6 +558,7 @@ int security_inode_permission(struct inode *inode, int mask)
  		return 0;
  	return security_ops->inode_permission(inode, mask);
  }

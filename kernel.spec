@@ -27,7 +27,7 @@
 %bcond_with	verbose		# verbose build (V=1)
 %bcond_with	reiser4		# support for reiser4 fs (experimental)
 
-%bcond_without	grsecurity	# don't build grsecurity nor pax at all
+%bcond_with	grsecurity	# don't build grsecurity nor pax at all
 %bcond_with	pax		# build pax and grsecurity (ie. grsecurity && pax)
 
 %bcond_with	fbcondecor	# build fbcondecor (disable FB_TILEBLITTING and affected fb modules)
@@ -90,14 +90,14 @@
 %define		have_pcmcia	0
 %endif
 
-%define		rel		0.1
+%define		rel		1
 %define		basever		3.2
-%define		postver		.5
+%define		postver		.6
 
 # __alt_kernel is list of features, empty string if none set
 # _alt kernel is defined as: %{nil}%{?alt_kernel:-%{?alt_kernel}} (defined in rpm.macros)
 # alt_kernel should be defined if __alt_kernel has non-empty value (for %{?alt_kernel:foo} constructs)
-%define		__alt_kernel	%{?with_pax:pax}%{!?with_grsecurity:nogrsecurity}
+%define		__alt_kernel	%{?with_pax:pax}%{?with_grsecurity:grsecurity}
 
 %if "%{__alt_kernel}" != ""
 %define		alt_kernel	%{__alt_kernel}
@@ -135,7 +135,7 @@ Source0:	http://www.kernel.org/pub/linux/kernel/v3.x/linux-%{basever}.tar.xz
 # Source0-md5:	364066fa18767ec0ae5f4e4abcf9dc51
 %if "%{postver}" != ".0"
 Patch0:		http://www.kernel.org/pub/linux/kernel/v3.x/patch-%{version}.bz2
-# Patch0-md5:	fb4d0b76b4c9a42977d75c4b2f3948d0
+# Patch0-md5:	2bd4679899df503177a3b61ae2068749
 %endif
 
 Source3:	kernel-autoconf.h
@@ -220,18 +220,18 @@ Patch59:	kernel-rndis_host-wm5.patch
 # http://patches.aircrack-ng.org/hostap-kernel-2.6.18.patch
 Patch85:	kernel-hostap.patch
 
-# http://vserver.13thfloor.at/Experimental/patch-3.1.1-vs2.3.2.diff
+# http://vserver.13thfloor.at/Experimental/patch-3.2.5-vs2.3.2.6.diff
 Patch100:	kernel-vserver-2.3.patch
 Patch101:	kernel-vserver-fixes.patch
 
-# http://download.filesystems.org/unionfs/unionfs-2.x/unionfs-2.5.10_for_3.1.0-rc4.diff.gz
+# http://download.filesystems.org/unionfs/unionfs-2.x/unionfs-2.5.11_for_3.2.2.diff.gz
 Patch140:	kernel-unionfs.patch
 
 # git://aufs.git.sourceforge.net/gitroot/aufs/aufs3-standalone.git, read README
 # Patch creation:
 # git clone git://aufs.git.sourceforge.net/gitroot/aufs/aufs3-standalone.git
 # cd aufs3-standalone
-# git checkout -b aufs3.0 origin/aufs3.0
+# git checkout -b aufs3.2 origin/aufs3.2
 # cat aufs3-kbuild.patch aufs3-base.patch aufs3-standalone.patch > ~/rpm/packages/kernel/kernel-aufs3.patch
 # mkdir linux
 # cp -a Documentation fs include linux
