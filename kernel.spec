@@ -94,7 +94,7 @@
 
 %define		basever		3.0
 %define		postver		.21
-%define		rel		1
+%define		rel		2
 
 %define		_enable_debug_packages			0
 
@@ -123,7 +123,7 @@
 # modules will be looked from /lib/modules/%{kernel_release}
 # localversion is just that without version for "> localversion"
 %define		localversion	%{rel}
-%define		kernel_release	%{version}%{?alt_kernel:_%{alt_kernel}}-%{localversion}
+%define		kernel_release	%{version}%{?alt_kernel:.%{alt_kernel}}-%{localversion}
 
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de.UTF-8):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
