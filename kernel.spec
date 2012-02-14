@@ -94,7 +94,7 @@
 
 %define		basever		3.0
 %define		postver		.21
-%define		rel		2
+%define		rel		3
 
 %define		_enable_debug_packages			0
 
@@ -111,7 +111,7 @@
 %if %{with rescuecd}
 %define		alt_kernel	rescuecd
 %else # not rescuecd:
-%define		__alt_kernel	longterm%{?with_pax:pax}%{!?with_grsecurity:nogrsecurity}
+%define		__alt_kernel	longterm%{?with_pax:.pax}%{!?with_grsecurity:.nogrsecurity}
 %if "%{__alt_kernel}" != ""
 %define		alt_kernel	%{__alt_kernel}
 %endif
@@ -800,7 +800,7 @@ sed -i 's/-Werror//' arch/alpha/kernel/Makefile
 #%patch50000 -p1
 
 # Fix EXTRAVERSION in main Makefile
-sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{?alt_kernel:_%{alt_kernel}}#g' Makefile
+sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{?alt_kernel:.%{alt_kernel}}#g' Makefile
 
 # cleanup backups after patching
 find '(' -name '*~' -o -name '*.orig' -o -name '.gitignore' ')' -print0 | xargs -0 -r -l512 rm -f
