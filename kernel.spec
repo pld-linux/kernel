@@ -770,7 +770,7 @@ exit 0
 #%patch50000 -p1
 
 # Fix EXTRAVERSION in main Makefile
-sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{?alt_kernel:_%{alt_kernel}}#g' Makefile
+sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{?alt_kernel:.%{alt_kernel}}#g' Makefile
 
 # cleanup backups after patching
 find '(' -name '*~' -o -name '*.orig' -o -name '.gitignore' ')' -print0 | xargs -0 -r -l512 rm -f
