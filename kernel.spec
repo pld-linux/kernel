@@ -93,8 +93,8 @@
 %endif
 
 %define		basever		3.0
-%define		postver		.22
-%define		rel		2
+%define		postver		.24
+%define		rel		0.1
 
 %define		_enable_debug_packages			0
 
@@ -140,7 +140,7 @@ Source0:	http://www.kernel.org/pub/linux/kernel/v3.x/linux-%{basever}.tar.xz
 # Source0-md5:	ecf932280e2441bdd992423ef3d55f8f
 %if "%{postver}" != ".0"
 Patch0:		http://www.kernel.org/pub/linux/kernel/v3.x/patch-%{version}.bz2
-# Patch0-md5:	56e1ef2134c60d2aaacdb25c3831a123
+# Patch0-md5:	73500c48851f07c4d8d2ee458cd78108
 %endif
 
 Source3:	kernel-autoconf.h
