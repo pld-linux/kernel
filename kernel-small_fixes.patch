@@ -401,19 +401,6 @@ Signed-off-by: Sharyathi Nagesh <sharyathi@xxxxxxxxxx>
 Acked-by: Serge E. Hallyn <serge@xxxxxxxxxx>
 -----------------
 
---- kernel-2.6.27.46/arch/sparc/mm/init.c~	2010-05-08 23:56:23.015019695 +0000
-+++ kernel-2.6.27.46/arch/sparc/mm/init.c	2010-05-08 23:55:50.187439000 +0000
-@@ -312,8 +312,10 @@
- pgprot_t PAGE_SHARED __read_mostly;
- EXPORT_SYMBOL(PAGE_SHARED);
- 
-+#ifdef CONFIG_PAX_PAGEEXEC
- pgprot_t PAGE_SHARED_NOEXEC __read_mostly;
- EXPORT_SYMBOL(PAGE_SHARED_NOEXEC);
-+#endif
- 
- void __init paging_init(void)
- {
 Subject: [PATCH] Disallow 32bit project quota id.
 
 Currently on-disk structure is able to keep only 16bit project quota id,
@@ -456,3 +443,17 @@ index 237f5ff..4fec427 100644
 1.7.2.2
 
 
+gcc-6:4.6.2-6.x86_64 thinks there is duplicate padding:
+include/linux/kvm.h:240:9: error: duplicate member 'padding'
+upstream: https://github.com/torvalds/linux/commit/2f8b9ee14eb439008e0c5131116ea6baa40dba50
+--- linux-2.6.27/include/linux/kvm.h~	2008-10-10 01:13:53.000000000 +0300
++++ linux-2.6.27/include/linux/kvm.h	2012-03-14 23:08:25.445571026 +0200
+@@ -237,7 +237,7 @@
+ 	__u32 padding;
+ 	union {
+ 		void __user *dirty_bitmap; /* one bit per page */
+-		__u64 padding;
++		__u64 padding2;
+ 	};
+ };
+ 
