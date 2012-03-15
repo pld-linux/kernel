@@ -14775,21 +14775,6 @@ diff -urNp linux-2.6.27.10/fs/compat.c linux-2.6.27.10/fs/compat.c
  
  #include <asm/uaccess.h>
  #include <asm/mmu_context.h>
-@@ -1298,14 +1299,12 @@ static int compat_copy_strings(int argc,
- 			if (!kmapped_page || kpos != (pos & PAGE_MASK)) {
- 				struct page *page;
- 
--#ifdef CONFIG_STACK_GROWSUP
- 				ret = expand_stack_downwards(bprm->vma, pos);
- 				if (ret < 0) {
- 					/* We've exceed the stack rlimit. */
- 					ret = -E2BIG;
- 					goto out;
- 				}
--#endif
- 				ret = get_user_pages(current, bprm->mm, pos,
- 						     1, 1, 1, &page, NULL);
- 				if (ret <= 0) {
 @@ -1351,6 +1350,11 @@ int compat_do_execve(char * filename,
  	compat_uptr_t __user *envp,
  	struct pt_regs * regs)
@@ -16588,9 +16573,8 @@ diff -urNp linux-2.6.27.10/fs/pipe.c linux-2.6.27.10/fs/pipe.c
  static int pipefs_delete_dentry(struct dentry *dentry)
  {
  	/*
-diff -urNp linux-2.6.27.10/fs/proc/array.c linux-2.6.27.10/fs/proc/array.c
---- linux-2.6.27.10/fs/proc/array.c	2008-11-07 12:55:34.000000000 -0500
-+++ linux-2.6.27.10/fs/proc/array.c	2008-11-18 03:38:45.000000000 -0500
+--- linux-2.6.27.61/fs/proc/array.c~	2012-03-15 00:38:20.000000000 +0200
++++ linux-2.6.27.61/fs/proc/array.c	2012-03-15 00:49:58.015131576 +0200
 @@ -315,6 +315,21 @@ static inline void task_context_switch_c
  			p->nivcsw);
  }
@@ -16654,17 +16638,17 @@ diff -urNp linux-2.6.27.10/fs/proc/array.c linux-2.6.27.10/fs/proc/array.c
  	/* scale priority and nice values from timeslices to -20..20 */
  	/* to make it look like a "normal" Unix priority/nice value  */
  	priority = task_prio(task);
-@@ -469,9 +508,15 @@ static int do_task_stat(struct seq_file 
+@@ -567,9 +567,15 @@
  		vsize,
  		mm ? get_mm_rss(mm) : 0,
  		rsslim,
 +#ifdef CONFIG_GRKERNSEC_PROC_MEMMAP
-+		PAX_RAND_FLAGS(mm) ? 1 : (mm ? mm->start_code : 0),
-+		PAX_RAND_FLAGS(mm) ? 1 : (mm ? mm->end_code : 0),
++		PAX_RAND_FLAGS(mm) ? 1 : (mm ? (permitted ? mm->start_code : 1) : 0),
++		PAX_RAND_FLAGS(mm) ? 1 : (mm ? (permitted ? mm->end_code : 1) : 0),
 +		PAX_RAND_FLAGS(mm) ? 0 : ((permitted && mm) ? mm->start_stack : 0),
 +#else
- 		mm ? mm->start_code : 0,
- 		mm ? mm->end_code : 0,
+ 		mm ? (permitted ? mm->start_code : 1) : 0,
+ 		mm ? (permitted ? mm->end_code : 1) : 0,
  		(permitted && mm) ? mm->start_stack : 0,
 +#endif
  		esp,
@@ -16681,9 +16665,8 @@ diff -urNp linux-2.6.27.10/fs/proc/array.c linux-2.6.27.10/fs/proc/array.c
 +	return sprintf(buffer, "%u.%u.%u.%u\n", NIPQUAD(task->signal->curr_ip));
 +}
 +#endif
-diff -urNp linux-2.6.27.10/fs/proc/base.c linux-2.6.27.10/fs/proc/base.c
---- linux-2.6.27.10/fs/proc/base.c	2008-11-07 12:55:34.000000000 -0500
-+++ linux-2.6.27.10/fs/proc/base.c	2008-11-18 03:38:45.000000000 -0500
+--- linux-2.6.27.61/fs/proc/base.c~	2012-03-15 00:38:20.000000000 +0200
++++ linux-2.6.27.61/fs/proc/base.c	2012-03-15 00:51:33.062818356 +0200
 @@ -79,6 +79,8 @@
  #include <linux/pid_namespace.h>
  #include <linux/vs_context.h>
@@ -16897,16 +16880,16 @@ diff -urNp linux-2.6.27.10/fs/proc/base.c linux-2.6.27.10/fs/proc/base.c
  	put_task_struct(task);
  out:
  	return result;
-@@ -2754,6 +2834,9 @@ int proc_pid_readdir(struct file * filp,
- {
- 	unsigned int nr = filp->f_pos - FIRST_PROCESS_ENTRY;
- 	struct task_struct *reaper = get_proc_task_real(filp->f_path.dentry->d_inode);
+@@ -2839,6 +2839,9 @@
+ 	struct task_struct *reaper;
+ 	struct tgid_iter iter;
+ 	struct pid_namespace *ns;
 +#if defined(CONFIG_GRKERNSEC_PROC_USER) || defined(CONFIG_GRKERNSEC_PROC_USERGROUP)
 +	struct task_struct *tmp = current;
 +#endif
- 	struct tgid_iter iter;
- 	struct pid_namespace *ns;
  
+ 	if (filp->f_pos >= PID_MAX_LIMIT + TGID_OFFSET)
+ 		goto out_no_task;
 @@ -2772,6 +2855,17 @@ int proc_pid_readdir(struct file * filp,
  	for (iter = next_tgid(ns, iter);
  	     iter.task;
@@ -17117,9 +17100,8 @@ diff -urNp linux-2.6.27.10/fs/proc/root.c linux-2.6.27.10/fs/proc/root.c
  	proc_sys_init();
  }
  
-diff -urNp linux-2.6.27.10/fs/proc/task_mmu.c linux-2.6.27.10/fs/proc/task_mmu.c
---- linux-2.6.27.10/fs/proc/task_mmu.c	2008-12-21 01:16:51.000000000 -0500
-+++ linux-2.6.27.10/fs/proc/task_mmu.c	2008-12-21 01:13:46.000000000 -0500
+--- linux-2.6.27.61/fs/proc/task_mmu.c~	2012-03-15 00:54:59.000000000 +0200
++++ linux-2.6.27.61/fs/proc/task_mmu.c	2012-03-15 00:55:04.485835446 +0200
 @@ -46,15 +46,26 @@ void task_mem(struct seq_file *m, struct
  		"VmStk:\t%8lu kB\n"
  		"VmExe:\t%8lu kB\n"
@@ -17186,13 +17168,9 @@ diff -urNp linux-2.6.27.10/fs/proc/task_mmu.c linux-2.6.27.10/fs/proc/task_mmu.c
  			MAJOR(dev), MINOR(dev), ino, &len);
  
  	/*
-@@ -234,11 +260,11 @@ static void show_map_vma(struct seq_file
- 		const char *name = arch_vma_name(vma);
- 		if (!name) {
- 			if (mm) {
--				if (vma->vm_start <= mm->start_brk &&
--						vma->vm_end >= mm->brk) {
-+				if (vma->vm_start <= mm->brk && vma->vm_end >= mm->start_brk) {
+@@ -270,8 +270,9 @@
+ 				if (vma->vm_start <= mm->brk &&
+ 						vma->vm_end >= mm->start_brk) {
  					name = "[heap]";
 -				} else if (vma->vm_start <= mm->start_stack &&
 -					   vma->vm_end >= mm->start_stack) {
