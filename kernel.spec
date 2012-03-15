@@ -1237,7 +1237,8 @@ PreInstallKernel() {
 	install arch/arm/boot/zImage $KERNEL_INSTALL_DIR/boot/vmlinuz-$KernelVer
 %endif
 
-	%{__make} %{MakeOpts} modules_install firmware_install \
+	install -d $KERNEL_INSTALL_DIR/lib/firmware/$KernelVer
+	%{__make} %{MakeOpts} -j1 modules_install firmware_install \
 		%{?with_verbose:V=1} \
 		DEPMOD=%DepMod \
 		INSTALL_MOD_PATH=$KERNEL_INSTALL_DIR \
