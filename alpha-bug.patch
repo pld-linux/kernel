@@ -1,29 +1,35 @@
-try to fix alpha build:
+https://github.com/torvalds/linux/commit/945048ca36173315afa2f0c53bed21ba01a588c1.patch
 
-kernel-2.6.27.61/arch/alpha/include/asm/bug.h: In function `unknown_bootoption':
-kernel-2.6.27.61/arch/alpha/include/asm/bug.h:13: warning: asm operand 1 probably doesn't match constraints
-kernel-2.6.27.61/arch/alpha/include/asm/bug.h:13: warning: asm operand 2 probably doesn't match constraints
-kernel-2.6.27.61/arch/alpha/include/asm/bug.h:13: error: impossible constraint in `asm'
-kernel-2.6.27.61/arch/alpha/include/asm/bug.h: In function `__BUG':
-kernel-2.6.27.61/arch/alpha/include/asm/bug.h:13: warning: asm operand 1 probably doesn't match constraints
-kernel-2.6.27.61/arch/alpha/include/asm/bug.h:13: warning: asm operand 2 probably doesn't match constraints
-make[1]: *** [init/main.o] Error 1
+From 945048ca36173315afa2f0c53bed21ba01a588c1 Mon Sep 17 00:00:00 2001
+From: Ivan Kokshaysky <ink@jurassic.park.msu.ru>
+Date: Thu, 29 Jan 2009 14:25:20 -0800
+Subject: [PATCH] alpha: fix the BUG() macro
 
-thus, reverting ed6b9b97f42c091630335bfb71a2931e6f86388b
+The commit "alpha: teach the compiler that BUG doesn't return"
+(ed6b9b97f42c091630335bfb71a2931e6f86388b) moved the asm code into inline
+function which takes __FILE__ and __LINE__ as arguments.  This violates
+asm constrains there ("i" - an immediate operand with constant value), so
+that compile may result in warning or error, depending on compiler
+version.
 
---- linux-2.6.27/arch/alpha/include/asm/bug.h~	2012-03-16 09:24:29.000000000 +0000
-+++ linux-2.6.27/arch/alpha/include/asm/bug.h	2012-03-16 09:24:35.000000000 +0000
-@@ -1,24 +1,14 @@
- #ifndef _ALPHA_BUG_H
- #define _ALPHA_BUG_H
- 
--#include <linux/linkage.h>
--
- #ifdef CONFIG_BUG
- #include <asm/pal.h>
+Just adding an infinite loop to the BUG() is sufficient.
+
+Signed-off-by: Ivan Kokshaysky <ink@jurassic.park.msu.ru>
+Cc: Richard Henderson <rth@twiddle.net>
+Signed-off-by: Andrew Morton <akpm@linux-foundation.org>
+Signed-off-by: Linus Torvalds <torvalds@linux-foundation.org>
+---
+ arch/alpha/include/asm/bug.h |   17 ++++++-----------
+ 1 files changed, 6 insertions(+), 11 deletions(-)
+
+diff --git a/arch/alpha/include/asm/bug.h b/arch/alpha/include/asm/bug.h
+index 695a5ee..7b85b7c 100644
+--- a/arch/alpha/include/asm/bug.h
++++ b/arch/alpha/include/asm/bug.h
+@@ -8,17 +8,12 @@
  
  /* ??? Would be nice to use .gprel32 here, but we can't be sure that the
--   function loaded the GP, so this could fail in modules.  */
+    function loaded the GP, so this could fail in modules.  */
 -static inline void ATTRIB_NORET __BUG(const char *file, int line)
 -{
 -	__asm__ __volatile__(
@@ -35,10 +41,15 @@ thus, reverting ed6b9b97f42c091630335bfb71a2931e6f86388b
 -}
 -
 -#define BUG() __BUG(__FILE__, __LINE__)
-+ *    function loaded the GP, so this could fail in modules.  */
-+#define BUG() \
-+	  __asm__ __volatile__("call_pal %0  # bugchk\n\t"".long %1\n\t.8byte %2" \
-+			  		       : : "i" (PAL_bugchk), "i"(__LINE__), "i"(__FILE__))
++#define BUG()	{							\
++	__asm__ __volatile__(						\
++		"call_pal %0  # bugchk\n\t"				\
++		".long %1\n\t.8byte %2"					\
++		: : "i"(PAL_bugchk), "i"(__LINE__), "i"(__FILE__));	\
++	for ( ; ; ); }
  
  #define HAVE_ARCH_BUG
  #endif
+-- 
+1.7.5.4
+
