@@ -35,7 +35,6 @@
 %bcond_with	nfsroot		# build with root on NFS support
 
 %bcond_without	imq		# imq support
-%bcond_without	wrr		# wrr support
 %bcond_without	esfq		# esfq support
 %bcond_without	ipv6		# ipv6 support
 
@@ -162,7 +161,6 @@ Source49:	kernel-pax.config
 Source50:	kernel-no-pax.config
 Source55:	kernel-imq.config
 Source56:	kernel-reiser4.config
-Source57:	kernel-wrr.config
 
 Source58:	kernel-inittmpfs.config
 
@@ -181,9 +179,6 @@ Patch16:	kernel-pom-ng-mms-conntrack-nat.patch
 Patch22:	kernel-pom-ng-rsh.patch
 Patch23:	kernel-pom-ng-rpc.patch
 
-# based on http://mike.it-loops.com/rtsp/rtsp-2.6.26.patch
-Patch36:	kernel-nf_rtsp.patch
-
 # http://ftp.linux-vserver.org/pub/people/dhozac/p/k/delta-owner-xid-feat02.diff
 Patch37:	kernel-owner-xid.patch
 
@@ -201,9 +196,6 @@ Patch50:	kernel-imq.patch
 
 # http://www.kernel.org/pub/linux/kernel/people/edward/reiser4/reiser4-for-2.6/reiser4-for-2.6.35.patch.bz2
 Patch51:	kernel-reiser4.patch
-
-# http://www.zz9.dk/patches/wrr-linux-071203-2.6.25.patch.gz
-Patch52:	kernel-wrr.patch
 
 # http://fatooh.org/esfq-2.6/sfq-2.6.24.1.tar.bz2
 Patch53:	kernel-esfq.patch
@@ -673,9 +665,6 @@ sed -i 's/-Werror//' arch/alpha/kernel/Makefile
 # kernel-pom-ng-rpc.patch
 %patch23 -p1
 
-# kernel-nf_rtsp.patch
-%patch36 -p1
-
 # kernel-owner-xid.patch
 %if %{with vserver}
 %patch37 -p1
@@ -702,10 +691,6 @@ sed -i 's/-Werror//' arch/alpha/kernel/Makefile
 # esfq
 %if %{with esfq}
 %patch53 -p1
-%endif
-
-%if %{with wrr}
-%patch52 -p1
 %endif
 
 %patch55 -p1
@@ -962,9 +947,6 @@ EOCONFIG
 		\
 %if %{with reiser4}
 		%{SOURCE56} \
-%endif
-%if %{with wrr}
-		%{SOURCE57} \
 %endif
 %if %{with imq}
 		%{SOURCE55} \
@@ -1269,7 +1251,7 @@ fi
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/net/wireless/hostap/hostap_cs.ko*
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/net/wireless/libertas/*_cs.ko*
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/parport/parport_cs.ko*
-%exclude /lib/modules/%{kernel_release}/kernel/drivers/tty/serial/serial_cs.ko*
+%exclude /lib/modules/%{kernel_release}/kernel/drivers/tty/serial/8250/serial_cs.ko*
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/usb/host/sl811_cs.ko*
 %endif
 %if %{with myown}
@@ -1336,7 +1318,7 @@ fi
 /lib/modules/%{kernel_release}/kernel/drivers/net/wireless/hostap/hostap_cs.ko*
 /lib/modules/%{kernel_release}/kernel/drivers/net/wireless/libertas/*_cs.ko*
 /lib/modules/%{kernel_release}/kernel/drivers/parport/parport_cs.ko*
-/lib/modules/%{kernel_release}/kernel/drivers/tty/serial/serial_cs.ko*
+/lib/modules/%{kernel_release}/kernel/drivers/tty/serial/8250/serial_cs.ko*
 /lib/modules/%{kernel_release}/kernel/drivers/usb/host/sl811_cs.ko*
 %endif
 

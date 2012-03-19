@@ -287,13 +287,13 @@ diff -uNr linux-3.1/drivers/net/imq.c linux-3.1-imq/drivers/net/imq.c
 +#if defined(CONFIG_IPV6) || defined(CONFIG_IPV6_MODULE)
 +	case htons(ETH_P_IPV6): {
 +		const struct ipv6hdr *iph = ipv6_hdr(skb);
-+
++		__be16 frag_off;
 +		if (unlikely(!pskb_may_pull(skb, sizeof(struct ipv6hdr))))
 +			goto other;
 +
 +		addr1 = iph->daddr.s6_addr32[3];
 +		addr2 = iph->saddr.s6_addr32[3];
-+		ihl = ipv6_skip_exthdr(skb, sizeof(struct ipv6hdr), &ip_proto);
++		ihl = ipv6_skip_exthdr(skb, sizeof(struct ipv6hdr), &ip_proto, &frag_off);
 +		if (unlikely(ihl < 0))
 +			goto other;
 +
