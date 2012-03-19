@@ -1067,9 +1067,9 @@ diff -uNr linux-3.1/include/linux/skbuff.h linux-3.1-imq/include/linux/skbuff.h
 --- linux-3.1/include/linux/skbuff.h	2011-10-24 10:10:05.000000000 +0300
 +++ linux-3.1-imq/include/linux/skbuff.h	2011-11-04 11:12:52.116390515 +0200
 @@ -29,6 +29,9 @@
- #include <linux/dmaengine.h>
  #include <linux/hrtimer.h>
  #include <linux/dma-mapping.h>
+ #include <linux/netdev_features.h>
 +#if defined(CONFIG_IMQ) || defined(CONFIG_IMQ_MODULE)
 +#include <linux/imq.h>
 +#endif
@@ -1292,7 +1292,7 @@ diff -uNr linux-3.1/net/core/skbuff.c linux-3.1-imq/net/core/skbuff.c
 +		printk(KERN_WARNING
 +				"IMQ: kfree_skb: skb->nf_queue_entry != NULL");
 +#endif
- #if defined(CONFIG_NF_CONNTRACK) || defined(CONFIG_NF_CONNTRACK_MODULE)
+ #if IS_ENABLED(CONFIG_NF_CONNTRACK)
  	nf_conntrack_put(skb->nfct);
  #endif
 @@ -533,6 +632,9 @@
@@ -1501,15 +1501,15 @@ diff -uNr linux-3.1/net/netfilter/nf_queue.c linux-3.1-imq/net/netfilter/nf_queu
  
  	switch (pf) {
  	case NFPROTO_IPV4:
-@@ -244,7 +277,7 @@
- 		segs->next = NULL;
- 		if (err == 0)
+@@ -299,7 +299,7 @@ int nf_queue(struct sk_buff *skb,
+ 		if (err == 0) {
+ 			nf_bridge_adjust_segmented_data(segs);
  			err = __nf_queue(segs, elem, pf, hook, indev,
 -					   outdev, okfn, queuenum);
-+					 outdev, okfn, queuenum, queuetype);
++					   outdev, okfn, queuenum, queuetype);
+ 		}
  		if (err == 0)
  			queued++;
- 		else
 @@ -299,9 +332,11 @@
  		local_bh_enable();
  		break;
