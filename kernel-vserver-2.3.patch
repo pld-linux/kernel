@@ -24143,12 +24143,12 @@ diff -NurpP --minimal linux-3.2.11/net/bridge/br_multicast.c linux-3.2.11-vs2.3.
 @@ -447,7 +447,7 @@ static struct sk_buff *br_ip6_multicast_
  	ip6h->hop_limit = 1;
  	ipv6_addr_set(&ip6h->daddr, htonl(0xff020000), 0, 0, htonl(1));
- 	ipv6_dev_get_saddr(dev_net(br->dev), br->dev, &ip6h->daddr, 0,
--			   &ip6h->saddr);
-+			   &ip6h->saddr, NULL);
- 	ipv6_eth_mc_map(&ip6h->daddr, eth->h_dest);
- 
- 	hopopt = (u8 *)(ip6h + 1);
+ 	if (ipv6_dev_get_saddr(dev_net(br->dev), br->dev, &ip6h->daddr, 0,
+-			       &ip6h->saddr)) {
++			       &ip6h->saddr, NULL)) {
+ 		kfree_skb(skb);
+ 		return NULL;
+ 	}
 diff -NurpP --minimal linux-3.2.11/net/core/dev.c linux-3.2.11-vs2.3.2.8/net/core/dev.c
 --- linux-3.2.11/net/core/dev.c	2012-03-14 10:22:15.000000000 +0100
 +++ linux-3.2.11-vs2.3.2.8/net/core/dev.c	2012-03-01 21:39:38.000000000 +0100
