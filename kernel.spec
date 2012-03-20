@@ -368,7 +368,11 @@ BuildRequires:	uboot-mkimage
 %endif
 AutoReqProv:	no
 BuildRequires:	/sbin/depmod
+%ifarch ppc
+BuildRequires:	gcc >= 5:3.4
+%else
 BuildRequires:	gcc >= 5:3.2
+%endif
 %{?with_rescuecd:BuildRequires:	lzma >= 1:4.42.2}
 # for hostname command
 BuildRequires:	net-tools
