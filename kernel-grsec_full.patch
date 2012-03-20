@@ -7504,31 +7504,15 @@ diff -urNp linux-3.0.9/arch/x86/include/asm/i387.h linux-3.0.9/arch/x86/include/
  	/*
  	 * Clear the bytes not touched by the fxsave and reserved
  	 * for the SW usage.
-@@ -213,13 +223,8 @@ static inline void fpu_fxsave(struct fpu
- #endif	/* CONFIG_X86_64 */
- 
- /* We need a safe address that is cheap to find and that is already
--   in L1 during context switch. The best choices are unfortunately
--   different for UP and SMP */
--#ifdef CONFIG_SMP
--#define safe_address (__per_cpu_offset[0])
--#else
--#define safe_address (kstat_cpu(0).cpustat.user)
--#endif
-+   in L1 during context switch. */
-+#define safe_address (init_tss[smp_processor_id()].x86_tss.sp0)
+@@ -424,7 +434,7 @@ static inline bool interrupted_kernel_fpu_idle(void)
+ static inline bool interrupted_user_mode(void)
+ {
+ 	struct pt_regs *regs = get_irq_regs();
+-	return regs && user_mode_vm(regs);
++	return regs && user_mode(regs);
+ }
  
  /*
-  * These must be called with preempt disabled
-@@ -312,7 +317,7 @@ static inline void kernel_fpu_begin(void
- 	struct thread_info *me = current_thread_info();
- 	preempt_disable();
- 	if (me->status & TS_USEDFPU)
--		__save_init_fpu(me->task);
-+		__save_init_fpu(current);
- 	else
- 		clts();
- }
 diff -urNp linux-3.0.9/arch/x86/include/asm/io.h linux-3.0.9/arch/x86/include/asm/io.h
 --- linux-3.0.9/arch/x86/include/asm/io.h	2011-11-11 13:12:24.000000000 -0500
 +++ linux-3.0.9/arch/x86/include/asm/io.h	2011-11-15 20:02:59.000000000 -0500
@@ -14977,7 +14961,7 @@ diff -urNp linux-3.0.9/arch/x86/kernel/process_32.c linux-3.0.9/arch/x86/kernel/
  	int cpu = smp_processor_id();
 -	struct tss_struct *tss = &per_cpu(init_tss, cpu);
 +	struct tss_struct *tss = init_tss + cpu;
- 	bool preload_fpu;
+ 	fpu_switch_t fpu;
  
  	/* never put a printk in __switch_to... printk() calls wake_up*() indirectly */
 @@ -327,6 +328,10 @@ __switch_to(struct task_struct *prev_p, 
@@ -14998,9 +14982,9 @@ diff -urNp linux-3.0.9/arch/x86/kernel/process_32.c linux-3.0.9/arch/x86/kernel/
 +	percpu_write(current_task, next_p);
 +	percpu_write(current_tinfo, &next_p->tinfo);
 +
- 	if (preload_fpu)
- 		__math_state_restore();
- 
+ 	/*
+ 	 * Restore %gs if needed (which is common)
+ 	 */
 @@ -371,8 +379,6 @@ __switch_to(struct task_struct *prev_p, 
  	if (prev->gs | next->gs)
  		lazy_load_gs(next->gs);
@@ -16399,25 +16383,17 @@ diff -urNp linux-3.0.9/arch/x86/kernel/traps.c linux-3.0.9/arch/x86/kernel/traps
  	{
  		if (!fixup_exception(regs)) {
  			task->thread.error_code = error_code;
-@@ -723,7 +763,7 @@ asmlinkage void __attribute__((weak)) sm
- void __math_state_restore(void)
+@@ -569,8 +598,8 @@ asmlinkage void __attribute__((weak)) smp_threshold_interrupt(void)
+ void __math_state_restore(struct task_struct *tsk)
  {
- 	struct thread_info *thread = current_thread_info();
--	struct task_struct *tsk = thread->task;
-+	struct task_struct *tsk = current;
+ 	/* We need a safe address that is cheap to find and that is already
+-	   in L1. We've just brought in "tsk->thread.has_fpu", so use that */
+-#define safe_address (tsk->thread.has_fpu)
++	   in L1. */
++#define safe_address (init_tss[smp_processor_id()].x86_tss.sp0)
  
- 	/*
- 	 * Paranoid restore. send a SIGSEGV if we fail to restore the state.
-@@ -750,8 +790,7 @@ void __math_state_restore(void)
-  */
- asmlinkage void math_state_restore(void)
- {
--	struct thread_info *thread = current_thread_info();
--	struct task_struct *tsk = thread->task;
-+	struct task_struct *tsk = current;
- 
- 	if (!tsk_used_math(tsk)) {
- 		local_irq_enable();
+ 	/* AMD K7/K8 CPUs don't save/restore FDP/FIP/FOP unless an exception
+ 	   is pending.  Clear the x87 state here by setting it to fixed
 diff -urNp linux-3.0.9/arch/x86/kernel/verify_cpu.S linux-3.0.9/arch/x86/kernel/verify_cpu.S
 --- linux-3.0.9/arch/x86/kernel/verify_cpu.S	2011-11-11 13:12:24.000000000 -0500
 +++ linux-3.0.9/arch/x86/kernel/verify_cpu.S	2011-11-15 20:02:59.000000000 -0500
