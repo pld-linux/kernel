@@ -11,62 +11,46 @@
  
  /* Some toolchains use a `_' prefix for all user symbols. */
 
-commit 87b09f1f25cd1e01d7c50bf423c7fe33027d7511
-Author: stephen hemminger <shemminger@vyatta.com>
-Date:   Fri Feb 12 06:58:00 2010 +0000
+From: Stephen Hemminger <shemminger@vyatta.com>
 
-    sky2: dont enable PME legacy mode
-    
-    This bit is not changed by vendor driver, and should be left alone.
-    The documentation implies this a debug bit.
-      0 = WAKE# only asserted when VMAIN not available
-      1 = WAKE# is depend on wake events and independent of VMAIN.
-    
-    Signed-off-by: Stephen Hemminger <shemminger@vyatta.com>
-    Signed-off-by: David S. Miller <davem@davemloft.net>
+Some BIOS's don't setup power management correctly (what else is
+new) and don't allow use of PCI Express power control. Add a special
+exception module parameter to allow working around this issue.
+Based on slightly different patch by Knut Petersen.
 
-diff --git b/drivers/net/ethernet/marvell/sky2.c a/drivers/net/ethernet/marvell/sky2.c
-index 2494842..edf37aa 100644
---- b/drivers/net/ethernet/marvell/sky2.c
-+++ a/drivers/net/ethernet/marvell/sky2.c
-@@ -733,6 +733,7 @@ static void sky2_wol_init(struct sky2_port *sky2)
- 	unsigned port = sky2->port;
- 	enum flow_control save_mode;
- 	u16 ctrl;
-+	u32 reg1;
+Reported-by: Arkadiusz Miskiewicz <arekm@maven.pl>
+Signed-off-by: Stephen Hemminger <shemminger@vyatta.com>
+---
+Patch against -net (ie. 3.3.0)
+
+--- a/drivers/net/ethernet/marvell/sky2.c	2012-01-10 10:56:56.855156017 -0800
++++ b/drivers/net/ethernet/marvell/sky2.c	2012-03-21 08:25:52.400929532 -0700
+@@ -95,6 +95,10 @@ static int disable_msi = 0;
+ module_param(disable_msi, int, 0);
+ MODULE_PARM_DESC(disable_msi, "Disable Message Signaled Interrupt (MSI)");
  
- 	/* Bring hardware out of reset */
- 	sky2_write16(hw, B0_CTST, CS_RST_CLR);
-@@ -786,6 +787,11 @@ static void sky2_wol_init(struct sky2_port *sky2)
++static int legacy_pme = 0;
++module_param(legacy_pme, int, 0);
++MODULE_PARM_DESC(legacy_pme, "Legacy power management");
++
+ static DEFINE_PCI_DEVICE_TABLE(sky2_id_table) = {
+ 	{ PCI_DEVICE(PCI_VENDOR_ID_SYSKONNECT, 0x9000) }, /* SK-9Sxx */
+ 	{ PCI_DEVICE(PCI_VENDOR_ID_SYSKONNECT, 0x9E00) }, /* SK-9Exx */
+@@ -867,6 +871,13 @@ static void sky2_wol_init(struct sky2_po
  	/* Disable PiG firmware */
  	sky2_write16(hw, B0_CTST, Y2_HW_WOL_OFF);
  
-+	/* Turn on legacy PCI-Express PME mode */
-+	reg1 = sky2_pci_read32(hw, PCI_DEV_REG1);
-+	reg1 |= PCI_Y2_PME_LEGACY;
-+	sky2_pci_write32(hw, PCI_DEV_REG1, reg1);
++	/* Needed by some broken BIOSes, use PCI rather than PCI-e for WOL */
++	if (legacy_pme) {
++		u32 reg1 = sky2_pci_read32(hw, PCI_DEV_REG1);
++		reg1 |= PCI_Y2_PME_LEGACY;
++		sky2_pci_write32(hw, PCI_DEV_REG1, reg1);
++	}
 +
  	/* block receiver */
  	sky2_write8(hw, SK_REG(port, RX_GMF_CTRL_T), GMF_RST_SET);
- }
-On Sat, 2 Jul 2011, Andi Kleen wrote:
+ 	sky2_read32(hw, B0_CTST);
 
-> > The problem is that blk_peek_request() calls scsi_prep_fn(), which 
-> > does this:
-> > 
-> > 	struct scsi_device *sdev = q->queuedata;
-> > 	int ret = BLKPREP_KILL;
-> > 
-> > 	if (req->cmd_type == REQ_TYPE_BLOCK_PC)
-> > 		ret = scsi_setup_blk_pc_cmnd(sdev, req);
-> > 	return scsi_prep_return(q, req, ret);
-> > 
-> > It doesn't check to see if sdev is NULL, nor does 
-> > scsi_setup_blk_pc_cmnd().  That accounts for this error:
-> 
-> I actually added a NULL check in scsi_setup_blk_pc_cmnd early on,
-> but that just caused RCU CPU stalls afterwards and then eventually
-> a hung system.
 
 The RCU problem is likely to be a separate issue.  It might even be a 
 result of the use-after-free problem with the elevator.
@@ -80,8 +64,6 @@ said before, I'm not certain it's the best thing to do, but it worked
 on my system.
 
 Alan Stern
-
-
 
 
 Index: usb-3.0/drivers/scsi/scsi_lib.c
