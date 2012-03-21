@@ -89,7 +89,7 @@
 %define		have_pcmcia	0
 %endif
 
-%define		rel		1
+%define		rel		2
 %define		basever		3.3
 %define		postver		.0
 
@@ -1067,6 +1067,11 @@ cp -a$l %{srcdir}/* $RPM_BUILD_ROOT%{_kernelsrcdir}
 cp -a %{objdir}/Module.symvers $RPM_BUILD_ROOT%{_kernelsrcdir}
 cp -aL %{objdir}/.config $RPM_BUILD_ROOT%{_kernelsrcdir}
 cp -a %{objdir}/include $RPM_BUILD_ROOT%{_kernelsrcdir}
+# copy arch/x86/include/generated
+for dir in $(cd %{objdir} && find arch -name generated -type d); do
+	cp -a %{objdir}/$dir $RPM_BUILD_ROOT%{_kernelsrcdir}/$dir
+	find $RPM_BUILD_ROOT%{_kernelsrcdir}/$dir -name '.*.cmd' -exec rm "{}" ";"
+done
 
 # disable this here, causes a lot of build-time problems and our rpm-build disables it anyway
 %{__sed} -i -e 's|\(CONSTIFY_PLUGIN.*:=.*\)|# \1|' $RPM_BUILD_ROOT%{_kernelsrcdir}/Makefile
