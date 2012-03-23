@@ -127,3 +127,43 @@ Please read the FAQ at  http://www.tux.org/lkml/
 
 
 
+From: Vasiliy Kulikov <segoon@openwall.com>
+Date: Fri, 23 Mar 2012 20:56:42 +0400
+Subject: [PATCH] proc: fix mount -t proc -o AAA
+
+proc_parse_options() inside of proc_mount() runs only once at the boot
+time without any given options.  So, following umount(2)+mount(2) ignore
+mount options: proc_parse_options() is not called as ->s_root is already
+initialized.  To fix that parse mount options unconditionally.
+
+Signed-off-by: Vasiliy Kulikov <segoon@openwall.com>
+Reported-by: Arkadiusz Miśkiewicz <a.miskiewicz@gmail.com>
+---
+ fs/proc/root.c |    9 +++++----
+ 1 files changed, 5 insertions(+), 4 deletions(-)
+
+diff --git a/fs/proc/root.c b/fs/proc/root.c
+index 46a15d8..eed44bf 100644
+--- a/fs/proc/root.c
++++ b/fs/proc/root.c
+@@ -115,12 +115,13 @@ static struct dentry *proc_mount(struct file_system_type *fs_type,
+ 	if (IS_ERR(sb))
+ 		return ERR_CAST(sb);
+ 
++	if (!proc_parse_options(options, ns)) {
++		deactivate_locked_super(sb);
++		return ERR_PTR(-EINVAL);
++	}
++
+ 	if (!sb->s_root) {
+ 		sb->s_flags = flags;
+-		if (!proc_parse_options(options, ns)) {
+-			deactivate_locked_super(sb);
+-			return ERR_PTR(-EINVAL);
+-		}
+ 		err = proc_fill_super(sb);
+ 		if (err) {
+ 			deactivate_locked_super(sb);
+-- 
+1.7.0.4
+
