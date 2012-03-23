@@ -373,9 +373,10 @@ BuildRequires:	gcc >= 5:3.4
 %else
 BuildRequires:	gcc >= 5:3.2
 %endif
+BuildRequires:	diskspace(%{_builddir}) >= 3.2Gb
+BuildRequires:	diskspace(%{tmpdir}) >= 400Mb
 %{?with_rescuecd:BuildRequires:	lzma >= 1:4.42.2}
 # for hostname command
-BuildRequires:	diskspace(%{_builddir}) >= 3.2Gb
 BuildRequires:	net-tools
 BuildRequires:	perl-base
 BuildRequires:	rpm-build >= 4.4.9-56
