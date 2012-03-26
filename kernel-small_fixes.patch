@@ -167,3 +167,26 @@ index 46a15d8..eed44bf 100644
 -- 
 1.7.0.4
 
+diff --git a/drivers/net/ethernet/realtek/r8169.c b/drivers/net/ethernet/realtek/r8169.c
+index 7a0c800..ec5ebbb 100644
+--- a/drivers/net/ethernet/realtek/r8169.c
++++ b/drivers/net/ethernet/realtek/r8169.c
+@@ -4103,6 +4103,14 @@ rtl8169_init_one(struct pci_dev *pdev, const struct pci_device_id *ent)
+ 	/* Get MAC address */
+ 	for (i = 0; i < ETH_ALEN; i++)
+ 		dev->dev_addr[i] = RTL_R8(MAC0 + i);
++
++	if (!is_valid_ether_addr(dev->dev_addr)) {
++		/* Report it and use a random ethernet address instead */
++		netdev_err(dev, "Invalid MAC address: %pM\n", dev->dev_addr);
++		random_ether_addr(dev->dev_addr);
++		netdev_info(dev, "Using random MAC address: %pM\n",
++			    dev->dev_addr);
++	}
+ 	memcpy(dev->perm_addr, dev->dev_addr, dev->addr_len);
+ 
+ 	SET_ETHTOOL_OPS(dev, &rtl8169_ethtool_ops);
+-- 
+1.7.7.3
+
+  
