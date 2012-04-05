@@ -976,7 +976,7 @@ memtotal=$(awk '/MemTotal|SwapTotal/{ mem += $2 } END { print mem }' /proc/memin
 %ifarch alpha
 %if "%{depmod}" != "/bin/true"
 if [ "$memtotal" -lt "1500000" ]; then
-	echo >&2 depmod needs a lot memory, at least 1.5GiB needed not to run, and you have only $memtotal kB
+	echo >&2 "depmod needs a lot memory, at least 1.5GiB needed to run, and you have only $memtotal kB"
 	exit 1
 fi
 %endif
