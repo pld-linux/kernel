@@ -1055,7 +1055,7 @@ EOCONFIG
 }
 
 BuildConfig() {
-	%{?debug:set -x}
+	set -x
 	set -e
 
 	Config="kernel-%{target_arch_dir}.config"
@@ -1178,7 +1178,7 @@ EOCONFIG
 }
 
 BuildKernel() {
-	%{?debug:set -x}
+	set -x
 	echo "Building kernel $1 ..."
 	install .config %{defconfig}
 	%{__make} %{MakeOpts} mrproper \
@@ -1207,6 +1207,7 @@ BuildKernel() {
 }
 
 PreInstallKernel() {
+	set -x
 	Config="%{_target_base_arch}"
 	KernelVer=%{kernel_release}
 
