@@ -972,6 +972,16 @@ sed -i -e 's/^EXTRA_CFLAGS := -Werror/EXTRA_CFLAGS := /' arch/sparc64/kernel/Mak
 find '(' -name '*~' -o -name '*.orig' -o -name '.gitignore' ')' -print0 | xargs -0 -r -l512 rm -f
 
 %build
+memtotal=$(awk '/MemTotal|SwapTotal/{ mem += $2 } END { print mem }' /proc/meminfo)
+%ifarch alpha
+%if "%{depmod}" != "/bin/true"
+if [ "$memtotal" -lt "1500000" ]; then
+	echo >&2 depmod needs a lot memory, at least 1.5GiB needed not to run, and you have only $memtotal kB
+	exit 1
+fi
+%endif
+%endif
+
 cd linux-%{basever}
 PaXconfig () {
 	set -x
