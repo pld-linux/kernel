@@ -296,6 +296,7 @@ Requires:	virtual(module-tools)
 Requires:	cpuinfo(pae)
 %endif
 %endif
+Suggests:	dracut
 Suggests:	keyutils
 Suggests:	linux-firmware
 Provides:	%{name}(netfilter) = 20070806
@@ -1136,6 +1137,11 @@ mv -f %{initrd_dir}/initrd{,.old} 2> /dev/null
 %{?alt_kernel:mv -f %{initrd_dir}/initrd%{_alt_kernel}{,.old} 2> /dev/null}
 ln -sf initrd-%{kernel_release}.gz %{initrd_dir}/initrd
 %{?alt_kernel:ln -sf initrd-%{kernel_release}.gz %{initrd_dir}/initrd%{_alt_kernel}}
+
+# if dracut is present then generate full-featured initramfs
+if [ -x /sbin/dracut ]; then
+	/sbin/dracut --quiet /boot/initramfs-%{kernel_release}.img %{kernel_release}
+fi
 
 # update boot loaders when old package files are gone from filesystem
 if [ -x /sbin/update-grub -a -f /etc/sysconfig/grub ]; then
