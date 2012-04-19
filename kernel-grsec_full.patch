@@ -15592,9 +15592,9 @@ index 2d8a371..4fa6ae6 100644
 @@ -180,7 +180,7 @@ void dump_stack(void)
  #endif
  
- 	printk("Pid: %d, comm: %.20s %s %s %.*s\n",
--		current->pid, current->comm, print_tainted(),
-+		task_pid_nr(current), current->comm, print_tainted(),
+ 	printk("Pid: %d, comm: %.20s xid: #%u %s %s %.*s\n",
+-		current->pid, current->comm, current->xid, print_tainted(),
++		task_pid_nr(current), current->comm, current->xid, print_tainted(),
  		init_utsname()->release,
  		(int)strcspn(init_utsname()->version, " "),
  		init_utsname()->version);
@@ -20211,9 +20211,9 @@ index 39493bc..196816d 100644
 @@ -170,7 +170,7 @@ void __show_regs(struct pt_regs *regs, int all)
  	if (!board)
  		board = "";
- 	printk(KERN_INFO "Pid: %d, comm: %.20s %s %s %.*s %s\n",
--		current->pid, current->comm, print_tainted(),
-+		task_pid_nr(current), current->comm, print_tainted(),
+ 	printk(KERN_INFO "Pid: %d, comm: %.20s xid: #%u %s %s %.*s %s\n",
+-		current->pid, current->comm, current->xid, print_tainted(),
++		task_pid_nr(current), current->comm, current->xid, print_tainted(),
  		init_utsname()->release,
  		(int)strcspn(init_utsname()->version, " "),
  		init_utsname()->version, board);
@@ -65219,9 +65219,9 @@ index a64fde6..b3f1464 100644
 --- a/fs/binfmt_elf.c
 +++ b/fs/binfmt_elf.c
 @@ -31,6 +31,7 @@
- #include <linux/random.h>
  #include <linux/elf.h>
  #include <linux/utsname.h>
+ #include <linux/vs_memory.h>
 +#include <linux/xattr.h>
  #include <asm/uaccess.h>
  #include <asm/param.h>
@@ -68540,9 +68540,9 @@ index eee0590..1181166 100644
 --- a/fs/fs_struct.c
 +++ b/fs/fs_struct.c
 @@ -4,6 +4,7 @@
- #include <linux/path.h>
  #include <linux/slab.h>
  #include <linux/fs_struct.h>
+ #include <linux/vserver/global.h>
 +#include <linux/grsecurity.h>
  
  /*
@@ -70297,7 +70297,7 @@ diff --git a/fs/libfs.c b/fs/libfs.c
 index ba36e93..3153fce 100644
 --- a/fs/libfs.c
 +++ b/fs/libfs.c
-@@ -157,12 +157,20 @@ int dcache_readdir(struct file * filp, void * dirent, filldir_t filldir)
+@@ -157,14 +157,22 @@ int dcache_readdir(struct file * filp, void * dirent, filldir_t filldir)
  
  			for (p=q->next; p != &dentry->d_subdirs; p=p->next) {
  				struct dentry *next;
@@ -70306,6 +70306,8 @@ index ba36e93..3153fce 100644
 +
  				next = list_entry(p, struct dentry, d_u.d_child);
  				if (d_unhashed(next) || !next->d_inode)
+ 					continue;
+ 				if (filter && !filter(next))
  					continue;
  
  				spin_unlock(&dcache_lock);
@@ -70363,7 +70365,7 @@ diff --git a/fs/locks.c b/fs/locks.c
 index a8794f2..4041e55 100644
 --- a/fs/locks.c
 +++ b/fs/locks.c
-@@ -145,10 +145,28 @@ static LIST_HEAD(blocked_list);
+@@ -145,12 +145,30 @@ static LIST_HEAD(blocked_list);
  
  static struct kmem_cache *filelock_cache __read_mostly;
  
@@ -70383,6 +70385,8 @@ index a8794f2..4041e55 100644
  /* Allocate an empty lock structure. */
  static struct file_lock *locks_alloc_lock(void)
  {
+ 	if (!vx_locks_avail(1))
+ 		return NULL;
 -	return kmem_cache_alloc(filelock_cache, GFP_KERNEL);
 +	struct file_lock *fl = kmem_cache_alloc(filelock_cache, GFP_KERNEL);
 +
@@ -70393,7 +70397,7 @@ index a8794f2..4041e55 100644
  }
  
  void locks_release_private(struct file_lock *fl)
-@@ -183,17 +201,9 @@ void locks_init_lock(struct file_lock *fl)
+@@ -183,18 +201,10 @@ void locks_init_lock(struct file_lock *fl)
  	INIT_LIST_HEAD(&fl->fl_link);
  	INIT_LIST_HEAD(&fl->fl_block);
  	init_waitqueue_head(&fl->fl_wait);
@@ -70408,6 +70412,7 @@ index a8794f2..4041e55 100644
 -	fl->fl_start = fl->fl_end = 0;
  	fl->fl_ops = NULL;
  	fl->fl_lmops = NULL;
+ 	fl->fl_xid = -1;
 +	locks_init_lock_always(fl);
  }
  
@@ -71480,7 +71485,7 @@ index 4f01e06..2a8057a 100644
  	error = 0;
  dput_and_out:
  	path_put(&path);
-@@ -596,66 +618,57 @@ out:
+@@ -596,70 +618,60 @@ out:
  	return error;
  }
  
@@ -71560,6 +71565,10 @@ index 4f01e06..2a8057a 100644
  	error = user_path_at(dfd, filename, LOOKUP_FOLLOW, &path);
 -	if (error)
 -		goto out;
+-
+-	error = cow_check_and_break(&path);
+-	if (error)
+-		goto dput_and_out;
 -	inode = path.dentry->d_inode;
 -
 -	error = mnt_want_write(path.mnt);
@@ -71577,7 +71586,10 @@ index 4f01e06..2a8057a 100644
 -	path_put(&path);
 -out:
 +	if (!error) {
-+		error = chmod_common(&path, mode);
++		error = cow_check_and_break(&path);
++		if (!error) {
++			error = chmod_common(&path, mode);
++		}
 +		path_put(&path);
 +	}
  	return error;
@@ -71601,29 +71613,29 @@ index 4f01e06..2a8057a 100644
  	if (user != (uid_t) -1) {
  		newattrs.ia_valid |= ATTR_UID;
 @@ -700,7 +716,7 @@ SYSCALL_DEFINE3(chown, const char __user *, filename, uid_t, user, gid_t, group)
- 	error = mnt_want_write(path.mnt);
- 	if (error)
- 		goto out_release;
--	error = chown_common(path.dentry, user, group);
-+	error = chown_common(path.dentry, user, group, path.mnt);
+ 	error = cow_check_and_break(&path);
+ 	if (!error)
+ #endif
+-		error = chown_common(path.dentry, user, group);
++		error = chown_common(path.dentry, user, group, path.mnt);
  	mnt_drop_write(path.mnt);
  out_release:
  	path_put(&path);
 @@ -725,7 +741,7 @@ SYSCALL_DEFINE5(fchownat, int, dfd, const char __user *, filename, uid_t, user,
- 	error = mnt_want_write(path.mnt);
- 	if (error)
- 		goto out_release;
--	error = chown_common(path.dentry, user, group);
-+	error = chown_common(path.dentry, user, group, path.mnt);
+ 	error = cow_check_and_break(&path);
+ 	if (!error)
+ #endif
+-		error = chown_common(path.dentry, user, group);
++		error = chown_common(path.dentry, user, group, path.mnt);
  	mnt_drop_write(path.mnt);
  out_release:
  	path_put(&path);
 @@ -744,7 +760,7 @@ SYSCALL_DEFINE3(lchown, const char __user *, filename, uid_t, user, gid_t, group
- 	error = mnt_want_write(path.mnt);
- 	if (error)
- 		goto out_release;
--	error = chown_common(path.dentry, user, group);
-+	error = chown_common(path.dentry, user, group, path.mnt);
+ 	error = cow_check_and_break(&path);
+ 	if (!error)
+ #endif
+-		error = chown_common(path.dentry, user, group);
++		error = chown_common(path.dentry, user, group, path.mnt);
  	mnt_drop_write(path.mnt);
  out_release:
  	path_put(&path);
@@ -72393,11 +72405,11 @@ index 67f7dc0..a86ad9a 100644
  	INF("io",	S_IRUSR, proc_tgid_io_accounting),
  #endif
 +#ifdef CONFIG_GRKERNSEC_PROC_IPADDR
-+	INF("ipaddr",	  S_IRUSR, proc_pid_ipaddr),
++	INF("ipaddr",	S_IRUSR, proc_pid_ipaddr),
 +#endif
+	ONE("nsproxy",	S_IRUGO, proc_pid_nsproxy),
  };
  
- static int proc_tgid_base_readdir(struct file * filp,
 @@ -2735,7 +2867,14 @@ static struct dentry *proc_pid_instantiate(struct inode *dir,
  	if (!inode)
  		goto out;
@@ -72461,6 +72473,8 @@ index 67f7dc0..a86ad9a 100644
 +	rcu_read_unlock();
 +#endif
  		filp->f_pos = iter.tgid + TGID_OFFSET;
+ 		if (!vx_proc_task_visible(iter.task))
+ 			continue;
 -		if (proc_pid_fill_cache(filp, dirent, filldir, iter) < 0) {
 +		if (proc_pid_fill_cache(filp, dirent, __filldir, iter) < 0) {
  			put_task_struct(iter.task);
@@ -72576,14 +72590,14 @@ index 753ca37..26bcf3b 100644
 +++ b/fs/proc/internal.h
 @@ -51,6 +51,9 @@ extern int proc_pid_status(struct seq_file *m, struct pid_namespace *ns,
  				struct pid *pid, struct task_struct *task);
- extern int proc_pid_statm(struct seq_file *m, struct pid_namespace *ns,
+ extern int proc_pid_nsproxy(struct seq_file *m, struct pid_namespace *ns,
  				struct pid *pid, struct task_struct *task);
 +#ifdef CONFIG_GRKERNSEC_PROC_IPADDR
 +extern int proc_pid_ipaddr(struct task_struct *task, char *buffer);
 +#endif
+ 
  extern loff_t mem_lseek(struct file *file, loff_t offset, int orig);
  
- extern const struct file_operations proc_maps_operations;
 diff --git a/fs/proc/kcore.c b/fs/proc/kcore.c
 index b442dac..aab29cb 100644
 --- a/fs/proc/kcore.c
@@ -85782,6 +85796,9 @@ index 1b9a47a..6fe2934 100644
 +	void (* const clear_inode) (struct inode *);
 +	void (* const umount_begin) (struct super_block *);
  
+-	void (*sync_inodes)(struct super_block *sb,
++	void (* const sync_inodes)(struct super_block *sb,
+ 				struct writeback_control *wbc);
 -	int (*show_options)(struct seq_file *, struct vfsmount *);
 -	int (*show_stats)(struct seq_file *, struct vfsmount *);
 +	int (* const show_options)(struct seq_file *, struct vfsmount *);
@@ -87976,9 +87993,9 @@ index 379eaed..1bf73e3 100644
  	mode_t mode, struct proc_dir_entry *base, 
  	read_proc_t *read_proc, void * data)
 @@ -256,7 +269,7 @@ union proc_op {
- 	int (*proc_show)(struct seq_file *m,
- 		struct pid_namespace *ns, struct pid *pid,
- 		struct task_struct *task);
+ 	int (*proc_vs_read)(char *page);
+ 	int (*proc_vxi_read)(struct vx_info *vxi, char *page);
+ 	int (*proc_nxi_read)(struct nx_info *nxi, char *page);
 -};
 +} __no_const;
  
@@ -91549,10 +91566,12 @@ index 4bde56f..8976a8f 100644
  	return 0;
  }
  
-@@ -1033,12 +1060,16 @@ static struct task_struct *copy_process(unsigned long clone_flags,
+@@ -1033,14 +1060,18 @@ static struct task_struct *copy_process(unsigned long clone_flags,
  	DEBUG_LOCKS_WARN_ON(!p->softirqs_enabled);
  #endif
  	retval = -EAGAIN;
+ 	if (!vx_nproc_avail(1))
+ 		goto bad_fork_cleanup_vm;
 +
 +	gr_learn_resource(p, RLIMIT_NPROC, atomic_read(&p->real_cred->user->processes), 0);
 +
@@ -91562,7 +91581,7 @@ index 4bde56f..8976a8f 100644
 -		    p->real_cred->user != INIT_USER)
 +		if (p->real_cred->user != INIT_USER &&
 +		    !capable(CAP_SYS_RESOURCE) && !capable(CAP_SYS_ADMIN))
- 			goto bad_fork_free;
+ 			goto bad_fork_cleanup_vm;
  	}
 +	current->flags &= ~PF_NPROC_EXCEEDED;
  
@@ -93391,10 +93410,10 @@ index fce7198..4f23a7e 100644
   */
  struct task_struct *find_task_by_pid_ns(pid_t nr, struct pid_namespace *ns)
  {
--	return pid_task(find_pid_ns(nr, ns), PIDTYPE_PID);
+-	return pid_task(find_pid_ns(vx_rmap_pid(nr), ns), PIDTYPE_PID);
 +	struct task_struct *task;
 +	
-+	task = pid_task(find_pid_ns(nr, ns), PIDTYPE_PID);
++	task = pid_task(find_pid_ns(vx_rmap_pid(nr), ns), PIDTYPE_PID);
 +
 +	if (gr_pid_is_chrooted(task))
 +		return NULL;
@@ -93668,15 +93687,15 @@ diff --git a/kernel/printk.c b/kernel/printk.c
 index 4cade47..4d17900 100644
 --- a/kernel/printk.c
 +++ b/kernel/printk.c
-@@ -33,6 +33,7 @@
- #include <linux/bootmem.h>
+@@ -35,6 +35,7 @@
  #include <linux/syscalls.h>
  #include <linux/kexec.h>
+ #include <linux/vs_cvirt.h>
 +#include <linux/syslog.h>
  
  #include <asm/uaccess.h>
  
-@@ -256,38 +257,30 @@ static inline void boot_delay_msec(void)
+@@ -259,29 +260,21 @@ static inline void boot_delay_msec(void)
  }
  #endif
  
@@ -93701,7 +93720,7 @@ index 4cade47..4d17900 100644
  	unsigned i, j, limit, count;
  	int do_clear = 0;
  	char c;
- 	int error = 0;
+ 	int error;
  
 -	error = security_syslog(type);
 +#ifdef CONFIG_GRKERNSEC_DMESG
@@ -93715,19 +93734,22 @@ index 4cade47..4d17900 100644
  	if (error)
  		return error;
  
+@@ -301,11 +294,11 @@ int do_syslog(int type, char __user *buf
+ 		return vx_do_syslog(type, buf, len);
+ 
  	switch (type) {
 -	case 0:		/* Close log */
-+	case SYSLOG_ACTION_CLOSE:	/* Close log */
++	case SYSLOG_ACTION_CLOSE:		/* Close log */
  		break;
 -	case 1:		/* Open log */
-+	case SYSLOG_ACTION_OPEN:	/* Open log */
++	case SYSLOG_ACTION_OPEN:		/* Open log */
  		break;
 -	case 2:		/* Read from log */
-+	case SYSLOG_ACTION_READ:	/* Read from log */
- 		error = -EINVAL;
- 		if (!buf || len < 0)
- 			goto out;
-@@ -318,10 +311,12 @@ int do_syslog(int type, char __user *buf, int len)
++	case SYSLOG_ACTION_READ:		/* Read from log */
+ 		error = wait_event_interruptible(log_wait,
+ 							(log_start - log_end));
+ 		if (error)
+@@ -326,10 +319,12 @@ int do_syslog(int type, char __user *buf
  		if (!error)
  			error = i;
  		break;
@@ -93739,10 +93761,10 @@ index 4cade47..4d17900 100644
 -	case 3:		/* Read last kernel messages */
 +	/* Read last kernel messages */
 +	case SYSLOG_ACTION_READ_ALL:
- 		error = -EINVAL;
- 		if (!buf || len < 0)
- 			goto out;
-@@ -374,21 +369,25 @@ int do_syslog(int type, char __user *buf, int len)
+ 		count = len;
+ 		if (count > log_buf_len)
+ 			count = log_buf_len;
+@@ -372,21 +367,25 @@ int do_syslog(int type, char __user *buf
  			}
  		}
  		break;
@@ -93772,7 +93794,7 @@ index 4cade47..4d17900 100644
  		error = -EINVAL;
  		if (len < 1 || len > 8)
  			goto out;
-@@ -399,10 +398,12 @@ int do_syslog(int type, char __user *buf, int len)
+@@ -397,10 +396,12 @@ int do_syslog(int type, char __user *buf
  		saved_console_loglevel = -1;
  		error = 0;
  		break;
@@ -93787,7 +93809,7 @@ index 4cade47..4d17900 100644
  		error = log_buf_len;
  		break;
  	default:
-@@ -415,7 +416,7 @@ out:
+@@ -413,7 +414,7 @@ out:
  
  SYSCALL_DEFINE3(syslog, int, type, char __user *, buf, int, len)
  {
@@ -94481,7 +94503,7 @@ index 0591df8..e3af3a4 100644
 -	if (increment < 0 && !can_nice(current, nice))
 +	if (increment < 0 && (!can_nice(current, nice) ||
 +			      gr_handle_chroot_nice()))
- 		return -EPERM;
+ 		return vx_flags(VXF_IGNEG_NICE, 0) ? 0 : -EPERM;
  
  	retval = security_task_setnice(current, nice);
 @@ -8774,7 +8794,7 @@ static void init_sched_groups_power(int cpu, struct sched_domain *sd)
@@ -94541,9 +94563,9 @@ index 2494827..cda80a0 100644
  		return 1;
  	if (handler != SIG_IGN && handler != SIG_DFL)
 @@ -627,6 +630,13 @@ static int check_kill_permission(int sig, struct siginfo *info,
- 		}
+ 		return error;
  	}
- 
+ skip:
 +	/* allow glibc communication via tgkill to other threads in our
 +	   thread group */
 +	if ((info == SEND_SIG_NOINFO || info->si_code != SI_TKILL ||
@@ -96744,7 +96766,7 @@ index 6c836d3..48f3264 100644
   * We enter with non-exclusive mmap_sem (to exclude vma changes,
   * but allow concurrent faults), and pte mapped but not yet locked.
   * We return with mmap_sem still held, but pte unmapped and unlocked.
-@@ -2674,27 +2864,23 @@ static int do_anonymous_page(struct mm_struct *mm, struct vm_area_struct *vma,
+@@ -2674,30 +2864,27 @@ static int do_anonymous_page(struct mm_struct *mm, struct vm_area_struct *vma,
  		unsigned long address, pte_t *page_table, pmd_t *pmd,
  		unsigned int flags)
  {
@@ -96754,7 +96776,10 @@ index 6c836d3..48f3264 100644
  	pte_t entry;
  
 -	pte_unmap(page_table);
--
+ 
+ 	if (!vx_rss_avail(mm, 1))
+ 		goto oom;
+ 
 -	/* Check if we need to add a guard page to the stack */
 -	if (check_stack_guard_page(vma, address) < 0)
 -		return VM_FAULT_SIGBUS;
@@ -97162,9 +97187,9 @@ index 2d846cf..98134d2 100644
  		if (!(flags & MCL_CURRENT))
  			newflags &= ~VM_LOCKED;
 @@ -570,6 +573,7 @@ SYSCALL_DEFINE1(mlockall, int, flags)
- 	lock_limit >>= PAGE_SHIFT;
- 
  	ret = -ENOMEM;
+ 	if(!vx_vmlocked_avail(current->mm, current->mm->total_vm))
+ 		goto out;
 +	gr_learn_resource(current, RLIMIT_MEMLOCK, current->mm->total_vm << PAGE_SHIFT, 1);
  	if (!(flags & MCL_CURRENT) || (current->mm->total_vm <= lock_limit) ||
  	    capable(CAP_IPC_LOCK))
@@ -98053,9 +98078,9 @@ index 4b80cbf..f1145be 100644
 +		}
 +#endif
 +
- 		mm->total_vm -= nrpages;
+ 		// mm->total_vm -= nrpages;
+ 		vx_vmpages_sub(mm, nrpages);
  		vm_stat_account(mm, vma->vm_flags, vma->vm_file, -nrpages);
- 		vma = remove_vma(vma);
 @@ -1813,6 +2104,16 @@ detach_vmas_to_be_unmapped(struct mm_struct *mm, struct vm_area_struct *vma,
  	insertion_point = (prev ? &prev->vm_next : &mm->mmap);
  	vma->vm_prev = NULL;
@@ -98306,11 +98331,11 @@ index 4b80cbf..f1145be 100644
  	if (mm->map_count > sysctl_max_map_count)
  		return -ENOMEM;
  
--	if (security_vm_enough_memory(len >> PAGE_SHIFT))
-+	if (security_vm_enough_memory(charged))
+-	if (security_vm_enough_memory(len >> PAGE_SHIFT) ||
++	if (security_vm_enough_memory(charged) ||
+ 		!vx_vmpages_avail(mm, len >> PAGE_SHIFT))
  		return -ENOMEM;
  
- 	/* Can we just expand an old private anonymous mapping? */
 @@ -2066,7 +2467,7 @@ unsigned long do_brk(unsigned long addr, unsigned long len)
  	 */
  	vma = kmem_cache_zalloc(vm_area_cachep, GFP_KERNEL);
@@ -98320,16 +98345,18 @@ index 4b80cbf..f1145be 100644
  		return -ENOMEM;
  	}
  
-@@ -2078,11 +2479,12 @@ unsigned long do_brk(unsigned long addr, unsigned long len)
- 	vma->vm_page_prot = vm_get_page_prot(flags);
+@@ -2078,13 +2479,14 @@ unsigned long do_brk(unsigned long addr, unsigned long len)
  	vma_link(mm, vma, prev, rb_link, rb_parent);
  out:
--	mm->total_vm += len >> PAGE_SHIFT;
-+	mm->total_vm += charged;
+ 	// mm->total_vm += len >> PAGE_SHIFT;
+-	vx_vmpages_add(mm, len >> PAGE_SHIFT);
++	vx_vmpages_add(mm, charged);
+ 
  	if (flags & VM_LOCKED) {
  		if (!mlock_vma_pages_range(vma, addr, addr + len))
--			mm->locked_vm += (len >> PAGE_SHIFT);
-+			mm->locked_vm += charged;
+ 			// mm->locked_vm += (len >> PAGE_SHIFT);
+-			vx_vmlocked_add(mm, len >> PAGE_SHIFT);
++			vx_vmlocked_add(mm, charged);
  	}
 +	track_exec_limit(mm, addr, addr + len, flags);
  	return addr;
@@ -100790,7 +100817,7 @@ diff --git a/net/ipv4/inet_hashtables.c b/net/ipv4/inet_hashtables.c
 index d717267..56de7e7 100644
 --- a/net/ipv4/inet_hashtables.c
 +++ b/net/ipv4/inet_hashtables.c
-@@ -18,12 +18,15 @@
+@@ -18,13 +18,16 @@
  #include <linux/sched.h>
  #include <linux/slab.h>
  #include <linux/wait.h>
@@ -100799,6 +100826,7 @@ index d717267..56de7e7 100644
  #include <net/inet_connection_sock.h>
  #include <net/inet_hashtables.h>
  #include <net/secure_seq.h>
+ #include <net/route.h>
  #include <net/ip.h>
  
 +extern void gr_update_task_in_ip_table(struct task_struct *task, const struct inet_sock *inet);
@@ -104979,9 +105007,9 @@ index fe30751..aaba312 100644
 --- a/security/commoncap.c
 +++ b/security/commoncap.c
 @@ -27,6 +27,8 @@
- #include <linux/sched.h>
  #include <linux/prctl.h>
  #include <linux/securebits.h>
+ #include <linux/vs_context.h>
 +#include <linux/syslog.h>
 +#include <net/sock.h>
  
@@ -105000,7 +105028,7 @@ index fe30751..aaba312 100644
 +#ifdef CONFIG_NET
 +	NETLINK_CB(skb).eff_cap = gr_cap_rtnetlink(sk);
 +#else
- 	NETLINK_CB(skb).eff_cap = current_cap();
+ 	NETLINK_CB(skb).eff_cap = vx_mbcaps(current_cap());
 +#endif
 +	
  	return 0;
@@ -105016,7 +105044,7 @@ index fe30751..aaba312 100644
  	if (cred->uid != 0) {
  		if (bprm->cap_effective)
  			return 1;
-@@ -956,13 +970,18 @@ error:
+@@ -956,14 +970,18 @@ error:
  /**
   * cap_syslog - Determine whether syslog function is permitted
   * @type: Function requested
@@ -105028,12 +105056,13 @@ index fe30751..aaba312 100644
 -int cap_syslog(int type)
 +int cap_syslog(int type, bool from_file)
  {
--	if ((type != 3 && type != 10) && !capable(CAP_SYS_ADMIN))
+-	if ((type != 3 && type != 10) &&
+-		!vx_capable(CAP_SYS_ADMIN, VXC_SYSLOG))
 +	/* /proc/kmsg can open be opened by CAP_SYS_ADMIN */
 +	if (type != SYSLOG_ACTION_OPEN && from_file)
 +		return 0;
 +	if ((type != SYSLOG_ACTION_READ_ALL &&
-+	     type != SYSLOG_ACTION_SIZE_BUFFER) && !capable(CAP_SYS_ADMIN))
++	     type != SYSLOG_ACTION_SIZE_BUFFER) && !vx_capable(CAP_SYS_ADMIN, VXC_SYSLOG))
  		return -EPERM;
  	return 0;
  }
