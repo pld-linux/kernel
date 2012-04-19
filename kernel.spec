@@ -1342,9 +1342,6 @@ cd $RPM_BUILD_ROOT%{_kernelsrcdir}
 %{__make} %{MakeOpts} mrproper archclean \
 	RCS_FIND_IGNORE='-name build-done -prune -o'
 
-rm -f *.config
-rm -rf samples
-
 if [ -e $KERNEL_BUILD_DIR/build-done/kernel%{_kernelsrcdir}/include/linux/autoconf-dist.h ]; then
 	install $KERNEL_BUILD_DIR/build-done/kernel%{_kernelsrcdir}/include/linux/autoconf-dist.h \
 		$RPM_BUILD_ROOT%{_kernelsrcdir}/include/linux
