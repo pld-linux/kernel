@@ -63352,14 +63352,6 @@ diff -urNp linux-3.0.9/kernel/fork.c linux-3.0.9/kernel/fork.c
 diff -urNp linux-3.0.9/kernel/futex.c linux-3.0.9/kernel/futex.c
 --- linux-3.0.9/kernel/futex.c	2011-11-11 13:12:24.000000000 -0500
 +++ linux-3.0.9/kernel/futex.c	2011-11-15 20:03:00.000000000 -0500
-@@ -54,6 +54,7 @@
- #include <linux/mount.h>
- #include <linux/pagemap.h>
- #include <linux/syscalls.h>
-+#include <linux/ptrace.h>
- #include <linux/signal.h>
- #include <linux/module.h>
- #include <linux/magic.h>
 @@ -238,6 +239,11 @@ get_futex_key(u32 __user *uaddr, int fsh
  	struct page *page, *page_head;
  	int err, ro = 0;
@@ -63390,35 +63382,6 @@ diff -urNp linux-3.0.9/kernel/futex.c linux-3.0.9/kernel/futex.c
  	if (!bitset)
  		return -EINVAL;
  
-@@ -2431,7 +2441,9 @@ SYSCALL_DEFINE3(get_robust_list, int, pi
- {
- 	struct robust_list_head __user *head;
- 	unsigned long ret;
-+#ifndef CONFIG_GRKERNSEC_PROC_MEMMAP
- 	const struct cred *cred = current_cred(), *pcred;
-+#endif
- 
- 	if (!futex_cmpxchg_enabled)
- 		return -ENOSYS;
-@@ -2447,6 +2459,10 @@ SYSCALL_DEFINE3(get_robust_list, int, pi
- 		if (!p)
- 			goto err_unlock;
- 		ret = -EPERM;
-+#ifdef CONFIG_GRKERNSEC_PROC_MEMMAP
-+		if (!ptrace_may_access(p, PTRACE_MODE_READ))
-+			goto err_unlock;
-+#else
- 		pcred = __task_cred(p);
- 		/* If victim is in different user_ns, then uids are not
- 		   comparable, so we must have CAP_SYS_PTRACE */
-@@ -2461,6 +2477,7 @@ SYSCALL_DEFINE3(get_robust_list, int, pi
- 		    !ns_capable(pcred->user->user_ns, CAP_SYS_PTRACE))
- 			goto err_unlock;
- ok:
-+#endif
- 		head = p->robust_list;
- 		rcu_read_unlock();
- 	}
 @@ -2712,6 +2729,7 @@ static int __init futex_init(void)
  {
  	u32 curval;
@@ -63439,48 +63402,6 @@ diff -urNp linux-3.0.9/kernel/futex.c linux-3.0.9/kernel/futex.c
  
  	for (i = 0; i < ARRAY_SIZE(futex_queues); i++) {
  		plist_head_init(&futex_queues[i].chain, &futex_queues[i].lock);
-diff -urNp linux-3.0.9/kernel/futex_compat.c linux-3.0.9/kernel/futex_compat.c
---- linux-3.0.9/kernel/futex_compat.c	2011-11-11 13:12:24.000000000 -0500
-+++ linux-3.0.9/kernel/futex_compat.c	2011-11-15 20:03:00.000000000 -0500
-@@ -10,6 +10,7 @@
- #include <linux/compat.h>
- #include <linux/nsproxy.h>
- #include <linux/futex.h>
-+#include <linux/ptrace.h>
- 
- #include <asm/uaccess.h>
- 
-@@ -136,7 +137,10 @@ compat_sys_get_robust_list(int pid, comp
- {
- 	struct compat_robust_list_head __user *head;
- 	unsigned long ret;
--	const struct cred *cred = current_cred(), *pcred;
-+#ifndef CONFIG_GRKERNSEC_PROC_MEMMAP
-+	const struct cred *cred = current_cred();
-+	const struct cred *pcred;
-+#endif
- 
- 	if (!futex_cmpxchg_enabled)
- 		return -ENOSYS;
-@@ -152,6 +156,10 @@ compat_sys_get_robust_list(int pid, comp
- 		if (!p)
- 			goto err_unlock;
- 		ret = -EPERM;
-+#ifdef CONFIG_GRKERNSEC_PROC_MEMMAP
-+		if (!ptrace_may_access(p, PTRACE_MODE_READ))
-+			goto err_unlock;
-+#else
- 		pcred = __task_cred(p);
- 		/* If victim is in different user_ns, then uids are not
- 		   comparable, so we must have CAP_SYS_PTRACE */
-@@ -166,6 +174,7 @@ compat_sys_get_robust_list(int pid, comp
- 		    !ns_capable(pcred->user->user_ns, CAP_SYS_PTRACE))
- 			goto err_unlock;
- ok:
-+#endif
- 		head = p->compat_robust_list;
- 		rcu_read_unlock();
- 	}
 diff -urNp linux-3.0.9/kernel/gcov/base.c linux-3.0.9/kernel/gcov/base.c
 --- linux-3.0.9/kernel/gcov/base.c	2011-11-11 13:12:24.000000000 -0500
 +++ linux-3.0.9/kernel/gcov/base.c	2011-11-15 20:03:00.000000000 -0500
@@ -75809,9 +75730,9 @@ diff -urNp linux-3.0.9/security/commoncap.c linux-3.0.9/security/commoncap.c
 --- linux-3.0.9/security/commoncap.c	2011-11-11 13:12:24.000000000 -0500
 +++ linux-3.0.9/security/commoncap.c	2011-11-15 20:03:00.000000000 -0500
 @@ -28,6 +28,7 @@
- #include <linux/prctl.h>
  #include <linux/securebits.h>
  #include <linux/user_namespace.h>
+ #include <linux/personality.h>
 +#include <net/sock.h>
  
  /*
