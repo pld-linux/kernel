@@ -213,7 +213,7 @@ index 613da5d..4fe3eda 100644
  M:	Liam Girdwood <lrg@slimlogic.co.uk>
  M:	Mark Brown <broonie@opensource.wolfsonmicro.com>
 diff --git a/Makefile b/Makefile
-index 3a9a721..e5a22f7 100644
+index 3a9a721..683dc09 100644
 --- a/Makefile
 +++ b/Makefile
 @@ -221,8 +221,9 @@ CONFIG_SHELL := $(shell if [ -x "$$BASH" ]; then echo $$BASH; \
@@ -248,14 +248,16 @@ index 3a9a721..e5a22f7 100644
  			 include/linux/version.h headers_% \
  			 kernelrelease kernelversion
  
-@@ -526,6 +527,53 @@ else
+@@ -526,6 +527,55 @@ else
  KBUILD_CFLAGS	+= -O2
  endif
  
 +ifndef DISABLE_PAX_PLUGINS
 +ifeq ($(shell $(CONFIG_SHELL) $(srctree)/scripts/gcc-plugin.sh "$(HOSTCC)" "$(CC)"), y)
 +ifndef DISABLE_PAX_CONSTIFY_PLUGIN
++ifndef CONFIG_UML
 +CONSTIFY_PLUGIN_CFLAGS := -fplugin=$(objtree)/tools/gcc/constify_plugin.so -DCONSTIFY_PLUGIN
++endif
 +endif
 +ifdef CONFIG_PAX_MEMORY_STACKLEAK
 +STACKLEAK_PLUGIN_CFLAGS := -fplugin=$(objtree)/tools/gcc/stackleak_plugin.so -DSTACKLEAK_PLUGIN
@@ -302,7 +304,7 @@ index 3a9a721..e5a22f7 100644
  include $(srctree)/arch/$(SRCARCH)/Makefile
  
  ifneq ($(CONFIG_FRAME_WARN),0)
-@@ -647,7 +695,7 @@ export mod_strip_cmd
+@@ -647,7 +697,7 @@ export mod_strip_cmd
  
  
  ifeq ($(KBUILD_EXTMOD),)
@@ -311,7 +313,7 @@ index 3a9a721..e5a22f7 100644
  
  vmlinux-dirs	:= $(patsubst %/,%,$(filter %/, $(init-y) $(init-m) \
  		     $(core-y) $(core-m) $(drivers-y) $(drivers-m) \
-@@ -868,6 +916,8 @@ vmlinux.o: $(modpost-init) $(vmlinux-main) FORCE
+@@ -868,6 +918,8 @@ vmlinux.o: $(modpost-init) $(vmlinux-main) FORCE
  
  # The actual objects are generated when descending, 
  # make sure no implicit rule kicks in
@@ -320,7 +322,7 @@ index 3a9a721..e5a22f7 100644
  $(sort $(vmlinux-init) $(vmlinux-main)) $(vmlinux-lds): $(vmlinux-dirs) ;
  
  # Handle descending into subdirectories listed in $(vmlinux-dirs)
-@@ -877,7 +927,7 @@ $(sort $(vmlinux-init) $(vmlinux-main)) $(vmlinux-lds): $(vmlinux-dirs) ;
+@@ -877,7 +929,7 @@ $(sort $(vmlinux-init) $(vmlinux-main)) $(vmlinux-lds): $(vmlinux-dirs) ;
  # Error messages still appears in the original language
  
  PHONY += $(vmlinux-dirs)
@@ -329,7 +331,7 @@ index 3a9a721..e5a22f7 100644
  	$(Q)$(MAKE) $(build)=$@
  
  # Build the kernel release string
-@@ -986,6 +1036,7 @@ prepare0: archprepare FORCE
+@@ -986,6 +1038,7 @@ prepare0: archprepare FORCE
  	$(Q)$(MAKE) $(build)=. missing-syscalls
  
  # All the preparing..
@@ -337,7 +339,7 @@ index 3a9a721..e5a22f7 100644
  prepare: prepare0
  
  # The asm symlink changes when $(ARCH) changes.
-@@ -1127,6 +1178,8 @@ all: modules
+@@ -1127,6 +1180,8 @@ all: modules
  #	using awk while concatenating to the final file.
  
  PHONY += modules
@@ -346,7 +348,7 @@ index 3a9a721..e5a22f7 100644
  modules: $(vmlinux-dirs) $(if $(KBUILD_BUILTIN),vmlinux)
  	$(Q)$(AWK) '!x[$$0]++' $(vmlinux-dirs:%=$(objtree)/%/modules.order) > $(objtree)/modules.order
  	@$(kecho) '  Building modules, stage 2.';
-@@ -1136,7 +1189,7 @@ modules: $(vmlinux-dirs) $(if $(KBUILD_BUILTIN),vmlinux)
+@@ -1136,7 +1191,7 @@ modules: $(vmlinux-dirs) $(if $(KBUILD_BUILTIN),vmlinux)
  
  # Target to prepare building external modules
  PHONY += modules_prepare
@@ -355,7 +357,7 @@ index 3a9a721..e5a22f7 100644
  
  # Target to install modules
  PHONY += modules_install
-@@ -1201,7 +1254,7 @@ MRPROPER_FILES += .config .config.old include/asm .version .old_version \
+@@ -1201,7 +1256,7 @@ MRPROPER_FILES += .config .config.old include/asm .version .old_version \
                    include/linux/autoconf.h include/linux/version.h      \
                    include/linux/utsrelease.h                            \
                    include/linux/bounds.h include/asm*/asm-offsets.h     \
@@ -364,7 +366,7 @@ index 3a9a721..e5a22f7 100644
  
  # clean - Delete most, but leave enough to build external modules
  #
-@@ -1245,7 +1298,7 @@ distclean: mrproper
+@@ -1245,7 +1300,7 @@ distclean: mrproper
  	@find $(srctree) $(RCS_FIND_IGNORE) \
  		\( -name '*.orig' -o -name '*.rej' -o -name '*~' \
  		-o -name '*.bak' -o -name '#*#' -o -name '.*.orig' \
@@ -373,7 +375,7 @@ index 3a9a721..e5a22f7 100644
  		-o -name '*%' -o -name '.*.cmd' -o -name 'core' \) \
  		-type f -print | xargs rm -f
  
-@@ -1292,6 +1345,7 @@ help:
+@@ -1292,6 +1347,7 @@ help:
  	@echo  '  modules_prepare - Set up for building external modules'
  	@echo  '  tags/TAGS	  - Generate tags file for editors'
  	@echo  '  cscope	  - Generate cscope index'
@@ -381,7 +383,7 @@ index 3a9a721..e5a22f7 100644
  	@echo  '  kernelrelease	  - Output the release version string'
  	@echo  '  kernelversion	  - Output the version stored in Makefile'
  	@echo  '  headers_install - Install sanitised kernel headers to INSTALL_HDR_PATH'; \
-@@ -1393,6 +1447,8 @@ PHONY += $(module-dirs) modules
+@@ -1393,6 +1449,8 @@ PHONY += $(module-dirs) modules
  $(module-dirs): crmodverdir $(objtree)/Module.symvers
  	$(Q)$(MAKE) $(build)=$(patsubst _module_%,%,$@)
  
@@ -390,7 +392,7 @@ index 3a9a721..e5a22f7 100644
  modules: $(module-dirs)
  	@$(kecho) '  Building modules, stage 2.';
  	$(Q)$(MAKE) -f $(srctree)/scripts/Makefile.modpost
-@@ -1448,7 +1504,7 @@ endif # KBUILD_EXTMOD
+@@ -1448,7 +1506,7 @@ endif # KBUILD_EXTMOD
  quiet_cmd_tags = GEN     $@
        cmd_tags = $(CONFIG_SHELL) $(srctree)/scripts/tags.sh $@
  
@@ -399,7 +401,7 @@ index 3a9a721..e5a22f7 100644
  	$(call cmd,tags)
  
  # Scripts to check various things for consistency
-@@ -1513,17 +1569,21 @@ else
+@@ -1513,17 +1571,21 @@ else
          target-dir = $(if $(KBUILD_EXTMOD),$(dir $<),$(dir $@))
  endif
  
@@ -425,7 +427,7 @@ index 3a9a721..e5a22f7 100644
  	$(Q)$(MAKE) $(build)=$(build-dir) $(target-dir)$(notdir $@)
  %.symtypes: %.c prepare scripts FORCE
  	$(Q)$(MAKE) $(build)=$(build-dir) $(target-dir)$(notdir $@)
-@@ -1533,11 +1593,15 @@ endif
+@@ -1533,11 +1595,15 @@ endif
  	$(cmd_crmodverdir)
  	$(Q)$(MAKE) KBUILD_MODULES=$(if $(CONFIG_MODULES),1) \
  	$(build)=$(build-dir)
@@ -752,7 +754,7 @@ index b68faef..6dd1496 100644
  	select HAVE_KRETPROBES if (HAVE_KPROBES)
  	select HAVE_FUNCTION_TRACER if (!XIP_KERNEL)
 diff --git a/arch/arm/include/asm/atomic.h b/arch/arm/include/asm/atomic.h
-index d0daeab..99ab713 100644
+index d0daeab..8d7cb84 100644
 --- a/arch/arm/include/asm/atomic.h
 +++ b/arch/arm/include/asm/atomic.h
 @@ -15,6 +15,10 @@
@@ -830,7 +832,7 @@ index d0daeab..99ab713 100644
 +#ifdef CONFIG_PAX_REFCOUNT
 +"	bvc	3f\n"
 +"	mov	%0, %1\n"
-+"2:	bkpt 0xf103\n"
++"2:	bkpt	0xf103\n"
 +"3:\n"
 +#endif
 +
@@ -5938,6 +5940,16 @@ index 2782681..77ded84 100644
  
  extra-y     := head_$(BITS).o
  extra-y     += init_task.o
+diff --git a/arch/sparc/kernel/ds.c b/arch/sparc/kernel/ds.c
+index 4a700f4..6a831bd 100644
+--- a/arch/sparc/kernel/ds.c
++++ b/arch/sparc/kernel/ds.c
+@@ -1242,4 +1242,4 @@ static int __init ds_init(void)
+ 	return vio_register_driver(&ds_driver);
+ }
+ 
+-subsys_initcall(ds_init);
++fs_initcall(ds_init);
 diff --git a/arch/sparc/kernel/iommu.c b/arch/sparc/kernel/iommu.c
 index 7690cc2..ece64c9 100644
 --- a/arch/sparc/kernel/iommu.c
@@ -6108,6 +6120,32 @@ index cb70476..3d0c191 100644
  			       (void *) gp->tpc,
  			       (void *) gp->o7,
  			       (void *) gp->i7,
+diff --git a/arch/sparc/kernel/rtrap_64.S b/arch/sparc/kernel/rtrap_64.S
+index fd3cee4..cc4b1ff 100644
+--- a/arch/sparc/kernel/rtrap_64.S
++++ b/arch/sparc/kernel/rtrap_64.S
+@@ -20,11 +20,6 @@
+ 
+ 		.text
+ 		.align			32
+-__handle_softirq:
+-		call			do_softirq
+-		 nop
+-		ba,a,pt			%xcc, __handle_softirq_continue
+-		 nop
+ __handle_preemption:
+ 		call			schedule
+ 		 wrpr			%g0, RTRAP_PSTATE, %pstate
+@@ -159,9 +154,7 @@ rtrap:
+ 		cmp			%l1, 0
+ 
+ 		/* mm/ultra.S:xcall_report_regs KNOWS about this load. */
+-		bne,pn			%icc, __handle_softirq
+ 		 ldx			[%sp + PTREGS_OFF + PT_V9_TSTATE], %l1
+-__handle_softirq_continue:
+ rtrap_xcall:
+ 		sethi			%hi(0xf << 20), %l4
+ 		and			%l1, %l4, %l4
 diff --git a/arch/sparc/kernel/sigutil_64.c b/arch/sparc/kernel/sigutil_64.c
 index 6edc4e5..06a69b4 100644
 --- a/arch/sparc/kernel/sigutil_64.c
@@ -15592,9 +15630,9 @@ index 2d8a371..4fa6ae6 100644
 @@ -180,7 +180,7 @@ void dump_stack(void)
  #endif
  
- 	printk("Pid: %d, comm: %.20s xid: #%u %s %s %.*s\n",
--		current->pid, current->comm, current->xid, print_tainted(),
-+		task_pid_nr(current), current->comm, current->xid, print_tainted(),
+ 	printk("Pid: %d, comm: %.20s %s %s %.*s\n",
+-		current->pid, current->comm, print_tainted(),
++		task_pid_nr(current), current->comm, print_tainted(),
  		init_utsname()->release,
  		(int)strcspn(init_utsname()->version, " "),
  		init_utsname()->version);
@@ -20211,9 +20249,9 @@ index 39493bc..196816d 100644
 @@ -170,7 +170,7 @@ void __show_regs(struct pt_regs *regs, int all)
  	if (!board)
  		board = "";
- 	printk(KERN_INFO "Pid: %d, comm: %.20s xid: #%u %s %s %.*s %s\n",
--		current->pid, current->comm, current->xid, print_tainted(),
-+		task_pid_nr(current), current->comm, current->xid, print_tainted(),
+ 	printk(KERN_INFO "Pid: %d, comm: %.20s %s %s %.*s %s\n",
+-		current->pid, current->comm, print_tainted(),
++		task_pid_nr(current), current->comm, print_tainted(),
  		init_utsname()->release,
  		(int)strcspn(init_utsname()->version, " "),
  		init_utsname()->version, board);
@@ -22613,18 +22651,10 @@ index 3bc2707..dd157e2 100644
  		 sptep, *sptep, write_pt);
  
 diff --git a/arch/x86/kvm/svm.c b/arch/x86/kvm/svm.c
-index 7c6e63e..1b7dac1 100644
+index 7c6e63e..c5d92c1 100644
 --- a/arch/x86/kvm/svm.c
 +++ b/arch/x86/kvm/svm.c
-@@ -2240,6 +2240,7 @@ static int rdmsr_interception(struct vcpu_svm *svm, struct kvm_run *kvm_run)
- 	return 1;
- }
- 
-+static int svm_set_msr(struct kvm_vcpu *vcpu, unsigned ecx, u64 data) __size_overflow(3);
- static int svm_set_msr(struct kvm_vcpu *vcpu, unsigned ecx, u64 data)
- {
- 	struct vcpu_svm *svm = to_svm(vcpu);
-@@ -2486,7 +2487,11 @@ static void reload_tss(struct kvm_vcpu *vcpu)
+@@ -2486,7 +2486,11 @@ static void reload_tss(struct kvm_vcpu *vcpu)
  	int cpu = raw_smp_processor_id();
  
  	struct svm_cpu_data *svm_data = per_cpu(svm_data, cpu);
@@ -22636,7 +22666,7 @@ index 7c6e63e..1b7dac1 100644
  	load_TR_desc();
  }
  
-@@ -2947,7 +2952,7 @@ static bool svm_gb_page_enable(void)
+@@ -2947,7 +2951,7 @@ static bool svm_gb_page_enable(void)
  	return true;
  }
  
@@ -65219,9 +65249,9 @@ index a64fde6..b3f1464 100644
 --- a/fs/binfmt_elf.c
 +++ b/fs/binfmt_elf.c
 @@ -31,6 +31,7 @@
+ #include <linux/random.h>
  #include <linux/elf.h>
  #include <linux/utsname.h>
- #include <linux/vs_memory.h>
 +#include <linux/xattr.h>
  #include <asm/uaccess.h>
  #include <asm/param.h>
@@ -68540,9 +68570,9 @@ index eee0590..1181166 100644
 --- a/fs/fs_struct.c
 +++ b/fs/fs_struct.c
 @@ -4,6 +4,7 @@
+ #include <linux/path.h>
  #include <linux/slab.h>
  #include <linux/fs_struct.h>
- #include <linux/vserver/global.h>
 +#include <linux/grsecurity.h>
  
  /*
@@ -69564,7 +69594,7 @@ index c598ea4..6aac13e 100644
  
  	for (loop = 0; loop < pagevec->nr; loop++) {
 diff --git a/fs/fscache/stats.c b/fs/fscache/stats.c
-index 46435f3..8cddf18 100644
+index 46435f3a..8cddf18 100644
 --- a/fs/fscache/stats.c
 +++ b/fs/fscache/stats.c
 @@ -18,95 +18,95 @@
@@ -70297,7 +70327,7 @@ diff --git a/fs/libfs.c b/fs/libfs.c
 index ba36e93..3153fce 100644
 --- a/fs/libfs.c
 +++ b/fs/libfs.c
-@@ -157,14 +157,22 @@ int dcache_readdir(struct file * filp, void * dirent, filldir_t filldir)
+@@ -157,12 +157,20 @@ int dcache_readdir(struct file * filp, void * dirent, filldir_t filldir)
  
  			for (p=q->next; p != &dentry->d_subdirs; p=p->next) {
  				struct dentry *next;
@@ -70306,8 +70336,6 @@ index ba36e93..3153fce 100644
 +
  				next = list_entry(p, struct dentry, d_u.d_child);
  				if (d_unhashed(next) || !next->d_inode)
- 					continue;
- 				if (filter && !filter(next))
  					continue;
  
  				spin_unlock(&dcache_lock);
@@ -70365,7 +70393,7 @@ diff --git a/fs/locks.c b/fs/locks.c
 index a8794f2..4041e55 100644
 --- a/fs/locks.c
 +++ b/fs/locks.c
-@@ -145,12 +145,30 @@ static LIST_HEAD(blocked_list);
+@@ -145,10 +145,28 @@ static LIST_HEAD(blocked_list);
  
  static struct kmem_cache *filelock_cache __read_mostly;
  
@@ -70385,8 +70413,6 @@ index a8794f2..4041e55 100644
  /* Allocate an empty lock structure. */
  static struct file_lock *locks_alloc_lock(void)
  {
- 	if (!vx_locks_avail(1))
- 		return NULL;
 -	return kmem_cache_alloc(filelock_cache, GFP_KERNEL);
 +	struct file_lock *fl = kmem_cache_alloc(filelock_cache, GFP_KERNEL);
 +
@@ -70397,7 +70423,7 @@ index a8794f2..4041e55 100644
  }
  
  void locks_release_private(struct file_lock *fl)
-@@ -183,18 +201,10 @@ void locks_init_lock(struct file_lock *fl)
+@@ -183,17 +201,9 @@ void locks_init_lock(struct file_lock *fl)
  	INIT_LIST_HEAD(&fl->fl_link);
  	INIT_LIST_HEAD(&fl->fl_block);
  	init_waitqueue_head(&fl->fl_wait);
@@ -70412,7 +70438,6 @@ index a8794f2..4041e55 100644
 -	fl->fl_start = fl->fl_end = 0;
  	fl->fl_ops = NULL;
  	fl->fl_lmops = NULL;
- 	fl->fl_xid = -1;
 +	locks_init_lock_always(fl);
  }
  
@@ -71485,7 +71510,7 @@ index 4f01e06..2a8057a 100644
  	error = 0;
  dput_and_out:
  	path_put(&path);
-@@ -596,70 +618,60 @@ out:
+@@ -596,66 +618,57 @@ out:
  	return error;
  }
  
@@ -71565,10 +71590,6 @@ index 4f01e06..2a8057a 100644
  	error = user_path_at(dfd, filename, LOOKUP_FOLLOW, &path);
 -	if (error)
 -		goto out;
--
--	error = cow_check_and_break(&path);
--	if (error)
--		goto dput_and_out;
 -	inode = path.dentry->d_inode;
 -
 -	error = mnt_want_write(path.mnt);
@@ -71586,10 +71607,7 @@ index 4f01e06..2a8057a 100644
 -	path_put(&path);
 -out:
 +	if (!error) {
-+		error = cow_check_and_break(&path);
-+		if (!error) {
-+			error = chmod_common(&path, mode);
-+		}
++		error = chmod_common(&path, mode);
 +		path_put(&path);
 +	}
  	return error;
@@ -71613,29 +71631,29 @@ index 4f01e06..2a8057a 100644
  	if (user != (uid_t) -1) {
  		newattrs.ia_valid |= ATTR_UID;
 @@ -700,7 +716,7 @@ SYSCALL_DEFINE3(chown, const char __user *, filename, uid_t, user, gid_t, group)
- 	error = cow_check_and_break(&path);
- 	if (!error)
- #endif
--		error = chown_common(path.dentry, user, group);
-+		error = chown_common(path.dentry, user, group, path.mnt);
+ 	error = mnt_want_write(path.mnt);
+ 	if (error)
+ 		goto out_release;
+-	error = chown_common(path.dentry, user, group);
++	error = chown_common(path.dentry, user, group, path.mnt);
  	mnt_drop_write(path.mnt);
  out_release:
  	path_put(&path);
 @@ -725,7 +741,7 @@ SYSCALL_DEFINE5(fchownat, int, dfd, const char __user *, filename, uid_t, user,
- 	error = cow_check_and_break(&path);
- 	if (!error)
- #endif
--		error = chown_common(path.dentry, user, group);
-+		error = chown_common(path.dentry, user, group, path.mnt);
+ 	error = mnt_want_write(path.mnt);
+ 	if (error)
+ 		goto out_release;
+-	error = chown_common(path.dentry, user, group);
++	error = chown_common(path.dentry, user, group, path.mnt);
  	mnt_drop_write(path.mnt);
  out_release:
  	path_put(&path);
 @@ -744,7 +760,7 @@ SYSCALL_DEFINE3(lchown, const char __user *, filename, uid_t, user, gid_t, group
- 	error = cow_check_and_break(&path);
- 	if (!error)
- #endif
--		error = chown_common(path.dentry, user, group);
-+		error = chown_common(path.dentry, user, group, path.mnt);
+ 	error = mnt_want_write(path.mnt);
+ 	if (error)
+ 		goto out_release;
+-	error = chown_common(path.dentry, user, group);
++	error = chown_common(path.dentry, user, group, path.mnt);
  	mnt_drop_write(path.mnt);
  out_release:
  	path_put(&path);
@@ -72405,11 +72423,11 @@ index 67f7dc0..a86ad9a 100644
  	INF("io",	S_IRUSR, proc_tgid_io_accounting),
  #endif
 +#ifdef CONFIG_GRKERNSEC_PROC_IPADDR
-+	INF("ipaddr",	S_IRUSR, proc_pid_ipaddr),
++	INF("ipaddr",	  S_IRUSR, proc_pid_ipaddr),
 +#endif
-	ONE("nsproxy",	S_IRUGO, proc_pid_nsproxy),
  };
  
+ static int proc_tgid_base_readdir(struct file * filp,
 @@ -2735,7 +2867,14 @@ static struct dentry *proc_pid_instantiate(struct inode *dir,
  	if (!inode)
  		goto out;
@@ -72473,8 +72491,6 @@ index 67f7dc0..a86ad9a 100644
 +	rcu_read_unlock();
 +#endif
  		filp->f_pos = iter.tgid + TGID_OFFSET;
- 		if (!vx_proc_task_visible(iter.task))
- 			continue;
 -		if (proc_pid_fill_cache(filp, dirent, filldir, iter) < 0) {
 +		if (proc_pid_fill_cache(filp, dirent, __filldir, iter) < 0) {
  			put_task_struct(iter.task);
@@ -72590,14 +72606,14 @@ index 753ca37..26bcf3b 100644
 +++ b/fs/proc/internal.h
 @@ -51,6 +51,9 @@ extern int proc_pid_status(struct seq_file *m, struct pid_namespace *ns,
  				struct pid *pid, struct task_struct *task);
- extern int proc_pid_nsproxy(struct seq_file *m, struct pid_namespace *ns,
+ extern int proc_pid_statm(struct seq_file *m, struct pid_namespace *ns,
  				struct pid *pid, struct task_struct *task);
 +#ifdef CONFIG_GRKERNSEC_PROC_IPADDR
 +extern int proc_pid_ipaddr(struct task_struct *task, char *buffer);
 +#endif
- 
  extern loff_t mem_lseek(struct file *file, loff_t offset, int orig);
  
+ extern const struct file_operations proc_maps_operations;
 diff --git a/fs/proc/kcore.c b/fs/proc/kcore.c
 index b442dac..aab29cb 100644
 --- a/fs/proc/kcore.c
@@ -73202,7 +73218,7 @@ index d42c30c..4fd8718 100644
  
  	reiserfs_check_lock_depth(inode->i_sb, "readdir");
 diff --git a/fs/reiserfs/do_balan.c b/fs/reiserfs/do_balan.c
-index 128d3f7..8840d44 100644
+index 128d3f7c..8840d44 100644
 --- a/fs/reiserfs/do_balan.c
 +++ b/fs/reiserfs/do_balan.c
 @@ -2058,7 +2058,7 @@ void do_balance(struct tree_balance *tb,	/* tree_balance structure */
@@ -85796,9 +85812,6 @@ index 1b9a47a..6fe2934 100644
 +	void (* const clear_inode) (struct inode *);
 +	void (* const umount_begin) (struct super_block *);
  
--	void (*sync_inodes)(struct super_block *sb,
-+	void (* const sync_inodes)(struct super_block *sb,
- 				struct writeback_control *wbc);
 -	int (*show_options)(struct seq_file *, struct vfsmount *);
 -	int (*show_stats)(struct seq_file *, struct vfsmount *);
 +	int (* const show_options)(struct seq_file *, struct vfsmount *);
@@ -87993,9 +88006,9 @@ index 379eaed..1bf73e3 100644
  	mode_t mode, struct proc_dir_entry *base, 
  	read_proc_t *read_proc, void * data)
 @@ -256,7 +269,7 @@ union proc_op {
- 	int (*proc_vs_read)(char *page);
- 	int (*proc_vxi_read)(struct vx_info *vxi, char *page);
- 	int (*proc_nxi_read)(struct nx_info *nxi, char *page);
+ 	int (*proc_show)(struct seq_file *m,
+ 		struct pid_namespace *ns, struct pid *pid,
+ 		struct task_struct *task);
 -};
 +} __no_const;
  
@@ -88869,6 +88882,27 @@ index 67ad11f..0bbd8af 100644
  	__SONET_ITEMS
  #undef __HANDLE_ITEM
  };
+diff --git a/include/linux/stddef.h b/include/linux/stddef.h
+index 6a40c76..1747b67 100644
+--- a/include/linux/stddef.h
++++ b/include/linux/stddef.h
+@@ -3,14 +3,10 @@
+ 
+ #include <linux/compiler.h>
+ 
++#ifdef __KERNEL__
++
+ #undef NULL
+-#if defined(__cplusplus)
+-#define NULL 0
+-#else
+ #define NULL ((void *)0)
+-#endif
+-
+-#ifdef __KERNEL__
+ 
+ enum {
+ 	false	= 0,
 diff --git a/include/linux/sunrpc/cache.h b/include/linux/sunrpc/cache.h
 index 6f52b4d..5500323 100644
 --- a/include/linux/sunrpc/cache.h
@@ -91566,12 +91600,10 @@ index 4bde56f..8976a8f 100644
  	return 0;
  }
  
-@@ -1033,14 +1060,18 @@ static struct task_struct *copy_process(unsigned long clone_flags,
+@@ -1033,12 +1060,16 @@ static struct task_struct *copy_process(unsigned long clone_flags,
  	DEBUG_LOCKS_WARN_ON(!p->softirqs_enabled);
  #endif
  	retval = -EAGAIN;
- 	if (!vx_nproc_avail(1))
- 		goto bad_fork_cleanup_vm;
 +
 +	gr_learn_resource(p, RLIMIT_NPROC, atomic_read(&p->real_cred->user->processes), 0);
 +
@@ -91581,7 +91613,7 @@ index 4bde56f..8976a8f 100644
 -		    p->real_cred->user != INIT_USER)
 +		if (p->real_cred->user != INIT_USER &&
 +		    !capable(CAP_SYS_RESOURCE) && !capable(CAP_SYS_ADMIN))
- 			goto bad_fork_cleanup_vm;
+ 			goto bad_fork_free;
  	}
 +	current->flags &= ~PF_NPROC_EXCEEDED;
  
@@ -93410,10 +93442,10 @@ index fce7198..4f23a7e 100644
   */
  struct task_struct *find_task_by_pid_ns(pid_t nr, struct pid_namespace *ns)
  {
--	return pid_task(find_pid_ns(vx_rmap_pid(nr), ns), PIDTYPE_PID);
+-	return pid_task(find_pid_ns(nr, ns), PIDTYPE_PID);
 +	struct task_struct *task;
 +	
-+	task = pid_task(find_pid_ns(vx_rmap_pid(nr), ns), PIDTYPE_PID);
++	task = pid_task(find_pid_ns(nr, ns), PIDTYPE_PID);
 +
 +	if (gr_pid_is_chrooted(task))
 +		return NULL;
@@ -93687,15 +93719,15 @@ diff --git a/kernel/printk.c b/kernel/printk.c
 index 4cade47..4d17900 100644
 --- a/kernel/printk.c
 +++ b/kernel/printk.c
-@@ -35,6 +35,7 @@
+@@ -33,6 +33,7 @@
+ #include <linux/bootmem.h>
  #include <linux/syscalls.h>
  #include <linux/kexec.h>
- #include <linux/vs_cvirt.h>
 +#include <linux/syslog.h>
  
  #include <asm/uaccess.h>
  
-@@ -259,29 +260,21 @@ static inline void boot_delay_msec(void)
+@@ -256,38 +257,30 @@ static inline void boot_delay_msec(void)
  }
  #endif
  
@@ -93720,7 +93752,7 @@ index 4cade47..4d17900 100644
  	unsigned i, j, limit, count;
  	int do_clear = 0;
  	char c;
- 	int error;
+ 	int error = 0;
  
 -	error = security_syslog(type);
 +#ifdef CONFIG_GRKERNSEC_DMESG
@@ -93734,22 +93766,19 @@ index 4cade47..4d17900 100644
  	if (error)
  		return error;
  
-@@ -301,11 +294,11 @@ int do_syslog(int type, char __user *buf
- 		return vx_do_syslog(type, buf, len);
- 
  	switch (type) {
 -	case 0:		/* Close log */
-+	case SYSLOG_ACTION_CLOSE:		/* Close log */
++	case SYSLOG_ACTION_CLOSE:	/* Close log */
  		break;
 -	case 1:		/* Open log */
-+	case SYSLOG_ACTION_OPEN:		/* Open log */
++	case SYSLOG_ACTION_OPEN:	/* Open log */
  		break;
 -	case 2:		/* Read from log */
-+	case SYSLOG_ACTION_READ:		/* Read from log */
- 		error = wait_event_interruptible(log_wait,
- 							(log_start - log_end));
- 		if (error)
-@@ -326,10 +319,12 @@ int do_syslog(int type, char __user *buf
++	case SYSLOG_ACTION_READ:	/* Read from log */
+ 		error = -EINVAL;
+ 		if (!buf || len < 0)
+ 			goto out;
+@@ -318,10 +311,12 @@ int do_syslog(int type, char __user *buf, int len)
  		if (!error)
  			error = i;
  		break;
@@ -93761,10 +93790,10 @@ index 4cade47..4d17900 100644
 -	case 3:		/* Read last kernel messages */
 +	/* Read last kernel messages */
 +	case SYSLOG_ACTION_READ_ALL:
- 		count = len;
- 		if (count > log_buf_len)
- 			count = log_buf_len;
-@@ -372,21 +367,25 @@ int do_syslog(int type, char __user *buf
+ 		error = -EINVAL;
+ 		if (!buf || len < 0)
+ 			goto out;
+@@ -374,21 +369,25 @@ int do_syslog(int type, char __user *buf, int len)
  			}
  		}
  		break;
@@ -93794,7 +93823,7 @@ index 4cade47..4d17900 100644
  		error = -EINVAL;
  		if (len < 1 || len > 8)
  			goto out;
-@@ -397,10 +396,12 @@ int do_syslog(int type, char __user *buf
+@@ -399,10 +398,12 @@ int do_syslog(int type, char __user *buf, int len)
  		saved_console_loglevel = -1;
  		error = 0;
  		break;
@@ -93809,7 +93838,7 @@ index 4cade47..4d17900 100644
  		error = log_buf_len;
  		break;
  	default:
-@@ -413,7 +414,7 @@ out:
+@@ -415,7 +416,7 @@ out:
  
  SYSCALL_DEFINE3(syslog, int, type, char __user *, buf, int, len)
  {
@@ -94503,7 +94532,7 @@ index 0591df8..e3af3a4 100644
 -	if (increment < 0 && !can_nice(current, nice))
 +	if (increment < 0 && (!can_nice(current, nice) ||
 +			      gr_handle_chroot_nice()))
- 		return vx_flags(VXF_IGNEG_NICE, 0) ? 0 : -EPERM;
+ 		return -EPERM;
  
  	retval = security_task_setnice(current, nice);
 @@ -8774,7 +8794,7 @@ static void init_sched_groups_power(int cpu, struct sched_domain *sd)
@@ -94563,9 +94592,9 @@ index 2494827..cda80a0 100644
  		return 1;
  	if (handler != SIG_IGN && handler != SIG_DFL)
 @@ -627,6 +630,13 @@ static int check_kill_permission(int sig, struct siginfo *info,
- 		return error;
+ 		}
  	}
- skip:
+ 
 +	/* allow glibc communication via tgkill to other threads in our
 +	   thread group */
 +	if ((info == SEND_SIG_NOINFO || info->si_code != SI_TKILL ||
@@ -96766,7 +96795,7 @@ index 6c836d3..48f3264 100644
   * We enter with non-exclusive mmap_sem (to exclude vma changes,
   * but allow concurrent faults), and pte mapped but not yet locked.
   * We return with mmap_sem still held, but pte unmapped and unlocked.
-@@ -2674,30 +2864,27 @@ static int do_anonymous_page(struct mm_struct *mm, struct vm_area_struct *vma,
+@@ -2674,27 +2864,23 @@ static int do_anonymous_page(struct mm_struct *mm, struct vm_area_struct *vma,
  		unsigned long address, pte_t *page_table, pmd_t *pmd,
  		unsigned int flags)
  {
@@ -96776,10 +96805,7 @@ index 6c836d3..48f3264 100644
  	pte_t entry;
  
 -	pte_unmap(page_table);
- 
- 	if (!vx_rss_avail(mm, 1))
- 		goto oom;
- 
+-
 -	/* Check if we need to add a guard page to the stack */
 -	if (check_stack_guard_page(vma, address) < 0)
 -		return VM_FAULT_SIGBUS;
@@ -97187,9 +97213,9 @@ index 2d846cf..98134d2 100644
  		if (!(flags & MCL_CURRENT))
  			newflags &= ~VM_LOCKED;
 @@ -570,6 +573,7 @@ SYSCALL_DEFINE1(mlockall, int, flags)
+ 	lock_limit >>= PAGE_SHIFT;
+ 
  	ret = -ENOMEM;
- 	if(!vx_vmlocked_avail(current->mm, current->mm->total_vm))
- 		goto out;
 +	gr_learn_resource(current, RLIMIT_MEMLOCK, current->mm->total_vm << PAGE_SHIFT, 1);
  	if (!(flags & MCL_CURRENT) || (current->mm->total_vm <= lock_limit) ||
  	    capable(CAP_IPC_LOCK))
@@ -98078,9 +98104,9 @@ index 4b80cbf..f1145be 100644
 +		}
 +#endif
 +
- 		// mm->total_vm -= nrpages;
- 		vx_vmpages_sub(mm, nrpages);
+ 		mm->total_vm -= nrpages;
  		vm_stat_account(mm, vma->vm_flags, vma->vm_file, -nrpages);
+ 		vma = remove_vma(vma);
 @@ -1813,6 +2104,16 @@ detach_vmas_to_be_unmapped(struct mm_struct *mm, struct vm_area_struct *vma,
  	insertion_point = (prev ? &prev->vm_next : &mm->mmap);
  	vma->vm_prev = NULL;
@@ -98331,11 +98357,11 @@ index 4b80cbf..f1145be 100644
  	if (mm->map_count > sysctl_max_map_count)
  		return -ENOMEM;
  
--	if (security_vm_enough_memory(len >> PAGE_SHIFT) ||
-+	if (security_vm_enough_memory(charged) ||
- 		!vx_vmpages_avail(mm, len >> PAGE_SHIFT))
+-	if (security_vm_enough_memory(len >> PAGE_SHIFT))
++	if (security_vm_enough_memory(charged))
  		return -ENOMEM;
  
+ 	/* Can we just expand an old private anonymous mapping? */
 @@ -2066,7 +2467,7 @@ unsigned long do_brk(unsigned long addr, unsigned long len)
  	 */
  	vma = kmem_cache_zalloc(vm_area_cachep, GFP_KERNEL);
@@ -98345,18 +98371,16 @@ index 4b80cbf..f1145be 100644
  		return -ENOMEM;
  	}
  
-@@ -2078,13 +2479,14 @@ unsigned long do_brk(unsigned long addr, unsigned long len)
+@@ -2078,11 +2479,12 @@ unsigned long do_brk(unsigned long addr, unsigned long len)
+ 	vma->vm_page_prot = vm_get_page_prot(flags);
  	vma_link(mm, vma, prev, rb_link, rb_parent);
  out:
- 	// mm->total_vm += len >> PAGE_SHIFT;
--	vx_vmpages_add(mm, len >> PAGE_SHIFT);
-+	vx_vmpages_add(mm, charged);
- 
+-	mm->total_vm += len >> PAGE_SHIFT;
++	mm->total_vm += charged;
  	if (flags & VM_LOCKED) {
  		if (!mlock_vma_pages_range(vma, addr, addr + len))
- 			// mm->locked_vm += (len >> PAGE_SHIFT);
--			vx_vmlocked_add(mm, len >> PAGE_SHIFT);
-+			vx_vmlocked_add(mm, charged);
+-			mm->locked_vm += (len >> PAGE_SHIFT);
++			mm->locked_vm += charged;
  	}
 +	track_exec_limit(mm, addr, addr + len, flags);
  	return addr;
@@ -100817,7 +100841,7 @@ diff --git a/net/ipv4/inet_hashtables.c b/net/ipv4/inet_hashtables.c
 index d717267..56de7e7 100644
 --- a/net/ipv4/inet_hashtables.c
 +++ b/net/ipv4/inet_hashtables.c
-@@ -18,13 +18,16 @@
+@@ -18,12 +18,15 @@
  #include <linux/sched.h>
  #include <linux/slab.h>
  #include <linux/wait.h>
@@ -100826,7 +100850,6 @@ index d717267..56de7e7 100644
  #include <net/inet_connection_sock.h>
  #include <net/inet_hashtables.h>
  #include <net/secure_seq.h>
- #include <net/route.h>
  #include <net/ip.h>
  
 +extern void gr_update_task_in_ip_table(struct task_struct *task, const struct inet_sock *inet);
@@ -104338,10 +104361,10 @@ index d52f7a0..b66cdd9 100755
  		rm -f tags
  		xtags ctags
 diff --git a/security/Kconfig b/security/Kconfig
-index fb363cd..a9d08e5 100644
+index fb363cd..c2c0a96 100644
 --- a/security/Kconfig
 +++ b/security/Kconfig
-@@ -4,6 +4,638 @@
+@@ -4,6 +4,634 @@
  
  menu "Security options"
  
@@ -104952,16 +104975,12 @@ index fb363cd..a9d08e5 100644
 +	  accessors.  Though the whitelist of regions will be reduced over
 +	  time, it notably protects important data structures like task structs.
 +
-+
-+	  If frame pointers are enabled on x86, this option will also
-+	  restrict copies into and out of the kernel stack to local variables
-+	  within a single frame.
-+
 +	  Since this has a negligible performance impact, you should enable
 +	  this feature.
 +
 +config PAX_SIZE_OVERFLOW
 +	bool "Prevent various integer overflows in function size parameters"
++	depends on X86
 +	help
 +	  By saying Y here the kernel recomputes expressions of function
 +	  arguments marked by a size_overflow attribute with double integer
@@ -104980,7 +104999,7 @@ index fb363cd..a9d08e5 100644
  config KEYS
  	bool "Enable access key retention support"
  	help
-@@ -146,7 +778,7 @@ config INTEL_TXT
+@@ -146,7 +774,7 @@ config INTEL_TXT
  config LSM_MMAP_MIN_ADDR
  	int "Low address space for LSM to protect from user allocation"
  	depends on SECURITY && SECURITY_SELINUX
@@ -105003,13 +105022,13 @@ index fce07a7..5f12858 100644
  };
  
 diff --git a/security/commoncap.c b/security/commoncap.c
-index fe30751..aaba312 100644
+index fe30751..7702d78 100644
 --- a/security/commoncap.c
 +++ b/security/commoncap.c
 @@ -27,6 +27,8 @@
+ #include <linux/sched.h>
  #include <linux/prctl.h>
  #include <linux/securebits.h>
- #include <linux/vs_context.h>
 +#include <linux/syslog.h>
 +#include <net/sock.h>
  
@@ -105028,13 +105047,25 @@ index fe30751..aaba312 100644
 +#ifdef CONFIG_NET
 +	NETLINK_CB(skb).eff_cap = gr_cap_rtnetlink(sk);
 +#else
- 	NETLINK_CB(skb).eff_cap = vx_mbcaps(current_cap());
+ 	NETLINK_CB(skb).eff_cap = current_cap();
 +#endif
 +	
  	return 0;
  }
  
-@@ -582,6 +593,9 @@ int cap_bprm_secureexec(struct linux_binprm *bprm)
+@@ -511,6 +522,11 @@ int cap_bprm_set_creds(struct linux_binprm *bprm)
+ 	}
+ skip:
+ 
++	/* if we have fs caps, clear dangerous personality flags */
++	if (!cap_issubset(new->cap_permitted, old->cap_permitted))
++		bprm->per_clear |= PER_CLEAR_ON_SETID;
++
++
+ 	/* Don't let someone trace a set[ug]id/setpcap binary with the revised
+ 	 * credentials unless they have the appropriate permit
+ 	 */
+@@ -582,6 +598,9 @@ int cap_bprm_secureexec(struct linux_binprm *bprm)
  {
  	const struct cred *cred = current_cred();
  
@@ -105044,7 +105075,7 @@ index fe30751..aaba312 100644
  	if (cred->uid != 0) {
  		if (bprm->cap_effective)
  			return 1;
-@@ -956,14 +970,18 @@ error:
+@@ -956,13 +975,18 @@ error:
  /**
   * cap_syslog - Determine whether syslog function is permitted
   * @type: Function requested
@@ -105056,13 +105087,12 @@ index fe30751..aaba312 100644
 -int cap_syslog(int type)
 +int cap_syslog(int type, bool from_file)
  {
--	if ((type != 3 && type != 10) &&
--		!vx_capable(CAP_SYS_ADMIN, VXC_SYSLOG))
+-	if ((type != 3 && type != 10) && !capable(CAP_SYS_ADMIN))
 +	/* /proc/kmsg can open be opened by CAP_SYS_ADMIN */
 +	if (type != SYSLOG_ACTION_OPEN && from_file)
 +		return 0;
 +	if ((type != SYSLOG_ACTION_READ_ALL &&
-+	     type != SYSLOG_ACTION_SIZE_BUFFER) && !vx_capable(CAP_SYS_ADMIN, VXC_SYSLOG))
++	     type != SYSLOG_ACTION_SIZE_BUFFER) && !capable(CAP_SYS_ADMIN))
  		return -EPERM;
  	return 0;
  }
@@ -106656,7 +106686,7 @@ index 0000000..ee950d0
 +}
 diff --git a/tools/gcc/constify_plugin.c b/tools/gcc/constify_plugin.c
 new file mode 100644
-index 0000000..704a564
+index 0000000..88a7438
 --- /dev/null
 +++ b/tools/gcc/constify_plugin.c
 @@ -0,0 +1,303 @@
@@ -106919,7 +106949,7 @@ index 0000000..704a564
 +//			continue;
 +
 +		if (walk_struct(type)) {
-+			error("constified variable %qE cannot be local", var);
++			error_at(DECL_SOURCE_LOCATION(var), "constified variable %qE cannot be local", var);
 +			return 1;
 +		}
 +	}
