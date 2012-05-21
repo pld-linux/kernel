@@ -89,9 +89,9 @@
 %define		have_pcmcia	0
 %endif
 
-%define		rel		1
-%define		basever		3.3
-%define		postver		.6
+%define		rel		0.1
+%define		basever		3.4
+%define		postver		.0
 
 # __alt_kernel is list of features, empty string if none set
 # _alt kernel is defined as: %{nil}%{?alt_kernel:-%{?alt_kernel}} (defined in rpm.macros)
@@ -131,7 +131,7 @@ Epoch:		3
 License:	GPL v2
 Group:		Base/Kernel
 Source0:	http://www.kernel.org/pub/linux/kernel/v3.x/linux-%{basever}.tar.xz
-# Source0-md5:	7133f5a2086a7d7ef97abac610c094f5
+# Source0-md5:	4eb2384e1a076ee2f13484183792d679
 %if "%{postver}" != ".0"
 Patch0:		http://www.kernel.org/pub/linux/kernel/v3.x/patch-%{version}.bz2
 # Patch0-md5:	8c96e1b050036372599076a0a6b4d1eb
@@ -216,7 +216,7 @@ Patch85:	kernel-hostap.patch
 Patch100:	kernel-vserver-2.3.patch
 Patch101:	kernel-vserver-fixes.patch
 
-# http://download.filesystems.org/unionfs/unionfs-2.x/unionfs-2.5.11_for_3.2.2.diff.gz
+# http://download.filesystems.org/unionfs/unionfs-2.x/unionfs-2.5.11_for_3.3.0-rc3.diff.gz
 Patch140:	kernel-unionfs.patch
 
 # git://aufs.git.sourceforge.net/gitroot/aufs/aufs3-standalone.git, read README
@@ -1253,7 +1253,7 @@ fi
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/bluetooth/*_cs.ko*
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/isdn/hardware/avm/avm_cs.ko*
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/isdn/hardware/avm/b1pcmcia.ko*
-%exclude /lib/modules/%{kernel_release}/kernel/drivers/telephony/ixj_pcmcia.ko*
+%exclude /lib/modules/%{kernel_release}/kernel/drivers/staging/telephony/ixj_pcmcia.ko*
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/usb/gadget/g_midi.ko*
 %endif
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/ide/ide-cs.ko*
@@ -1320,7 +1320,7 @@ fi
 /lib/modules/%{kernel_release}/kernel/drivers/bluetooth/*_cs.ko*
 /lib/modules/%{kernel_release}/kernel/drivers/isdn/hardware/avm/avm_cs.ko*
 /lib/modules/%{kernel_release}/kernel/drivers/isdn/hardware/avm/b1pcmcia.ko*
-/lib/modules/%{kernel_release}/kernel/drivers/telephony/ixj_pcmcia.ko*
+/lib/modules/%{kernel_release}/kernel/drivers/staging/telephony/ixj_pcmcia.ko*
 %endif
 /lib/modules/%{kernel_release}/kernel/drivers/ata/pata_pcmcia.ko*
 /lib/modules/%{kernel_release}/kernel/drivers/ide/ide-cs.ko*
