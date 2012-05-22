@@ -371,6 +371,7 @@ AutoReqProv:	no
 BuildRequires:	/sbin/depmod
 %ifarch ppc
 BuildRequires:	gcc >= 5:3.4
+BuildConflicts:	gcc < 5:3.4
 %else
 BuildRequires:	gcc >= 5:3.2
 %endif
