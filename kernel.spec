@@ -212,7 +212,7 @@ Patch59:	kernel-rndis_host-wm5.patch
 # http://patches.aircrack-ng.org/hostap-kernel-2.6.18.patch
 Patch85:	kernel-hostap.patch
 
-# http://vserver.13thfloor.at/Experimental/patch-3.3.1-vs2.3.3.2.diff
+# http://vserver.13thfloor.at/Experimental/patch-3.4-vs2.3.3.4.diff
 Patch100:	kernel-vserver-2.3.patch
 Patch101:	kernel-vserver-fixes.patch
 
@@ -244,9 +244,7 @@ Patch2000:	kernel-small_fixes.patch
 Patch2001:	kernel-pwc-uncompress.patch
 Patch2003:	kernel-regressions.patch
 
-# 0001-AppArmor-compatibility-patch-for-v5-network-controll.patch
-# 0002-AppArmor-compatibility-patch-for-v5-interface.patch
-# from http://kernel.org/pub/linux/security/apparmor/apparmor-2.6.36-patches.tgz
+# http://git.kernel.org/?p=linux/kernel/git/jj/linux-apparmor.git;a=shortlog;h=refs/heads/v3.4-aa2.8
 Patch5000:	kernel-apparmor.patch
 
 # for rescuecd
