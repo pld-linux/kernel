@@ -1188,7 +1188,7 @@ ln -sf initrd-%{kernel_release}.gz %{initrd_dir}/initrd
 
 # if dracut is present then generate full-featured initramfs
 if [ -x /sbin/dracut ]; then
-	/sbin/dracut --quiet /boot/initramfs-%{kernel_release}.img %{kernel_release}
+	/sbin/dracut --force --quiet /boot/initramfs-%{kernel_release}.img %{kernel_release}
 fi
 
 # update boot loaders when old package files are gone from filesystem
