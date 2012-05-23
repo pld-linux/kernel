@@ -223,11 +223,12 @@ Patch140:	kernel-unionfs.patch
 # Patch creation:
 # git clone git://aufs.git.sourceforge.net/gitroot/aufs/aufs3-standalone.git
 # cd aufs3-standalone
-# git checkout -b aufs3.2 origin/aufs3.2
+# git checkout -b aufs3.4 origin/aufs3.4
 # cat aufs3-kbuild.patch aufs3-base.patch aufs3-standalone.patch > ~/rpm/packages/kernel/kernel-aufs3.patch
 # mkdir linux
 # cp -a Documentation fs include linux
 # diff -urN /usr/share/empty linux >> ~/rpm/packages/kernel/kernel-aufs3.patch
+# drop hunk at the end of patch (hunk is patching include/linux/Kbuild with single line change)
 #
 Patch145:	kernel-aufs3.patch
 Patch146:	kernel-aufs2-unionfs.patch
@@ -707,7 +708,7 @@ sed -i 's/-Werror//' arch/alpha/kernel/Makefile
 %patch101 -p1
 %endif
 
-# aufs2
+# aufs3
 %if %{with reiser4}
 %patch148 -p1
 %endif
