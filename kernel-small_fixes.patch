@@ -50,3 +50,30 @@ index 7a0c800..ec5ebbb 100644
 1.7.7.3
 
   
+--- linux-3.4/fs/unionfs/commonfops.c.org	2012-05-29 20:40:20.756489877 +0200
++++ linux-3.4/fs/unionfs/commonfops.c	2012-05-29 21:07:12.021252743 +0200
+@@ -766,7 +766,7 @@
+ 				   unsigned int cmd, unsigned long arg)
+ {
+ 	int err = 0;
+-	fd_set branchlist;
++	unsigned long branchlist = 0;
+ 	int bstart = 0, bend = 0, bindex = 0;
+ 	int orig_bstart, orig_bend;
+ 	struct dentry *dentry, *lower_dentry;
+@@ -781,14 +781,12 @@
+ 	bstart = dbstart(dentry);
+ 	bend = dbend(dentry);
+ 
+-	FD_ZERO(&branchlist);
+-
+ 	for (bindex = bstart; bindex <= bend; bindex++) {
+ 		lower_dentry = unionfs_lower_dentry_idx(dentry, bindex);
+ 		if (!lower_dentry)
+ 			continue;
+ 		if (likely(lower_dentry->d_inode))
+-			FD_SET(bindex, &branchlist);
++			__set_bit(bindex, &branchlist);
+ 		/* purge any lower objects after partial_lookup */
+ 		if (bindex < orig_bstart || bindex > orig_bend) {
+ 			dput(lower_dentry);
