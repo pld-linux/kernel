@@ -39516,9 +39516,8 @@ diff -urNp linux-3.0.9/fs/9p/vfs_inode.c linux-3.0.9/fs/9p/vfs_inode.c
  
  	P9_DPRINTK(P9_DEBUG_VFS, " %s %s\n", dentry->d_name.name,
  		IS_ERR(s) ? "<error>" : s);
-diff -urNp linux-3.0.9/fs/aio.c linux-3.0.9/fs/aio.c
---- linux-3.0.9/fs/aio.c	2011-11-11 13:12:24.000000000 -0500
-+++ linux-3.0.9/fs/aio.c	2011-11-15 20:02:59.000000000 -0500
+--- linux-3.0/fs/aio.c~	2012-06-10 23:06:59.000000000 +0300
++++ linux-3.0/fs/aio.c	2012-06-10 23:22:51.831577737 +0300
 @@ -119,7 +119,7 @@ static int aio_setup_ring(struct kioctx 
  	size += sizeof(struct io_event) * nr_events;
  	nr_pages = (size + PAGE_SIZE-1) >> PAGE_SHIFT;
@@ -39537,7 +39536,7 @@ diff -urNp linux-3.0.9/fs/aio.c linux-3.0.9/fs/aio.c
  	/* needed to zero any padding within an entry (there shouldn't be 
  	 * any, but C is fun!
  	 */
-@@ -1381,22 +1383,27 @@ static ssize_t aio_fsync(struct kiocb *i
+@@ -1381,18 +1381,19 @@
  static ssize_t aio_setup_vectored_rw(int type, struct kiocb *kiocb, bool compat)
  {
  	ssize_t ret;
@@ -39557,6 +39556,9 @@ diff -urNp linux-3.0.9/fs/aio.c linux-3.0.9/fs/aio.c
 -				kiocb->ki_nbytes, 1, &kiocb->ki_inline_vec,
 +				kiocb->ki_nbytes, 1, &iovstack,
  				&kiocb->ki_iovec);
+ 	if (ret < 0)
+ 		goto out;
+@@ -1401,6 +1402,10 @@
  	if (ret < 0)
  		goto out;
  
@@ -68194,10 +68196,9 @@ diff -urNp linux-3.0.9/mm/memory-failure.c linux-3.0.9/mm/memory-failure.c
  	SetPageHWPoison(page);
  	/* keep elevated page count for bad page */
  	return ret;
-diff -urNp linux-3.0.9/mm/mempolicy.c linux-3.0.9/mm/mempolicy.c
---- linux-3.0.9/mm/mempolicy.c	2011-11-11 13:12:24.000000000 -0500
-+++ linux-3.0.9/mm/mempolicy.c	2011-11-15 20:03:00.000000000 -0500
-@@ -639,6 +639,10 @@ static int mbind_range(struct mm_struct 
+--- kernel-longterm-3.0.34/mm/mempolicy.c	2012-06-10 23:50:56.908064131 +0300
++++ kernel-longterm-3.0.34/mm/mempolicy.c	2012-06-10 23:50:10.725871821 +0300
+@@ -618,6 +618,10 @@
  	unsigned long vmstart;
  	unsigned long vmend;
  
@@ -68208,24 +68209,7 @@ diff -urNp linux-3.0.9/mm/mempolicy.c linux-3.0.9/mm/mempolicy.c
  	vma = find_vma_prev(mm, start, &prev);
  	if (!vma || vma->vm_start > start)
  		return -EFAULT;
-@@ -669,6 +673,16 @@ static int mbind_range(struct mm_struct 
- 		err = policy_vma(vma, new_pol);
- 		if (err)
- 			goto out;
-+
-+#ifdef CONFIG_PAX_SEGMEXEC
-+		vma_m = pax_find_mirror_vma(vma);
-+		if (vma_m) {
-+			err = policy_vma(vma_m, new_pol);
-+			if (err)
-+				goto out;
-+		}
-+#endif
-+
- 	}
- 
-  out:
-@@ -1102,6 +1116,17 @@ static long do_mbind(unsigned long start
+@@ -1095,6 +1099,17 @@
  
  	if (end < start)
  		return -EINVAL;
@@ -68243,9 +68227,36 @@ diff -urNp linux-3.0.9/mm/mempolicy.c linux-3.0.9/mm/mempolicy.c
  	if (end == start)
  		return 0;
  
-@@ -1320,6 +1345,14 @@ SYSCALL_DEFINE4(migrate_pages, pid_t, pi
- 	if (!mm)
+@@ -1322,8 +1337,7 @@
+ 	rcu_read_lock();
+ 	tcred = __task_cred(task);
+ 	if (cred->euid != tcred->suid && cred->euid != tcred->uid &&
+-	    cred->uid  != tcred->suid && cred->uid  != tcred->uid &&
+-	    !capable(CAP_SYS_NICE)) {
++	    cred->uid  != tcred->suid && !capable(CAP_SYS_NICE)) {
+ 		rcu_read_unlock();
+ 		err = -EPERM;
  		goto out;
+@@ -2382,6 +2396,16 @@
+ 		 */
+ 		if (!nodelist)
+ 			goto out;
++
++#ifdef CONFIG_PAX_SEGMEXEC
++		vma_m = pax_find_mirror_vma(vma);
++		if (vma_m) {
++			err = policy_vma(vma_m, new_pol);
++			if (err)
++				goto out;
++		}
++#endif
++
+ 	}
+ 
+ 	mode_flags = 0;
+@@ -2453,6 +2477,14 @@
+ 	unsigned short mode;
+ 	unsigned short flags = pol ? pol->flags : 0;
  
 +#ifdef CONFIG_GRKERNSEC_PROC_MEMMAP
 +	if (mm != current->mm &&
@@ -68256,18 +68267,8 @@ diff -urNp linux-3.0.9/mm/mempolicy.c linux-3.0.9/mm/mempolicy.c
 +#endif
 +
  	/*
- 	 * Check if this process has the right to modify the specified
- 	 * process. The right exists if the process has administrative
-@@ -1329,8 +1362,7 @@ SYSCALL_DEFINE4(migrate_pages, pid_t, pi
- 	rcu_read_lock();
- 	tcred = __task_cred(task);
- 	if (cred->euid != tcred->suid && cred->euid != tcred->uid &&
--	    cred->uid  != tcred->suid && cred->uid  != tcred->uid &&
--	    !capable(CAP_SYS_NICE)) {
-+	    cred->uid  != tcred->suid && !capable(CAP_SYS_NICE)) {
- 		rcu_read_unlock();
- 		err = -EPERM;
- 		goto out;
+ 	 * Sanity check:  room for longest mode, flag and some nodes
+ 	 */
 diff -urNp linux-3.0.9/mm/migrate.c linux-3.0.9/mm/migrate.c
 --- linux-3.0.9/mm/migrate.c	2011-11-11 13:12:24.000000000 -0500
 +++ linux-3.0.9/mm/migrate.c	2011-11-15 20:03:00.000000000 -0500
