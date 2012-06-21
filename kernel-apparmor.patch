@@ -1,9 +1,8 @@
+From 8de755e4dfdbc40bfcaca848ae6b5aeaf0ede0e8 Mon Sep 17 00:00:00 2001
 From: John Johansen <john.johansen@canonical.com>
-Date: Thu, 22 Jul 2010 09:32:02 +0000 (-0700)
-Subject: UBUNTU: SAUCE: AppArmor: Add profile introspection file to interface
-X-Git-Url: http://git.kernel.org/?p=linux%2Fkernel%2Fgit%2Fjj%2Flinux-apparmor.git;a=commitdiff_plain;h=8de755e4dfdbc40bfcaca848ae6b5aeaf0ede0e8
-
-UBUNTU: SAUCE: AppArmor: Add profile introspection file to interface
+Date: Thu, 22 Jul 2010 02:32:02 -0700
+Subject: [PATCH 1/3] UBUNTU: SAUCE: AppArmor: Add profile introspection file
+ to interface
 
 Add the dynamic profiles file to the interace, to allow load policy
 introspection.
@@ -12,6 +11,8 @@ Signed-off-by: John Johansen <john.johansen@canonical.com>
 Acked-by: Kees Cook <kees@ubuntu.com>
 Signed-off-by: Tim Gardner <tim.gardner@canonical.com>
 ---
+ security/apparmor/apparmorfs.c |  227 ++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 227 insertions(+)
 
 diff --git a/security/apparmor/apparmorfs.c b/security/apparmor/apparmorfs.c
 index 16c15ec..89bdc62 100644
@@ -258,17 +259,31 @@ index 16c15ec..89bdc62 100644
  	AA_FS_DIR("features", aa_fs_entry_features),
  	{ }
  };
-From: John Johansen <john.johansen@canonical.com>
-Date: Mon, 4 Oct 2010 22:03:36 +0000 (-0700)
-Subject: UBUNTU: SAUCE: AppArmor: basic networking rules
-X-Git-Url: http://git.kernel.org/?p=linux%2Fkernel%2Fgit%2Fjj%2Flinux-apparmor.git;a=commitdiff_plain;h=423e2cb454d75d6185eecd0c1b5cf6ccc2d8482d
+-- 
+1.7.9.5
 
-UBUNTU: SAUCE: AppArmor: basic networking rules
+From 423e2cb454d75d6185eecd0c1b5cf6ccc2d8482d Mon Sep 17 00:00:00 2001
+From: John Johansen <john.johansen@canonical.com>
+Date: Mon, 4 Oct 2010 15:03:36 -0700
+Subject: [PATCH 2/3] UBUNTU: SAUCE: AppArmor: basic networking rules
 
 Base support for network mediation.
 
 Signed-off-by: John Johansen <john.johansen@canonical.com>
 ---
+ security/apparmor/.gitignore       |    2 +-
+ security/apparmor/Makefile         |   42 +++++++++-
+ security/apparmor/apparmorfs.c     |    1 +
+ security/apparmor/include/audit.h  |    4 +
+ security/apparmor/include/net.h    |   44 ++++++++++
+ security/apparmor/include/policy.h |    3 +
+ security/apparmor/lsm.c            |  112 +++++++++++++++++++++++++
+ security/apparmor/net.c            |  162 ++++++++++++++++++++++++++++++++++++
+ security/apparmor/policy.c         |    1 +
+ security/apparmor/policy_unpack.c  |   46 ++++++++++
+ 10 files changed, 414 insertions(+), 3 deletions(-)
+ create mode 100644 security/apparmor/include/net.h
+ create mode 100644 security/apparmor/net.c
 
 diff --git a/security/apparmor/.gitignore b/security/apparmor/.gitignore
 index 4d995ae..d5b291e 100644
@@ -847,12 +862,14 @@ index deab7c7..8f8e9c1 100644
  	if (unpack_nameX(e, AA_STRUCT, "policydb")) {
  		/* generic policy dfa - optional and may be NULL */
  		profile->policy.dfa = unpack_dfa(e);
-From: John Johansen <john.johansen@canonical.com>
-Date: Wed, 16 May 2012 17:58:05 +0000 (-0700)
-Subject: UBUNTU: SAUCE: apparmor: Add the ability to mediate mount
-X-Git-Url: http://git.kernel.org/?p=linux%2Fkernel%2Fgit%2Fjj%2Flinux-apparmor.git;a=commitdiff_plain;h=a94d5e11c0484af59e5feebf144cc48c186892ad
+-- 
+1.7.9.5
 
-UBUNTU: SAUCE: apparmor: Add the ability to mediate mount
+From a94d5e11c0484af59e5feebf144cc48c186892ad Mon Sep 17 00:00:00 2001
+From: John Johansen <john.johansen@canonical.com>
+Date: Wed, 16 May 2012 10:58:05 -0700
+Subject: [PATCH 3/3] UBUNTU: SAUCE: apparmor: Add the ability to mediate
+ mount
 
 Add the ability for apparmor to do mediation of mount operations. Mount
 rules require an updated apparmor_parser (2.8 series) for policy compilation.
@@ -892,6 +909,19 @@ See the apparmor userspace for full documentation
 Signed-off-by: John Johansen <john.johansen@canonical.com>
 Acked-by: Kees Cook <kees@ubuntu.com>
 ---
+ security/apparmor/Makefile           |    2 +-
+ security/apparmor/apparmorfs.c       |   13 +
+ security/apparmor/audit.c            |    4 +
+ security/apparmor/domain.c           |    2 +-
+ security/apparmor/include/apparmor.h |    3 +-
+ security/apparmor/include/audit.h    |   11 +
+ security/apparmor/include/domain.h   |    2 +
+ security/apparmor/include/mount.h    |   54 +++
+ security/apparmor/lsm.c              |   59 ++++
+ security/apparmor/mount.c            |  620 ++++++++++++++++++++++++++++++++++
+ 10 files changed, 767 insertions(+), 3 deletions(-)
+ create mode 100644 security/apparmor/include/mount.h
+ create mode 100644 security/apparmor/mount.c
 
 diff --git a/security/apparmor/Makefile b/security/apparmor/Makefile
 index 19daa85..63e0a4c 100644
@@ -1789,3 +1819,6 @@ index 0000000..63d8493
 +
 +	return error;
 +}
+-- 
+1.7.9.5
+
