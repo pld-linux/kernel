@@ -1021,7 +1021,6 @@ ln -sf %{defconfig} .config
 cd -
 
 %{__make} \
-	CONSTIFY_PLUGIN="" \
 	TARGETOBJ=%{targetobj} \
 	%{?with_verbose:V=1} \
 	oldconfig
@@ -1030,7 +1029,6 @@ cd -
 
 # build kernel
 %{__make} \
-	CONSTIFY_PLUGIN="" \
 	TARGETOBJ=%{targetobj} \
 	%{?with_verbose:V=1} \
 	all
