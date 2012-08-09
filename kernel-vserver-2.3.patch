@@ -8415,10 +8415,10 @@ diff -NurpP --minimal linux-3.5/include/linux/net.h linux-3.5-vs2.3.4/include/li
 --- linux-3.5/include/linux/net.h	2012-07-22 23:39:44.000000000 +0200
 +++ linux-3.5-vs2.3.4/include/linux/net.h	2012-07-23 01:45:55.000000000 +0200
 @@ -72,6 +72,7 @@ struct net;
- #define SOCK_NOSPACE		2
  #define SOCK_PASSCRED		3
  #define SOCK_PASSSEC		4
-+#define SOCK_USER_SOCKET	5
+ #define SOCK_EXTERNALLY_ALLOCATED 5
++#define SOCK_USER_SOCKET	6
  
  #ifndef ARCH_HAS_SOCKET_TYPES
  /**
@@ -25972,3 +25972,90 @@ diff -NurpP --minimal linux-3.5/security/selinux/hooks.c linux-3.5-vs2.3.4/secur
  #include <linux/parser.h>
  #include <linux/nfs_mount.h>
  #include <net/ipv6.h>
+diff -NurpP --minimal linux-3.5-vs2.3.4/kernel/vserver/limit.c linux-3.5-vs2.3.4.1/kernel/vserver/limit.c
+--- linux-3.5-vs2.3.4/kernel/vserver/limit.c	2012-07-23 01:45:55.000000000 +0200
++++ linux-3.5-vs2.3.4.1/kernel/vserver/limit.c	2012-08-09 19:58:03.000000000 +0200
+@@ -258,11 +258,13 @@ int vc_rlimit_stat(struct vx_info *vxi, 
+ void vx_vsi_meminfo(struct sysinfo *val)
+ {
+ #ifdef	CONFIG_CGROUP_MEM_RES_CTLR
+-	struct mem_cgroup *mcg = mem_cgroup_from_task(current);
++	struct mem_cgroup *mcg;
+ 	u64 res_limit, res_usage;
+ 
++	rcu_read_lock();
++	mcg = mem_cgroup_from_task(current);
+ 	if (!mcg)
+-		return;
++		goto out;
+ 
+ 	res_limit = mem_cgroup_res_read_u64(mcg, RES_LIMIT);
+ 	res_usage = mem_cgroup_res_read_u64(mcg, RES_USAGE);
+@@ -273,6 +275,8 @@ void vx_vsi_meminfo(struct sysinfo *val)
+ 	val->bufferram = 0;
+ 	val->totalhigh = 0;
+ 	val->freehigh = 0;
++out:
++	rcu_read_unlock();
+ #endif	/* CONFIG_CGROUP_MEM_RES_CTLR */
+ 	return;
+ }
+@@ -281,12 +285,14 @@ void vx_vsi_swapinfo(struct sysinfo *val
+ {
+ #ifdef	CONFIG_CGROUP_MEM_RES_CTLR
+ #ifdef	CONFIG_CGROUP_MEM_RES_CTLR_SWAP
+-	struct mem_cgroup *mcg = mem_cgroup_from_task(current);
++	struct mem_cgroup *mcg;
+ 	u64 res_limit, res_usage, memsw_limit, memsw_usage;
+ 	s64 swap_limit, swap_usage;
+ 
++	rcu_read_lock();
++	mcg = mem_cgroup_from_task(current);
+ 	if (!mcg)
+-		return;
++		goto out;
+ 
+ 	res_limit = mem_cgroup_res_read_u64(mcg, RES_LIMIT);
+ 	res_usage = mem_cgroup_res_read_u64(mcg, RES_USAGE);
+@@ -295,7 +301,7 @@ void vx_vsi_swapinfo(struct sysinfo *val
+ 
+ 	/* memory unlimited */
+ 	if (res_limit == RESOURCE_MAX)
+-		return;
++		goto out;
+ 
+ 	swap_limit = memsw_limit - res_limit;
+ 	/* we have a swap limit? */
+@@ -309,6 +315,8 @@ void vx_vsi_swapinfo(struct sysinfo *val
+ 	/* total shown minus usage gives free swap */
+ 	val->freeswap = (swap_usage < swap_limit) ?
+ 		val->totalswap - (swap_usage >> PAGE_SHIFT) : 0;
++out:
++	rcu_read_unlock();
+ #else	/* !CONFIG_CGROUP_MEM_RES_CTLR_SWAP */
+ 	val->totalswap = 0;
+ 	val->freeswap = 0;
+@@ -319,12 +327,19 @@ void vx_vsi_swapinfo(struct sysinfo *val
+ 
+ long vx_vsi_cached(struct sysinfo *val)
+ {
++	long cache = 0;
+ #ifdef	CONFIG_CGROUP_MEM_RES_CTLR
+-	struct mem_cgroup *mcg = mem_cgroup_from_task(current);
++	struct mem_cgroup *mcg;
+ 
+-	return mem_cgroup_stat_read_cache(mcg);
+-#else
+-	return 0;
++	rcu_read_lock();
++	mcg = mem_cgroup_from_task(current);
++	if (!mcg)
++		goto out;
++
++	cache = mem_cgroup_stat_read_cache(mcg);
++out:
++	rcu_read_unlock();
+ #endif
++	return cache;
+ }
+ 
