@@ -42344,9 +42344,9 @@ diff -urNp linux-3.0.9/fs/fifo.c linux-3.0.9/fs/fifo.c
  
 -		if (!pipe->readers) {
 +		if (!atomic_read(&pipe->readers)) {
- 			wait_for_partner(inode, &pipe->r_counter);
- 			if (signal_pending(current))
+ 			if (wait_for_partner(inode, &pipe->r_counter))
  				goto err_wr;
+ 		}
 @@ -105,11 +105,11 @@ static int fifo_open(struct inode *inode
  	 */
  		filp->f_op = &rdwr_pipefifo_fops;
@@ -57912,18 +57912,6 @@ diff -urNp linux-3.0.9/include/linux/compiler.h linux-3.0.9/include/linux/compil
 +#define ACCESS_ONCE_RW(x) (*(volatile typeof(x) *)&(x))
  
  #endif /* __LINUX_COMPILER_H */
-diff -urNp linux-3.0.9/include/linux/cpuset.h linux-3.0.9/include/linux/cpuset.h
---- linux-3.0.9/include/linux/cpuset.h	2011-11-11 13:12:24.000000000 -0500
-+++ linux-3.0.9/include/linux/cpuset.h	2011-11-15 20:02:59.000000000 -0500
-@@ -118,7 +118,7 @@ static inline void put_mems_allowed(void
- 	 * nodemask.
- 	 */
- 	smp_mb();
--	--ACCESS_ONCE(current->mems_allowed_change_disable);
-+	--ACCESS_ONCE_RW(current->mems_allowed_change_disable);
- }
- 
- static inline void set_mems_allowed(nodemask_t nodemask)
 diff -urNp linux-3.0.9/include/linux/crypto.h linux-3.0.9/include/linux/crypto.h
 --- linux-3.0.9/include/linux/crypto.h	2011-11-11 13:12:24.000000000 -0500
 +++ linux-3.0.9/include/linux/crypto.h	2011-11-15 20:02:59.000000000 -0500
@@ -71375,8 +71363,8 @@ diff -urNp linux-3.0.9/mm/vmstat.c linux-3.0.9/mm/vmstat.c
   *
   * vm_stat contains the global counters
   */
--atomic_long_t vm_stat[NR_VM_ZONE_STAT_ITEMS];
-+atomic_long_unchecked_t vm_stat[NR_VM_ZONE_STAT_ITEMS];
+-atomic_long_t vm_stat[NR_VM_ZONE_STAT_ITEMS] __cacheline_aligned_in_smp;
++atomic_long_unchecked_t vm_stat[NR_VM_ZONE_STAT_ITEMS] __cacheline_aligned_in_smp;
  EXPORT_SYMBOL(vm_stat);
  
  #ifdef CONFIG_SMP
