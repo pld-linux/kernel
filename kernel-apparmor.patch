@@ -1,27 +1,45 @@
-From 8de755e4dfdbc40bfcaca848ae6b5aeaf0ede0e8 Mon Sep 17 00:00:00 2001
+From 05bf1eb7276886a3eda0588a8e012b558b693e96 Mon Sep 17 00:00:00 2001
 From: John Johansen <john.johansen@canonical.com>
 Date: Thu, 22 Jul 2010 02:32:02 -0700
-Subject: [PATCH 1/3] UBUNTU: SAUCE: AppArmor: Add profile introspection file
- to interface
+Subject: [PATCH] UBUNTU: SAUCE: AppArmor: Add profile introspection file to
+ interface
 
 Add the dynamic profiles file to the interace, to allow load policy
 introspection.
 
 Signed-off-by: John Johansen <john.johansen@canonical.com>
 Acked-by: Kees Cook <kees@ubuntu.com>
-Signed-off-by: Tim Gardner <tim.gardner@canonical.com>
 ---
- security/apparmor/apparmorfs.c |  227 ++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 227 insertions(+)
+ security/apparmor/Kconfig      |    9 ++
+ security/apparmor/apparmorfs.c |  231 ++++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 240 insertions(+), 0 deletions(-)
 
+diff --git a/security/apparmor/Kconfig b/security/apparmor/Kconfig
+index 9b9013b..51ebf96 100644
+--- a/security/apparmor/Kconfig
++++ b/security/apparmor/Kconfig
+@@ -29,3 +29,12 @@ config SECURITY_APPARMOR_BOOTPARAM_VALUE
+ 	  boot.
+ 
+ 	  If you are unsure how to answer this question, answer 1.
++
++config SECURITY_APPARMOR_COMPAT_24
++	bool "Enable AppArmor 2.4 compatability"
++	depends on SECURITY_APPARMOR
++	default y
++	help
++	  This option enables compatability with AppArmor 2.4.  It is
++          recommended if compatability with older versions of AppArmor
++          is desired.
 diff --git a/security/apparmor/apparmorfs.c b/security/apparmor/apparmorfs.c
-index 16c15ec..89bdc62 100644
+index 16c15ec..42b7c9f 100644
 --- a/security/apparmor/apparmorfs.c
 +++ b/security/apparmor/apparmorfs.c
-@@ -182,6 +182,232 @@ const struct file_operations aa_fs_seq_file_ops = {
+@@ -182,6 +182,234 @@ const struct file_operations aa_fs_seq_file_ops = {
  	.release	= single_release,
  };
  
++#ifdef CONFIG_SECURITY_APPARMOR_COMPAT_24
 +/**
 + * __next_namespace - find the next namespace to list
 + * @root: root namespace to stop search at (NOT NULL)
@@ -247,25 +265,28 @@ index 16c15ec..89bdc62 100644
 +	.llseek = seq_lseek,
 +	.release = profiles_release,
 +};
++#endif /* CONFIG_SECURITY_APPARMOR_COMPAT_24 */
 +
  /** Base file system setup **/
  
  static struct aa_fs_entry aa_fs_entry_file[] = {
-@@ -210,6 +436,7 @@ static struct aa_fs_entry aa_fs_entry_apparmor[] = {
+@@ -210,6 +438,9 @@ static struct aa_fs_entry aa_fs_entry_apparmor[] = {
  	AA_FS_FILE_FOPS(".load", 0640, &aa_fs_profile_load),
  	AA_FS_FILE_FOPS(".replace", 0640, &aa_fs_profile_replace),
  	AA_FS_FILE_FOPS(".remove", 0640, &aa_fs_profile_remove),
++#ifdef CONFIG_SECURITY_APPARMOR_COMPAT_24
 +	AA_FS_FILE_FOPS("profiles", 0640, &aa_fs_profiles_fops),
++#endif
  	AA_FS_DIR("features", aa_fs_entry_features),
  	{ }
  };
 -- 
-1.7.9.5
+1.7.6.5
 
-From 423e2cb454d75d6185eecd0c1b5cf6ccc2d8482d Mon Sep 17 00:00:00 2001
+From 4facdf9db37c12ff655c91270d9030e2ed805ca2 Mon Sep 17 00:00:00 2001
 From: John Johansen <john.johansen@canonical.com>
 Date: Mon, 4 Oct 2010 15:03:36 -0700
-Subject: [PATCH 2/3] UBUNTU: SAUCE: AppArmor: basic networking rules
+Subject: [PATCH] UBUNTU: SAUCE: AppArmor: basic networking rules
 
 Base support for network mediation.
 
@@ -370,10 +391,10 @@ index 806bd19..19daa85 100644
 +	$(call cmd,make-af)
 +	$(call cmd,make-sock)
 diff --git a/security/apparmor/apparmorfs.c b/security/apparmor/apparmorfs.c
-index 89bdc62..c66315d 100644
+index 42b7c9f..114fb23 100644
 --- a/security/apparmor/apparmorfs.c
 +++ b/security/apparmor/apparmorfs.c
-@@ -427,6 +427,7 @@ static struct aa_fs_entry aa_fs_entry_domain[] = {
+@@ -429,6 +429,7 @@ static struct aa_fs_entry aa_fs_entry_domain[] = {
  static struct aa_fs_entry aa_fs_entry_features[] = {
  	AA_FS_DIR("domain",			aa_fs_entry_domain),
  	AA_FS_DIR("file",			aa_fs_entry_file),
@@ -382,10 +403,10 @@ index 89bdc62..c66315d 100644
  	AA_FS_DIR("rlimit",			aa_fs_entry_rlimit),
  	{ }
 diff --git a/security/apparmor/include/audit.h b/security/apparmor/include/audit.h
-index 3868b1e..c1ff09c 100644
+index 4b7e189..17734f9 100644
 --- a/security/apparmor/include/audit.h
 +++ b/security/apparmor/include/audit.h
-@@ -126,6 +126,10 @@ struct apparmor_audit_data {
+@@ -127,6 +127,10 @@ struct apparmor_audit_data {
  			u32 denied;
  			uid_t ouid;
  		} fs;
@@ -475,7 +496,7 @@ index bda4569..eb13a73 100644
  };
  
 diff --git a/security/apparmor/lsm.c b/security/apparmor/lsm.c
-index ad05d39..3cde194 100644
+index 8ea39aa..f628734 100644
 --- a/security/apparmor/lsm.c
 +++ b/security/apparmor/lsm.c
 @@ -32,6 +32,7 @@
@@ -486,7 +507,7 @@ index ad05d39..3cde194 100644
  #include "include/path.h"
  #include "include/policy.h"
  #include "include/procattr.h"
-@@ -622,6 +623,104 @@ static int apparmor_task_setrlimit(struct task_struct *task,
+@@ -614,6 +615,104 @@ static int apparmor_task_setrlimit(struct task_struct *task,
  	return error;
  }
  
@@ -591,7 +612,7 @@ index ad05d39..3cde194 100644
  static struct security_operations apparmor_ops = {
  	.name =				"apparmor",
  
-@@ -653,6 +752,19 @@ static struct security_operations apparmor_ops = {
+@@ -646,6 +745,19 @@ static struct security_operations apparmor_ops = {
  	.getprocattr =			apparmor_getprocattr,
  	.setprocattr =			apparmor_setprocattr,
  
@@ -613,7 +634,7 @@ index ad05d39..3cde194 100644
  	.cred_prepare =			apparmor_cred_prepare,
 diff --git a/security/apparmor/net.c b/security/apparmor/net.c
 new file mode 100644
-index 0000000..084232b
+index 0000000..003dd18
 --- /dev/null
 +++ b/security/apparmor/net.c
 @@ -0,0 +1,162 @@
@@ -780,7 +801,7 @@ index 0000000..084232b
 +	return error;
 +}
 diff --git a/security/apparmor/policy.c b/security/apparmor/policy.c
-index f1f7506..b8100a7 100644
+index cf5fd22..27c8161 100644
 --- a/security/apparmor/policy.c
 +++ b/security/apparmor/policy.c
 @@ -745,6 +745,7 @@ static void free_profile(struct aa_profile *profile)
@@ -792,7 +813,7 @@ index f1f7506..b8100a7 100644
  
  	aa_free_sid(profile->sid);
 diff --git a/security/apparmor/policy_unpack.c b/security/apparmor/policy_unpack.c
-index deab7c7..8f8e9c1 100644
+index 329b1fd..1b90dfa 100644
 --- a/security/apparmor/policy_unpack.c
 +++ b/security/apparmor/policy_unpack.c
 @@ -193,6 +193,19 @@ fail:
@@ -863,13 +884,12 @@ index deab7c7..8f8e9c1 100644
  		/* generic policy dfa - optional and may be NULL */
  		profile->policy.dfa = unpack_dfa(e);
 -- 
-1.7.9.5
+1.7.7.6
 
-From a94d5e11c0484af59e5feebf144cc48c186892ad Mon Sep 17 00:00:00 2001
+From 888a3d71db1ffd3a19d9f621b07e60c4ab9e1c44 Mon Sep 17 00:00:00 2001
 From: John Johansen <john.johansen@canonical.com>
 Date: Wed, 16 May 2012 10:58:05 -0700
-Subject: [PATCH 3/3] UBUNTU: SAUCE: apparmor: Add the ability to mediate
- mount
+Subject: [PATCH] UBUNTU: SAUCE: apparmor: Add the ability to mediate mount
 
 Add the ability for apparmor to do mediation of mount operations. Mount
 rules require an updated apparmor_parser (2.8 series) for policy compilation.
@@ -937,10 +957,10 @@ index 19daa85..63e0a4c 100644
  clean-files := capability_names.h rlim_names.h net_names.h
  
 diff --git a/security/apparmor/apparmorfs.c b/security/apparmor/apparmorfs.c
-index c66315d..ff19009 100644
+index 114fb23..ee77ec9 100644
 --- a/security/apparmor/apparmorfs.c
 +++ b/security/apparmor/apparmorfs.c
-@@ -424,10 +424,23 @@ static struct aa_fs_entry aa_fs_entry_domain[] = {
+@@ -426,10 +426,23 @@ static struct aa_fs_entry aa_fs_entry_domain[] = {
  	{ }
  };
  
@@ -965,7 +985,7 @@ index c66315d..ff19009 100644
  	AA_FS_DIR("rlimit",			aa_fs_entry_rlimit),
  	{ }
 diff --git a/security/apparmor/audit.c b/security/apparmor/audit.c
-index cc3520d..b9f5ee9 100644
+index 3ae28db..e267963 100644
 --- a/security/apparmor/audit.c
 +++ b/security/apparmor/audit.c
 @@ -44,6 +44,10 @@ const char *const op_table[] = {
@@ -980,7 +1000,7 @@ index cc3520d..b9f5ee9 100644
  	"post_create",
  	"bind",
 diff --git a/security/apparmor/domain.c b/security/apparmor/domain.c
-index 6327685..dfdc47b 100644
+index b81ea10..afa8671 100644
 --- a/security/apparmor/domain.c
 +++ b/security/apparmor/domain.c
 @@ -242,7 +242,7 @@ static const char *next_name(int xtype, const char *name)
@@ -1008,7 +1028,7 @@ index 40aedd9..e243d96 100644
  /* Control parameters settable through module/boot flags */
  extern enum audit_mode aa_g_audit;
 diff --git a/security/apparmor/include/audit.h b/security/apparmor/include/audit.h
-index c1ff09c..7b90900c 100644
+index 17734f9..66a738c 100644
 --- a/security/apparmor/include/audit.h
 +++ b/security/apparmor/include/audit.h
 @@ -73,6 +73,10 @@ enum aa_ops {
@@ -1022,7 +1042,7 @@ index c1ff09c..7b90900c 100644
  	OP_CREATE,
  	OP_POST_CREATE,
  	OP_BIND,
-@@ -121,6 +125,13 @@ struct apparmor_audit_data {
+@@ -122,6 +126,13 @@ struct apparmor_audit_data {
  			unsigned long max;
  		} rlim;
  		struct {
@@ -1110,7 +1130,7 @@ index 0000000..bc17a53
 +
 +#endif /* __AA_MOUNT_H */
 diff --git a/security/apparmor/lsm.c b/security/apparmor/lsm.c
-index 3cde194..4512cc6 100644
+index f628734..65ff9e4 100644
 --- a/security/apparmor/lsm.c
 +++ b/security/apparmor/lsm.c
 @@ -36,6 +36,7 @@
@@ -1121,7 +1141,7 @@ index 3cde194..4512cc6 100644
  
  /* Flag indicating whether initialization completed */
  int apparmor_initialized __initdata;
-@@ -512,6 +513,60 @@ static int apparmor_file_mprotect(struct vm_area_struct *vma,
+@@ -504,6 +505,60 @@ static int apparmor_file_mprotect(struct vm_area_struct *vma,
  			   !(vma->vm_flags & VM_SHARED) ? MAP_PRIVATE : 0);
  }
  
@@ -1182,7 +1202,7 @@ index 3cde194..4512cc6 100644
  static int apparmor_getprocattr(struct task_struct *task, char *name,
  				char **value)
  {
-@@ -729,6 +784,10 @@ static struct security_operations apparmor_ops = {
+@@ -721,6 +776,10 @@ static struct security_operations apparmor_ops = {
  	.capget =			apparmor_capget,
  	.capable =			apparmor_capable,
  
@@ -1195,7 +1215,7 @@ index 3cde194..4512cc6 100644
  	.path_symlink =			apparmor_path_symlink,
 diff --git a/security/apparmor/mount.c b/security/apparmor/mount.c
 new file mode 100644
-index 0000000..63d8493
+index 0000000..478aa4d
 --- /dev/null
 +++ b/security/apparmor/mount.c
 @@ -0,0 +1,620 @@
@@ -1339,7 +1359,7 @@ index 0000000..63d8493
 +		       struct file_perms *perms, const char *info, int error)
 +{
 +	int audit_type = AUDIT_APPARMOR_AUTO;
-+	struct common_audit_data sa;
++	struct common_audit_data sa = { };
 +	struct apparmor_audit_data aad = { };
 +
 +	if (likely(!error)) {
@@ -1820,5 +1840,5 @@ index 0000000..63d8493
 +	return error;
 +}
 -- 
-1.7.9.5
+1.7.7.6
 

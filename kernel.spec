@@ -91,7 +91,7 @@
 
 %define		rel		1
 %define		basever		3.5
-%define		postver		.2
+%define		postver		.3
 
 # __alt_kernel is list of features, empty string if none set
 # _alt kernel is defined as: %{nil}%{?alt_kernel:-%{?alt_kernel}} (defined in rpm.macros)
@@ -134,7 +134,7 @@ Source0:	http://www.kernel.org/pub/linux/kernel/v3.x/linux-%{basever}.tar.xz
 # Source0-md5:	24153eaaa81dedc9481ada8cd9c3b83d
 %if "%{postver}" != ".0"
 Patch0:		http://www.kernel.org/pub/linux/kernel/v3.x/patch-%{version}.bz2
-# Patch0-md5:	128f05bf03ba7e772286b2066eab439c
+# Patch0-md5:	94115bfe01743bd4326d71f321f2e5ac
 %endif
 
 Source3:	kernel-autoconf.h
@@ -223,7 +223,7 @@ Patch140:	kernel-unionfs.patch
 # Patch creation:
 # git clone git://aufs.git.sourceforge.net/gitroot/aufs/aufs3-standalone.git
 # cd aufs3-standalone
-# git checkout -b aufs3.4 origin/aufs3.4
+# git checkout -b aufs3.5 origin/aufs3.5
 # cat aufs3-kbuild.patch aufs3-base.patch aufs3-standalone.patch > ~/rpm/packages/kernel/kernel-aufs3.patch
 # mkdir linux
 # cp -a Documentation fs include linux
@@ -245,7 +245,7 @@ Patch2000:	kernel-small_fixes.patch
 Patch2001:	kernel-pwc-uncompress.patch
 Patch2003:	kernel-regressions.patch
 
-# http://git.kernel.org/?p=linux/kernel/git/jj/linux-apparmor.git;a=shortlog;h=refs/heads/v3.4-aa2.8
+# http://git.kernel.org/?p=linux/kernel/git/jj/linux-apparmor.git;a=shortlog;h=refs/heads/v3.5-aa2.8
 Patch5000:	kernel-apparmor.patch
 
 # for rescuecd
