@@ -297,7 +297,7 @@ Requires:	cpuinfo(pae)
 %endif
 Suggests:	dracut
 Suggests:	keyutils
-Suggests:	linux-firmware
+Suggests:	linux-firmware >= 20120720
 Provides:	%{name}(netfilter) = 20070806
 Provides:	%{name}(vermagic) = %{kernel_release}
 Obsoletes:	kernel%{_alt_kernel}-char-lirc-ene0100
