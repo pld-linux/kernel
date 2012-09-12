@@ -297,7 +297,7 @@ Requires:	cpuinfo(pae)
 %endif
 Suggests:	dracut
 Suggests:	keyutils
-Suggests:	linux-firmware >= 20120720
+Suggests:	linux-firmware
 Provides:	%{name}(netfilter) = 20070806
 Provides:	%{name}(vermagic) = %{kernel_release}
 Obsoletes:	kernel%{_alt_kernel}-char-lirc-ene0100
@@ -320,6 +320,7 @@ Obsoletes:	kernel-smp
 Conflicts:	e2fsprogs < 1.29
 Conflicts:	isdn4k-utils < 3.1pre1
 Conflicts:	jfsutils < 1.1.3
+Conflicts:	linux-firmware < 20120720
 Conflicts:	lvm2 < 2.02.40
 Conflicts:	module-init-tools < 3.16
 Conflicts:	nfs-utils < 1.0.5
