@@ -311,7 +311,7 @@ BuildRequires:	hostname
 BuildRequires:	virtual(module-tools)
 BuildRequires:	perl-base
 BuildRequires:	rpm-build >= 4.5-24
-BuildRequires:	rpmbuild(macros) >= 1.217
+BuildRequires:	rpmbuild(macros) >= 1.652
 Requires(post):	coreutils
 Requires(post):	geninitrd >= 10000-3
 Requires(post):	virtual(module-tools)
@@ -398,21 +398,21 @@ BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 
 %define		_kernelsrcdir	/usr/src/linux%{_alt_kernel}-%{version}
 
-%if "%{_target_base_arch}" != "%{_arch}"
+%if "%{_target_base_arch}" != "%{_host_base_arch}"
 	%define CrossOpts ARCH=%{_target_base_arch} CROSS_COMPILE=%{_target_cpu}-pld-linux-
 	%define	DepMod /bin/true
 
-	%if "%{_arch}" == "sparc" && "%{_target_base_arch}" == "sparc64"
+	%if "%{_host_base_arch}" == "sparc" && "%{_target_base_arch}" == "sparc64"
 	%define	CrossOpts ARCH=%{_target_base_arch} CC="%{__cc}"
 	%define	DepMod /sbin/depmod
 	%endif
 
-	%if "%{_arch}" == "sparc64" && "%{_target_base_arch}" == "sparc"
+	%if "%{_host_base_arch}" == "sparc64" && "%{_target_base_arch}" == "sparc"
 	%define	CrossOpts ARCH=%{_target_base_arch} CC="%{__cc}"
 	%define	DepMod /sbin/depmod
 	%endif
 
-	%if "%{_arch}" == "x86_64" && "%{_target_base_arch}" == "i386"
+	%if "%{_host_base_arch}" == "x86_64" && "%{_target_base_arch}" == "i386"
 	%define	CrossOpts ARCH=%{_target_base_arch} CC="%{__cc}"
 	%define	DepMod /sbin/depmod
 	%endif
@@ -590,7 +590,7 @@ Summary(de.UTF-8):	Development Dateien die beim Kernel Modul kompilationen gebra
 Summary(pl.UTF-8):	Pliki służące do budowania modułów jądra
 Group:		Development/Building
 Requires:	%{name}-headers = %{epoch}:%{version}-%{release}
-Conflicts:	rpmbuild(macros) < 1.642
+Conflicts:	rpmbuild(macros) < 1.652
 AutoReqProv:	no
 
 %description module-build
@@ -1102,7 +1102,7 @@ cp -a %{objdir}/System.map $RPM_BUILD_ROOT/boot/System.map-%{kernel_release}
 touch $RPM_BUILD_ROOT%{initrd_dir}/initrd-%{kernel_release}.gz
 touch $RPM_BUILD_ROOT%{initrd_dir}/initramfs-%{kernel_release}.img
 
-%if "%{_target_base_arch}" != "%{_arch}"
+%if "%{_target_base_arch}" != "%{_host_base_arch}"
 touch $RPM_BUILD_ROOT/lib/modules/%{kernel_release}/modules.dep
 %endif
 
