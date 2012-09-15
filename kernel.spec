@@ -91,7 +91,7 @@
 
 %define		rel		1
 %define		basever		3.5
-%define		postver		.3
+%define		postver		.4
 
 # __alt_kernel is list of features, empty string if none set
 # _alt kernel is defined as: %{nil}%{?alt_kernel:-%{?alt_kernel}} (defined in rpm.macros)
@@ -212,7 +212,7 @@ Patch59:	kernel-rndis_host-wm5.patch
 # http://patches.aircrack-ng.org/hostap-kernel-2.6.18.patch
 Patch85:	kernel-hostap.patch
 
-# http://vserver.13thfloor.at/Experimental/patch-3.5.1-vs2.3.4.1.diff
+# http://vserver.13thfloor.at/Experimental/patch-3.5.3-vs2.3.4.2.diff
 Patch100:	kernel-vserver-2.3.patch
 Patch101:	kernel-vserver-fixes.patch
 
@@ -753,7 +753,7 @@ exit 0
 #%patch2003 -p1
 
 # Do not remove this, please!
-#%patch50000 -p1
+#%%patch50000 -p1
 
 # Fix EXTRAVERSION in main Makefile
 sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{?alt_kernel:.%{alt_kernel}}#g' Makefile
@@ -923,6 +923,8 @@ EOCONFIG
 	PaXconfig pax.config
 %endif
 
+	# for rpm 5.3
+	[ -z "$RPM_SOURCE_DIR" ] && export RPM_SOURCE_DIR=$(dirname %{SOURCE6})
 	# prepare kernel-style config file from multiple config files
 	%{__awk} -v arch="all %{target_arch_dir} %{_target_base_arch} %{_target_cpu}" -f %{SOURCE6} \
 %if %{with myown}
