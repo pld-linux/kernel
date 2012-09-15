@@ -922,9 +922,6 @@ EOCONFIG
 %if %{with pax}
 	PaXconfig pax.config
 %endif
-
-	# for rpm 5.3
-	[ -z "$RPM_SOURCE_DIR" ] && export RPM_SOURCE_DIR=$(dirname %{SOURCE6})
 	# prepare kernel-style config file from multiple config files
 	%{__awk} -v arch="all %{target_arch_dir} %{_target_base_arch} %{_target_cpu}" -f %{SOURCE6} \
 %if %{with myown}
