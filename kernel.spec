@@ -103,15 +103,24 @@
 %endif
 
 # these override whatever name was picked from bconds
-%if %{with myown} && "%{_alt_kernel}" == ""
+%if %{with myown}
+%if "%{_alt_kernel}" == ""
 %define		alt_kernel	myown
 %endif
-%if %{with rescuecd}
-%define		alt_kernel	rescuecd
-%endif
+%else # not myown:
 %if %{with vanilla}
 %define		alt_kernel	vanilla
+%else # not vanilla:
+%if %{with rescuecd}
+%define		alt_kernel	rescuecd
+%else # not rescuecd:
+%define		__alt_kernel	longterm
+%if "%{__alt_kernel}" != ""
+%define		alt_kernel	%{__alt_kernel}
 %endif
+%endif # not rescuecd
+%endif # not vanilla
+%endif # not myown
 
 # kernel release (used in filesystem and eventually in uname -r)
 # modules will be looked from /lib/modules/%{kernel_release}
