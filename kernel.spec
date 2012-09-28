@@ -1100,6 +1100,7 @@ cp -a %{objdir}/System.map $RPM_BUILD_ROOT/boot/System.map-%{kernel_release}
 
 # ghosted initrd
 touch $RPM_BUILD_ROOT%{initrd_dir}/initrd-%{kernel_release}.gz
+touch $RPM_BUILD_ROOT%{initrd_dir}/initramfs-%{kernel_release}.img
 
 %if "%{_target_base_arch}" != "%{_arch}"
 touch $RPM_BUILD_ROOT/lib/modules/%{kernel_release}/modules.dep
@@ -1266,6 +1267,7 @@ fi
 /boot/vmlinuz-%{kernel_release}
 /boot/System.map-%{kernel_release}
 %ghost %{initrd_dir}/initrd-%{kernel_release}.gz
+%ghost %{initrd_dir}/initramfs-%{kernel_release}.img
 /lib/firmware/%{kernel_release}
 
 %dir /lib/modules/%{kernel_release}
