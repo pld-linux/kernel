@@ -91,7 +91,7 @@
 
 %define		rel		1
 %define		basever		3.5
-%define		postver		.4
+%define		postver		.5
 
 # __alt_kernel is list of features, empty string if none set
 # _alt kernel is defined as: %{nil}%{?alt_kernel:-%{?alt_kernel}} (defined in rpm.macros)
@@ -134,7 +134,7 @@ Source0:	http://www.kernel.org/pub/linux/kernel/v3.x/linux-%{basever}.tar.xz
 # Source0-md5:	24153eaaa81dedc9481ada8cd9c3b83d
 %if "%{postver}" != ".0"
 Patch0:		http://www.kernel.org/pub/linux/kernel/v3.x/patch-%{version}.bz2
-# Patch0-md5:	acdc8bd66d35c95eb364f4ab465354e9
+# Patch0-md5:	546c9b90bbd22ae66aec009616dfeb22
 %endif
 
 Source3:	kernel-autoconf.h
@@ -212,7 +212,7 @@ Patch59:	kernel-rndis_host-wm5.patch
 # http://patches.aircrack-ng.org/hostap-kernel-2.6.18.patch
 Patch85:	kernel-hostap.patch
 
-# http://vserver.13thfloor.at/Experimental/patch-3.5.3-vs2.3.4.2.diff
+# http://vserver.13thfloor.at/Experimental/patch-3.5.4-vs2.3.4.3.diff
 Patch100:	kernel-vserver-2.3.patch
 Patch101:	kernel-vserver-fixes.patch
 
