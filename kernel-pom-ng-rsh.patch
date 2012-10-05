@@ -1,29 +1,7 @@
-diff -NurpP --minimal linux/include/net/netfilter/nf_conntrack.h linux/include/net/netfilter/nf_conntrack.h
---- linux/include/net/netfilter/nf_conntrack.h	2007-05-30 11:57:00.000000000 +0200
-+++ linux/include/net/netfilter/nf_conntrack.h	2007-05-30 11:58:41.000000000 +0200
-@@ -29,6 +29,7 @@ union nf_conntrack_expect_proto {
- };
- 
- /* Add protocol helper include file here */
-+#include <linux/netfilter/nf_conntrack_rsh.h>
- #include <linux/netfilter/nf_conntrack_ftp.h>
- #include <linux/netfilter/nf_conntrack_pptp.h>
- #include <linux/netfilter/nf_conntrack_h323.h>
-@@ -73,6 +73,10 @@
- #if defined(CONFIG_NF_NAT_MMS) || defined(CONFIG_NF_NAT_MMS_MODULE)
- 	struct nf_ct_mms_master ct_mms_info;
- #endif
-+#if defined(CONFIG_NF_CONNTRACK_RSH) || defined(CONFIG_NF_CONNTRACK_RSH_MODULE)
-+	struct nf_ct_rsh_master ct_rsh_info;
-+#endif
-+
- };
- 
- #include <linux/types.h>
 diff -NurpP --minimal linux/include/linux/netfilter/nf_conntrack_rsh.h linux/include/linux/netfilter/nf_conntrack_rsh.h
 --- linux/include/linux/netfilter/nf_conntrack_rsh.h	1970-01-01 01:00:00.000000000 +0100
 +++ linux/include/linux/netfilter/nf_conntrack_rsh.h	2007-05-30 11:58:41.000000000 +0200
-@@ -0,0 +1,28 @@
+@@ -0,0 +1,24 @@
 +/* RSH extension for IP connection tracking, Version 1.0
 + * (C) 2002 by Ian (Larry) Latter <Ian.Latter@mq.edu.au>
 + * based on HW's ip_conntrack_irc.c     
@@ -44,10 +22,6 @@ diff -NurpP --minimal linux/include/linux/netfilter/nf_conntrack_rsh.h linux/inc
 +struct nf_ct_rsh_expect
 +{
 +	u_int16_t port;
-+};
-+
-+/* This structure exists only once per master */
-+struct nf_ct_rsh_master {
 +};
 +
 +#endif /* _IP_CONNTRACK_RSH_H */
@@ -92,7 +66,7 @@ diff -NurpP --minimal linux/net/netfilter/Makefile linux/net/netfilter/Makefile
 diff -NurpP --minimal linux/net/netfilter/nf_conntrack_rsh.c linux/net/netfilter/nf_conntrack_rsh.c
 --- linux/net/netfilter/nf_conntrack_rsh.c	1970-01-01 01:00:00.000000000 +0100
 +++ linux/net/netfilter/nf_conntrack_rsh.c	2007-05-30 11:58:41.000000000 +0200
-@@ -0,0 +1,361 @@
+@@ -0,0 +1,362 @@
 +/* RSH extension for IP connection tracking, Version 1.0
 + * (C) 2002 by Ian (Larry) Latter <Ian.Latter@mq.edu.au>
 + * based on HW's ip_conntrack_irc.c	
@@ -412,6 +386,7 @@ diff -NurpP --minimal linux/net/netfilter/nf_conntrack_rsh.c linux/net/netfilter
 +		rsh_helpers[port].name = tmpname;
 +
 +		rsh_helpers[port].me = THIS_MODULE;
++		rsh_helpers[port].data_len = 0;
 +		rsh_helpers[port].expect_policy = &rsh_exp_policy;
 +
 +		rsh_helpers[port].tuple.dst.protonum = IPPROTO_TCP;
