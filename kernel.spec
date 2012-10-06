@@ -1,9 +1,4 @@
 #
-# NOTE:
-# the following bcond combos will not work
-# - without_vserver and any of the following
-#   - with_grsecurity
-#
 # LATEST VERSION CHECKER:
 # # curl -s http://www.kernel.org/kdist/finger_banner
 #
@@ -27,9 +22,6 @@
 %bcond_with	verbose		# verbose build (V=1)
 %bcond_with	reiser4		# support for reiser4 fs (experimental)
 
-%bcond_with	grsecurity	# don't build grsecurity nor pax at all
-%bcond_with	pax		# build pax and grsecurity (ie. grsecurity && pax)
-
 %bcond_with	fbcondecor	# build fbcondecor (disable FB_TILEBLITTING and affected fb modules)
 %bcond_without	pae		# build PAE (HIGHMEM64G) support on 32bit i686 athlon pentium3 pentium4
 %bcond_with	nfsroot		# build with root on NFS support
@@ -46,27 +38,12 @@
 
 %{?debug:%define with_verbose 1}
 
-%if %{with vanilla}
-%unglobal      with_grsecurity
-%endif
-
-%if %{without grsecurity}
-%unglobal	with_pax
-%endif
-
-%if %{with pax}
-%define		with_grsecurity		1
-%define		with_pax		1
-%endif
-
 %define		have_drm	1
 %define		have_oss	1
 %define		have_sound	1
 %define		have_pcmcia	1
 
 %if %{with rescuecd}
-%unglobal	with_grsecurity
-%unglobal	with_pax
 %unglobal	with_vserver
 %define		have_drm	0
 %define		have_sound	0
@@ -96,7 +73,7 @@
 # __alt_kernel is list of features, empty string if none set
 # _alt kernel is defined as: %{nil}%{?alt_kernel:-%{?alt_kernel}} (defined in rpm.macros)
 # alt_kernel should be defined if __alt_kernel has non-empty value (for %{?alt_kernel:foo} constructs)
-%define		__alt_kernel	%{?with_pax:pax}%{?with_grsecurity:grsecurity}
+%define		__alt_kernel	%{nil}
 
 %if "%{__alt_kernel}" != ""
 %define		alt_kernel	%{__alt_kernel}
@@ -155,10 +132,7 @@ Source25:	kernel-ia64.config
 
 Source41:	kernel-patches.config
 Source43:	kernel-vserver.config
-Source45:	kernel-grsec.config
 
-Source49:	kernel-pax.config
-Source50:	kernel-no-pax.config
 Source55:	kernel-imq.config
 Source56:	kernel-reiser4.config
 
@@ -232,7 +206,6 @@ Patch140:	kernel-unionfs.patch
 #
 Patch145:	kernel-aufs3.patch
 Patch146:	kernel-aufs2-unionfs.patch
-Patch147:	kernel-aufs2-no-const-grsec.patch
 Patch148:	kernel-aufs2-reiser4.patch
 
 # Show normal colors in menuconfig with ncurses ABI 6
@@ -251,16 +224,6 @@ Patch5000:	kernel-apparmor.patch
 # for rescuecd
 # based on ftp://ftp.leg.uct.ac.za/pub/linux/rip/tmpfs_root-2.6.30.diff.gz
 Patch7000:	kernel-inittmpfs.patch
-
-# based on http://grsecurity.net/~spender/grsecurity-2.2.2-3.1.1-201111181902.patch
-# NOTE: put raw upstream patches on kernel-grsec_full.patch:GRSECURITY_RAW for reference
-#       (since upstream deletes older patches)
-# NOTE: mirror of old grsecurity patches:
-#	https://github.com/slashbeast/grsecurity-scrape/tree/master/test
-Patch9999:	kernel-grsec_full.patch
-Patch10000:	kernel-grsec-caps.patch
-Patch10001:	kernel-grsec-common.patch
-Patch10002:	kernel-grsec_fixes.patch
 
 # Do not remove this line, please. It is easier for me to uncomment two lines, then patch
 # kernel.spec every time.
@@ -405,8 +368,6 @@ BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 %define MakeOpts %{CrossOpts} HOSTCC="%{__cc}"
 
 %define __features \
-%{?with_grsecurity:Grsecurity support - enabled}\
-%{?with_pax:PaX support - enabled}\
 %{?with_fbcondecor:Fbsplash/fbcondecor - enabled }\
 %{?with_nfsroot:Root on NFS - enabled}\
 
@@ -635,10 +596,6 @@ ln -s %{SOURCE7} kernel-module-build.pl
 ln -s %{SOURCE10} Makefile
 cd linux-%{basever}
 
-# hack against warning in pax/grsec
-sed -i 's/-Werror//' arch/alpha/kernel/Makefile
-
-
 %if "%{postver}" != ".0"
 %patch0 -p1
 %endif
@@ -723,20 +680,6 @@ sed -i 's/-Werror//' arch/alpha/kernel/Makefile
 %patch7000 -p1
 %endif
 
-# grsecurity & pax stuff
-#
-%if %{with grsecurity}
-exit 0
-%patch9999 -p1
-# aufs needs this
-%patch147 -p1
-%{?with_vserver:%patch10000 -p1}
-%{?with_vserver:%patch10001 -p1}
-%{?with_vserver:%patch10002 -p1}
-%endif
-#
-# end of grsecurity & pax stuff
-
 # apparmor
 %patch5000 -p1
 
@@ -774,54 +717,6 @@ Q			:= %{!?with_verbose:@}
 MAKE_OPTS	:= %{MakeOpts}
 DEFCONFIG   := %{defconfig}
 EOF
-
-PaXconfig() {
-	set -x
-	cat <<-EOCONFIG > $1
-	%ifarch %{ix86}
-		CONFIG_PAX_SEGMEXEC=y
-		# performance impact on CPUs without NX bit
-		CONFIG_PAX_PAGEEXEC=n
-		# Testing KERNEXEC
-
-		CONFIG_HOTPLUG_PCI_COMPAQ_NVRAM=n
-		CONFIG_PCI_BIOS=n
-		CONFIG_EFI=n
-	%endif
-
-	%ifarch ppc64
-		CONFIG_PAX_NOELFRELOCS=n
-	%endif
-	%ifarch ppc
-		CONFIG_PAX_EMUTRAMP=y
-		CONFIG_PAX_EMUSIGRT=y
-		CONFIG_PAX_EMUPLT=y
-	%endif
-
-	%ifarch sparc sparc64 alpha
-		CONFIG_PAX_EMUPLT=y
-	%endif
-
-	# Now we have to check MAC system integration. Grsecurity uses PAX_HAVE_ACL_FLAGS
-	# setting (direct acces). grsec_minimal probably have no idea about PaX so we probably
-	# could use PAX_NO_ACL_FLAGS, but for testing the hooks setting will be used
-	# PAX_HOOK_ACL_FLAGS.
-
-	%if %{with grsecurity}
-		# Hardening grsec options if with pax
-		CONFIG_GRKERNSEC_PROC_MEMMAP=y
-		# almost rational (see HIDESYM help)
-		CONFIG_GRKERNSEC_HIDESYM=y
-
-		# no change needed CONFIG=PAX_HAVE_ACL_FLAGS=y is taken from the kernel-pax.config
-	%else
-		CONFIG_PAX_HAVE_ACL_FLAGS=n
-		CONFIG_PAX_HOOK_ACL_FLAGS=y
-	%endif
-EOCONFIG
-
-	return 0
-}
 
 RescueConfig() {
 	set -x
@@ -909,18 +804,10 @@ BuildConfig() {
 		CONFIG_NFS_FS=y
 		CONFIG_ROOT_NFS=y
 %endif
-
-# Temporary disabled RELOCATABLE. Needed only on x86??
-%if %{with pax} || %{with grsecurity}
-		CONFIG_RELOCATABLE=n
-%endif
 EOCONFIG
 
 %if %{with rescuecd}
 	RescueConfig rescue.config
-%endif
-%if %{with pax}
-	PaXconfig pax.config
 %endif
 	# prepare kernel-style config file from multiple config files
 	%{__awk} -v arch="all %{target_arch_dir} %{_target_base_arch} %{_target_cpu}" -f %{SOURCE6} \
@@ -932,17 +819,6 @@ EOCONFIG
 %if %{with rescuecd}
 		%{SOURCE58} \
 		rescue.config \
-%endif
-		\
-%if %{with pax}
-		%{SOURCE45} \
-		%{SOURCE49} \
-		pax.config \
-%else
-  %if %{with grsecurity}
-		%{SOURCE45} \
-		%{SOURCE50} \
-  %endif
 %endif
 		\
 %if %{with reiser4}
@@ -1410,9 +1286,6 @@ fi
 %{_kernelsrcdir}/scripts/selinux/mdp/*.c
 %exclude %dir %{_kernelsrcdir}/security
 %exclude %dir %{_kernelsrcdir}/security/selinux
-%if %{with grsecurity}
-%{_kernelsrcdir}/tools/gcc/*.c
-%endif
 
 %if %{with doc}
 %files doc
@@ -1455,9 +1328,6 @@ fi
 %{_kernelsrcdir}/drivers
 %{_kernelsrcdir}/firmware
 %{_kernelsrcdir}/fs
-%if %{with grsecurity} && %{without rescuecd}
-%{_kernelsrcdir}/grsecurity
-%endif
 %{_kernelsrcdir}/init
 %{_kernelsrcdir}/ipc
 %{_kernelsrcdir}/kernel
@@ -1491,9 +1361,6 @@ fi
 %{_kernelsrcdir}/security
 %exclude %{_kernelsrcdir}/security/selinux/include
 %{_kernelsrcdir}/tools/*
-%if %{with grsecurity}
-%exclude %{_kernelsrcdir}/tools/gcc/*.c
-%endif
 %{_kernelsrcdir}/usr
 %{_kernelsrcdir}/COPYING
 %{_kernelsrcdir}/CREDITS
