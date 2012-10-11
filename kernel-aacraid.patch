@@ -1,0 +1,1235 @@
+commit ff08784b41e1ab5da6776411b7a8381fe942f2cc
+Author: Ben Collins <bcollins@ubuntu.com>
+Date:   Mon Jun 11 14:05:02 2012 -0400
+
+    [SCSI] aacraid: Use resource_size_t for IO mem pointers and offsets
+    
+    This also stops using the "legacy crap" in Scsi_Host (shost->base is an
+    unsigned long).
+    
+    This affected 32-bit systems that have 64-bit resource sizes, causing the
+    IO address to be truncated.
+    
+    Signed-off-by: Ben Collins <bcollins@ubuntu.com>
+    Acked-by: Achim Leubner <Achim_Leubner@pmc-sierra.com>
+    Signed-off-by: James Bottomley <JBottomley@Parallels.com>
+
+diff --git a/drivers/scsi/aacraid/aacraid.h b/drivers/scsi/aacraid/aacraid.h
+index 3fcf627..6ab32db 100644
+--- a/drivers/scsi/aacraid/aacraid.h
++++ b/drivers/scsi/aacraid/aacraid.h
+@@ -1052,10 +1052,11 @@ struct aac_dev
+ 	struct adapter_ops	a_ops;
+ 	unsigned long		fsrev;		/* Main driver's revision number */
+ 
+-	unsigned long		dbg_base;	/* address of UART
++	resource_size_t		base_start;	/* main IO base */
++	resource_size_t		dbg_base;	/* address of UART
+ 						 * debug buffer */
+ 
+-	unsigned		base_size, dbg_size;	/* Size of
++	resource_size_t		base_size, dbg_size;	/* Size of
+ 							 *  mapped in region */
+ 
+ 	struct aac_init		*init;		/* Holds initialization info to communicate with adapter */
+diff --git a/drivers/scsi/aacraid/linit.c b/drivers/scsi/aacraid/linit.c
+index 0d279c44..fdfc4be 100644
+--- a/drivers/scsi/aacraid/linit.c
++++ b/drivers/scsi/aacraid/linit.c
+@@ -1145,11 +1145,11 @@ static int __devinit aac_probe_one(struct pci_dev *pdev,
+ 		goto out_disable_pdev;
+ 
+ 	shost->irq = pdev->irq;
+-	shost->base = pci_resource_start(pdev, 0);
+ 	shost->unique_id = unique_id;
+ 	shost->max_cmd_len = 16;
+ 
+ 	aac = (struct aac_dev *)shost->hostdata;
++	aac->base_start = pci_resource_start(pdev, 0);
+ 	aac->scsi_host_ptr = shost;
+ 	aac->pdev = pdev;
+ 	aac->name = aac_driver_template.name;
+diff --git a/drivers/scsi/aacraid/nark.c b/drivers/scsi/aacraid/nark.c
+index f397d21..6c53b1d 100644
+--- a/drivers/scsi/aacraid/nark.c
++++ b/drivers/scsi/aacraid/nark.c
+@@ -49,14 +49,14 @@ static int aac_nark_ioremap(struct aac_dev * dev, u32 size)
+ 		dev->base = NULL;
+ 		return 0;
+ 	}
+-	dev->scsi_host_ptr->base = pci_resource_start(dev->pdev, 2);
++	dev->base_start = pci_resource_start(dev->pdev, 2);
+ 	dev->regs.rx = ioremap((u64)pci_resource_start(dev->pdev, 0) |
+ 	  ((u64)pci_resource_start(dev->pdev, 1) << 32),
+ 	  sizeof(struct rx_registers) - sizeof(struct rx_inbound));
+ 	dev->base = NULL;
+ 	if (dev->regs.rx == NULL)
+ 		return -1;
+-	dev->base = ioremap(dev->scsi_host_ptr->base, size);
++	dev->base = ioremap(dev->base_start, size);
+ 	if (dev->base == NULL) {
+ 		iounmap(dev->regs.rx);
+ 		dev->regs.rx = NULL;
+diff --git a/drivers/scsi/aacraid/rkt.c b/drivers/scsi/aacraid/rkt.c
+index be44de9..7d8013f 100644
+--- a/drivers/scsi/aacraid/rkt.c
++++ b/drivers/scsi/aacraid/rkt.c
+@@ -79,7 +79,7 @@ static int aac_rkt_ioremap(struct aac_dev * dev, u32 size)
+ 		iounmap(dev->regs.rkt);
+ 		return 0;
+ 	}
+-	dev->base = dev->regs.rkt = ioremap(dev->scsi_host_ptr->base, size);
++	dev->base = dev->regs.rkt = ioremap(dev->base_start, size);
+ 	if (dev->base == NULL)
+ 		return -1;
+ 	dev->IndexRegs = &dev->regs.rkt->IndexRegs;
+diff --git a/drivers/scsi/aacraid/rx.c b/drivers/scsi/aacraid/rx.c
+index b029c7c..dada38a 100644
+--- a/drivers/scsi/aacraid/rx.c
++++ b/drivers/scsi/aacraid/rx.c
+@@ -471,7 +471,7 @@ static int aac_rx_ioremap(struct aac_dev * dev, u32 size)
+ 		iounmap(dev->regs.rx);
+ 		return 0;
+ 	}
+-	dev->base = dev->regs.rx = ioremap(dev->scsi_host_ptr->base, size);
++	dev->base = dev->regs.rx = ioremap(dev->base_start, size);
+ 	if (dev->base == NULL)
+ 		return -1;
+ 	dev->IndexRegs = &dev->regs.rx->IndexRegs;
+@@ -653,7 +653,7 @@ int _aac_rx_init(struct aac_dev *dev)
+ 			name, instance);
+ 		goto error_iounmap;
+ 	}
+-	dev->dbg_base = dev->scsi_host_ptr->base;
++	dev->dbg_base = dev->base_start;
+ 	dev->dbg_base_mapped = dev->base;
+ 	dev->dbg_size = dev->base_size;
+ 
+diff --git a/drivers/scsi/aacraid/sa.c b/drivers/scsi/aacraid/sa.c
+index beb5336..2244f31 100644
+--- a/drivers/scsi/aacraid/sa.c
++++ b/drivers/scsi/aacraid/sa.c
+@@ -305,7 +305,7 @@ static int aac_sa_ioremap(struct aac_dev * dev, u32 size)
+ 		iounmap(dev->regs.sa);
+ 		return 0;
+ 	}
+-	dev->base = dev->regs.sa = ioremap(dev->scsi_host_ptr->base, size);
++	dev->base = dev->regs.sa = ioremap(dev->base_start, size);
+ 	return (dev->base == NULL) ? -1 : 0;
+ }
+ 
+@@ -393,7 +393,7 @@ int aac_sa_init(struct aac_dev *dev)
+ 			name, instance);
+ 		goto error_iounmap;
+ 	}
+-	dev->dbg_base = dev->scsi_host_ptr->base;
++	dev->dbg_base = dev->base_start;
+ 	dev->dbg_base_mapped = dev->base;
+ 	dev->dbg_size = dev->base_size;
+ 
+diff --git a/drivers/scsi/aacraid/src.c b/drivers/scsi/aacraid/src.c
+index 7628206..27a3e77 100644
+--- a/drivers/scsi/aacraid/src.c
++++ b/drivers/scsi/aacraid/src.c
+@@ -435,8 +435,7 @@ static int aac_src_ioremap(struct aac_dev *dev, u32 size)
+ 	dev->base = NULL;
+ 	if (dev->regs.src.bar1 == NULL)
+ 		return -1;
+-	dev->base = dev->regs.src.bar0 = ioremap(dev->scsi_host_ptr->base,
+-				size);
++	dev->base = dev->regs.src.bar0 = ioremap(dev->base_start, size);
+ 	if (dev->base == NULL) {
+ 		iounmap(dev->regs.src.bar1);
+ 		dev->regs.src.bar1 = NULL;
+@@ -459,7 +458,7 @@ static int aac_srcv_ioremap(struct aac_dev *dev, u32 size)
+ 		dev->base = dev->regs.src.bar0 = NULL;
+ 		return 0;
+ 	}
+-	dev->base = dev->regs.src.bar0 = ioremap(dev->scsi_host_ptr->base, size);
++	dev->base = dev->regs.src.bar0 = ioremap(dev->base_start, size);
+ 	if (dev->base == NULL)
+ 		return -1;
+ 	dev->IndexRegs = &((struct src_registers __iomem *)
+@@ -764,7 +763,7 @@ int aac_srcv_init(struct aac_dev *dev)
+ 			name, instance);
+ 		goto error_iounmap;
+ 	}
+-	dev->dbg_base = dev->scsi_host_ptr->base;
++	dev->dbg_base = dev->base_start;
+ 	dev->dbg_base_mapped = dev->base;
+ 	dev->dbg_size = dev->base_size;
+ 
+commit 361ee9c3f3839d6cbd306b5bd34292e0848ecfdc
+Author: Ben Collins <bcollins@ubuntu.com>
+Date:   Mon Jun 11 14:16:36 2012 -0400
+
+    [SCSI] aacraid: Better handling of in-flight events on thread stop
+    
+    When an error occured that would shut down the driver, some in-flight
+    events were getting caught up, deadlocking a CPU or two.
+    
+    Signed-off-by: Ben Collins <bcollins@ubuntu.com>
+    Acked-by: Achim Leubner <Achim_Leubner@pmc-sierra.com>
+    Signed-off-by: James Bottomley <JBottomley@Parallels.com>
+
+diff --git a/drivers/scsi/aacraid/linit.c b/drivers/scsi/aacraid/linit.c
+index fdfc4be..2be612b 100644
+--- a/drivers/scsi/aacraid/linit.c
++++ b/drivers/scsi/aacraid/linit.c
+@@ -1089,8 +1089,17 @@ static struct scsi_host_template aac_driver_template = {
+ 
+ static void __aac_shutdown(struct aac_dev * aac)
+ {
+-	if (aac->aif_thread)
++	if (aac->aif_thread) {
++		int i;
++		/* Clear out events first */
++		for (i = 0; i < (aac->scsi_host_ptr->can_queue + AAC_NUM_MGT_FIB); i++) {
++			struct fib *fib = &aac->fibs[i];
++			if (!(fib->hw_fib_va->header.XferState & cpu_to_le32(NoResponseExpected | Async)) &&
++			    (fib->hw_fib_va->header.XferState & cpu_to_le32(ResponseExpected)))
++				up(&fib->event_wait);
++		}
+ 		kthread_stop(aac->thread);
++	}
+ 	aac_send_shutdown(aac);
+ 	aac_adapter_disable_int(aac);
+ 	free_irq(aac->pdev->irq, aac);
+@@ -1191,6 +1200,7 @@ static int __devinit aac_probe_one(struct pci_dev *pdev,
+ 	if (IS_ERR(aac->thread)) {
+ 		printk(KERN_ERR "aacraid: Unable to create command thread.\n");
+ 		error = PTR_ERR(aac->thread);
++		aac->thread = NULL;
+ 		goto out_deinit;
+ 	}
+ 
+commit 30002f1c02ada69342443e7ed5ee9118feb89510
+Author: Ben Collins <bcollins@ubuntu.com>
+Date:   Mon Jun 11 14:44:44 2012 -0400
+
+    [SCSI] aacraid: Relax the tight timeout loop on fib commands
+    
+    The loop that waited for syncronous fib commands was causing a CPU stall
+    when a timeout actually occured.
+    
+    1) Switch to using a more accurate timeout mechanism.
+    2) Do not pace the loop with udelay(). Use cpu_relax() to allow for
+       scheduling to occur.
+    
+    Signed-off-by: Ben Collins <bcollins@ubuntu.com>
+    Acked-by: Achim Leubner <Achim_Leubner@pmc-sierra.com>
+    Signed-off-by: James Bottomley <JBottomley@Parallels.com>
+
+diff --git a/drivers/scsi/aacraid/commsup.c b/drivers/scsi/aacraid/commsup.c
+index 4b32ca4..906a501 100644
+--- a/drivers/scsi/aacraid/commsup.c
++++ b/drivers/scsi/aacraid/commsup.c
+@@ -564,10 +564,10 @@ int aac_fib_send(u16 command, struct fib *fibptr, unsigned long size,
+ 			 * functioning because an interrupt routing or other
+ 			 * hardware failure has occurred.
+ 			 */
+-			unsigned long count = 36000000L; /* 3 minutes */
++			unsigned long timeout = jiffies + (180 * HZ); /* 3 minutes */
+ 			while (down_trylock(&fibptr->event_wait)) {
+ 				int blink;
+-				if (--count == 0) {
++				if (time_is_before_eq_jiffies(timeout)) {
+ 					struct aac_queue * q = &dev->queues->queue[AdapNormCmdQueue];
+ 					spin_lock_irqsave(q->lock, qflags);
+ 					q->numpending--;
+@@ -588,7 +588,10 @@ int aac_fib_send(u16 command, struct fib *fibptr, unsigned long size,
+ 					}
+ 					return -EFAULT;
+ 				}
+-				udelay(5);
++				/* We used to udelay() here but that absorbed
++				 * a CPU when a timeout occured. Not very
++				 * useful. */
++				cpu_relax();
+ 			}
+ 		} else if (down_interruptible(&fibptr->event_wait)) {
+ 			/* Do nothing ... satisfy
+commit b5f1758f221e446c5a2956cf7ffdf62b005f6458
+Author: Ben Collins <bcollins@ubuntu.com>
+Date:   Mon Jun 11 16:14:36 2012 -0400
+
+    [SCSI] aacraid: Fix endian issues in core and SRC portions of driver
+    
+    This may not fix all endian issues in this driver, but it does get the
+    driver working on PowerPC for a PMC SRC card. So it should at least fix
+    all the problems in the core and in the SRC support.
+    
+    [jejb: fix >> 32 breakage reported by Fengguang Wu]
+    Signed-off-by: Ben Collins <bcollins@ubuntu.com>
+    Acked-by: Achim Leubner <Achim_Leubner@pmc-sierra.com>
+    Signed-off-by: James Bottomley <JBottomley@Parallels.com>
+
+diff --git a/drivers/scsi/aacraid/comminit.c b/drivers/scsi/aacraid/comminit.c
+index a35f54e..8e4b525 100644
+--- a/drivers/scsi/aacraid/comminit.c
++++ b/drivers/scsi/aacraid/comminit.c
+@@ -132,8 +132,8 @@ static int aac_alloc_comm(struct aac_dev *dev, void **commaddr, unsigned long co
+ 	init->MaxFibSize = cpu_to_le32(dev->max_fib_size);
+ 
+ 	init->MaxNumAif = cpu_to_le32(dev->max_num_aif);
+-	init->HostRRQ_AddrHigh = (u32)((u64)dev->host_rrq_pa >> 32);
+-	init->HostRRQ_AddrLow = (u32)(dev->host_rrq_pa & 0xffffffff);
++	init->HostRRQ_AddrHigh = cpu_to_le32((u32)((u64)dev->host_rrq_pa >> 32));
++	init->HostRRQ_AddrLow = cpu_to_le32((u32)(dev->host_rrq_pa & 0xffffffff));
+ 
+ 
+ 	/*
+diff --git a/drivers/scsi/aacraid/src.c b/drivers/scsi/aacraid/src.c
+index 27a3e77..0fb1f55 100644
+--- a/drivers/scsi/aacraid/src.c
++++ b/drivers/scsi/aacraid/src.c
+@@ -74,7 +74,7 @@ static irqreturn_t aac_src_intr_message(int irq, void *dev_id)
+ 		for (;;) {
+ 			isFastResponse = 0;
+ 			/* remove toggle bit (31) */
+-			handle = (dev->host_rrq[index] & 0x7fffffff);
++			handle = le32_to_cpu(dev->host_rrq[index]) & 0x7fffffff;
+ 			/* check fast response bit (30) */
+ 			if (handle & 0x40000000)
+ 				isFastResponse = 1;
+@@ -389,30 +389,42 @@ static int aac_src_deliver_message(struct fib *fib)
+ 	struct aac_queue *q = &dev->queues->queue[AdapNormCmdQueue];
+ 	unsigned long qflags;
+ 	u32 fibsize;
+-	u64 address;
++	dma_addr_t address;
+ 	struct aac_fib_xporthdr *pFibX;
++	u16 hdr_size = le16_to_cpu(fib->hw_fib_va->header.Size);
+ 
+ 	spin_lock_irqsave(q->lock, qflags);
+ 	q->numpending++;
+ 	spin_unlock_irqrestore(q->lock, qflags);
+ 
+ 	/* Calculate the amount to the fibsize bits */
+-	fibsize = (sizeof(struct aac_fib_xporthdr) +
+-		fib->hw_fib_va->header.Size + 127) / 128 - 1;
++	fibsize = (sizeof(struct aac_fib_xporthdr) + hdr_size + 127) / 128 - 1;
+ 	if (fibsize > (ALIGN32 - 1))
+-		fibsize = ALIGN32 - 1;
+-
+-    /* Fill XPORT header */
+-	pFibX = (struct aac_fib_xporthdr *)
+-		((unsigned char *)fib->hw_fib_va -
+-		sizeof(struct aac_fib_xporthdr));
+-	pFibX->Handle = fib->hw_fib_va->header.SenderData + 1;
+-	pFibX->HostAddress = fib->hw_fib_pa;
+-	pFibX->Size = fib->hw_fib_va->header.Size;
+-	address = fib->hw_fib_pa - (u64)sizeof(struct aac_fib_xporthdr);
+-
+-	src_writel(dev, MUnit.IQ_H, (u32)(address >> 32));
+-	src_writel(dev, MUnit.IQ_L, (u32)(address & 0xffffffff) + fibsize);
++		return -EMSGSIZE;
++
++	/* Fill XPORT header */
++	pFibX = (void *)fib->hw_fib_va - sizeof(struct aac_fib_xporthdr);
++	/*
++	 * This was stored by aac_fib_send() and it is the index into
++	 * dev->fibs. Not sure why we add 1 to it, but I suspect that it's
++	 * because it can't be zero when we pass it to the hardware. Note that
++	 * it was stored in native endian, hence the lack of swapping. -- BenC
++	 */
++	pFibX->Handle = cpu_to_le32(fib->hw_fib_va->header.SenderData + 1);
++	pFibX->HostAddress = cpu_to_le64(fib->hw_fib_pa);
++	pFibX->Size = cpu_to_le32(hdr_size);
++
++	/*
++	 * The xport header has been 32-byte aligned for us so that fibsize
++	 * can be masked out of this address by hardware. -- BenC
++	 */
++	address = fib->hw_fib_pa - sizeof(struct aac_fib_xporthdr);
++	if (address & (ALIGN32 - 1))
++		return -EINVAL;
++	address |= fibsize;
++	src_writel(dev, MUnit.IQ_H, (address >> 32) & 0xffffffff);
++	src_writel(dev, MUnit.IQ_L, address & 0xffffffff);
++
+ 	return 0;
+ }
+ 
+commit 85d22bbf6787c240921539bba224eb221bfb8ee1
+Author: Mahesh Rajashekhara <Mahesh_Rajashekhara@pmc-sierra.com>
+Date:   Sat Jul 14 18:18:51 2012 +0530
+
+    [SCSI] aacraid: Series 7 Async. (performance) mode support
+    
+    - Series 7 Async. (performance) mode support added
+    - New scatter/gather list format for Series 7
+    - Driver converts s/g list to a firmware suitable list for best performance on
+      Series 7, this can be disabled with driver parameter "aac_convert_sgl" for
+      testing purposes
+    - New container read/write command structure for Series 7
+    - Fast response support for the SCSI pass-through path added
+    - Async. status response buffer changes
+    
+    Signed-off-by: Mahesh Rajashekhara <Mahesh_Rajashekhara@pmc-sierra.com>
+    Signed-off-by: James Bottomley <JBottomley@Parallels.com>
+
+diff --git a/drivers/scsi/aacraid/aachba.c b/drivers/scsi/aacraid/aachba.c
+index 5255166..d79457a 100644
+--- a/drivers/scsi/aacraid/aachba.c
++++ b/drivers/scsi/aacraid/aachba.c
+@@ -135,6 +135,8 @@ struct inquiry_data {
+ static unsigned long aac_build_sg(struct scsi_cmnd* scsicmd, struct sgmap* sgmap);
+ static unsigned long aac_build_sg64(struct scsi_cmnd* scsicmd, struct sgmap64* psg);
+ static unsigned long aac_build_sgraw(struct scsi_cmnd* scsicmd, struct sgmapraw* psg);
++static unsigned long aac_build_sgraw2(struct scsi_cmnd *scsicmd, struct aac_raw_io2 *rio2, int sg_max);
++static int aac_convert_sgraw2(struct aac_raw_io2 *rio2, int pages, int nseg, int nseg_new);
+ static int aac_send_srb_fib(struct scsi_cmnd* scsicmd);
+ #ifdef AAC_DETAILED_STATUS_INFO
+ static char *aac_get_status_string(u32 status);
+@@ -152,10 +154,14 @@ int aac_commit = -1;
+ int startup_timeout = 180;
+ int aif_timeout = 120;
+ int aac_sync_mode;  /* Only Sync. transfer - disabled */
++int aac_convert_sgl = 1;	/* convert non-conformable s/g list - enabled */
+ 
+ module_param(aac_sync_mode, int, S_IRUGO|S_IWUSR);
+ MODULE_PARM_DESC(aac_sync_mode, "Force sync. transfer mode"
+ 	" 0=off, 1=on");
++module_param(aac_convert_sgl, int, S_IRUGO|S_IWUSR);
++MODULE_PARM_DESC(aac_convert_sgl, "Convert non-conformable s/g list"
++	" 0=off, 1=on");
+ module_param(nondasd, int, S_IRUGO|S_IWUSR);
+ MODULE_PARM_DESC(nondasd, "Control scanning of hba for nondasd devices."
+ 	" 0=off, 1=on");
+@@ -963,25 +969,44 @@ static void io_callback(void *context, struct fib * fibptr);
+ 
+ static int aac_read_raw_io(struct fib * fib, struct scsi_cmnd * cmd, u64 lba, u32 count)
+ {
+-	u16 fibsize;
+-	struct aac_raw_io *readcmd;
++	struct aac_dev *dev = fib->dev;
++	u16 fibsize, command;
++
+ 	aac_fib_init(fib);
+-	readcmd = (struct aac_raw_io *) fib_data(fib);
+-	readcmd->block[0] = cpu_to_le32((u32)(lba&0xffffffff));
+-	readcmd->block[1] = cpu_to_le32((u32)((lba&0xffffffff00000000LL)>>32));
+-	readcmd->count = cpu_to_le32(count<<9);
+-	readcmd->cid = cpu_to_le16(scmd_id(cmd));
+-	readcmd->flags = cpu_to_le16(IO_TYPE_READ);
+-	readcmd->bpTotal = 0;
+-	readcmd->bpComplete = 0;
++	if (dev->comm_interface == AAC_COMM_MESSAGE_TYPE2 && !dev->sync_mode) {
++		struct aac_raw_io2 *readcmd2;
++		readcmd2 = (struct aac_raw_io2 *) fib_data(fib);
++		memset(readcmd2, 0, sizeof(struct aac_raw_io2));
++		readcmd2->blockLow = cpu_to_le32((u32)(lba&0xffffffff));
++		readcmd2->blockHigh = cpu_to_le32((u32)((lba&0xffffffff00000000LL)>>32));
++		readcmd2->byteCount = cpu_to_le32(count<<9);
++		readcmd2->cid = cpu_to_le16(scmd_id(cmd));
++		readcmd2->flags = cpu_to_le16(RIO2_IO_TYPE_READ);
++		aac_build_sgraw2(cmd, readcmd2, dev->scsi_host_ptr->sg_tablesize);
++		command = ContainerRawIo2;
++		fibsize = sizeof(struct aac_raw_io2) +
++			((le32_to_cpu(readcmd2->sgeCnt)-1) * sizeof(struct sge_ieee1212));
++	} else {
++		struct aac_raw_io *readcmd;
++		readcmd = (struct aac_raw_io *) fib_data(fib);
++		readcmd->block[0] = cpu_to_le32((u32)(lba&0xffffffff));
++		readcmd->block[1] = cpu_to_le32((u32)((lba&0xffffffff00000000LL)>>32));
++		readcmd->count = cpu_to_le32(count<<9);
++		readcmd->cid = cpu_to_le16(scmd_id(cmd));
++		readcmd->flags = cpu_to_le16(RIO_TYPE_READ);
++		readcmd->bpTotal = 0;
++		readcmd->bpComplete = 0;
++		aac_build_sgraw(cmd, &readcmd->sg);
++		command = ContainerRawIo;
++		fibsize = sizeof(struct aac_raw_io) +
++			((le32_to_cpu(readcmd->sg.count)-1) * sizeof(struct sgentryraw));
++	}
+ 
+-	aac_build_sgraw(cmd, &readcmd->sg);
+-	fibsize = sizeof(struct aac_raw_io) + ((le32_to_cpu(readcmd->sg.count) - 1) * sizeof (struct sgentryraw));
+ 	BUG_ON(fibsize > (fib->dev->max_fib_size - sizeof(struct aac_fibhdr)));
+ 	/*
+ 	 *	Now send the Fib to the adapter
+ 	 */
+-	return aac_fib_send(ContainerRawIo,
++	return aac_fib_send(command,
+ 			  fib,
+ 			  fibsize,
+ 			  FsaNormal,
+@@ -1052,28 +1077,50 @@ static int aac_read_block(struct fib * fib, struct scsi_cmnd * cmd, u64 lba, u32
+ 
+ static int aac_write_raw_io(struct fib * fib, struct scsi_cmnd * cmd, u64 lba, u32 count, int fua)
+ {
+-	u16 fibsize;
+-	struct aac_raw_io *writecmd;
++	struct aac_dev *dev = fib->dev;
++	u16 fibsize, command;
++
+ 	aac_fib_init(fib);
+-	writecmd = (struct aac_raw_io *) fib_data(fib);
+-	writecmd->block[0] = cpu_to_le32((u32)(lba&0xffffffff));
+-	writecmd->block[1] = cpu_to_le32((u32)((lba&0xffffffff00000000LL)>>32));
+-	writecmd->count = cpu_to_le32(count<<9);
+-	writecmd->cid = cpu_to_le16(scmd_id(cmd));
+-	writecmd->flags = (fua && ((aac_cache & 5) != 1) &&
+-	  (((aac_cache & 5) != 5) || !fib->dev->cache_protected)) ?
+-		cpu_to_le16(IO_TYPE_WRITE|IO_SUREWRITE) :
+-		cpu_to_le16(IO_TYPE_WRITE);
+-	writecmd->bpTotal = 0;
+-	writecmd->bpComplete = 0;
+-
+-	aac_build_sgraw(cmd, &writecmd->sg);
+-	fibsize = sizeof(struct aac_raw_io) + ((le32_to_cpu(writecmd->sg.count) - 1) * sizeof (struct sgentryraw));
++	if (dev->comm_interface == AAC_COMM_MESSAGE_TYPE2 && !dev->sync_mode) {
++		struct aac_raw_io2 *writecmd2;
++		writecmd2 = (struct aac_raw_io2 *) fib_data(fib);
++		memset(writecmd2, 0, sizeof(struct aac_raw_io2));
++		writecmd2->blockLow = cpu_to_le32((u32)(lba&0xffffffff));
++		writecmd2->blockHigh = cpu_to_le32((u32)((lba&0xffffffff00000000LL)>>32));
++		writecmd2->byteCount = cpu_to_le32(count<<9);
++		writecmd2->cid = cpu_to_le16(scmd_id(cmd));
++		writecmd2->flags = (fua && ((aac_cache & 5) != 1) &&
++						   (((aac_cache & 5) != 5) || !fib->dev->cache_protected)) ?
++			cpu_to_le16(RIO2_IO_TYPE_WRITE|RIO2_IO_SUREWRITE) :
++			cpu_to_le16(RIO2_IO_TYPE_WRITE);
++		aac_build_sgraw2(cmd, writecmd2, dev->scsi_host_ptr->sg_tablesize);
++		command = ContainerRawIo2;
++		fibsize = sizeof(struct aac_raw_io2) +
++			((le32_to_cpu(writecmd2->sgeCnt)-1) * sizeof(struct sge_ieee1212));
++	} else {
++		struct aac_raw_io *writecmd;
++		writecmd = (struct aac_raw_io *) fib_data(fib);
++		writecmd->block[0] = cpu_to_le32((u32)(lba&0xffffffff));
++		writecmd->block[1] = cpu_to_le32((u32)((lba&0xffffffff00000000LL)>>32));
++		writecmd->count = cpu_to_le32(count<<9);
++		writecmd->cid = cpu_to_le16(scmd_id(cmd));
++		writecmd->flags = (fua && ((aac_cache & 5) != 1) &&
++						   (((aac_cache & 5) != 5) || !fib->dev->cache_protected)) ?
++			cpu_to_le16(RIO_TYPE_WRITE|RIO_SUREWRITE) :
++			cpu_to_le16(RIO_TYPE_WRITE);
++		writecmd->bpTotal = 0;
++		writecmd->bpComplete = 0;
++		aac_build_sgraw(cmd, &writecmd->sg);
++		command = ContainerRawIo;
++		fibsize = sizeof(struct aac_raw_io) +
++			((le32_to_cpu(writecmd->sg.count)-1) * sizeof (struct sgentryraw));
++	}
++
+ 	BUG_ON(fibsize > (fib->dev->max_fib_size - sizeof(struct aac_fibhdr)));
+ 	/*
+ 	 *	Now send the Fib to the adapter
+ 	 */
+-	return aac_fib_send(ContainerRawIo,
++	return aac_fib_send(command,
+ 			  fib,
+ 			  fibsize,
+ 			  FsaNormal,
+@@ -1492,8 +1539,6 @@ int aac_get_adapter_info(struct aac_dev* dev)
+ 			dev->a_ops.adapter_write = aac_write_block;
+ 		}
+ 		dev->scsi_host_ptr->max_sectors = AAC_MAX_32BIT_SGBCOUNT;
+-		if (dev->adapter_info.options & AAC_OPT_NEW_COMM_TYPE1)
+-			dev->adapter_info.options |= AAC_OPT_NEW_COMM;
+ 		if (!(dev->adapter_info.options & AAC_OPT_NEW_COMM)) {
+ 			/*
+ 			 * Worst case size that could cause sg overflow when
+@@ -2616,12 +2661,18 @@ static void aac_srb_callback(void *context, struct fib * fibptr)
+ 	srbreply = (struct aac_srb_reply *) fib_data(fibptr);
+ 
+ 	scsicmd->sense_buffer[0] = '\0';  /* Initialize sense valid flag to false */
+-	/*
+-	 *	Calculate resid for sg
+-	 */
+ 
+-	scsi_set_resid(scsicmd, scsi_bufflen(scsicmd)
+-		       - le32_to_cpu(srbreply->data_xfer_length));
++	if (fibptr->flags & FIB_CONTEXT_FLAG_FASTRESP) {
++		/* fast response */
++		srbreply->srb_status = cpu_to_le32(SRB_STATUS_SUCCESS);
++		srbreply->scsi_status = cpu_to_le32(SAM_STAT_GOOD);
++	} else {
++		/*
++		 *	Calculate resid for sg
++		 */
++		scsi_set_resid(scsicmd, scsi_bufflen(scsicmd)
++				   - le32_to_cpu(srbreply->data_xfer_length));
++	}
+ 
+ 	scsi_dma_unmap(scsicmd);
+ 
+@@ -2954,6 +3005,118 @@ static unsigned long aac_build_sgraw(struct scsi_cmnd* scsicmd, struct sgmapraw*
+ 	return byte_count;
+ }
+ 
++static unsigned long aac_build_sgraw2(struct scsi_cmnd *scsicmd, struct aac_raw_io2 *rio2, int sg_max)
++{
++	unsigned long byte_count = 0;
++	int nseg;
++
++	nseg = scsi_dma_map(scsicmd);
++	BUG_ON(nseg < 0);
++	if (nseg) {
++		struct scatterlist *sg;
++		int i, conformable = 0;
++		u32 min_size = PAGE_SIZE, cur_size;
++
++		scsi_for_each_sg(scsicmd, sg, nseg, i) {
++			int count = sg_dma_len(sg);
++			u64 addr = sg_dma_address(sg);
++
++			BUG_ON(i >= sg_max);
++			rio2->sge[i].addrHigh = cpu_to_le32((u32)(addr>>32));
++			rio2->sge[i].addrLow = cpu_to_le32((u32)(addr & 0xffffffff));
++			cur_size = cpu_to_le32(count);
++			rio2->sge[i].length = cur_size;
++			rio2->sge[i].flags = 0;
++			if (i == 0) {
++				conformable = 1;
++				rio2->sgeFirstSize = cur_size;
++			} else if (i == 1) {
++				rio2->sgeNominalSize = cur_size;
++				min_size = cur_size;
++			} else if ((i+1) < nseg && cur_size != rio2->sgeNominalSize) {
++				conformable = 0;
++				if (cur_size < min_size)
++					min_size = cur_size;
++			}
++			byte_count += count;
++		}
++
++		/* hba wants the size to be exact */
++		if (byte_count > scsi_bufflen(scsicmd)) {
++			u32 temp = le32_to_cpu(rio2->sge[i-1].length) -
++				(byte_count - scsi_bufflen(scsicmd));
++			rio2->sge[i-1].length = cpu_to_le32(temp);
++			byte_count = scsi_bufflen(scsicmd);
++		}
++
++		rio2->sgeCnt = cpu_to_le32(nseg);
++		rio2->flags |= cpu_to_le16(RIO2_SG_FORMAT_IEEE1212);
++		/* not conformable: evaluate required sg elements */
++		if (!conformable) {
++			int j, nseg_new = nseg, err_found;
++			for (i = min_size / PAGE_SIZE; i >= 1; --i) {
++				err_found = 0;
++				nseg_new = 2;
++				for (j = 1; j < nseg - 1; ++j) {
++					if (rio2->sge[j].length % (i*PAGE_SIZE)) {
++						err_found = 1;
++						break;
++					}
++					nseg_new += (rio2->sge[j].length / (i*PAGE_SIZE));
++				}
++				if (!err_found)
++					break;
++			}
++			if (i > 0 && nseg_new <= sg_max)
++				aac_convert_sgraw2(rio2, i, nseg, nseg_new);
++		} else
++			rio2->flags |= cpu_to_le16(RIO2_SGL_CONFORMANT);
++
++		/* Check for command underflow */
++		if (scsicmd->underflow && (byte_count < scsicmd->underflow)) {
++			printk(KERN_WARNING"aacraid: cmd len %08lX cmd underflow %08X\n",
++					byte_count, scsicmd->underflow);
++		}
++	}
++
++	return byte_count;
++}
++
++static int aac_convert_sgraw2(struct aac_raw_io2 *rio2, int pages, int nseg, int nseg_new)
++{
++	struct sge_ieee1212 *sge;
++	int i, j, pos;
++	u32 addr_low;
++
++	if (aac_convert_sgl == 0)
++		return 0;
++
++	sge = kmalloc(nseg_new * sizeof(struct sge_ieee1212), GFP_ATOMIC);
++	if (sge == NULL)
++		return -1;
++
++	for (i = 1, pos = 1; i < nseg-1; ++i) {
++		for (j = 0; j < rio2->sge[i].length / (pages * PAGE_SIZE); ++j) {
++			addr_low = rio2->sge[i].addrLow + j * pages * PAGE_SIZE;
++			sge[pos].addrLow = addr_low;
++			sge[pos].addrHigh = rio2->sge[i].addrHigh;
++			if (addr_low < rio2->sge[i].addrLow)
++				sge[pos].addrHigh++;
++			sge[pos].length = pages * PAGE_SIZE;
++			sge[pos].flags = 0;
++			pos++;
++		}
++	}
++	sge[pos] = rio2->sge[nseg-1];
++	memcpy(&rio2->sge[1], &sge[1], (nseg_new-1)*sizeof(struct sge_ieee1212));
++
++	kfree(sge);
++	rio2->sgeCnt = cpu_to_le32(nseg_new);
++	rio2->flags |= cpu_to_le16(RIO2_SGL_CONFORMANT);
++	rio2->sgeNominalSize = pages * PAGE_SIZE;
++	return 0;
++}
++
+ #ifdef AAC_DETAILED_STATUS_INFO
+ 
+ struct aac_srb_status_info {
+diff --git a/drivers/scsi/aacraid/aacraid.h b/drivers/scsi/aacraid/aacraid.h
+index 6ab32db..9e933a8 100644
+--- a/drivers/scsi/aacraid/aacraid.h
++++ b/drivers/scsi/aacraid/aacraid.h
+@@ -12,7 +12,7 @@
+  *----------------------------------------------------------------------------*/
+ 
+ #ifndef AAC_DRIVER_BUILD
+-# define AAC_DRIVER_BUILD 28900
++# define AAC_DRIVER_BUILD 29800
+ # define AAC_DRIVER_BRANCH "-ms"
+ #endif
+ #define MAXIMUM_NUM_CONTAINERS	32
+@@ -100,6 +100,13 @@ struct user_sgentryraw {
+ 	u32		flags;	/* reserved for F/W use */
+ };
+ 
++struct sge_ieee1212 {
++	u32	addrLow;
++	u32	addrHigh;
++	u32	length;
++	u32	flags;
++};
++
+ /*
+  *	SGMAP
+  *
+@@ -270,6 +277,8 @@ enum aac_queue_types {
+  */
+ 
+ #define		FIB_MAGIC	0x0001
++#define		FIB_MAGIC2	0x0004
++#define		FIB_MAGIC2_64	0x0005
+ 
+ /*
+  *	Define the priority levels the FSA communication routines support.
+@@ -296,22 +305,20 @@ struct aac_fibhdr {
+ 	__le32 XferState;	/* Current transfer state for this CCB */
+ 	__le16 Command;		/* Routing information for the destination */
+ 	u8 StructType;		/* Type FIB */
+-	u8 Flags;		/* Flags for FIB */
++	u8 Unused;		/* Unused */
+ 	__le16 Size;		/* Size of this FIB in bytes */
+ 	__le16 SenderSize;	/* Size of the FIB in the sender
+ 				   (for response sizing) */
+ 	__le32 SenderFibAddress;  /* Host defined data in the FIB */
+-	__le32 ReceiverFibAddress;/* Logical address of this FIB for
+-				     the adapter */
+-	u32 SenderData;		/* Place holder for the sender to store data */
+ 	union {
+-		struct {
+-		    __le32 _ReceiverTimeStart;	/* Timestamp for
+-						   receipt of fib */
+-		    __le32 _ReceiverTimeDone;	/* Timestamp for
+-						   completion of fib */
+-		} _s;
+-	} _u;
++		__le32 ReceiverFibAddress;/* Logical address of this FIB for
++				     the adapter (old) */
++		__le32 SenderFibAddressHigh;/* upper 32bit of phys. FIB address */
++		__le32 TimeStamp;	/* otherwise timestamp for FW internal use */
++	} u;
++	u32 Handle;		/* FIB handle used for MSGU commnunication */
++	u32 Previous;		/* FW internal use */
++	u32 Next;		/* FW internal use */
+ };
+ 
+ struct hw_fib {
+@@ -361,6 +368,7 @@ struct hw_fib {
+ #define		ContainerCommand		500
+ #define		ContainerCommand64		501
+ #define		ContainerRawIo			502
++#define		ContainerRawIo2			503
+ /*
+  *	Scsi Port commands (scsi passthrough)
+  */
+@@ -417,6 +425,7 @@ enum fib_xfer_state {
+ #define ADAPTER_INIT_STRUCT_REVISION		3
+ #define ADAPTER_INIT_STRUCT_REVISION_4		4 // rocket science
+ #define ADAPTER_INIT_STRUCT_REVISION_6		6 /* PMC src */
++#define ADAPTER_INIT_STRUCT_REVISION_7		7 /* Denali */
+ 
+ struct aac_init
+ {
+@@ -441,7 +450,9 @@ struct aac_init
+ #define INITFLAGS_NEW_COMM_SUPPORTED	0x00000001
+ #define INITFLAGS_DRIVER_USES_UTC_TIME	0x00000010
+ #define INITFLAGS_DRIVER_SUPPORTS_PM	0x00000020
+-#define INITFLAGS_NEW_COMM_TYPE1_SUPPORTED	0x00000041
++#define INITFLAGS_NEW_COMM_TYPE1_SUPPORTED	0x00000040
++#define INITFLAGS_FAST_JBOD_SUPPORTED	0x00000080
++#define INITFLAGS_NEW_COMM_TYPE2_SUPPORTED	0x00000100
+ 	__le32	MaxIoCommands;	/* max outstanding commands */
+ 	__le32	MaxIoSize;	/* largest I/O command */
+ 	__le32	MaxFibSize;	/* largest FIB to adapter */
+@@ -1124,6 +1135,7 @@ struct aac_dev
+ #	define AAC_COMM_PRODUCER 0
+ #	define AAC_COMM_MESSAGE  1
+ #	define AAC_COMM_MESSAGE_TYPE1	3
++#	define AAC_COMM_MESSAGE_TYPE2	4
+ 	u8			raw_io_interface;
+ 	u8			raw_io_64;
+ 	u8			printf_enabled;
+@@ -1182,6 +1194,7 @@ struct aac_dev
+ #define FIB_CONTEXT_FLAG_TIMED_OUT		(0x00000001)
+ #define FIB_CONTEXT_FLAG			(0x00000002)
+ #define FIB_CONTEXT_FLAG_WAIT			(0x00000004)
++#define FIB_CONTEXT_FLAG_FASTRESP		(0x00000008)
+ 
+ /*
+  *	Define the command values
+@@ -1288,6 +1301,22 @@ struct aac_dev
+ #define CMDATA_SYNCH		4
+ #define CMUNSTABLE		5
+ 
++#define	RIO_TYPE_WRITE 			0x0000
++#define	RIO_TYPE_READ			0x0001
++#define	RIO_SUREWRITE			0x0008
++
++#define RIO2_IO_TYPE			0x0003
++#define RIO2_IO_TYPE_WRITE		0x0000
++#define RIO2_IO_TYPE_READ		0x0001
++#define RIO2_IO_TYPE_VERIFY		0x0002
++#define RIO2_IO_ERROR			0x0004
++#define RIO2_IO_SUREWRITE		0x0008
++#define RIO2_SGL_CONFORMANT		0x0010
++#define RIO2_SG_FORMAT			0xF000
++#define RIO2_SG_FORMAT_ARC		0x0000
++#define RIO2_SG_FORMAT_SRL		0x1000
++#define RIO2_SG_FORMAT_IEEE1212		0x2000
++
+ struct aac_read
+ {
+ 	__le32		command;
+@@ -1332,9 +1361,6 @@ struct aac_write64
+ 	__le32		block;
+ 	__le16		pad;
+ 	__le16		flags;
+-#define	IO_TYPE_WRITE 0x00000000
+-#define	IO_TYPE_READ  0x00000001
+-#define	IO_SUREWRITE  0x00000008
+ 	struct sgmap64	sg;	// Must be last in struct because it is variable
+ };
+ struct aac_write_reply
+@@ -1355,6 +1381,22 @@ struct aac_raw_io
+ 	struct sgmapraw	sg;
+ };
+ 
++struct aac_raw_io2 {
++	__le32		blockLow;
++	__le32		blockHigh;
++	__le32		byteCount;
++	__le16		cid;
++	__le16		flags;		/* RIO2 flags */
++	__le32		sgeFirstSize;	/* size of first sge el. */
++	__le32		sgeNominalSize;	/* size of 2nd sge el. (if conformant) */
++	u8		sgeCnt;		/* only 8 bits required */
++	u8		bpTotal;	/* reserved for F/W use */
++	u8		bpComplete;	/* reserved for F/W use */
++	u8		sgeFirstIndex;	/* reserved for F/W use */
++	u8		unused[4];
++	struct sge_ieee1212	sge[1];
++};
++
+ #define CT_FLUSH_CACHE 129
+ struct aac_synchronize {
+ 	__le32		command;	/* VM_ContainerConfig */
+diff --git a/drivers/scsi/aacraid/commctrl.c b/drivers/scsi/aacraid/commctrl.c
+index 0bd38da..1ef041b 100644
+--- a/drivers/scsi/aacraid/commctrl.c
++++ b/drivers/scsi/aacraid/commctrl.c
+@@ -498,6 +498,8 @@ static int aac_send_raw_srb(struct aac_dev* dev, void __user * arg)
+ 		return -ENOMEM;
+ 	}
+ 	aac_fib_init(srbfib);
++	/* raw_srb FIB is not FastResponseCapable */
++	srbfib->hw_fib_va->header.XferState &= ~cpu_to_le32(FastResponseCapable);
+ 
+ 	srbcmd = (struct aac_srb*) fib_data(srbfib);
+ 
+diff --git a/drivers/scsi/aacraid/comminit.c b/drivers/scsi/aacraid/comminit.c
+index 8e4b525..8e5d3be 100644
+--- a/drivers/scsi/aacraid/comminit.c
++++ b/drivers/scsi/aacraid/comminit.c
+@@ -58,7 +58,8 @@ static int aac_alloc_comm(struct aac_dev *dev, void **commaddr, unsigned long co
+ 	dma_addr_t phys;
+ 	unsigned long aac_max_hostphysmempages;
+ 
+-	if (dev->comm_interface == AAC_COMM_MESSAGE_TYPE1)
++	if (dev->comm_interface == AAC_COMM_MESSAGE_TYPE1 ||
++	    dev->comm_interface == AAC_COMM_MESSAGE_TYPE2)
+ 		host_rrq_size = (dev->scsi_host_ptr->can_queue
+ 			+ AAC_NUM_MGT_FIB) * sizeof(u32);
+ 	size = fibsize + sizeof(struct aac_init) + commsize +
+@@ -75,7 +76,8 @@ static int aac_alloc_comm(struct aac_dev *dev, void **commaddr, unsigned long co
+ 	dev->comm_phys = phys;
+ 	dev->comm_size = size;
+ 	
+-	if (dev->comm_interface == AAC_COMM_MESSAGE_TYPE1) {
++	if (dev->comm_interface == AAC_COMM_MESSAGE_TYPE1 ||
++	    dev->comm_interface == AAC_COMM_MESSAGE_TYPE2) {
+ 		dev->host_rrq = (u32 *)(base + fibsize);
+ 		dev->host_rrq_pa = phys + fibsize;
+ 		memset(dev->host_rrq, 0, host_rrq_size);
+@@ -115,26 +117,32 @@ static int aac_alloc_comm(struct aac_dev *dev, void **commaddr, unsigned long co
+ 	else
+ 		init->HostPhysMemPages = cpu_to_le32(AAC_MAX_HOSTPHYSMEMPAGES);
+ 
+-	init->InitFlags = 0;
++	init->InitFlags = cpu_to_le32(INITFLAGS_DRIVER_USES_UTC_TIME |
++		INITFLAGS_DRIVER_SUPPORTS_PM);
++	init->MaxIoCommands = cpu_to_le32(dev->scsi_host_ptr->can_queue + AAC_NUM_MGT_FIB);
++	init->MaxIoSize = cpu_to_le32(dev->scsi_host_ptr->max_sectors << 9);
++	init->MaxFibSize = cpu_to_le32(dev->max_fib_size);
++	init->MaxNumAif = cpu_to_le32(dev->max_num_aif);
++
+ 	if (dev->comm_interface == AAC_COMM_MESSAGE) {
+ 		init->InitFlags |= cpu_to_le32(INITFLAGS_NEW_COMM_SUPPORTED);
+ 		dprintk((KERN_WARNING"aacraid: New Comm Interface enabled\n"));
+ 	} else if (dev->comm_interface == AAC_COMM_MESSAGE_TYPE1) {
+ 		init->InitStructRevision = cpu_to_le32(ADAPTER_INIT_STRUCT_REVISION_6);
+-		init->InitFlags |= cpu_to_le32(INITFLAGS_NEW_COMM_TYPE1_SUPPORTED);
+-		dprintk((KERN_WARNING
+-			"aacraid: New Comm Interface type1 enabled\n"));
++		init->InitFlags |= cpu_to_le32(INITFLAGS_NEW_COMM_SUPPORTED |
++			INITFLAGS_NEW_COMM_TYPE1_SUPPORTED | INITFLAGS_FAST_JBOD_SUPPORTED);
++		init->HostRRQ_AddrHigh = cpu_to_le32((u32)((u64)dev->host_rrq_pa >> 32));
++		init->HostRRQ_AddrLow = cpu_to_le32((u32)(dev->host_rrq_pa & 0xffffffff));
++		dprintk((KERN_WARNING"aacraid: New Comm Interface type1 enabled\n"));
++	} else if (dev->comm_interface == AAC_COMM_MESSAGE_TYPE2) {
++		init->InitStructRevision = cpu_to_le32(ADAPTER_INIT_STRUCT_REVISION_7);
++		init->InitFlags |= cpu_to_le32(INITFLAGS_NEW_COMM_SUPPORTED |
++			INITFLAGS_NEW_COMM_TYPE2_SUPPORTED | INITFLAGS_FAST_JBOD_SUPPORTED);
++		init->HostRRQ_AddrHigh = cpu_to_le32((u32)((u64)dev->host_rrq_pa >> 32));
++		init->HostRRQ_AddrLow = cpu_to_le32((u32)(dev->host_rrq_pa & 0xffffffff));
++		init->MiniPortRevision = cpu_to_le32(0L);		/* number of MSI-X */
++		dprintk((KERN_WARNING"aacraid: New Comm Interface type2 enabled\n"));
+ 	}
+-	init->InitFlags |= cpu_to_le32(INITFLAGS_DRIVER_USES_UTC_TIME |
+-				       INITFLAGS_DRIVER_SUPPORTS_PM);
+-	init->MaxIoCommands = cpu_to_le32(dev->scsi_host_ptr->can_queue + AAC_NUM_MGT_FIB);
+-	init->MaxIoSize = cpu_to_le32(dev->scsi_host_ptr->max_sectors << 9);
+-	init->MaxFibSize = cpu_to_le32(dev->max_fib_size);
+-
+-	init->MaxNumAif = cpu_to_le32(dev->max_num_aif);
+-	init->HostRRQ_AddrHigh = cpu_to_le32((u32)((u64)dev->host_rrq_pa >> 32));
+-	init->HostRRQ_AddrLow = cpu_to_le32((u32)(dev->host_rrq_pa & 0xffffffff));
+-
+ 
+ 	/*
+ 	 * Increment the base address by the amount already used
+@@ -354,13 +362,15 @@ struct aac_dev *aac_init_adapter(struct aac_dev *dev)
+ 			if ((status[1] & le32_to_cpu(AAC_OPT_NEW_COMM_TYPE1))) {
+ 				/* driver supports TYPE1 (Tupelo) */
+ 				dev->comm_interface = AAC_COMM_MESSAGE_TYPE1;
++			} else if ((status[1] & le32_to_cpu(AAC_OPT_NEW_COMM_TYPE2))) {
++				/* driver supports TYPE2 (Denali) */
++				dev->comm_interface = AAC_COMM_MESSAGE_TYPE2;
+ 			} else if ((status[1] & le32_to_cpu(AAC_OPT_NEW_COMM_TYPE4)) ||
+-				  (status[1] & le32_to_cpu(AAC_OPT_NEW_COMM_TYPE3)) ||
+-				  (status[1] & le32_to_cpu(AAC_OPT_NEW_COMM_TYPE2))) {
+-					/* driver doesn't support TYPE2 (Series7), TYPE3 and TYPE4 */
+-					/* switch to sync. mode */
+-					dev->comm_interface = AAC_COMM_MESSAGE_TYPE1;
+-					dev->sync_mode = 1;
++				  (status[1] & le32_to_cpu(AAC_OPT_NEW_COMM_TYPE3))) {
++				/* driver doesn't TYPE3 and TYPE4 */
++				/* switch to sync. mode */
++				dev->comm_interface = AAC_COMM_MESSAGE_TYPE2;
++				dev->sync_mode = 1;
+ 			}
+ 		}
+ 		if ((dev->comm_interface == AAC_COMM_MESSAGE) &&
+diff --git a/drivers/scsi/aacraid/commsup.c b/drivers/scsi/aacraid/commsup.c
+index 906a501..1be0776 100644
+--- a/drivers/scsi/aacraid/commsup.c
++++ b/drivers/scsi/aacraid/commsup.c
+@@ -136,6 +136,7 @@ int aac_fib_setup(struct aac_dev * dev)
+ 		i < (dev->scsi_host_ptr->can_queue + AAC_NUM_MGT_FIB);
+ 		i++, fibptr++)
+ 	{
++		fibptr->flags = 0;
+ 		fibptr->dev = dev;
+ 		fibptr->hw_fib_va = hw_fib;
+ 		fibptr->data = (void *) fibptr->hw_fib_va->data;
+@@ -240,11 +241,11 @@ void aac_fib_init(struct fib *fibptr)
+ {
+ 	struct hw_fib *hw_fib = fibptr->hw_fib_va;
+ 
++	memset(&hw_fib->header, 0, sizeof(struct aac_fibhdr));
+ 	hw_fib->header.StructType = FIB_MAGIC;
+ 	hw_fib->header.Size = cpu_to_le16(fibptr->dev->max_fib_size);
+ 	hw_fib->header.XferState = cpu_to_le32(HostOwned | FibInitialized | FibEmpty | FastResponseCapable);
+-	hw_fib->header.SenderFibAddress = 0; /* Filled in later if needed */
+-	hw_fib->header.ReceiverFibAddress = cpu_to_le32(fibptr->hw_fib_pa);
++	hw_fib->header.u.ReceiverFibAddress = cpu_to_le32(fibptr->hw_fib_pa);
+ 	hw_fib->header.SenderSize = cpu_to_le16(fibptr->dev->max_fib_size);
+ }
+ 
+@@ -259,7 +260,6 @@ void aac_fib_init(struct fib *fibptr)
+ static void fib_dealloc(struct fib * fibptr)
+ {
+ 	struct hw_fib *hw_fib = fibptr->hw_fib_va;
+-	BUG_ON(hw_fib->header.StructType != FIB_MAGIC);
+ 	hw_fib->header.XferState = 0;
+ }
+ 
+@@ -370,7 +370,7 @@ int aac_queue_get(struct aac_dev * dev, u32 * index, u32 qid, struct hw_fib * hw
+ 		entry->size = cpu_to_le32(le16_to_cpu(hw_fib->header.Size));
+ 		entry->addr = hw_fib->header.SenderFibAddress;
+ 			/* Restore adapters pointer to the FIB */
+-		hw_fib->header.ReceiverFibAddress = hw_fib->header.SenderFibAddress;	/* Let the adapter now where to find its data */
++		hw_fib->header.u.ReceiverFibAddress = hw_fib->header.SenderFibAddress;  /* Let the adapter now where to find its data */
+ 		map = 0;
+ 	}
+ 	/*
+@@ -450,7 +450,7 @@ int aac_fib_send(u16 command, struct fib *fibptr, unsigned long size,
+ 	 */
+ 
+ 	hw_fib->header.SenderFibAddress = cpu_to_le32(((u32)(fibptr - dev->fibs)) << 2);
+-	hw_fib->header.SenderData = (u32)(fibptr - dev->fibs);
++	hw_fib->header.Handle = (u32)(fibptr - dev->fibs) + 1;
+ 	/*
+ 	 *	Set FIB state to indicate where it came from and if we want a
+ 	 *	response from the adapter. Also load the command from the
+@@ -460,7 +460,6 @@ int aac_fib_send(u16 command, struct fib *fibptr, unsigned long size,
+ 	 */
+ 	hw_fib->header.Command = cpu_to_le16(command);
+ 	hw_fib->header.XferState |= cpu_to_le32(SentFromHost);
+-	fibptr->hw_fib_va->header.Flags = 0;	/* 0 the flags field - internal only*/
+ 	/*
+ 	 *	Set the size of the Fib we want to send to the adapter
+ 	 */
+@@ -711,7 +710,8 @@ int aac_fib_adapter_complete(struct fib *fibptr, unsigned short size)
+ 	unsigned long nointr = 0;
+ 	unsigned long qflags;
+ 
+-	if (dev->comm_interface == AAC_COMM_MESSAGE_TYPE1) {
++	if (dev->comm_interface == AAC_COMM_MESSAGE_TYPE1 ||
++	    dev->comm_interface == AAC_COMM_MESSAGE_TYPE2) {
+ 		kfree(hw_fib);
+ 		return 0;
+ 	}
+@@ -724,7 +724,9 @@ int aac_fib_adapter_complete(struct fib *fibptr, unsigned short size)
+ 	/*
+ 	 *	If we plan to do anything check the structure type first.
+ 	 */
+-	if (hw_fib->header.StructType != FIB_MAGIC) {
++	if (hw_fib->header.StructType != FIB_MAGIC &&
++	    hw_fib->header.StructType != FIB_MAGIC2 &&
++	    hw_fib->header.StructType != FIB_MAGIC2_64) {
+ 		if (dev->comm_interface == AAC_COMM_MESSAGE)
+ 			kfree(hw_fib);
+ 		return -EINVAL;
+@@ -786,7 +788,9 @@ int aac_fib_complete(struct fib *fibptr)
+ 	 *	If we plan to do anything check the structure type first.
+ 	 */
+ 
+-	if (hw_fib->header.StructType != FIB_MAGIC)
++	if (hw_fib->header.StructType != FIB_MAGIC &&
++	    hw_fib->header.StructType != FIB_MAGIC2 &&
++	    hw_fib->header.StructType != FIB_MAGIC2_64)
+ 		return -EINVAL;
+ 	/*
+ 	 *	This block completes a cdb which orginated on the host and we
+diff --git a/drivers/scsi/aacraid/dpcsup.c b/drivers/scsi/aacraid/dpcsup.c
+index f0c66a8..d81b281 100644
+--- a/drivers/scsi/aacraid/dpcsup.c
++++ b/drivers/scsi/aacraid/dpcsup.c
+@@ -101,6 +101,7 @@ unsigned int aac_response_normal(struct aac_queue * q)
+ 			 */
+ 			*(__le32 *)hwfib->data = cpu_to_le32(ST_OK);
+ 			hwfib->header.XferState |= cpu_to_le32(AdapterProcessed);
++			fib->flags |= FIB_CONTEXT_FLAG_FASTRESP;
+ 		}
+ 
+ 		FIB_COUNTER_INCREMENT(aac_config.FibRecved);
+@@ -121,7 +122,7 @@ unsigned int aac_response_normal(struct aac_queue * q)
+ 			 *	NOTE:  we cannot touch the fib after this
+ 			 *	    call, because it may have been deallocated.
+ 			 */
+-			fib->flags = 0;
++			fib->flags &= FIB_CONTEXT_FLAG_FASTRESP;
+ 			fib->callback(fib->callback_data, fib);
+ 		} else {
+ 			unsigned long flagv;
+@@ -367,6 +368,7 @@ unsigned int aac_intr_normal(struct aac_dev *dev, u32 index,
+ 			 */
+ 			*(__le32 *)hwfib->data = cpu_to_le32(ST_OK);
+ 			hwfib->header.XferState |= cpu_to_le32(AdapterProcessed);
++			fib->flags |= FIB_CONTEXT_FLAG_FASTRESP;
+ 		}
+ 
+ 		FIB_COUNTER_INCREMENT(aac_config.FibRecved);
+@@ -387,7 +389,7 @@ unsigned int aac_intr_normal(struct aac_dev *dev, u32 index,
+ 			 *	NOTE:  we cannot touch the fib after this
+ 			 *	    call, because it may have been deallocated.
+ 			 */
+-			fib->flags = 0;
++			fib->flags &= FIB_CONTEXT_FLAG_FASTRESP;
+ 			fib->callback(fib->callback_data, fib);
+ 		} else {
+ 			unsigned long flagv;
+diff --git a/drivers/scsi/aacraid/linit.c b/drivers/scsi/aacraid/linit.c
+index 2be612b..7199534 100644
+--- a/drivers/scsi/aacraid/linit.c
++++ b/drivers/scsi/aacraid/linit.c
+@@ -1166,7 +1166,7 @@ static int __devinit aac_probe_one(struct pci_dev *pdev,
+ 	aac->cardtype = index;
+ 	INIT_LIST_HEAD(&aac->entry);
+ 
+-	aac->fibs = kmalloc(sizeof(struct fib) * (shost->can_queue + AAC_NUM_MGT_FIB), GFP_KERNEL);
++	aac->fibs = kzalloc(sizeof(struct fib) * (shost->can_queue + AAC_NUM_MGT_FIB), GFP_KERNEL);
+ 	if (!aac->fibs)
+ 		goto out_free_host;
+ 	spin_lock_init(&aac->fib_lock);
+diff --git a/drivers/scsi/aacraid/src.c b/drivers/scsi/aacraid/src.c
+index 0fb1f55..3b021ec 100644
+--- a/drivers/scsi/aacraid/src.c
++++ b/drivers/scsi/aacraid/src.c
+@@ -56,21 +56,10 @@ static irqreturn_t aac_src_intr_message(int irq, void *dev_id)
+ 	if (bellbits & PmDoorBellResponseSent) {
+ 		bellbits = PmDoorBellResponseSent;
+ 		/* handle async. status */
++		src_writel(dev, MUnit.ODR_C, bellbits);
++		src_readl(dev, MUnit.ODR_C);
+ 		our_interrupt = 1;
+ 		index = dev->host_rrq_idx;
+-		if (dev->host_rrq[index] == 0) {
+-			u32 old_index = index;
+-			/* adjust index */
+-			do {
+-				index++;
+-				if (index == dev->scsi_host_ptr->can_queue +
+-							AAC_NUM_MGT_FIB)
+-					index = 0;
+-				if (dev->host_rrq[index] != 0)
+-					break;
+-			} while (index != old_index);
+-			dev->host_rrq_idx = index;
+-		}
+ 		for (;;) {
+ 			isFastResponse = 0;
+ 			/* remove toggle bit (31) */
+@@ -93,6 +82,8 @@ static irqreturn_t aac_src_intr_message(int irq, void *dev_id)
+ 	} else {
+ 		bellbits_shifted = (bellbits >> SRC_ODR_SHIFT);
+ 		if (bellbits_shifted & DoorBellAifPending) {
++			src_writel(dev, MUnit.ODR_C, bellbits);
++			src_readl(dev, MUnit.ODR_C);
+ 			our_interrupt = 1;
+ 			/* handle AIF */
+ 			aac_intr_normal(dev, 0, 2, 0, NULL);
+@@ -100,6 +91,13 @@ static irqreturn_t aac_src_intr_message(int irq, void *dev_id)
+ 			unsigned long sflags;
+ 			struct list_head *entry;
+ 			int send_it = 0;
++			extern int aac_sync_mode;
++
++			if (!aac_sync_mode) {
++				src_writel(dev, MUnit.ODR_C, bellbits);
++				src_readl(dev, MUnit.ODR_C);
++				our_interrupt = 1;
++			}
+ 
+ 			if (dev->sync_fib) {
+ 				our_interrupt = 1;
+@@ -132,7 +130,6 @@ static irqreturn_t aac_src_intr_message(int irq, void *dev_id)
+ 	}
+ 
+ 	if (our_interrupt) {
+-		src_writel(dev, MUnit.ODR_C, bellbits);
+ 		return IRQ_HANDLED;
+ 	}
+ 	return IRQ_NONE;
+@@ -336,6 +333,9 @@ static void aac_src_start_adapter(struct aac_dev *dev)
+ {
+ 	struct aac_init *init;
+ 
++	 /* reset host_rrq_idx first */
++	dev->host_rrq_idx = 0;
++
+ 	init = dev->init;
+ 	init->HostElapsedSeconds = cpu_to_le32(get_seconds());
+ 
+@@ -397,31 +397,40 @@ static int aac_src_deliver_message(struct fib *fib)
+ 	q->numpending++;
+ 	spin_unlock_irqrestore(q->lock, qflags);
+ 
+-	/* Calculate the amount to the fibsize bits */
+-	fibsize = (sizeof(struct aac_fib_xporthdr) + hdr_size + 127) / 128 - 1;
+-	if (fibsize > (ALIGN32 - 1))
+-		return -EMSGSIZE;
++	if (dev->comm_interface == AAC_COMM_MESSAGE_TYPE2) {
++		/* Calculate the amount to the fibsize bits */
++		fibsize = (hdr_size + 127) / 128 - 1;
++		if (fibsize > (ALIGN32 - 1))
++			return -EMSGSIZE;
++		/* New FIB header, 32-bit */
++		address = fib->hw_fib_pa;
++		fib->hw_fib_va->header.StructType = FIB_MAGIC2;
++		fib->hw_fib_va->header.SenderFibAddress = (u32)address;
++		fib->hw_fib_va->header.u.TimeStamp = 0;
++		BUG_ON((u32)(address >> 32) != 0L);
++		address |= fibsize;
++	} else {
++		/* Calculate the amount to the fibsize bits */
++		fibsize = (sizeof(struct aac_fib_xporthdr) + hdr_size + 127) / 128 - 1;
++		if (fibsize > (ALIGN32 - 1))
++			return -EMSGSIZE;
++
++		/* Fill XPORT header */
++		pFibX = (void *)fib->hw_fib_va - sizeof(struct aac_fib_xporthdr);
++		pFibX->Handle = cpu_to_le32(fib->hw_fib_va->header.Handle);
++		pFibX->HostAddress = cpu_to_le64(fib->hw_fib_pa);
++		pFibX->Size = cpu_to_le32(hdr_size);
+ 
+-	/* Fill XPORT header */
+-	pFibX = (void *)fib->hw_fib_va - sizeof(struct aac_fib_xporthdr);
+-	/*
+-	 * This was stored by aac_fib_send() and it is the index into
+-	 * dev->fibs. Not sure why we add 1 to it, but I suspect that it's
+-	 * because it can't be zero when we pass it to the hardware. Note that
+-	 * it was stored in native endian, hence the lack of swapping. -- BenC
+-	 */
+-	pFibX->Handle = cpu_to_le32(fib->hw_fib_va->header.SenderData + 1);
+-	pFibX->HostAddress = cpu_to_le64(fib->hw_fib_pa);
+-	pFibX->Size = cpu_to_le32(hdr_size);
++		/*
++		 * The xport header has been 32-byte aligned for us so that fibsize
++		 * can be masked out of this address by hardware. -- BenC
++		 */
++		address = fib->hw_fib_pa - sizeof(struct aac_fib_xporthdr);
++		if (address & (ALIGN32 - 1))
++			return -EINVAL;
++		address |= fibsize;
++	}
+ 
+-	/*
+-	 * The xport header has been 32-byte aligned for us so that fibsize
+-	 * can be masked out of this address by hardware. -- BenC
+-	 */
+-	address = fib->hw_fib_pa - sizeof(struct aac_fib_xporthdr);
+-	if (address & (ALIGN32 - 1))
+-		return -EINVAL;
+-	address |= fibsize;
+ 	src_writel(dev, MUnit.IQ_H, (address >> 32) & 0xffffffff);
+ 	src_writel(dev, MUnit.IQ_L, address & 0xffffffff);
+ 
+@@ -764,7 +773,7 @@ int aac_srcv_init(struct aac_dev *dev)
+ 
+ 	if (aac_init_adapter(dev) == NULL)
+ 		goto error_iounmap;
+-	if (dev->comm_interface != AAC_COMM_MESSAGE_TYPE1)
++	if (dev->comm_interface != AAC_COMM_MESSAGE_TYPE2)
+ 		goto error_iounmap;
+ 	dev->msi = aac_msi && !pci_enable_msi(dev->pdev);
+ 	if (request_irq(dev->pdev->irq, dev->a_ops.adapter_intr,

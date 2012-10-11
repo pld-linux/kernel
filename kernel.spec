@@ -89,7 +89,7 @@
 %define		have_pcmcia	0
 %endif
 
-%define		rel		1
+%define		rel		2
 %define		basever		3.5
 %define		postver		.6
 
@@ -244,6 +244,9 @@ Patch400:	kernel-virtio-gl-accel.patch
 Patch2000:	kernel-small_fixes.patch
 Patch2001:	kernel-pwc-uncompress.patch
 Patch2003:	kernel-regressions.patch
+
+# update aacraid from 3.6 kernel (series 7 support)
+Patch3000:	kernel-aacraid.patch
 
 # http://git.kernel.org/?p=linux/kernel/git/jj/linux-apparmor.git;a=shortlog;h=refs/heads/v3.5-aa2.8
 Patch5000:	kernel-apparmor.patch
@@ -736,6 +739,9 @@ exit 0
 %endif
 #
 # end of grsecurity & pax stuff
+
+# aacraid
+%patch3000 -p1
 
 # apparmor
 %patch5000 -p1
