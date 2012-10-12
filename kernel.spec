@@ -89,9 +89,9 @@
 %define		have_pcmcia	0
 %endif
 
-%define		rel		2
+%define		rel		1
 %define		basever		3.5
-%define		postver		.6
+%define		postver		.7
 
 # __alt_kernel is list of features, empty string if none set
 # _alt kernel is defined as: %{nil}%{?alt_kernel:-%{?alt_kernel}} (defined in rpm.macros)
@@ -134,7 +134,7 @@ Source0:	http://www.kernel.org/pub/linux/kernel/v3.x/linux-%{basever}.tar.xz
 # Source0-md5:	24153eaaa81dedc9481ada8cd9c3b83d
 %if "%{postver}" != ".0"
 Patch0:		http://www.kernel.org/pub/linux/kernel/v3.x/patch-%{version}.bz2
-# Patch0-md5:	c0406b6d8539e551ea07cf6d21831599
+# Patch0-md5:	f908f8c222cf4a1988b8bf180df46bb2
 %endif
 
 Source3:	kernel-autoconf.h
