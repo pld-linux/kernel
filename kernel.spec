@@ -169,8 +169,8 @@ Patch49:	kernel-zph.patch
 # based on http://www.linuximq.net/patchs/patch-imqmq-3.1.diff.bz2
 Patch50:	kernel-imq.patch
 
-# http://www.kernel.org/pub/linux/kernel/people/edward/reiser4/reiser4-for-2.6/reiser4-for-2.6.35.patch.bz2
-Patch51:	kernel-reiser4.patch
+Patch51:	http://downloads.sourceforge.net/project/reiser4/reiser4-for-linux-3.x/reiser4-for-3.5.3.patch.gz
+# Patch51-md5:	7794f6edb31fd39f5d27f978d4f23cb1
 
 # http://fatooh.org/esfq-2.6/sfq-2.6.24.1.tar.bz2
 Patch53:	kernel-esfq.patch
@@ -207,7 +207,6 @@ Patch140:	kernel-unionfs.patch
 #
 Patch145:	kernel-aufs3.patch
 Patch146:	kernel-aufs2-unionfs.patch
-Patch148:	kernel-aufs2-reiser4.patch
 
 # Show normal colors in menuconfig with ncurses ABI 6
 Patch250:	kernel-fix_256colors_menuconfig.patch
@@ -668,9 +667,6 @@ cd linux-%{basever}
 %endif
 
 # aufs3
-%if %{with reiser4}
-%patch148 -p1
-%endif
 %patch145 -p1
 %{?with_unionfs:%patch146 -p1}
 
