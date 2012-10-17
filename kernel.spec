@@ -21,6 +21,7 @@
 
 %bcond_with	verbose		# verbose build (V=1)
 %bcond_with	reiser4		# support for reiser4 fs (experimental)
+%bcond_without	unionfs		# unmaintained unionfs support
 
 %bcond_with	fbcondecor	# build fbcondecor (disable FB_TILEBLITTING and affected fb modules)
 %bcond_without	pae		# build PAE (HIGHMEM64G) support on 32bit i686 athlon pentium3 pentium4
@@ -197,7 +198,7 @@ Patch140:	kernel-unionfs.patch
 # Patch creation:
 # git clone git://aufs.git.sourceforge.net/gitroot/aufs/aufs3-standalone.git
 # cd aufs3-standalone
-# git checkout -b aufs3.5 origin/aufs3.5
+# git checkout -b aufs3.6 origin/aufs3.6
 # cat aufs3-kbuild.patch aufs3-base.patch aufs3-standalone.patch > ~/rpm/packages/kernel/kernel-aufs3.patch
 # mkdir linux
 # cp -a Documentation fs include linux
@@ -671,10 +672,10 @@ cd linux-%{basever}
 %patch148 -p1
 %endif
 %patch145 -p1
-%patch146 -p1
+%{?with_unionfs:%patch146 -p1}
 
 # unionfs
-%patch140 -p1
+%{?with_unionfs:%patch140 -p1}
 
 %if %{with rescuecd}
 %patch7000 -p1

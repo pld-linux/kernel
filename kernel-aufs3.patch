@@ -1,4 +1,4 @@
-aufs3.5 kbuild patch
+aufs3.6 kbuild patch
 
 diff --git a/fs/Kconfig b/fs/Kconfig
 index f95ae3a..6d8a9a5 100644
@@ -22,7 +22,7 @@ index 2fb9779..abefac5 100644
  obj-$(CONFIG_PSTORE)		+= pstore/
 +obj-$(CONFIG_AUFS_FS)           += aufs/
 diff --git a/include/linux/Kbuild b/include/linux/Kbuild
-index 8760be3..a1b8446 100644
+index fa21760..ee029e3 100644
 --- a/include/linux/Kbuild
 +++ b/include/linux/Kbuild
 @@ -66,6 +66,7 @@ header-y += atmppp.h
@@ -33,10 +33,10 @@ index 8760be3..a1b8446 100644
  header-y += auto_fs.h
  header-y += auto_fs4.h
  header-y += auxvec.h
-aufs3.5 base patch
+aufs3.6 base patch
 
 diff --git a/fs/inode.c b/fs/inode.c
-index c99163b..7f772fd 100644
+index ac8d904..7b2c8fa 100644
 --- a/fs/inode.c
 +++ b/fs/inode.c
 @@ -1491,7 +1491,7 @@ static int relatime_need_update(struct vfsmount *mnt, struct inode *inode,
@@ -48,24 +48,11 @@ index c99163b..7f772fd 100644
  {
  	if (inode->i_op->update_time)
  		return inode->i_op->update_time(inode, time, flags);
-diff --git a/fs/namei.c b/fs/namei.c
-index 7d69419..18c9782 100644
---- a/fs/namei.c
-+++ b/fs/namei.c
-@@ -1864,7 +1864,7 @@ int vfs_path_lookup(struct dentry *dentry, struct vfsmount *mnt,
-  * needs parent already locked. Doesn't follow mounts.
-  * SMP-safe.
-  */
--static struct dentry *lookup_hash(struct nameidata *nd)
-+struct dentry *lookup_hash(struct nameidata *nd)
- {
- 	return __lookup_hash(&nd->last, nd->path.dentry, nd);
- }
 diff --git a/fs/splice.c b/fs/splice.c
-index 7bf08fa..e3c40b5 100644
+index 41514dd..663b402 100644
 --- a/fs/splice.c
 +++ b/fs/splice.c
-@@ -1090,8 +1090,8 @@ EXPORT_SYMBOL(generic_splice_sendpage);
+@@ -1093,8 +1093,8 @@ EXPORT_SYMBOL(generic_splice_sendpage);
  /*
   * Attempt to initiate a splice from pipe to file.
   */
@@ -76,7 +63,7 @@ index 7bf08fa..e3c40b5 100644
  {
  	ssize_t (*splice_write)(struct pipe_inode_info *, struct file *,
  				loff_t *, size_t, unsigned int);
-@@ -1118,9 +1118,9 @@ static long do_splice_from(struct pipe_inode_info *pipe, struct file *out,
+@@ -1121,9 +1121,9 @@ static long do_splice_from(struct pipe_inode_info *pipe, struct file *out,
  /*
   * Attempt to initiate a splice from a file to a pipe.
   */
@@ -90,10 +77,10 @@ index 7bf08fa..e3c40b5 100644
  	ssize_t (*splice_read)(struct file *, loff_t *,
  			       struct pipe_inode_info *, size_t, unsigned int);
 diff --git a/include/linux/fs.h b/include/linux/fs.h
-index 17fd887..9c75a47 100644
+index aa11047..9116d2e 100644
 --- a/include/linux/fs.h
 +++ b/include/linux/fs.h
-@@ -2591,6 +2591,7 @@ extern int inode_change_ok(const struct inode *, struct iattr *);
+@@ -2741,6 +2741,7 @@ extern int inode_change_ok(const struct inode *, struct iattr *);
  extern int inode_newsize_ok(const struct inode *, loff_t offset);
  extern void setattr_copy(struct inode *inode, const struct iattr *attr);
  
@@ -101,18 +88,6 @@ index 17fd887..9c75a47 100644
  extern int file_update_time(struct file *file);
  
  extern int generic_show_options(struct seq_file *m, struct dentry *root);
-diff --git a/include/linux/namei.h b/include/linux/namei.h
-index ffc0213..ef35a31 100644
---- a/include/linux/namei.h
-+++ b/include/linux/namei.h
-@@ -85,6 +85,7 @@ extern int vfs_path_lookup(struct dentry *, struct vfsmount *,
- extern struct file *lookup_instantiate_filp(struct nameidata *nd, struct dentry *dentry,
- 		int (*open)(struct inode *, struct file *));
- 
-+extern struct dentry *lookup_hash(struct nameidata *nd);
- extern struct dentry *lookup_one_len(const char *, struct dentry *, int);
- 
- extern int follow_down_one(struct path *);
 diff --git a/include/linux/splice.h b/include/linux/splice.h
 index 09a545a..1ac5727 100644
 --- a/include/linux/splice.h
@@ -128,13 +103,13 @@ index 09a545a..1ac5727 100644
 +			 struct pipe_inode_info *pipe, size_t len,
 +			 unsigned int flags);
  #endif
-aufs3.5 standalone patch
+aufs3.6 standalone patch
 
 diff --git a/fs/file_table.c b/fs/file_table.c
-index a305d9e..6a768be 100644
+index 701985e..a9fe741 100644
 --- a/fs/file_table.c
 +++ b/fs/file_table.c
-@@ -35,6 +35,7 @@ struct files_stat_struct files_stat = {
+@@ -37,6 +37,7 @@ struct files_stat_struct files_stat = {
  };
  
  DEFINE_LGLOCK(files_lglock);
@@ -142,7 +117,7 @@ index a305d9e..6a768be 100644
  
  /* SLAB cache for file structures */
  static struct kmem_cache *filp_cachep __read_mostly;
-@@ -441,6 +442,8 @@ void file_sb_list_del(struct file *file)
+@@ -509,6 +510,8 @@ void file_sb_list_del(struct file *file)
  	}
  }
  
@@ -152,7 +127,7 @@ index a305d9e..6a768be 100644
  
  /*
 diff --git a/fs/inode.c b/fs/inode.c
-index 7f772fd..e789d2f 100644
+index 7b2c8fa..0c4318d 100644
 --- a/fs/inode.c
 +++ b/fs/inode.c
 @@ -56,6 +56,7 @@ static struct hlist_head *inode_hashtable __read_mostly;
@@ -171,20 +146,8 @@ index 7f772fd..e789d2f 100644
  
  /**
   *	touch_atime	-	update the access time
-diff --git a/fs/namei.c b/fs/namei.c
-index 18c9782..f09edf3 100644
---- a/fs/namei.c
-+++ b/fs/namei.c
-@@ -1868,6 +1868,7 @@ struct dentry *lookup_hash(struct nameidata *nd)
- {
- 	return __lookup_hash(&nd->last, nd->path.dentry, nd);
- }
-+EXPORT_SYMBOL(lookup_hash);
- 
- /**
-  * lookup_one_len - filesystem helper to lookup single pathname component
 diff --git a/fs/namespace.c b/fs/namespace.c
-index 1e4a5fe..06aa768 100644
+index 7bdf790..5b85c4c 100644
 --- a/fs/namespace.c
 +++ b/fs/namespace.c
 @@ -50,6 +50,7 @@ EXPORT_SYMBOL_GPL(fs_kobj);
@@ -195,7 +158,7 @@ index 1e4a5fe..06aa768 100644
  
  static inline unsigned long hash(struct vfsmount *mnt, struct dentry *dentry)
  {
-@@ -1341,6 +1342,7 @@ int iterate_mounts(int (*f)(struct vfsmount *, void *), void *arg,
+@@ -1401,6 +1402,7 @@ int iterate_mounts(int (*f)(struct vfsmount *, void *), void *arg,
  	}
  	return 0;
  }
@@ -265,7 +228,7 @@ index f104d56..54f36db 100644
  static int fsnotify_mark_destroy(void *ignored)
  {
 diff --git a/fs/open.c b/fs/open.c
-index 1540632..2463289 100644
+index e1f2cdb..2804cd6 100644
 --- a/fs/open.c
 +++ b/fs/open.c
 @@ -60,6 +60,7 @@ int do_truncate(struct dentry *dentry, loff_t length, unsigned int time_attrs,
@@ -277,10 +240,10 @@ index 1540632..2463289 100644
  static long do_sys_truncate(const char __user *pathname, loff_t length)
  {
 diff --git a/fs/splice.c b/fs/splice.c
-index e3c40b5..3afc547 100644
+index 663b402..51e1deb 100644
 --- a/fs/splice.c
 +++ b/fs/splice.c
-@@ -1114,6 +1114,7 @@ long do_splice_from(struct pipe_inode_info *pipe, struct file *out,
+@@ -1117,6 +1117,7 @@ long do_splice_from(struct pipe_inode_info *pipe, struct file *out,
  
  	return splice_write(pipe, out, ppos, len, flags);
  }
@@ -288,7 +251,7 @@ index e3c40b5..3afc547 100644
  
  /*
   * Attempt to initiate a splice from a file to a pipe.
-@@ -1140,6 +1141,7 @@ long do_splice_to(struct file *in, loff_t *ppos,
+@@ -1143,6 +1144,7 @@ long do_splice_to(struct file *in, loff_t *ppos,
  
  	return splice_read(in, ppos, pipe, len, flags);
  }
@@ -1464,8 +1427,8 @@ diff -urN /usr/share/empty/Documentation/filesystems/aufs/design/99plan.txt linu
 +Otherwise from /new.
 diff -urN /usr/share/empty/Documentation/filesystems/aufs/README linux/Documentation/filesystems/aufs/README
 --- /usr/share/empty/Documentation/filesystems/aufs/README	1970-01-01 01:00:00.000000000 +0100
-+++ linux/Documentation/filesystems/aufs/README	2012-08-26 08:39:00.757174634 +0200
-@@ -0,0 +1,330 @@
++++ linux/Documentation/filesystems/aufs/README	2012-10-05 20:51:16.675326257 +0200
+@@ -0,0 +1,332 @@
 +
 +Aufs3 -- advanced multi layered unification filesystem version 3.x
 +http://aufs.sf.net
@@ -1571,7 +1534,7 @@ diff -urN /usr/share/empty/Documentation/filesystems/aufs/README linux/Documenta
 +The aufs3-linux tree includes the whole linux mainline GIT tree,
 +git://git.kernel.org/.../torvalds/linux.git.
 +And you cannot select CONFIG_AUFS_FS=m for this version, eg. you cannot
-+build aufs3 as an externel kernel module.
++build aufs3 as an external kernel module.
 +
 +On the other hand, the aufs3-standalone tree has only aufs source files
 +and necessary patches, and you can select CONFIG_AUFS_FS=m.
@@ -1642,13 +1605,14 @@ diff -urN /usr/share/empty/Documentation/filesystems/aufs/README linux/Documenta
 +- apply ./aufs3-standalone.patch too, if you have a plan to set
 +  CONFIG_AUFS_FS=m. otherwise you don't need ./aufs3-standalone.patch.
 +- copy ./{Documentation,fs,include/linux/aufs_type.h} files to your
-+  kernel source tree. Never copy ./include/linux/Kbuild.
++  kernel source tree. Never copy $PWD/include/linux/Kbuild.
 +- enable CONFIG_EXPERIMENTAL and CONFIG_AUFS_FS, you can select either
 +  =m or =y.
 +- and build your kernel as usual.
 +- install the built kernel.
 +- install the header files too by "make headers_install" to the
 +  directory where you specify. By default, it is $PWD/usr.
++  "make help" shows a brief note for headers_install.
 +- and reboot your system.
 +
 +2.
@@ -1660,22 +1624,23 @@ diff -urN /usr/share/empty/Documentation/filesystems/aufs/README linux/Documenta
 +- apply ./aufs3-standalone.patch too.
 +- build your kernel, don't forget "make headers_install", and reboot.
 +- edit ./config.mk and set other aufs configurations if necessary.
-+  Note: You should read ./fs/aufs/Kconfig carefully which describes
++  Note: You should read $PWD/fs/aufs/Kconfig carefully which describes
 +  every aufs configurations.
 +- build the module by simple "make".
 +- you can specify ${KDIR} make variable which points to your kernel
 +  source tree.
 +- install the files
 +  + run "make install" to install the aufs module, or copy the built
-+    ./aufs.ko to /lib/modules/... and run depmod -a (or reboot simply).
-+  + run "make headers_install" to install the aufs header file (you can
-+    specify DESTDIR), or copty ./usr/include/linux/aufs_type.h to
-+    /usr/include/linux or wherever you like. By default, the target
-+    directory is $PWD/usr.
++    $PWD/aufs.ko to /lib/modules/... and run depmod -a (or reboot simply).
++  + run "make install_headers" (instead of headers_install) to install
++    the modified aufs header file (you can specify DESTDIR which is
++    available in aufs standalone version's Makefile only), or copy
++    $PWD/usr/include/linux/aufs_type.h to /usr/include/linux or wherever
++    you like manually. By default, the target directory is $PWD/usr.
 +- no need to apply aufs3-kbuild.patch, nor copying source files to your
 +  kernel source tree.
 +
-+Note: The haeder file aufs_type.h is necessary to build aufs-util
++Note: The header file aufs_type.h is necessary to build aufs-util
 +      as well as "make headers_install" in the kernel source tree.
 +      headers_install is subject to be forgotten, but it is essentially
 +      necessary, not only for building aufs-util.
@@ -1759,7 +1724,7 @@ diff -urN /usr/share/empty/Documentation/filesystems/aufs/README linux/Documenta
 +	Since Apr 2010, Tomas M (the author of Slax and Linux Live
 +	scripts) is making "doubling" donations.
 +	Unfortunately I cannot list all of the donators, but I really
-+	appriciate.
++	appreciate.
 +	It ends Aug 2010, but the ordinary donation URL is still available.
 +	<http://sourceforge.net/donate/index.php?group_id=167503>
 +Dai Itasaka made a donation (2007/8).
@@ -1862,7 +1827,7 @@ diff -urN /usr/share/empty/fs/aufs/aufs.h linux/fs/aufs/aufs.h
 +#endif /* __AUFS_H__ */
 diff -urN /usr/share/empty/fs/aufs/branch.c linux/fs/aufs/branch.c
 --- /usr/share/empty/fs/aufs/branch.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/branch.c	2012-08-26 08:39:00.757174634 +0200
++++ linux/fs/aufs/branch.c	2012-10-17 10:31:01.772481151 +0200
 @@ -0,0 +1,1169 @@
 +/*
 + * Copyright (C) 2005-2012 Junjiro R. Okajima
@@ -2938,7 +2903,7 @@ diff -urN /usr/share/empty/fs/aufs/branch.c linux/fs/aufs/branch.c
 +		spin_unlock(&hf->f_lock);
 +		if (!file_check_writeable(hf)) {
 +			file_release_write(hf);
-+			mnt_drop_write(hf->f_vfsmnt);
++			vfsub_mnt_drop_write(hf->f_vfsmnt);
 +		}
 +	}
 +
@@ -3311,8 +3276,8 @@ diff -urN /usr/share/empty/fs/aufs/conf.mk linux/fs/aufs/conf.mk
 +-include ${srctree}/${src}/conf_priv.mk
 diff -urN /usr/share/empty/fs/aufs/cpup.c linux/fs/aufs/cpup.c
 --- /usr/share/empty/fs/aufs/cpup.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/cpup.c	2012-08-26 08:39:00.757174634 +0200
-@@ -0,0 +1,1084 @@
++++ linux/fs/aufs/cpup.c	2012-10-17 10:31:01.772481151 +0200
+@@ -0,0 +1,1085 @@
 +/*
 + * Copyright (C) 2005-2012 Junjiro R. Okajima
 + *
@@ -3801,7 +3766,8 @@ diff -urN /usr/share/empty/fs/aufs/cpup.c linux/fs/aufs/cpup.c
 +	case S_IFREG:
 +		/* try stopping to update while we are referencing */
 +		IMustLock(h_inode);
-+		err = vfsub_create(h_dir, &h_path, mode | S_IWUSR);
++		err = vfsub_create(h_dir, &h_path, mode | S_IWUSR,
++				   /*want_excl*/true);
 +		if (!err)
 +			err = au_do_cpup_regular
 +				(dentry, bdst, bsrc, len,
@@ -5220,8 +5186,8 @@ diff -urN /usr/share/empty/fs/aufs/dcsub.h linux/fs/aufs/dcsub.h
 +#endif /* __AUFS_DCSUB_H__ */
 diff -urN /usr/share/empty/fs/aufs/debug.c linux/fs/aufs/debug.c
 --- /usr/share/empty/fs/aufs/debug.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/debug.c	2012-08-26 08:39:00.757174634 +0200
-@@ -0,0 +1,489 @@
++++ linux/fs/aufs/debug.c	2012-10-17 10:31:01.772481151 +0200
+@@ -0,0 +1,490 @@
 +/*
 + * Copyright (C) 2005-2012 Junjiro R. Okajima
 + *
@@ -5362,9 +5328,10 @@ diff -urN /usr/share/empty/fs/aufs/debug.c linux/fs/aufs/debug.c
 +void au_dpri_dalias(struct inode *inode)
 +{
 +	struct dentry *d;
++	struct hlist_node *p;
 +
 +	spin_lock(&inode->i_lock);
-+	list_for_each_entry(d, &inode->i_dentry, d_alias)
++	hlist_for_each_entry(d, p, &inode->i_dentry, d_alias)
 +		au_dpri_dentry(d);
 +	spin_unlock(&inode->i_lock);
 +}
@@ -5959,8 +5926,8 @@ diff -urN /usr/share/empty/fs/aufs/debug.h linux/fs/aufs/debug.h
 +#endif /* __AUFS_DEBUG_H__ */
 diff -urN /usr/share/empty/fs/aufs/dentry.c linux/fs/aufs/dentry.c
 --- /usr/share/empty/fs/aufs/dentry.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/dentry.c	2012-08-26 08:39:00.757174634 +0200
-@@ -0,0 +1,1140 @@
++++ linux/fs/aufs/dentry.c	2012-10-17 10:31:01.772481151 +0200
+@@ -0,0 +1,1063 @@
 +/*
 + * Copyright (C) 2005-2012 Junjiro R. Okajima
 + *
@@ -5986,63 +5953,6 @@ diff -urN /usr/share/empty/fs/aufs/dentry.c linux/fs/aufs/dentry.c
 +#include <linux/namei.h>
 +#include "aufs.h"
 +
-+static void au_h_nd(struct nameidata *h_nd, struct nameidata *nd)
-+{
-+	if (nd) {
-+		*h_nd = *nd;
-+
-+		/*
-+		 * gave up supporting LOOKUP_CREATE/OPEN for lower fs,
-+		 * due to whiteout and branch permission.
-+		 */
-+		h_nd->flags &= ~(/*LOOKUP_PARENT |*/ LOOKUP_OPEN | LOOKUP_CREATE
-+				 | LOOKUP_FOLLOW | LOOKUP_EXCL);
-+		/* unnecessary? */
-+		h_nd->intent.open.file = NULL;
-+	} else
-+		memset(h_nd, 0, sizeof(*h_nd));
-+}
-+
-+struct au_lkup_one_args {
-+	struct dentry **errp;
-+	struct qstr *name;
-+	struct dentry *h_parent;
-+	struct au_branch *br;
-+	struct nameidata *nd;
-+};
-+
-+struct dentry *au_lkup_one(struct qstr *name, struct dentry *h_parent,
-+			   struct au_branch *br, struct nameidata *nd)
-+{
-+	struct dentry *h_dentry;
-+	int err;
-+	struct nameidata h_nd;
-+
-+	if (au_test_fs_null_nd(h_parent->d_sb))
-+		return vfsub_lookup_one_len(name->name, h_parent, name->len);
-+
-+	au_h_nd(&h_nd, nd);
-+	h_nd.path.dentry = h_parent;
-+	h_nd.path.mnt = br->br_mnt;
-+
-+	err = vfsub_name_hash(name->name, &h_nd.last, name->len);
-+	h_dentry = ERR_PTR(err);
-+	if (!err) {
-+		path_get(&h_nd.path);
-+		h_dentry = vfsub_lookup_hash(&h_nd);
-+		path_put(&h_nd.path);
-+	}
-+
-+	AuTraceErrPtr(h_dentry);
-+	return h_dentry;
-+}
-+
-+static void au_call_lkup_one(void *args)
-+{
-+	struct au_lkup_one_args *a = args;
-+	*a->errp = au_lkup_one(a->name, a->h_parent, a->br, a->nd);
-+}
-+
 +#define AuLkup_ALLOW_NEG	1
 +#define au_ftest_lkup(flags, name)	((flags) & AuLkup_##name)
 +#define au_fset_lkup(flags, name) \
@@ -6053,7 +5963,7 @@ diff -urN /usr/share/empty/fs/aufs/dentry.c linux/fs/aufs/dentry.c
 +struct au_do_lookup_args {
 +	unsigned int		flags;
 +	mode_t			type;
-+	struct nameidata	*nd;
++	unsigned int		nd_flags;
 +};
 +
 +/*
@@ -6090,7 +6000,7 @@ diff -urN /usr/share/empty/fs/aufs/dentry.c linux/fs/aufs/dentry.c
 +		return NULL; /* success */
 +
 +real_lookup:
-+	h_dentry = au_lkup_one(&dentry->d_name, h_parent, br, args->nd);
++	h_dentry = vfsub_lkup_one(&dentry->d_name, h_parent);
 +	if (IS_ERR(h_dentry))
 +		goto out;
 +
@@ -6145,16 +6055,16 @@ diff -urN /usr/share/empty/fs/aufs/dentry.c linux/fs/aufs/dentry.c
 + * can be called at unlinking with @type is zero.
 + */
 +int au_lkup_dentry(struct dentry *dentry, aufs_bindex_t bstart, mode_t type,
-+		   struct nameidata *nd)
++		   unsigned int flags)
 +{
 +	int npositive, err;
 +	aufs_bindex_t bindex, btail, bdiropq;
 +	unsigned char isdir;
 +	struct qstr whname;
 +	struct au_do_lookup_args args = {
-+		.flags	= 0,
-+		.type	= type,
-+		.nd	= nd
++		.flags		= 0,
++		.type		= type,
++		.nd_flags	= flags
 +	};
 +	const struct qstr *name = &dentry->d_name;
 +	struct dentry *parent;
@@ -6250,17 +6160,15 @@ diff -urN /usr/share/empty/fs/aufs/dentry.c linux/fs/aufs/dentry.c
 +	int wkq_err;
 +
 +	if (!au_test_h_perm_sio(parent->d_inode, MAY_EXEC))
-+		dentry = au_lkup_one(name, parent, br, /*nd*/NULL);
++		dentry = vfsub_lkup_one(name, parent);
 +	else {
-+		struct au_lkup_one_args args = {
-+			.errp		= &dentry,
-+			.name		= name,
-+			.h_parent	= parent,
-+			.br		= br,
-+			.nd		= NULL
++		struct vfsub_lkup_one_args args = {
++			.errp	= &dentry,
++			.name	= name,
++			.parent	= parent
 +		};
 +
-+		wkq_err = au_wkq_wait(au_call_lkup_one, &args);
++		wkq_err = au_wkq_wait(vfsub_call_lkup_one, &args);
 +		if (unlikely(wkq_err))
 +			dentry = ERR_PTR(wkq_err);
 +	}
@@ -6368,7 +6276,7 @@ diff -urN /usr/share/empty/fs/aufs/dentry.c linux/fs/aufs/dentry.c
 +		goto out;
 +
 +	/* main purpose is namei.c:cached_lookup() and d_revalidate */
-+	h_d = au_lkup_one(&h_dentry->d_name, h_parent, br, /*nd*/NULL);
++	h_d = vfsub_lkup_one(&h_dentry->d_name, h_parent);
 +	err = PTR_ERR(h_d);
 +	if (IS_ERR(h_d))
 +		goto out;
@@ -6754,7 +6662,7 @@ diff -urN /usr/share/empty/fs/aufs/dentry.c linux/fs/aufs/dentry.c
 +	 * if current working dir is removed, it returns an error.
 +	 * but the dentry is legal.
 +	 */
-+	err = au_lkup_dentry(dentry, /*bstart*/0, /*type*/0, /*nd*/NULL);
++	err = au_lkup_dentry(dentry, /*bstart*/0, /*type*/0, /*flags*/0);
 +	AuDbgDentry(dentry);
 +	au_di_swap(tmp, dinfo);
 +	if (err == -ENOENT)
@@ -6783,42 +6691,24 @@ diff -urN /usr/share/empty/fs/aufs/dentry.c linux/fs/aufs/dentry.c
 +	return err;
 +}
 +
-+static noinline_for_stack
-+int au_do_h_d_reval(struct dentry *h_dentry, struct nameidata *nd,
-+		    struct dentry *dentry, aufs_bindex_t bindex)
++static int au_do_h_d_reval(struct dentry *h_dentry, unsigned int flags,
++			   struct dentry *dentry, aufs_bindex_t bindex)
 +{
 +	int err, valid;
-+	int (*reval)(struct dentry *, struct nameidata *);
 +
 +	err = 0;
 +	if (!(h_dentry->d_flags & DCACHE_OP_REVALIDATE))
 +		goto out;
-+	reval = h_dentry->d_op->d_revalidate;
 +
 +	AuDbg("b%d\n", bindex);
-+	if (au_test_fs_null_nd(h_dentry->d_sb))
-+		/* it may return tri-state */
-+		valid = reval(h_dentry, NULL);
-+	else {
-+		struct nameidata h_nd;
-+		int locked;
-+		struct dentry *parent;
-+
-+		au_h_nd(&h_nd, nd);
-+		parent = nd->path.dentry;
-+		locked = (nd && nd->path.dentry != dentry);
-+		if (locked)
-+			di_read_lock_parent(parent, AuLock_IR);
-+		BUG_ON(bindex > au_dbend(parent));
-+		h_nd.path.dentry = au_h_dptr(parent, bindex);
-+		BUG_ON(!h_nd.path.dentry);
-+		h_nd.path.mnt = au_sbr(parent->d_sb, bindex)->br_mnt;
-+		path_get(&h_nd.path);
-+		valid = reval(h_dentry, &h_nd);
-+		path_put(&h_nd.path);
-+		if (locked)
-+			di_read_unlock(parent, AuLock_IR);
-+	}
++	/*
++	 * gave up supporting LOOKUP_CREATE/OPEN for lower fs,
++	 * due to whiteout and branch permission.
++	 */
++	flags &= ~(/*LOOKUP_PARENT |*/ LOOKUP_OPEN | LOOKUP_CREATE
++		   | LOOKUP_FOLLOW | LOOKUP_EXCL);
++	/* it may return tri-state */
++	valid = h_dentry->d_op->d_revalidate(h_dentry, flags);
 +
 +	if (unlikely(valid < 0))
 +		err = valid;
@@ -6832,7 +6722,7 @@ diff -urN /usr/share/empty/fs/aufs/dentry.c linux/fs/aufs/dentry.c
 +
 +/* todo: remove this */
 +static int h_d_revalidate(struct dentry *dentry, struct inode *inode,
-+			  struct nameidata *nd, int do_udba)
++			  unsigned int flags, int do_udba)
 +{
 +	int err;
 +	umode_t mode, h_mode;
@@ -6892,7 +6782,7 @@ diff -urN /usr/share/empty/fs/aufs/dentry.c linux/fs/aufs/dentry.c
 +		}
 +		spin_unlock(&h_dentry->d_lock);
 +
-+		err = au_do_h_d_reval(h_dentry, nd, dentry, bindex);
++		err = au_do_h_d_reval(h_dentry, flags, dentry, bindex);
 +		if (unlikely(err))
 +			/* do not goto err, to keep the errno */
 +			break;
@@ -7001,7 +6891,7 @@ diff -urN /usr/share/empty/fs/aufs/dentry.c linux/fs/aufs/dentry.c
 +/*
 + * if valid returns 1, otherwise 0.
 + */
-+static int aufs_d_revalidate(struct dentry *dentry, struct nameidata *nd)
++static int aufs_d_revalidate(struct dentry *dentry, unsigned int flags)
 +{
 +	int valid, err;
 +	unsigned int sigen;
@@ -7010,7 +6900,7 @@ diff -urN /usr/share/empty/fs/aufs/dentry.c linux/fs/aufs/dentry.c
 +	struct inode *inode;
 +
 +	/* todo: support rcu-walk? */
-+	if (nd && (nd->flags & LOOKUP_RCU))
++	if (flags & LOOKUP_RCU)
 +		return -ECHILD;
 +
 +	valid = 0;
@@ -7067,7 +6957,7 @@ diff -urN /usr/share/empty/fs/aufs/dentry.c linux/fs/aufs/dentry.c
 +		}
 +	}
 +
-+	err = h_d_revalidate(dentry, inode, nd, do_udba);
++	err = h_d_revalidate(dentry, inode, flags, do_udba);
 +	if (unlikely(!err && do_udba && au_dbstart(dentry) < 0)) {
 +		err = -EIO;
 +		AuDbg("both of real entry and whiteout found, %.*s, err %d\n",
@@ -7103,8 +6993,8 @@ diff -urN /usr/share/empty/fs/aufs/dentry.c linux/fs/aufs/dentry.c
 +};
 diff -urN /usr/share/empty/fs/aufs/dentry.h linux/fs/aufs/dentry.h
 --- /usr/share/empty/fs/aufs/dentry.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/dentry.h	2012-08-26 08:39:00.757174634 +0200
-@@ -0,0 +1,237 @@
++++ linux/fs/aufs/dentry.h	2012-10-17 10:31:01.772481151 +0200
+@@ -0,0 +1,235 @@
 +/*
 + * Copyright (C) 2005-2012 Junjiro R. Okajima
 + *
@@ -7153,15 +7043,13 @@ diff -urN /usr/share/empty/fs/aufs/dentry.h linux/fs/aufs/dentry.h
 +/* dentry.c */
 +extern const struct dentry_operations aufs_dop;
 +struct au_branch;
-+struct dentry *au_lkup_one(struct qstr *name, struct dentry *h_parent,
-+			   struct au_branch *br, struct nameidata *nd);
 +struct dentry *au_sio_lkup_one(struct qstr *name, struct dentry *parent,
 +			       struct au_branch *br);
 +int au_h_verify(struct dentry *h_dentry, unsigned int udba, struct inode *h_dir,
 +		struct dentry *h_parent, struct au_branch *br);
 +
 +int au_lkup_dentry(struct dentry *dentry, aufs_bindex_t bstart, mode_t type,
-+		   struct nameidata *nd);
++		   unsigned int flags);
 +int au_lkup_neg(struct dentry *dentry, aufs_bindex_t bindex);
 +int au_refresh_dentry(struct dentry *dentry, struct dentry *parent);
 +int au_reval_dpath(struct dentry *dentry, unsigned int sigen);
@@ -7891,8 +7779,8 @@ diff -urN /usr/share/empty/fs/aufs/dinfo.c linux/fs/aufs/dinfo.c
 +}
 diff -urN /usr/share/empty/fs/aufs/dir.c linux/fs/aufs/dir.c
 --- /usr/share/empty/fs/aufs/dir.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/dir.c	2012-08-26 08:39:00.757174634 +0200
-@@ -0,0 +1,636 @@
++++ linux/fs/aufs/dir.c	2012-10-17 10:31:01.772481151 +0200
+@@ -0,0 +1,633 @@
 +/*
 + * Copyright (C) 2005-2012 Junjiro R. Okajima
 + *
@@ -8118,9 +8006,6 @@ diff -urN /usr/share/empty/fs/aufs/dir.c linux/fs/aufs/dir.c
 +	finfo = au_fi(file);
 +	fidir = finfo->fi_hdir;
 +	if (fidir) {
-+		/* remove me from sb->s_files */
-+		file_sb_list_del(file);
-+
 +		vdir_cache = fidir->fd_vdir_cache; /* lock-free */
 +		if (vdir_cache)
 +			au_vdir_free(vdir_cache);
@@ -8672,8 +8557,8 @@ diff -urN /usr/share/empty/fs/aufs/dir.h linux/fs/aufs/dir.h
 +#endif /* __AUFS_DIR_H__ */
 diff -urN /usr/share/empty/fs/aufs/dynop.c linux/fs/aufs/dynop.c
 --- /usr/share/empty/fs/aufs/dynop.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/dynop.c	2012-08-26 08:39:00.760508065 +0200
-@@ -0,0 +1,377 @@
++++ linux/fs/aufs/dynop.c	2012-10-17 10:31:01.772481151 +0200
+@@ -0,0 +1,379 @@
 +/*
 + * Copyright (C) 2010-2012 Junjiro R. Okajima
 + *
@@ -8870,6 +8755,8 @@ diff -urN /usr/share/empty/fs/aufs/dynop.c linux/fs/aufs/dynop.c
 +	DySetAop(launder_page);
 +	DySetAop(is_partially_uptodate);
 +	DySetAop(error_remove_page);
++	DySetAop(swap_activate);
++	DySetAop(swap_deactivate);
 +
 +	DyDbgSize(cnt, *h_aop);
 +	dyaop->da_get_xip_mem = h_aop->get_xip_mem;
@@ -9133,8 +9020,8 @@ diff -urN /usr/share/empty/fs/aufs/dynop.h linux/fs/aufs/dynop.h
 +#endif /* __AUFS_DYNOP_H__ */
 diff -urN /usr/share/empty/fs/aufs/export.c linux/fs/aufs/export.c
 --- /usr/share/empty/fs/aufs/export.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/export.c	2012-08-26 08:39:00.760508065 +0200
-@@ -0,0 +1,810 @@
++++ linux/fs/aufs/export.c	2012-10-17 10:31:01.772481151 +0200
+@@ -0,0 +1,811 @@
 +/*
 + * Copyright (C) 2005-2012 Junjiro R. Okajima
 + *
@@ -9348,6 +9235,7 @@ diff -urN /usr/share/empty/fs/aufs/export.c linux/fs/aufs/export.c
 +	struct dentry *dentry, *d;
 +	struct inode *inode;
 +	unsigned int sigen;
++	struct hlist_node *p;
 +
 +	dentry = NULL;
 +	inode = ilookup(sb, ino);
@@ -9366,7 +9254,7 @@ diff -urN /usr/share/empty/fs/aufs/export.c linux/fs/aufs/export.c
 +		dentry = d_find_alias(inode);
 +	else {
 +		spin_lock(&inode->i_lock);
-+		list_for_each_entry(d, &inode->i_dentry, d_alias) {
++		hlist_for_each_entry(d, p, &inode->i_dentry, d_alias) {
 +			spin_lock(&d->d_lock);
 +			if (!au_test_anon(d)
 +			    && d->d_parent->d_inode->i_ino == dir_ino) {
@@ -9520,7 +9408,7 @@ diff -urN /usr/share/empty/fs/aufs/export.c linux/fs/aufs/export.c
 +	if (!arg.found)
 +		goto out_name;
 +
-+	/* do not call au_lkup_one() */
++	/* do not call vfsub_lkup_one() */
 +	dir = parent->d_inode;
 +	mutex_lock(&dir->i_mutex);
 +	dentry = vfsub_lookup_one_len(arg.name, parent, arg.namelen);
@@ -9947,8 +9835,8 @@ diff -urN /usr/share/empty/fs/aufs/export.c linux/fs/aufs/export.c
 +}
 diff -urN /usr/share/empty/fs/aufs/file.c linux/fs/aufs/file.c
 --- /usr/share/empty/fs/aufs/file.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/file.c	2012-08-26 08:39:00.760508065 +0200
-@@ -0,0 +1,676 @@
++++ linux/fs/aufs/file.c	2012-10-17 10:31:01.772481151 +0200
+@@ -0,0 +1,683 @@
 +/*
 + * Copyright (C) 2005-2012 Junjiro R. Okajima
 + *
@@ -10603,6 +10491,11 @@ diff -urN /usr/share/empty/fs/aufs/file.c linux/fs/aufs/file.c
 +static int aufs_error_remove_page(struct address_space *mapping,
 +				  struct page *page)
 +{ AuUnsupport(); return 0; }
++static int aufs_swap_activate(struct swap_info_struct *sis, struct file *file,
++			      sector_t *span)
++{ AuUnsupport(); return 0; }
++static void aufs_swap_deactivate(struct file *file)
++{ AuUnsupport(); }
 +#endif /* CONFIG_AUFS_DEBUG */
 +
 +const struct address_space_operations aufs_aop = {
@@ -10622,7 +10515,9 @@ diff -urN /usr/share/empty/fs/aufs/file.c linux/fs/aufs/file.c
 +	.migratepage		= aufs_migratepage,
 +	.launder_page		= aufs_launder_page,
 +	.is_partially_uptodate	= aufs_is_partially_uptodate,
-+	.error_remove_page	= aufs_error_remove_page
++	.error_remove_page	= aufs_error_remove_page,
++	.swap_activate		= aufs_swap_activate,
++	.swap_deactivate	= aufs_swap_deactivate
 +#endif /* CONFIG_AUFS_DEBUG */
 +};
 diff -urN /usr/share/empty/fs/aufs/file.h linux/fs/aufs/file.h
@@ -11089,8 +10984,8 @@ diff -urN /usr/share/empty/fs/aufs/finfo.c linux/fs/aufs/finfo.c
 +}
 diff -urN /usr/share/empty/fs/aufs/f_op.c linux/fs/aufs/f_op.c
 --- /usr/share/empty/fs/aufs/f_op.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/f_op.c	2012-08-26 08:39:00.760508065 +0200
-@@ -0,0 +1,727 @@
++++ linux/fs/aufs/f_op.c	2012-10-17 10:31:01.772481151 +0200
+@@ -0,0 +1,724 @@
 +/*
 + * Copyright (C) 2005-2012 Junjiro R. Okajima
 + *
@@ -11176,11 +11071,8 @@ diff -urN /usr/share/empty/fs/aufs/f_op.c linux/fs/aufs/f_op.c
 +
 +	finfo = au_fi(file);
 +	bindex = finfo->fi_btop;
-+	if (bindex >= 0) {
-+		/* remove me from sb->s_files */
-+		file_sb_list_del(file);
++	if (bindex >= 0)
 +		au_set_h_fptr(file, bindex, NULL);
-+	}
 +
 +	au_finfo_fin(file);
 +	return 0;
@@ -12119,8 +12011,8 @@ diff -urN /usr/share/empty/fs/aufs/f_op_sp.c linux/fs/aufs/f_op_sp.c
 +}
 diff -urN /usr/share/empty/fs/aufs/fstype.h linux/fs/aufs/fstype.h
 --- /usr/share/empty/fs/aufs/fstype.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/fstype.h	2012-08-26 08:39:00.760508065 +0200
-@@ -0,0 +1,496 @@
++++ linux/fs/aufs/fstype.h	2012-10-17 10:31:01.772481151 +0200
+@@ -0,0 +1,481 @@
 +/*
 + * Copyright (C) 2005-2012 Junjiro R. Okajima
 + *
@@ -12462,16 +12354,6 @@ diff -urN /usr/share/empty/fs/aufs/fstype.h linux/fs/aufs/fstype.h
 +		|| au_test_aufs(sb); /* will be supported in next version */
 +}
 +
-+/*
-+ * If the filesystem supports NFS-export, then it has to support NULL as
-+ * a nameidata parameter for ->create(), ->lookup() and ->d_revalidate().
-+ * We can apply this principle when we handle a lower filesystem.
-+ */
-+static inline int au_test_fs_null_nd(struct super_block *sb)
-+{
-+	return !!sb->s_export_op;
-+}
-+
 +static inline int au_test_fs_remote(struct super_block *sb)
 +{
 +	return !au_test_tmpfs(sb)
@@ -12587,11 +12469,6 @@ diff -urN /usr/share/empty/fs/aufs/fstype.h linux/fs/aufs/fstype.h
 +{
 +	return au_test_fs_remote(sb)
 +		|| au_test_fs_bad_iattr_size(sb)
-+#ifdef CONFIG_AUFS_BR_RAMFS
-+		|| !(au_test_ramfs(sb) || au_test_fs_null_nd(sb))
-+#else
-+		|| !au_test_fs_null_nd(sb) /* to keep xino code simple */
-+#endif
 +		/* don't want unnecessary work for xino */
 +		|| au_test_aufs(sb)
 +		|| au_test_ecryptfs(sb)
@@ -12941,8 +12818,8 @@ diff -urN /usr/share/empty/fs/aufs/hfsplus.c linux/fs/aufs/hfsplus.c
 +}
 diff -urN /usr/share/empty/fs/aufs/hnotify.c linux/fs/aufs/hnotify.c
 --- /usr/share/empty/fs/aufs/hnotify.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/hnotify.c	2012-08-26 08:39:00.760508065 +0200
-@@ -0,0 +1,712 @@
++++ linux/fs/aufs/hnotify.c	2012-10-17 10:31:01.772481151 +0200
+@@ -0,0 +1,713 @@
 +/*
 + * Copyright (C) 2005-2012 Junjiro R. Okajima
 + *
@@ -13145,6 +13022,7 @@ diff -urN /usr/share/empty/fs/aufs/hnotify.c linux/fs/aufs/hnotify.c
 +	int err;
 +	struct dentry *d;
 +	struct qstr *dname;
++	struct hlist_node *p;
 +
 +	err = 1;
 +	if (unlikely(inode->i_ino == AUFS_ROOT_INO)) {
@@ -13157,7 +13035,7 @@ diff -urN /usr/share/empty/fs/aufs/hnotify.c linux/fs/aufs/hnotify.c
 +		AuDebugOn(!name);
 +		au_iigen_dec(inode);
 +		spin_lock(&inode->i_lock);
-+		list_for_each_entry(d, &inode->i_dentry, d_alias) {
++		hlist_for_each_entry(d, p, &inode->i_dentry, d_alias) {
 +			spin_lock(&d->d_lock);
 +			dname = &d->d_name;
 +			if (dname->len != nlen
@@ -14407,7 +14285,7 @@ diff -urN /usr/share/empty/fs/aufs/inode.c linux/fs/aufs/inode.c
 +}
 diff -urN /usr/share/empty/fs/aufs/inode.h linux/fs/aufs/inode.h
 --- /usr/share/empty/fs/aufs/inode.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/inode.h	2012-08-26 08:39:00.760508065 +0200
++++ linux/fs/aufs/inode.h	2012-10-17 10:31:01.772481151 +0200
 @@ -0,0 +1,560 @@
 +/*
 + * Copyright (C) 2005-2012 Junjiro R. Okajima
@@ -14572,7 +14450,7 @@ diff -urN /usr/share/empty/fs/aufs/inode.h linux/fs/aufs/inode.h
 +	       dev_t dev);
 +int aufs_symlink(struct inode *dir, struct dentry *dentry, const char *symname);
 +int aufs_create(struct inode *dir, struct dentry *dentry, umode_t mode,
-+		struct nameidata *nd);
++		bool want_excl);
 +int aufs_link(struct dentry *src_dentry, struct inode *dir,
 +	      struct dentry *dentry);
 +int aufs_mkdir(struct inode *dir, struct dentry *dentry, umode_t mode);
@@ -15171,7 +15049,7 @@ diff -urN /usr/share/empty/fs/aufs/ioctl.c linux/fs/aufs/ioctl.c
 +#endif
 diff -urN /usr/share/empty/fs/aufs/i_op_add.c linux/fs/aufs/i_op_add.c
 --- /usr/share/empty/fs/aufs/i_op_add.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/i_op_add.c	2012-08-26 08:39:00.760508065 +0200
++++ linux/fs/aufs/i_op_add.c	2012-10-17 10:31:01.772481151 +0200
 @@ -0,0 +1,712 @@
 +/*
 + * Copyright (C) 2005-2012 Junjiro R. Okajima
@@ -15391,7 +15269,7 @@ diff -urN /usr/share/empty/fs/aufs/i_op_add.c linux/fs/aufs/i_op_add.c
 +	union {
 +		struct {
 +			umode_t mode;
-+			struct nameidata *nd;
++			bool want_excl;
 +		} c;
 +		struct {
 +			const char *symname;
@@ -15442,7 +15320,7 @@ diff -urN /usr/share/empty/fs/aufs/i_op_add.c linux/fs/aufs/i_op_add.c
 +	h_dir = au_pinned_h_dir(&pin);
 +	switch (arg->type) {
 +	case Creat:
-+		err = vfsub_create(h_dir, &h_path, arg->u.c.mode);
++		err = vfsub_create(h_dir, &h_path, arg->u.c.mode, arg->u.c.want_excl);
 +		break;
 +	case Symlink:
 +		err = vfsub_symlink(h_dir, &h_path, arg->u.s.symname);
@@ -15507,13 +15385,13 @@ diff -urN /usr/share/empty/fs/aufs/i_op_add.c linux/fs/aufs/i_op_add.c
 +}
 +
 +int aufs_create(struct inode *dir, struct dentry *dentry, umode_t mode,
-+		struct nameidata *nd)
++		bool want_excl)
 +{
 +	struct simple_arg arg = {
 +		.type = Creat,
 +		.u.c = {
-+			.mode	= mode,
-+			.nd	= nd
++			.mode		= mode,
++			.want_excl	= want_excl
 +		}
 +	};
 +	return add_simple(dir, dentry, &arg);
@@ -15887,7 +15765,7 @@ diff -urN /usr/share/empty/fs/aufs/i_op_add.c linux/fs/aufs/i_op_add.c
 +}
 diff -urN /usr/share/empty/fs/aufs/i_op.c linux/fs/aufs/i_op.c
 --- /usr/share/empty/fs/aufs/i_op.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/i_op.c	2012-08-26 08:39:00.760508065 +0200
++++ linux/fs/aufs/i_op.c	2012-10-17 10:31:01.772481151 +0200
 @@ -0,0 +1,1009 @@
 +/*
 + * Copyright (C) 2005-2012 Junjiro R. Okajima
@@ -16045,7 +15923,7 @@ diff -urN /usr/share/empty/fs/aufs/i_op.c linux/fs/aufs/i_op.c
 +/* ---------------------------------------------------------------------- */
 +
 +static struct dentry *aufs_lookup(struct inode *dir, struct dentry *dentry,
-+				  struct nameidata *nd)
++				  unsigned int flags)
 +{
 +	struct dentry *ret, *parent;
 +	struct inode *inode;
@@ -16077,7 +15955,7 @@ diff -urN /usr/share/empty/fs/aufs/i_op.c linux/fs/aufs/i_op.c
 +		err = au_digen_test(parent, au_sigen(sb));
 +	if (!err) {
 +		npositive = au_lkup_dentry(dentry, au_dbstart(parent),
-+					   /*type*/0, nd);
++					   /*type*/0, flags);
 +		err = npositive;
 +	}
 +	di_read_unlock(parent, AuLock_IR);
@@ -16249,7 +16127,7 @@ diff -urN /usr/share/empty/fs/aufs/i_op.c linux/fs/aufs/i_op.c
 +void au_unpin(struct au_pin *p)
 +{
 +	if (p->h_mnt && au_ftest_pin(p->flags, MNT_WRITE))
-+		mnt_drop_write(p->h_mnt);
++		vfsub_mnt_drop_write(p->h_mnt);
 +	if (!p->hdir)
 +		return;
 +
@@ -16277,7 +16155,7 @@ diff -urN /usr/share/empty/fs/aufs/i_op.c linux/fs/aufs/i_op.c
 +	if (IS_ROOT(p->dentry)) {
 +		if (au_ftest_pin(p->flags, MNT_WRITE)) {
 +			p->h_mnt = br->br_mnt;
-+			err = mnt_want_write(p->h_mnt);
++			err = vfsub_mnt_want_write(p->h_mnt);
 +			if (unlikely(err)) {
 +				au_fclr_pin(p->flags, MNT_WRITE);
 +				goto out_err;
@@ -16331,7 +16209,7 @@ diff -urN /usr/share/empty/fs/aufs/i_op.c linux/fs/aufs/i_op.c
 +
 +	if (au_ftest_pin(p->flags, MNT_WRITE)) {
 +		p->h_mnt = br->br_mnt;
-+		err = mnt_want_write(p->h_mnt);
++		err = vfsub_mnt_want_write(p->h_mnt);
 +		if (unlikely(err)) {
 +			au_fclr_pin(p->flags, MNT_WRITE);
 +			goto out_unpin;
@@ -16825,7 +16703,6 @@ diff -urN /usr/share/empty/fs/aufs/i_op.c linux/fs/aufs/i_op.c
 +out_name:
 +	__putname(buf.k);
 +out:
-+	path_put(&nd->path);
 +	AuTraceErr(err);
 +	return ERR_PTR(err);
 +}
@@ -16889,6 +16766,7 @@ diff -urN /usr/share/empty/fs/aufs/i_op.c linux/fs/aufs/i_op.c
 +	.getattr	= aufs_getattr,
 +
 +	.update_time	= aufs_update_time
++	/* no support for atomic_open() */
 +};
 +
 +struct inode_operations aufs_iop = {
@@ -16900,7 +16778,7 @@ diff -urN /usr/share/empty/fs/aufs/i_op.c linux/fs/aufs/i_op.c
 +};
 diff -urN /usr/share/empty/fs/aufs/i_op_del.c linux/fs/aufs/i_op_del.c
 --- /usr/share/empty/fs/aufs/i_op_del.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/i_op_del.c	2012-08-26 08:39:00.760508065 +0200
++++ linux/fs/aufs/i_op_del.c	2012-10-17 10:31:01.772481151 +0200
 @@ -0,0 +1,478 @@
 +/*
 + * Copyright (C) 2005-2012 Junjiro R. Okajima
@@ -16973,7 +16851,7 @@ diff -urN /usr/share/empty/fs/aufs/i_op_del.c linux/fs/aufs/i_op_del.c
 +			au_di_swap(tmp, dinfo);
 +			/* returns the number of positive dentries */
 +			need_wh = au_lkup_dentry(dentry, bstart + 1, /*type*/0,
-+						 /*nd*/NULL);
++						 /*flags*/0);
 +			au_di_swap(tmp, dinfo);
 +			au_rw_write_unlock(&tmp->di_rwsem);
 +			au_di_free(tmp);
@@ -17382,7 +17260,7 @@ diff -urN /usr/share/empty/fs/aufs/i_op_del.c linux/fs/aufs/i_op_del.c
 +}
 diff -urN /usr/share/empty/fs/aufs/i_op_ren.c linux/fs/aufs/i_op_ren.c
 --- /usr/share/empty/fs/aufs/i_op_ren.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/i_op_ren.c	2012-08-26 08:39:00.760508065 +0200
++++ linux/fs/aufs/i_op_ren.c	2012-10-17 10:31:01.772481151 +0200
 @@ -0,0 +1,1026 @@
 +/*
 + * Copyright (C) 2005-2012 Junjiro R. Okajima
@@ -17505,11 +17383,11 @@ diff -urN /usr/share/empty/fs/aufs/i_op_ren.c linux/fs/aufs/i_op_ren.c
 +{
 +	int rerr;
 +
-+	a->h_path.dentry = au_lkup_one(&a->src_dentry->d_name, a->src_h_parent,
-+				       a->br, /*nd*/NULL);
++	a->h_path.dentry = vfsub_lkup_one(&a->src_dentry->d_name,
++					  a->src_h_parent);
 +	rerr = PTR_ERR(a->h_path.dentry);
 +	if (IS_ERR(a->h_path.dentry)) {
-+		RevertFailure("au_lkup_one %.*s", AuDLNPair(a->src_dentry));
++		RevertFailure("lkup one %.*s", AuDLNPair(a->src_dentry));
 +		return;
 +	}
 +
@@ -17539,11 +17417,11 @@ diff -urN /usr/share/empty/fs/aufs/i_op_ren.c linux/fs/aufs/i_op_ren.c
 +{
 +	int rerr;
 +
-+	a->h_path.dentry = au_lkup_one(&a->dst_dentry->d_name, a->dst_h_parent,
-+				       a->br, /*nd*/NULL);
++	a->h_path.dentry = vfsub_lkup_one(&a->dst_dentry->d_name,
++					  a->dst_h_parent);
 +	rerr = PTR_ERR(a->h_path.dentry);
 +	if (IS_ERR(a->h_path.dentry)) {
-+		RevertFailure("lookup %.*s", AuDLNPair(a->dst_dentry));
++		RevertFailure("lkup one %.*s", AuDLNPair(a->dst_dentry));
 +		return;
 +	}
 +	if (a->h_path.dentry->d_inode) {
@@ -18000,7 +17878,7 @@ diff -urN /usr/share/empty/fs/aufs/i_op_ren.c linux/fs/aufs/i_op_ren.c
 +
 +	sb = a->dst_dentry->d_sb;
 +	if (au_ftest_ren(a->flags, MNT_WRITE))
-+		mnt_drop_write(a->br->br_mnt);
++		vfsub_mnt_drop_write(a->br->br_mnt);
 +	vfsub_unlock_rename(a->src_h_parent, a->src_hdir,
 +			    a->dst_h_parent, a->dst_hdir);
 +}
@@ -18030,7 +17908,7 @@ diff -urN /usr/share/empty/fs/aufs/i_op_ren.c linux/fs/aufs/i_op_ren.c
 +				  a->dst_h_parent->d_inode, a->dst_h_parent,
 +				  a->br);
 +	if (!err) {
-+		err = mnt_want_write(a->br->br_mnt);
++		err = vfsub_mnt_want_write(a->br->br_mnt);
 +		if (unlikely(err))
 +			goto out_unlock;
 +		au_fset_ren(a->flags, MNT_WRITE);
@@ -21117,7 +20995,7 @@ diff -urN /usr/share/empty/fs/aufs/opts.h linux/fs/aufs/opts.h
 +#endif /* __AUFS_OPTS_H__ */
 diff -urN /usr/share/empty/fs/aufs/plink.c linux/fs/aufs/plink.c
 --- /usr/share/empty/fs/aufs/plink.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/plink.c	2012-08-26 08:39:00.763841498 +0200
++++ linux/fs/aufs/plink.c	2012-10-17 10:31:01.775814563 +0200
 @@ -0,0 +1,511 @@
 +/*
 + * Copyright (C) 2005-2012 Junjiro R. Okajima
@@ -21330,7 +21208,7 @@ diff -urN /usr/share/empty/fs/aufs/plink.c linux/fs/aufs/plink.c
 +
 +	h_mtx = &h_parent->d_inode->i_mutex;
 +	mutex_lock_nested(h_mtx, AuLsc_I_CHILD2);
-+	h_dentry = au_lkup_one(tgtname, h_parent, br, /*nd*/NULL);
++	h_dentry = vfsub_lkup_one(tgtname, h_parent);
 +	mutex_unlock(h_mtx);
 +	return h_dentry;
 +}
@@ -21388,7 +21266,7 @@ diff -urN /usr/share/empty/fs/aufs/plink.c linux/fs/aufs/plink.c
 +	h_dir = h_parent->d_inode;
 +	mutex_lock_nested(&h_dir->i_mutex, AuLsc_I_CHILD2);
 +again:
-+	h_path.dentry = au_lkup_one(tgt, h_parent, br, /*nd*/NULL);
++	h_path.dentry = vfsub_lkup_one(tgt, h_parent);
 +	err = PTR_ERR(h_path.dentry);
 +	if (IS_ERR(h_path.dentry))
 +		goto out;
@@ -22859,7 +22737,7 @@ diff -urN /usr/share/empty/fs/aufs/spl.h linux/fs/aufs/spl.h
 +#endif /* __AUFS_SPL_H__ */
 diff -urN /usr/share/empty/fs/aufs/super.c linux/fs/aufs/super.c
 --- /usr/share/empty/fs/aufs/super.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/super.c	2012-08-26 08:39:00.763841498 +0200
++++ linux/fs/aufs/super.c	2012-10-17 10:31:01.775814563 +0200
 @@ -0,0 +1,962 @@
 +/*
 + * Copyright (C) 2005-2012 Junjiro R. Okajima
@@ -22912,7 +22790,7 @@ diff -urN /usr/share/empty/fs/aufs/super.c linux/fs/aufs/super.c
 +{
 +	struct inode *inode = container_of(head, struct inode, i_rcu);
 +
-+	INIT_LIST_HEAD(&inode->i_dentry);
++	INIT_HLIST_HEAD(&inode->i_dentry);
 +	au_cache_free_icntnr(container_of(inode, struct au_icntnr, vfs_inode));
 +}
 +
@@ -24853,7 +24731,7 @@ diff -urN /usr/share/empty/fs/aufs/sysfs.c linux/fs/aufs/sysfs.c
 +}
 diff -urN /usr/share/empty/fs/aufs/sysrq.c linux/fs/aufs/sysrq.c
 --- /usr/share/empty/fs/aufs/sysrq.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/sysrq.c	2012-08-26 08:39:00.763841498 +0200
++++ linux/fs/aufs/sysrq.c	2012-10-17 10:31:01.775814563 +0200
 @@ -0,0 +1,148 @@
 +/*
 + * Copyright (C) 2005-2012 Junjiro R. Okajima
@@ -24933,7 +24811,7 @@ diff -urN /usr/share/empty/fs/aufs/sysrq.c linux/fs/aufs/sysrq.c
 +		spin_lock(&inode_sb_list_lock);
 +		list_for_each_entry(i, &sb->s_inodes, i_sb_list) {
 +			spin_lock(&i->i_lock);
-+			if (1 || list_empty(&i->i_dentry))
++			if (1 || hlist_empty(&i->i_dentry))
 +				au_dpri_inode(i);
 +			spin_unlock(&i->i_lock);
 +		}
@@ -25894,8 +25772,8 @@ diff -urN /usr/share/empty/fs/aufs/vdir.c linux/fs/aufs/vdir.c
 +}
 diff -urN /usr/share/empty/fs/aufs/vfsub.c linux/fs/aufs/vfsub.c
 --- /usr/share/empty/fs/aufs/vfsub.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/vfsub.c	2012-08-26 08:39:00.763841498 +0200
-@@ -0,0 +1,832 @@
++++ linux/fs/aufs/vfsub.c	2012-10-17 10:31:01.775814563 +0200
+@@ -0,0 +1,777 @@
 +/*
 + * Copyright (C) 2005-2012 Junjiro R. Okajima
 + *
@@ -25950,9 +25828,7 @@ diff -urN /usr/share/empty/fs/aufs/vfsub.c linux/fs/aufs/vfsub.c
 +{
 +	struct file *file;
 +
-+	path_get(path);
-+	file = dentry_open(path->dentry, path->mnt,
-+			   flags /* | __FMODE_NONOTIFY */,
++	file = dentry_open(path, flags /* | __FMODE_NONOTIFY */,
 +			   current_cred());
 +	if (!IS_ERR_OR_NULL(file)
 +	    && (file->f_mode & (FMODE_READ | FMODE_WRITE)) == FMODE_READ)
@@ -26009,48 +25885,10 @@ diff -urN /usr/share/empty/fs/aufs/vfsub.c linux/fs/aufs/vfsub.c
 +	return path.dentry;
 +}
 +
-+struct dentry *vfsub_lookup_hash(struct nameidata *nd)
++void vfsub_call_lkup_one(void *args)
 +{
-+	struct path path = {
-+		.mnt = nd->path.mnt
-+	};
-+
-+	IMustLock(nd->path.dentry->d_inode);
-+
-+	path.dentry = lookup_hash(nd);
-+	if (IS_ERR(path.dentry))
-+		goto out;
-+	if (path.dentry->d_inode)
-+		vfsub_update_h_iattr(&path, /*did*/NULL); /*ignore*/
-+
-+out:
-+	AuTraceErrPtr(path.dentry);
-+	return path.dentry;
-+}
-+
-+/*
-+ * this is "VFS:__lookup_one_len()" which was removed and merged into
-+ * VFS:lookup_one_len() by the commit.
-+ *	6a96ba5 2011-03-14 kill __lookup_one_len()
-+ * this function should always be equivalent to the corresponding part in
-+ * VFS:lookup_one_len().
-+ */
-+int vfsub_name_hash(const char *name, struct qstr *this, int len)
-+{
-+	unsigned int c;
-+
-+	this->name = name;
-+	this->len = len;
-+	this->hash = full_name_hash(name, len);
-+	if (!len)
-+		return -EACCES;
-+
-+	while (len--) {
-+		c = *(const unsigned char *)name++;
-+		if (c == '/' || c == '\0')
-+			return -EACCES;
-+	}
-+	return 0;
++	struct vfsub_lkup_one_args *a = args;
++	*a->errp = vfsub_lkup_one(a->name, a->parent);
 +}
 +
 +/* ---------------------------------------------------------------------- */
@@ -26083,7 +25921,7 @@ diff -urN /usr/share/empty/fs/aufs/vfsub.c linux/fs/aufs/vfsub.c
 +
 +/* ---------------------------------------------------------------------- */
 +
-+int vfsub_create(struct inode *dir, struct path *path, int mode)
++int vfsub_create(struct inode *dir, struct path *path, int mode, bool want_excl)
 +{
 +	int err;
 +	struct dentry *d;
@@ -26097,23 +25935,7 @@ diff -urN /usr/share/empty/fs/aufs/vfsub.c linux/fs/aufs/vfsub.c
 +	if (unlikely(err))
 +		goto out;
 +
-+	if (au_test_fs_null_nd(dir->i_sb))
-+		err = vfs_create(dir, path->dentry, mode, NULL);
-+	else {
-+		struct nameidata h_nd;
-+
-+		memset(&h_nd, 0, sizeof(h_nd));
-+		h_nd.flags = LOOKUP_CREATE;
-+		h_nd.intent.open.flags = O_CREAT
-+			| vfsub_fmode_to_uint(FMODE_READ);
-+		h_nd.intent.open.create_mode = mode;
-+		h_nd.path.dentry = path->dentry->d_parent;
-+		h_nd.path.mnt = path->mnt;
-+		path_get(&h_nd.path);
-+		err = vfs_create(dir, path->dentry, mode, &h_nd);
-+		path_put(&h_nd.path);
-+	}
-+
++	err = vfs_create(dir, path->dentry, mode, want_excl);
 +	if (!err) {
 +		struct path tmp = *path;
 +		int did;
@@ -26213,6 +26035,7 @@ diff -urN /usr/share/empty/fs/aufs/vfsub.c linux/fs/aufs/vfsub.c
 +	if (unlikely(err))
 +		return err;
 +
++	/* we don't call may_linkat() */
 +	d = path->dentry;
 +	path->dentry = d->d_parent;
 +	err = security_path_link(src_dentry, path, d);
@@ -26496,7 +26319,7 @@ diff -urN /usr/share/empty/fs/aufs/vfsub.c linux/fs/aufs/vfsub.c
 +
 +	h_inode = h_path->dentry->d_inode;
 +	if (!h_file) {
-+		err = mnt_want_write(h_path->mnt);
++		err = vfsub_mnt_want_write(h_path->mnt);
 +		if (err)
 +			goto out;
 +		err = inode_permission(h_inode, MAY_WRITE);
@@ -26524,7 +26347,7 @@ diff -urN /usr/share/empty/fs/aufs/vfsub.c linux/fs/aufs/vfsub.c
 +		put_write_access(h_inode);
 +out_mnt:
 +	if (!h_file)
-+		mnt_drop_write(h_path->mnt);
++		vfsub_mnt_drop_write(h_path->mnt);
 +out:
 +	return err;
 +}
@@ -26730,8 +26553,8 @@ diff -urN /usr/share/empty/fs/aufs/vfsub.c linux/fs/aufs/vfsub.c
 +}
 diff -urN /usr/share/empty/fs/aufs/vfsub.h linux/fs/aufs/vfsub.h
 --- /usr/share/empty/fs/aufs/vfsub.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/vfsub.h	2012-08-26 08:39:00.763841498 +0200
-@@ -0,0 +1,252 @@
++++ linux/fs/aufs/vfsub.h	2012-10-17 10:31:01.775814563 +0200
+@@ -0,0 +1,283 @@
 +/*
 + * Copyright (C) 2005-2012 Junjiro R. Okajima
 + *
@@ -26761,12 +26584,12 @@ diff -urN /usr/share/empty/fs/aufs/vfsub.h linux/fs/aufs/vfsub.h
 +
 +#include <linux/fs.h>
 +#include <linux/lglock.h>
++#include <linux/mount.h>
 +#include "debug.h"
 +
 +/* copied from linux/fs/internal.h */
 +/* todo: BAD approach!! */
 +extern struct lglock vfsmount_lock;
-+extern void file_sb_list_del(struct file *f);
 +extern spinlock_t inode_sb_list_lock;
 +
 +/* copied from linux/fs/file_table.c */
@@ -26853,10 +26676,41 @@ diff -urN /usr/share/empty/fs/aufs/vfsub.h linux/fs/aufs/vfsub.h
 +struct file *vfsub_dentry_open(struct path *path, int flags);
 +struct file *vfsub_filp_open(const char *path, int oflags, int mode);
 +int vfsub_kern_path(const char *name, unsigned int flags, struct path *path);
++
 +struct dentry *vfsub_lookup_one_len(const char *name, struct dentry *parent,
 +				    int len);
-+struct dentry *vfsub_lookup_hash(struct nameidata *nd);
-+int vfsub_name_hash(const char *name, struct qstr *this, int len);
++
++struct vfsub_lkup_one_args {
++	struct dentry **errp;
++	struct qstr *name;
++	struct dentry *parent;
++};
++
++static inline struct dentry *vfsub_lkup_one(struct qstr *name,
++					    struct dentry *parent)
++{
++	return vfsub_lookup_one_len(name->name, parent, name->len);
++}
++
++void vfsub_call_lkup_one(void *args);
++
++/* ---------------------------------------------------------------------- */
++
++static inline int vfsub_mnt_want_write(struct vfsmount *mnt)
++{
++	int err;
++	lockdep_off();
++	err = mnt_want_write(mnt);
++	lockdep_on();
++	return err;
++}
++
++static inline void vfsub_mnt_drop_write(struct vfsmount *mnt)
++{
++	lockdep_off();
++	mnt_drop_write(mnt);
++	lockdep_on();
++}
 +
 +/* ---------------------------------------------------------------------- */
 +
@@ -26866,7 +26720,7 @@ diff -urN /usr/share/empty/fs/aufs/vfsub.h linux/fs/aufs/vfsub.h
 +void vfsub_unlock_rename(struct dentry *d1, struct au_hinode *hdir1,
 +			 struct dentry *d2, struct au_hinode *hdir2);
 +
-+int vfsub_create(struct inode *dir, struct path *path, int mode);
++int vfsub_create(struct inode *dir, struct path *path, int mode, bool want_excl);
 +int vfsub_symlink(struct inode *dir, struct path *path,
 +		  const char *symname);
 +int vfsub_mknod(struct inode *dir, struct path *path, int mode, dev_t dev);
@@ -27690,8 +27544,8 @@ diff -urN /usr/share/empty/fs/aufs/wbr_policy.c linux/fs/aufs/wbr_policy.c
 +};
 diff -urN /usr/share/empty/fs/aufs/whout.c linux/fs/aufs/whout.c
 --- /usr/share/empty/fs/aufs/whout.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/whout.c	2012-08-26 08:39:00.763841498 +0200
-@@ -0,0 +1,1041 @@
++++ linux/fs/aufs/whout.c	2012-10-17 10:31:01.775814563 +0200
+@@ -0,0 +1,1042 @@
 +/*
 + * Copyright (C) 2005-2012 Junjiro R. Okajima
 + *
@@ -27765,7 +27619,7 @@ diff -urN /usr/share/empty/fs/aufs/whout.c linux/fs/aufs/whout.c
 +	struct dentry *wh_dentry;
 +
 +	if (!try_sio)
-+		wh_dentry = au_lkup_one(wh_name, h_parent, br, /*nd*/NULL);
++		wh_dentry = vfsub_lkup_one(wh_name, h_parent);
 +	else
 +		wh_dentry = au_sio_lkup_one(wh_name, h_parent, br);
 +	err = PTR_ERR(wh_dentry);
@@ -27931,7 +27785,7 @@ diff -urN /usr/share/empty/fs/aufs/whout.c linux/fs/aufs/whout.c
 +	};
 +
 +	err = 0;
-+	h_path.dentry = au_lkup_one(wh, h_parent, br, /*nd*/NULL);
++	h_path.dentry = vfsub_lkup_one(wh, h_parent);
 +	if (IS_ERR(h_path.dentry))
 +		err = PTR_ERR(h_path.dentry);
 +	else {
@@ -27957,13 +27811,13 @@ diff -urN /usr/share/empty/fs/aufs/whout.c linux/fs/aufs/whout.c
 +	if (!whpath->dentry->d_inode)
 +		return;
 +
-+	err = mnt_want_write(whpath->mnt);
++	err = vfsub_mnt_want_write(whpath->mnt);
 +	if (!err) {
 +		if (isdir)
 +			err = vfsub_rmdir(h_dir, whpath);
 +		else
 +			err = vfsub_unlink(h_dir, whpath, /*force*/0);
-+		mnt_drop_write(whpath->mnt);
++		vfsub_mnt_drop_write(whpath->mnt);
 +	}
 +	if (unlikely(err))
 +		pr_warn("failed removing %.*s (%d), ignored.\n",
@@ -27993,10 +27847,10 @@ diff -urN /usr/share/empty/fs/aufs/whout.c linux/fs/aufs/whout.c
 +
 +		if (au_test_nfs(path->dentry->d_sb))
 +			mode |= S_IXUGO;
-+		err = mnt_want_write(path->mnt);
++		err = vfsub_mnt_want_write(path->mnt);
 +		if (!err) {
 +			err = vfsub_mkdir(h_dir, path, mode);
-+			mnt_drop_write(path->mnt);
++			vfsub_mnt_drop_write(path->mnt);
 +		}
 +	} else if (S_ISDIR(path->dentry->d_inode->i_mode))
 +		err = 0;
@@ -28091,11 +27945,12 @@ diff -urN /usr/share/empty/fs/aufs/whout.c linux/fs/aufs/whout.c
 +	err = -EEXIST;
 +	h_dir = h_root->d_inode;
 +	if (!base[AuBrWh_BASE].dentry->d_inode) {
-+		err = mnt_want_write(h_path->mnt);
++		err = vfsub_mnt_want_write(h_path->mnt);
 +		if (!err) {
 +			h_path->dentry = base[AuBrWh_BASE].dentry;
-+			err = vfsub_create(h_dir, h_path, WH_MASK);
-+			mnt_drop_write(h_path->mnt);
++			err = vfsub_create(h_dir, h_path, WH_MASK,
++					   /*want_excl*/true);
++			vfsub_mnt_drop_write(h_path->mnt);
 +		}
 +	} else if (S_ISREG(base[AuBrWh_BASE].dentry->d_inode->i_mode))
 +		err = 0;
@@ -28257,12 +28112,12 @@ diff -urN /usr/share/empty/fs/aufs/whout.c linux/fs/aufs/whout.c
 +	err = au_h_verify(wbr->wbr_whbase, au_opt_udba(a->sb), hdir->hi_inode,
 +			  h_root, a->br);
 +	if (!err) {
-+		err = mnt_want_write(a->br->br_mnt);
++		err = vfsub_mnt_want_write(a->br->br_mnt);
 +		if (!err) {
 +			h_path.dentry = wbr->wbr_whbase;
 +			h_path.mnt = a->br->br_mnt;
 +			err = vfsub_unlink(hdir->hi_inode, &h_path, /*force*/0);
-+			mnt_drop_write(a->br->br_mnt);
++			vfsub_mnt_drop_write(a->br->br_mnt);
 +		}
 +	} else {
 +		pr_warn("%.*s is moved, ignored\n",
@@ -28356,7 +28211,7 @@ diff -urN /usr/share/empty/fs/aufs/whout.c linux/fs/aufs/whout.c
 +	}
 +
 +	/* return this error in this context */
-+	err = vfsub_create(h_dir, &h_path, WH_MASK);
++	err = vfsub_create(h_dir, &h_path, WH_MASK, /*want_excl*/true);
 +
 +out:
 +	wbr_wh_read_unlock(wbr);
@@ -28379,7 +28234,7 @@ diff -urN /usr/share/empty/fs/aufs/whout.c linux/fs/aufs/whout.c
 +	sb = dentry->d_sb;
 +	br = au_sbr(sb, bindex);
 +	h_dentry = au_h_dptr(dentry, bindex);
-+	opq_dentry = au_lkup_one(&diropq_name, h_dentry, br, /*nd*/NULL);
++	opq_dentry = vfsub_lkup_one(&diropq_name, h_dentry);
 +	if (IS_ERR(opq_dentry))
 +		goto out;
 +
@@ -28461,7 +28316,7 @@ diff -urN /usr/share/empty/fs/aufs/whout.c linux/fs/aufs/whout.c
 +	err = au_wh_name_alloc(&wh_name, base_name);
 +	wh_dentry = ERR_PTR(err);
 +	if (!err) {
-+		wh_dentry = au_lkup_one(&wh_name, h_parent, br, /*nd*/NULL);
++		wh_dentry = vfsub_lkup_one(&wh_name, h_parent);
 +		kfree(wh_name.name);
 +	}
 +	return wh_dentry;
@@ -28692,11 +28547,11 @@ diff -urN /usr/share/empty/fs/aufs/whout.c linux/fs/aufs/whout.c
 +	err = au_h_verify(a->wh_dentry, au_opt_udba(sb), h_dir, h_parent,
 +			  a->br);
 +	if (!err) {
-+		err = mnt_want_write(a->br->br_mnt);
++		err = vfsub_mnt_want_write(a->br->br_mnt);
 +		if (!err) {
 +			err = au_whtmp_rmdir(a->dir, bindex, a->wh_dentry,
 +					     &a->whlist);
-+			mnt_drop_write(a->br->br_mnt);
++			vfsub_mnt_drop_write(a->br->br_mnt);
 +		}
 +	}
 +	au_hn_imtx_unlock(hdir);
@@ -30409,7 +30264,7 @@ diff -urN /usr/share/empty/fs/aufs/xino.c linux/fs/aufs/xino.c
 +}
 diff -urN /usr/share/empty/include/linux/aufs_type.h linux/include/linux/aufs_type.h
 --- /usr/share/empty/include/linux/aufs_type.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux/include/linux/aufs_type.h	2012-08-26 08:39:00.763841498 +0200
++++ linux/include/linux/aufs_type.h	2012-10-17 10:31:01.775814563 +0200
 @@ -0,0 +1,233 @@
 +/*
 + * Copyright (C) 2005-2012 Junjiro R. Okajima
@@ -30452,7 +30307,7 @@ diff -urN /usr/share/empty/include/linux/aufs_type.h linux/include/linux/aufs_ty
 +
 +#include <linux/limits.h>
 +
-+#define AUFS_VERSION	"3.5-20120813"
++#define AUFS_VERSION	"3.6-20121015"
 +
 +/* todo? move this to linux-2.6.19/include/magic.h */
 +#define AUFS_SUPER_MAGIC	('a' << 24 | 'u' << 16 | 'f' << 8 | 's')
@@ -30644,4 +30499,3 @@ diff -urN /usr/share/empty/include/linux/aufs_type.h linux/include/linux/aufs_ty
 +#define AUFS_CTL_IBUSY		_IOWR(AuCtlType, AuCtl_IBUSY, struct aufs_ibusy)
 +
 +#endif /* __AUFS_TYPE_H__ */
-
