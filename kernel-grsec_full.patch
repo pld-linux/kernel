@@ -21064,18 +21064,17 @@ diff -urNp linux-3.0.9/arch/x86/mm/init_64.c linux-3.0.9/arch/x86/mm/init_64.c
  		return "[vdso]";
  	if (vma == &gate_vma)
  		return "[vsyscall]";
-diff -urNp linux-3.0.9/arch/x86/mm/init.c linux-3.0.9/arch/x86/mm/init.c
---- linux-3.0.9/arch/x86/mm/init.c	2011-11-11 13:12:24.000000000 -0500
-+++ linux-3.0.9/arch/x86/mm/init.c	2011-11-15 20:02:59.000000000 -0500
-@@ -31,7 +31,7 @@ int direct_gbpages
- static void __init find_early_table_space(unsigned long end, int use_pse,
- 					  int use_gbpages)
+--- linux-3.0.50/arch/x86/mm/init.c~	2012-11-03 12:47:37.930582122 +0200
++++ linux-3.0.50/arch/x86/mm/init.c	2012-11-03 12:57:09.860976072 +0200
+@@ -43,7 +43,7 @@
  {
--	unsigned long puds, pmds, ptes, tables, start = 0, good_end = end;
-+	unsigned long puds, pmds, ptes, tables, start = 0x100000, good_end = end;
+ 	int i;
+ 	unsigned long puds = 0, pmds = 0, ptes = 0, tables;
+-	unsigned long start = 0, good_end;
++	unsigned long start = 0x100000, good_end;
  	phys_addr_t base;
  
- 	puds = (end + PUD_SIZE - 1) >> PUD_SHIFT;
+ 	for (i = 0; i < nr_range; i++) {
 @@ -312,12 +312,34 @@ unsigned long __init_refok init_memory_m
   */
  int devmem_is_allowed(unsigned long pagenr)
@@ -41184,19 +41183,9 @@ diff -urNp linux-3.0.9/fs/compat.c linux-3.0.9/fs/compat.c
  	set_fs(oldfs);
  
  	if (err)
-diff -urNp linux-3.0.9/fs/compat_ioctl.c linux-3.0.9/fs/compat_ioctl.c
---- linux-3.0.9/fs/compat_ioctl.c	2011-11-11 13:12:24.000000000 -0500
-+++ linux-3.0.9/fs/compat_ioctl.c	2011-11-15 20:02:59.000000000 -0500
-@@ -208,6 +208,8 @@ static int do_video_set_spu_palette(unsi
- 
- 	err  = get_user(palp, &up->palette);
- 	err |= get_user(length, &up->length);
-+	if (err)
-+		return -EFAULT;
- 
- 	up_native = compat_alloc_user_space(sizeof(struct video_spu_palette));
- 	err  = put_user(compat_ptr(palp), &up_native->palette);
-@@ -619,7 +621,7 @@ static int serial_struct_ioctl(unsigned 
+--- linux-3.0.50/fs/compat_ioctl.c~	2012-11-03 12:47:36.700531151 +0200
++++ linux-3.0.50/fs/compat_ioctl.c	2012-11-03 13:03:03.949025488 +0200
+@@ -621,7 +621,7 @@
  			return -EFAULT;
                  if (__get_user(udata, &ss32->iomem_base))
  			return -EFAULT;
@@ -41205,7 +41194,7 @@ diff -urNp linux-3.0.9/fs/compat_ioctl.c linux-3.0.9/fs/compat_ioctl.c
                  if (__get_user(ss.iomem_reg_shift, &ss32->iomem_reg_shift) ||
  		    __get_user(ss.port_high, &ss32->port_high))
  			return -EFAULT;
-@@ -794,7 +796,7 @@ static int compat_ioctl_preallocate(stru
+@@ -796,7 +796,7 @@
  	    copy_in_user(&p->l_len,	&p32->l_len,	sizeof(s64)) ||
  	    copy_in_user(&p->l_sysid,	&p32->l_sysid,	sizeof(s32)) ||
  	    copy_in_user(&p->l_pid,	&p32->l_pid,	sizeof(u32)) ||
@@ -41214,7 +41203,7 @@ diff -urNp linux-3.0.9/fs/compat_ioctl.c linux-3.0.9/fs/compat_ioctl.c
  		return -EFAULT;
  
  	return ioctl_preallocate(file, p);
-@@ -1638,8 +1640,8 @@ asmlinkage long compat_sys_ioctl(unsigne
+@@ -1640,8 +1640,8 @@
  static int __init init_sys32_ioctl_cmp(const void *p, const void *q)
  {
  	unsigned int a, b;
@@ -44854,15 +44843,6 @@ diff -urNp linux-3.0.9/fs/ncpfs/inode.c linux-3.0.9/fs/ncpfs/inode.c
 diff -urNp linux-3.0.9/fs/nfs/inode.c linux-3.0.9/fs/nfs/inode.c
 --- linux-3.0.9/fs/nfs/inode.c	2011-11-11 13:12:24.000000000 -0500
 +++ linux-3.0.9/fs/nfs/inode.c	2011-11-15 20:02:59.000000000 -0500
-@@ -150,7 +150,7 @@ static void nfs_zap_caches_locked(struct
- 	nfsi->attrtimeo = NFS_MINATTRTIMEO(inode);
- 	nfsi->attrtimeo_timestamp = jiffies;
- 
--	memset(NFS_COOKIEVERF(inode), 0, sizeof(NFS_COOKIEVERF(inode)));
-+	memset(NFS_COOKIEVERF(inode), 0, sizeof(NFS_I(inode)->cookieverf));
- 	if (S_ISREG(mode) || S_ISDIR(mode) || S_ISLNK(mode))
- 		nfsi->cache_validity |= NFS_INO_INVALID_ATTR|NFS_INO_INVALID_DATA|NFS_INO_INVALID_ACCESS|NFS_INO_INVALID_ACL|NFS_INO_REVAL_PAGECACHE;
- 	else
 @@ -1000,16 +1000,16 @@ static int nfs_size_need_update(const st
  	return nfs_size_to_loff_t(fattr->size) > i_size_read(inode);
  }
@@ -78317,31 +78297,6 @@ diff -urNp linux-3.0.9/tools/perf/util/include/asm/alternative-asm.h linux-3.0.9
 +	.endm
 +
  #endif
-diff -urNp linux-3.0.9/usr/gen_init_cpio.c linux-3.0.9/usr/gen_init_cpio.c
---- linux-3.0.9/usr/gen_init_cpio.c	2011-11-11 13:12:24.000000000 -0500
-+++ linux-3.0.9/usr/gen_init_cpio.c	2011-11-15 20:03:00.000000000 -0500
-@@ -303,7 +303,7 @@ static int cpio_mkfile(const char *name,
- 	int retval;
- 	int rc = -1;
- 	int namesize;
--	int i;
-+	unsigned int i;
- 
- 	mode |= S_IFREG;
- 
-@@ -392,9 +392,10 @@ static char *cpio_replace_env(char *new_
-                        *env_var = *expanded = '\0';
-                        strncat(env_var, start + 2, end - start - 2);
-                        strncat(expanded, new_location, start - new_location);
--                       strncat(expanded, getenv(env_var), PATH_MAX);
--                       strncat(expanded, end + 1, PATH_MAX);
-+                       strncat(expanded, getenv(env_var), PATH_MAX - strlen(expanded));
-+                       strncat(expanded, end + 1, PATH_MAX - strlen(expanded));
-                        strncpy(new_location, expanded, PATH_MAX);
-+                       new_location[PATH_MAX] = 0;
-                } else
-                        break;
-        }
 diff -urNp linux-3.0.9/virt/kvm/kvm_main.c linux-3.0.9/virt/kvm/kvm_main.c
 --- linux-3.0.9/virt/kvm/kvm_main.c	2011-11-11 13:12:24.000000000 -0500
 +++ linux-3.0.9/virt/kvm/kvm_main.c	2011-11-15 20:03:00.000000000 -0500
