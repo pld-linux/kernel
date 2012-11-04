@@ -238,7 +238,7 @@ Patch70:	kernel-tuxonice-headers.patch
 # http://patches.aircrack-ng.org/hostap-kernel-2.6.18.patch
 Patch85:	kernel-hostap.patch
 
-# http://vserver.13thfloor.at/Experimental/patch-3.0.25-vs2.3.2.3.diff
+# http://vserver.13thfloor.at/Experimental/patch-3.0.46-vs2.3.2.5.diff
 Patch100:	kernel-vserver-2.3.patch
 Patch101:	kernel-vserver-fixes.patch
 
@@ -257,7 +257,7 @@ Patch140:	kernel-unionfs.patch
 # cat aufs3-kbuild.patch aufs3-base.patch aufs3-standalone.patch > ~/rpm/packages/kernel/kernel-aufs3.patch
 # mkdir linux
 # cp -a Documentation fs include linux
-# diff -urN /usr/share/empty linux >> ~/rpm/packages/kernel/kernel-aufs3.patch 
+# diff -urN /usr/share/empty linux >> ~/rpm/packages/kernel/kernel-aufs3.patch
 #
 Patch145:	kernel-aufs3.patch
 Patch146:	kernel-aufs2-unionfs.patch
