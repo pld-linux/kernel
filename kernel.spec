@@ -21,7 +21,7 @@
 
 %bcond_with	verbose		# verbose build (V=1)
 %bcond_with	reiser4		# support for reiser4 fs (experimental)
-%bcond_without	unionfs		# unmaintained unionfs support
+%bcond_with	unionfs		# unmaintained unionfs support
 
 %bcond_with	fbcondecor	# build fbcondecor (disable FB_TILEBLITTING and affected fb modules)
 %bcond_without	pae		# build PAE (HIGHMEM64G) support on 32bit i686 athlon pentium3 pentium4
@@ -69,7 +69,7 @@
 
 %define		rel		0.1
 %define		basever		3.6
-%define		postver		.1
+%define		postver		.6
 
 # __alt_kernel is list of features, empty string if none set
 # _alt kernel is defined as: %{nil}%{?alt_kernel:-%{?alt_kernel}} (defined in rpm.macros)
@@ -112,7 +112,7 @@ Source0:	http://www.kernel.org/pub/linux/kernel/v3.x/linux-%{basever}.tar.xz
 # Source0-md5:	1a1760420eac802c541a20ab51a093d1
 %if "%{postver}" != ".0"
 Patch0:		http://www.kernel.org/pub/linux/kernel/v3.x/patch-%{version}.bz2
-# Patch0-md5:	cb1ad7822d729a0e86a20859d05c0dda
+# Patch0-md5:	363e730147333182616cc687345e7fe2
 %endif
 
 Source3:	kernel-autoconf.h
@@ -187,7 +187,7 @@ Patch59:	kernel-rndis_host-wm5.patch
 # http://patches.aircrack-ng.org/hostap-kernel-2.6.18.patch
 Patch85:	kernel-hostap.patch
 
-# http://vserver.13thfloor.at/Experimental/patch-3.6-vs2.3.4.3-noxfs-nocow.diff
+# http://vserver.13thfloor.at/Experimental/patch-3.6.6-vs2.3.4.3.1-noxfs-nocow.diff
 Patch100:	kernel-vserver-2.3.patch
 Patch101:	kernel-vserver-fixes.patch
 
@@ -615,13 +615,16 @@ cd linux-%{basever}
 %patch10 -p1
 
 # kernel-pom-ng-mms-conntrack-nat.patch
-%patch16 -p1
+# FIXME FOR 3.6 KERNEL
+#%%patch16 -p1
 
 # kernel-pom-ng-rsh.patch
-%patch22 -p1
+# FIXME FOR 3.6 KERNEL
+#%%patch22 -p1
 
 # kernel-pom-ng-rpc.patch
-%patch23 -p1
+# FIXME FOR 3.6 KERNEL
+#%%patch23 -p1
 
 # kernel-owner-xid.patch
 %if %{with vserver}
