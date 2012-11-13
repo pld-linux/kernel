@@ -590,6 +590,16 @@ Verzeichniss vorgefunden werden kann.
 Pakiet zawiera dokumentację do jądra Linuksa pochodzącą z katalogu
 /usr/src/linux/Documentation.
 
+%package tools-perf
+Summary:	perf tool
+Group:		Applications/System
+
+%description tools-perf
+Perf is a profiler tool for Linux 2.6+ based systems that abstracts
+away CPU hardware differences in Linux performance measurements and
+presents a simple commandline interface. Perf is based on the
+perf_events interface exported by recent versions of the Linux kernel.
+
 %prep
 %setup -qc
 ln -s %{SOURCE7} kernel-module-build.pl
@@ -849,6 +859,30 @@ cd -
 
 %{__awk} %{?debug:-v dieOnError=1} -v infile=%{objdir}/%{defconfig} -f %{SOURCE8} %{objdir}/.config
 
+# builds userspace tools
+
+# perf slag version
+install -d %{targetobj}/tools/perf-slang
+%{__make} all man NO_GTK2=1 \
+	SUB_DIR=tools/perf \
+	OSUB_DIR=tools/perf-slang \
+	TARGETOBJ=%{targetobj} \
+	%{?with_verbose:V=1} \
+	prefix=%{_prefix} \
+	perfexecdir=%{_datadir}/perf-core \
+	template_dir=%{_datadir}/perf-core/templates
+
+# perf gtk version
+install -d %{targetobj}/tools/perf-gtk
+%{__make} all man \
+	SUB_DIR=tools/perf \
+	OSUB_DIR=tools/perf-gtk \
+	TARGETOBJ=%{targetobj} \
+	%{?with_verbose:V=1} \
+	prefix=%{_prefix} \
+	perfexecdir=%{_datadir}/perf-core \
+	template_dir=%{_datadir}/perf-core/templates
+
 # build kernel
 %{__make} \
 	TARGETOBJ=%{targetobj} \
@@ -857,6 +891,27 @@ cd -
 
 %install
 rm -rf $RPM_BUILD_ROOT
+
+%if 0
+# FIXME
+# perf slang
+%{__make} %{MakeOpts} -j1 %{!?with_verbose:-s} install install-man NO_GTK2=1 \
+	-C %{objdir}/tools/perf-slang \
+	DESTDIR=$RPM_BUILD_ROOT \
+	prefix=%{_prefix} \
+	perfexecdir=%{_datadir}/perf-core \
+	template_dir=%{_datadir}/perf-core/templates
+
+# perf gtk
+%{__make} %{MakeOpts} -j1 %{!?with_verbose:-s} install install-man \
+	-C %{objdir}/tools/perf-gtk \
+	DESTDIR=$RPM_BUILD_ROOT \
+	prefix=%{_prefix} \
+	perfexecdir=%{_datadir}/perf-core \
+	template_dir=%{_datadir}/perf-core/templates
+%endif
+
+# kernel modules and rest
 %{__make} %{MakeOpts} -j1 %{!?with_verbose:-s} modules_install firmware_install \
 	-C %{objdir} \
 	%{?with_verbose:V=1} \
