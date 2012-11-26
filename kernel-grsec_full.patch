@@ -26371,9 +26371,8 @@ diff -urNp linux-3.0.9/drivers/gpu/drm/drm_drv.c linux-3.0.9/drivers/gpu/drm/drm
  	++file_priv->ioctl_count;
  
  	DRM_DEBUG("pid=%d, cmd=0x%02x, nr=0x%02x, dev 0x%lx, auth=%d\n",
-diff -urNp linux-3.0.9/drivers/gpu/drm/drm_fops.c linux-3.0.9/drivers/gpu/drm/drm_fops.c
---- linux-3.0.9/drivers/gpu/drm/drm_fops.c	2011-11-11 13:12:24.000000000 -0500
-+++ linux-3.0.9/drivers/gpu/drm/drm_fops.c	2011-11-15 20:02:59.000000000 -0500
+--- kernel-3.0.52/drivers/gpu/drm/drm_fops.c~	2012-11-25 20:39:13.000000000 +0200
++++ kernel-3.0.52/drivers/gpu/drm/drm_fops.c	2012-11-25 20:43:10.258775214 +0200
 @@ -70,7 +70,7 @@ static int drm_setup(struct drm_device *
  	}
  
@@ -26383,15 +26382,19 @@ diff -urNp linux-3.0.9/drivers/gpu/drm/drm_fops.c linux-3.0.9/drivers/gpu/drm/dr
  
  	dev->sigdata.lock = NULL;
  
-@@ -134,8 +134,8 @@ int drm_open(struct inode *inode, struct
+@@ -134,11 +134,11 @@
  
  	retcode = drm_open_helper(inode, filp, dev);
  	if (!retcode) {
 -		atomic_inc(&dev->counts[_DRM_STAT_OPENS]);
--		if (!dev->open_count++)
+-		if (!dev->open_count++) {
 +		atomic_inc_unchecked(&dev->counts[_DRM_STAT_OPENS]);
-+		if (local_inc_return(&dev->open_count) == 1)
++		if (local_inc_return(&dev->open_count) == 1) {
  			retcode = drm_setup(dev);
+ 			if (retcode)
+-				dev->open_count--;
++				local_dec(&dev->open_count);
+ 		}
  	}
  	if (!retcode) {
 @@ -472,7 +472,7 @@ int drm_release(struct inode *inode, str
