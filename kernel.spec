@@ -69,7 +69,7 @@
 
 %define		rel		0.1
 %define		basever		3.6
-%define		postver		.6
+%define		postver		.9
 
 # __alt_kernel is list of features, empty string if none set
 # _alt kernel is defined as: %{nil}%{?alt_kernel:-%{?alt_kernel}} (defined in rpm.macros)
@@ -112,7 +112,7 @@ Source0:	http://www.kernel.org/pub/linux/kernel/v3.x/linux-%{basever}.tar.xz
 # Source0-md5:	1a1760420eac802c541a20ab51a093d1
 %if "%{postver}" != ".0"
 Patch0:		http://www.kernel.org/pub/linux/kernel/v3.x/patch-%{version}.bz2
-# Patch0-md5:	363e730147333182616cc687345e7fe2
+# Patch0-md5:	521206b52f0c159f4f3e3d2e975977dc
 %endif
 
 Source3:	kernel-autoconf.h
@@ -169,8 +169,8 @@ Patch49:	kernel-zph.patch
 # based on http://www.linuximq.net/patchs/patch-imqmq-3.1.diff.bz2
 Patch50:	kernel-imq.patch
 
-Patch51:	http://downloads.sourceforge.net/project/reiser4/reiser4-for-linux-3.x/reiser4-for-3.5.3.patch.gz
-# Patch51-md5:	7794f6edb31fd39f5d27f978d4f23cb1
+Patch51:	http://downloads.sourceforge.net/project/reiser4/reiser4-for-linux-3.x/reiser4-for-3.6.4.patch.gz
+# Patch51-md5:	4128aa3bd062d0289117dda6775a7f20
 
 # http://fatooh.org/esfq-2.6/sfq-2.6.24.1.tar.bz2
 Patch53:	kernel-esfq.patch
@@ -187,7 +187,7 @@ Patch59:	kernel-rndis_host-wm5.patch
 # http://patches.aircrack-ng.org/hostap-kernel-2.6.18.patch
 Patch85:	kernel-hostap.patch
 
-# http://vserver.13thfloor.at/Experimental/patch-3.6.6-vs2.3.4.3.1-noxfs-nocow.diff
+# http://vserver.13thfloor.at/Experimental/patch-3.6.9-vs2.3.4.4.diff
 Patch100:	kernel-vserver-2.3.patch
 Patch101:	kernel-vserver-fixes.patch
 
@@ -590,16 +590,6 @@ Verzeichniss vorgefunden werden kann.
 Pakiet zawiera dokumentację do jądra Linuksa pochodzącą z katalogu
 /usr/src/linux/Documentation.
 
-%package tools-perf
-Summary:	perf tool
-Group:		Applications/System
-
-%description tools-perf
-Perf is a profiler tool for Linux 2.6+ based systems that abstracts
-away CPU hardware differences in Linux performance measurements and
-presents a simple commandline interface. Perf is based on the
-perf_events interface exported by recent versions of the Linux kernel.
-
 %prep
 %setup -qc
 ln -s %{SOURCE7} kernel-module-build.pl
@@ -859,30 +849,6 @@ cd -
 
 %{__awk} %{?debug:-v dieOnError=1} -v infile=%{objdir}/%{defconfig} -f %{SOURCE8} %{objdir}/.config
 
-# builds userspace tools
-
-# perf slag version
-install -d %{targetobj}/tools/perf-slang
-%{__make} all man NO_GTK2=1 \
-	SUB_DIR=tools/perf \
-	OSUB_DIR=tools/perf-slang \
-	TARGETOBJ=%{targetobj} \
-	%{?with_verbose:V=1} \
-	prefix=%{_prefix} \
-	perfexecdir=%{_datadir}/perf-core \
-	template_dir=%{_datadir}/perf-core/templates
-
-# perf gtk version
-install -d %{targetobj}/tools/perf-gtk
-%{__make} all man \
-	SUB_DIR=tools/perf \
-	OSUB_DIR=tools/perf-gtk \
-	TARGETOBJ=%{targetobj} \
-	%{?with_verbose:V=1} \
-	prefix=%{_prefix} \
-	perfexecdir=%{_datadir}/perf-core \
-	template_dir=%{_datadir}/perf-core/templates
-
 # build kernel
 %{__make} \
 	TARGETOBJ=%{targetobj} \
@@ -891,27 +857,6 @@ install -d %{targetobj}/tools/perf-gtk
 
 %install
 rm -rf $RPM_BUILD_ROOT
-
-%if 0
-# FIXME
-# perf slang
-%{__make} %{MakeOpts} -j1 %{!?with_verbose:-s} install install-man NO_GTK2=1 \
-	-C %{objdir}/tools/perf-slang \
-	DESTDIR=$RPM_BUILD_ROOT \
-	prefix=%{_prefix} \
-	perfexecdir=%{_datadir}/perf-core \
-	template_dir=%{_datadir}/perf-core/templates
-
-# perf gtk
-%{__make} %{MakeOpts} -j1 %{!?with_verbose:-s} install install-man \
-	-C %{objdir}/tools/perf-gtk \
-	DESTDIR=$RPM_BUILD_ROOT \
-	prefix=%{_prefix} \
-	perfexecdir=%{_datadir}/perf-core \
-	template_dir=%{_datadir}/perf-core/templates
-%endif
-
-# kernel modules and rest
 %{__make} %{MakeOpts} -j1 %{!?with_verbose:-s} modules_install firmware_install \
 	-C %{objdir} \
 	%{?with_verbose:V=1} \
