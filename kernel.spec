@@ -150,10 +150,6 @@ Patch5:		linux-wistron-amilo8210.patch
 
 Patch10:	kernel-pom-ng-IPV4OPTSSTRIP.patch
 
-Patch16:	kernel-pom-ng-mms-conntrack-nat.patch
-Patch22:	kernel-pom-ng-rsh.patch
-Patch23:	kernel-pom-ng-rpc.patch
-
 # http://ftp.linux-vserver.org/pub/people/dhozac/p/k/delta-owner-xid-feat02.diff
 Patch37:	kernel-owner-xid.patch
 
@@ -613,18 +609,6 @@ cd linux-%{basever}
 
 # kernel-pom-ng-IPV4OPTSSTRIP.patch
 %patch10 -p1
-
-# kernel-pom-ng-mms-conntrack-nat.patch
-# FIXME FOR 3.6 KERNEL
-#%%patch16 -p1
-
-# kernel-pom-ng-rsh.patch
-# FIXME FOR 3.6 KERNEL
-#%%patch22 -p1
-
-# kernel-pom-ng-rpc.patch
-# FIXME FOR 3.6 KERNEL
-#%%patch23 -p1
 
 # kernel-owner-xid.patch
 %if %{with vserver}
