@@ -255,11 +255,11 @@ BuildRequires:	rpm-build >= 4.5-24
 BuildRequires:	rpmbuild(macros) >= 1.652
 Requires(post):	coreutils
 Requires(post):	geninitrd >= 10000-3
-Requires(post):	virtual(module-tools)
+Requires(post):	kmod
 Requires:	/sbin/depmod
 Requires:	coreutils
 Requires:	geninitrd >= 10000-3
-Requires:	virtual(module-tools)
+Requires:	kmod
 %if %{with pae}
 %ifarch i686 athlon pentium3 pentium4
 Requires:	cpuinfo(pae)
