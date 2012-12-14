@@ -1119,9 +1119,9 @@ fi
 /lib/modules/%{kernel_release}/kernel/sound/ac97_bus.ko*
 /lib/modules/%{kernel_release}/kernel/sound/sound*.ko*
 %ifnarch sparc
-%exclude /lib/modules/%{kernel_release}/kernel/drivers/media/video/cx88/cx88-alsa.ko*
-%exclude /lib/modules/%{kernel_release}/kernel/drivers/media/video/em28xx/em28xx-alsa.ko*
-%exclude /lib/modules/%{kernel_release}/kernel/drivers/media/video/saa7134/saa7134-alsa.ko*
+%exclude /lib/modules/%{kernel_release}/kernel/drivers/media/pci/cx88/cx88-alsa.ko*
+%exclude /lib/modules/%{kernel_release}/kernel/drivers/media/usb/em28xx/em28xx-alsa.ko*
+%exclude /lib/modules/%{kernel_release}/kernel/drivers/media/pci/saa7134/saa7134-alsa.ko*
 %endif
 %endif
 %dir /lib/modules/%{kernel_release}/misc
@@ -1218,9 +1218,9 @@ fi
 %endif
 %ifnarch sparc
 /lib/modules/%{kernel_release}/kernel/drivers/usb/gadget/g_midi.ko*
-/lib/modules/%{kernel_release}/kernel/drivers/media/video/cx88/cx88-alsa.ko*
-/lib/modules/%{kernel_release}/kernel/drivers/media/video/em28xx/em28xx-alsa.ko*
-/lib/modules/%{kernel_release}/kernel/drivers/media/video/saa7134/saa7134-alsa.ko*
+/lib/modules/%{kernel_release}/kernel/drivers/media/pci/cx88/cx88-alsa.ko*
+/lib/modules/%{kernel_release}/kernel/drivers/media/usb/em28xx/em28xx-alsa.ko*
+/lib/modules/%{kernel_release}/kernel/drivers/media/pci/saa7134/saa7134-alsa.ko*
 %endif
 
 %if %{have_oss}
@@ -1252,7 +1252,7 @@ fi
 %{_kernelsrcdir}/arch/*/kernel/asm-offsets*
 %{_kernelsrcdir}/arch/*/kernel/sigframe*.h
 %{_kernelsrcdir}/drivers/lguest/lg.h
-%{_kernelsrcdir}/drivers/media/video/bt8xx/bttv.h
+%{_kernelsrcdir}/drivers/media/pci/bt8xx/bttv.h
 %{_kernelsrcdir}/kernel/bounds.c
 %{_kernelsrcdir}/scripts/basic/*.c
 %attr(755,root,root) %{_kernelsrcdir}/scripts/kconfig/*.sh
@@ -1318,7 +1318,7 @@ fi
 %exclude %{_kernelsrcdir}/arch/*/kernel/asm-offsets*
 %exclude %{_kernelsrcdir}/arch/*/kernel/sigframe*.h
 %exclude %{_kernelsrcdir}/drivers/lguest/lg.h
-%exclude %{_kernelsrcdir}/drivers/media/video/bt8xx/bttv.h
+%exclude %{_kernelsrcdir}/drivers/media/pci/bt8xx/bttv.h
 %{_kernelsrcdir}/block
 %{_kernelsrcdir}/crypto
 %{_kernelsrcdir}/drivers
