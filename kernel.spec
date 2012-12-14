@@ -183,6 +183,9 @@ Patch59:	kernel-rndis_host-wm5.patch
 Patch85:	kernel-hostap.patch
 
 # http://vserver.13thfloor.at/Experimental/patch-3.7-vs2.3.5.1.diff
+# note there are additional patches from above url:
+# - *fix* are real fixes (we want these)
+# - *feat* are new features/tests (we don't want these)
 Patch100:	kernel-vserver-2.3.patch
 Patch101:	kernel-vserver-fixes.patch
 
