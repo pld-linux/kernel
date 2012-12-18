@@ -66,9 +66,9 @@
 %define		have_pcmcia	0
 %endif
 
-%define		rel		0.1
+%define		rel		1
 %define		basever		3.7
-%define		postver		.0
+%define		postver		.1
 
 # __alt_kernel is list of features, empty string if none set
 # _alt kernel is defined as: %{nil}%{?alt_kernel:-%{?alt_kernel}} (defined in rpm.macros)
@@ -111,7 +111,7 @@ Source0:	http://www.kernel.org/pub/linux/kernel/v3.x/linux-%{basever}.tar.xz
 # Source0-md5:	21223369d682bcf44bcdfe1521095983
 %if "%{postver}" != ".0"
 Patch0:		http://www.kernel.org/pub/linux/kernel/v3.x/patch-%{version}.bz2
-# Patch0-md5:	588a17953c84168285116823be669af3
+# Patch0-md5:	c391dc1a1b4dae81aaef6f08a0594813
 %endif
 
 Source3:	kernel-autoconf.h
@@ -161,7 +161,7 @@ Patch40:	kernel-layer7.patch
 # http://zph.bratcheda.org/linux-2.6.26.3-zph.patch
 Patch49:	kernel-zph.patch
 
-# based on http://www.linuximq.net/patchs/patch-imqmq-3.1.diff.bz2
+# http://www.linuximq.net/patches/patch-imqmq-3.5.diff.xz
 Patch50:	kernel-imq.patch
 
 Patch51:	http://downloads.sourceforge.net/project/reiser4/reiser4-for-linux-3.x/reiser4-for-3.6.4.patch.gz
@@ -182,7 +182,7 @@ Patch59:	kernel-rndis_host-wm5.patch
 # http://patches.aircrack-ng.org/hostap-kernel-2.6.18.patch
 Patch85:	kernel-hostap.patch
 
-# http://vserver.13thfloor.at/Experimental/patch-3.7-vs2.3.5.1.diff
+# http://vserver.13thfloor.at/Experimental/patch-3.7.1-vs2.3.5.3.diff
 # note there are additional patches from above url:
 # - *fix* are real fixes (we want these)
 # - *feat* are new features/tests (we don't want these)
