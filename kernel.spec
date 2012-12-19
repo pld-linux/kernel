@@ -66,7 +66,7 @@
 %define		have_pcmcia	0
 %endif
 
-%define		rel		1
+%define		rel		2
 %define		basever		3.7
 %define		postver		.1
 
@@ -956,6 +956,10 @@ for dir in $(cd %{objdir} && find arch -name generated -type d); do
 	cp -a %{objdir}/$dir $RPM_BUILD_ROOT%{_kernelsrcdir}/$dir
 	find $RPM_BUILD_ROOT%{_kernelsrcdir}/$dir -name '.*.cmd' -exec rm "{}" ";"
 done
+
+# version.h location changed in 3.7, but a lot of external modules don't know about it
+# add a compatibility symlink
+ln -s %{_kernelsrcdir}/include/generated/uapi/linux/version.h $RPM_BUILD_ROOT%{_kernelsrcdir}/include/linux/version.h
 
 # disable this here, causes a lot of build-time problems and our rpm-build disables it anyway
 %{__sed} -i -e 's|\(CONSTIFY_PLUGIN.*:=.*\)|# \1|' $RPM_BUILD_ROOT%{_kernelsrcdir}/Makefile
