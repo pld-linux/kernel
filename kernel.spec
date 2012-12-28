@@ -614,6 +614,9 @@ Summary(pl.UTF-8):	Kod źródłowy jądra Linuksa
 Group:		Development/Building
 Requires:	%{name}-module-build = %{epoch}:%{version}-%{release}
 AutoReqProv:	no
+%if "%{_rpmversion}" >= "5"
+BuildArch:	noarch
+%endif
 
 %description source
 This is the source code for the Linux kernel. You can build a custom
@@ -644,6 +647,9 @@ Summary(de.UTF-8):	Kernel Dokumentation
 Summary(pl.UTF-8):	Dokumentacja do jądra Linuksa
 Group:		Documentation
 AutoReqProv:	no
+%if "%{_rpmversion}" >= "5"
+BuildArch:	noarch
+%endif
 
 %description doc
 This is the documentation for the Linux kernel, as found in
@@ -1127,14 +1133,18 @@ for f in `find %{objdir}/scripts -type f -print | grep -v "/\.\|\.o$"` ; do
 	cp -a "$f" "$RPM_BUILD_ROOT%{_kernelsrcdir}/$ff"
 done
 
+%if %{with doc}
 # move to %{_docdir} so we wouldn't depend on any kernel package for dirs
 install -d $RPM_BUILD_ROOT%{_docdir}
 mv $RPM_BUILD_ROOT{%{_kernelsrcdir}/Documentation,%{_docdir}/%{name}-%{version}}
 
-rm -f $RPM_BUILD_ROOT%{_docdir}/%{name}-%{version}/dontdiff
-rm -f $RPM_BUILD_ROOT%{_docdir}/%{name}-%{version}/Makefile
-rm -f $RPM_BUILD_ROOT%{_docdir}/%{name}-%{version}/*/Makefile
-rm -f $RPM_BUILD_ROOT%{_docdir}/%{name}-%{version}/*/*/Makefile
+%{__rm} $RPM_BUILD_ROOT%{_docdir}/%{name}-%{version}/dontdiff
+%{__rm} $RPM_BUILD_ROOT%{_docdir}/%{name}-%{version}/Makefile
+%{__rm} $RPM_BUILD_ROOT%{_docdir}/%{name}-%{version}/*/Makefile
+%{__rm} $RPM_BUILD_ROOT%{_docdir}/%{name}-%{version}/*/*/Makefile
+%else
+%{__rm} -r $RPM_BUILD_ROOT%{_kernelsrcdir}/Documentation
+%endif
 
 %clean
 rm -rf $RPM_BUILD_ROOT
