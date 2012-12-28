@@ -164,7 +164,7 @@ Patch49:	kernel-zph.patch
 # http://www.linuximq.net/patches/patch-imqmq-3.5.diff.xz
 Patch50:	kernel-imq.patch
 
-Patch51:	http://downloads.sourceforge.net/project/reiser4/reiser4-for-linux-3.x/reiser4-for-3.6.4.patch.gz
+Patch51:	http://downloads.sourceforge.net/reiser4/reiser4-for-3.6.4.patch.gz
 # Patch51-md5:	4128aa3bd062d0289117dda6775a7f20
 
 # http://fatooh.org/esfq-2.6/sfq-2.6.24.1.tar.bz2
@@ -557,6 +557,9 @@ Summary(pl.UTF-8):	Kod źródłowy jądra Linuksa
 Group:		Development/Building
 Requires:	%{name}-module-build = %{epoch}:%{version}-%{release}
 AutoReqProv:	no
+%if "%{_rpmversion}" >= "5"
+BuildArch:	noarch
+%endif
 
 %description source
 This is the source code for the Linux kernel. You can build a custom
@@ -587,6 +590,9 @@ Summary(de.UTF-8):	Kernel Dokumentation
 Summary(pl.UTF-8):	Dokumentacja do jądra Linuksa
 Group:		Documentation
 AutoReqProv:	no
+%if "%{_rpmversion}" >= "5"
+BuildArch:	noarch
+%endif
 
 %description doc
 This is the documentation for the Linux kernel, as found in
@@ -982,14 +988,18 @@ for f in `find %{objdir}/scripts -type f -print | grep -v "/\.\|\.o$"` ; do
 	cp -a "$f" "$RPM_BUILD_ROOT%{_kernelsrcdir}/$ff"
 done
 
+%if %{with doc}
 # move to %{_docdir} so we wouldn't depend on any kernel package for dirs
 install -d $RPM_BUILD_ROOT%{_docdir}
 mv $RPM_BUILD_ROOT{%{_kernelsrcdir}/Documentation,%{_docdir}/%{name}-%{version}}
 
-rm -f $RPM_BUILD_ROOT%{_docdir}/%{name}-%{version}/dontdiff
-rm -f $RPM_BUILD_ROOT%{_docdir}/%{name}-%{version}/Makefile
-rm -f $RPM_BUILD_ROOT%{_docdir}/%{name}-%{version}/*/Makefile
-rm -f $RPM_BUILD_ROOT%{_docdir}/%{name}-%{version}/*/*/Makefile
+%{__rm} $RPM_BUILD_ROOT%{_docdir}/%{name}-%{version}/dontdiff
+%{__rm} $RPM_BUILD_ROOT%{_docdir}/%{name}-%{version}/Makefile
+%{__rm} $RPM_BUILD_ROOT%{_docdir}/%{name}-%{version}/*/Makefile
+%{__rm} $RPM_BUILD_ROOT%{_docdir}/%{name}-%{version}/*/*/Makefile
+%else
+%{__rm} -r $RPM_BUILD_ROOT%{_kernelsrcdir}/Documentation
+%endif
 
 %clean
 rm -rf $RPM_BUILD_ROOT
