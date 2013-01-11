@@ -1,4 +1,4 @@
-aufs3.x-rcN kbuild patch
+aufs3.7 kbuild patch
 
 diff --git a/fs/Kconfig b/fs/Kconfig
 index f95ae3a..6d8a9a5 100644
@@ -21,7 +21,7 @@ index 1d7af79..06db6eb 100644
  obj-$(CONFIG_CEPH_FS)		+= ceph/
  obj-$(CONFIG_PSTORE)		+= pstore/
 +obj-$(CONFIG_AUFS_FS)           += aufs/
-aufs3.x-rcN base patch
+aufs3.7 base patch
 
 diff --git a/fs/file_table.c b/fs/file_table.c
 index a72bf9d..dac6792 100644
@@ -37,10 +37,10 @@ index a72bf9d..dac6792 100644
  /* SLAB cache for file structures */
  static struct kmem_cache *filp_cachep __read_mostly;
 diff --git a/fs/inode.c b/fs/inode.c
-index b03c719..ee497f9 100644
+index 64999f1..ad73fc3 100644
 --- a/fs/inode.c
 +++ b/fs/inode.c
-@@ -1491,7 +1491,7 @@ static int relatime_need_update(struct vfsmount *mnt, struct inode *inode,
+@@ -1503,7 +1503,7 @@ static int relatime_need_update(struct vfsmount *mnt, struct inode *inode,
   * This does the actual work of updating an inodes time or version.  Must have
   * had called mnt_want_write() before calling this.
   */
@@ -78,10 +78,10 @@ index 13e5b47..f185c6c 100644
  	ssize_t (*splice_read)(struct file *, loff_t *,
  			       struct pipe_inode_info *, size_t, unsigned int);
 diff --git a/include/linux/fs.h b/include/linux/fs.h
-index b33cfc9..963a61b 100644
+index 75fe9a1..70a766ae 100644
 --- a/include/linux/fs.h
 +++ b/include/linux/fs.h
-@@ -2558,6 +2558,7 @@ extern int inode_change_ok(const struct inode *, struct iattr *);
+@@ -2553,6 +2553,7 @@ extern int inode_change_ok(const struct inode *, struct iattr *);
  extern int inode_newsize_ok(const struct inode *, loff_t offset);
  extern void setattr_copy(struct inode *inode, const struct iattr *attr);
  
@@ -104,7 +104,7 @@ index 09a545a..1ac5727 100644
 +			 struct pipe_inode_info *pipe, size_t len,
 +			 unsigned int flags);
  #endif
-aufs3.x-rcN standalone patch
+aufs3.7 standalone patch
 
 diff --git a/fs/file_table.c b/fs/file_table.c
 index dac6792..e3f2c15 100644
@@ -128,7 +128,7 @@ index dac6792..e3f2c15 100644
  
  /*
 diff --git a/fs/inode.c b/fs/inode.c
-index ee497f9..5e7eee7 100644
+index ad73fc3..108ff2b 100644
 --- a/fs/inode.c
 +++ b/fs/inode.c
 @@ -56,6 +56,7 @@ static struct hlist_head *inode_hashtable __read_mostly;
@@ -139,7 +139,7 @@ index ee497f9..5e7eee7 100644
  
  /*
   * Empty aops. Can be used for the cases where the user does not
-@@ -1507,6 +1508,7 @@ int update_time(struct inode *inode, struct timespec *time, int flags)
+@@ -1519,6 +1520,7 @@ int update_time(struct inode *inode, struct timespec *time, int flags)
  	mark_inode_dirty_sync(inode);
  	return 0;
  }
@@ -382,7 +382,7 @@ index 8dcd4ae..6efe561 100644
  {
 diff -urN /usr/share/empty/Documentation/ABI/testing/debugfs-aufs linux/Documentation/ABI/testing/debugfs-aufs
 --- /usr/share/empty/Documentation/ABI/testing/debugfs-aufs	1970-01-01 01:00:00.000000000 +0100
-+++ linux/Documentation/ABI/testing/debugfs-aufs	2012-12-13 20:41:10.424793346 +0100
++++ linux/Documentation/ABI/testing/debugfs-aufs	2012-08-26 08:39:00.753841216 +0200
 @@ -0,0 +1,37 @@
 +What:		/debug/aufs/si_<id>/
 +Date:		March 2009
@@ -423,7 +423,7 @@ diff -urN /usr/share/empty/Documentation/ABI/testing/debugfs-aufs linux/Document
 +		will be empty. About XINO files, see the aufs manual.
 diff -urN /usr/share/empty/Documentation/ABI/testing/sysfs-aufs linux/Documentation/ABI/testing/sysfs-aufs
 --- /usr/share/empty/Documentation/ABI/testing/sysfs-aufs	1970-01-01 01:00:00.000000000 +0100
-+++ linux/Documentation/ABI/testing/sysfs-aufs	2012-12-13 20:41:10.424793346 +0100
++++ linux/Documentation/ABI/testing/sysfs-aufs	2012-08-26 08:39:00.753841216 +0200
 @@ -0,0 +1,24 @@
 +What:		/sys/fs/aufs/si_<id>/
 +Date:		March 2009
@@ -451,10 +451,10 @@ diff -urN /usr/share/empty/Documentation/ABI/testing/sysfs-aufs linux/Documentat
 +		will be empty. About XINO files, see the aufs manual.
 diff -urN /usr/share/empty/Documentation/filesystems/aufs/design/01intro.txt linux/Documentation/filesystems/aufs/design/01intro.txt
 --- /usr/share/empty/Documentation/filesystems/aufs/design/01intro.txt	1970-01-01 01:00:00.000000000 +0100
-+++ linux/Documentation/filesystems/aufs/design/01intro.txt	2012-12-13 20:41:10.424793346 +0100
++++ linux/Documentation/filesystems/aufs/design/01intro.txt	2013-01-11 19:46:12.632614518 +0100
 @@ -0,0 +1,162 @@
 +
-+# Copyright (C) 2005-2011 Junjiro R. Okajima
++# Copyright (C) 2005-2013 Junjiro R. Okajima
 +# 
 +# This program is free software; you can redistribute it and/or modify
 +# it under the terms of the GNU General Public License as published by
@@ -617,10 +617,10 @@ diff -urN /usr/share/empty/Documentation/filesystems/aufs/design/01intro.txt lin
 +about it. But currently I have implemented it in kernel space.
 diff -urN /usr/share/empty/Documentation/filesystems/aufs/design/02struct.txt linux/Documentation/filesystems/aufs/design/02struct.txt
 --- /usr/share/empty/Documentation/filesystems/aufs/design/02struct.txt	1970-01-01 01:00:00.000000000 +0100
-+++ linux/Documentation/filesystems/aufs/design/02struct.txt	2012-12-13 20:41:10.424793346 +0100
++++ linux/Documentation/filesystems/aufs/design/02struct.txt	2013-01-11 19:46:12.632614518 +0100
 @@ -0,0 +1,226 @@
 +
-+# Copyright (C) 2005-2011 Junjiro R. Okajima
++# Copyright (C) 2005-2013 Junjiro R. Okajima
 +# 
 +# This program is free software; you can redistribute it and/or modify
 +# it under the terms of the GNU General Public License as published by
@@ -847,10 +847,10 @@ diff -urN /usr/share/empty/Documentation/filesystems/aufs/design/02struct.txt li
 +dir, aufs reverts it after copy-up.
 diff -urN /usr/share/empty/Documentation/filesystems/aufs/design/03lookup.txt linux/Documentation/filesystems/aufs/design/03lookup.txt
 --- /usr/share/empty/Documentation/filesystems/aufs/design/03lookup.txt	1970-01-01 01:00:00.000000000 +0100
-+++ linux/Documentation/filesystems/aufs/design/03lookup.txt	2012-12-13 20:41:10.428126759 +0100
++++ linux/Documentation/filesystems/aufs/design/03lookup.txt	2013-01-11 19:46:12.632614518 +0100
 @@ -0,0 +1,106 @@
 +
-+# Copyright (C) 2005-2011 Junjiro R. Okajima
++# Copyright (C) 2005-2013 Junjiro R. Okajima
 +# 
 +# This program is free software; you can redistribute it and/or modify
 +# it under the terms of the GNU General Public License as published by
@@ -957,10 +957,10 @@ diff -urN /usr/share/empty/Documentation/filesystems/aufs/design/03lookup.txt li
 +   by over-mounting something (or another method).
 diff -urN /usr/share/empty/Documentation/filesystems/aufs/design/04branch.txt linux/Documentation/filesystems/aufs/design/04branch.txt
 --- /usr/share/empty/Documentation/filesystems/aufs/design/04branch.txt	1970-01-01 01:00:00.000000000 +0100
-+++ linux/Documentation/filesystems/aufs/design/04branch.txt	2012-12-13 20:41:10.428126759 +0100
++++ linux/Documentation/filesystems/aufs/design/04branch.txt	2013-01-11 19:46:12.632614518 +0100
 @@ -0,0 +1,76 @@
 +
-+# Copyright (C) 2005-2011 Junjiro R. Okajima
++# Copyright (C) 2005-2013 Junjiro R. Okajima
 +# 
 +# This program is free software; you can redistribute it and/or modify
 +# it under the terms of the GNU General Public License as published by
@@ -1037,10 +1037,10 @@ diff -urN /usr/share/empty/Documentation/filesystems/aufs/design/04branch.txt li
 +    same named entry on the upper branch.
 diff -urN /usr/share/empty/Documentation/filesystems/aufs/design/05wbr_policy.txt linux/Documentation/filesystems/aufs/design/05wbr_policy.txt
 --- /usr/share/empty/Documentation/filesystems/aufs/design/05wbr_policy.txt	1970-01-01 01:00:00.000000000 +0100
-+++ linux/Documentation/filesystems/aufs/design/05wbr_policy.txt	2012-12-13 20:41:10.428126759 +0100
++++ linux/Documentation/filesystems/aufs/design/05wbr_policy.txt	2013-01-11 19:46:12.632614518 +0100
 @@ -0,0 +1,65 @@
 +
-+# Copyright (C) 2005-2011 Junjiro R. Okajima
++# Copyright (C) 2005-2013 Junjiro R. Okajima
 +# 
 +# This program is free software; you can redistribute it and/or modify
 +# it under the terms of the GNU General Public License as published by
@@ -1106,10 +1106,10 @@ diff -urN /usr/share/empty/Documentation/filesystems/aufs/design/05wbr_policy.tx
 +  copyup policy.
 diff -urN /usr/share/empty/Documentation/filesystems/aufs/design/06mmap.txt linux/Documentation/filesystems/aufs/design/06mmap.txt
 --- /usr/share/empty/Documentation/filesystems/aufs/design/06mmap.txt	1970-01-01 01:00:00.000000000 +0100
-+++ linux/Documentation/filesystems/aufs/design/06mmap.txt	2012-12-13 20:41:10.428126759 +0100
++++ linux/Documentation/filesystems/aufs/design/06mmap.txt	2013-01-11 19:46:12.632614518 +0100
 @@ -0,0 +1,47 @@
 +
-+# Copyright (C) 2005-2011 Junjiro R. Okajima
++# Copyright (C) 2005-2013 Junjiro R. Okajima
 +# 
 +# This program is free software; you can redistribute it and/or modify
 +# it under the terms of the GNU General Public License as published by
@@ -1157,10 +1157,10 @@ diff -urN /usr/share/empty/Documentation/filesystems/aufs/design/06mmap.txt linu
 +switching the approach.
 diff -urN /usr/share/empty/Documentation/filesystems/aufs/design/07export.txt linux/Documentation/filesystems/aufs/design/07export.txt
 --- /usr/share/empty/Documentation/filesystems/aufs/design/07export.txt	1970-01-01 01:00:00.000000000 +0100
-+++ linux/Documentation/filesystems/aufs/design/07export.txt	2012-12-13 20:41:10.428126759 +0100
++++ linux/Documentation/filesystems/aufs/design/07export.txt	2013-01-11 19:46:12.632614518 +0100
 @@ -0,0 +1,59 @@
 +
-+# Copyright (C) 2005-2011 Junjiro R. Okajima
++# Copyright (C) 2005-2013 Junjiro R. Okajima
 +# 
 +# This program is free software; you can redistribute it and/or modify
 +# it under the terms of the GNU General Public License as published by
@@ -1220,10 +1220,10 @@ diff -urN /usr/share/empty/Documentation/filesystems/aufs/design/07export.txt li
 +  lookup_one_len(), vfs_getattr(), encode_fh() and others.
 diff -urN /usr/share/empty/Documentation/filesystems/aufs/design/08shwh.txt linux/Documentation/filesystems/aufs/design/08shwh.txt
 --- /usr/share/empty/Documentation/filesystems/aufs/design/08shwh.txt	1970-01-01 01:00:00.000000000 +0100
-+++ linux/Documentation/filesystems/aufs/design/08shwh.txt	2012-12-13 20:41:10.428126759 +0100
++++ linux/Documentation/filesystems/aufs/design/08shwh.txt	2013-01-11 19:46:12.632614518 +0100
 @@ -0,0 +1,53 @@
 +
-+# Copyright (C) 2005-2011 Junjiro R. Okajima
++# Copyright (C) 2005-2013 Junjiro R. Okajima
 +# 
 +# This program is free software; you can redistribute it and/or modify
 +# it under the terms of the GNU General Public License as published by
@@ -1277,10 +1277,10 @@ diff -urN /usr/share/empty/Documentation/filesystems/aufs/design/08shwh.txt linu
 +initramfs will use it to replace the old one at the next boot.
 diff -urN /usr/share/empty/Documentation/filesystems/aufs/design/10dynop.txt linux/Documentation/filesystems/aufs/design/10dynop.txt
 --- /usr/share/empty/Documentation/filesystems/aufs/design/10dynop.txt	1970-01-01 01:00:00.000000000 +0100
-+++ linux/Documentation/filesystems/aufs/design/10dynop.txt	2012-12-13 20:41:10.428126759 +0100
++++ linux/Documentation/filesystems/aufs/design/10dynop.txt	2013-01-11 19:46:12.632614518 +0100
 @@ -0,0 +1,47 @@
 +
-+# Copyright (C) 2010-2011 Junjiro R. Okajima
++# Copyright (C) 2010-2013 Junjiro R. Okajima
 +#
 +# This program is free software; you can redistribute it and/or modify
 +# it under the terms of the GNU General Public License as published by
@@ -1328,10 +1328,10 @@ diff -urN /usr/share/empty/Documentation/filesystems/aufs/design/10dynop.txt lin
 +vm_operations_struct for regular files only.
 diff -urN /usr/share/empty/Documentation/filesystems/aufs/design/99plan.txt linux/Documentation/filesystems/aufs/design/99plan.txt
 --- /usr/share/empty/Documentation/filesystems/aufs/design/99plan.txt	1970-01-01 01:00:00.000000000 +0100
-+++ linux/Documentation/filesystems/aufs/design/99plan.txt	2012-12-13 20:41:10.428126759 +0100
++++ linux/Documentation/filesystems/aufs/design/99plan.txt	2013-01-11 19:46:12.632614518 +0100
 @@ -0,0 +1,96 @@
 +
-+# Copyright (C) 2005-2011 Junjiro R. Okajima
++# Copyright (C) 2005-2013 Junjiro R. Okajima
 +# 
 +# This program is free software; you can redistribute it and/or modify
 +# it under the terms of the GNU General Public License as published by
@@ -1428,7 +1428,7 @@ diff -urN /usr/share/empty/Documentation/filesystems/aufs/design/99plan.txt linu
 +Otherwise from /new.
 diff -urN /usr/share/empty/Documentation/filesystems/aufs/README linux/Documentation/filesystems/aufs/README
 --- /usr/share/empty/Documentation/filesystems/aufs/README	1970-01-01 01:00:00.000000000 +0100
-+++ linux/Documentation/filesystems/aufs/README	2012-12-13 20:41:10.424793346 +0100
++++ linux/Documentation/filesystems/aufs/README	2013-01-11 19:46:28.699667650 +0100
 @@ -0,0 +1,333 @@
 +
 +Aufs3 -- advanced multi layered unification filesystem version 3.x
@@ -1765,10 +1765,10 @@ diff -urN /usr/share/empty/Documentation/filesystems/aufs/README linux/Documenta
 +# End: ;
 diff -urN /usr/share/empty/fs/aufs/aufs.h linux/fs/aufs/aufs.h
 --- /usr/share/empty/fs/aufs/aufs.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/aufs.h	2012-12-13 20:41:10.428126759 +0100
++++ linux/fs/aufs/aufs.h	2013-01-11 19:46:12.635947932 +0100
 @@ -0,0 +1,60 @@
 +/*
-+ * Copyright (C) 2005-2012 Junjiro R. Okajima
++ * Copyright (C) 2005-2013 Junjiro R. Okajima
 + *
 + * This program, aufs is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
@@ -1829,10 +1829,10 @@ diff -urN /usr/share/empty/fs/aufs/aufs.h linux/fs/aufs/aufs.h
 +#endif /* __AUFS_H__ */
 diff -urN /usr/share/empty/fs/aufs/branch.c linux/fs/aufs/branch.c
 --- /usr/share/empty/fs/aufs/branch.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/branch.c	2012-12-13 20:41:10.428126759 +0100
++++ linux/fs/aufs/branch.c	2013-01-11 19:46:12.635947932 +0100
 @@ -0,0 +1,1172 @@
 +/*
-+ * Copyright (C) 2005-2012 Junjiro R. Okajima
++ * Copyright (C) 2005-2013 Junjiro R. Okajima
 + *
 + * This program, aufs is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
@@ -3005,10 +3005,10 @@ diff -urN /usr/share/empty/fs/aufs/branch.c linux/fs/aufs/branch.c
 +}
 diff -urN /usr/share/empty/fs/aufs/branch.h linux/fs/aufs/branch.h
 --- /usr/share/empty/fs/aufs/branch.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/branch.h	2012-12-13 20:41:10.428126759 +0100
++++ linux/fs/aufs/branch.h	2013-01-11 19:46:12.635947932 +0100
 @@ -0,0 +1,230 @@
 +/*
-+ * Copyright (C) 2005-2012 Junjiro R. Okajima
++ * Copyright (C) 2005-2013 Junjiro R. Okajima
 + *
 + * This program, aufs is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
@@ -3239,7 +3239,7 @@ diff -urN /usr/share/empty/fs/aufs/branch.h linux/fs/aufs/branch.h
 +#endif /* __AUFS_BRANCH_H__ */
 diff -urN /usr/share/empty/fs/aufs/conf.mk linux/fs/aufs/conf.mk
 --- /usr/share/empty/fs/aufs/conf.mk	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/conf.mk	2012-12-13 20:41:10.428126759 +0100
++++ linux/fs/aufs/conf.mk	2012-08-26 08:39:00.757174634 +0200
 @@ -0,0 +1,38 @@
 +
 +AuConfStr = CONFIG_AUFS_FS=${CONFIG_AUFS_FS}
@@ -3281,10 +3281,10 @@ diff -urN /usr/share/empty/fs/aufs/conf.mk linux/fs/aufs/conf.mk
 +-include ${srctree}/${src}/conf_priv.mk
 diff -urN /usr/share/empty/fs/aufs/cpup.c linux/fs/aufs/cpup.c
 --- /usr/share/empty/fs/aufs/cpup.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/cpup.c	2012-12-13 20:41:10.428126759 +0100
++++ linux/fs/aufs/cpup.c	2013-01-11 19:46:28.699667650 +0100
 @@ -0,0 +1,1085 @@
 +/*
-+ * Copyright (C) 2005-2012 Junjiro R. Okajima
++ * Copyright (C) 2005-2013 Junjiro R. Okajima
 + *
 + * This program, aufs is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
@@ -4370,10 +4370,10 @@ diff -urN /usr/share/empty/fs/aufs/cpup.c linux/fs/aufs/cpup.c
 +}
 diff -urN /usr/share/empty/fs/aufs/cpup.h linux/fs/aufs/cpup.h
 --- /usr/share/empty/fs/aufs/cpup.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/cpup.h	2012-12-13 20:41:10.428126759 +0100
++++ linux/fs/aufs/cpup.h	2013-01-11 19:46:12.635947932 +0100
 @@ -0,0 +1,81 @@
 +/*
-+ * Copyright (C) 2005-2012 Junjiro R. Okajima
++ * Copyright (C) 2005-2013 Junjiro R. Okajima
 + *
 + * This program, aufs is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
@@ -4455,10 +4455,10 @@ diff -urN /usr/share/empty/fs/aufs/cpup.h linux/fs/aufs/cpup.h
 +#endif /* __AUFS_CPUP_H__ */
 diff -urN /usr/share/empty/fs/aufs/dbgaufs.c linux/fs/aufs/dbgaufs.c
 --- /usr/share/empty/fs/aufs/dbgaufs.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/dbgaufs.c	2012-12-13 20:41:10.428126759 +0100
++++ linux/fs/aufs/dbgaufs.c	2013-01-11 19:46:12.635947932 +0100
 @@ -0,0 +1,334 @@
 +/*
-+ * Copyright (C) 2005-2012 Junjiro R. Okajima
++ * Copyright (C) 2005-2013 Junjiro R. Okajima
 + *
 + * This program, aufs is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
@@ -4793,10 +4793,10 @@ diff -urN /usr/share/empty/fs/aufs/dbgaufs.c linux/fs/aufs/dbgaufs.c
 +}
 diff -urN /usr/share/empty/fs/aufs/dbgaufs.h linux/fs/aufs/dbgaufs.h
 --- /usr/share/empty/fs/aufs/dbgaufs.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/dbgaufs.h	2012-12-13 20:41:10.428126759 +0100
++++ linux/fs/aufs/dbgaufs.h	2013-01-11 19:46:12.635947932 +0100
 @@ -0,0 +1,49 @@
 +/*
-+ * Copyright (C) 2005-2012 Junjiro R. Okajima
++ * Copyright (C) 2005-2013 Junjiro R. Okajima
 + *
 + * This program, aufs is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
@@ -4846,10 +4846,10 @@ diff -urN /usr/share/empty/fs/aufs/dbgaufs.h linux/fs/aufs/dbgaufs.h
 +#endif /* __DBGAUFS_H__ */
 diff -urN /usr/share/empty/fs/aufs/dcsub.c linux/fs/aufs/dcsub.c
 --- /usr/share/empty/fs/aufs/dcsub.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/dcsub.c	2012-12-13 20:41:10.428126759 +0100
++++ linux/fs/aufs/dcsub.c	2013-01-11 19:46:12.635947932 +0100
 @@ -0,0 +1,243 @@
 +/*
-+ * Copyright (C) 2005-2012 Junjiro R. Okajima
++ * Copyright (C) 2005-2013 Junjiro R. Okajima
 + *
 + * This program, aufs is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
@@ -5093,10 +5093,10 @@ diff -urN /usr/share/empty/fs/aufs/dcsub.c linux/fs/aufs/dcsub.c
 +}
 diff -urN /usr/share/empty/fs/aufs/dcsub.h linux/fs/aufs/dcsub.h
 --- /usr/share/empty/fs/aufs/dcsub.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/dcsub.h	2012-12-13 20:41:10.428126759 +0100
++++ linux/fs/aufs/dcsub.h	2013-01-11 19:46:12.635947932 +0100
 @@ -0,0 +1,94 @@
 +/*
-+ * Copyright (C) 2005-2012 Junjiro R. Okajima
++ * Copyright (C) 2005-2013 Junjiro R. Okajima
 + *
 + * This program, aufs is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
@@ -5191,10 +5191,10 @@ diff -urN /usr/share/empty/fs/aufs/dcsub.h linux/fs/aufs/dcsub.h
 +#endif /* __AUFS_DCSUB_H__ */
 diff -urN /usr/share/empty/fs/aufs/debug.c linux/fs/aufs/debug.c
 --- /usr/share/empty/fs/aufs/debug.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/debug.c	2012-12-13 20:41:10.428126759 +0100
++++ linux/fs/aufs/debug.c	2013-01-11 19:46:12.635947932 +0100
 @@ -0,0 +1,490 @@
 +/*
-+ * Copyright (C) 2005-2012 Junjiro R. Okajima
++ * Copyright (C) 2005-2013 Junjiro R. Okajima
 + *
 + * This program, aufs is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
@@ -5685,10 +5685,10 @@ diff -urN /usr/share/empty/fs/aufs/debug.c linux/fs/aufs/debug.c
 +}
 diff -urN /usr/share/empty/fs/aufs/debug.h linux/fs/aufs/debug.h
 --- /usr/share/empty/fs/aufs/debug.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/debug.h	2012-12-13 20:41:10.428126759 +0100
++++ linux/fs/aufs/debug.h	2013-01-11 19:46:12.635947932 +0100
 @@ -0,0 +1,242 @@
 +/*
-+ * Copyright (C) 2005-2012 Junjiro R. Okajima
++ * Copyright (C) 2005-2013 Junjiro R. Okajima
 + *
 + * This program, aufs is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
@@ -5931,10 +5931,10 @@ diff -urN /usr/share/empty/fs/aufs/debug.h linux/fs/aufs/debug.h
 +#endif /* __AUFS_DEBUG_H__ */
 diff -urN /usr/share/empty/fs/aufs/dentry.c linux/fs/aufs/dentry.c
 --- /usr/share/empty/fs/aufs/dentry.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/dentry.c	2012-12-13 20:41:10.428126759 +0100
++++ linux/fs/aufs/dentry.c	2013-01-11 19:46:12.635947932 +0100
 @@ -0,0 +1,1060 @@
 +/*
-+ * Copyright (C) 2005-2012 Junjiro R. Okajima
++ * Copyright (C) 2005-2013 Junjiro R. Okajima
 + *
 + * This program, aufs is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
@@ -6995,10 +6995,10 @@ diff -urN /usr/share/empty/fs/aufs/dentry.c linux/fs/aufs/dentry.c
 +};
 diff -urN /usr/share/empty/fs/aufs/dentry.h linux/fs/aufs/dentry.h
 --- /usr/share/empty/fs/aufs/dentry.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/dentry.h	2012-12-13 20:41:10.428126759 +0100
++++ linux/fs/aufs/dentry.h	2013-01-11 19:46:12.635947932 +0100
 @@ -0,0 +1,234 @@
 +/*
-+ * Copyright (C) 2005-2012 Junjiro R. Okajima
++ * Copyright (C) 2005-2013 Junjiro R. Okajima
 + *
 + * This program, aufs is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
@@ -7233,10 +7233,10 @@ diff -urN /usr/share/empty/fs/aufs/dentry.h linux/fs/aufs/dentry.h
 +#endif /* __AUFS_DENTRY_H__ */
 diff -urN /usr/share/empty/fs/aufs/dinfo.c linux/fs/aufs/dinfo.c
 --- /usr/share/empty/fs/aufs/dinfo.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/dinfo.c	2012-12-13 20:41:10.428126759 +0100
++++ linux/fs/aufs/dinfo.c	2013-01-11 19:46:12.635947932 +0100
 @@ -0,0 +1,543 @@
 +/*
-+ * Copyright (C) 2005-2012 Junjiro R. Okajima
++ * Copyright (C) 2005-2013 Junjiro R. Okajima
 + *
 + * This program, aufs is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
@@ -7780,10 +7780,10 @@ diff -urN /usr/share/empty/fs/aufs/dinfo.c linux/fs/aufs/dinfo.c
 +}
 diff -urN /usr/share/empty/fs/aufs/dir.c linux/fs/aufs/dir.c
 --- /usr/share/empty/fs/aufs/dir.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/dir.c	2012-12-13 20:41:10.428126759 +0100
++++ linux/fs/aufs/dir.c	2013-01-11 19:46:12.635947932 +0100
 @@ -0,0 +1,633 @@
 +/*
-+ * Copyright (C) 2005-2012 Junjiro R. Okajima
++ * Copyright (C) 2005-2013 Junjiro R. Okajima
 + *
 + * This program, aufs is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
@@ -8417,10 +8417,10 @@ diff -urN /usr/share/empty/fs/aufs/dir.c linux/fs/aufs/dir.c
 +};
 diff -urN /usr/share/empty/fs/aufs/dir.h linux/fs/aufs/dir.h
 --- /usr/share/empty/fs/aufs/dir.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/dir.h	2012-12-13 20:41:10.428126759 +0100
++++ linux/fs/aufs/dir.h	2013-01-11 19:46:12.635947932 +0100
 @@ -0,0 +1,137 @@
 +/*
-+ * Copyright (C) 2005-2012 Junjiro R. Okajima
++ * Copyright (C) 2005-2013 Junjiro R. Okajima
 + *
 + * This program, aufs is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
@@ -8558,10 +8558,10 @@ diff -urN /usr/share/empty/fs/aufs/dir.h linux/fs/aufs/dir.h
 +#endif /* __AUFS_DIR_H__ */
 diff -urN /usr/share/empty/fs/aufs/dynop.c linux/fs/aufs/dynop.c
 --- /usr/share/empty/fs/aufs/dynop.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/dynop.c	2012-12-13 20:41:10.428126759 +0100
++++ linux/fs/aufs/dynop.c	2013-01-11 19:46:12.635947932 +0100
 @@ -0,0 +1,379 @@
 +/*
-+ * Copyright (C) 2010-2012 Junjiro R. Okajima
++ * Copyright (C) 2010-2013 Junjiro R. Okajima
 + *
 + * This program, aufs is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
@@ -8941,10 +8941,10 @@ diff -urN /usr/share/empty/fs/aufs/dynop.c linux/fs/aufs/dynop.c
 +}
 diff -urN /usr/share/empty/fs/aufs/dynop.h linux/fs/aufs/dynop.h
 --- /usr/share/empty/fs/aufs/dynop.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/dynop.h	2012-12-13 20:41:10.428126759 +0100
++++ linux/fs/aufs/dynop.h	2013-01-11 19:46:12.635947932 +0100
 @@ -0,0 +1,76 @@
 +/*
-+ * Copyright (C) 2010-2012 Junjiro R. Okajima
++ * Copyright (C) 2010-2013 Junjiro R. Okajima
 + *
 + * This program, aufs is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
@@ -9021,10 +9021,10 @@ diff -urN /usr/share/empty/fs/aufs/dynop.h linux/fs/aufs/dynop.h
 +#endif /* __AUFS_DYNOP_H__ */
 diff -urN /usr/share/empty/fs/aufs/export.c linux/fs/aufs/export.c
 --- /usr/share/empty/fs/aufs/export.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/export.c	2012-12-13 20:41:10.428126759 +0100
++++ linux/fs/aufs/export.c	2013-01-11 19:46:28.699667650 +0100
 @@ -0,0 +1,811 @@
 +/*
-+ * Copyright (C) 2005-2012 Junjiro R. Okajima
++ * Copyright (C) 2005-2013 Junjiro R. Okajima
 + *
 + * This program, aufs is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
@@ -9836,10 +9836,10 @@ diff -urN /usr/share/empty/fs/aufs/export.c linux/fs/aufs/export.c
 +}
 diff -urN /usr/share/empty/fs/aufs/file.c linux/fs/aufs/file.c
 --- /usr/share/empty/fs/aufs/file.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/file.c	2012-12-13 20:41:10.431460173 +0100
++++ linux/fs/aufs/file.c	2013-01-11 19:46:12.635947932 +0100
 @@ -0,0 +1,683 @@
 +/*
-+ * Copyright (C) 2005-2012 Junjiro R. Okajima
++ * Copyright (C) 2005-2013 Junjiro R. Okajima
 + *
 + * This program, aufs is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
@@ -10523,10 +10523,10 @@ diff -urN /usr/share/empty/fs/aufs/file.c linux/fs/aufs/file.c
 +};
 diff -urN /usr/share/empty/fs/aufs/file.h linux/fs/aufs/file.h
 --- /usr/share/empty/fs/aufs/file.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/file.h	2012-12-13 20:41:10.431460173 +0100
++++ linux/fs/aufs/file.h	2013-01-11 19:46:12.635947932 +0100
 @@ -0,0 +1,298 @@
 +/*
-+ * Copyright (C) 2005-2012 Junjiro R. Okajima
++ * Copyright (C) 2005-2013 Junjiro R. Okajima
 + *
 + * This program, aufs is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
@@ -10825,10 +10825,10 @@ diff -urN /usr/share/empty/fs/aufs/file.h linux/fs/aufs/file.h
 +#endif /* __AUFS_FILE_H__ */
 diff -urN /usr/share/empty/fs/aufs/finfo.c linux/fs/aufs/finfo.c
 --- /usr/share/empty/fs/aufs/finfo.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/finfo.c	2012-12-13 20:41:10.431460173 +0100
++++ linux/fs/aufs/finfo.c	2013-01-11 19:46:12.635947932 +0100
 @@ -0,0 +1,156 @@
 +/*
-+ * Copyright (C) 2005-2012 Junjiro R. Okajima
++ * Copyright (C) 2005-2013 Junjiro R. Okajima
 + *
 + * This program, aufs is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
@@ -10985,10 +10985,10 @@ diff -urN /usr/share/empty/fs/aufs/finfo.c linux/fs/aufs/finfo.c
 +}
 diff -urN /usr/share/empty/fs/aufs/f_op.c linux/fs/aufs/f_op.c
 --- /usr/share/empty/fs/aufs/f_op.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/f_op.c	2012-12-13 20:41:10.428126759 +0100
++++ linux/fs/aufs/f_op.c	2013-01-11 19:46:28.699667650 +0100
 @@ -0,0 +1,723 @@
 +/*
-+ * Copyright (C) 2005-2012 Junjiro R. Okajima
++ * Copyright (C) 2005-2013 Junjiro R. Okajima
 + *
 + * This program, aufs is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
@@ -11712,10 +11712,10 @@ diff -urN /usr/share/empty/fs/aufs/f_op.c linux/fs/aufs/f_op.c
 +};
 diff -urN /usr/share/empty/fs/aufs/f_op_sp.c linux/fs/aufs/f_op_sp.c
 --- /usr/share/empty/fs/aufs/f_op_sp.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/f_op_sp.c	2012-12-13 20:41:10.431460173 +0100
++++ linux/fs/aufs/f_op_sp.c	2013-01-11 19:46:12.635947932 +0100
 @@ -0,0 +1,295 @@
 +/*
-+ * Copyright (C) 2005-2012 Junjiro R. Okajima
++ * Copyright (C) 2005-2013 Junjiro R. Okajima
 + *
 + * This program, aufs is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
@@ -12011,10 +12011,10 @@ diff -urN /usr/share/empty/fs/aufs/f_op_sp.c linux/fs/aufs/f_op_sp.c
 +}
 diff -urN /usr/share/empty/fs/aufs/fstype.h linux/fs/aufs/fstype.h
 --- /usr/share/empty/fs/aufs/fstype.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/fstype.h	2012-12-13 20:41:10.431460173 +0100
++++ linux/fs/aufs/fstype.h	2013-01-11 19:46:12.635947932 +0100
 @@ -0,0 +1,481 @@
 +/*
-+ * Copyright (C) 2005-2012 Junjiro R. Okajima
++ * Copyright (C) 2005-2013 Junjiro R. Okajima
 + *
 + * This program, aufs is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
@@ -12496,10 +12496,10 @@ diff -urN /usr/share/empty/fs/aufs/fstype.h linux/fs/aufs/fstype.h
 +#endif /* __AUFS_FSTYPE_H__ */
 diff -urN /usr/share/empty/fs/aufs/hfsnotify.c linux/fs/aufs/hfsnotify.c
 --- /usr/share/empty/fs/aufs/hfsnotify.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/hfsnotify.c	2012-12-13 20:41:10.431460173 +0100
++++ linux/fs/aufs/hfsnotify.c	2013-01-11 19:46:12.635947932 +0100
 @@ -0,0 +1,257 @@
 +/*
-+ * Copyright (C) 2005-2012 Junjiro R. Okajima
++ * Copyright (C) 2005-2013 Junjiro R. Okajima
 + *
 + * This program, aufs is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
@@ -12757,10 +12757,10 @@ diff -urN /usr/share/empty/fs/aufs/hfsnotify.c linux/fs/aufs/hfsnotify.c
 +};
 diff -urN /usr/share/empty/fs/aufs/hfsplus.c linux/fs/aufs/hfsplus.c
 --- /usr/share/empty/fs/aufs/hfsplus.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/hfsplus.c	2012-12-13 20:41:10.431460173 +0100
++++ linux/fs/aufs/hfsplus.c	2013-01-11 19:46:12.639281345 +0100
 @@ -0,0 +1,57 @@
 +/*
-+ * Copyright (C) 2010-2012 Junjiro R. Okajima
++ * Copyright (C) 2010-2013 Junjiro R. Okajima
 + *
 + * This program, aufs is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
@@ -12818,10 +12818,10 @@ diff -urN /usr/share/empty/fs/aufs/hfsplus.c linux/fs/aufs/hfsplus.c
 +}
 diff -urN /usr/share/empty/fs/aufs/hnotify.c linux/fs/aufs/hnotify.c
 --- /usr/share/empty/fs/aufs/hnotify.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/hnotify.c	2012-12-13 20:41:10.431460173 +0100
++++ linux/fs/aufs/hnotify.c	2013-01-11 19:46:12.639281345 +0100
 @@ -0,0 +1,713 @@
 +/*
-+ * Copyright (C) 2005-2012 Junjiro R. Okajima
++ * Copyright (C) 2005-2013 Junjiro R. Okajima
 + *
 + * This program, aufs is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
@@ -13535,10 +13535,10 @@ diff -urN /usr/share/empty/fs/aufs/hnotify.c linux/fs/aufs/hnotify.c
 +}
 diff -urN /usr/share/empty/fs/aufs/iinfo.c linux/fs/aufs/iinfo.c
 --- /usr/share/empty/fs/aufs/iinfo.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/iinfo.c	2012-12-13 20:41:10.431460173 +0100
++++ linux/fs/aufs/iinfo.c	2013-01-11 19:46:12.639281345 +0100
 @@ -0,0 +1,276 @@
 +/*
-+ * Copyright (C) 2005-2012 Junjiro R. Okajima
++ * Copyright (C) 2005-2013 Junjiro R. Okajima
 + *
 + * This program, aufs is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
@@ -13815,10 +13815,10 @@ diff -urN /usr/share/empty/fs/aufs/iinfo.c linux/fs/aufs/iinfo.c
 +}
 diff -urN /usr/share/empty/fs/aufs/inode.c linux/fs/aufs/inode.c
 --- /usr/share/empty/fs/aufs/inode.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/inode.c	2012-12-13 20:41:10.431460173 +0100
++++ linux/fs/aufs/inode.c	2013-01-11 19:46:12.639281345 +0100
 @@ -0,0 +1,488 @@
 +/*
-+ * Copyright (C) 2005-2012 Junjiro R. Okajima
++ * Copyright (C) 2005-2013 Junjiro R. Okajima
 + *
 + * This program, aufs is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
@@ -14307,10 +14307,10 @@ diff -urN /usr/share/empty/fs/aufs/inode.c linux/fs/aufs/inode.c
 +}
 diff -urN /usr/share/empty/fs/aufs/inode.h linux/fs/aufs/inode.h
 --- /usr/share/empty/fs/aufs/inode.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/inode.h	2012-12-13 20:41:10.431460173 +0100
++++ linux/fs/aufs/inode.h	2013-01-11 19:46:12.639281345 +0100
 @@ -0,0 +1,588 @@
 +/*
-+ * Copyright (C) 2005-2012 Junjiro R. Okajima
++ * Copyright (C) 2005-2013 Junjiro R. Okajima
 + *
 + * This program, aufs is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
@@ -14377,7 +14377,7 @@ diff -urN /usr/share/empty/fs/aufs/inode.h linux/fs/aufs/inode.h
 +struct au_vdir;
 +struct au_iinfo {
 +	spinlock_t		ii_genspin;
-+	struct au_iigen 	ii_generation;
++	struct au_iigen		ii_generation;
 +	struct super_block	*ii_hsb1;	/* no get/put */
 +
 +	struct au_rwsem		ii_rwsem;
@@ -14899,10 +14899,10 @@ diff -urN /usr/share/empty/fs/aufs/inode.h linux/fs/aufs/inode.h
 +#endif /* __AUFS_INODE_H__ */
 diff -urN /usr/share/empty/fs/aufs/ioctl.c linux/fs/aufs/ioctl.c
 --- /usr/share/empty/fs/aufs/ioctl.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/ioctl.c	2012-12-13 20:41:10.431460173 +0100
++++ linux/fs/aufs/ioctl.c	2013-01-11 19:46:12.639281345 +0100
 @@ -0,0 +1,196 @@
 +/*
-+ * Copyright (C) 2005-2012 Junjiro R. Okajima
++ * Copyright (C) 2005-2013 Junjiro R. Okajima
 + *
 + * This program, aufs is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
@@ -15099,10 +15099,10 @@ diff -urN /usr/share/empty/fs/aufs/ioctl.c linux/fs/aufs/ioctl.c
 +#endif
 diff -urN /usr/share/empty/fs/aufs/i_op_add.c linux/fs/aufs/i_op_add.c
 --- /usr/share/empty/fs/aufs/i_op_add.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/i_op_add.c	2012-12-13 20:41:10.431460173 +0100
++++ linux/fs/aufs/i_op_add.c	2013-01-11 19:46:12.639281345 +0100
 @@ -0,0 +1,713 @@
 +/*
-+ * Copyright (C) 2005-2012 Junjiro R. Okajima
++ * Copyright (C) 2005-2013 Junjiro R. Okajima
 + *
 + * This program, aufs is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
@@ -15816,10 +15816,10 @@ diff -urN /usr/share/empty/fs/aufs/i_op_add.c linux/fs/aufs/i_op_add.c
 +}
 diff -urN /usr/share/empty/fs/aufs/i_op.c linux/fs/aufs/i_op.c
 --- /usr/share/empty/fs/aufs/i_op.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/i_op.c	2012-12-13 20:41:10.431460173 +0100
++++ linux/fs/aufs/i_op.c	2013-01-11 19:46:28.699667650 +0100
 @@ -0,0 +1,1026 @@
 +/*
-+ * Copyright (C) 2005-2012 Junjiro R. Okajima
++ * Copyright (C) 2005-2013 Junjiro R. Okajima
 + *
 + * This program, aufs is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
@@ -16846,10 +16846,10 @@ diff -urN /usr/share/empty/fs/aufs/i_op.c linux/fs/aufs/i_op.c
 +};
 diff -urN /usr/share/empty/fs/aufs/i_op_del.c linux/fs/aufs/i_op_del.c
 --- /usr/share/empty/fs/aufs/i_op_del.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/i_op_del.c	2012-12-13 20:41:10.431460173 +0100
++++ linux/fs/aufs/i_op_del.c	2013-01-11 19:46:12.639281345 +0100
 @@ -0,0 +1,477 @@
 +/*
-+ * Copyright (C) 2005-2012 Junjiro R. Okajima
++ * Copyright (C) 2005-2013 Junjiro R. Okajima
 + *
 + * This program, aufs is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
@@ -17327,10 +17327,10 @@ diff -urN /usr/share/empty/fs/aufs/i_op_del.c linux/fs/aufs/i_op_del.c
 +}
 diff -urN /usr/share/empty/fs/aufs/i_op_ren.c linux/fs/aufs/i_op_ren.c
 --- /usr/share/empty/fs/aufs/i_op_ren.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/i_op_ren.c	2012-12-13 20:41:10.431460173 +0100
++++ linux/fs/aufs/i_op_ren.c	2013-01-11 19:46:12.639281345 +0100
 @@ -0,0 +1,1026 @@
 +/*
-+ * Copyright (C) 2005-2012 Junjiro R. Okajima
++ * Copyright (C) 2005-2013 Junjiro R. Okajima
 + *
 + * This program, aufs is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
@@ -18357,7 +18357,7 @@ diff -urN /usr/share/empty/fs/aufs/i_op_ren.c linux/fs/aufs/i_op_ren.c
 +}
 diff -urN /usr/share/empty/fs/aufs/Kconfig linux/fs/aufs/Kconfig
 --- /usr/share/empty/fs/aufs/Kconfig	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/Kconfig	2012-12-13 20:41:10.428126759 +0100
++++ linux/fs/aufs/Kconfig	2012-08-26 08:39:00.757174634 +0200
 @@ -0,0 +1,203 @@
 +config AUFS_FS
 +	tristate "Aufs (Advanced multi layered unification filesystem) support"
@@ -18564,10 +18564,10 @@ diff -urN /usr/share/empty/fs/aufs/Kconfig linux/fs/aufs/Kconfig
 +endif
 diff -urN /usr/share/empty/fs/aufs/loop.c linux/fs/aufs/loop.c
 --- /usr/share/empty/fs/aufs/loop.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/loop.c	2012-12-13 20:41:10.431460173 +0100
++++ linux/fs/aufs/loop.c	2013-01-11 19:46:12.639281345 +0100
 @@ -0,0 +1,133 @@
 +/*
-+ * Copyright (C) 2005-2012 Junjiro R. Okajima
++ * Copyright (C) 2005-2013 Junjiro R. Okajima
 + *
 + * This program, aufs is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
@@ -18701,10 +18701,10 @@ diff -urN /usr/share/empty/fs/aufs/loop.c linux/fs/aufs/loop.c
 +}
 diff -urN /usr/share/empty/fs/aufs/loop.h linux/fs/aufs/loop.h
 --- /usr/share/empty/fs/aufs/loop.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/loop.h	2012-12-13 20:41:10.431460173 +0100
++++ linux/fs/aufs/loop.h	2013-01-11 19:46:12.639281345 +0100
 @@ -0,0 +1,50 @@
 +/*
-+ * Copyright (C) 2005-2012 Junjiro R. Okajima
++ * Copyright (C) 2005-2013 Junjiro R. Okajima
 + *
 + * This program, aufs is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
@@ -18755,7 +18755,7 @@ diff -urN /usr/share/empty/fs/aufs/loop.h linux/fs/aufs/loop.h
 +#endif /* __AUFS_LOOP_H__ */
 diff -urN /usr/share/empty/fs/aufs/magic.mk linux/fs/aufs/magic.mk
 --- /usr/share/empty/fs/aufs/magic.mk	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/magic.mk	2012-12-13 20:41:10.431460173 +0100
++++ linux/fs/aufs/magic.mk	2012-08-26 08:39:00.760508065 +0200
 @@ -0,0 +1,54 @@
 +
 +# defined in ${srctree}/fs/fuse/inode.c
@@ -18813,7 +18813,7 @@ diff -urN /usr/share/empty/fs/aufs/magic.mk linux/fs/aufs/magic.mk
 +endif
 diff -urN /usr/share/empty/fs/aufs/Makefile linux/fs/aufs/Makefile
 --- /usr/share/empty/fs/aufs/Makefile	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/Makefile	2012-12-13 20:41:10.428126759 +0100
++++ linux/fs/aufs/Makefile	2012-08-26 08:39:00.757174634 +0200
 @@ -0,0 +1,42 @@
 +
 +include ${src}/magic.mk
@@ -18859,10 +18859,10 @@ diff -urN /usr/share/empty/fs/aufs/Makefile linux/fs/aufs/Makefile
 +aufs-$(CONFIG_AUFS_MAGIC_SYSRQ) += sysrq.o
 diff -urN /usr/share/empty/fs/aufs/module.c linux/fs/aufs/module.c
 --- /usr/share/empty/fs/aufs/module.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/module.c	2012-12-13 20:41:10.431460173 +0100
++++ linux/fs/aufs/module.c	2013-01-11 19:46:28.699667650 +0100
 @@ -0,0 +1,202 @@
 +/*
-+ * Copyright (C) 2005-2012 Junjiro R. Okajima
++ * Copyright (C) 2005-2013 Junjiro R. Okajima
 + *
 + * This program, aufs is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
@@ -19065,10 +19065,10 @@ diff -urN /usr/share/empty/fs/aufs/module.c linux/fs/aufs/module.c
 +module_exit(aufs_exit);
 diff -urN /usr/share/empty/fs/aufs/module.h linux/fs/aufs/module.h
 --- /usr/share/empty/fs/aufs/module.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/module.h	2012-12-13 20:41:10.431460173 +0100
++++ linux/fs/aufs/module.h	2013-01-11 19:46:12.639281345 +0100
 @@ -0,0 +1,105 @@
 +/*
-+ * Copyright (C) 2005-2012 Junjiro R. Okajima
++ * Copyright (C) 2005-2013 Junjiro R. Okajima
 + *
 + * This program, aufs is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
@@ -19174,10 +19174,10 @@ diff -urN /usr/share/empty/fs/aufs/module.h linux/fs/aufs/module.h
 +#endif /* __AUFS_MODULE_H__ */
 diff -urN /usr/share/empty/fs/aufs/opts.c linux/fs/aufs/opts.c
 --- /usr/share/empty/fs/aufs/opts.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/opts.c	2012-12-13 20:41:10.431460173 +0100
++++ linux/fs/aufs/opts.c	2013-01-11 19:46:12.639281345 +0100
 @@ -0,0 +1,1677 @@
 +/*
-+ * Copyright (C) 2005-2012 Junjiro R. Okajima
++ * Copyright (C) 2005-2013 Junjiro R. Okajima
 + *
 + * This program, aufs is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
@@ -20855,10 +20855,10 @@ diff -urN /usr/share/empty/fs/aufs/opts.c linux/fs/aufs/opts.c
 +}
 diff -urN /usr/share/empty/fs/aufs/opts.h linux/fs/aufs/opts.h
 --- /usr/share/empty/fs/aufs/opts.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/opts.h	2012-12-13 20:41:10.431460173 +0100
++++ linux/fs/aufs/opts.h	2013-01-11 19:46:12.639281345 +0100
 @@ -0,0 +1,209 @@
 +/*
-+ * Copyright (C) 2005-2012 Junjiro R. Okajima
++ * Copyright (C) 2005-2013 Junjiro R. Okajima
 + *
 + * This program, aufs is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
@@ -21068,10 +21068,10 @@ diff -urN /usr/share/empty/fs/aufs/opts.h linux/fs/aufs/opts.h
 +#endif /* __AUFS_OPTS_H__ */
 diff -urN /usr/share/empty/fs/aufs/plink.c linux/fs/aufs/plink.c
 --- /usr/share/empty/fs/aufs/plink.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/plink.c	2012-12-13 20:41:10.431460173 +0100
++++ linux/fs/aufs/plink.c	2013-01-11 19:46:12.639281345 +0100
 @@ -0,0 +1,511 @@
 +/*
-+ * Copyright (C) 2005-2012 Junjiro R. Okajima
++ * Copyright (C) 2005-2013 Junjiro R. Okajima
 + *
 + * This program, aufs is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
@@ -21583,10 +21583,10 @@ diff -urN /usr/share/empty/fs/aufs/plink.c linux/fs/aufs/plink.c
 +}
 diff -urN /usr/share/empty/fs/aufs/poll.c linux/fs/aufs/poll.c
 --- /usr/share/empty/fs/aufs/poll.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/poll.c	2012-12-13 20:41:10.431460173 +0100
++++ linux/fs/aufs/poll.c	2013-01-11 19:46:12.639281345 +0100
 @@ -0,0 +1,56 @@
 +/*
-+ * Copyright (C) 2005-2012 Junjiro R. Okajima
++ * Copyright (C) 2005-2013 Junjiro R. Okajima
 + *
 + * This program, aufs is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
@@ -21643,10 +21643,10 @@ diff -urN /usr/share/empty/fs/aufs/poll.c linux/fs/aufs/poll.c
 +}
 diff -urN /usr/share/empty/fs/aufs/procfs.c linux/fs/aufs/procfs.c
 --- /usr/share/empty/fs/aufs/procfs.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/procfs.c	2012-12-13 20:41:10.431460173 +0100
++++ linux/fs/aufs/procfs.c	2013-01-11 19:46:12.639281345 +0100
 @@ -0,0 +1,170 @@
 +/*
-+ * Copyright (C) 2010-2012 Junjiro R. Okajima
++ * Copyright (C) 2010-2013 Junjiro R. Okajima
 + *
 + * This program, aufs is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
@@ -21817,10 +21817,10 @@ diff -urN /usr/share/empty/fs/aufs/procfs.c linux/fs/aufs/procfs.c
 +}
 diff -urN /usr/share/empty/fs/aufs/rdu.c linux/fs/aufs/rdu.c
 --- /usr/share/empty/fs/aufs/rdu.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/rdu.c	2012-12-13 20:41:10.431460173 +0100
++++ linux/fs/aufs/rdu.c	2013-01-11 19:46:12.639281345 +0100
 @@ -0,0 +1,384 @@
 +/*
-+ * Copyright (C) 2005-2012 Junjiro R. Okajima
++ * Copyright (C) 2005-2013 Junjiro R. Okajima
 + *
 + * This program, aufs is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
@@ -22205,10 +22205,10 @@ diff -urN /usr/share/empty/fs/aufs/rdu.c linux/fs/aufs/rdu.c
 +#endif
 diff -urN /usr/share/empty/fs/aufs/rwsem.h linux/fs/aufs/rwsem.h
 --- /usr/share/empty/fs/aufs/rwsem.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/rwsem.h	2012-12-13 20:41:10.431460173 +0100
++++ linux/fs/aufs/rwsem.h	2013-01-11 19:46:12.639281345 +0100
 @@ -0,0 +1,188 @@
 +/*
-+ * Copyright (C) 2005-2012 Junjiro R. Okajima
++ * Copyright (C) 2005-2013 Junjiro R. Okajima
 + *
 + * This program, aufs is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
@@ -22397,10 +22397,10 @@ diff -urN /usr/share/empty/fs/aufs/rwsem.h linux/fs/aufs/rwsem.h
 +#endif /* __AUFS_RWSEM_H__ */
 diff -urN /usr/share/empty/fs/aufs/sbinfo.c linux/fs/aufs/sbinfo.c
 --- /usr/share/empty/fs/aufs/sbinfo.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/sbinfo.c	2012-12-13 20:41:10.431460173 +0100
++++ linux/fs/aufs/sbinfo.c	2013-01-11 19:46:12.639281345 +0100
 @@ -0,0 +1,343 @@
 +/*
-+ * Copyright (C) 2005-2012 Junjiro R. Okajima
++ * Copyright (C) 2005-2013 Junjiro R. Okajima
 + *
 + * This program, aufs is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
@@ -22744,10 +22744,10 @@ diff -urN /usr/share/empty/fs/aufs/sbinfo.c linux/fs/aufs/sbinfo.c
 +}
 diff -urN /usr/share/empty/fs/aufs/spl.h linux/fs/aufs/spl.h
 --- /usr/share/empty/fs/aufs/spl.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/spl.h	2012-12-13 20:41:10.431460173 +0100
++++ linux/fs/aufs/spl.h	2013-01-11 19:46:12.639281345 +0100
 @@ -0,0 +1,62 @@
 +/*
-+ * Copyright (C) 2005-2012 Junjiro R. Okajima
++ * Copyright (C) 2005-2013 Junjiro R. Okajima
 + *
 + * This program, aufs is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
@@ -22810,10 +22810,10 @@ diff -urN /usr/share/empty/fs/aufs/spl.h linux/fs/aufs/spl.h
 +#endif /* __AUFS_SPL_H__ */
 diff -urN /usr/share/empty/fs/aufs/super.c linux/fs/aufs/super.c
 --- /usr/share/empty/fs/aufs/super.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/super.c	2012-12-13 20:41:10.431460173 +0100
++++ linux/fs/aufs/super.c	2013-01-11 19:46:12.639281345 +0100
 @@ -0,0 +1,993 @@
 +/*
-+ * Copyright (C) 2005-2012 Junjiro R. Okajima
++ * Copyright (C) 2005-2013 Junjiro R. Okajima
 + *
 + * This program, aufs is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
@@ -23807,10 +23807,10 @@ diff -urN /usr/share/empty/fs/aufs/super.c linux/fs/aufs/super.c
 +};
 diff -urN /usr/share/empty/fs/aufs/super.h linux/fs/aufs/super.h
 --- /usr/share/empty/fs/aufs/super.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/super.h	2012-12-13 20:41:10.431460173 +0100
++++ linux/fs/aufs/super.h	2013-01-11 19:46:12.639281345 +0100
 @@ -0,0 +1,546 @@
 +/*
-+ * Copyright (C) 2005-2012 Junjiro R. Okajima
++ * Copyright (C) 2005-2013 Junjiro R. Okajima
 + *
 + * This program, aufs is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
@@ -24357,10 +24357,10 @@ diff -urN /usr/share/empty/fs/aufs/super.h linux/fs/aufs/super.h
 +#endif /* __AUFS_SUPER_H__ */
 diff -urN /usr/share/empty/fs/aufs/sysaufs.c linux/fs/aufs/sysaufs.c
 --- /usr/share/empty/fs/aufs/sysaufs.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/sysaufs.c	2012-12-13 20:41:10.431460173 +0100
++++ linux/fs/aufs/sysaufs.c	2013-01-11 19:46:12.639281345 +0100
 @@ -0,0 +1,105 @@
 +/*
-+ * Copyright (C) 2005-2012 Junjiro R. Okajima
++ * Copyright (C) 2005-2013 Junjiro R. Okajima
 + *
 + * This program, aufs is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
@@ -24466,10 +24466,10 @@ diff -urN /usr/share/empty/fs/aufs/sysaufs.c linux/fs/aufs/sysaufs.c
 +}
 diff -urN /usr/share/empty/fs/aufs/sysaufs.h linux/fs/aufs/sysaufs.h
 --- /usr/share/empty/fs/aufs/sysaufs.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/sysaufs.h	2012-12-13 20:41:10.431460173 +0100
++++ linux/fs/aufs/sysaufs.h	2013-01-11 19:46:12.639281345 +0100
 @@ -0,0 +1,104 @@
 +/*
-+ * Copyright (C) 2005-2012 Junjiro R. Okajima
++ * Copyright (C) 2005-2013 Junjiro R. Okajima
 + *
 + * This program, aufs is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
@@ -24574,10 +24574,10 @@ diff -urN /usr/share/empty/fs/aufs/sysaufs.h linux/fs/aufs/sysaufs.h
 +#endif /* __SYSAUFS_H__ */
 diff -urN /usr/share/empty/fs/aufs/sysfs.c linux/fs/aufs/sysfs.c
 --- /usr/share/empty/fs/aufs/sysfs.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/sysfs.c	2012-12-13 20:41:10.431460173 +0100
++++ linux/fs/aufs/sysfs.c	2013-01-11 19:46:12.642614759 +0100
 @@ -0,0 +1,257 @@
 +/*
-+ * Copyright (C) 2005-2012 Junjiro R. Okajima
++ * Copyright (C) 2005-2013 Junjiro R. Okajima
 + *
 + * This program, aufs is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
@@ -24835,10 +24835,10 @@ diff -urN /usr/share/empty/fs/aufs/sysfs.c linux/fs/aufs/sysfs.c
 +}
 diff -urN /usr/share/empty/fs/aufs/sysrq.c linux/fs/aufs/sysrq.c
 --- /usr/share/empty/fs/aufs/sysrq.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/sysrq.c	2012-12-13 20:41:10.431460173 +0100
++++ linux/fs/aufs/sysrq.c	2013-01-11 19:46:12.642614759 +0100
 @@ -0,0 +1,148 @@
 +/*
-+ * Copyright (C) 2005-2012 Junjiro R. Okajima
++ * Copyright (C) 2005-2013 Junjiro R. Okajima
 + *
 + * This program, aufs is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
@@ -24987,10 +24987,10 @@ diff -urN /usr/share/empty/fs/aufs/sysrq.c linux/fs/aufs/sysrq.c
 +}
 diff -urN /usr/share/empty/fs/aufs/vdir.c linux/fs/aufs/vdir.c
 --- /usr/share/empty/fs/aufs/vdir.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/vdir.c	2012-12-13 20:41:10.434793588 +0100
++++ linux/fs/aufs/vdir.c	2013-01-11 19:46:28.699667650 +0100
 @@ -0,0 +1,885 @@
 +/*
-+ * Copyright (C) 2005-2012 Junjiro R. Okajima
++ * Copyright (C) 2005-2013 Junjiro R. Okajima
 + *
 + * This program, aufs is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
@@ -25876,10 +25876,10 @@ diff -urN /usr/share/empty/fs/aufs/vdir.c linux/fs/aufs/vdir.c
 +}
 diff -urN /usr/share/empty/fs/aufs/vfsub.c linux/fs/aufs/vfsub.c
 --- /usr/share/empty/fs/aufs/vfsub.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/vfsub.c	2012-12-13 20:41:10.434793588 +0100
++++ linux/fs/aufs/vfsub.c	2013-01-11 19:46:12.642614759 +0100
 @@ -0,0 +1,777 @@
 +/*
-+ * Copyright (C) 2005-2012 Junjiro R. Okajima
++ * Copyright (C) 2005-2013 Junjiro R. Okajima
 + *
 + * This program, aufs is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
@@ -26657,10 +26657,10 @@ diff -urN /usr/share/empty/fs/aufs/vfsub.c linux/fs/aufs/vfsub.c
 +}
 diff -urN /usr/share/empty/fs/aufs/vfsub.h linux/fs/aufs/vfsub.h
 --- /usr/share/empty/fs/aufs/vfsub.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/vfsub.h	2012-12-13 20:41:10.434793588 +0100
++++ linux/fs/aufs/vfsub.h	2013-01-11 19:46:12.642614759 +0100
 @@ -0,0 +1,284 @@
 +/*
-+ * Copyright (C) 2005-2012 Junjiro R. Okajima
++ * Copyright (C) 2005-2013 Junjiro R. Okajima
 + *
 + * This program, aufs is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
@@ -26945,10 +26945,10 @@ diff -urN /usr/share/empty/fs/aufs/vfsub.h linux/fs/aufs/vfsub.h
 +#endif /* __AUFS_VFSUB_H__ */
 diff -urN /usr/share/empty/fs/aufs/wbr_policy.c linux/fs/aufs/wbr_policy.c
 --- /usr/share/empty/fs/aufs/wbr_policy.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/wbr_policy.c	2012-12-13 20:41:10.434793588 +0100
++++ linux/fs/aufs/wbr_policy.c	2013-01-11 19:46:12.642614759 +0100
 @@ -0,0 +1,700 @@
 +/*
-+ * Copyright (C) 2005-2012 Junjiro R. Okajima
++ * Copyright (C) 2005-2013 Junjiro R. Okajima
 + *
 + * This program, aufs is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
@@ -27649,10 +27649,10 @@ diff -urN /usr/share/empty/fs/aufs/wbr_policy.c linux/fs/aufs/wbr_policy.c
 +};
 diff -urN /usr/share/empty/fs/aufs/whout.c linux/fs/aufs/whout.c
 --- /usr/share/empty/fs/aufs/whout.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/whout.c	2012-12-13 20:41:10.434793588 +0100
++++ linux/fs/aufs/whout.c	2013-01-11 19:46:28.699667650 +0100
 @@ -0,0 +1,1042 @@
 +/*
-+ * Copyright (C) 2005-2012 Junjiro R. Okajima
++ * Copyright (C) 2005-2013 Junjiro R. Okajima
 + *
 + * This program, aufs is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
@@ -28695,10 +28695,10 @@ diff -urN /usr/share/empty/fs/aufs/whout.c linux/fs/aufs/whout.c
 +}
 diff -urN /usr/share/empty/fs/aufs/whout.h linux/fs/aufs/whout.h
 --- /usr/share/empty/fs/aufs/whout.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/whout.h	2012-12-13 20:41:10.434793588 +0100
++++ linux/fs/aufs/whout.h	2013-01-11 19:46:12.659281826 +0100
 @@ -0,0 +1,88 @@
 +/*
-+ * Copyright (C) 2005-2012 Junjiro R. Okajima
++ * Copyright (C) 2005-2013 Junjiro R. Okajima
 + *
 + * This program, aufs is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
@@ -28787,10 +28787,10 @@ diff -urN /usr/share/empty/fs/aufs/whout.h linux/fs/aufs/whout.h
 +#endif /* __AUFS_WHOUT_H__ */
 diff -urN /usr/share/empty/fs/aufs/wkq.c linux/fs/aufs/wkq.c
 --- /usr/share/empty/fs/aufs/wkq.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/wkq.c	2012-12-13 20:41:10.434793588 +0100
++++ linux/fs/aufs/wkq.c	2013-01-11 19:46:12.659281826 +0100
 @@ -0,0 +1,214 @@
 +/*
-+ * Copyright (C) 2005-2012 Junjiro R. Okajima
++ * Copyright (C) 2005-2013 Junjiro R. Okajima
 + *
 + * This program, aufs is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
@@ -29005,10 +29005,10 @@ diff -urN /usr/share/empty/fs/aufs/wkq.c linux/fs/aufs/wkq.c
 +}
 diff -urN /usr/share/empty/fs/aufs/wkq.h linux/fs/aufs/wkq.h
 --- /usr/share/empty/fs/aufs/wkq.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/wkq.h	2012-12-13 20:41:10.434793588 +0100
++++ linux/fs/aufs/wkq.h	2013-01-11 19:46:12.659281826 +0100
 @@ -0,0 +1,92 @@
 +/*
-+ * Copyright (C) 2005-2012 Junjiro R. Okajima
++ * Copyright (C) 2005-2013 Junjiro R. Okajima
 + *
 + * This program, aufs is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
@@ -29101,10 +29101,10 @@ diff -urN /usr/share/empty/fs/aufs/wkq.h linux/fs/aufs/wkq.h
 +#endif /* __AUFS_WKQ_H__ */
 diff -urN /usr/share/empty/fs/aufs/xino.c linux/fs/aufs/xino.c
 --- /usr/share/empty/fs/aufs/xino.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/xino.c	2012-12-13 20:41:10.434793588 +0100
++++ linux/fs/aufs/xino.c	2013-01-11 19:46:28.699667650 +0100
 @@ -0,0 +1,1264 @@
 +/*
-+ * Copyright (C) 2005-2012 Junjiro R. Okajima
++ * Copyright (C) 2005-2013 Junjiro R. Okajima
 + *
 + * This program, aufs is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
@@ -30369,10 +30369,10 @@ diff -urN /usr/share/empty/fs/aufs/xino.c linux/fs/aufs/xino.c
 +}
 diff -urN /usr/share/empty/include/linux/aufs_type.h linux/include/linux/aufs_type.h
 --- /usr/share/empty/include/linux/aufs_type.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux/include/linux/aufs_type.h	2012-12-13 20:41:10.434793588 +0100
++++ linux/include/linux/aufs_type.h	2013-01-11 19:46:28.699667650 +0100
 @@ -0,0 +1,19 @@
 +/*
-+ * Copyright (C) 2012 Junjiro R. Okajima
++ * Copyright (C) 2012-2013 Junjiro R. Okajima
 + *
 + * This program, aufs is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
@@ -30392,10 +30392,10 @@ diff -urN /usr/share/empty/include/linux/aufs_type.h linux/include/linux/aufs_ty
 +#include <uapi/linux/aufs_type.h>
 diff -urN /usr/share/empty/include/uapi/linux/aufs_type.h linux/include/uapi/linux/aufs_type.h
 --- /usr/share/empty/include/uapi/linux/aufs_type.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux/include/uapi/linux/aufs_type.h	2012-12-13 20:41:10.434793588 +0100
++++ linux/include/uapi/linux/aufs_type.h	2013-01-11 19:46:28.699667650 +0100
 @@ -0,0 +1,233 @@
 +/*
-+ * Copyright (C) 2005-2012 Junjiro R. Okajima
++ * Copyright (C) 2005-2013 Junjiro R. Okajima
 + *
 + * This program, aufs is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
@@ -30435,7 +30435,7 @@ diff -urN /usr/share/empty/include/uapi/linux/aufs_type.h linux/include/uapi/lin
 +
 +#include <linux/limits.h>
 +
-+#define AUFS_VERSION	"3.x-rcN-20121210"
++#define AUFS_VERSION	"3.7-20130107"
 +
 +/* todo? move this to linux-2.6.19/include/magic.h */
 +#define AUFS_SUPER_MAGIC	('a' << 24 | 'u' << 16 | 'f' << 8 | 's')
@@ -30627,3 +30627,4 @@ diff -urN /usr/share/empty/include/uapi/linux/aufs_type.h linux/include/uapi/lin
 +#define AUFS_CTL_IBUSY		_IOWR(AuCtlType, AuCtl_IBUSY, struct aufs_ibusy)
 +
 +#endif /* __AUFS_TYPE_H__ */
+
