@@ -1211,8 +1211,8 @@ fi
 /lib/modules/%{kernel_release}/kernel/drivers/isdn/hardware/avm/avm_cs.ko*
 /lib/modules/%{kernel_release}/kernel/drivers/isdn/hardware/avm/b1pcmcia.ko*
 /lib/modules/%{kernel_release}/kernel/drivers/staging/telephony/ixj_pcmcia.ko*
-%endif
 /lib/modules/%{kernel_release}/kernel/drivers/ata/pata_pcmcia.ko*
+%endif
 /lib/modules/%{kernel_release}/kernel/drivers/ide/ide-cs.ko*
 /lib/modules/%{kernel_release}/kernel/drivers/net/wireless/*_cs.ko*
 /lib/modules/%{kernel_release}/kernel/drivers/net/wireless/b43
