@@ -26159,3 +26159,32 @@ diff -NurpP --minimal linux-3.7.1/security/selinux/hooks.c linux-3.7.1-vs2.3.5.5
  #include <linux/parser.h>
  #include <linux/nfs_mount.h>
  #include <net/ipv6.h>
+--- ../linux-3.7.2-vs2.3.5.5//kernel/vserver/inet.c	2013-01-11 13:43:00.000000000 +0000
++++ ./kernel/vserver/inet.c	2013-02-05 01:41:48.000000000 +0000
+@@ -167,7 +167,6 @@ struct rtable *ip_v4_find_src(struct net
+ 
+ 	if (fl4->saddr == INADDR_ANY) {
+ 		struct nx_addr_v4 *ptr;
+-		unsigned long irqflags;
+ 		__be32 found = 0;
+ 
+ 		rt = __ip_route_output_key(net, fl4);
+@@ -181,7 +180,8 @@ struct rtable *ip_v4_find_src(struct net
+ 				goto found;
+ 		}
+ 
+-		spin_lock_irqsave(&nxi->addr_lock, irqflags);
++		WARN_ON_ONCE(in_irq());
++		spin_lock(&nxi->addr_lock);
+ 		for (ptr = &nxi->v4; ptr; ptr = ptr->next) {
+ 			__be32 primary = ptr->ip[0].s_addr;
+ 			__be32 mask = ptr->mask.s_addr;
+@@ -210,7 +210,7 @@ struct rtable *ip_v4_find_src(struct net
+ 		found = ipv4_is_loopback(fl4->daddr)
+ 			? IPI_LOOPBACK : nxi->v4.ip[0].s_addr;
+ 	found_unlock:
+-		spin_unlock_irqrestore(&nxi->addr_lock, irqflags);
++		spin_unlock(&nxi->addr_lock);
+ 	found:
+ 		/* assign src ip to flow */
+ 		fl4->saddr = found;
