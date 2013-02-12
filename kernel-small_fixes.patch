@@ -666,3 +666,36 @@ index 205af8d..22436f7 100644
 1.7.6.5
 
 
+diff --git a/drivers/regulator/core.c b/drivers/regulator/core.c
+index 042c1ff..d07c240 100644
+--- a/drivers/regulator/core.c
++++ b/drivers/regulator/core.c
+@@ -1872,7 +1872,14 @@ int regulator_count_voltages(struct regulator *regulator)
+ {
+ 	struct regulator_dev	*rdev = regulator->rdev;
+
+-	return rdev->desc->n_voltages ? : -EINVAL;
++	if (rdev->constraints->valid_ops_mask & REGULATOR_CHANGE_VOLTAGE) {
++		if (rdev->desc->n_voltages)
++			return rdev->desc->n_voltages;
++		else
++			return -EINVAL;
++	} else {
++		return 1;
++	}
+ }
+ EXPORT_SYMBOL_GPL(regulator_count_voltages);
+
+diff --git a/drivers/mmc/host/sdhci.c b/drivers/mmc/host/sdhci.c
+index c7851c0..6f6534e 100644
+--- a/drivers/mmc/host/sdhci.c
++++ b/drivers/mmc/host/sdhci.c
+@@ -2923,7 +2923,7 @@ int sdhci_add_host(struct sdhci_host *host)
+ 		regulator_enable(host->vmmc);
+
+ #ifdef CONFIG_REGULATOR
+-	if (host->vmmc) {
++	if (host->vmmc && regulator_count_voltages(host->vmmc) > 1) {
+ 		ret = regulator_is_supported_voltage(host->vmmc, 3300000,
+ 			3300000);
+ 		if ((ret <= 0) || (!(caps[0] & SDHCI_CAN_VDD_330)))
