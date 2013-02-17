@@ -68,7 +68,7 @@
 
 %define		rel		1
 %define		basever		3.7
-%define		postver		.8
+%define		postver		.9
 
 # __alt_kernel is list of features, empty string if none set
 # _alt kernel is defined as: %{nil}%{?alt_kernel:-%{?alt_kernel}} (defined in rpm.macros)
@@ -111,7 +111,7 @@ Source0:	http://www.kernel.org/pub/linux/kernel/v3.x/linux-%{basever}.tar.xz
 # Source0-md5:	21223369d682bcf44bcdfe1521095983
 %if "%{postver}" != ".0"
 Patch0:		http://www.kernel.org/pub/linux/kernel/v3.x/patch-%{version}.bz2
-# Patch0-md5:	eebc58aad29509ca5a4eba58a9888b4a
+# Patch0-md5:	8d176cf61afaafa3c621833a8f8d2c62
 %endif
 
 Source3:	kernel-autoconf.h
