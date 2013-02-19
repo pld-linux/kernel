@@ -1151,7 +1151,6 @@ fi
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/bluetooth/*_cs.ko*
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/isdn/hardware/avm/avm_cs.ko*
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/isdn/hardware/avm/b1pcmcia.ko*
-%exclude /lib/modules/%{kernel_release}/kernel/drivers/staging/telephony/ixj_pcmcia.ko*
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/usb/gadget/g_midi.ko*
 %endif
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/ide/ide-cs.ko*
@@ -1210,7 +1209,6 @@ fi
 /lib/modules/%{kernel_release}/kernel/drivers/bluetooth/*_cs.ko*
 /lib/modules/%{kernel_release}/kernel/drivers/isdn/hardware/avm/avm_cs.ko*
 /lib/modules/%{kernel_release}/kernel/drivers/isdn/hardware/avm/b1pcmcia.ko*
-/lib/modules/%{kernel_release}/kernel/drivers/staging/telephony/ixj_pcmcia.ko*
 /lib/modules/%{kernel_release}/kernel/drivers/ata/pata_pcmcia.ko*
 %endif
 /lib/modules/%{kernel_release}/kernel/drivers/ide/ide-cs.ko*
