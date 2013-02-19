@@ -66,9 +66,9 @@
 %define		have_pcmcia	0
 %endif
 
-%define		rel		1
-%define		basever		3.7
-%define		postver		.9
+%define		rel		0.1
+%define		basever		3.8
+%define		postver		.0
 
 # __alt_kernel is list of features, empty string if none set
 # _alt kernel is defined as: %{nil}%{?alt_kernel:-%{?alt_kernel}} (defined in rpm.macros)
@@ -108,7 +108,7 @@ Epoch:		3
 License:	GPL v2
 Group:		Base/Kernel
 Source0:	http://www.kernel.org/pub/linux/kernel/v3.x/linux-%{basever}.tar.xz
-# Source0-md5:	21223369d682bcf44bcdfe1521095983
+# Source0-md5:	1c738edfc54e7c65faeb90c436104e2f
 %if "%{postver}" != ".0"
 Patch0:		http://www.kernel.org/pub/linux/kernel/v3.x/patch-%{version}.bz2
 # Patch0-md5:	8d176cf61afaafa3c621833a8f8d2c62
@@ -209,7 +209,7 @@ Patch122:	ovl13-overlayfs-copy-up-i_uid-i_gid-from-the-underlying-in.patch
 # Patch creation:
 # git clone git://aufs.git.sourceforge.net/gitroot/aufs/aufs3-standalone.git
 # cd aufs3-standalone
-# git checkout -b aufs3.7 origin/aufs3.7
+# git checkout -b aufs3.8 origin/aufs3.8
 # cat aufs3-kbuild.patch aufs3-base.patch aufs3-standalone.patch > ~/rpm/packages/kernel/kernel-aufs3.patch
 # mkdir linux
 # cp -a Documentation fs include linux
