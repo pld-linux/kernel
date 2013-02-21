@@ -308,7 +308,7 @@ Conflicts:	udev < 1:081
 Conflicts:	util-linux < 2.10o
 Conflicts:	util-vserver < 0.30.216
 Conflicts:	xfsprogs < 2.6.0
-ExclusiveArch:	%{ix86} %{x8664} alpha arm ia64 ppc ppc64 sparc sparc64
+ExclusiveArch:	i486 i586 i686 pentium3 pentium4 athlon %{x8664} alpha arm ia64 ppc ppc64 sparc sparc64
 ExclusiveOS:	Linux
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 
