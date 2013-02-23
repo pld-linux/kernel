@@ -31,8 +31,8 @@
 %bcond_with	verbose		# verbose build (V=1)
 %bcond_without	reiser4		# support for reiser4 fs (experimental)
 
-%bcond_without	grsecurity	# don't build grsecurity nor pax at all
-%bcond_without	grsec_full	# build full grsecurity
+%bcond_with	grsecurity	# don't build grsecurity nor pax at all
+%bcond_with	grsec_full	# build full grsecurity
 %bcond_with	grsec_minimal	# build only minimal subset (proc,link,fifo,shm)
 %bcond_with	pax		# build pax and full grsecurity (ie. grsec_full && pax)
 
@@ -45,8 +45,8 @@
 %bcond_without	esfq		# esfq support
 %bcond_without	ipv6		# ipv6 support
 
-%bcond_without	vserver		# support for VServer (enabled by default)
-%bcond_without	tuxonice	# support for tuxonice (ex-suspend2) (enabled by default)
+%bcond_with	vserver		# support for VServer
+%bcond_with	tuxonice	# support for tuxonice (ex-suspend2)
 %bcond_without	apparmor	# build kernel with apparmor (exerimental mix)
 
 %bcond_with	rescuecd	# build kernel for our rescue
@@ -114,8 +114,8 @@
 %endif
 
 %define		basever		2.6.34
-%define		postver		.7
-%define		rel		2
+%define		postver		.14
+%define		rel		1
 
 %define		_enable_debug_packages			0
 
@@ -157,8 +157,8 @@ Group:		Base/Kernel
 Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{basever}.tar.bz2
 # Source0-md5:	10eebcb0178fb4540e2165bfd7efc7ad
 %if "%{postver}" != "%{nil}"
-Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
-# Source1-md5:	a88e4b5a9fcb23c2229301ac4dae1f1a
+Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/longterm/v%{basever}/patch-%{version}.bz2
+# Source1-md5:	715ad265b0ea11fd30979a918a63645e
 %endif
 
 Source3:	kernel-autoconf.h
@@ -313,10 +313,6 @@ Patch1000:	kernel-grsec-minimal.patch
 Patch2000:	kernel-small_fixes.patch
 Patch2001:	kernel-pwc-uncompress.patch
 Patch2003:	kernel-regressions.patch
-
-Patch2004:	01-compat-make-compat_alloc_user_space-incorporate-the-access_ok-check.patch
-Patch2005:	02-compat-test-rax-for-the-system-call-number-not-eax.patch
-Patch2006:	03-compat-retruncate-rax-after-ia32-syscall-entry-tracing.patch
 
 # kill some thousands of warnings
 # (only warnings, so just remove parts of this patch if conflics)
@@ -873,10 +869,6 @@ sed -i 's/-Werror//' arch/alpha/kernel/Makefile
 %patch2000 -p1
 %patch2001 -p1
 #%patch2003 -p1
-
-%patch2004 -p1
-%patch2005 -p1
-%patch2006 -p1
 
 # Fix EXTRAVERSION in main Makefile
 sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{postver}%{?alt_kernel:_%{alt_kernel}}#g' Makefile
