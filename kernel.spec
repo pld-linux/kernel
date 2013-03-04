@@ -92,7 +92,7 @@
 %define		rel		1
 %define		basever		3.5
 %define		postver		.7
-%define		ubver		.6
+%define		ubver		.7
 
 # __alt_kernel is list of features, empty string if none set
 # _alt kernel is defined as: %{nil}%{?alt_kernel:-%{?alt_kernel}} (defined in rpm.macros)
@@ -139,7 +139,7 @@ Patch0:		http://www.kernel.org/pub/linux/kernel/v3.x/patch-%{basever}%{postver}.
 %endif
 %if "%{ubver}" != ""
 Patch1:		http://kernel.ubuntu.com/git?p=ubuntu/linux.git;a=commitdiff_plain;hp=v%{basever}%{postver};h=v%{basever}%{postver}%{ubver};/v%{basever}%{postver}%{ubver}.patch
-# Patch1-md5:	9a16e9711c056a78f22001a2ce7f8ae4
+# Patch1-md5:	a955d5248cc5cd585cf34191a4d4854c
 %endif
 
 Source3:	kernel-autoconf.h
