@@ -268,6 +268,7 @@ Requires:	kmod >= 12-2
 Requires:	cpuinfo(pae)
 %endif
 %endif
+Suggests:	crda
 Suggests:	dracut
 Suggests:	keyutils
 Suggests:	linux-firmware
