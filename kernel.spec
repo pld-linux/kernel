@@ -139,7 +139,7 @@ Patch0:		http://www.kernel.org/pub/linux/kernel/v3.x/patch-%{basever}%{postver}.
 %endif
 %if "%{ubver}" != ""
 Patch1:		http://kernel.ubuntu.com/git?p=ubuntu/linux.git;a=commitdiff_plain;hp=v%{basever}%{postver};h=v%{basever}%{postver}%{ubver};/v%{basever}%{postver}%{ubver}.patch
-# Patch1-md5:	59dde3d506ce8c4f48104bb9e33d2aca
+# Patch1-md5:	9a16e9711c056a78f22001a2ce7f8ae4
 %endif
 
 Source3:	kernel-autoconf.h
