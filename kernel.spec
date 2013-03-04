@@ -92,6 +92,7 @@
 %define		rel		1
 %define		basever		3.5
 %define		postver		.7
+%define		ubver		.6
 
 # __alt_kernel is list of features, empty string if none set
 # _alt kernel is defined as: %{nil}%{?alt_kernel:-%{?alt_kernel}} (defined in rpm.macros)
@@ -125,7 +126,7 @@ Summary(et.UTF-8):	Linuxi kernel (ehk operatsioonisüsteemi tuum)
 Summary(fr.UTF-8):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl.UTF-8):	Jądro Linuksa
 Name:		kernel%{_alt_kernel}
-Version:	%{basever}%{postver}
+Version:	%{basever}%{postver}%{ubver}
 Release:	%{rel}
 Epoch:		3
 License:	GPL v2
@@ -133,8 +134,12 @@ Group:		Base/Kernel
 Source0:	http://www.kernel.org/pub/linux/kernel/v3.x/linux-%{basever}.tar.xz
 # Source0-md5:	24153eaaa81dedc9481ada8cd9c3b83d
 %if "%{postver}" != ".0"
-Patch0:		http://www.kernel.org/pub/linux/kernel/v3.x/patch-%{version}.bz2
+Patch0:		http://www.kernel.org/pub/linux/kernel/v3.x/patch-%{basever}%{postver}.bz2
 # Patch0-md5:	f908f8c222cf4a1988b8bf180df46bb2
+%endif
+%if "%{ubver}" != ""
+Patch1:		http://kernel.ubuntu.com/git?p=ubuntu/linux.git;a=commitdiff_plain;hp=v%{basever}%{postver};h=v%{basever}%{postver}%{ubver};/v%{basever}%{postver}%{ubver}.patch
+# Patch1-md5:	59dde3d506ce8c4f48104bb9e33d2aca
 %endif
 
 Source3:	kernel-autoconf.h
@@ -644,6 +649,9 @@ sed -i 's/-Werror//' arch/alpha/kernel/Makefile
 
 %if "%{postver}" != ".0"
 %patch0 -p1
+%endif
+%if "%{ubver}" != ""
+%patch1 -p1
 %endif
 
 %if %{without vanilla}

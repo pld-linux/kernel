@@ -14404,10 +14404,9 @@ diff -NurpP --minimal linux-3.5.4/kernel/fork.c linux-3.5.4-vs2.3.4.3/kernel/for
  	mm_free_pgd(mm);
  	free_mm(mm);
  	return NULL;
-@@ -1161,6 +1170,8 @@ static struct task_struct *copy_process(
+@@ -1161,5 +1170,7 @@ static struct task_struct *copy_process(
  	int retval;
  	struct task_struct *p;
- 	int cgroup_callbacks_done = 0;
 +	struct vx_info *vxi;
 +	struct nx_info *nxi;
  
@@ -24574,37 +24573,6 @@ diff -NurpP --minimal linux-3.5.4/net/ipv4/inet_diag.c linux-3.5.4-vs2.3.4.3/net
  	r->idiag_state	      = tw->tw_substate;
  	r->idiag_timer	      = 3;
  	r->idiag_expires      = DIV_ROUND_UP(tmo * 1000, HZ);
-@@ -272,12 +276,14 @@ int inet_diag_dump_one_icsk(struct inet_
- 
- 	err = -EINVAL;
- 	if (req->sdiag_family == AF_INET) {
-+		/* TODO: lback */
- 		sk = inet_lookup(&init_net, hashinfo, req->id.idiag_dst[0],
- 				 req->id.idiag_dport, req->id.idiag_src[0],
- 				 req->id.idiag_sport, req->id.idiag_if);
- 	}
- #if IS_ENABLED(CONFIG_IPV6)
- 	else if (req->sdiag_family == AF_INET6) {
-+		/* TODO: lback */
- 		sk = inet6_lookup(&init_net, hashinfo,
- 				  (struct in6_addr *)req->id.idiag_dst,
- 				  req->id.idiag_dport,
-@@ -472,6 +478,7 @@ int inet_diag_bc_sk(const struct nlattr 
- 	} else
- #endif
- 	{
-+			/* TODO: lback */
- 		entry.saddr = &inet->inet_rcv_saddr;
- 		entry.daddr = &inet->inet_daddr;
- 	}
-@@ -570,6 +577,7 @@ static int inet_twsk_diag_dump(struct in
- 		} else
- #endif
- 		{
-+			/* TODO: lback */
- 			entry.saddr = &tw->tw_rcv_saddr;
- 			entry.daddr = &tw->tw_daddr;
- 		}
 @@ -615,8 +623,8 @@ static int inet_diag_fill_req(struct sk_
  
  	r->id.idiag_sport = inet->inet_sport;
@@ -24616,14 +24584,6 @@ diff -NurpP --minimal linux-3.5.4/net/ipv4/inet_diag.c linux-3.5.4-vs2.3.4.3/net
  	r->idiag_expires = jiffies_to_msecs(tmo);
  	r->idiag_rqueue = 0;
  	r->idiag_wqueue = 0;
-@@ -683,6 +691,7 @@ static int inet_diag_dump_reqs(struct sk
- 				continue;
- 
- 			if (bc) {
-+				/* TODO: lback */
- 				entry.saddr =
- #if IS_ENABLED(CONFIG_IPV6)
- 					(entry.family == AF_INET6) ?
 @@ -744,6 +753,8 @@ void inet_diag_dump_icsk(struct inet_has
  			sk_nulls_for_each(sk, node, &ilb->head) {
  				struct inet_sock *inet = inet_sk(sk);
