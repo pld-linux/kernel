@@ -15409,9 +15409,8 @@ diff -urNp linux-3.0.9/arch/x86/kernel/reboot.c linux-3.0.9/arch/x86/kernel/rebo
  }
  
  struct machine_ops machine_ops = {
-diff -urNp linux-3.0.9/arch/x86/kernel/setup.c linux-3.0.9/arch/x86/kernel/setup.c
---- linux-3.0.9/arch/x86/kernel/setup.c	2011-11-11 13:12:24.000000000 -0500
-+++ linux-3.0.9/arch/x86/kernel/setup.c	2011-11-15 20:02:59.000000000 -0500
+--- kernel-3.0.68/arch/x86/kernel/setup.c~	2013-03-05 21:11:56.000000000 +0200
++++ kernel-3.0.68/arch/x86/kernel/setup.c	2013-03-05 22:13:05.713034303 +0200
 @@ -447,7 +447,7 @@ static void __init parse_setup_data(void
  
  		switch (data->type) {
@@ -15421,15 +15420,15 @@ diff -urNp linux-3.0.9/arch/x86/kernel/setup.c linux-3.0.9/arch/x86/kernel/setup
  			break;
  		case SETUP_DTB:
  			add_dtb(pa_data);
-@@ -650,7 +650,7 @@ static void __init trim_bios_range(void)
+@@ -727,7 +727,7 @@
  	 * area (640->1Mb) as ram even though it is not.
  	 * take them out.
  	 */
 -	e820_remove_range(BIOS_BEGIN, BIOS_END - BIOS_BEGIN, E820_RAM, 1);
 +	e820_remove_range(ISA_START_ADDRESS, ISA_END_ADDRESS - ISA_START_ADDRESS, E820_RAM, 1);
+ 
  	sanitize_e820_map(e820.map, ARRAY_SIZE(e820.map), &e820.nr_map);
  }
- 
 @@ -773,14 +773,14 @@ void __init setup_arch(char **cmdline_p)
  
  	if (!boot_params.hdr.root_flags)
@@ -67528,10 +67527,9 @@ diff -urNp linux-3.0.9/mm/madvise.c linux-3.0.9/mm/madvise.c
  	error = 0;
  	if (end == start)
  		goto out;
-diff -urNp linux-3.0.9/mm/memory.c linux-3.0.9/mm/memory.c
---- linux-3.0.9/mm/memory.c	2011-11-11 13:12:24.000000000 -0500
-+++ linux-3.0.9/mm/memory.c	2011-11-15 20:03:00.000000000 -0500
-@@ -457,8 +457,12 @@ static inline void free_pmd_range(struct
+--- kernel-3.0.68/mm/memory.c~	2013-03-05 22:35:36.000000000 +0200
++++ kernel-3.0.68/mm/memory.c	2013-03-05 22:37:01.886010668 +0200
+@@ -462,8 +462,12 @@
  		return;
  
  	pmd = pmd_offset(pud, start);
@@ -67544,7 +67542,7 @@ diff -urNp linux-3.0.9/mm/memory.c linux-3.0.9/mm/memory.c
  }
  
  static inline void free_pud_range(struct mmu_gather *tlb, pgd_t *pgd,
-@@ -489,9 +493,12 @@ static inline void free_pud_range(struct
+@@ -494,9 +498,12 @@
  	if (end - 1 > ceiling - 1)
  		return;
  
@@ -67557,7 +67555,7 @@ diff -urNp linux-3.0.9/mm/memory.c linux-3.0.9/mm/memory.c
  }
  
  /*
-@@ -1577,12 +1584,6 @@ no_page_table:
+@@ -1590,12 +1597,6 @@
  	return page;
  }
  
@@ -67570,7 +67568,7 @@ diff -urNp linux-3.0.9/mm/memory.c linux-3.0.9/mm/memory.c
  /**
   * __get_user_pages() - pin user pages in memory
   * @tsk:	task_struct of target task
-@@ -1655,10 +1656,10 @@ int __get_user_pages(struct task_struct 
+@@ -1668,10 +1669,10 @@
  			(VM_MAYREAD | VM_MAYWRITE) : (VM_READ | VM_WRITE);
  	i = 0;
  
@@ -67583,7 +67581,7 @@ diff -urNp linux-3.0.9/mm/memory.c linux-3.0.9/mm/memory.c
  		if (!vma && in_gate_area(mm, start)) {
  			unsigned long pg = start & PAGE_MASK;
  			pgd_t *pgd;
-@@ -1706,7 +1707,7 @@ int __get_user_pages(struct task_struct 
+@@ -1719,7 +1720,7 @@
  			goto next_page;
  		}
  
@@ -67592,7 +67590,7 @@ diff -urNp linux-3.0.9/mm/memory.c linux-3.0.9/mm/memory.c
  		    (vma->vm_flags & (VM_IO | VM_PFNMAP)) ||
  		    !(vm_flags & vma->vm_flags))
  			return i ? : -EFAULT;
-@@ -1733,11 +1734,6 @@ int __get_user_pages(struct task_struct 
+@@ -1746,11 +1747,6 @@
  				int ret;
  				unsigned int fault_flags = 0;
  
@@ -67604,7 +67602,7 @@ diff -urNp linux-3.0.9/mm/memory.c linux-3.0.9/mm/memory.c
  				if (foll_flags & FOLL_WRITE)
  					fault_flags |= FAULT_FLAG_WRITE;
  				if (nonblocking)
-@@ -1811,7 +1807,7 @@ next_page:
+@@ -1824,7 +1820,7 @@
  			start += PAGE_SIZE;
  			nr_pages--;
  		} while (nr_pages && start < vma->vm_end);
@@ -67613,7 +67611,7 @@ diff -urNp linux-3.0.9/mm/memory.c linux-3.0.9/mm/memory.c
  	return i;
  }
  EXPORT_SYMBOL(__get_user_pages);
-@@ -2018,6 +2014,10 @@ static int insert_page(struct vm_area_st
+@@ -2031,6 +2027,10 @@
  	page_add_file_rmap(page);
  	set_pte_at(mm, addr, pte, mk_pte(page, prot));
  
@@ -67624,7 +67622,7 @@ diff -urNp linux-3.0.9/mm/memory.c linux-3.0.9/mm/memory.c
  	retval = 0;
  	pte_unmap_unlock(pte, ptl);
  	return retval;
-@@ -2052,10 +2052,22 @@ out:
+@@ -2065,10 +2065,22 @@
  int vm_insert_page(struct vm_area_struct *vma, unsigned long addr,
  			struct page *page)
  {
@@ -67647,7 +67645,7 @@ diff -urNp linux-3.0.9/mm/memory.c linux-3.0.9/mm/memory.c
  	vma->vm_flags |= VM_INSERTPAGE;
  	return insert_page(vma, addr, page, vma->vm_page_prot);
  }
-@@ -2141,6 +2153,7 @@ int vm_insert_mixed(struct vm_area_struc
+@@ -2154,6 +2166,7 @@
  			unsigned long pfn)
  {
  	BUG_ON(!(vma->vm_flags & VM_MIXEDMAP));
@@ -67655,7 +67653,7 @@ diff -urNp linux-3.0.9/mm/memory.c linux-3.0.9/mm/memory.c
  
  	if (addr < vma->vm_start || addr >= vma->vm_end)
  		return -EFAULT;
-@@ -2456,6 +2469,186 @@ static inline void cow_user_page(struct 
+@@ -2469,6 +2482,186 @@
  		copy_user_highpage(dst, src, va, vma);
  }
  
@@ -67842,7 +67840,7 @@ diff -urNp linux-3.0.9/mm/memory.c linux-3.0.9/mm/memory.c
  /*
   * This routine handles present pages, when users try to write
   * to a shared page. It is done by copying the page to a new address
-@@ -2667,6 +2860,12 @@ gotten:
+@@ -2680,6 +2873,12 @@
  	 */
  	page_table = pte_offset_map_lock(mm, pmd, address, &ptl);
  	if (likely(pte_same(*page_table, orig_pte))) {
@@ -67855,7 +67853,7 @@ diff -urNp linux-3.0.9/mm/memory.c linux-3.0.9/mm/memory.c
  		if (old_page) {
  			if (!PageAnon(old_page)) {
  				dec_mm_counter_fast(mm, MM_FILEPAGES);
-@@ -2718,6 +2917,10 @@ gotten:
+@@ -2731,6 +2930,10 @@
  			page_remove_rmap(old_page);
  		}
  
@@ -67866,7 +67864,7 @@ diff -urNp linux-3.0.9/mm/memory.c linux-3.0.9/mm/memory.c
  		/* Free the old page.. */
  		new_page = old_page;
  		ret |= VM_FAULT_WRITE;
-@@ -2997,6 +3200,11 @@ static int do_swap_page(struct mm_struct
+@@ -3010,6 +3213,11 @@
  	swap_free(entry);
  	if (vm_swap_full() || (vma->vm_flags & VM_LOCKED) || PageMlocked(page))
  		try_to_free_swap(page);
@@ -67878,7 +67876,7 @@ diff -urNp linux-3.0.9/mm/memory.c linux-3.0.9/mm/memory.c
  	unlock_page(page);
  	if (swapcache) {
  		/*
-@@ -3020,6 +3228,11 @@ static int do_swap_page(struct mm_struct
+@@ -3033,6 +3241,11 @@
  
  	/* No need to invalidate - it was non-present before */
  	update_mmu_cache(vma, address, page_table);
@@ -67890,7 +67888,7 @@ diff -urNp linux-3.0.9/mm/memory.c linux-3.0.9/mm/memory.c
  unlock:
  	pte_unmap_unlock(page_table, ptl);
  out:
-@@ -3039,40 +3252,6 @@ out_release:
+@@ -3052,40 +3265,6 @@
  }
  
  /*
@@ -67931,7 +67929,7 @@ diff -urNp linux-3.0.9/mm/memory.c linux-3.0.9/mm/memory.c
   * We enter with non-exclusive mmap_sem (to exclude vma changes,
   * but allow concurrent faults), and pte mapped but not yet locked.
   * We return with mmap_sem still held, but pte unmapped and unlocked.
-@@ -3081,27 +3260,23 @@ static int do_anonymous_page(struct mm_s
+@@ -3094,27 +3273,23 @@
  		unsigned long address, pte_t *page_table, pmd_t *pmd,
  		unsigned int flags)
  {
@@ -67964,7 +67962,7 @@ diff -urNp linux-3.0.9/mm/memory.c linux-3.0.9/mm/memory.c
  	if (unlikely(anon_vma_prepare(vma)))
  		goto oom;
  	page = alloc_zeroed_user_highpage_movable(vma, address);
-@@ -3120,6 +3295,11 @@ static int do_anonymous_page(struct mm_s
+@@ -3133,6 +3308,11 @@
  	if (!pte_none(*page_table))
  		goto release;
  
@@ -67976,7 +67974,7 @@ diff -urNp linux-3.0.9/mm/memory.c linux-3.0.9/mm/memory.c
  	inc_mm_counter_fast(mm, MM_ANONPAGES);
  	page_add_new_anon_rmap(page, vma, address);
  setpte:
-@@ -3127,6 +3307,12 @@ setpte:
+@@ -3140,6 +3320,12 @@
  
  	/* No need to invalidate - it was non-present before */
  	update_mmu_cache(vma, address, page_table);
@@ -67989,7 +67987,7 @@ diff -urNp linux-3.0.9/mm/memory.c linux-3.0.9/mm/memory.c
  unlock:
  	pte_unmap_unlock(page_table, ptl);
  	return 0;
-@@ -3264,6 +3450,12 @@ static int __do_fault(struct mm_struct *
+@@ -3277,6 +3463,12 @@
  	 */
  	/* Only go through if we didn't race with anybody else... */
  	if (likely(pte_same(*page_table, orig_pte))) {
@@ -68002,7 +68000,7 @@ diff -urNp linux-3.0.9/mm/memory.c linux-3.0.9/mm/memory.c
  		flush_icache_page(vma, page);
  		entry = mk_pte(page, vma->vm_page_prot);
  		if (flags & FAULT_FLAG_WRITE)
-@@ -3283,6 +3475,14 @@ static int __do_fault(struct mm_struct *
+@@ -3296,6 +3488,14 @@
  
  		/* no need to invalidate: a not-present page won't be cached */
  		update_mmu_cache(vma, address, page_table);
@@ -68017,7 +68015,7 @@ diff -urNp linux-3.0.9/mm/memory.c linux-3.0.9/mm/memory.c
  	} else {
  		if (charged)
  			mem_cgroup_uncharge_page(page);
-@@ -3430,6 +3630,12 @@ int handle_pte_fault(struct mm_struct *m
+@@ -3447,6 +3647,12 @@
  		if (flags & FAULT_FLAG_WRITE)
  			flush_tlb_fix_spurious_fault(vma, address);
  	}
@@ -68029,8 +68027,8 @@ diff -urNp linux-3.0.9/mm/memory.c linux-3.0.9/mm/memory.c
 +
  unlock:
  	pte_unmap_unlock(pte, ptl);
- 	return 0;
-@@ -3446,6 +3652,10 @@ int handle_mm_fault(struct mm_struct *mm
+ 	ret = 0;
+@@ -3466,6 +3672,10 @@
  	pmd_t *pmd;
  	pte_t *pte;
  
@@ -68041,9 +68039,27 @@ diff -urNp linux-3.0.9/mm/memory.c linux-3.0.9/mm/memory.c
  	__set_current_state(TASK_RUNNING);
  
  	count_vm_event(PGFAULT);
-@@ -3457,6 +3667,34 @@ int handle_mm_fault(struct mm_struct *mm
- 	if (unlikely(is_vm_hugetlb_page(vma)))
- 		return hugetlb_fault(mm, vma, address, flags);
+@@ -3518,7 +3728,7 @@
+ 	 * run pte_offset_map on the pmd, if an huge pmd could
+ 	 * materialize from under us from a different thread.
+ 	 */
+-	if (unlikely(pmd_none(*pmd)) && __pte_alloc(mm, vma, pmd, address))
++	if (unlikely(pmd_none(*pmd) && __pte_alloc(mm, vma, pmd, address)))
+ 		return VM_FAULT_OOM;
+ 	/* if an huge pmd materialized from under us just retry later */
+ 	if (unlikely(pmd_trans_huge(*pmd)))
+@@ -3622,7 +3832,7 @@
+ 	gate_vma.vm_start = FIXADDR_USER_START;
+ 	gate_vma.vm_end = FIXADDR_USER_END;
+ 	gate_vma.vm_flags = VM_READ | VM_MAYREAD | VM_EXEC | VM_MAYEXEC;
+-	gate_vma.vm_page_prot = __P101;
++	gate_vma.vm_page_prot = vm_get_page_prot(gate_vma.vm_flags);
+ 	/*
+ 	 * Make sure the vDSO gets into every core dump.
+ 	 * Dumping its contents makes post-mortem fully interpretable later
+@@ -3663,6 +3873,34 @@
+ 	pmd_t *pmd;
+ 	pte_t *ptep;
  
 +#ifdef CONFIG_PAX_SEGMEXEC
 +	vma_m = pax_find_mirror_vma(vma);
@@ -68074,26 +68090,8 @@ diff -urNp linux-3.0.9/mm/memory.c linux-3.0.9/mm/memory.c
 +#endif
 +
  	pgd = pgd_offset(mm, address);
- 	pud = pud_alloc(mm, pgd, address);
- 	if (!pud)
-@@ -3486,7 +3724,7 @@ int handle_mm_fault(struct mm_struct *mm
- 	 * run pte_offset_map on the pmd, if an huge pmd could
- 	 * materialize from under us from a different thread.
- 	 */
--	if (unlikely(pmd_none(*pmd)) && __pte_alloc(mm, vma, pmd, address))
-+	if (unlikely(pmd_none(*pmd) && __pte_alloc(mm, vma, pmd, address)))
- 		return VM_FAULT_OOM;
- 	/* if an huge pmd materialized from under us just retry later */
- 	if (unlikely(pmd_trans_huge(*pmd)))
-@@ -3590,7 +3828,7 @@ static int __init gate_vma_init(void)
- 	gate_vma.vm_start = FIXADDR_USER_START;
- 	gate_vma.vm_end = FIXADDR_USER_END;
- 	gate_vma.vm_flags = VM_READ | VM_MAYREAD | VM_EXEC | VM_MAYEXEC;
--	gate_vma.vm_page_prot = __P101;
-+	gate_vma.vm_page_prot = vm_get_page_prot(gate_vma.vm_flags);
- 	/*
- 	 * Make sure the vDSO gets into every core dump.
- 	 * Dumping its contents makes post-mortem fully interpretable later
+ 	if (pgd_none(*pgd) || unlikely(pgd_bad(*pgd)))
+ 		goto out;
 diff -urNp linux-3.0.9/mm/memory-failure.c linux-3.0.9/mm/memory-failure.c
 --- linux-3.0.9/mm/memory-failure.c	2011-11-11 13:12:24.000000000 -0500
 +++ linux-3.0.9/mm/memory-failure.c	2011-11-15 20:03:00.000000000 -0500
@@ -70206,9 +70204,8 @@ diff -urNp linux-3.0.9/mm/rmap.c linux-3.0.9/mm/rmap.c
  {
  	struct anon_vma_chain *avc;
  	struct anon_vma *anon_vma;
-diff -urNp linux-3.0.9/mm/shmem.c linux-3.0.9/mm/shmem.c
---- linux-3.0.9/mm/shmem.c	2011-11-11 13:12:24.000000000 -0500
-+++ linux-3.0.9/mm/shmem.c	2011-11-15 20:03:00.000000000 -0500
+--- kernel-3.0.68/mm/shmem.c~	2013-03-05 21:11:58.000000000 +0200
++++ kernel-3.0.68/mm/shmem.c	2013-03-05 22:23:19.054682047 +0200
 @@ -31,7 +31,7 @@
  #include <linux/percpu_counter.h>
  #include <linux/swap.h>
@@ -70227,15 +70224,15 @@ diff -urNp linux-3.0.9/mm/shmem.c linux-3.0.9/mm/shmem.c
  	if (entry->val) {
  		/*
  		 * The more uptodate page coming down from a stacked
-@@ -1172,6 +1174,8 @@ static struct page *shmem_swapin(swp_ent
+@@ -1173,6 +1173,8 @@
  	struct vm_area_struct pvma;
  	struct page *page;
  
 +	pax_track_stack();
 +
- 	spol = mpol_cond_copy(&mpol,
- 				mpol_shared_policy_lookup(&info->policy, idx));
- 
+ 	/* Create a pseudo vma that just contains the policy */
+ 	pvma.vm_start = 0;
+ 	pvma.vm_pgoff = idx;
 @@ -2568,8 +2572,7 @@ int shmem_fill_super(struct super_block 
  	int err = -ENOMEM;
  
@@ -72128,13 +72125,12 @@ diff -urNp linux-3.0.9/net/core/iovec.c linux-3.0.9/net/core/iovec.c
  		return -EFAULT;
  
  	m->msg_iov = iov;
-diff -urNp linux-3.0.9/net/core/rtnetlink.c linux-3.0.9/net/core/rtnetlink.c
---- linux-3.0.9/net/core/rtnetlink.c	2011-11-11 13:12:24.000000000 -0500
-+++ linux-3.0.9/net/core/rtnetlink.c	2011-11-15 20:03:00.000000000 -0500
-@@ -56,7 +56,7 @@
- struct rtnl_link {
+--- kernel-3.0.68/net/core/rtnetlink.c~	2013-03-05 21:11:53.000000000 +0200
++++ kernel-3.0.68/net/core/rtnetlink.c	2013-03-05 22:26:41.287351284 +0200
+@@ -57,7 +57,7 @@
  	rtnl_doit_func		doit;
  	rtnl_dumpit_func	dumpit;
+ 	rtnl_calcit_func 	calcit;
 -};
 +} __no_const;
  
