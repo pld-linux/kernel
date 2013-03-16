@@ -114,7 +114,7 @@
 %endif
 
 %define		basever		2.6.32
-%define		postver		.58
+%define		postver		.60
 %define		rel		1
 
 %define		_enable_debug_packages			0
@@ -158,7 +158,7 @@ Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{basever}.tar.bz2
 # Source0-md5:	260551284ac224c3a43c4adac7df4879
 %if "%{postver}" != "%{nil}"
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/longterm/v%{basever}/patch-%{version}.bz2
-# Source1-md5:	a32385ccb645eea5bb33e88adb4af5b8
+# Source1-md5:	1718e3b1caff13c1e731e257c4c4120b
 %endif
 
 Source3:	kernel-autoconf.h
@@ -271,7 +271,7 @@ Patch85:	kernel-hostap.patch
 # Taken from http://download.opensuse.org/factory/repo/src-oss/suse/src/kernel-source-2.6.30-10.3.src.rpm
 Patch90:	kernel-mpt-fusion.patch
 
-# based on http://vserver.13thfloor.at/Experimental/patch-2.6.32.8-vs2.3.0.36.29.1.diff
+# based on http://vserver.13thfloor.at/Experimental/patch-2.6.32.60-vs2.3.0.36.29.9.diff
 Patch100:	kernel-vserver-2.3.patch
 Patch101:	kernel-vserver-fixes.patch
 
