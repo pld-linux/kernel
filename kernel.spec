@@ -1120,18 +1120,22 @@ fi
 %post
 %ifarch ia64
 mv -f /boot/efi/vmlinuz{,.old} 2> /dev/null
-%{?alt_kernel:mv -f /boot/efi/vmlinuz%{_alt_kernel}{,.old} 2> /dev/null}
 ln -sf vmlinuz-%{kernel_release} /boot/efi/vmlinuz
-%{?alt_kernel:ln -sf vmlinuz-%{kernel_release} /boot/efi/vmlinuz%{_alt_kernel}}
+%if 0%{?alt_kernel:1}
+mv -f /boot/efi/vmlinuz%{_alt_kernel}{,.old} 2> /dev/null
+ln -sf vmlinuz-%{kernel_release} /boot/efi/vmlinuz%{_alt_kernel}
+%endif
 %endif
 mv -f /boot/vmlinuz{,.old} 2> /dev/null
-%{?alt_kernel:mv -f /boot/vmlinuz%{_alt_kernel}{,.old} 2> /dev/null}
 mv -f /boot/System.map{,.old} 2> /dev/null
-%{?alt_kernel:mv -f /boot/System%{_alt_kernel}.map{,.old} 2> /dev/null}
 ln -sf vmlinuz-%{kernel_release} /boot/vmlinuz
-%{?alt_kernel:ln -sf vmlinuz-%{kernel_release} /boot/vmlinuz%{_alt_kernel}}
 ln -sf System.map-%{kernel_release} /boot/System.map
-%{?alt_kernel:ln -sf System.map-%{kernel_release} /boot/System.map%{_alt_kernel}}
+%if 0%{?alt_kernel:1}
+mv -f /boot/vmlinuz%{_alt_kernel}{,.old} 2> /dev/null
+mv -f /boot/System%{_alt_kernel}.map{,.old} 2> /dev/null
+ln -sf vmlinuz-%{kernel_release} /boot/vmlinuz%{_alt_kernel}
+ln -sf System.map-%{kernel_release} /boot/System.map%{_alt_kernel}
+%endif
 
 %depmod %{kernel_release}
 
@@ -1139,9 +1143,11 @@ ln -sf System.map-%{kernel_release} /boot/System.map
 # generate initrd after all dependant modules are installed
 /sbin/geninitrd -f --initrdfs=initramfs %{initrd_dir}/initrd-%{kernel_release}.gz %{kernel_release}
 mv -f %{initrd_dir}/initrd{,.old} 2> /dev/null
-%{?alt_kernel:mv -f %{initrd_dir}/initrd%{_alt_kernel}{,.old} 2> /dev/null}
 ln -sf initrd-%{kernel_release}.gz %{initrd_dir}/initrd
-%{?alt_kernel:ln -sf initrd-%{kernel_release}.gz %{initrd_dir}/initrd%{_alt_kernel}}
+%if 0%{?alt_kernel:1}
+mv -f %{initrd_dir}/initrd%{_alt_kernel}{,.old} 2> /dev/null
+ln -sf initrd-%{kernel_release}.gz %{initrd_dir}/initrd%{_alt_kernel}
+%endif
 
 # if dracut is present then generate full-featured initramfs
 if [ -x /sbin/dracut ]; then
@@ -1163,9 +1169,11 @@ fi
 
 %post vmlinux
 mv -f /boot/vmlinux{,.old} 2> /dev/null
-%{?alt_kernel:mv -f /boot/vmlinux-%{alt_kernel}{,.old} 2> /dev/null}
 ln -sf vmlinux-%{kernel_release} /boot/vmlinux
-%{?alt_kernel:ln -sf vmlinux-%{kernel_release} /boot/vmlinux-%{alt_kernel}}
+%if 0%{?alt_kernel:1}
+mv -f /boot/vmlinux-%{alt_kernel}{,.old} 2> /dev/null
+ln -sf vmlinux-%{kernel_release} /boot/vmlinux-%{alt_kernel}
+%endif
 
 %post drm
 %depmod %{kernel_release}
