@@ -113,6 +113,7 @@ Source0:	http://www.kernel.org/pub/linux/kernel/v3.x/linux-%{basever}.tar.xz
 Patch0:		http://www.kernel.org/pub/linux/kernel/v3.x/patch-%{version}.bz2
 # Patch0-md5:	477a910b5956ca67c857c2e69d550410
 %endif
+Source1:	kernel.sysconfig
 
 Source3:	kernel-autoconf.h
 Source4:	kernel-config.h
@@ -948,6 +949,9 @@ touch $RPM_BUILD_ROOT/lib/modules/%{kernel_release}/modules.dep
 # /etc/modrobe.d
 install -d $RPM_BUILD_ROOT%{_sysconfdir}/modprobe.d/%{kernel_release}
 
+install -d $RPM_BUILD_ROOT/etc/sysconfig
+install %{SOURCE1} $RPM_BUILD_ROOT/etc/sysconfig/kernel
+
 # /usr/src/linux
 install -d $RPM_BUILD_ROOT%{_kernelsrcdir}
 
@@ -1014,39 +1018,47 @@ if [ -x /sbin/new-kernel-pkg ]; then
 fi
 
 %post
+[ -f /etc/sysconfig/kernel ] && . /etc/sysconfig/kernel
+if [[ "$CREATE_SYMLINKS" != [Nn][Oo] ]]; then
 %ifarch ia64
-mv -f /boot/efi/vmlinuz{,.old} 2> /dev/null
-ln -sf vmlinuz-%{kernel_release} /boot/efi/vmlinuz
+	mv -f /boot/efi/vmlinuz{,.old} 2> /dev/null
+	ln -sf vmlinuz-%{kernel_release} /boot/efi/vmlinuz
 %if 0%{?alt_kernel:1}
-mv -f /boot/efi/vmlinuz%{_alt_kernel}{,.old} 2> /dev/null
-ln -sf vmlinuz-%{kernel_release} /boot/efi/vmlinuz%{_alt_kernel}
+	mv -f /boot/efi/vmlinuz%{_alt_kernel}{,.old} 2> /dev/null
+	ln -sf vmlinuz-%{kernel_release} /boot/efi/vmlinuz%{_alt_kernel}
 %endif
 %endif
-mv -f /boot/vmlinuz{,.old} 2> /dev/null
-mv -f /boot/System.map{,.old} 2> /dev/null
-ln -sf vmlinuz-%{kernel_release} /boot/vmlinuz
-ln -sf System.map-%{kernel_release} /boot/System.map
+	mv -f /boot/vmlinuz{,.old} 2> /dev/null
+	mv -f /boot/System.map{,.old} 2> /dev/null
+	ln -sf vmlinuz-%{kernel_release} /boot/vmlinuz
+	ln -sf System.map-%{kernel_release} /boot/System.map
 %if 0%{?alt_kernel:1}
-mv -f /boot/vmlinuz%{_alt_kernel}{,.old} 2> /dev/null
-mv -f /boot/System%{_alt_kernel}.map{,.old} 2> /dev/null
-ln -sf vmlinuz-%{kernel_release} /boot/vmlinuz%{_alt_kernel}
-ln -sf System.map-%{kernel_release} /boot/System.map%{_alt_kernel}
+	mv -f /boot/vmlinuz%{_alt_kernel}{,.old} 2> /dev/null
+	mv -f /boot/System%{_alt_kernel}.map{,.old} 2> /dev/null
+	ln -sf vmlinuz-%{kernel_release} /boot/vmlinuz%{_alt_kernel}
+	ln -sf System.map-%{kernel_release} /boot/System.map%{_alt_kernel}
 %endif
+fi
 
 %depmod %{kernel_release}
 
 %posttrans
-# generate initrd after all dependant modules are installed
-/sbin/geninitrd -f --initrdfs=initramfs %{initrd_dir}/initrd-%{kernel_release}.gz %{kernel_release}
-mv -f %{initrd_dir}/initrd{,.old} 2> /dev/null
-ln -sf initrd-%{kernel_release}.gz %{initrd_dir}/initrd
+[ -f /etc/sysconfig/kernel ] && . /etc/sysconfig/kernel
+if [[ "$USE_GENINITRD" != [Nn][Oo] ]]; then
+	# generate initrd after all dependant modules are installed
+	/sbin/geninitrd -f --initrdfs=initramfs %{initrd_dir}/initrd-%{kernel_release}.gz %{kernel_release}
+fi
+if [[ "$CREATE_SYMLINKS" != [Nn][Oo] ]]; then
+	mv -f %{initrd_dir}/initrd{,.old} 2> /dev/null
+	ln -sf initrd-%{kernel_release}.gz %{initrd_dir}/initrd
 %if 0%{?alt_kernel:1}
-mv -f %{initrd_dir}/initrd%{_alt_kernel}{,.old} 2> /dev/null
-ln -sf initrd-%{kernel_release}.gz %{initrd_dir}/initrd%{_alt_kernel}
+	mv -f %{initrd_dir}/initrd%{_alt_kernel}{,.old} 2> /dev/null
+	ln -sf initrd-%{kernel_release}.gz %{initrd_dir}/initrd%{_alt_kernel}
 %endif
+fi
 
 # if dracut is present then generate full-featured initramfs
-if [ -x /sbin/dracut ]; then
+if [[ "$USE_DRACUT" != [Nn][Oo] ]] && [ -x /sbin/dracut ]; then
 	/sbin/dracut --force --quiet /boot/initramfs-%{kernel_release}.img %{kernel_release}
 fi
 
@@ -1064,12 +1076,15 @@ if [ -x /sbin/rc-boot ]; then
 fi
 
 %post vmlinux
-mv -f /boot/vmlinux{,.old} 2> /dev/null
-ln -sf vmlinux-%{kernel_release} /boot/vmlinux
+[ -f /etc/sysconfig/kernel ] && . /etc/sysconfig/kernel
+if [[ "$CREATE_SYMLINKS" != [Nn][Oo] ]]; then
+	mv -f /boot/vmlinux{,.old} 2> /dev/null
+	ln -sf vmlinux-%{kernel_release} /boot/vmlinux
 %if 0%{?alt_kernel:1}
-mv -f /boot/vmlinux-%{alt_kernel}{,.old} 2> /dev/null
-ln -sf vmlinux-%{kernel_release} /boot/vmlinux-%{alt_kernel}
+	mv -f /boot/vmlinux-%{alt_kernel}{,.old} 2> /dev/null
+	ln -sf vmlinux-%{kernel_release} /boot/vmlinux-%{alt_kernel}
 %endif
+fi
 
 %post drm
 %depmod %{kernel_release}
