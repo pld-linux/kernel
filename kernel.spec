@@ -1018,6 +1018,7 @@ done
 # /boot
 install -d $RPM_BUILD_ROOT/boot
 cp -a %{objdir}/System.map $RPM_BUILD_ROOT/boot/System.map-%{kernel_release}
+cp -a %{objdir}/.config $RPM_BUILD_ROOT/boot/config-%{kernel_release}
 %ifarch %{ix86} %{x8664}
 	cp -a %{objdir}/arch/%{target_arch_dir}/boot/bzImage $RPM_BUILD_ROOT/boot/vmlinuz-%{kernel_release}
 	install -p %{objdir}/vmlinux $RPM_BUILD_ROOT/boot/vmlinux-%{kernel_release}
@@ -1221,6 +1222,7 @@ fi
 %endif
 /boot/vmlinuz-%{kernel_release}
 /boot/System.map-%{kernel_release}
+/boot/config-%{kernel_release}
 %ghost %{initrd_dir}/initrd-%{kernel_release}.gz
 %ghost %{initrd_dir}/initramfs-%{kernel_release}.img
 /lib/firmware/%{kernel_release}
