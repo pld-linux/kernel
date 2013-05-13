@@ -1137,7 +1137,7 @@ ln -sf System.map-%{kernel_release} /boot/System.map
 
 %posttrans
 # generate initrd after all dependant modules are installed
-/sbin/geninitrd -f --initrdfs=initramfs %{initrd_dir}/initrd-%{kernel_release}.gz %{kernel_release}
+/sbin/geninitrd -f --initrdfs=initramfs %{initrd_dir}/initrd-%{kernel_release}.gz %{kernel_release} || :
 mv -f %{initrd_dir}/initrd{,.old} 2> /dev/null
 %{?alt_kernel:mv -f %{initrd_dir}/initrd%{_alt_kernel}{,.old} 2> /dev/null}
 ln -sf initrd-%{kernel_release}.gz %{initrd_dir}/initrd
