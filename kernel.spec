@@ -1044,10 +1044,10 @@ fi
 %depmod %{kernel_release}
 
 %posttrans
+# use posttrans to generate initrd after all dependant module packages (-drm, etc) are installed
 [ -f /etc/sysconfig/kernel ] && . /etc/sysconfig/kernel
 if [[ "$USE_GENINITRD" != [Nn][Oo] ]]; then
-	# generate initrd after all dependant modules are installed
-	/sbin/geninitrd -f --initrdfs=initramfs %{initrd_dir}/initrd-%{kernel_release}.gz %{kernel_release}
+	/sbin/geninitrd -f --initrdfs=initramfs %{initrd_dir}/initrd-%{kernel_release}.gz %{kernel_release} || :
 fi
 if [[ "$CREATE_SYMLINKS" != [Nn][Oo] ]]; then
 	mv -f %{initrd_dir}/initrd{,.old} 2> /dev/null
