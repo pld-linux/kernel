@@ -66,7 +66,7 @@
 %define		have_pcmcia	0
 %endif
 
-%define		rel		7
+%define		rel		8
 %define		basever		3.7
 %define		postver		.10
 
@@ -227,6 +227,7 @@ Patch400:	kernel-virtio-gl-accel.patch
 Patch2000:	kernel-small_fixes.patch
 Patch2001:	kernel-pwc-uncompress.patch
 Patch2003:	kernel-regressions.patch
+Patch2004:	CVE-2013-2094.patch
 
 # http://git.kernel.org/?p=linux/kernel/git/jj/linux-apparmor.git;a=shortlog;h=refs/heads/v3.5-aa2.8
 Patch5000:	kernel-apparmor.patch
@@ -708,6 +709,7 @@ cd linux-%{basever}
 %patch2000 -p1
 %patch2001 -p1
 #%patch2003 -p1
+%patch2004 -p1
 
 # Do not remove this, please!
 #%%patch50000 -p1
