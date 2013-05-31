@@ -1317,7 +1317,7 @@ fi
 %{_kernelsrcdir}/scripts/kconfig/[m-u]*.h
 %{_kernelsrcdir}/scripts/kconfig/lxdialog
 %{_kernelsrcdir}/scripts/mod/*.c
-%{_kernelsrcdir}/scripts/mod/[^e]*.h
+%{_kernelsrcdir}/scripts/mod/modpost.h
 %attr(755,root,root) %{_kernelsrcdir}/scripts/mkcompile_h
 %{_kernelsrcdir}/scripts/mkmakefile
 %{_kernelsrcdir}/scripts/module-common.lds
@@ -1359,6 +1359,7 @@ fi
 %ifarch ppc ppc64
 %exclude %{_kernelsrcdir}/arch/powerpc/lib/crtsavres.*
 %endif
+%{_kernelsrcdir}/arch/arm/kvm
 %{_kernelsrcdir}/arch/s390/kvm
 %{_kernelsrcdir}/arch/x86/kvm
 %exclude %{_kernelsrcdir}/arch/*/kernel/asm-offsets*
