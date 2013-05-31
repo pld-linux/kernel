@@ -67,8 +67,8 @@
 %endif
 
 %define		rel		0.1
-%define		basever		3.8
-%define		postver		.12
+%define		basever		3.9
+%define		postver		.4
 
 # __alt_kernel is list of features, empty string if none set
 # _alt kernel is defined as: %{nil}%{?alt_kernel:-%{?alt_kernel}} (defined in rpm.macros)
@@ -108,10 +108,10 @@ Epoch:		3
 License:	GPL v2
 Group:		Base/Kernel
 Source0:	http://www.kernel.org/pub/linux/kernel/v3.x/linux-%{basever}.tar.xz
-# Source0-md5:	1c738edfc54e7c65faeb90c436104e2f
+# Source0-md5:	4348c9b6b2eb3144d601e87c19d5d909
 %if "%{postver}" != ".0"
 Patch0:		http://www.kernel.org/pub/linux/kernel/v3.x/patch-%{version}.bz2
-# Patch0-md5:	77cb3a52d24a05171006757abe4fd3fd
+# Patch0-md5:	c0f20f2c33265b128610d735cb344e9a
 %endif
 Source1:	kernel.sysconfig
 
@@ -162,11 +162,12 @@ Patch40:	kernel-layer7.patch
 # http://zph.bratcheda.org/linux-2.6.26.3-zph.patch
 Patch49:	kernel-zph.patch
 
-# http://www.linuximq.net/patches/patch-imqmq-3.5.diff.xz
+# http://www.linuximq.net
+# http://tech.groups.yahoo.com/group/linuximq/message/3096
 Patch50:	kernel-imq.patch
 
-Patch51:	http://downloads.sourceforge.net/reiser4/reiser4-for-3.6.4.patch.gz
-# Patch51-md5:	4128aa3bd062d0289117dda6775a7f20
+Patch51:	http://downloads.sourceforge.net/project/reiser4/reiser4-for-linux-3.x/reiser4-for-3.9.2.patch.gz
+# Patch51-md5:	6f7e3f62e887c073844281be90716c28
 
 # http://fatooh.org/esfq-2.6/sfq-2.6.24.1.tar.bz2
 Patch53:	kernel-esfq.patch
