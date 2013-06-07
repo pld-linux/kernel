@@ -110,8 +110,8 @@ Group:		Base/Kernel
 Source0:	http://www.kernel.org/pub/linux/kernel/v3.x/linux-%{basever}.tar.xz
 # Source0-md5:	4348c9b6b2eb3144d601e87c19d5d909
 %if "%{postver}" != ".0"
-Patch0:		http://www.kernel.org/pub/linux/kernel/v3.x/patch-%{version}.bz2
-# Patch0-md5:	e25df2969cb5f5c68e5739b6e313cb92
+Patch0:		http://www.kernel.org/pub/linux/kernel/v3.x/patch-%{version}.xz
+# Patch0-md5:	aa22187ae5cd482a69097e9e59244491
 %endif
 Source1:	kernel.sysconfig
 
