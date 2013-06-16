@@ -1,5 +1,6 @@
 MAKE_OPTS :=
 
+-include default.mk
 include $(TARGETOBJ).mk
 
 all := $(filter-out all Makefile,$(MAKECMDGOALS))
