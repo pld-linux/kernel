@@ -66,9 +66,9 @@
 %define		have_pcmcia	0
 %endif
 
-%define		rel		1
-%define		basever		3.9
-%define		postver		.8
+%define		rel		0.1
+%define		basever		3.10
+%define		postver		.0
 
 # __alt_kernel is list of features, empty string if none set
 # _alt kernel is defined as: %{nil}%{?alt_kernel:-%{?alt_kernel}} (defined in rpm.macros)
@@ -108,7 +108,7 @@ Epoch:		3
 License:	GPL v2
 Group:		Base/Kernel
 Source0:	http://www.kernel.org/pub/linux/kernel/v3.x/linux-%{basever}.tar.xz
-# Source0-md5:	4348c9b6b2eb3144d601e87c19d5d909
+# Source0-md5:	4f25cd5bec5f8d5a7d935b3f2ccb8481
 %if "%{postver}" != ".0"
 Patch0:		http://www.kernel.org/pub/linux/kernel/v3.x/patch-%{version}.xz
 # Patch0-md5:	c5f2166686a913abf550bfed8b77df27
@@ -198,17 +198,13 @@ Patch101:	kernel-vserver-fixes.patch
 # patches.suse/ovl*
 Patch110:	ovl01-vfs-add-i_op-dentry_open.patch
 Patch111:	ovl02-vfs-export-do_splice_direct-to-modules.patch
-Patch112:	ovl03-vfs-introduce-clone_private_mount.patch
-Patch113:	ovl04-overlay-filesystem.patch
-Patch114:	ovl05-overlayfs-add-statfs-support.patch
-Patch115:	ovl06-overlayfs-implement-show_options.patch
-Patch116:	ovl07-overlay-overlay-filesystem-documentation.patch
-Patch117:	ovl08-fs-limit-filesystem-stacking-depth.patch
-Patch118:	ovl09-overlayfs-fix-possible-leak-in-ovl_new_inode.patch
-Patch119:	ovl10-overlayfs-create-new-inode-in-ovl_link.patch
-Patch120:	ovl11-vfs-export-__inode_permission-to-modules.patch
-Patch121:	ovl12-ovl-switch-to-__inode_permission.patch
-Patch122:	ovl13-overlayfs-copy-up-i_uid-i_gid-from-the-underlying-in.patch
+Patch112:	ovl03-vfs-export-inode_permission-to-modules.patch
+Patch113:	ovl04-vfs-introduce-clone_private_mount.patch
+Patch114:	ovl05-overlay-filesystem.patch
+Patch115:	ovl06-overlayfs-add-statfs-support.patch
+Patch116:	ovl07-overlayfs-implement-show_options.patch
+Patch117:	ovl08-overlay-overlay-filesystem-documentation.patch
+Patch118:	ovl09-fs-limit-filesystem-stacking-depth.patch
 
 # git://aufs.git.sourceforge.net/gitroot/aufs/aufs3-standalone.git, read README
 # Patch creation:
@@ -691,10 +687,6 @@ cd linux-%{basever}
 %patch116 -p1
 %patch117 -p1
 %patch118 -p1
-%patch119 -p1
-%patch120 -p1
-%patch121 -p1
-%patch122 -p1
 
 # aufs3
 %patch145 -p1
