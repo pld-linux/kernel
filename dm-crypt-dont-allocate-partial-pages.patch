@@ -1,0 +1,251 @@
+dm-crypt: don't allocate pages for a partial request.
+
+This patch changes crypt_alloc_buffer so that it always allocates pages for
+a full request.
+
+This change enables further simplification and removing of one refcounts
+in the next patches.
+
+Note: the next patch is needed to fix a theoretical deadlock
+
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+
+---
+ drivers/md/dm-crypt.c |  133 +++++++++-----------------------------------------
+ 1 file changed, 25 insertions(+), 108 deletions(-)
+
+Index: linux-3.9.2-fast/drivers/md/dm-crypt.c
+===================================================================
+--- linux-3.9.2-fast.orig/drivers/md/dm-crypt.c	2013-05-15 21:47:30.000000000 +0200
++++ linux-3.9.2-fast/drivers/md/dm-crypt.c	2013-05-15 22:49:13.000000000 +0200
+@@ -59,7 +59,6 @@ struct dm_crypt_io {
+ 	atomic_t io_pending;
+ 	int error;
+ 	sector_t sector;
+-	struct dm_crypt_io *base_io;
+ };
+ 
+ struct dm_crypt_request {
+@@ -162,7 +161,6 @@ struct crypt_config {
+ };
+ 
+ #define MIN_IOS        16
+-#define MIN_POOL_PAGES 32
+ 
+ static struct kmem_cache *_crypt_io_pool;
+ 
+@@ -777,14 +775,13 @@ static int crypt_convert(struct crypt_co
+ 	return 0;
+ }
+ 
++static void crypt_free_buffer_pages(struct crypt_config *cc, struct bio *clone);
++
+ /*
+  * Generate a new unfragmented bio with the given size
+  * This should never violate the device limitations
+- * May return a smaller bio when running out of pages, indicated by
+- * *out_of_pages set to 1.
+  */
+-static struct bio *crypt_alloc_buffer(struct dm_crypt_io *io, unsigned size,
+-				      unsigned *out_of_pages)
++static struct bio *crypt_alloc_buffer(struct dm_crypt_io *io, unsigned size)
+ {
+ 	struct crypt_config *cc = io->cc;
+ 	struct bio *clone;
+@@ -798,37 +795,22 @@ static struct bio *crypt_alloc_buffer(st
+ 		return NULL;
+ 
+ 	clone_init(io, clone);
+-	*out_of_pages = 0;
+ 
+ 	for (i = 0; i < nr_iovecs; i++) {
+ 		page = mempool_alloc(cc->page_pool, gfp_mask);
+-		if (!page) {
+-			*out_of_pages = 1;
+-			break;
+-		}
+-
+-		/*
+-		 * If additional pages cannot be allocated without waiting,
+-		 * return a partially-allocated bio.  The caller will then try
+-		 * to allocate more bios while submitting this partial bio.
+-		 */
+-		gfp_mask = (gfp_mask | __GFP_NOWARN) & ~__GFP_WAIT;
+ 
+ 		len = (size > PAGE_SIZE) ? PAGE_SIZE : size;
+ 
+ 		if (!bio_add_page(clone, page, len, 0)) {
+ 			mempool_free(page, cc->page_pool);
+-			break;
++			crypt_free_buffer_pages(cc, clone);
++			bio_put(clone);
++			return NULL;
+ 		}
+ 
+ 		size -= len;
+ 	}
+ 
+-	if (!clone->bi_size) {
+-		bio_put(clone);
+-		return NULL;
+-	}
+-
+ 	return clone;
+ }
+ 
+@@ -855,7 +837,6 @@ static struct dm_crypt_io *crypt_io_allo
+ 	io->base_bio = bio;
+ 	io->sector = sector;
+ 	io->error = 0;
+-	io->base_io = NULL;
+ 	io->ctx.req = NULL;
+ 	atomic_set(&io->io_pending, 0);
+ 
+@@ -870,13 +851,11 @@ static void crypt_inc_pending(struct dm_
+ /*
+  * One of the bios was finished. Check for completion of
+  * the whole request and correctly clean up the buffer.
+- * If base_io is set, wait for the last fragment to complete.
+  */
+ static void crypt_dec_pending(struct dm_crypt_io *io)
+ {
+ 	struct crypt_config *cc = io->cc;
+ 	struct bio *base_bio = io->base_bio;
+-	struct dm_crypt_io *base_io = io->base_io;
+ 	int error = io->error;
+ 
+ 	if (!atomic_dec_and_test(&io->io_pending))
+@@ -886,13 +865,7 @@ static void crypt_dec_pending(struct dm_
+ 		mempool_free(io->ctx.req, cc->req_pool);
+ 	mempool_free(io, cc->io_pool);
+ 
+-	if (likely(!base_io))
+-		bio_endio(base_bio, error);
+-	else {
+-		if (error && !base_io->error)
+-			base_io->error = error;
+-		crypt_dec_pending(base_io);
+-	}
++	bio_endio(base_bio, error);
+ }
+ 
+ /*
+@@ -1030,10 +1003,7 @@ static void kcryptd_crypt_write_convert(
+ {
+ 	struct crypt_config *cc = io->cc;
+ 	struct bio *clone;
+-	struct dm_crypt_io *new_io;
+ 	int crypt_finished;
+-	unsigned out_of_pages = 0;
+-	unsigned remaining = io->base_bio->bi_size;
+ 	sector_t sector = io->sector;
+ 	int r;
+ 
+@@ -1043,81 +1013,28 @@ static void kcryptd_crypt_write_convert(
+ 	crypt_inc_pending(io);
+ 	crypt_convert_init(cc, &io->ctx, NULL, io->base_bio, sector);
+ 
+-	/*
+-	 * The allocated buffers can be smaller than the whole bio,
+-	 * so repeat the whole process until all the data can be handled.
+-	 */
+-	while (remaining) {
+-		clone = crypt_alloc_buffer(io, remaining, &out_of_pages);
+-		if (unlikely(!clone)) {
+-			io->error = -ENOMEM;
+-			break;
+-		}
+-
+-		io->ctx.bio_out = clone;
+-		io->ctx.idx_out = 0;
+-
+-		remaining -= clone->bi_size;
+-		sector += bio_sectors(clone);
+-
+-		crypt_inc_pending(io);
+-
+-		r = crypt_convert(cc, &io->ctx);
+-		if (r < 0)
+-			io->error = -EIO;
+-
+-		crypt_finished = atomic_dec_and_test(&io->ctx.cc_pending);
+-
+-		/* Encryption was already finished, submit io now */
+-		if (crypt_finished) {
+-			kcryptd_crypt_write_io_submit(io, 0);
+-
+-			/*
+-			 * If there was an error, do not try next fragments.
+-			 * For async, error is processed in async handler.
+-			 */
+-			if (unlikely(r < 0))
+-				break;
++	clone = crypt_alloc_buffer(io, io->base_bio->bi_size);
++	if (unlikely(!clone)) {
++		io->error = -ENOMEM;
++		goto dec;
++	}
+ 
+-			io->sector = sector;
+-		}
++	io->ctx.bio_out = clone;
++	io->ctx.idx_out = 0;
+ 
+-		/*
+-		 * Out of memory -> run queues
+-		 * But don't wait if split was due to the io size restriction
+-		 */
+-		if (unlikely(out_of_pages))
+-			congestion_wait(BLK_RW_ASYNC, HZ/100);
++	sector += bio_sectors(clone);
+ 
+-		/*
+-		 * With async crypto it is unsafe to share the crypto context
+-		 * between fragments, so switch to a new dm_crypt_io structure.
+-		 */
+-		if (unlikely(!crypt_finished && remaining)) {
+-			new_io = crypt_io_alloc(io->cc, io->base_bio,
+-						sector);
+-			crypt_inc_pending(new_io);
+-			crypt_convert_init(cc, &new_io->ctx, NULL,
+-					   io->base_bio, sector);
+-			new_io->ctx.idx_in = io->ctx.idx_in;
+-			new_io->ctx.offset_in = io->ctx.offset_in;
+-
+-			/*
+-			 * Fragments after the first use the base_io
+-			 * pending count.
+-			 */
+-			if (!io->base_io)
+-				new_io->base_io = io;
+-			else {
+-				new_io->base_io = io->base_io;
+-				crypt_inc_pending(io->base_io);
+-				crypt_dec_pending(io);
+-			}
++	crypt_inc_pending(io);
++	r = crypt_convert(cc, &io->ctx);
++	if (r)
++		io->error = -EIO;
++	crypt_finished = atomic_dec_and_test(&io->ctx.cc_pending);
+ 
+-			io = new_io;
+-		}
+-	}
++	/* Encryption was already finished, submit io now */
++	if (crypt_finished)
++		kcryptd_crypt_write_io_submit(io, 0);
+ 
++dec:
+ 	crypt_dec_pending(io);
+ }
+ 
+@@ -1556,7 +1473,7 @@ static int crypt_ctr(struct dm_target *t
+ 		goto bad;
+ 	}
+ 
+-	cc->page_pool = mempool_create_page_pool(MIN_POOL_PAGES, 0);
++	cc->page_pool = mempool_create_page_pool(BIO_MAX_PAGES, 0);
+ 	if (!cc->page_pool) {
+ 		ti->error = "Cannot allocate page mempool";
+ 		goto bad;

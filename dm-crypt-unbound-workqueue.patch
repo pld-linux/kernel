@@ -1,0 +1,27 @@
+dm-crypt: use unbound workqueue for request processing
+
+Use unbound workqueue so that work is automatically ballanced between
+available CPUs.
+
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+
+---
+ drivers/md/dm-crypt.c |    5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
+
+Index: linux-3.8.6-fast/drivers/md/dm-crypt.c
+===================================================================
+--- linux-3.8.6-fast.orig/drivers/md/dm-crypt.c	2013-04-11 17:29:10.000000000 +0200
++++ linux-3.8.6-fast/drivers/md/dm-crypt.c	2013-04-11 17:29:13.000000000 +0200
+@@ -1623,8 +1623,9 @@ static int crypt_ctr(struct dm_target *t
+ 	cc->crypt_queue = alloc_workqueue("kcryptd",
+ 					  WQ_NON_REENTRANT|
+ 					  WQ_CPU_INTENSIVE|
+-					  WQ_MEM_RECLAIM,
+-					  1);
++					  WQ_MEM_RECLAIM|
++					  WQ_UNBOUND,
++					  num_online_cpus());
+ 	if (!cc->crypt_queue) {
+ 		ti->error = "Couldn't create kcryptd queue";
+ 		goto bad;
