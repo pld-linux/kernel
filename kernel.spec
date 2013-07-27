@@ -1358,6 +1358,7 @@ fi
 %exclude %{_kernelsrcdir}/arch/powerpc/lib/crtsavres.*
 %endif
 %{_kernelsrcdir}/arch/arm/kvm
+%{_kernelsrcdir}/arch/mips/kvm
 %{_kernelsrcdir}/arch/s390/kvm
 %{_kernelsrcdir}/arch/x86/kvm
 %exclude %{_kernelsrcdir}/arch/*/kernel/asm-offsets*

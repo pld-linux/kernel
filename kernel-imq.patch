@@ -166,7 +166,7 @@ diff -uNr linux-3.9.1/drivers/net/imq.c linux-3.9.1-imqmq/drivers/net/imq.c
 +#include <net/ip.h>
 +#include <net/ipv6.h>
 +
-+static int imq_nf_queue(struct nf_queue_entry *entry, unsigned queue_num);
++static int imq_nf_queue(struct nf_queue_entry *entry, unsigned int queue_num);
 +
 +static nf_hookfn imq_nf_hook;
 +
@@ -516,7 +516,7 @@ diff -uNr linux-3.9.1/drivers/net/imq.c linux-3.9.1-imqmq/drivers/net/imq.c
 +	return dev;
 +}
 +
-+static int imq_nf_queue(struct nf_queue_entry *entry, unsigned queue_num)
++static int imq_nf_queue(struct nf_queue_entry *entry, unsigned int queue_num)
 +{
 +	struct net_device *dev;
 +	struct sk_buff *skb_orig, *skb, *skb_shared;
@@ -1065,9 +1065,9 @@ diff -uNr linux-3.9.1/include/linux/skbuff.h linux-3.9.1-imqmq/include/linux/skb
 --- linux-3.9.1/include/linux/skbuff.h	2013-05-08 06:58:03.000000000 +0300
 +++ linux-3.9.1-imqmq/include/linux/skbuff.h	2013-05-08 17:30:29.015285965 +0300
 @@ -32,6 +32,9 @@
- #include <linux/hrtimer.h>
  #include <linux/dma-mapping.h>
  #include <linux/netdev_features.h>
+ #include <net/flow_keys.h>
 +#if defined(CONFIG_IMQ) || defined(CONFIG_IMQ_MODULE)
 +#include <linux/imq.h>
 +#endif
@@ -1448,23 +1448,6 @@ diff -uNr linux-3.9.1/net/netfilter/nf_queue.c linux-3.9.1-imqmq/net/netfilter/n
  /* return EBUSY when somebody else is registered, return EEXIST if the
   * same handler is registered, return 0 in case of success. */
  void nf_register_queue_handler(const struct nf_queue_handler *qh)
-@@ -40,7 +57,7 @@
- }
- EXPORT_SYMBOL(nf_unregister_queue_handler);
- 
--static void nf_queue_entry_release_refs(struct nf_queue_entry *entry)
-+void nf_queue_entry_release_refs(struct nf_queue_entry *entry)
- {
- 	/* Release those devices we held, or Alexey will kill me. */
- 	if (entry->indev)
-@@ -60,6 +77,7 @@
- 	/* Drop reference to owner of hook which queued us. */
- 	module_put(entry->elem->owner);
- }
-+EXPORT_SYMBOL_GPL(nf_queue_entry_release_refs);
- 
- /*
-  * Any packet that leaves via this function must come back
 @@ -71,7 +89,8 @@
  		      struct net_device *indev,
  		      struct net_device *outdev,
@@ -1494,44 +1477,16 @@ diff -uNr linux-3.9.1/net/netfilter/nf_queue.c linux-3.9.1-imqmq/net/netfilter/n
  	if (!qh) {
  		status = -ESRCH;
  		goto err_unlock;
-@@ -178,7 +207,8 @@
- 	     struct net_device *indev,
- 	     struct net_device *outdev,
- 	     int (*okfn)(struct sk_buff *),
--	     unsigned int queuenum)
-+	     unsigned int queuenum,
-+	     unsigned int queuetype)
- {
- 	struct sk_buff *segs;
- 	int err = -EINVAL;
-@@ -186,7 +216,7 @@
- 
- 	if (!skb_is_gso(skb))
- 		return __nf_queue(skb, elem, pf, hook, indev, outdev, okfn,
--				  queuenum);
-+				  queuenum, queuetype);
- 
- 	switch (pf) {
- 	case NFPROTO_IPV4:
-@@ -214,7 +244,7 @@
- 		if (err == 0) {
- 			nf_bridge_adjust_segmented_data(segs);
- 			err = __nf_queue(segs, elem, pf, hook, indev,
--					   outdev, okfn, queuenum);
-+					   outdev, okfn, queuenum, queuetype);
- 		}
- 		if (err == 0)
- 			queued++;
-@@ -271,9 +301,11 @@
+@@ -233,9 +261,11 @@
  		local_bh_enable();
  		break;
  	case NF_QUEUE:
 +	case NF_IMQ_QUEUE:
- 		err = __nf_queue(skb, elem, entry->pf, entry->hook,
- 				 entry->indev, entry->outdev, entry->okfn,
--				 verdict >> NF_VERDICT_QBITS);
-+				 verdict >> NF_VERDICT_QBITS,
-+				 verdict & NF_VERDICT_MASK);
+ 		err = nf_queue(skb, elem, entry->pf, entry->hook,
+ 				entry->indev, entry->outdev, entry->okfn,
+-				verdict >> NF_VERDICT_QBITS);
++				verdict >> NF_VERDICT_QBITS,
++				verdict & NF_VERDICT_MASK);
  		if (err < 0) {
  			if (err == -ECANCELED)
  				goto next_hook;
