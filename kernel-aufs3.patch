@@ -1,4 +1,4 @@
-aufs3.x-rcN kbuild patch
+aufs3.10 kbuild patch
 
 diff --git a/fs/Kconfig b/fs/Kconfig
 index c229f82..397b473 100644
@@ -22,7 +22,7 @@ index 4fe6df3..4a57676 100644
  obj-$(CONFIG_EFIVAR_FS)		+= efivarfs/
 +obj-$(CONFIG_AUFS_FS)           += aufs/
 diff --git a/include/uapi/linux/Kbuild b/include/uapi/linux/Kbuild
-index ab5d499..ed438c0 100644
+index bdc6e87..349600c 100644
 --- a/include/uapi/linux/Kbuild
 +++ b/include/uapi/linux/Kbuild
 @@ -56,6 +56,7 @@ header-y += atmppp.h
@@ -33,7 +33,7 @@ index ab5d499..ed438c0 100644
  header-y += auto_fs.h
  header-y += auto_fs4.h
  header-y += auxvec.h
-aufs3.x-rcN base patch
+aufs3.10 base patch
 
 diff --git a/fs/file_table.c b/fs/file_table.c
 index 485dc0e..8db8096 100644
@@ -62,7 +62,7 @@ index 00d5fc3..f324521 100644
  	if (inode->i_op->update_time)
  		return inode->i_op->update_time(inode, time, flags);
 diff --git a/fs/splice.c b/fs/splice.c
-index 9eca476..4ba1844 100644
+index d37431d..987346f 100644
 --- a/fs/splice.c
 +++ b/fs/splice.c
 @@ -1093,8 +1093,8 @@ EXPORT_SYMBOL(generic_splice_sendpage);
@@ -116,7 +116,7 @@ index 74575cb..bfc6fb6 100644
 +			 struct pipe_inode_info *pipe, size_t len,
 +			 unsigned int flags);
  #endif
-aufs3.x-rcN standalone patch
+aufs3.10 standalone patch
 
 diff --git a/fs/file_table.c b/fs/file_table.c
 index 8db8096..e271e28 100644
@@ -272,7 +272,7 @@ index 8c74100..be563cd 100644
  long vfs_truncate(struct path *path, loff_t length)
  {
 diff --git a/fs/splice.c b/fs/splice.c
-index 4ba1844..2370d0b 100644
+index 987346f..8d6a045 100644
 --- a/fs/splice.c
 +++ b/fs/splice.c
 @@ -1120,6 +1120,7 @@ long do_splice_from(struct pipe_inode_info *pipe, struct file *out,
@@ -1472,8 +1472,8 @@ diff -urN /usr/share/empty/Documentation/filesystems/aufs/design/99plan.txt linu
 +Otherwise from /new.
 diff -urN /usr/share/empty/Documentation/filesystems/aufs/README linux/Documentation/filesystems/aufs/README
 --- /usr/share/empty/Documentation/filesystems/aufs/README	1970-01-01 01:00:00.000000000 +0100
-+++ linux/Documentation/filesystems/aufs/README	2013-07-06 13:20:47.730197761 +0200
-@@ -0,0 +1,345 @@
++++ linux/Documentation/filesystems/aufs/README	2013-07-30 22:42:46.229279157 +0200
+@@ -0,0 +1,346 @@
 +
 +Aufs3 -- advanced multi layered unification filesystem version 3.x
 +http://aufs.sf.net
@@ -1802,6 +1802,7 @@ diff -urN /usr/share/empty/Documentation/filesystems/aufs/README linux/Documenta
 +POIRETTE Marc made a donation (2013/4).
 +Alessandro Gorreta made a donation (2013/4).
 +lauri kasvandik made a donation (2013/5).
++pemasu from Finland made a donation (2013/7).
 +
 +Thank you very much.
 +Donations are always, including future donations, very important and
@@ -1885,7 +1886,7 @@ diff -urN /usr/share/empty/fs/aufs/aufs.h linux/fs/aufs/aufs.h
 +#endif /* __AUFS_H__ */
 diff -urN /usr/share/empty/fs/aufs/branch.c linux/fs/aufs/branch.c
 --- /usr/share/empty/fs/aufs/branch.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/branch.c	2013-07-06 13:20:47.736864659 +0200
++++ linux/fs/aufs/branch.c	2013-07-30 22:42:55.839613269 +0200
 @@ -0,0 +1,1213 @@
 +/*
 + * Copyright (C) 2005-2013 Junjiro R. Okajima
@@ -3403,8 +3404,8 @@ diff -urN /usr/share/empty/fs/aufs/conf.mk linux/fs/aufs/conf.mk
 +-include ${srctree}/${src}/conf_priv.mk
 diff -urN /usr/share/empty/fs/aufs/cpup.c linux/fs/aufs/cpup.c
 --- /usr/share/empty/fs/aufs/cpup.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/cpup.c	2013-07-06 13:20:47.740198107 +0200
-@@ -0,0 +1,1228 @@
++++ linux/fs/aufs/cpup.c	2013-07-30 22:42:46.232612606 +0200
+@@ -0,0 +1,1247 @@
 +/*
 + * Copyright (C) 2005-2013 Junjiro R. Okajima
 + *
@@ -3434,7 +3435,7 @@ diff -urN /usr/share/empty/fs/aufs/cpup.c linux/fs/aufs/cpup.c
 +void au_cpup_attr_flags(struct inode *dst, unsigned int iflags)
 +{
 +	const unsigned int mask = S_DEAD | S_SWAPFILE | S_PRIVATE
-+		| S_NOATIME | S_NOCMTIME;
++		| S_NOATIME | S_NOCMTIME | S_AUTOMOUNT;
 +
 +	BUILD_BUG_ON(sizeof(iflags) != sizeof(dst->i_flags));
 +
@@ -4354,6 +4355,25 @@ diff -urN /usr/share/empty/fs/aufs/cpup.c linux/fs/aufs/cpup.c
 +	return err;
 +}
 +
++/* generalized cpup_simple() with h_open_pre/post() calls */
++int au_sio_cpup_simple_h_open(struct dentry *dentry, aufs_bindex_t bdst,
++			      loff_t len, unsigned int flags,
++			      struct au_pin *pin, aufs_bindex_t bsrc)
++{
++	int err;
++	struct file *h_file;
++
++	h_file = au_h_open_pre(dentry, bsrc);
++	if (IS_ERR(h_file))
++		err = PTR_ERR(h_file);
++	else {
++		err = au_sio_cpup_simple(dentry, bdst, len, flags, pin);
++		au_h_open_post(dentry, bsrc, h_file);
++	}
++
++	return err;
++}
++
 +/* ---------------------------------------------------------------------- */
 +
 +/*
@@ -4635,8 +4655,8 @@ diff -urN /usr/share/empty/fs/aufs/cpup.c linux/fs/aufs/cpup.c
 +}
 diff -urN /usr/share/empty/fs/aufs/cpup.h linux/fs/aufs/cpup.h
 --- /usr/share/empty/fs/aufs/cpup.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/cpup.h	2013-07-06 13:20:47.740198107 +0200
-@@ -0,0 +1,84 @@
++++ linux/fs/aufs/cpup.h	2013-07-30 22:42:46.232612606 +0200
+@@ -0,0 +1,87 @@
 +/*
 + * Copyright (C) 2005-2013 Junjiro R. Okajima
 + *
@@ -4696,6 +4716,9 @@ diff -urN /usr/share/empty/fs/aufs/cpup.h linux/fs/aufs/cpup.h
 +		       struct dentry *dst_parent, struct au_pin *pin);
 +int au_sio_cpup_simple(struct dentry *dentry, aufs_bindex_t bdst, loff_t len,
 +		       unsigned int flags, struct au_pin *pin);
++int au_sio_cpup_simple_h_open(struct dentry *dentry, aufs_bindex_t bdst,
++			      loff_t len, unsigned int flags,
++			      struct au_pin *pin, aufs_bindex_t bsrc);
 +int au_sio_cpup_wh(struct dentry *dentry, aufs_bindex_t bdst, loff_t len,
 +		   struct file *file, struct au_pin *pin);
 +
@@ -5213,7 +5236,7 @@ diff -urN /usr/share/empty/fs/aufs/dbgaufs.h linux/fs/aufs/dbgaufs.h
 +#endif /* __DBGAUFS_H__ */
 diff -urN /usr/share/empty/fs/aufs/dcsub.c linux/fs/aufs/dcsub.c
 --- /usr/share/empty/fs/aufs/dcsub.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/dcsub.c	2013-07-06 13:20:47.740198107 +0200
++++ linux/fs/aufs/dcsub.c	2013-07-30 22:42:55.839613269 +0200
 @@ -0,0 +1,243 @@
 +/*
 + * Copyright (C) 2005-2013 Junjiro R. Okajima
@@ -5558,7 +5581,7 @@ diff -urN /usr/share/empty/fs/aufs/dcsub.h linux/fs/aufs/dcsub.h
 +#endif /* __AUFS_DCSUB_H__ */
 diff -urN /usr/share/empty/fs/aufs/debug.c linux/fs/aufs/debug.c
 --- /usr/share/empty/fs/aufs/debug.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/debug.c	2013-07-06 13:20:47.740198107 +0200
++++ linux/fs/aufs/debug.c	2013-07-30 22:42:55.839613269 +0200
 @@ -0,0 +1,491 @@
 +/*
 + * Copyright (C) 2005-2013 Junjiro R. Okajima
@@ -7606,7 +7629,7 @@ diff -urN /usr/share/empty/fs/aufs/dentry.h linux/fs/aufs/dentry.h
 +#endif /* __AUFS_DENTRY_H__ */
 diff -urN /usr/share/empty/fs/aufs/dinfo.c linux/fs/aufs/dinfo.c
 --- /usr/share/empty/fs/aufs/dinfo.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/dinfo.c	2013-07-06 13:20:47.740198107 +0200
++++ linux/fs/aufs/dinfo.c	2013-07-30 22:42:55.839613269 +0200
 @@ -0,0 +1,543 @@
 +/*
 + * Copyright (C) 2005-2013 Junjiro R. Okajima
@@ -8153,7 +8176,7 @@ diff -urN /usr/share/empty/fs/aufs/dinfo.c linux/fs/aufs/dinfo.c
 +}
 diff -urN /usr/share/empty/fs/aufs/dir.c linux/fs/aufs/dir.c
 --- /usr/share/empty/fs/aufs/dir.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/dir.c	2013-07-06 13:20:47.740198107 +0200
++++ linux/fs/aufs/dir.c	2013-07-30 22:42:55.839613269 +0200
 @@ -0,0 +1,632 @@
 +/*
 + * Copyright (C) 2005-2013 Junjiro R. Okajima
@@ -8789,7 +8812,7 @@ diff -urN /usr/share/empty/fs/aufs/dir.c linux/fs/aufs/dir.c
 +};
 diff -urN /usr/share/empty/fs/aufs/dir.h linux/fs/aufs/dir.h
 --- /usr/share/empty/fs/aufs/dir.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/dir.h	2013-07-06 13:20:47.740198107 +0200
++++ linux/fs/aufs/dir.h	2013-07-30 22:42:55.839613269 +0200
 @@ -0,0 +1,137 @@
 +/*
 + * Copyright (C) 2005-2013 Junjiro R. Okajima
@@ -8930,7 +8953,7 @@ diff -urN /usr/share/empty/fs/aufs/dir.h linux/fs/aufs/dir.h
 +#endif /* __AUFS_DIR_H__ */
 diff -urN /usr/share/empty/fs/aufs/dynop.c linux/fs/aufs/dynop.c
 --- /usr/share/empty/fs/aufs/dynop.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/dynop.c	2013-07-06 13:20:47.740198107 +0200
++++ linux/fs/aufs/dynop.c	2013-07-30 22:42:55.839613269 +0200
 @@ -0,0 +1,379 @@
 +/*
 + * Copyright (C) 2010-2013 Junjiro R. Okajima
@@ -9393,7 +9416,7 @@ diff -urN /usr/share/empty/fs/aufs/dynop.h linux/fs/aufs/dynop.h
 +#endif /* __AUFS_DYNOP_H__ */
 diff -urN /usr/share/empty/fs/aufs/export.c linux/fs/aufs/export.c
 --- /usr/share/empty/fs/aufs/export.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/export.c	2013-07-06 13:20:47.740198107 +0200
++++ linux/fs/aufs/export.c	2013-07-30 22:42:55.839613269 +0200
 @@ -0,0 +1,826 @@
 +/*
 + * Copyright (C) 2005-2013 Junjiro R. Okajima
@@ -10223,8 +10246,8 @@ diff -urN /usr/share/empty/fs/aufs/export.c linux/fs/aufs/export.c
 +}
 diff -urN /usr/share/empty/fs/aufs/file.c linux/fs/aufs/file.c
 --- /usr/share/empty/fs/aufs/file.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/file.c	2013-07-06 13:20:47.750198454 +0200
-@@ -0,0 +1,688 @@
++++ linux/fs/aufs/file.c	2013-07-30 22:42:55.842946719 +0200
+@@ -0,0 +1,689 @@
 +/*
 + * Copyright (C) 2005-2013 Junjiro R. Okajima
 + *
@@ -10639,10 +10662,11 @@ diff -urN /usr/share/empty/fs/aufs/file.c linux/fs/aufs/file.c
 +		/* always superio. */
 +		err = au_pin(&pin, dentry, bstart, AuOpt_UDBA_NONE,
 +			     AuPin_DI_LOCKED | AuPin_MNT_WRITE);
-+		if (!err)
++		if (!err) {
 +			err = au_sio_cpup_simple(dentry, bstart, -1,
 +						 AuCpup_DTIME, &pin);
-+		au_unpin(&pin);
++			au_unpin(&pin);
++		}
 +	} else if (hi_wh) {
 +		/* already copied-up after unlink */
 +		err = au_reopen_wh(file, bstart, hi_wh);
@@ -11388,7 +11412,7 @@ diff -urN /usr/share/empty/fs/aufs/finfo.c linux/fs/aufs/finfo.c
 +}
 diff -urN /usr/share/empty/fs/aufs/f_op.c linux/fs/aufs/f_op.c
 --- /usr/share/empty/fs/aufs/f_op.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/f_op.c	2013-07-06 13:20:47.740198107 +0200
++++ linux/fs/aufs/f_op.c	2013-07-30 22:42:55.839613269 +0200
 @@ -0,0 +1,721 @@
 +/*
 + * Copyright (C) 2005-2013 Junjiro R. Okajima
@@ -13337,7 +13361,7 @@ diff -urN /usr/share/empty/fs/aufs/hfsplus.c linux/fs/aufs/hfsplus.c
 +}
 diff -urN /usr/share/empty/fs/aufs/hnotify.c linux/fs/aufs/hnotify.c
 --- /usr/share/empty/fs/aufs/hnotify.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/hnotify.c	2013-07-06 13:20:47.750198454 +0200
++++ linux/fs/aufs/hnotify.c	2013-07-30 22:42:55.842946719 +0200
 @@ -0,0 +1,712 @@
 +/*
 + * Copyright (C) 2005-2013 Junjiro R. Okajima
@@ -15633,8 +15657,8 @@ diff -urN /usr/share/empty/fs/aufs/ioctl.c linux/fs/aufs/ioctl.c
 +#endif
 diff -urN /usr/share/empty/fs/aufs/i_op_add.c linux/fs/aufs/i_op_add.c
 --- /usr/share/empty/fs/aufs/i_op_add.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/i_op_add.c	2013-07-06 13:20:47.750198454 +0200
-@@ -0,0 +1,722 @@
++++ linux/fs/aufs/i_op_add.c	2013-07-30 22:42:46.235946055 +0200
+@@ -0,0 +1,716 @@
 +/*
 + * Copyright (C) 2005-2013 Junjiro R. Okajima
 + *
@@ -15996,7 +16020,6 @@ diff -urN /usr/share/empty/fs/aufs/i_op_add.c linux/fs/aufs/i_op_add.c
 +{
 +	int err;
 +	struct dentry *h_src_dentry;
-+	struct file *h_file;
 +
 +	di_read_lock_parent(a->src_parent, AuLock_IR);
 +	err = au_test_and_cpup_dirs(src_dentry, a->bdst);
@@ -16009,15 +16032,10 @@ diff -urN /usr/share/empty/fs/aufs/i_op_add.c linux/fs/aufs/i_op_add.c
 +		     AuPin_DI_LOCKED | AuPin_MNT_WRITE);
 +	if (unlikely(err))
 +		goto out;
-+	h_file = au_h_open_pre(src_dentry, a->bsrc);
-+	if (IS_ERR(h_file))
-+		err = PTR_ERR(h_file);
-+	else {
-+		err = au_sio_cpup_simple(src_dentry, a->bdst, -1,
-+					 AuCpup_DTIME /* | AuCpup_KEEPLINO */,
-+					 &a->pin);
-+		au_h_open_post(src_dentry, a->bsrc, h_file);
-+	}
++
++	err = au_sio_cpup_simple_h_open(src_dentry, a->bdst, -1,
++					AuCpup_DTIME /* | AuCpup_KEEPLINO */,
++					&a->pin, a->bsrc);
 +	au_unpin(&a->pin);
 +
 +out:
@@ -16359,8 +16377,8 @@ diff -urN /usr/share/empty/fs/aufs/i_op_add.c linux/fs/aufs/i_op_add.c
 +}
 diff -urN /usr/share/empty/fs/aufs/i_op.c linux/fs/aufs/i_op.c
 --- /usr/share/empty/fs/aufs/i_op.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/i_op.c	2013-07-06 13:20:47.750198454 +0200
-@@ -0,0 +1,1108 @@
++++ linux/fs/aufs/i_op.c	2013-07-30 22:42:46.235946055 +0200
+@@ -0,0 +1,1100 @@
 +/*
 + * Copyright (C) 2005-2013 Junjiro R. Okajima
 + *
@@ -16993,7 +17011,6 @@ diff -urN /usr/share/empty/fs/aufs/i_op.c linux/fs/aufs/i_op.c
 +	aufs_bindex_t bstart, ibstart;
 +	struct dentry *hi_wh, *parent;
 +	struct inode *inode;
-+	struct file *h_file;
 +	struct au_wr_dir_args wr_dir_args = {
 +		.force_btgt	= -1,
 +		.flags		= 0
@@ -17035,7 +17052,6 @@ diff -urN /usr/share/empty/fs/aufs/i_op.c linux/fs/aufs/i_op.c
 +		sz = ia->ia_size;
 +	mutex_unlock(&a->h_inode->i_mutex);
 +
-+	h_file = NULL;
 +	hi_wh = NULL;
 +	if (au_ftest_icpup(a->flags, DID_CPUP) && d_unlinked(dentry)) {
 +		hi_wh = au_hi_wh(inode, a->btgt);
@@ -17059,14 +17075,8 @@ diff -urN /usr/share/empty/fs/aufs/i_op.c linux/fs/aufs/i_op.c
 +		goto out; /* success */
 +
 +	if (!d_unhashed(dentry)) {
-+		h_file = au_h_open_pre(dentry, bstart);
-+		if (IS_ERR(h_file))
-+			err = PTR_ERR(h_file);
-+		else {
-+			err = au_sio_cpup_simple(dentry, a->btgt, sz,
-+						 AuCpup_DTIME, &a->pin);
-+			au_h_open_post(dentry, bstart, h_file);
-+		}
++		err = au_sio_cpup_simple_h_open(dentry, a->btgt, sz,
++						AuCpup_DTIME, &a->pin, bstart);
 +		if (!err)
 +			a->h_path.dentry = au_h_dptr(dentry, a->btgt);
 +	} else if (!hi_wh)
@@ -17952,8 +17962,8 @@ diff -urN /usr/share/empty/fs/aufs/i_op_del.c linux/fs/aufs/i_op_del.c
 +}
 diff -urN /usr/share/empty/fs/aufs/i_op_ren.c linux/fs/aufs/i_op_ren.c
 --- /usr/share/empty/fs/aufs/i_op_ren.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/i_op_ren.c	2013-07-06 13:20:47.750198454 +0200
-@@ -0,0 +1,1053 @@
++++ linux/fs/aufs/i_op_ren.c	2013-07-30 22:42:46.235946055 +0200
+@@ -0,0 +1,1045 @@
 +/*
 + * Copyright (C) 2005-2013 Junjiro R. Okajima
 + *
@@ -18917,26 +18927,18 @@ diff -urN /usr/share/empty/fs/aufs/i_op_ren.c linux/fs/aufs/i_op_ren.c
 +
 +	/* cpup src */
 +	if (a->src_bstart != a->btgt) {
-+		struct file *h_file;
 +		struct au_pin pin;
 +
 +		err = au_pin(&pin, a->src_dentry, a->btgt,
 +			     au_opt_udba(a->src_dentry->d_sb),
 +			     AuPin_DI_LOCKED | AuPin_MNT_WRITE);
-+		if (unlikely(err))
-+			goto out_children;
-+
-+		AuDebugOn(au_dbstart(a->src_dentry) != a->src_bstart);
-+		h_file = au_h_open_pre(a->src_dentry, a->src_bstart);
-+		if (IS_ERR(h_file)) {
-+			err = PTR_ERR(h_file);
-+			h_file = NULL;
-+		} else {
-+			err = au_sio_cpup_simple(a->src_dentry, a->btgt, -1,
-+						 AuCpup_DTIME, &pin);
-+			au_h_open_post(a->src_dentry, a->src_bstart, h_file);
++		if (!err) {
++			AuDebugOn(au_dbstart(a->src_dentry) != a->src_bstart);
++			err = au_sio_cpup_simple_h_open(a->src_dentry, a->btgt,
++							-1, AuCpup_DTIME, &pin,
++							a->src_bstart);
++			au_unpin(&pin);
 +		}
-+		au_unpin(&pin);
 +		if (unlikely(err))
 +			goto out_children;
 +		a->src_bstart = a->btgt;
@@ -19215,7 +19217,7 @@ diff -urN /usr/share/empty/fs/aufs/Kconfig linux/fs/aufs/Kconfig
 +endif
 diff -urN /usr/share/empty/fs/aufs/loop.c linux/fs/aufs/loop.c
 --- /usr/share/empty/fs/aufs/loop.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/loop.c	2013-07-06 13:20:47.750198454 +0200
++++ linux/fs/aufs/loop.c	2013-07-30 22:42:55.842946719 +0200
 @@ -0,0 +1,135 @@
 +/*
 + * Copyright (C) 2005-2013 Junjiro R. Okajima
@@ -19354,7 +19356,7 @@ diff -urN /usr/share/empty/fs/aufs/loop.c linux/fs/aufs/loop.c
 +}
 diff -urN /usr/share/empty/fs/aufs/loop.h linux/fs/aufs/loop.h
 --- /usr/share/empty/fs/aufs/loop.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/loop.h	2013-07-06 13:20:47.750198454 +0200
++++ linux/fs/aufs/loop.h	2013-07-30 22:42:55.842946719 +0200
 @@ -0,0 +1,50 @@
 +/*
 + * Copyright (C) 2005-2013 Junjiro R. Okajima
@@ -22500,7 +22502,7 @@ diff -urN /usr/share/empty/fs/aufs/procfs.c linux/fs/aufs/procfs.c
 +}
 diff -urN /usr/share/empty/fs/aufs/rdu.c linux/fs/aufs/rdu.c
 --- /usr/share/empty/fs/aufs/rdu.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/rdu.c	2013-07-06 13:20:47.753531903 +0200
++++ linux/fs/aufs/rdu.c	2013-07-30 22:42:55.842946719 +0200
 @@ -0,0 +1,384 @@
 +/*
 + * Copyright (C) 2005-2013 Junjiro R. Okajima
@@ -25734,7 +25736,7 @@ diff -urN /usr/share/empty/fs/aufs/sysrq.c linux/fs/aufs/sysrq.c
 +}
 diff -urN /usr/share/empty/fs/aufs/vdir.c linux/fs/aufs/vdir.c
 --- /usr/share/empty/fs/aufs/vdir.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/vdir.c	2013-07-06 13:20:47.753531903 +0200
++++ linux/fs/aufs/vdir.c	2013-07-30 22:42:55.842946719 +0200
 @@ -0,0 +1,878 @@
 +/*
 + * Copyright (C) 2005-2013 Junjiro R. Okajima
@@ -26616,7 +26618,7 @@ diff -urN /usr/share/empty/fs/aufs/vdir.c linux/fs/aufs/vdir.c
 +}
 diff -urN /usr/share/empty/fs/aufs/vfsub.c linux/fs/aufs/vfsub.c
 --- /usr/share/empty/fs/aufs/vfsub.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/vfsub.c	2013-07-06 13:20:47.753531903 +0200
++++ linux/fs/aufs/vfsub.c	2013-07-30 22:42:55.842946719 +0200
 @@ -0,0 +1,769 @@
 +/*
 + * Copyright (C) 2005-2013 Junjiro R. Okajima
@@ -27389,7 +27391,7 @@ diff -urN /usr/share/empty/fs/aufs/vfsub.c linux/fs/aufs/vfsub.c
 +}
 diff -urN /usr/share/empty/fs/aufs/vfsub.h linux/fs/aufs/vfsub.h
 --- /usr/share/empty/fs/aufs/vfsub.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/vfsub.h	2013-07-06 13:20:47.753531903 +0200
++++ linux/fs/aufs/vfsub.h	2013-07-30 22:42:55.842946719 +0200
 @@ -0,0 +1,294 @@
 +/*
 + * Copyright (C) 2005-2013 Junjiro R. Okajima
@@ -31113,7 +31115,7 @@ diff -urN /usr/share/empty/include/linux/aufs_type.h linux/include/linux/aufs_ty
 +#include <uapi/linux/aufs_type.h>
 diff -urN /usr/share/empty/include/uapi/linux/aufs_type.h linux/include/uapi/linux/aufs_type.h
 --- /usr/share/empty/include/uapi/linux/aufs_type.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux/include/uapi/linux/aufs_type.h	2013-07-06 13:20:47.760198800 +0200
++++ linux/include/uapi/linux/aufs_type.h	2013-07-30 22:42:55.842946719 +0200
 @@ -0,0 +1,235 @@
 +/*
 + * Copyright (C) 2005-2013 Junjiro R. Okajima
@@ -31157,7 +31159,7 @@ diff -urN /usr/share/empty/include/uapi/linux/aufs_type.h linux/include/uapi/lin
 +
 +#include <linux/limits.h>
 +
-+#define AUFS_VERSION	"3.x-rcN-20130701"
++#define AUFS_VERSION	"3.10-20130722"
 +
 +/* todo? move this to linux-2.6.19/include/magic.h */
 +#define AUFS_SUPER_MAGIC	('a' << 24 | 'u' << 16 | 'f' << 8 | 's')
@@ -31350,3 +31352,4 @@ diff -urN /usr/share/empty/include/uapi/linux/aufs_type.h linux/include/uapi/lin
 +#define AUFS_CTL_IBUSY		_IOWR(AuCtlType, AuCtl_IBUSY, struct aufs_ibusy)
 +
 +#endif /* __AUFS_TYPE_H__ */
+
