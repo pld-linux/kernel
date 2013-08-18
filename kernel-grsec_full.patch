@@ -8037,10 +8037,9 @@ diff -urNp linux-3.0.9/arch/x86/include/asm/paravirt.h linux-3.0.9/arch/x86/incl
  #endif	/* CONFIG_X86_32 */
  
  #endif /* __ASSEMBLY__ */
-diff -urNp linux-3.0.9/arch/x86/include/asm/paravirt_types.h linux-3.0.9/arch/x86/include/asm/paravirt_types.h
---- linux-3.0.9/arch/x86/include/asm/paravirt_types.h	2011-11-11 13:12:24.000000000 -0500
-+++ linux-3.0.9/arch/x86/include/asm/paravirt_types.h	2011-11-15 20:02:59.000000000 -0500
-@@ -78,19 +78,19 @@ struct pv_init_ops {
+--- linux-3.0.91/arch/x86/include/asm/paravirt_types.h~	2013-08-18 14:08:28.000000000 +0300
++++ linux-3.0.91/arch/x86/include/asm/paravirt_types.h	2013-08-18 14:30:43.203843859 +0300
+@@ -78,7 +78,7 @@
  	 */
  	unsigned (*patch)(u8 type, u16 clobber, void *insnbuf,
  			  unsigned long addr, unsigned len);
@@ -8049,9 +8048,10 @@ diff -urNp linux-3.0.9/arch/x86/include/asm/paravirt_types.h linux-3.0.9/arch/x8
  
  
  struct pv_lazy_ops {
- 	/* Set deferred update mode, used for batching operations. */
+@@ -86,12 +86,12 @@
  	void (*enter)(void);
  	void (*leave)(void);
+ 	void (*flush)(void);
 -};
 +} __no_const;
  
@@ -14234,9 +14234,8 @@ diff -urNp linux-3.0.9/arch/x86/kernel/irq_32.c linux-3.0.9/arch/x86/kernel/irq_
  		/*
  		 * Shouldn't happen, we returned above if in_interrupt():
  		 */
-diff -urNp linux-3.0.9/arch/x86/kernel/irq.c linux-3.0.9/arch/x86/kernel/irq.c
---- linux-3.0.9/arch/x86/kernel/irq.c	2011-11-11 13:12:24.000000000 -0500
-+++ linux-3.0.9/arch/x86/kernel/irq.c	2011-11-15 20:02:59.000000000 -0500
+--- linux-3.0.91/arch/x86/kernel/irq.c~	2013-08-18 14:08:28.000000000 +0300
++++ linux-3.0.91/arch/x86/kernel/irq.c	2013-08-18 14:32:35.475467176 +0300
 @@ -17,7 +17,7 @@
  #include <asm/mce.h>
  #include <asm/hw_irq.h>
@@ -14258,19 +14257,15 @@ diff -urNp linux-3.0.9/arch/x86/kernel/irq.c linux-3.0.9/arch/x86/kernel/irq.c
  #endif
  	return 0;
  }
-@@ -158,10 +158,10 @@ u64 arch_irq_stat_cpu(unsigned int cpu)
+@@ -158,7 +158,7 @@
  
  u64 arch_irq_stat(void)
  {
 -	u64 sum = atomic_read(&irq_err_count);
 +	u64 sum = atomic_read_unchecked(&irq_err_count);
- 
- #ifdef CONFIG_X86_IO_APIC
--	sum += atomic_read(&irq_mis_count);
-+	sum += atomic_read_unchecked(&irq_mis_count);
- #endif
  	return sum;
  }
+ 
 diff -urNp linux-3.0.9/arch/x86/kernel/kgdb.c linux-3.0.9/arch/x86/kernel/kgdb.c
 --- linux-3.0.9/arch/x86/kernel/kgdb.c	2011-11-11 13:12:24.000000000 -0500
 +++ linux-3.0.9/arch/x86/kernel/kgdb.c	2011-11-15 20:02:59.000000000 -0500
@@ -21063,17 +21058,17 @@ diff -urNp linux-3.0.9/arch/x86/mm/init_64.c linux-3.0.9/arch/x86/mm/init_64.c
  		return "[vdso]";
  	if (vma == &gate_vma)
  		return "[vsyscall]";
---- linux-3.0.50/arch/x86/mm/init.c~	2012-11-03 12:47:37.930582122 +0200
-+++ linux-3.0.50/arch/x86/mm/init.c	2012-11-03 12:57:09.860976072 +0200
+--- linux-3.0.91/arch/x86/mm/init.c~	2013-08-18 14:08:29.000000000 +0300
++++ linux-3.0.91/arch/x86/mm/init.c	2013-08-18 14:33:46.628608987 +0300
 @@ -43,7 +43,7 @@
  {
  	int i;
  	unsigned long puds = 0, pmds = 0, ptes = 0, tables;
 -	unsigned long start = 0, good_end;
 +	unsigned long start = 0x100000, good_end;
+ 	unsigned long pgd_extra = 0;
  	phys_addr_t base;
  
- 	for (i = 0; i < nr_range; i++) {
 @@ -312,12 +312,34 @@ unsigned long __init_refok init_memory_m
   */
  int devmem_is_allowed(unsigned long pagenr)
@@ -26753,9 +26748,8 @@ diff -urNp linux-3.0.9/drivers/gpu/drm/i915/i915_irq.c linux-3.0.9/drivers/gpu/d
  
  	INIT_WORK(&dev_priv->hotplug_work, i915_hotplug_work_func);
  	INIT_WORK(&dev_priv->error_work, i915_error_work_func);
-diff -urNp linux-3.0.9/drivers/gpu/drm/i915/intel_display.c linux-3.0.9/drivers/gpu/drm/i915/intel_display.c
---- linux-3.0.9/drivers/gpu/drm/i915/intel_display.c	2011-11-11 13:12:24.000000000 -0500
-+++ linux-3.0.9/drivers/gpu/drm/i915/intel_display.c	2011-11-15 20:02:59.000000000 -0500
+--- linux-3.0.91/drivers/gpu/drm/i915/intel_display.c~	2013-08-18 14:08:29.000000000 +0300
++++ linux-3.0.91/drivers/gpu/drm/i915/intel_display.c	2013-08-18 14:34:46.271242831 +0300
 @@ -1961,7 +1961,7 @@ intel_pipe_set_base(struct drm_crtc *crt
  
  		wait_event(dev_priv->pending_flip_queue,
@@ -26792,13 +26786,13 @@ diff -urNp linux-3.0.9/drivers/gpu/drm/i915/intel_display.c linux-3.0.9/drivers/
  
  	ret = dev_priv->display.queue_flip(dev, crtc, fb, obj);
  	if (ret)
-@@ -6527,7 +6527,7 @@ static int intel_crtc_page_flip(struct d
+@@ -6568,7 +6568,7 @@
  	return 0;
  
  cleanup_pending:
 -	atomic_sub(1 << intel_crtc->plane, &work->old_fb_obj->pending_flip);
 +	atomic_sub_unchecked(1 << intel_crtc->plane, &work->old_fb_obj->pending_flip);
- cleanup_objs:
+ 	crtc->fb = old_fb;
  	drm_gem_object_unreference(&work->old_fb_obj->base);
  	drm_gem_object_unreference(&obj->base);
 diff -urNp linux-3.0.9/drivers/gpu/drm/mga/mga_drv.h linux-3.0.9/drivers/gpu/drm/mga/mga_drv.h
@@ -66733,15 +66727,14 @@ diff -urNp linux-3.0.9/kernel/trace/trace_output.c linux-3.0.9/kernel/trace/trac
  		if (p) {
  			s->len = p - s->buffer;
  			return 1;
-diff -urNp linux-3.0.9/kernel/trace/trace_stack.c linux-3.0.9/kernel/trace/trace_stack.c
---- linux-3.0.9/kernel/trace/trace_stack.c	2011-11-11 13:12:24.000000000 -0500
-+++ linux-3.0.9/kernel/trace/trace_stack.c	2011-11-15 20:03:00.000000000 -0500
-@@ -50,7 +50,7 @@ static inline void check_stack(void)
+--- linux-3.0.91/kernel/trace/trace_stack.c~	2013-08-18 14:08:22.000000000 +0300
++++ linux-3.0.91/kernel/trace/trace_stack.c	2013-08-18 14:35:49.430698928 +0300
+@@ -66,7 +66,7 @@
  		return;
  
  	/* we do not handle interrupt stacks yet */
--	if (!object_is_on_stack(&this_size))
-+	if (!object_starts_on_stack(&this_size))
+-	if (!object_is_on_stack(stack))
++	if (!object_starts_on_stack(stack))
  		return;
  
  	local_irq_save(flags);
@@ -72187,9 +72180,8 @@ diff -urNp linux-3.0.9/net/core/skbuff.c linux-3.0.9/net/core/skbuff.c
  	if (splice_grow_spd(pipe, &spd))
  		return -ENOMEM;
  
-diff -urNp linux-3.0.9/net/core/sock.c linux-3.0.9/net/core/sock.c
---- linux-3.0.9/net/core/sock.c	2011-11-11 13:12:24.000000000 -0500
-+++ linux-3.0.9/net/core/sock.c	2011-11-15 20:03:00.000000000 -0500
+--- linux-3.0.91/net/core/sock.c~	2013-08-18 14:08:40.000000000 +0300
++++ linux-3.0.91/net/core/sock.c	2013-08-18 14:37:47.459222476 +0300
 @@ -291,7 +291,7 @@ int sock_queue_rcv_skb(struct sock *sk, 
  	 */
  	if (atomic_read(&sk->sk_rmem_alloc) + skb->truesize >=
@@ -72235,10 +72227,10 @@ diff -urNp linux-3.0.9/net/core/sock.c linux-3.0.9/net/core/sock.c
  		goto discard_and_relse;
  	}
  
-@@ -921,7 +921,7 @@ int sock_getsockopt(struct socket *sock,
- 		if (len > sizeof(peercred))
+@@ -932,7 +932,7 @@
  			len = sizeof(peercred);
- 		cred_to_ucred(sk->sk_peer_pid, sk->sk_peer_cred, &peercred);
+ 		cred_to_ucred(sk->sk_peer_pid, sk->sk_peer_cred,
+ 			      &peercred, true);
 -		if (copy_to_user(optval, &peercred, len))
 +		if (len > sizeof(peercred) || copy_to_user(optval, &peercred, len))
  			return -EFAULT;
@@ -76351,21 +76343,19 @@ diff -urNp linux-3.0.9/security/Kconfig linux-3.0.9/security/Kconfig
  	default 65536
  	help
  	  This is the portion of low virtual memory which should be protected
-diff -urNp linux-3.0.9/security/keys/compat.c linux-3.0.9/security/keys/compat.c
---- linux-3.0.9/security/keys/compat.c	2011-11-11 13:12:24.000000000 -0500
-+++ linux-3.0.9/security/keys/compat.c	2011-11-15 20:03:00.000000000 -0500
-@@ -44,7 +44,7 @@ long compat_keyctl_instantiate_key_iov(
+--- linux-3.0.91/security/keys/compat.c~	2013-08-18 14:40:57.000000000 +0300
++++ linux-3.0.91/security/keys/compat.c	2013-08-18 14:42:42.498864167 +0300
+@@ -44,7 +44,7 @@
  	if (ret == 0)
  		goto no_payload_free;
  
 -	ret = keyctl_instantiate_key_common(id, iov, ioc, ret, ringid);
 +	ret = keyctl_instantiate_key_common(id, (const struct iovec __force_user *)iov, ioc, ret, ringid);
- 
+ err:
  	if (iov != iovstack)
  		kfree(iov);
-diff -urNp linux-3.0.9/security/keys/keyctl.c linux-3.0.9/security/keys/keyctl.c
---- linux-3.0.9/security/keys/keyctl.c	2011-11-11 13:12:24.000000000 -0500
-+++ linux-3.0.9/security/keys/keyctl.c	2011-11-15 20:03:00.000000000 -0500
+--- linux-3.0.91/security/keys/keyctl.c~	2013-08-18 14:41:02.000000000 +0300
++++ linux-3.0.91/security/keys/keyctl.c	2013-08-18 14:43:30.700984579 +0300
 @@ -921,7 +921,7 @@ static int keyctl_change_reqkey_auth(str
  /*
   * Copy the iovec data from userspace
@@ -76393,13 +76383,13 @@ diff -urNp linux-3.0.9/security/keys/keyctl.c linux-3.0.9/security/keys/keyctl.c
  	}
  
  	return keyctl_instantiate_key_common(id, NULL, 0, 0, ringid);
-@@ -1071,7 +1071,7 @@ long keyctl_instantiate_key_iov(key_seri
+@@ -1071,7 +1071,7 @@
  	if (ret == 0)
  		goto no_payload_free;
  
 -	ret = keyctl_instantiate_key_common(id, iov, ioc, ret, ringid);
 +	ret = keyctl_instantiate_key_common(id, (const struct iovec __force_user *)iov, ioc, ret, ringid);
- 
+ err:
  	if (iov != iovstack)
  		kfree(iov);
 diff -urNp linux-3.0.9/security/keys/keyring.c linux-3.0.9/security/keys/keyring.c
