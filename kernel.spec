@@ -219,6 +219,7 @@ Patch118:	ovl09-fs-limit-filesystem-stacking-depth.patch
 # drop hunk at the end of patch (hunk is patching include/linux/Kbuild with single line change)
 #
 Patch145:	kernel-aufs3.patch
+Patch146:	kernel-aufs3+vserver.patch
 
 # Show normal colors in menuconfig with ncurses ABI 6
 Patch250:	kernel-fix_256colors_menuconfig.patch
@@ -699,6 +700,9 @@ cd linux-%{basever}
 
 # aufs3
 %patch145 -p1
+%if %{with vserver}
+%patch146 -p1
+%endif
 
 %if %{with rescuecd}
 %patch7000 -p1
