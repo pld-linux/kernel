@@ -1186,6 +1186,9 @@ fi
 if [ -x /sbin/rc-boot ]; then
 	/sbin/rc-boot 1>&2 || :
 fi
+if [ -x /sbin/efi-boot-update ]; then
+	/sbin/efi-boot-update --auto || :
+fi
 
 %post vmlinux
 [ -f /etc/sysconfig/kernel ] && . /etc/sysconfig/kernel
