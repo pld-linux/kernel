@@ -69,7 +69,7 @@
 
 %define		rel		1
 %define		basever		3.10
-%define		postver		.15
+%define		postver		.17
 
 # __alt_kernel is list of features, empty string if none set
 # _alt kernel is defined as: %{nil}%{?alt_kernel:-%{?alt_kernel}} (defined in rpm.macros)
@@ -112,7 +112,7 @@ Source0:	http://www.kernel.org/pub/linux/kernel/v3.x/linux-%{basever}.tar.xz
 # Source0-md5:	4f25cd5bec5f8d5a7d935b3f2ccb8481
 %if "%{postver}" != ".0"
 Patch0:		http://www.kernel.org/pub/linux/kernel/v3.x/patch-%{version}.xz
-# Patch0-md5:	70cc9bd12b04382c3783da96edda4562
+# Patch0-md5:	8431ee4e2467fdfde47e31701813a265
 %endif
 Source1:	kernel.sysconfig
 
@@ -164,7 +164,6 @@ Patch40:	kernel-layer7.patch
 Patch49:	kernel-zph.patch
 
 # http://www.linuximq.net
-# http://tech.groups.yahoo.com/group/linuximq/message/3096
 Patch50:	kernel-imq.patch
 
 Patch51:	http://downloads.sourceforge.net/project/reiser4/reiser4-for-linux-3.x/reiser4-for-3.10.patch.gz
@@ -353,7 +352,7 @@ BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 %define		topdir		%{_builddir}/%{name}-%{version}
 %define		srcdir		%{topdir}/linux-%{basever}
 %define		objdir		%{topdir}/%{targetobj}
-%define		targetobj	%{_target_base_arch}-gcc-%(%{kgcc} -dumpversion)
+%define		targetobj	%{_target_base_arch}-gcc-%(%{__cc} -dumpversion)
 
 %define		_kernelsrcdir	/usr/src/linux%{_alt_kernel}-%{version}
 
