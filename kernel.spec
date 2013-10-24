@@ -91,7 +91,7 @@
 
 %define		rel		1
 %define		basever		3.4
-%define		postver		.65
+%define		postver		.67
 
 # __alt_kernel is list of features, empty string if none set
 # _alt kernel is defined as: %{nil}%{?alt_kernel:-%{?alt_kernel}} (defined in rpm.macros)
@@ -138,7 +138,7 @@ Source0:	http://www.kernel.org/pub/linux/kernel/v3.x/linux-%{basever}.tar.xz
 # Source0-md5:	967f72983655e2479f951195953e8480
 %if "%{postver}" != ".0"
 Patch0:		http://www.kernel.org/pub/linux/kernel/v3.x/patch-%{version}.xz
-# Patch0-md5:	5cc0b3e19712173f8f2612c17af16a64
+# Patch0-md5:	1ccc0e8290b5496467a08f101fc555a5
 %endif
 Source1:	kernel.sysconfig
 
@@ -373,7 +373,7 @@ BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 %define		topdir		%{_builddir}/%{name}-%{version}
 %define		srcdir		%{topdir}/linux-%{basever}
 %define		objdir		%{topdir}/%{targetobj}
-%define		targetobj	%{_target_base_arch}-gcc-%(%{kgcc} -dumpversion)
+%define		targetobj	%{_target_base_arch}-gcc-%(%{__cc} -dumpversion)
 
 %define		_kernelsrcdir	/usr/src/linux%{_alt_kernel}-%{version}
 
