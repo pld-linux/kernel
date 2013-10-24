@@ -67,7 +67,7 @@
 %define		have_pcmcia	0
 %endif
 
-%define		rel		1
+%define		rel		2
 %define		basever		3.10
 %define		postver		.17
 
@@ -1067,21 +1067,29 @@ fi
 %posttrans
 # use posttrans to generate initrd after all dependant module packages (-drm, etc) are installed
 [ -f /etc/sysconfig/kernel ] && . /etc/sysconfig/kernel
+initrd_file=""
 if [[ "$USE_GENINITRD" != [Nn][Oo] ]]; then
 	/sbin/geninitrd -f --initrdfs=initramfs %{initrd_dir}/initrd-%{kernel_release}.gz %{kernel_release} || :
-fi
-if [[ "$CREATE_SYMLINKS" != [Nn][Oo] ]]; then
-	mv -f %{initrd_dir}/initrd{,.old} 2> /dev/null
-	ln -sf initrd-%{kernel_release}.gz %{initrd_dir}/initrd
-%if 0%{?alt_kernel:1}
-	mv -f %{initrd_dir}/initrd%{_alt_kernel}{,.old} 2> /dev/null
-	ln -sf initrd-%{kernel_release}.gz %{initrd_dir}/initrd%{_alt_kernel}
-%endif
+	initrd_file="initrd-%{kernel_release}.gz"
 fi
 
 # if dracut is present then generate full-featured initramfs
 if [[ "$USE_DRACUT" != [Nn][Oo] ]] && [ -x /sbin/dracut ]; then
 	/sbin/dracut --force --quiet /boot/initramfs-%{kernel_release}.img %{kernel_release}
+        [ -n "$initrd_file" ] || initrd_file="initramfs-%{kernel_release}.img"
+fi
+
+if [[ "$CREATE_SYMLINKS" != [Nn][Oo] ]]; then
+	mv -f %{initrd_dir}/initrd{,.old} 2> /dev/null
+        if [ -n "$initrd_file" ] ; then
+	    ln -sf "$initrd_file" %{initrd_dir}/initrd
+        fi
+%if 0%{?alt_kernel:1}
+	mv -f %{initrd_dir}/initrd%{_alt_kernel}{,.old} 2> /dev/null
+        if [ -n "$initrd_file" ] ; then
+	    ln -sf "$initrd_file" %{initrd_dir}/initrd%{_alt_kernel}
+        fi
+%endif
 fi
 
 # update boot loaders when old package files are gone from filesystem
@@ -1095,6 +1103,9 @@ if [ -x /sbin/new-kernel-pkg ]; then
 fi
 if [ -x /sbin/rc-boot ]; then
 	/sbin/rc-boot 1>&2 || :
+fi
+if [ -x /sbin/efi-boot-update ]; then
+	/sbin/efi-boot-update --auto || :
 fi
 
 %post vmlinux
