@@ -166,8 +166,8 @@ Patch49:	kernel-zph.patch
 # http://www.linuximq.net
 Patch50:	kernel-imq.patch
 
-Patch51:	http://downloads.sourceforge.net/project/reiser4/reiser4-for-linux-3.x/reiser4-for-3.10.patch.gz
-# Patch51-md5:	5af1bdc286a88ef79268337c7ff17508
+Patch51:	http://downloads.sourceforge.net/project/reiser4/reiser4-for-linux-3.x/reiser4-for-3.11.1.patch.gz
+# Patch51-md5:	24a7d3711aadd26000d16eaac943a4ce
 
 # http://fatooh.org/esfq-2.6/sfq-2.6.24.1.tar.bz2
 Patch53:	kernel-esfq.patch
