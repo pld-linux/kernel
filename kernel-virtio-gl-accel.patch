@@ -32,7 +32,7 @@ new file mode 100644
 index 0000000..8882bda
 --- /dev/null
 +++ b/drivers/gpu/misc/virtio-gl.c
-@@ -0,0 +1,312 @@
+@@ -0,0 +1,315 @@
 +/*
 + * Copyright (C) 2010 Intel Corporation
 + *
@@ -176,7 +176,10 @@ index 0000000..8882bda
 +	}
 +
 +	/* Transfer data */
-+	if (virtqueue_add_buf(vq, sg_list, o_page, i_page, (void *)1, GFP_ATOMIC) >= 0) {
++	struct scatterlist *sgs[2];
++	sgs[0] = &sg_list[0];
++	sgs[1] = &sg_list[1];
++	if (virtqueue_add_sgs(vq, sgs, o_page, i_page, (void *)1, GFP_ATOMIC) >= 0) {
 +		virtqueue_kick(vq);
 +		/* Chill out until it's done with the buffer. */
 +		while (!virtqueue_get_buf(vq, &count))

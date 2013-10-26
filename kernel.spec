@@ -67,9 +67,9 @@
 %define		have_pcmcia	0
 %endif
 
-%define		rel		1
-%define		basever		3.10
-%define		postver		.17
+%define		rel		0.1
+%define		basever		3.12
+%define		postver		.0
 
 # __alt_kernel is list of features, empty string if none set
 # _alt kernel is defined as: %{nil}%{?alt_kernel:-%{?alt_kernel}} (defined in rpm.macros)
@@ -108,7 +108,7 @@ Release:	%{rel}
 Epoch:		3
 License:	GPL v2
 Group:		Base/Kernel
-Source0:	http://www.kernel.org/pub/linux/kernel/v3.x/linux-%{basever}.tar.xz
+Source0:	http://www.kernel.org/pub/linux/kernel/v3.x/linux-%{basever}-rc6.tar.xz
 # Source0-md5:	4f25cd5bec5f8d5a7d935b3f2ccb8481
 %if "%{postver}" != ".0"
 Patch0:		http://www.kernel.org/pub/linux/kernel/v3.x/patch-%{version}.xz
@@ -621,6 +621,7 @@ Pakiet zawiera dokumentację do jądra Linuksa pochodzącą z katalogu
 %setup -qc
 ln -s %{SOURCE7} kernel-module-build.pl
 ln -s %{SOURCE10} Makefile
+mv linux-%{basever}-rc6 linux-%{basever}
 cd linux-%{basever}
 
 %if "%{postver}" != ".0"
@@ -1447,6 +1448,7 @@ fi
 %exclude %{_kernelsrcdir}/arch/powerpc/lib/crtsavres.*
 %endif
 %{_kernelsrcdir}/arch/arm/kvm
+%{_kernelsrcdir}/arch/arm64/kvm
 %{_kernelsrcdir}/arch/mips/kvm
 %{_kernelsrcdir}/arch/s390/kvm
 %{_kernelsrcdir}/arch/x86/kvm
