@@ -766,7 +766,6 @@ RescueConfig() {
 		# CONFIG_DVB_CORE is not set
 		# CONFIG_HAMRADIO is not set
 		# CONFIG_ARCNET is not set
-		# CONFIG_FB is not set
 		# CONFIG_DRM is not set
 		# CONFIG_WATCHDOG is not set
 		# CONFIG_INPUT_JOYSTICK is not set
@@ -784,6 +783,60 @@ RescueConfig() {
 		# CONFIG_MEDIA_SUPPORT is not set
 		# CONFIG_UWB is not set
 		# CONFIG_PWM is not set
+		# CONFIG_COMEDI_NI_LABPC_ISA is not set
+		# CONFIG_FB_SYS_FILLRECT is not set
+		# CONFIG_FB_SYS_COPYAREA is not set
+		# CONFIG_FB_SYS_IMAGEBLIT is not set
+		# CONFIG_FB_SYS_FOPS is not set
+		# CONFIG_FB_HECUBA is not set
+		# CONFIG_FB_SVGALIB is not set
+		# CONFIG_FB_CIRRUS is not set
+		# CONFIG_FB_PM2 is not set
+		# CONFIG_FB_CYBER2000 is not set
+		# CONFIG_FB_ARC is not set
+		# CONFIG_FB_ASILIANT is not set
+		# CONFIG_FB_IMSTT is not set
+		# CONFIG_FB_VGA16 is not set
+		# CONFIG_FB_UVESA is not set
+		# CONFIG_FB_N411 is not set
+		# CONFIG_FB_HGA is not set
+		# CONFIG_FB_S1D13XXX is not set
+		# CONFIG_FB_NVIDIA is not set
+		# CONFIG_FB_RIVA is not set
+		# CONFIG_FB_I740 is not set
+		# CONFIG_FB_LE80578 is not set
+		# CONFIG_FB_CARILLO_RANCH is not set
+		# CONFIG_FB_MATROX is not set
+		# CONFIG_FB_RADEON is not set
+		# CONFIG_FB_ATY128 is not set
+		# CONFIG_FB_ATY is not set
+		# CONFIG_FB_S3 is not set
+		# CONFIG_FB_SAVAGE is not set
+		# CONFIG_FB_SIS is not set
+		# CONFIG_FB_VIA is not set
+		# CONFIG_FB_NEOMAGIC is not set
+		# CONFIG_FB_KYRO is not set
+		# CONFIG_FB_3DFX is not set
+		# CONFIG_FB_VOODOO1 is not set
+		# CONFIG_FB_VT8623 is not set
+		# CONFIG_FB_TRIDENT is not set
+		# CONFIG_FB_ARK is not set
+		# CONFIG_FB_PM3 is not set
+		# CONFIG_FB_CARMINE is not set
+		# CONFIG_FB_GEODE is not set
+		# CONFIG_FB_TMIO is not set
+		# CONFIG_FB_SM501 is not set
+		# CONFIG_FB_SMSCUFX is not set
+		# CONFIG_FB_UDL is not set
+		# CONFIG_FB_GOLDFISH is not set
+		# CONFIG_XEN_FBDEV_FRONTEND is not set
+		# CONFIG_FB_METRONOME is not set
+		# CONFIG_FB_MB862XX is not set
+		# CONFIG_FB_BROADSHEET is not set
+		# CONFIG_FB_AUO_K190X is not set
+		# CONFIG_FB_AUO_K1900 is not set
+		# CONFIG_FB_AUO_K1901 is not set
+		# CONFIG_FB_HYPERV is not set
 		CONFIG_AUFS=y
 		CONFIG_AUFS_FS=y
 		CONFIG_AUFS_BR_RAMFS=y
@@ -792,6 +845,9 @@ RescueConfig() {
 		CONFIG_ISO9660_FS=y
 		CONFIG_NLS_UTF8=y
 		CONFIG_SQUASHFS=y
+		CONFIG_FB=y
+		CONFIG_FB_EFI=y
+		CONFIG_FRAMEBUFFER_CONSOLE_DETECT_PRIMARY=y
 EOCONFIG
 
 	return 0
