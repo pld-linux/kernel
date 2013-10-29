@@ -238,7 +238,8 @@ Patch2000:	kernel-small_fixes.patch
 Patch2001:	kernel-pwc-uncompress.patch
 Patch2003:	kernel-regressions.patch
 
-# http://git.kernel.org/?p=linux/kernel/git/jj/linux-apparmor.git;a=shortlog;h=refs/heads/v3.5-aa2.8
+# bzr co lp:apparmor
+# ls apparmor/kernel-patches/3.12
 Patch5000:	kernel-apparmor.patch
 
 # for rescuecd

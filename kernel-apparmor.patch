@@ -1,330 +1,61 @@
-From 05bf1eb7276886a3eda0588a8e012b558b693e96 Mon Sep 17 00:00:00 2001
-From: John Johansen <john.johansen@canonical.com>
-Date: Thu, 22 Jul 2010 02:32:02 -0700
-Subject: [PATCH] UBUNTU: SAUCE: AppArmor: Add profile introspection file to
- interface
-
-Add the dynamic profiles file to the interace, to allow load policy
-introspection.
-
-Signed-off-by: John Johansen <john.johansen@canonical.com>
-Acked-by: Kees Cook <kees@ubuntu.com>
----
- security/apparmor/Kconfig      |    9 ++
- security/apparmor/apparmorfs.c |  231 ++++++++++++++++++++++++++++++++++++++++
- 2 files changed, 240 insertions(+), 0 deletions(-)
-
-diff --git a/security/apparmor/Kconfig b/security/apparmor/Kconfig
-index 9b9013b..51ebf96 100644
---- a/security/apparmor/Kconfig
-+++ b/security/apparmor/Kconfig
-@@ -29,3 +29,12 @@ config SECURITY_APPARMOR_BOOTPARAM_VALUE
- 	  boot.
- 
- 	  If you are unsure how to answer this question, answer 1.
-+
-+config SECURITY_APPARMOR_COMPAT_24
-+	bool "Enable AppArmor 2.4 compatability"
-+	depends on SECURITY_APPARMOR
-+	default y
-+	help
-+	  This option enables compatability with AppArmor 2.4.  It is
-+          recommended if compatability with older versions of AppArmor
-+          is desired.
-diff --git a/security/apparmor/apparmorfs.c b/security/apparmor/apparmorfs.c
-index 16c15ec..42b7c9f 100644
---- a/security/apparmor/apparmorfs.c
-+++ b/security/apparmor/apparmorfs.c
-@@ -182,6 +182,234 @@ const struct file_operations aa_fs_seq_file_ops = {
- 	.release	= single_release,
- };
- 
-+#ifdef CONFIG_SECURITY_APPARMOR_COMPAT_24
-+/**
-+ * __next_namespace - find the next namespace to list
-+ * @root: root namespace to stop search at (NOT NULL)
-+ * @ns: current ns position (NOT NULL)
-+ *
-+ * Find the next namespace from @ns under @root and handle all locking needed
-+ * while switching current namespace.
-+ *
-+ * Returns: next namespace or NULL if at last namespace under @root
-+ * NOTE: will not unlock root->lock
-+ */
-+static struct aa_namespace *__next_namespace(struct aa_namespace *root,
-+					     struct aa_namespace *ns)
-+{
-+	struct aa_namespace *parent;
-+
-+	/* is next namespace a child */
-+	if (!list_empty(&ns->sub_ns)) {
-+		struct aa_namespace *next;
-+		next = list_first_entry(&ns->sub_ns, typeof(*ns), base.list);
-+		read_lock(&next->lock);
-+		return next;
-+	}
-+
-+	/* check if the next ns is a sibling, parent, gp, .. */
-+	parent = ns->parent;
-+	while (parent) {
-+		read_unlock(&ns->lock);
-+		list_for_each_entry_continue(ns, &parent->sub_ns, base.list) {
-+			read_lock(&ns->lock);
-+			return ns;
-+		}
-+		if (parent == root)
-+			return NULL;
-+		ns = parent;
-+		parent = parent->parent;
-+	}
-+
-+	return NULL;
-+}
-+
-+/**
-+ * __first_profile - find the first profile in a namespace
-+ * @root: namespace that is root of profiles being displayed (NOT NULL)
-+ * @ns: namespace to start in   (NOT NULL)
-+ *
-+ * Returns: unrefcounted profile or NULL if no profile
-+ */
-+static struct aa_profile *__first_profile(struct aa_namespace *root,
-+					  struct aa_namespace *ns)
-+{
-+	for ( ; ns; ns = __next_namespace(root, ns)) {
-+		if (!list_empty(&ns->base.profiles))
-+			return list_first_entry(&ns->base.profiles,
-+						struct aa_profile, base.list);
-+	}
-+	return NULL;
-+}
-+
-+/**
-+ * __next_profile - step to the next profile in a profile tree
-+ * @profile: current profile in tree (NOT NULL)
-+ *
-+ * Perform a depth first taversal on the profile tree in a namespace
-+ *
-+ * Returns: next profile or NULL if done
-+ * Requires: profile->ns.lock to be held
-+ */
-+static struct aa_profile *__next_profile(struct aa_profile *p)
-+{
-+	struct aa_profile *parent;
-+	struct aa_namespace *ns = p->ns;
-+
-+	/* is next profile a child */
-+	if (!list_empty(&p->base.profiles))
-+		return list_first_entry(&p->base.profiles, typeof(*p),
-+					base.list);
-+
-+	/* is next profile a sibling, parent sibling, gp, subling, .. */
-+	parent = p->parent;
-+	while (parent) {
-+		list_for_each_entry_continue(p, &parent->base.profiles,
-+					     base.list)
-+				return p;
-+		p = parent;
-+		parent = parent->parent;
-+	}
-+
-+	/* is next another profile in the namespace */
-+	list_for_each_entry_continue(p, &ns->base.profiles, base.list)
-+		return p;
-+
-+	return NULL;
-+}
-+
-+/**
-+ * next_profile - step to the next profile in where ever it may be
-+ * @root: root namespace  (NOT NULL)
-+ * @profile: current profile  (NOT NULL)
-+ *
-+ * Returns: next profile or NULL if there isn't one
-+ */
-+static struct aa_profile *next_profile(struct aa_namespace *root,
-+				       struct aa_profile *profile)
-+{
-+	struct aa_profile *next = __next_profile(profile);
-+	if (next)
-+		return next;
-+
-+	/* finished all profiles in namespace move to next namespace */
-+	return __first_profile(root, __next_namespace(root, profile->ns));
-+}
-+
-+/**
-+ * p_start - start a depth first traversal of profile tree
-+ * @f: seq_file to fill
-+ * @pos: current position
-+ *
-+ * Returns: first profile under current namespace or NULL if none found
-+ *
-+ * acquires first ns->lock
-+ */
-+static void *p_start(struct seq_file *f, loff_t *pos)
-+	__acquires(root->lock)
-+{
-+	struct aa_profile *profile = NULL;
-+	struct aa_namespace *root = aa_current_profile()->ns;
-+	loff_t l = *pos;
-+	f->private = aa_get_namespace(root);
-+
-+
-+	/* find the first profile */
-+	read_lock(&root->lock);
-+	profile = __first_profile(root, root);
-+
-+	/* skip to position */
-+	for (; profile && l > 0; l--)
-+		profile = next_profile(root, profile);
-+
-+	return profile;
-+}
-+
-+/**
-+ * p_next - read the next profile entry
-+ * @f: seq_file to fill
-+ * @p: profile previously returned
-+ * @pos: current position
-+ *
-+ * Returns: next profile after @p or NULL if none
-+ *
-+ * may acquire/release locks in namespace tree as necessary
-+ */
-+static void *p_next(struct seq_file *f, void *p, loff_t *pos)
-+{
-+	struct aa_profile *profile = p;
-+	struct aa_namespace *root = f->private;
-+	(*pos)++;
-+
-+	return next_profile(root, profile);
-+}
-+
-+/**
-+ * p_stop - stop depth first traversal
-+ * @f: seq_file we are filling
-+ * @p: the last profile writen
-+ *
-+ * Release all locking done by p_start/p_next on namespace tree
-+ */
-+static void p_stop(struct seq_file *f, void *p)
-+	__releases(root->lock)
-+{
-+	struct aa_profile *profile = p;
-+	struct aa_namespace *root = f->private, *ns;
-+
-+	if (profile) {
-+		for (ns = profile->ns; ns && ns != root; ns = ns->parent)
-+			read_unlock(&ns->lock);
-+	}
-+	read_unlock(&root->lock);
-+	aa_put_namespace(root);
-+}
-+
-+/**
-+ * seq_show_profile - show a profile entry
-+ * @f: seq_file to file
-+ * @p: current position (profile)    (NOT NULL)
-+ *
-+ * Returns: error on failure
-+ */
-+static int seq_show_profile(struct seq_file *f, void *p)
-+{
-+	struct aa_profile *profile = (struct aa_profile *)p;
-+	struct aa_namespace *root = f->private;
-+
-+	if (profile->ns != root)
-+		seq_printf(f, ":%s://", aa_ns_name(root, profile->ns));
-+	seq_printf(f, "%s (%s)\n", profile->base.hname,
-+		   COMPLAIN_MODE(profile) ? "complain" : "enforce");
-+
-+	return 0;
-+}
-+
-+static const struct seq_operations aa_fs_profiles_op = {
-+	.start = p_start,
-+	.next = p_next,
-+	.stop = p_stop,
-+	.show = seq_show_profile,
-+};
-+
-+static int profiles_open(struct inode *inode, struct file *file)
-+{
-+	return seq_open(file, &aa_fs_profiles_op);
-+}
-+
-+static int profiles_release(struct inode *inode, struct file *file)
-+{
-+	return seq_release(inode, file);
-+}
-+
-+const struct file_operations aa_fs_profiles_fops = {
-+	.open = profiles_open,
-+	.read = seq_read,
-+	.llseek = seq_lseek,
-+	.release = profiles_release,
-+};
-+#endif /* CONFIG_SECURITY_APPARMOR_COMPAT_24 */
-+
- /** Base file system setup **/
- 
- static struct aa_fs_entry aa_fs_entry_file[] = {
-@@ -210,6 +438,9 @@ static struct aa_fs_entry aa_fs_entry_apparmor[] = {
- 	AA_FS_FILE_FOPS(".load", 0640, &aa_fs_profile_load),
- 	AA_FS_FILE_FOPS(".replace", 0640, &aa_fs_profile_replace),
- 	AA_FS_FILE_FOPS(".remove", 0640, &aa_fs_profile_remove),
-+#ifdef CONFIG_SECURITY_APPARMOR_COMPAT_24
-+	AA_FS_FILE_FOPS("profiles", 0640, &aa_fs_profiles_fops),
-+#endif
- 	AA_FS_DIR("features", aa_fs_entry_features),
- 	{ }
- };
--- 
-1.7.6.5
-
-From 4facdf9db37c12ff655c91270d9030e2ed805ca2 Mon Sep 17 00:00:00 2001
+From d29d73fa5d7b5d016f9c17236fff2a741acea247 Mon Sep 17 00:00:00 2001
 From: John Johansen <john.johansen@canonical.com>
 Date: Mon, 4 Oct 2010 15:03:36 -0700
-Subject: [PATCH] UBUNTU: SAUCE: AppArmor: basic networking rules
+Subject: [PATCH 1/3] UBUNTU: SAUCE: AppArmor: basic networking rules
 
 Base support for network mediation.
 
 Signed-off-by: John Johansen <john.johansen@canonical.com>
+
+Conflicts:
+	security/apparmor/Makefile
+	security/apparmor/policy.c
 ---
- security/apparmor/.gitignore       |    2 +-
- security/apparmor/Makefile         |   42 +++++++++-
- security/apparmor/apparmorfs.c     |    1 +
- security/apparmor/include/audit.h  |    4 +
- security/apparmor/include/net.h    |   44 ++++++++++
- security/apparmor/include/policy.h |    3 +
- security/apparmor/lsm.c            |  112 +++++++++++++++++++++++++
- security/apparmor/net.c            |  162 ++++++++++++++++++++++++++++++++++++
- security/apparmor/policy.c         |    1 +
- security/apparmor/policy_unpack.c  |   46 ++++++++++
- 10 files changed, 414 insertions(+), 3 deletions(-)
+ security/apparmor/.gitignore       |   1 +
+ security/apparmor/Makefile         |  42 +++++++++-
+ security/apparmor/apparmorfs.c     |   1 +
+ security/apparmor/include/audit.h  |   4 +
+ security/apparmor/include/net.h    |  44 ++++++++++
+ security/apparmor/include/policy.h |   3 +
+ security/apparmor/lsm.c            | 112 +++++++++++++++++++++++++
+ security/apparmor/net.c            | 162 +++++++++++++++++++++++++++++++++++++
+ security/apparmor/policy.c         |   1 +
+ security/apparmor/policy_unpack.c  |  46 +++++++++++
+ 10 files changed, 414 insertions(+), 2 deletions(-)
  create mode 100644 security/apparmor/include/net.h
  create mode 100644 security/apparmor/net.c
 
+diff --git a/security/apparmor/.gitignore b/security/apparmor/.gitignore
+index 9cdec70..d5b291e 100644
+--- a/security/apparmor/.gitignore
++++ b/security/apparmor/.gitignore
+@@ -1,5 +1,6 @@
+ #
+ # Generated include files
+ #
++net_names.h
+ capability_names.h
+ rlim_names.h
 diff --git a/security/apparmor/Makefile b/security/apparmor/Makefile
-index 806bd19..19daa85 100644
+index d693df8..5dbb72f 100644
 --- a/security/apparmor/Makefile
 +++ b/security/apparmor/Makefile
-@@ -4,9 +4,9 @@ obj-$(CONFIG_SECURITY_APPARMOR) += apparmor.o
+@@ -4,10 +4,10 @@ obj-$(CONFIG_SECURITY_APPARMOR) += apparmor.o
  
  apparmor-y := apparmorfs.o audit.o capability.o context.o ipc.o lib.o match.o \
                path.o domain.o policy.o policy_unpack.o procattr.o lsm.o \
 -              resource.o sid.o file.o
 +              resource.o sid.o file.o net.o
+ apparmor-$(CONFIG_SECURITY_APPARMOR_HASH) += crypto.o
  
 -clean-files := capability_names.h rlim_names.h
 +clean-files := capability_names.h rlim_names.h net_names.h
  
  
  # Build a lower case string table of capability names
-@@ -20,6 +20,38 @@ cmd_make-caps = echo "static const char *const capability_names[] = {" > $@ ;\
- 	-e 's/^\#define[ \t]+CAP_([A-Z0-9_]+)[ \t]+([0-9]+)/[\2] = "\L\1",/p';\
- 	echo "};" >> $@
+@@ -25,6 +25,38 @@ cmd_make-caps = echo "static const char *const capability_names[] = {" > $@ ;\
+ 	    -e 's/^\#define[ \t]+CAP_([A-Z0-9_]+)[ \t]+([0-9]+)/\L\1/p' | \
+ 	     tr '\n' ' ' | sed -e 's/ $$/"\n/' >> $@
  
 +# Build a lower case string table of address family names
 +# Transform lines from
@@ -361,16 +92,16 @@ index 806bd19..19daa85 100644
  
  # Build a lower case string table of rlimit names.
  # Transforms lines from
-@@ -56,6 +88,7 @@ cmd_make-rlim = echo "static const char *const rlim_names[RLIM_NLIMITS] = {" \
+@@ -61,6 +93,7 @@ cmd_make-rlim = echo "static const char *const rlim_names[RLIM_NLIMITS] = {" \
  	    tr '\n' ' ' | sed -e 's/ $$/"\n/' >> $@
  
  $(obj)/capability.o : $(obj)/capability_names.h
 +$(obj)/net.o : $(obj)/net_names.h
  $(obj)/resource.o : $(obj)/rlim_names.h
- $(obj)/capability_names.h : $(srctree)/include/linux/capability.h \
+ $(obj)/capability_names.h : $(srctree)/include/uapi/linux/capability.h \
  			    $(src)/Makefile
-@@ -63,3 +96,8 @@ $(obj)/capability_names.h : $(srctree)/include/linux/capability.h \
- $(obj)/rlim_names.h : $(srctree)/include/asm-generic/resource.h \
+@@ -68,3 +101,8 @@ $(obj)/capability_names.h : $(srctree)/include/uapi/linux/capability.h \
+ $(obj)/rlim_names.h : $(srctree)/include/uapi/asm-generic/resource.h \
  		      $(src)/Makefile
  	$(call cmd,make-rlim)
 +$(obj)/net_names.h : $(srctree)/include/linux/socket.h \
@@ -379,24 +110,24 @@ index 806bd19..19daa85 100644
 +	$(call cmd,make-af)
 +	$(call cmd,make-sock)
 diff --git a/security/apparmor/apparmorfs.c b/security/apparmor/apparmorfs.c
-index 42b7c9f..114fb23 100644
+index 7db9954..18fc02c 100644
 --- a/security/apparmor/apparmorfs.c
 +++ b/security/apparmor/apparmorfs.c
-@@ -429,6 +429,7 @@ static struct aa_fs_entry aa_fs_entry_domain[] = {
- static struct aa_fs_entry aa_fs_entry_features[] = {
+@@ -806,6 +806,7 @@ static struct aa_fs_entry aa_fs_entry_features[] = {
+ 	AA_FS_DIR("policy",			aa_fs_entry_policy),
  	AA_FS_DIR("domain",			aa_fs_entry_domain),
  	AA_FS_DIR("file",			aa_fs_entry_file),
 +	AA_FS_DIR("network",                    aa_fs_entry_network),
  	AA_FS_FILE_U64("capability",		VFS_CAP_FLAGS_MASK),
  	AA_FS_DIR("rlimit",			aa_fs_entry_rlimit),
- 	{ }
+ 	AA_FS_DIR("caps",			aa_fs_entry_caps),
 diff --git a/security/apparmor/include/audit.h b/security/apparmor/include/audit.h
-index 4b7e189..17734f9 100644
+index 30e8d76..61abec5 100644
 --- a/security/apparmor/include/audit.h
 +++ b/security/apparmor/include/audit.h
-@@ -127,6 +127,10 @@ struct apparmor_audit_data {
+@@ -126,6 +126,10 @@ struct apparmor_audit_data {
  			u32 denied;
- 			uid_t ouid;
+ 			kuid_t ouid;
  		} fs;
 +		struct {
 +			int type, protocol;
@@ -456,7 +187,7 @@ index 0000000..cb8a121
 +
 +#endif /* __AA_NET_H */
 diff --git a/security/apparmor/include/policy.h b/security/apparmor/include/policy.h
-index bda4569..eb13a73 100644
+index c28b0f2..b524d88 100644
 --- a/security/apparmor/include/policy.h
 +++ b/security/apparmor/include/policy.h
 @@ -27,6 +27,7 @@
@@ -466,25 +197,25 @@ index bda4569..eb13a73 100644
 +#include "net.h"
  #include "resource.h"
  
- extern const char *const profile_mode_names[];
-@@ -157,6 +158,7 @@ struct aa_policydb {
+ extern const char *const aa_profile_mode_names[];
+@@ -176,6 +177,7 @@ struct aa_replacedby {
   * @policy: general match rules governing policy
   * @file: The set of rules governing basic file access and domain transitions
   * @caps: capabilities for the profile
 + * @net: network controls for the profile
   * @rlimits: rlimits for the profile
   *
-  * The AppArmor profile contains the basic confinement data.  Each profile
-@@ -194,6 +196,7 @@ struct aa_profile {
+  * @dents: dentries for the profiles file entries in apparmorfs
+@@ -217,6 +219,7 @@ struct aa_profile {
  	struct aa_policydb policy;
  	struct aa_file_rules file;
  	struct aa_caps caps;
 +	struct aa_net net;
  	struct aa_rlimit rlimits;
- };
  
+ 	unsigned char *hash;
 diff --git a/security/apparmor/lsm.c b/security/apparmor/lsm.c
-index 8ea39aa..f628734 100644
+index fb99e18..de55a7f 100644
 --- a/security/apparmor/lsm.c
 +++ b/security/apparmor/lsm.c
 @@ -32,6 +32,7 @@
@@ -495,7 +226,7 @@ index 8ea39aa..f628734 100644
  #include "include/path.h"
  #include "include/policy.h"
  #include "include/procattr.h"
-@@ -614,6 +615,104 @@ static int apparmor_task_setrlimit(struct task_struct *task,
+@@ -615,6 +616,104 @@ static int apparmor_task_setrlimit(struct task_struct *task,
  	return error;
  }
  
@@ -600,7 +331,7 @@ index 8ea39aa..f628734 100644
  static struct security_operations apparmor_ops = {
  	.name =				"apparmor",
  
-@@ -646,6 +745,19 @@ static struct security_operations apparmor_ops = {
+@@ -647,6 +746,19 @@ static struct security_operations apparmor_ops = {
  	.getprocattr =			apparmor_getprocattr,
  	.setprocattr =			apparmor_setprocattr,
  
@@ -789,19 +520,19 @@ index 0000000..003dd18
 +	return error;
 +}
 diff --git a/security/apparmor/policy.c b/security/apparmor/policy.c
-index cf5fd22..27c8161 100644
+index 705c287..e2afe29 100644
 --- a/security/apparmor/policy.c
 +++ b/security/apparmor/policy.c
-@@ -745,6 +745,7 @@ static void free_profile(struct aa_profile *profile)
+@@ -603,6 +603,7 @@ void aa_free_profile(struct aa_profile *profile)
  
  	aa_free_file_rules(&profile->file);
  	aa_free_cap_rules(&profile->caps);
 +	aa_free_net_rules(&profile->net);
  	aa_free_rlimit_rules(&profile->rlimits);
  
- 	aa_free_sid(profile->sid);
+ 	kzfree(profile->dirname);
 diff --git a/security/apparmor/policy_unpack.c b/security/apparmor/policy_unpack.c
-index 329b1fd..1b90dfa 100644
+index a689f10..1a35e6b 100644
 --- a/security/apparmor/policy_unpack.c
 +++ b/security/apparmor/policy_unpack.c
 @@ -193,6 +193,19 @@ fail:
@@ -824,7 +555,7 @@ index 329b1fd..1b90dfa 100644
  static bool unpack_u32(struct aa_ext *e, u32 *data, const char *name)
  {
  	if (unpack_nameX(e, AA_U32, name)) {
-@@ -471,6 +484,7 @@ static struct aa_profile *unpack_profile(struct aa_ext *e)
+@@ -476,6 +489,7 @@ static struct aa_profile *unpack_profile(struct aa_ext *e)
  {
  	struct aa_profile *profile = NULL;
  	const char *name = NULL;
@@ -832,7 +563,7 @@ index 329b1fd..1b90dfa 100644
  	int i, error = -EPROTO;
  	kernel_cap_t tmpcap;
  	u32 tmp;
-@@ -564,6 +578,38 @@ static struct aa_profile *unpack_profile(struct aa_ext *e)
+@@ -576,6 +590,38 @@ static struct aa_profile *unpack_profile(struct aa_ext *e)
  	if (!unpack_rlimits(e, profile))
  		goto fail;
  
@@ -872,12 +603,50 @@ index 329b1fd..1b90dfa 100644
  		/* generic policy dfa - optional and may be NULL */
  		profile->policy.dfa = unpack_dfa(e);
 -- 
-1.7.7.6
+1.8.3.2
 
-From 888a3d71db1ffd3a19d9f621b07e60c4ab9e1c44 Mon Sep 17 00:00:00 2001
+From b452a37e97af826ba6c7548230e07c95bd13d9c4 Mon Sep 17 00:00:00 2001
+From: John Johansen <john.johansen@canonical.com>
+Date: Fri, 29 Jun 2012 17:34:00 -0700
+Subject: [PATCH 2/3] apparmor: Fix quieting of audit messages for network
+ mediation
+
+If a profile specified a quieting of network denials for a given rule by
+either the quiet or deny rule qualifiers, the resultant quiet mask for
+denied requests was applied incorrectly, resulting in two potential bugs.
+1. The misapplied quiet mask would prevent denials from being correctly
+   tested against the kill mask/mode. Thus network access requests that
+   should have resulted in the application being killed did not.
+
+2. The actual quieting of the denied network request was not being applied.
+   This would result in network rejections always being logged even when
+   they had been specifically marked as quieted.
+
+Signed-off-by: John Johansen <john.johansen@canonical.com>
+---
+ security/apparmor/net.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/security/apparmor/net.c b/security/apparmor/net.c
+index 003dd18..6e6e5c9 100644
+--- a/security/apparmor/net.c
++++ b/security/apparmor/net.c
+@@ -88,7 +88,7 @@ static int audit_net(struct aa_profile *profile, int op, u16 family, int type,
+ 	} else {
+ 		u16 quiet_mask = profile->net.quiet[sa.u.net->family];
+ 		u16 kill_mask = 0;
+-		u16 denied = (1 << sa.aad->net.type) & ~quiet_mask;
++		u16 denied = (1 << sa.aad->net.type);
+ 
+ 		if (denied & kill_mask)
+ 			audit_type = AUDIT_APPARMOR_KILL;
+-- 
+1.8.3.2
+
+From 0f113c1f052be315f5097d8b7294a620b0adda87 Mon Sep 17 00:00:00 2001
 From: John Johansen <john.johansen@canonical.com>
 Date: Wed, 16 May 2012 10:58:05 -0700
-Subject: [PATCH] UBUNTU: SAUCE: apparmor: Add the ability to mediate mount
+Subject: [PATCH 3/3] UBUNTU: SAUCE: apparmor: Add the ability to mediate mount
 
 Add the ability for apparmor to do mediation of mount operations. Mount
 rules require an updated apparmor_parser (2.8 series) for policy compilation.
@@ -916,23 +685,27 @@ See the apparmor userspace for full documentation
 
 Signed-off-by: John Johansen <john.johansen@canonical.com>
 Acked-by: Kees Cook <kees@ubuntu.com>
+
+Conflicts:
+	security/apparmor/Makefile
+	security/apparmor/apparmorfs.c
 ---
- security/apparmor/Makefile           |    2 +-
- security/apparmor/apparmorfs.c       |   13 +
- security/apparmor/audit.c            |    4 +
- security/apparmor/domain.c           |    2 +-
- security/apparmor/include/apparmor.h |    3 +-
- security/apparmor/include/audit.h    |   11 +
- security/apparmor/include/domain.h   |    2 +
- security/apparmor/include/mount.h    |   54 +++
- security/apparmor/lsm.c              |   59 ++++
- security/apparmor/mount.c            |  620 ++++++++++++++++++++++++++++++++++
- 10 files changed, 767 insertions(+), 3 deletions(-)
+ security/apparmor/Makefile           |   2 +-
+ security/apparmor/apparmorfs.c       |  15 +-
+ security/apparmor/audit.c            |   4 +
+ security/apparmor/domain.c           |   2 +-
+ security/apparmor/include/apparmor.h |   3 +-
+ security/apparmor/include/audit.h    |  11 +
+ security/apparmor/include/domain.h   |   2 +
+ security/apparmor/include/mount.h    |  54 +++
+ security/apparmor/lsm.c              |  59 ++++
+ security/apparmor/mount.c            | 620 +++++++++++++++++++++++++++++++++++
+ 10 files changed, 768 insertions(+), 4 deletions(-)
  create mode 100644 security/apparmor/include/mount.h
  create mode 100644 security/apparmor/mount.c
 
 diff --git a/security/apparmor/Makefile b/security/apparmor/Makefile
-index 19daa85..63e0a4c 100644
+index 5dbb72f..89b3445 100644
 --- a/security/apparmor/Makefile
 +++ b/security/apparmor/Makefile
 @@ -4,7 +4,7 @@ obj-$(CONFIG_SECURITY_APPARMOR) += apparmor.o
@@ -941,17 +714,21 @@ index 19daa85..63e0a4c 100644
                path.o domain.o policy.o policy_unpack.o procattr.o lsm.o \
 -              resource.o sid.o file.o net.o
 +              resource.o sid.o file.o net.o mount.o
+ apparmor-$(CONFIG_SECURITY_APPARMOR_HASH) += crypto.o
  
  clean-files := capability_names.h rlim_names.h net_names.h
- 
 diff --git a/security/apparmor/apparmorfs.c b/security/apparmor/apparmorfs.c
-index 114fb23..ee77ec9 100644
+index 18fc02c..e709030 100644
 --- a/security/apparmor/apparmorfs.c
 +++ b/security/apparmor/apparmorfs.c
-@@ -426,10 +426,23 @@ static struct aa_fs_entry aa_fs_entry_domain[] = {
- 	{ }
- };
+@@ -799,7 +799,18 @@ static struct aa_fs_entry aa_fs_entry_domain[] = {
  
+ static struct aa_fs_entry aa_fs_entry_policy[] = {
+ 	AA_FS_FILE_BOOLEAN("set_load",          1),
+-	{}
++	{ }
++};
++
 +static struct aa_fs_entry aa_fs_entry_mount[] = {
 +	AA_FS_FILE_STRING("mask", "mount umount"),
 +	{ }
@@ -961,9 +738,10 @@ index 114fb23..ee77ec9 100644
 +	AA_FS_FILE_BOOLEAN("profile",           1),
 +	AA_FS_FILE_BOOLEAN("pivot_root",        1),
 +	{ }
-+};
-+
+ };
+ 
  static struct aa_fs_entry aa_fs_entry_features[] = {
+@@ -807,6 +818,8 @@ static struct aa_fs_entry aa_fs_entry_features[] = {
  	AA_FS_DIR("domain",			aa_fs_entry_domain),
  	AA_FS_DIR("file",			aa_fs_entry_file),
  	AA_FS_DIR("network",                    aa_fs_entry_network),
@@ -971,9 +749,9 @@ index 114fb23..ee77ec9 100644
 +	AA_FS_DIR("namespaces",                 aa_fs_entry_namespaces),
  	AA_FS_FILE_U64("capability",		VFS_CAP_FLAGS_MASK),
  	AA_FS_DIR("rlimit",			aa_fs_entry_rlimit),
- 	{ }
+ 	AA_FS_DIR("caps",			aa_fs_entry_caps),
 diff --git a/security/apparmor/audit.c b/security/apparmor/audit.c
-index 3ae28db..e267963 100644
+index 031d2d9..02d804c 100644
 --- a/security/apparmor/audit.c
 +++ b/security/apparmor/audit.c
 @@ -44,6 +44,10 @@ const char *const op_table[] = {
@@ -988,10 +766,10 @@ index 3ae28db..e267963 100644
  	"post_create",
  	"bind",
 diff --git a/security/apparmor/domain.c b/security/apparmor/domain.c
-index b81ea10..afa8671 100644
+index 26c607c..23936c5 100644
 --- a/security/apparmor/domain.c
 +++ b/security/apparmor/domain.c
-@@ -242,7 +242,7 @@ static const char *next_name(int xtype, const char *name)
+@@ -238,7 +238,7 @@ static const char *next_name(int xtype, const char *name)
   *
   * Returns: refcounted profile, or NULL on failure (MAYBE NULL)
   */
@@ -1001,10 +779,10 @@ index b81ea10..afa8671 100644
  	struct aa_profile *new_profile = NULL;
  	struct aa_namespace *ns = profile->ns;
 diff --git a/security/apparmor/include/apparmor.h b/security/apparmor/include/apparmor.h
-index 40aedd9..e243d96 100644
+index 8fb1488..22b172c 100644
 --- a/security/apparmor/include/apparmor.h
 +++ b/security/apparmor/include/apparmor.h
-@@ -29,8 +29,9 @@
+@@ -30,8 +30,9 @@
  #define AA_CLASS_NET		4
  #define AA_CLASS_RLIMITS	5
  #define AA_CLASS_DOMAIN		6
@@ -1016,10 +794,10 @@ index 40aedd9..e243d96 100644
  /* Control parameters settable through module/boot flags */
  extern enum audit_mode aa_g_audit;
 diff --git a/security/apparmor/include/audit.h b/security/apparmor/include/audit.h
-index 17734f9..66a738c 100644
+index 61abec5..a9835c3 100644
 --- a/security/apparmor/include/audit.h
 +++ b/security/apparmor/include/audit.h
-@@ -73,6 +73,10 @@ enum aa_ops {
+@@ -72,6 +72,10 @@ enum aa_ops {
  	OP_FMMAP,
  	OP_FMPROT,
  
@@ -1030,7 +808,7 @@ index 17734f9..66a738c 100644
  	OP_CREATE,
  	OP_POST_CREATE,
  	OP_BIND,
-@@ -122,6 +126,13 @@ struct apparmor_audit_data {
+@@ -121,6 +125,13 @@ struct apparmor_audit_data {
  			unsigned long max;
  		} rlim;
  		struct {
@@ -1118,7 +896,7 @@ index 0000000..bc17a53
 +
 +#endif /* __AA_MOUNT_H */
 diff --git a/security/apparmor/lsm.c b/security/apparmor/lsm.c
-index f628734..65ff9e4 100644
+index de55a7f..e0dd95f 100644
 --- a/security/apparmor/lsm.c
 +++ b/security/apparmor/lsm.c
 @@ -36,6 +36,7 @@
@@ -1129,7 +907,7 @@ index f628734..65ff9e4 100644
  
  /* Flag indicating whether initialization completed */
  int apparmor_initialized __initdata;
-@@ -504,6 +505,60 @@ static int apparmor_file_mprotect(struct vm_area_struct *vma,
+@@ -502,6 +503,60 @@ static int apparmor_file_mprotect(struct vm_area_struct *vma,
  			   !(vma->vm_flags & VM_SHARED) ? MAP_PRIVATE : 0);
  }
  
@@ -1190,7 +968,7 @@ index f628734..65ff9e4 100644
  static int apparmor_getprocattr(struct task_struct *task, char *name,
  				char **value)
  {
-@@ -721,6 +776,10 @@ static struct security_operations apparmor_ops = {
+@@ -722,6 +777,10 @@ static struct security_operations apparmor_ops = {
  	.capget =			apparmor_capget,
  	.capable =			apparmor_capable,
  
@@ -1828,5 +1606,5 @@ index 0000000..478aa4d
 +	return error;
 +}
 -- 
-1.7.7.6
+1.8.3.2
 
