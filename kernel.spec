@@ -108,8 +108,8 @@ Release:	%{rel}
 Epoch:		3
 License:	GPL v2
 Group:		Base/Kernel
-Source0:	http://www.kernel.org/pub/linux/kernel/v3.x/linux-%{basever}-rc6.tar.xz
-# Source0-md5:	4f25cd5bec5f8d5a7d935b3f2ccb8481
+Source0:	http://www.kernel.org/pub/linux/kernel/v3.x/linux-%{basever}.tar.xz
+# Source0-md5:	cc6ee608854e0da4b64f6c1ff8b6398c
 %if "%{postver}" != ".0"
 Patch0:		http://www.kernel.org/pub/linux/kernel/v3.x/patch-%{version}.xz
 # Patch0-md5:	8431ee4e2467fdfde47e31701813a265
@@ -622,7 +622,6 @@ Pakiet zawiera dokumentację do jądra Linuksa pochodzącą z katalogu
 %setup -qc
 ln -s %{SOURCE7} kernel-module-build.pl
 ln -s %{SOURCE10} Makefile
-mv linux-%{basever}-rc6 linux-%{basever}
 cd linux-%{basever}
 
 %if "%{postver}" != ".0"
