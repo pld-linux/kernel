@@ -1362,7 +1362,7 @@ diff -NurpP --minimal linux-3.10.15/drivers/net/tun.c linux-3.10.15-vs2.3.6.6/dr
  			     MAX_TAP_QUEUES : 1;
  
 -		if (!ns_capable(net->user_ns, CAP_NET_ADMIN))
-+		if (!vx_ns_capable(net->user_ns, CAP_NET_ADMIN, NXC_TUN_CREATE))
++		if (!nx_ns_capable(net->user_ns, CAP_NET_ADMIN, NXC_TUN_CREATE))
  			return -EPERM;
  		err = security_tun_dev_create();
  		if (err < 0)
@@ -4851,6 +4851,16 @@ diff -NurpP --minimal linux-3.10.15/fs/namespace.c linux-3.10.15-vs2.3.6.6/fs/na
  	br_write_lock(&vfsmount_lock);
  	list_add_tail(&mnt->mnt_instance, &sb->s_mounts);
  	br_write_unlock(&vfsmount_lock);
+@@ -1301,7 +1301,8 @@ static int do_umount(struct mount *mnt,
+  */
+ static inline bool may_mount(void)
+ {
+-	return ns_capable(current->nsproxy->mnt_ns->user_ns, CAP_SYS_ADMIN);
++	return vx_ns_capable(current->nsproxy->mnt_ns->user_ns,
++		CAP_SYS_ADMIN, VXC_SECURE_MOUNT);
+ }
+ 
+ /*
 @@ -1685,6 +1695,7 @@ static int do_change_type(struct path *p
  		if (err)
  			goto out_unlock;
@@ -6408,6 +6418,16 @@ diff -NurpP --minimal linux-3.10.15/fs/proc/root.c linux-3.10.15-vs2.3.6.6/fs/pr
  static int proc_test_super(struct super_block *sb, void *data)
  {
  	return sb->s_fs_info == data;
+@@ -116,7 +116,8 @@ static struct dentry *proc_mount(struct
+ 		options = data;
+ 
+ 		if (!current_user_ns()->may_mount_proc ||
+-		    !ns_capable(ns->user_ns, CAP_SYS_ADMIN))
++		    !vx_ns_capable(ns->user_ns,
++			CAP_SYS_ADMIN, VXC_SECURE_MOUNT))
+ 			return ERR_PTR(-EPERM);
+ 	}
+ 
 @@ -185,6 +190,7 @@ void __init proc_root_init(void)
  #endif
  	proc_mkdir("bus", NULL);
@@ -10099,7 +10119,7 @@ diff -NurpP --minimal linux-3.10.15/include/linux/vs_time.h linux-3.10.15-vs2.3.
 diff -NurpP --minimal linux-3.10.15/include/linux/vserver/base.h linux-3.10.15-vs2.3.6.6/include/linux/vserver/base.h
 --- linux-3.10.15/include/linux/vserver/base.h	1970-01-01 00:00:00.000000000 +0000
 +++ linux-3.10.15-vs2.3.6.6/include/linux/vserver/base.h	2013-08-22 20:30:00.000000000 +0000
-@@ -0,0 +1,181 @@
+@@ -0,0 +1,184 @@
 +#ifndef _VSERVER_BASE_H
 +#define _VSERVER_BASE_H
 +
@@ -10243,6 +10263,9 @@ diff -NurpP --minimal linux-3.10.15/include/linux/vserver/base.h linux-3.10.15-v
 +	(cap_raised(current_cap(), b) && vx_ccaps(c)))
 +
 +#define nx_capable(b, c) (capable(b) || \
++	(cap_raised(current_cap(), b) && nx_ncaps(c)))
++
++#define nx_ns_capable(n, b, c) (ns_capable(n, b) || \
 +	(cap_raised(current_cap(), b) && nx_ncaps(c)))
 +
 +#define vx_task_initpid(t, n) \
@@ -12685,8 +12708,8 @@ diff -NurpP --minimal linux-3.10.15/include/uapi/vserver/context.h linux-3.10.15
 +#define VXC_OOM_ADJUST		0x00002000
 +#define VXC_AUDIT_CONTROL	0x00004000
 +
-+/* #define VXC_SECURE_MOUNT	0x00010000
-+#define VXC_SECURE_REMOUNT	0x00020000 */
++#define VXC_SECURE_MOUNT	0x00010000
++/* #define VXC_SECURE_REMOUNT	0x00020000 */
 +#define VXC_BINARY_MOUNT	0x00040000
 +#define VXC_DEV_MOUNT		0x00080000
 +
@@ -15076,7 +15099,7 @@ diff -NurpP --minimal linux-3.10.15/kernel/utsname.c linux-3.10.15-vs2.3.6.6/ker
 diff -NurpP --minimal linux-3.10.15/kernel/vserver/Kconfig linux-3.10.15-vs2.3.6.6/kernel/vserver/Kconfig
 --- linux-3.10.15/kernel/vserver/Kconfig	1970-01-01 00:00:00.000000000 +0000
 +++ linux-3.10.15-vs2.3.6.6/kernel/vserver/Kconfig	2013-08-22 20:30:00.000000000 +0000
-@@ -0,0 +1,233 @@
+@@ -0,0 +1,230 @@
 +#
 +# Linux VServer configuration
 +#
@@ -15092,9 +15115,8 @@ diff -NurpP --minimal linux-3.10.15/kernel/vserver/Kconfig linux-3.10.15-vs2.3.6
 +	  startup.
 +
 +config	VSERVER_AUTO_SINGLE
-+	bool	"Automatic Single IP Special Casing"
-+	depends on EXPERIMENTAL
-+	default y
++	bool	"Automatic Single IP Special Casing (EXPERIMENTAL)"
++	default n
 +	help
 +	  This allows network contexts with a single IP to
 +	  automatically remap 0.0.0.0 bindings to that IP,
@@ -15114,8 +15136,7 @@ diff -NurpP --minimal linux-3.10.15/kernel/vserver/Kconfig linux-3.10.15-vs2.3.6
 +	  link and create a copy of the unified file)
 +
 +config	VSERVER_VTIME
-+	bool	"Enable Virtualized Guest Time"
-+	depends on EXPERIMENTAL
++	bool	"Enable Virtualized Guest Time (EXPERIMENTAL)"
 +	default n
 +	help
 +	  This enables per guest time offsets to allow for
@@ -15124,8 +15145,7 @@ diff -NurpP --minimal linux-3.10.15/kernel/vserver/Kconfig linux-3.10.15-vs2.3.6
 +	  therefore should not be enabled without good reason.
 +
 +config	VSERVER_DEVICE
-+	bool	"Enable Guest Device Mapping"
-+	depends on EXPERIMENTAL
++	bool	"Enable Guest Device Mapping (EXPERIMENTAL)"
 +	default n
 +	help
 +	  This enables generic device remapping.
@@ -24194,10 +24214,11 @@ diff -NurpP --minimal linux-3.10.15/net/core/sock.c linux-3.10.15-vs2.3.6.6/net/
  		/*
  		 * Increment the counter in the same struct proto as the master
  		 * sock (sk_refcnt_debug_inc uses newsk->sk_prot->socks, that
-@@ -2271,6 +2290,12 @@ void sock_init_data(struct socket *sock,
- 
+@@ -2291,6 +2291,13 @@ void sock_init_data(struct socket *sock,
  	sk->sk_stamp = ktime_set(-1L, 0);
  
+ 	sk->sk_pacing_rate = ~0U;
++
 +	set_vx_info(&sk->sk_vx_info, current_vx_info());
 +	sk->sk_xid = vx_current_xid();
 +	vx_sock_inc(sk);
