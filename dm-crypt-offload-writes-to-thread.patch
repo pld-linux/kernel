@@ -21,10 +21,10 @@ Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
  drivers/md/dm-crypt.c |  120 ++++++++++++++++++++++++++++++++++++++++----------
  1 file changed, 97 insertions(+), 23 deletions(-)
 
-Index: linux-3.9.2-fast/drivers/md/dm-crypt.c
+Index: linux-3.10.4-fast/drivers/md/dm-crypt.c
 ===================================================================
---- linux-3.9.2-fast.orig/drivers/md/dm-crypt.c	2013-05-15 22:49:53.000000000 +0200
-+++ linux-3.9.2-fast/drivers/md/dm-crypt.c	2013-05-15 22:49:57.000000000 +0200
+--- linux-3.10.4-fast.orig/drivers/md/dm-crypt.c	2013-07-31 17:03:24.000000000 +0200
++++ linux-3.10.4-fast/drivers/md/dm-crypt.c	2013-07-31 17:03:27.000000000 +0200
 @@ -17,6 +17,7 @@
  #include <linux/slab.h>
  #include <linux/crypto.h>
@@ -53,7 +53,7 @@ Index: linux-3.9.2-fast/drivers/md/dm-crypt.c
  	char *cipher;
  	char *cipher_string;
  
-@@ -977,37 +984,89 @@ static int kcryptd_io_read(struct dm_cry
+@@ -975,37 +982,89 @@ static int kcryptd_io_read(struct dm_cry
  	return 0;
  }
  
@@ -159,7 +159,7 @@ Index: linux-3.9.2-fast/drivers/md/dm-crypt.c
  
  	if (unlikely(io->error < 0)) {
  		crypt_free_buffer_pages(cc, clone);
-@@ -1021,10 +1080,10 @@ static void kcryptd_crypt_write_io_submi
+@@ -1019,10 +1078,10 @@ static void kcryptd_crypt_write_io_submi
  
  	clone->bi_sector = cc->start + io->sector;
  
@@ -174,7 +174,7 @@ Index: linux-3.9.2-fast/drivers/md/dm-crypt.c
  }
  
  static void kcryptd_crypt_write_convert(struct dm_crypt_io *io)
-@@ -1060,7 +1119,7 @@ static void kcryptd_crypt_write_convert(
+@@ -1058,7 +1117,7 @@ static void kcryptd_crypt_write_convert(
  
  	/* Encryption was already finished, submit io now */
  	if (crypt_finished)
@@ -183,7 +183,7 @@ Index: linux-3.9.2-fast/drivers/md/dm-crypt.c
  
  dec:
  	crypt_dec_pending(io);
-@@ -1118,7 +1177,7 @@ static void kcryptd_async_done(struct cr
+@@ -1116,7 +1175,7 @@ static void kcryptd_async_done(struct cr
  	if (bio_data_dir(io->base_bio) == READ)
  		kcryptd_crypt_read_done(io);
  	else
@@ -192,7 +192,7 @@ Index: linux-3.9.2-fast/drivers/md/dm-crypt.c
  }
  
  static void kcryptd_crypt(struct work_struct *work)
-@@ -1262,6 +1321,9 @@ static void crypt_dtr(struct dm_target *
+@@ -1260,6 +1319,9 @@ static void crypt_dtr(struct dm_target *
  	if (!cc)
  		return;
  
@@ -202,7 +202,7 @@ Index: linux-3.9.2-fast/drivers/md/dm-crypt.c
  	if (cc->io_queue)
  		destroy_workqueue(cc->io_queue);
  	if (cc->crypt_queue)
-@@ -1578,6 +1640,18 @@ static int crypt_ctr(struct dm_target *t
+@@ -1576,6 +1638,18 @@ static int crypt_ctr(struct dm_target *t
  		goto bad;
  	}
  
@@ -221,7 +221,7 @@ Index: linux-3.9.2-fast/drivers/md/dm-crypt.c
  	ti->num_flush_bios = 1;
  	ti->discard_zeroes_data_unsupported = true;
  
-@@ -1611,7 +1685,7 @@ static int crypt_map(struct dm_target *t
+@@ -1607,7 +1681,7 @@ static int crypt_map(struct dm_target *t
  
  	if (bio_data_dir(io->base_bio) == READ) {
  		if (kcryptd_io_read(io, GFP_NOWAIT))
