@@ -144,6 +144,7 @@ Source58:	kernel-inittmpfs.config
 Patch3:		kernel-fbcondecor.patch
 Patch4:		kernel-fbcon-margins.patch
 Patch5:		linux-wistron-amilo8210.patch
+Patch6:		linux-wistron-nx.patch
 
 # netfilter related stuff mostly based on patch-o-matic-ng
 # snapshot 20070806 with some fixes. Some modules
@@ -634,6 +635,7 @@ cd linux-%{basever}
 %endif
 %patch4 -p1
 %patch5 -p1
+%patch6 -p1
 
 ## netfilter
 #
