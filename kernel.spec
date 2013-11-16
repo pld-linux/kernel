@@ -388,7 +388,8 @@ BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 	%endif
 	%define	DepMod /sbin/depmod
 %endif
-%define MakeOpts %{CrossOpts} HOSTCC="%{__cc}"
+# use 64-bit offsets for fixdeps to work with 64-bit inodes
+%define MakeOpts %{CrossOpts} HOSTCC="%{__cc} -D_FILE_OFFSET_BITS=64"
 
 %define __features \
 %{?with_fbcondecor:Fbsplash/fbcondecor - enabled }\
