@@ -224,6 +224,10 @@ Patch146:	kernel-aufs3+vserver.patch
 # Show normal colors in menuconfig with ncurses ABI 6
 Patch250:	kernel-fix_256colors_menuconfig.patch
 
+# https://lkml.org/lkml/2013/9/3/539
+# fill thread: https://lkml.org/lkml/2013/7/25/205
+Patch300:	kernel-large-readline-paste.patch
+
 # https://patchwork.kernel.org/patch/236261/
 Patch400:	kernel-virtio-gl-accel.patch
 
@@ -714,6 +718,8 @@ cd linux-%{basever}
 %patch5000 -p1
 
 %patch250 -p1
+
+%patch300 -p1
 
 # virtio-gl
 %patch400 -p1
