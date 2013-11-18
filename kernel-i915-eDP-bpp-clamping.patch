@@ -52,13 +52,13 @@ diff --git a/drivers/gpu/drm/i915/intel_dp.c b/drivers/gpu/drm/i915/intel_dp.c
 index 2c555f9..1a43137 100644
 --- a/drivers/gpu/drm/i915/intel_dp.c
 +++ b/drivers/gpu/drm/i915/intel_dp.c
-@@ -1401,6 +1401,26 @@ static void intel_dp_get_config(struct intel_encoder *encoder,
- 		else
- 			pipe_config->port_clock = 270000;
- 	}
+@@ -755,6 +755,26 @@ static void intel_dp_get_config(struct intel_encoder *encoder,
+ 	adjusted_mode->clock = drm_dp_bw_code_to_link_rate(intel_dp->link_bw);
+ 	pipe_config->pipe_bpp = bpp;
+ 	pipe_config->pixel_target_clock = target_clock;
 +
-+	if (is_edp(intel_dp) && dev_priv->vbt.edp_bpp &&
-+	    pipe_config->pipe_bpp > dev_priv->vbt.edp_bpp) {
++	if (is_edp(intel_dp) && dev_priv->edp.bpp &&
++	    pipe_config->pipe_bpp > dev_priv->edp.bpp) {
 +		/*
 +		 * This is a big fat ugly hack.
 +		 *
@@ -73,11 +73,11 @@ index 2c555f9..1a43137 100644
 +		 * load.
 +		 */
 +		DRM_DEBUG_KMS("pipe has %d bpp for eDP panel, overriding BIOS-provided max %d bpp\n",
-+			      pipe_config->pipe_bpp, dev_priv->vbt.edp_bpp);
-+		dev_priv->vbt.edp_bpp = pipe_config->pipe_bpp;
++			      pipe_config->pipe_bpp, dev_priv->edp.bpp);
++		dev_priv->edp.bpp = pipe_config->pipe_bpp;
 +	}
- }
  
- static bool is_edp_psr(struct intel_dp *intel_dp)
+ 	DRM_DEBUG_KMS("DP link bw %02x lane count %d clock %d bpp %d\n",
+ 		      intel_dp->link_bw, intel_dp->lane_count,
 --
 cgit v0.9.2
