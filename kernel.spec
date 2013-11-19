@@ -29,7 +29,7 @@
 %bcond_without	imq		# imq support
 %bcond_without	esfq		# esfq support
 %bcond_without	ipv6		# ipv6 support
-%bcond_with	padmcrypt	# parallel dm-crypt
+%bcond_without	padmcrypt	# parallel dm-crypt
 
 %bcond_without	vserver		# support for VServer (enabled by default)
 
