@@ -11,13 +11,13 @@ Note: the next patch is needed to fix a theoretical deadlock
 Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 
 ---
- drivers/md/dm-crypt.c |  133 +++++++++-----------------------------------------
- 1 file changed, 25 insertions(+), 108 deletions(-)
+ drivers/md/dm-crypt.c |  134 +++++++++-----------------------------------------
+ 1 file changed, 26 insertions(+), 108 deletions(-)
 
-Index: linux-3.9.2-fast/drivers/md/dm-crypt.c
+Index: linux-3.10.4-fast/drivers/md/dm-crypt.c
 ===================================================================
---- linux-3.9.2-fast.orig/drivers/md/dm-crypt.c	2013-05-15 21:47:30.000000000 +0200
-+++ linux-3.9.2-fast/drivers/md/dm-crypt.c	2013-05-15 22:49:13.000000000 +0200
+--- linux-3.10.4-fast.orig/drivers/md/dm-crypt.c	2013-07-31 17:03:18.000000000 +0200
++++ linux-3.10.4-fast/drivers/md/dm-crypt.c	2013-07-31 17:03:21.000000000 +0200
 @@ -59,7 +59,6 @@ struct dm_crypt_io {
  	atomic_t io_pending;
  	int error;
@@ -52,7 +52,7 @@ Index: linux-3.9.2-fast/drivers/md/dm-crypt.c
  {
  	struct crypt_config *cc = io->cc;
  	struct bio *clone;
-@@ -798,37 +795,22 @@ static struct bio *crypt_alloc_buffer(st
+@@ -798,37 +795,23 @@ static struct bio *crypt_alloc_buffer(st
  		return NULL;
  
  	clone_init(io, clone);
@@ -75,6 +75,7 @@ Index: linux-3.9.2-fast/drivers/md/dm-crypt.c
  		len = (size > PAGE_SIZE) ? PAGE_SIZE : size;
  
  		if (!bio_add_page(clone, page, len, 0)) {
++			DMERR("bio_add_page failed for page %d: the underlying device has stricter limits than dm-crypt target", i);
  			mempool_free(page, cc->page_pool);
 -			break;
 +			crypt_free_buffer_pages(cc, clone);
@@ -93,7 +94,7 @@ Index: linux-3.9.2-fast/drivers/md/dm-crypt.c
  	return clone;
  }
  
-@@ -855,7 +837,6 @@ static struct dm_crypt_io *crypt_io_allo
+@@ -854,7 +837,6 @@ static struct dm_crypt_io *crypt_io_allo
  	io->base_bio = bio;
  	io->sector = sector;
  	io->error = 0;
@@ -101,7 +102,7 @@ Index: linux-3.9.2-fast/drivers/md/dm-crypt.c
  	io->ctx.req = NULL;
  	atomic_set(&io->io_pending, 0);
  
-@@ -870,13 +851,11 @@ static void crypt_inc_pending(struct dm_
+@@ -869,13 +851,11 @@ static void crypt_inc_pending(struct dm_
  /*
   * One of the bios was finished. Check for completion of
   * the whole request and correctly clean up the buffer.
@@ -115,7 +116,7 @@ Index: linux-3.9.2-fast/drivers/md/dm-crypt.c
  	int error = io->error;
  
  	if (!atomic_dec_and_test(&io->io_pending))
-@@ -886,13 +865,7 @@ static void crypt_dec_pending(struct dm_
+@@ -885,13 +865,7 @@ static void crypt_dec_pending(struct dm_
  		mempool_free(io->ctx.req, cc->req_pool);
  	mempool_free(io, cc->io_pool);
  
@@ -130,7 +131,7 @@ Index: linux-3.9.2-fast/drivers/md/dm-crypt.c
  }
  
  /*
-@@ -1030,10 +1003,7 @@ static void kcryptd_crypt_write_convert(
+@@ -1027,10 +1001,7 @@ static void kcryptd_crypt_write_convert(
  {
  	struct crypt_config *cc = io->cc;
  	struct bio *clone;
@@ -141,7 +142,7 @@ Index: linux-3.9.2-fast/drivers/md/dm-crypt.c
  	sector_t sector = io->sector;
  	int r;
  
-@@ -1043,81 +1013,28 @@ static void kcryptd_crypt_write_convert(
+@@ -1040,81 +1011,28 @@ static void kcryptd_crypt_write_convert(
  	crypt_inc_pending(io);
  	crypt_convert_init(cc, &io->ctx, NULL, io->base_bio, sector);
  
@@ -182,7 +183,7 @@ Index: linux-3.9.2-fast/drivers/md/dm-crypt.c
 -				break;
 +	clone = crypt_alloc_buffer(io, io->base_bio->bi_size);
 +	if (unlikely(!clone)) {
-+		io->error = -ENOMEM;
++		io->error = -EIO;
 +		goto dec;
 +	}
  
@@ -240,7 +241,7 @@ Index: linux-3.9.2-fast/drivers/md/dm-crypt.c
  	crypt_dec_pending(io);
  }
  
-@@ -1556,7 +1473,7 @@ static int crypt_ctr(struct dm_target *t
+@@ -1553,7 +1471,7 @@ static int crypt_ctr(struct dm_target *t
  		goto bad;
  	}
  
