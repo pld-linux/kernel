@@ -252,6 +252,7 @@ Patch7000:	kernel-inittmpfs.patch
 #Patch50000:	kernel-usb_reset.patch
 
 URL:		http://www.kernel.org/
+BuildRequires:	bc
 BuildRequires:	binutils >= 3:2.18
 %ifarch sparc sparc64
 BuildRequires:	elftoaout
