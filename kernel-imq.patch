@@ -1273,8 +1273,8 @@ index dec1748..1f17280 100644
  	unsigned long		_skb_refdst;
  #ifdef CONFIG_XFRM
 @@ -458,6 +464,9 @@ struct sk_buff {
- #ifdef NET_SKBUFF_NF_DEFRAG_NEEDED
- 	struct sk_buff		*nfct_reasm;
+ #if defined(CONFIG_NF_CONNTRACK) || defined(CONFIG_NF_CONNTRACK_MODULE)
+ 	struct nf_conntrack	*nfct;
  #endif
 +#if defined(CONFIG_IMQ) || defined(CONFIG_IMQ_MODULE)
 +	struct nf_queue_entry	*nf_queue_entry;
@@ -1307,8 +1307,8 @@ index dec1748..1f17280 100644
  extern void kfree_skb_list(struct sk_buff *segs);
  extern void skb_tx_error(struct sk_buff *skb);
 @@ -2754,6 +2773,10 @@ static inline void __nf_copy(struct sk_buff *dst, const struct sk_buff *src)
- 	dst->nfct_reasm = src->nfct_reasm;
- 	nf_conntrack_get_reasm(src->nfct_reasm);
+ 	nf_conntrack_get(src->nfct);
+ 	dst->nfctinfo = src->nfctinfo;
  #endif
 +#if defined(CONFIG_IMQ) || defined(CONFIG_IMQ_MODULE)
 +	dst->imq_flags = src->imq_flags;
