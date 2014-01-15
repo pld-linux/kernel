@@ -307,6 +307,7 @@ Obsoletes:	kernel-smp
 Conflicts:	e2fsprogs < 1.29
 Conflicts:	isdn4k-utils < 3.1pre1
 Conflicts:	jfsutils < 1.1.3
+Conflicts:	libusb < 1.0.9
 Conflicts:	linux-firmware < 20120720
 Conflicts:	lvm2 < 2.02.40
 Conflicts:	module-init-tools < 3.16
