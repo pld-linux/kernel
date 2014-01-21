@@ -70,3 +70,116 @@ index 3b1ea34..eaa808e 100644
  	/* Ask for all the pages supported by this device */
  	result = scsi_vpd_inquiry(sdev, buf, 0, buf_len);
  	if (result)
+commit 4d0ed18277cc6f07513ee0b04475f19cd69e75ef
+Author: Peter Hurley <peter@hurleysoftware.com>
+Date:   Tue Dec 10 17:12:02 2013 -0500
+
+    n_tty: Fix buffer overruns with larger-than-4k pastes
+    
+    readline() inadvertently triggers an error recovery path when
+    pastes larger than 4k overrun the line discipline buffer. The
+    error recovery path discards input when the line discipline buffer
+    is full and operating in canonical mode and no newline has been
+    received. Because readline() changes the termios to non-canonical
+    mode to read the line char-by-char, the line discipline buffer
+    can become full, and then when readline() restores termios back
+    to canonical mode for the caller, the now-full line discipline
+    buffer triggers the error recovery.
+    
+    When changing termios from non-canon to canon mode and the read
+    buffer contains data, simulate an EOF push _without_ the
+    DISABLED_CHAR in the read buffer.
+    
+    Importantly for the readline() problem, the termios can be
+    changed back to non-canonical mode without changes to the read
+    buffer occurring; ie., as if the previous termios change had not
+    happened (as long as no intervening read took place).
+    
+    Preserve existing userspace behavior which allows '\0's already
+    received in non-canon mode to be read as '\0's in canon mode
+    (rather than trigger add'l EOF pushes or an actual EOF).
+    
+    Patch based on original proposal and discussion here
+    https://bugzilla.kernel.org/show_bug.cgi?id=55991
+    by Stas Sergeev <stsp@users.sourceforge.net>
+    
+    Reported-by: Margarita Manterola <margamanterola@gmail.com>
+    Cc: Maximiliano Curia <maxy@gnuservers.com.ar>
+    Cc: Pavel Machek <pavel@ucw.cz>
+    Cc: Arkadiusz Miskiewicz <a.miskiewicz@gmail.com>
+    Acked-by: Stas Sergeev <stsp@users.sourceforge.net>
+    Signed-off-by: Peter Hurley <peter@hurleysoftware.com>
+    Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+
+diff --git a/drivers/tty/n_tty.c b/drivers/tty/n_tty.c
+index fdc2ecd..961e6a9 100644
+--- a/drivers/tty/n_tty.c
++++ b/drivers/tty/n_tty.c
+@@ -104,6 +104,7 @@ struct n_tty_data {
+ 
+ 	/* must hold exclusive termios_rwsem to reset these */
+ 	unsigned char lnext:1, erasing:1, raw:1, real_raw:1, icanon:1;
++	unsigned char push:1;
+ 
+ 	/* shared by producer and consumer */
+ 	char read_buf[N_TTY_BUF_SIZE];
+@@ -341,6 +342,7 @@ static void reset_buffer_flags(struct n_tty_data *ldata)
+ 
+ 	ldata->erasing = 0;
+ 	bitmap_zero(ldata->read_flags, N_TTY_BUF_SIZE);
++	ldata->push = 0;
+ }
+ 
+ static void n_tty_packet_mode_flush(struct tty_struct *tty)
+@@ -1745,7 +1747,16 @@ static void n_tty_set_termios(struct tty_struct *tty, struct ktermios *old)
+ 
+ 	if (!old || (old->c_lflag ^ tty->termios.c_lflag) & ICANON) {
+ 		bitmap_zero(ldata->read_flags, N_TTY_BUF_SIZE);
+-		ldata->line_start = ldata->canon_head = ldata->read_tail;
++		ldata->line_start = ldata->read_tail;
++		if (!L_ICANON(tty) || !read_cnt(ldata)) {
++			ldata->canon_head = ldata->read_tail;
++			ldata->push = 0;
++		} else {
++			set_bit((ldata->read_head - 1) & (N_TTY_BUF_SIZE - 1),
++				ldata->read_flags);
++			ldata->canon_head = ldata->read_head;
++			ldata->push = 1;
++		}
+ 		ldata->erasing = 0;
+ 		ldata->lnext = 0;
+ 	}
+@@ -1951,6 +1962,12 @@ static int copy_from_read_buf(struct tty_struct *tty,
+  *	it copies one line of input up to and including the line-delimiting
+  *	character into the user-space buffer.
+  *
++ *	NB: When termios is changed from non-canonical to canonical mode and
++ *	the read buffer contains data, n_tty_set_termios() simulates an EOF
++ *	push (as if C-d were input) _without_ the DISABLED_CHAR in the buffer.
++ *	This causes data already processed as input to be immediately available
++ *	as input although a newline has not been received.
++ *
+  *	Called under the atomic_read_lock mutex
+  *
+  *	n_tty_read()/consumer path:
+@@ -1997,7 +2014,7 @@ static int canon_copy_from_read_buf(struct tty_struct *tty,
+ 	n += found;
+ 	c = n;
+ 
+-	if (found && read_buf(ldata, eol) == __DISABLED_CHAR) {
++	if (found && !ldata->push && read_buf(ldata, eol) == __DISABLED_CHAR) {
+ 		n--;
+ 		eof_push = !n && ldata->read_tail != ldata->line_start;
+ 	}
+@@ -2024,7 +2041,10 @@ static int canon_copy_from_read_buf(struct tty_struct *tty,
+ 	ldata->read_tail += c;
+ 
+ 	if (found) {
+-		ldata->line_start = ldata->read_tail;
++		if (!ldata->push)
++			ldata->line_start = ldata->read_tail;
++		else
++			ldata->push = 0;
+ 		tty_audit_push(tty);
+ 	}
+ 	return eof_push ? -EAGAIN : 0;
