@@ -211,7 +211,7 @@ Patch118:	ovl09-fs-limit-filesystem-stacking-depth.patch
 # Patch creation:
 # git clone git://aufs.git.sourceforge.net/gitroot/aufs/aufs3-standalone.git
 # cd aufs3-standalone
-# git checkout -b aufs3.10 origin/aufs3.10
+# git checkout -b aufs3.13 origin/aufs3.13
 # cat aufs3-kbuild.patch aufs3-base.patch aufs3-standalone.patch > ~/rpm/packages/kernel/kernel-aufs3.patch
 # mkdir linux
 # cp -a Documentation fs include linux
