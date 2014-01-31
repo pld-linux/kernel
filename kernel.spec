@@ -31,7 +31,7 @@
 %bcond_without	ipv6		# ipv6 support
 %bcond_without	padmcrypt	# parallel dm-crypt
 
-%bcond_without	vserver		# support for VServer (enabled by default)
+%bcond_with	vserver		# support for VServer
 
 %bcond_with	vanilla		# don't include any patches
 %bcond_with	rescuecd	# build kernel for our rescue
@@ -394,6 +394,8 @@ BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 %define MakeOpts %{CrossOpts} HOSTCC="%{__cc} -D_FILE_OFFSET_BITS=64"
 
 %define __features \
+%{?with_vserver:Vserver - enabled}\
+%{!?with_vserver:WARNING: VSERVER IS DISABLED IN THIS KERNEL BUILD!}\
 %{?with_fbcondecor:Fbsplash/fbcondecor - enabled }\
 %{?with_nfsroot:Root on NFS - enabled}\
 
