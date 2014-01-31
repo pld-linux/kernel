@@ -1310,9 +1310,9 @@ index f66f346..d699b19 100644
 +extern int skb_restore_cb(struct sk_buff *skb);
 +#endif
 +
- extern void kfree_skb(struct sk_buff *skb);
- extern void kfree_skb_list(struct sk_buff *segs);
- extern void skb_tx_error(struct sk_buff *skb);
+ void kfree_skb(struct sk_buff *skb);
+ void kfree_skb_list(struct sk_buff *segs);
+ void skb_tx_error(struct sk_buff *skb);
 @@ -2635,6 +2653,10 @@ static inline void __nf_copy(struct sk_buff *dst, const struct sk_buff *src)
  	nf_conntrack_get(src->nfct);
  	dst->nfctinfo = src->nfctinfo;
@@ -1331,7 +1331,7 @@ index aaba4bb..f6e92a4 100644
 @@ -29,6 +29,12 @@ struct nf_queue_handler {
  void nf_register_queue_handler(const struct nf_queue_handler *qh);
  void nf_unregister_queue_handler(void);
- extern void nf_reinject(struct nf_queue_entry *entry, unsigned int verdict);
+ void nf_reinject(struct nf_queue_entry *entry, unsigned int verdict);
 +extern void nf_queue_entry_release_refs(struct nf_queue_entry *entry);
 +
 +#if defined(CONFIG_IMQ) || defined(CONFIG_IMQ_MODULE)
@@ -1360,9 +1360,9 @@ index 3d13874..9842f21 100644
 --- a/net/core/dev.c
 +++ b/net/core/dev.c
 @@ -131,6 +131,9 @@
- #include <linux/static_key.h>
  #include <linux/hashtable.h>
  #include <linux/vmalloc.h>
+ #include <linux/if_macvlan.h>
 +#if defined(CONFIG_IMQ) || defined(CONFIG_IMQ_MODULE)
 +#include <linux/imq.h>
 +#endif
@@ -1619,12 +1619,12 @@ index 3deec99..c1a1397 100644
 --- a/net/netfilter/nf_internals.h
 +++ b/net/netfilter/nf_internals.h
 @@ -29,7 +29,7 @@ extern int nf_queue(struct sk_buff *skb,
- 		    struct net_device *indev,
- 		    struct net_device *outdev,
- 		    int (*okfn)(struct sk_buff *),
--		    unsigned int queuenum);
-+		    unsigned int queuenum, unsigned int queuetype);
- extern int __init netfilter_queue_init(void);
+ int nf_queue(struct sk_buff *skb, struct nf_hook_ops *elem, u_int8_t pf,
+ 	     unsigned int hook, struct net_device *indev,
+ 	     struct net_device *outdev, int (*okfn)(struct sk_buff *),
+-	     unsigned int queuenum);
++	     unsigned int queuenum, unsigned int queuetype);
+ int __init netfilter_queue_init(void);
  
  /* nf_log.c */
 diff --git a/net/netfilter/nf_queue.c b/net/netfilter/nf_queue.c
