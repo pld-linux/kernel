@@ -77,3 +77,75 @@ index 7a0c800..ec5ebbb 100644
  		/* purge any lower objects after partial_lookup */
  		if (bindex < orig_bstart || bindex > orig_bend) {
  			dput(lower_dentry);
+From 30dce57c1abc8887fcafbc62d47307849987521b Mon Sep 17 00:00:00 2001
+From: Dave Chinner <dchinner@redhat.com>
+Date: Tue, 9 Oct 2012 14:50:52 +1100
+Subject: [PATCH] xfs: growfs: don't read garbage for new secondary superblocks
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+When updating new secondary superblocks in a growfs operation, the
+superblock buffer is read from the newly grown region of the
+underlying device. This is not guaranteed to be zero, so violates
+the underlying assumption that the unused parts of superblocks are
+zero filled. Get a new buffer for these secondary superblocks to
+ensure that the unused regions are zero filled correctly.
+
+Signed-off-by: Dave Chinner <dchinner@redhat.com>
+Reviewed-by: Carlos Maiolino <cmaiolino@redhat.com>
+Signed-off-by: Ben Myers <bpm@sgi.com>
+Signed-off-by: Elan Ruusamäe <glen@delfi.ee>
+Link: http://xfs.org/index.php/XFS_FAQ#Q:_I.27m_getting_.22Internal_error_xfs_sb_read_verify.22_errors_when_I_try_to_run_xfs_growfs_under_kernels_v3.10_through_v3.12
+
+Cherry-picked commit 1375cb6.
+Conflicts:
+	fs/xfs/xfs_fsops.c
+---
+ fs/xfs/xfs_fsops.c | 21 +++++++++++++++++++--
+ 1 file changed, 19 insertions(+), 2 deletions(-)
+
+diff --git a/fs/xfs/xfs_fsops.c b/fs/xfs/xfs_fsops.c
+index 1c6fdeb..d753340 100644
+--- a/fs/xfs/xfs_fsops.c
++++ b/fs/xfs/xfs_fsops.c
+@@ -405,9 +405,26 @@ xfs_growfs_data_private(
+ 
+ 	/* update secondary superblocks. */
+ 	for (agno = 1; agno < nagcount; agno++) {
+-		error = xfs_read_buf(mp, mp->m_ddev_targp,
++		error = 0;
++		/*
++		 * new secondary superblocks need to be zeroed, not read from
++		 * disk as the contents of the new area we are growing into is
++		 * completely unknown.
++		 */
++		if (agno < oagcount) {
++			error = xfs_trans_read_buf(mp, NULL, mp->m_ddev_targp,
+ 				  XFS_AGB_TO_DADDR(mp, agno, XFS_SB_BLOCK(mp)),
+ 				  XFS_FSS_TO_BB(mp, 1), 0, &bp);
++		} else {
++			bp = xfs_trans_get_buf(NULL, mp->m_ddev_targp,
++				  XFS_AGB_TO_DADDR(mp, agno, XFS_SB_BLOCK(mp)),
++				  XFS_FSS_TO_BB(mp, 1), 0);
++			if (bp)
++				xfs_buf_zero(bp, 0, BBTOB(bp->b_length));
++			else
++				error = ENOMEM;
++		}
++
+ 		if (error) {
+ 			xfs_warn(mp,
+ 		"error %d reading secondary superblock for ag %d",
+@@ -429,7 +446,7 @@ xfs_growfs_data_private(
+ 			break; /* no point in continuing */
+ 		}
+ 	}
+-	return 0;
++	return error;
+ 
+  error0:
+ 	xfs_trans_cancel(tp, XFS_TRANS_ABORT);
+-- 
+1.8.5.3
+
