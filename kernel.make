@@ -1,4 +1,5 @@
 MAKE_OPTS :=
+TARGETOBJ ?= $(patsubst %.mk,%,$(wildcard *.mk))
 
 include $(TARGETOBJ).mk
 
