@@ -84,9 +84,6 @@
 %if %{with myown} && "%{_alt_kernel}" == ""
 %define		alt_kernel	myown
 %endif
-%if %{with vserver}
-%define		alt_kernel	vserver
-%endif
 %if %{with rescuecd}
 %define		alt_kernel	rescuecd
 %endif
