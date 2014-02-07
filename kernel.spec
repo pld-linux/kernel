@@ -69,7 +69,7 @@
 
 %define		rel		1
 %define		basever		3.10
-%define		postver		.28
+%define		postver		.29
 
 # __alt_kernel is list of features, empty string if none set
 # _alt kernel is defined as: %{nil}%{?alt_kernel:-%{?alt_kernel}} (defined in rpm.macros)
@@ -112,7 +112,7 @@ Source0:	http://www.kernel.org/pub/linux/kernel/v3.x/linux-%{basever}.tar.xz
 # Source0-md5:	4f25cd5bec5f8d5a7d935b3f2ccb8481
 %if "%{postver}" != ".0"
 Patch0:		http://www.kernel.org/pub/linux/kernel/v3.x/patch-%{version}.xz
-# Patch0-md5:	34514ae21798afcf2a8dc3c77f2714a6
+# Patch0-md5:	be6e9556b5e967ff26e999de62ac1118
 %endif
 Source1:	kernel.sysconfig
 
@@ -167,7 +167,7 @@ Patch49:	kernel-zph.patch
 # http://www.linuximq.net
 Patch50:	kernel-imq.patch
 
-Patch51:	http://downloads.sourceforge.net/project/reiser4/reiser4-for-linux-3.x/reiser4-for-3.10.patch.gz
+Patch51:	http://downloads.sourceforge.net/reiser4/reiser4-for-linux-3.x/reiser4-for-3.10.patch.gz
 # Patch51-md5:	5af1bdc286a88ef79268337c7ff17508
 
 # http://fatooh.org/esfq-2.6/sfq-2.6.24.1.tar.bz2
