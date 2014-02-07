@@ -20,7 +20,6 @@
 %bcond_without	pcmcia		# don't build pcmcia
 
 %bcond_with	verbose		# verbose build (V=1)
-%bcond_with	reiser4		# support for reiser4 fs (experimental)
 
 %bcond_with	fbcondecor	# build fbcondecor (disable FB_TILEBLITTING and affected fb modules)
 %bcond_without	pae		# build PAE (HIGHMEM64G) support on 32bit i686 athlon pentium3 pentium4
@@ -69,7 +68,7 @@
 
 %define		rel		1
 %define		basever		3.13
-%define		postver		.1
+%define		postver		.2
 
 # __alt_kernel is list of features, empty string if none set
 # _alt kernel is defined as: %{nil}%{?alt_kernel:-%{?alt_kernel}} (defined in rpm.macros)
@@ -112,7 +111,7 @@ Source0:	http://www.kernel.org/pub/linux/kernel/v3.x/linux-%{basever}.tar.xz
 # Source0-md5:	0ecbaf65c00374eb4a826c2f9f37606f
 %if "%{postver}" != ".0"
 Patch0:		http://www.kernel.org/pub/linux/kernel/v3.x/patch-%{version}.xz
-# Patch0-md5:	675692f24410f375055d422e7886f3d8
+# Patch0-md5:	352993d23acc5760dafa10ffc9d8881a
 %endif
 Source1:	kernel.sysconfig
 
@@ -136,7 +135,6 @@ Source41:	kernel-patches.config
 Source43:	kernel-vserver.config
 
 Source55:	kernel-imq.config
-Source56:	kernel-reiser4.config
 
 Source58:	kernel-inittmpfs.config
 
@@ -166,9 +164,6 @@ Patch49:	kernel-zph.patch
 
 # http://www.linuximq.net
 Patch50:	kernel-imq.patch
-
-Patch51:	http://downloads.sourceforge.net/project/reiser4/reiser4-for-linux-3.x/reiser4-for-3.11.1.patch.gz
-# Patch51-md5:	24a7d3711aadd26000d16eaac943a4ce
 
 # http://fatooh.org/esfq-2.6/sfq-2.6.24.1.tar.bz2
 Patch53:	kernel-esfq.patch
@@ -316,7 +311,6 @@ Conflicts:	oprofile < 0.9
 Conflicts:	ppp < 1:2.4.0
 Conflicts:	procps < 3.2.0
 Conflicts:	quota-tools < 3.09
-%{?with_reiserfs4:Conflicts:	reiser4progs < 1.0.0}
 Conflicts:	reiserfsprogs < 3.6.3
 Conflicts:	rpm < 4.4.2-0.2
 Conflicts:	udev < 1:081
@@ -667,11 +661,6 @@ cd linux-%{basever}
 %patch50 -p1
 %endif
 
-# reiser4
-%if %{with reiser4}
-%patch51 -p1
-%endif
-
 # esfq
 %if %{with esfq}
 %patch53 -p1
@@ -925,9 +914,6 @@ EOCONFIG
 		rescue.config \
 %endif
 		\
-%if %{with reiser4}
-		%{SOURCE56} \
-%endif
 %if %{with imq}
 		%{SOURCE55} \
 %endif
