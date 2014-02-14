@@ -1391,21 +1391,13 @@ diff --git a/net/core/skbuff.c b/net/core/skbuff.c
 index c28c7fe..a5f1888 100644
 --- a/net/core/skbuff.c
 +++ b/net/core/skbuff.c
-@@ -73,6 +73,9 @@
+@@ -73,6 +73,84 @@
  
  struct kmem_cache *skbuff_head_cache __read_mostly;
  static struct kmem_cache *skbuff_fclone_cache __read_mostly;
 +#if defined(CONFIG_IMQ) || defined(CONFIG_IMQ_MODULE)
 +static struct kmem_cache *skbuff_cb_store_cache __read_mostly;
-+#endif
- 
- static void sock_pipe_buf_release(struct pipe_inode_info *pipe,
- 				  struct pipe_buffer *buf)
-@@ -92,6 +95,82 @@ static int sock_pipe_buf_steal(struct pipe_inode_info *pipe,
- 	return 1;
- }
- 
-+#if defined(CONFIG_IMQ) || defined(CONFIG_IMQ_MODULE)
++
 +/* Control buffer save/restore for IMQ devices */
 +struct skb_cb_table {
 +	char			cb[48] __aligned(8);
@@ -1482,8 +1474,8 @@ index c28c7fe..a5f1888 100644
 +}
 +#endif
  
- /* Pipe buffer operations for a socket. */
- static const struct pipe_buf_operations sock_pipe_buf_ops = {
+ /**
+  *	skb_panic - private function for out-of-line support
 @@ -577,6 +656,28 @@ static void skb_release_head_state(struct sk_buff *skb)
  		WARN_ON(in_irq());
  		skb->destructor(skb);
