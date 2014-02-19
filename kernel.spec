@@ -109,7 +109,7 @@
 %if %{with rescuecd}
 %define		alt_kernel	rescuecd
 %else # not rescuecd:
-%define		__alt_kernel	longterm%{?with_pax:pax}%{?with_grsecurity:grsecurity}
+%define		__alt_kernel	%{basever}%{?with_pax:pax}%{?with_grsecurity:grsecurity}
 %if "%{__alt_kernel}" != ""
 %define		alt_kernel	%{__alt_kernel}
 %endif
