@@ -93,6 +93,8 @@
 %define		basever		3.4
 %define		postver		.79
 
+%define		versuffix	-%{basever}
+
 # __alt_kernel is list of features, empty string if none set
 # _alt kernel is defined as: %{nil}%{?alt_kernel:-%{?alt_kernel}} (defined in rpm.macros)
 # alt_kernel should be defined if __alt_kernel has non-empty value (for %{?alt_kernel:foo} constructs)
@@ -128,7 +130,7 @@ Summary(de.UTF-8):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(et.UTF-8):	Linuxi kernel (ehk operatsioonisüsteemi tuum)
 Summary(fr.UTF-8):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl.UTF-8):	Jądro Linuksa
-Name:		kernel-%{basever}%{_alt_kernel}
+Name:		kernel%{versuffix}%{_alt_kernel}
 Version:	%{basever}%{postver}
 Release:	%{rel}
 Epoch:		3
@@ -375,7 +377,7 @@ BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 %define		objdir		%{topdir}/%{targetobj}
 %define		targetobj	%{_target_base_arch}-gcc-%(%{__cc} -dumpversion)
 
-%define		_kernelsrcdir	/usr/src/linux-%{basever}%{_alt_kernel}-%{version}
+%define		_kernelsrcdir	/usr/src/linux%{versuffix}%{_alt_kernel}-%{version}
 
 %if "%{_target_base_arch}" != "%{_host_base_arch}"
 	%define CrossOpts ARCH=%{_target_base_arch} CROSS_COMPILE=%{_target_cpu}-pld-linux-
@@ -1226,13 +1228,13 @@ fi
 %depmod %{kernel_release}
 
 %post headers
-ln -snf %{basename:%{_kernelsrcdir}} %{_prefix}/src/linux-%{basever}%{_alt_kernel}
+ln -snf %{basename:%{_kernelsrcdir}} %{_prefix}/src/linux%{versuffix}%{_alt_kernel}
 
 %postun headers
 if [ "$1" = "0" ]; then
-	if [ -L %{_prefix}/src/linux-%{basever}%{_alt_kernel} ]; then
-		if [ "$(readlink %{_prefix}/src/linux-%{basever}%{_alt_kernel})" = "linux-%{basever}%{_alt_kernel}-%{version}" ]; then
-			rm -f %{_prefix}/src/linux-%{basever}%{_alt_kernel}
+	if [ -L %{_prefix}/src/linux%{versuffix}%{_alt_kernel} ]; then
+		if [ "$(readlink %{_prefix}/src/linux%{versuffix}%{_alt_kernel})" = "linux%{versuffix}%{_alt_kernel}-%{version}" ]; then
+			rm -f %{_prefix}/src/linux%{versuffix}%{_alt_kernel}
 		fi
 	fi
 fi
