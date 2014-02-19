@@ -74,7 +74,7 @@
 # __alt_kernel is list of features, empty string if none set
 # _alt kernel is defined as: %{nil}%{?alt_kernel:-%{?alt_kernel}} (defined in rpm.macros)
 # alt_kernel should be defined if __alt_kernel has non-empty value (for %{?alt_kernel:foo} constructs)
-%define		__alt_kernel	longterm
+%define		__alt_kernel	%{basever}
 
 %if "%{__alt_kernel}" != ""
 %define		alt_kernel	%{__alt_kernel}
