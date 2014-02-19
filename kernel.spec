@@ -109,7 +109,7 @@
 %if %{with rescuecd}
 %define		alt_kernel	rescuecd
 %else # not rescuecd:
-%define		__alt_kernel	%{basever}%{?with_pax:pax}%{?with_grsecurity:grsecurity}
+%define		__alt_kernel	%{?with_pax:pax}%{?with_grsecurity:grsecurity}
 %if "%{__alt_kernel}" != ""
 %define		alt_kernel	%{__alt_kernel}
 %endif
@@ -128,7 +128,7 @@ Summary(de.UTF-8):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(et.UTF-8):	Linuxi kernel (ehk operatsioonisüsteemi tuum)
 Summary(fr.UTF-8):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl.UTF-8):	Jądro Linuksa
-Name:		kernel%{_alt_kernel}
+Name:		kernel-%{basever}%{_alt_kernel}
 Version:	%{basever}%{postver}
 Release:	%{rel}
 Epoch:		3
@@ -375,7 +375,7 @@ BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 %define		objdir		%{topdir}/%{targetobj}
 %define		targetobj	%{_target_base_arch}-gcc-%(%{__cc} -dumpversion)
 
-%define		_kernelsrcdir	/usr/src/linux%{_alt_kernel}-%{version}
+%define		_kernelsrcdir	/usr/src/linux-%{basever}%{_alt_kernel}-%{version}
 
 %if "%{_target_base_arch}" != "%{_host_base_arch}"
 	%define CrossOpts ARCH=%{_target_base_arch} CROSS_COMPILE=%{_target_cpu}-pld-linux-
@@ -1226,13 +1226,13 @@ fi
 %depmod %{kernel_release}
 
 %post headers
-ln -snf %{basename:%{_kernelsrcdir}} %{_prefix}/src/linux%{_alt_kernel}
+ln -snf %{basename:%{_kernelsrcdir}} %{_prefix}/src/linux-%{basever}%{_alt_kernel}
 
 %postun headers
 if [ "$1" = "0" ]; then
-	if [ -L %{_prefix}/src/linux%{_alt_kernel} ]; then
-		if [ "$(readlink %{_prefix}/src/linux%{_alt_kernel})" = "linux%{_alt_kernel}-%{version}" ]; then
-			rm -f %{_prefix}/src/linux%{_alt_kernel}
+	if [ -L %{_prefix}/src/linux-%{basever}%{_alt_kernel} ]; then
+		if [ "$(readlink %{_prefix}/src/linux-%{basever}%{_alt_kernel})" = "linux-%{basever}%{_alt_kernel}-%{version}" ]; then
+			rm -f %{_prefix}/src/linux-%{basever}%{_alt_kernel}
 		fi
 	fi
 fi
