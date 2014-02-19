@@ -1117,6 +1117,14 @@ fi
 
 %depmod %{kernel_release}
 
+%if %{without vserver}
+%banner kernel <<EOF
+
+WARNING: Vserver support is DISABLED in thins kernel build!
+
+EOF
+%endif
+
 %posttrans
 # use posttrans to generate initrd after all dependant module packages (-drm, etc) are installed
 [ -f /etc/sysconfig/kernel ] && . /etc/sysconfig/kernel
