@@ -1118,9 +1118,9 @@ fi
 %depmod %{kernel_release}
 
 %if %{without vserver}
-%banner kernel <<EOF
+%banner -e -a kernel <<EOF
 
-WARNING: Vserver support is DISABLED in thins kernel build!
+WARNING: Vserver support is DISABLED in this kernel build!
 
 EOF
 %endif
