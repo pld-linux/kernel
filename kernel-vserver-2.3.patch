@@ -24880,8 +24880,8 @@ diff -NurpP --minimal linux-3.13.1/net/netlink/af_netlink.c linux-3.13.1-vs2.3.6
  	do {
  		s = sk_next(s);
 -	} while (s && !nl_table[s->sk_protocol].compare(net, s));
-+	} while ((s && !nl_table[s->sk_protocol].compare(net, s)) ||
-+		!nx_check(s->sk_nid, VS_WATCH_P | VS_IDENT));
++	} while (s && (!nl_table[s->sk_protocol].compare(net, s) ||
++		!nx_check(s->sk_nid, VS_WATCH_P | VS_IDENT)));
  	if (s)
  		return s;
  
@@ -24890,8 +24890,8 @@ diff -NurpP --minimal linux-3.13.1/net/netlink/af_netlink.c linux-3.13.1-vs2.3.6
  			s = sk_head(&hash->table[j]);
  
 -			while (s && !nl_table[s->sk_protocol].compare(net, s))
-+			while ((s && !nl_table[s->sk_protocol].compare(net, s)) ||
-+				!nx_check(s->sk_nid, VS_WATCH_P | VS_IDENT))
++			while (s && (!nl_table[s->sk_protocol].compare(net, s) ||
++				!nx_check(s->sk_nid, VS_WATCH_P | VS_IDENT)))
  				s = sk_next(s);
  			if (s) {
  				iter->link = i;
