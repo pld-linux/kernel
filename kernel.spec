@@ -752,7 +752,7 @@ SRCARCH		:= %{target_arch_dir}
 ARCH		:= %{_target_base_arch}
 Q			:= %{!?with_verbose:@}
 MAKE_OPTS	:= %{MakeOpts}
-DEFCONFIG   := %{defconfig}
+DEFCONFIG	:= %{defconfig}
 EOF
 
 RescueConfig() {
@@ -876,12 +876,12 @@ BuildConfig() {
 %endif
 
 %ifarch i686 athlon pentium3 pentium4
-  %if %{with pae}
+	%if %{with pae}
 		CONFIG_HIGHMEM4G=n
 		CONFIG_HIGHMEM64G=y
 		CONFIG_X86_PAE=y
 		CONFIG_NUMA=n
-  %endif
+	%endif
 %endif
 
 %if %{without pcmcia}
@@ -1137,19 +1137,19 @@ fi
 # if dracut is present then generate full-featured initramfs
 if [[ "$USE_DRACUT" != [Nn][Oo] ]] && [ -x /sbin/dracut ]; then
 	/sbin/dracut --force --quiet /boot/initramfs-%{kernel_release}.img %{kernel_release}
-        [ -n "$initrd_file" ] || initrd_file="initramfs-%{kernel_release}.img"
+	[ -n "$initrd_file" ] || initrd_file="initramfs-%{kernel_release}.img"
 fi
 
 if [[ "$CREATE_SYMLINKS" != [Nn][Oo] ]]; then
 	mv -f %{initrd_dir}/initrd{,.old} 2> /dev/null
-        if [ -n "$initrd_file" ] ; then
-	    ln -sf "$initrd_file" %{initrd_dir}/initrd
-        fi
+	if [ -n "$initrd_file" ] ; then
+		ln -sf "$initrd_file" %{initrd_dir}/initrd
+	fi
 %if 0%{?alt_kernel:1}
 	mv -f %{initrd_dir}/initrd%{_alt_kernel}{,.old} 2> /dev/null
-        if [ -n "$initrd_file" ] ; then
-	    ln -sf "$initrd_file" %{initrd_dir}/initrd%{_alt_kernel}
-        fi
+	if [ -n "$initrd_file" ] ; then
+		ln -sf "$initrd_file" %{initrd_dir}/initrd%{_alt_kernel}
+	fi
 %endif
 fi
 
