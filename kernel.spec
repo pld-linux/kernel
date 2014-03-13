@@ -186,7 +186,7 @@ Patch85:	kernel-hostap.patch
 # http://www.linuxtv.org/wiki/index.php/TechniSat_CableStar_Combo_HD_CI#Patch
 Patch90:	kernel-technisat-combo-hd-ci.patch
 
-# http://vserver.13thfloor.at/Experimental/patch-3.13.1-vs2.3.6.10.diff
+# http://vserver.13thfloor.at/Experimental/patch-3.13.6-vs2.3.6.11.diff
 # note there are additional patches from above url:
 # - *fix* are real fixes (we want these)
 # - *feat* are new features/tests (we don't want these)
