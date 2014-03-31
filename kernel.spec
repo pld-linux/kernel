@@ -60,6 +60,7 @@
 %endif
 
 %define		have_drm	1
+%define		have_ide	1
 %define		have_oss	1
 %define		have_sound	1
 %define		have_pcmcia	1
@@ -74,6 +75,7 @@
 
 %if %{with myown}
 %define		have_drm	0
+%define		have_ide	0
 %define		have_oss	0
 %define		have_sound	0
 %define		have_pcmcia	0
@@ -484,6 +486,24 @@ DRM Kernel Treiber.
 
 %description drm -l pl.UTF-8
 Sterowniki DRM.
+
+%package ide
+Summary:	IDE kernel modules
+Summary(de.UTF-8):	IDE Kernel Treiber
+Summary(pl.UTF-8):	Sterowniki IDE
+Group:		Base/Kernel
+Requires(postun):	%{name} = %{epoch}:%{version}-%{release}
+Requires:	%{name} = %{epoch}:%{version}-%{release}
+AutoReqProv:	no
+
+%description ide
+IDE kernel modules.
+
+%description ide -l de.UTF-8
+IDE Kernel Treiber.
+
+%description ide -l pl.UTF-8
+Sterowniki IDE.
 
 %package pcmcia
 Summary:	PCMCIA modules
@@ -1210,6 +1230,12 @@ fi
 %postun drm
 %depmod %{kernel_release}
 
+%post ide
+%depmod %{kernel_release}
+
+%postun ide
+%depmod %{kernel_release}
+
 %post pcmcia
 %depmod %{kernel_release}
 
@@ -1272,6 +1298,9 @@ fi
 /lib/modules/%{kernel_release}/kernel/drivers
 %if %{have_drm}
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/gpu
+%endif
+%if %{have_ide}
+%exclude /lib/modules/%{kernel_release}/kernel/drivers/ide
 %endif
 /lib/modules/%{kernel_release}/kernel/fs
 /lib/modules/%{kernel_release}/kernel/kernel
@@ -1345,6 +1374,12 @@ fi
 %files drm
 %defattr(644,root,root,755)
 /lib/modules/%{kernel_release}/kernel/drivers/gpu
+%endif
+
+%if %{have_ide}
+%files ide
+%defattr(644,root,root,755)
+/lib/modules/%{kernel_release}/kernel/drivers/ide
 %endif
 
 %if %{have_pcmcia}
