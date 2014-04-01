@@ -1277,7 +1277,7 @@ fi
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/gpu
 %endif
 %if %{have_ide}
-%exclude /lib/modules/%{kernel_release}/kernel/drivers/ide
+%exclude /lib/modules/%{kernel_release}/kernel/drivers/ide/*
 %endif
 /lib/modules/%{kernel_release}/kernel/fs
 /lib/modules/%{kernel_release}/kernel/kernel
@@ -1355,7 +1355,7 @@ fi
 %if %{have_ide}
 %files ide
 %defattr(644,root,root,755)
-/lib/modules/%{kernel_release}/kernel/drivers/ide
+/lib/modules/%{kernel_release}/kernel/drivers/ide/*
 %if %{have_pcmcia}
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/ide/ide-cs.ko*
 %endif
