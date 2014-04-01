@@ -1365,6 +1365,9 @@ fi
 %files ide
 %defattr(644,root,root,755)
 /lib/modules/%{kernel_release}/kernel/drivers/ide
+%if %{have_pcmcia}
+%exclude /lib/modules/%{kernel_release}/kernel/drivers/ide/ide-cs.ko*
+%endif
 %endif
 
 %if %{have_pcmcia}
