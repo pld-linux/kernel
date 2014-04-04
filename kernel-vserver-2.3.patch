@@ -2936,44 +2936,45 @@ diff -NurpP --minimal linux-3.10.33/fs/ext4/ialloc.c linux-3.10.33-vs2.3.6.8/fs/
 diff -NurpP --minimal linux-3.10.33/fs/ext4/inode.c linux-3.10.33-vs2.3.6.8/fs/ext4/inode.c
 --- linux-3.10.33/fs/ext4/inode.c	2014-03-12 13:16:02.000000000 +0000
 +++ linux-3.10.33-vs2.3.6.8/fs/ext4/inode.c	2014-03-12 13:18:32.000000000 +0000
-@@ -38,6 +38,7 @@
- #include <linux/slab.h>
+@@ -39,6 +39,7 @@
  #include <linux/ratelimit.h>
  #include <linux/aio.h>
+ #include <linux/bitops.h>
 +#include <linux/vs_tag.h>
  
  #include "ext4_jbd2.h"
  #include "xattr.h"
-@@ -4045,41 +4046,64 @@ void ext4_set_inode_flags(struct inode *
+@@ -4046,43 +4047,65 @@ void ext4_set_inode_flags(struct inode *
  {
  	unsigned int flags = EXT4_I(inode)->i_flags;
- 
--	inode->i_flags &= ~(S_SYNC|S_APPEND|S_IMMUTABLE|S_NOATIME|S_DIRSYNC);
-+	inode->i_flags &= ~(S_IMMUTABLE | S_IXUNLINK |
-+		S_SYNC | S_APPEND | S_NOATIME | S_DIRSYNC);
+ 	unsigned int new_fl = 0;
++	unsigned int new_vf = 0;
 +
 +	if (flags & EXT4_IMMUTABLE_FL)
-+		inode->i_flags |= S_IMMUTABLE;
++		new_fl |= S_IMMUTABLE;
 +	if (flags & EXT4_IXUNLINK_FL)
-+		inode->i_flags |= S_IXUNLINK;
-+
++		new_fl |= S_IXUNLINK;
+ 
  	if (flags & EXT4_SYNC_FL)
- 		inode->i_flags |= S_SYNC;
+ 		new_fl |= S_SYNC;
  	if (flags & EXT4_APPEND_FL)
- 		inode->i_flags |= S_APPEND;
+ 		new_fl |= S_APPEND;
 -	if (flags & EXT4_IMMUTABLE_FL)
--		inode->i_flags |= S_IMMUTABLE;
+-		new_fl |= S_IMMUTABLE;
  	if (flags & EXT4_NOATIME_FL)
- 		inode->i_flags |= S_NOATIME;
+ 		new_fl |= S_NOATIME;
  	if (flags & EXT4_DIRSYNC_FL)
- 		inode->i_flags |= S_DIRSYNC;
-+
-+	inode->i_vflags &= ~(V_BARRIER | V_COW);
+ 		new_fl |= S_DIRSYNC;
+ 	set_mask_bits(&inode->i_flags,
+-		      S_SYNC|S_APPEND|S_IMMUTABLE|S_NOATIME|S_DIRSYNC, new_fl);
++		      S_IMMUTABLE|S_IXUNLINK|S_SYNC|S_APPEND|S_NOATIME|S_DIRSYNC,
++		      new_fl);
 +
 +	if (flags & EXT4_BARRIER_FL)
-+		inode->i_vflags |= V_BARRIER;
++		new_vf |= V_BARRIER;
 +	if (flags & EXT4_COW_FL)
-+		inode->i_vflags |= V_COW;
++		new_vf |= V_COW;
++	set_mask_bits(&inode->i_vflags, V_BARRIER|V_COW, new_vf);
  }
  
  /* Propagate flags from i_flags to EXT4_I(inode)->i_flags */
