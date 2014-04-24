@@ -68,9 +68,9 @@
 %define		have_pcmcia	0
 %endif
 
-%define		rel		1
-%define		basever		3.13
-%define		postver		.11
+%define		rel		0.1
+%define		basever		3.14
+%define		postver		.1
 
 # define this to '-%{basever}' for longterm branch
 %define		versuffix	%{nil}
@@ -113,10 +113,10 @@ Epoch:		3
 License:	GPL v2
 Group:		Base/Kernel
 Source0:	http://www.kernel.org/pub/linux/kernel/v3.x/linux-%{basever}.tar.xz
-# Source0-md5:	0ecbaf65c00374eb4a826c2f9f37606f
+# Source0-md5:	b621207b3f6ecbb67db18b13258f8ea8
 %if "%{postver}" != ".0"
 Patch0:		http://www.kernel.org/pub/linux/kernel/v3.x/patch-%{version}.xz
-# Patch0-md5:	6f12f7b53cb5e7f5fc44dc382246f8db
+# Patch0-md5:	2526eb95793ecc1c22d7e1428ef23cdc
 %endif
 Source1:	kernel.sysconfig
 
