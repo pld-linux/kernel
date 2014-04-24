@@ -1111,18 +1111,6 @@ diff -NurpP --minimal linux-3.13.10/drivers/block/vroot.c linux-3.13.10-vs2.3.6.
 +
 +#endif
 +
-diff -NurpP --minimal linux-3.13.10/drivers/infiniband/Kconfig linux-3.13.10-vs2.3.6.11/drivers/infiniband/Kconfig
---- linux-3.13.10/drivers/infiniband/Kconfig	2014-01-22 20:38:35.000000000 +0000
-+++ linux-3.13.10-vs2.3.6.11/drivers/infiniband/Kconfig	2014-01-31 20:38:03.000000000 +0000
-@@ -39,7 +39,7 @@ config INFINIBAND_USER_MEM
- config INFINIBAND_ADDR_TRANS
- 	bool
- 	depends on INET
--	depends on !(INFINIBAND = y && IPV6 = m)
-+	depends on !(INFINIBAND = y && IPV6 = y)
- 	default y
- 
- source "drivers/infiniband/hw/mthca/Kconfig"
 diff -NurpP --minimal linux-3.13.10/drivers/infiniband/core/addr.c linux-3.13.10-vs2.3.6.11/drivers/infiniband/core/addr.c
 --- linux-3.13.10/drivers/infiniband/core/addr.c	2013-11-25 15:44:35.000000000 +0000
 +++ linux-3.13.10-vs2.3.6.11/drivers/infiniband/core/addr.c	2014-01-31 20:38:03.000000000 +0000
@@ -1665,12 +1653,13 @@ diff -NurpP --minimal linux-3.13.10/fs/btrfs/inode.c linux-3.13.10-vs2.3.6.11/fs
  	btrfs_set_token_inode_size(leaf, item, BTRFS_I(inode)->disk_i_size,
  				   &token);
  	btrfs_set_token_inode_mode(leaf, item, inode->i_mode, &token);
-@@ -8652,12 +8669,15 @@ static const struct inode_operations btr
+@@ -8652,14 +8669,17 @@ static const struct inode_operations btr
  	.listxattr	= btrfs_listxattr,
  	.removexattr	= btrfs_removexattr,
  	.permission	= btrfs_permission,
 +	.sync_flags	= btrfs_sync_flags,
  	.get_acl	= btrfs_get_acl,
+ 	.set_acl	= btrfs_set_acl,
  	.update_time	= btrfs_update_time,
  };
 +
@@ -1679,6 +1668,7 @@ diff -NurpP --minimal linux-3.13.10/fs/btrfs/inode.c linux-3.13.10-vs2.3.6.11/fs
  	.permission	= btrfs_permission,
 +	.sync_flags	= btrfs_sync_flags,
  	.get_acl	= btrfs_get_acl,
+ 	.set_acl	= btrfs_set_acl,
  	.update_time	= btrfs_update_time,
  };
 @@ -8727,6 +8747,7 @@ static const struct inode_operations btr
@@ -1867,9 +1857,9 @@ diff -NurpP --minimal linux-3.13.10/fs/btrfs/super.c linux-3.13.10-vs2.3.6.11/fs
 --- linux-3.13.10/fs/btrfs/super.c	2014-01-22 20:39:05.000000000 +0000
 +++ linux-3.13.10-vs2.3.6.11/fs/btrfs/super.c	2014-01-31 23:58:08.000000000 +0000
 @@ -323,7 +323,7 @@ enum {
- 	Opt_check_integrity, Opt_check_integrity_including_extent_data,
- 	Opt_check_integrity_print_mask, Opt_fatal_errors, Opt_rescan_uuid_tree,
- 	Opt_commit_interval,
+ 	Opt_commit_interval, Opt_barrier, Opt_nodefrag, Opt_nodiscard,
+ 	Opt_noenospc_debug, Opt_noflushoncommit, Opt_acl, Opt_datacow,
+ 	Opt_datasum, Opt_treelog, Opt_noinode_cache,
 -	Opt_err,
 +	Opt_tag, Opt_notag, Opt_tagid, Opt_err,
  };
@@ -5455,7 +5445,7 @@ diff -NurpP --minimal linux-3.13.10/fs/nfsd/nfs4xdr.c linux-3.13.10-vs2.3.6.11/f
  
  #include "idmap.h"
  #include "acl.h"
-@@ -2430,14 +2431,18 @@ out_acl:
+@@ -2430,10 +2431,14 @@ out_acl:
  		WRITE32(stat.nlink);
  	}
  	if (bmval1 & FATTR4_WORD1_OWNER) {
@@ -5463,8 +5453,6 @@ diff -NurpP --minimal linux-3.13.10/fs/nfsd/nfs4xdr.c linux-3.13.10-vs2.3.6.11/f
 +		status = nfsd4_encode_user(rqstp,
 +			TAGINO_KUID(DX_TAG(dentry->d_inode),
 +			stat.uid, stat.tag), &p, &buflen);
- 		if (status == nfserr_resource)
- 			goto out_resource;
  		if (status)
  			goto out;
  	}
@@ -5473,9 +5461,9 @@ diff -NurpP --minimal linux-3.13.10/fs/nfsd/nfs4xdr.c linux-3.13.10-vs2.3.6.11/f
 +		status = nfsd4_encode_group(rqstp,
 +			TAGINO_KGID(DX_TAG(dentry->d_inode),
 +			stat.gid, stat.tag), &p, &buflen);
- 		if (status == nfserr_resource)
- 			goto out_resource;
  		if (status)
+ 			goto out;
+ 	}
 diff -NurpP --minimal linux-3.13.10/fs/nfsd/nfsxdr.c linux-3.13.10-vs2.3.6.11/fs/nfsd/nfsxdr.c
 --- linux-3.13.10/fs/nfsd/nfsxdr.c	2013-05-31 13:45:24.000000000 +0000
 +++ linux-3.13.10-vs2.3.6.11/fs/nfsd/nfsxdr.c	2014-01-31 20:38:03.000000000 +0000
@@ -6845,16 +6833,16 @@ diff -NurpP --minimal linux-3.13.10/fs/super.c linux-3.13.10-vs2.3.6.11/fs/super
  	error = security_sb_kern_mount(sb, flags, secdata);
  	if (error)
  		goto out_sb;
-diff -NurpP --minimal linux-3.13.10/fs/sysfs/mount.c linux-3.13.10-vs2.3.6.11/fs/sysfs/mount.c
---- linux-3.13.10/fs/sysfs/mount.c	2013-11-25 15:47:00.000000000 +0000
-+++ linux-3.13.10-vs2.3.6.11/fs/sysfs/mount.c	2014-01-31 20:38:03.000000000 +0000
+diff -NurpP --minimal linux-3.13.10/fs/kernfs/mount.c linux-3.13.10-vs2.3.6.11/fs/kernfs/mount.c
+--- linux-3.13.10/fs/kernfs/mount.c	2013-11-25 15:47:00.000000000 +0000
++++ linux-3.13.10-vs2.3.6.11/fs/kernfs/mount.c	2014-01-31 20:38:03.000000000 +0000
 @@ -48,7 +48,7 @@ static int sysfs_fill_super(struct super
  
  	sb->s_blocksize = PAGE_CACHE_SIZE;
  	sb->s_blocksize_bits = PAGE_CACHE_SHIFT;
 -	sb->s_magic = SYSFS_MAGIC;
 +	sb->s_magic = SYSFS_SUPER_MAGIC;
- 	sb->s_op = &sysfs_ops;
+ 	sb->s_op = &kernfs_sops;
  	sb->s_time_gran = 1;
  
 diff -NurpP --minimal linux-3.13.10/fs/utimes.c linux-3.13.10-vs2.3.6.11/fs/utimes.c
@@ -7479,7 +7467,7 @@ diff -NurpP --minimal linux-3.13.10/include/linux/uidgid.h linux-3.13.10-vs2.3.6
  
  static inline uid_t __kuid_val(kuid_t uid)
  {
-@@ -41,10 +45,16 @@ static inline gid_t __kgid_val(kgid_t gi
+@@ -41,11 +45,18 @@ static inline gid_t __kgid_val(kgid_t gi
  	return gid.val;
  }
  
@@ -7488,29 +7476,6 @@ diff -NurpP --minimal linux-3.13.10/include/linux/uidgid.h linux-3.13.10-vs2.3.6
 +	return tag.val;
 +}
 +
- #else
- 
- typedef uid_t kuid_t;
- typedef gid_t kgid_t;
-+typedef vtag_t ktag_t;
- 
- static inline uid_t __kuid_val(kuid_t uid)
- {
-@@ -56,16 +66,24 @@ static inline gid_t __kgid_val(kgid_t gi
- 	return gid;
- }
- 
-+static inline vtag_t __ktag_val(ktag_t tag)
-+{
-+	return tag;
-+}
-+
- #define KUIDT_INIT(value) ((kuid_t) value )
- #define KGIDT_INIT(value) ((kgid_t) value )
-+#define KTAGT_INIT(value) ((ktag_t) value )
- 
- #endif
- 
  #define GLOBAL_ROOT_UID KUIDT_INIT(0)
  #define GLOBAL_ROOT_GID KGIDT_INIT(0)
 +#define GLOBAL_ROOT_TAG KTAGT_INIT(0)
@@ -11746,7 +11711,7 @@ diff -NurpP --minimal linux-3.13.10/include/net/route.h linux-3.13.10-vs2.3.6.11
 +	struct nx_info *nx_info = current_nx_info();
  
  	ip_route_connect_init(fl4, dst, src, tos, oif, protocol,
- 			      sport, dport, sk, can_sleep);
+ 			      sport, dport, sk);
  
 -	if (!dst || !src) {
 +	if (sk)
@@ -12987,21 +12952,21 @@ diff -NurpP --minimal linux-3.13.10/init/Kconfig linux-3.13.10-vs2.3.6.11/init/K
 --- linux-3.13.10/init/Kconfig	2014-04-17 01:12:39.000000000 +0000
 +++ linux-3.13.10-vs2.3.6.11/init/Kconfig	2014-04-17 01:17:11.000000000 +0000
 @@ -855,6 +855,7 @@ config NUMA_BALANCING
+ 
  menuconfig CGROUPS
  	boolean "Control Group support"
- 	depends on EVENTFD
 +	default y
  	help
  	  This option adds support for grouping sets of processes together, for
  	  use with process control subsystems such as Cpusets, CFS, memory
 @@ -1117,6 +1118,7 @@ config IPC_NS
+ 
  config USER_NS
  	bool "User namespace"
- 	select UIDGID_STRICT_TYPE_CHECKS
 +	depends on VSERVER_DISABLED
- 
  	default n
  	help
+ 	  This allows containers, i.e. vservers, to use user namespaces
 diff -NurpP --minimal linux-3.13.10/init/main.c linux-3.13.10-vs2.3.6.11/init/main.c
 --- linux-3.13.10/init/main.c	2014-01-22 20:39:12.000000000 +0000
 +++ linux-3.13.10-vs2.3.6.11/init/main.c	2014-01-31 20:38:03.000000000 +0000
@@ -24718,9 +24683,9 @@ diff -NurpP --minimal linux-3.13.10/net/ipv6/tcp_ipv6.c linux-3.13.10-vs2.3.6.11
  	 *	connect() to INADDR_ANY means loopback (BSD'ism).
  	 */
  
--	if(ipv6_addr_any(&usin->sin6_addr))
+-	if (ipv6_addr_any(&usin->sin6_addr))
 -		usin->sin6_addr.s6_addr[15] = 0x1;
-+	if(ipv6_addr_any(&usin->sin6_addr)) {
++	if (ipv6_addr_any(&usin->sin6_addr)) {
 +		struct nx_info *nxi =  sk->sk_nx_info;
 +
 +		if (nxi && nx_info_has_v6(nxi))
