@@ -11,22 +11,22 @@ Note: the next patch is needed to fix a theoretical deadlock
 Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 
 ---
- drivers/md/dm-crypt.c |  134 +++++++++-----------------------------------------
- 1 file changed, 26 insertions(+), 108 deletions(-)
+ drivers/md/dm-crypt.c |  139 ++++++++++----------------------------------------
+ 1 file changed, 30 insertions(+), 109 deletions(-)
 
-Index: linux-3.10.4-fast/drivers/md/dm-crypt.c
+Index: linux-3.14/drivers/md/dm-crypt.c
 ===================================================================
---- linux-3.10.4-fast.orig/drivers/md/dm-crypt.c	2013-07-31 17:03:18.000000000 +0200
-+++ linux-3.10.4-fast/drivers/md/dm-crypt.c	2013-07-31 17:03:21.000000000 +0200
-@@ -59,7 +59,6 @@ struct dm_crypt_io {
+--- linux-3.14.orig/drivers/md/dm-crypt.c	2014-04-04 20:48:50.000000000 +0200
++++ linux-3.14/drivers/md/dm-crypt.c	2014-04-04 20:57:36.000000000 +0200
+@@ -58,7 +58,6 @@ struct dm_crypt_io {
  	atomic_t io_pending;
  	int error;
  	sector_t sector;
 -	struct dm_crypt_io *base_io;
- };
+ } CRYPTO_MINALIGN_ATTR;
  
  struct dm_crypt_request {
-@@ -162,7 +161,6 @@ struct crypt_config {
+@@ -172,7 +171,6 @@ struct crypt_config {
  };
  
  #define MIN_IOS        16
@@ -34,7 +34,7 @@ Index: linux-3.10.4-fast/drivers/md/dm-crypt.c
  
  static struct kmem_cache *_crypt_io_pool;
  
-@@ -777,14 +775,13 @@ static int crypt_convert(struct crypt_co
+@@ -951,14 +949,13 @@ static int crypt_convert(struct crypt_co
  	return 0;
  }
  
@@ -52,7 +52,14 @@ Index: linux-3.10.4-fast/drivers/md/dm-crypt.c
  {
  	struct crypt_config *cc = io->cc;
  	struct bio *clone;
-@@ -798,37 +795,23 @@ static struct bio *crypt_alloc_buffer(st
+@@ -966,41 +963,27 @@ static struct bio *crypt_alloc_buffer(st
+ 	gfp_t gfp_mask = GFP_NOIO | __GFP_HIGHMEM;
+ 	unsigned i, len;
+ 	struct page *page;
++	struct bio_vec *bvec;
+ 
+ 	clone = bio_alloc_bioset(GFP_NOIO, nr_iovecs, cc->bs);
+ 	if (!clone)
  		return NULL;
  
  	clone_init(io, clone);
@@ -74,35 +81,35 @@ Index: linux-3.10.4-fast/drivers/md/dm-crypt.c
  
  		len = (size > PAGE_SIZE) ? PAGE_SIZE : size;
  
- 		if (!bio_add_page(clone, page, len, 0)) {
-+			DMERR("bio_add_page failed for page %d: the underlying device has stricter limits than dm-crypt target", i);
- 			mempool_free(page, cc->page_pool);
+-		if (!bio_add_page(clone, page, len, 0)) {
+-			mempool_free(page, cc->page_pool);
 -			break;
-+			crypt_free_buffer_pages(cc, clone);
-+			bio_put(clone);
-+			return NULL;
- 		}
+-		}
++		bvec = &clone->bi_io_vec[clone->bi_vcnt++];
++		bvec->bv_page = page;
++		bvec->bv_len = len;
++		bvec->bv_offset = 0;
  
- 		size -= len;
- 	}
+-		size -= len;
+-	}
++		clone->bi_iter.bi_size += len;
  
--	if (!clone->bi_size) {
+-	if (!clone->bi_iter.bi_size) {
 -		bio_put(clone);
 -		return NULL;
--	}
--
- 	return clone;
- }
++		size -= len;
+ 	}
  
-@@ -854,7 +837,6 @@ static struct dm_crypt_io *crypt_io_allo
+ 	return clone;
+@@ -1025,7 +1008,6 @@ static void crypt_io_init(struct dm_cryp
  	io->base_bio = bio;
  	io->sector = sector;
  	io->error = 0;
 -	io->base_io = NULL;
  	io->ctx.req = NULL;
  	atomic_set(&io->io_pending, 0);
- 
-@@ -869,13 +851,11 @@ static void crypt_inc_pending(struct dm_
+ }
+@@ -1038,13 +1020,11 @@ static void crypt_inc_pending(struct dm_
  /*
   * One of the bios was finished. Check for completion of
   * the whole request and correctly clean up the buffer.
@@ -116,9 +123,9 @@ Index: linux-3.10.4-fast/drivers/md/dm-crypt.c
  	int error = io->error;
  
  	if (!atomic_dec_and_test(&io->io_pending))
-@@ -885,13 +865,7 @@ static void crypt_dec_pending(struct dm_
- 		mempool_free(io->ctx.req, cc->req_pool);
- 	mempool_free(io, cc->io_pool);
+@@ -1055,13 +1035,7 @@ static void crypt_dec_pending(struct dm_
+ 	if (io != dm_per_bio_data(base_bio, cc->per_bio_data_size))
+ 		mempool_free(io, cc->io_pool);
  
 -	if (likely(!base_io))
 -		bio_endio(base_bio, error);
@@ -131,18 +138,18 @@ Index: linux-3.10.4-fast/drivers/md/dm-crypt.c
  }
  
  /*
-@@ -1027,10 +1001,7 @@ static void kcryptd_crypt_write_convert(
+@@ -1197,10 +1171,7 @@ static void kcryptd_crypt_write_convert(
  {
  	struct crypt_config *cc = io->cc;
  	struct bio *clone;
 -	struct dm_crypt_io *new_io;
  	int crypt_finished;
 -	unsigned out_of_pages = 0;
--	unsigned remaining = io->base_bio->bi_size;
+-	unsigned remaining = io->base_bio->bi_iter.bi_size;
  	sector_t sector = io->sector;
  	int r;
  
-@@ -1040,81 +1011,28 @@ static void kcryptd_crypt_write_convert(
+@@ -1210,80 +1181,30 @@ static void kcryptd_crypt_write_convert(
  	crypt_inc_pending(io);
  	crypt_convert_init(cc, &io->ctx, NULL, io->base_bio, sector);
  
@@ -158,9 +165,9 @@ Index: linux-3.10.4-fast/drivers/md/dm-crypt.c
 -		}
 -
 -		io->ctx.bio_out = clone;
--		io->ctx.idx_out = 0;
+-		io->ctx.iter_out = clone->bi_iter;
 -
--		remaining -= clone->bi_size;
+-		remaining -= clone->bi_iter.bi_size;
 -		sector += bio_sectors(clone);
 -
 -		crypt_inc_pending(io);
@@ -181,7 +188,7 @@ Index: linux-3.10.4-fast/drivers/md/dm-crypt.c
 -			 */
 -			if (unlikely(r < 0))
 -				break;
-+	clone = crypt_alloc_buffer(io, io->base_bio->bi_size);
++	clone = crypt_alloc_buffer(io, io->base_bio->bi_iter.bi_size);
 +	if (unlikely(!clone)) {
 +		io->error = -EIO;
 +		goto dec;
@@ -190,7 +197,7 @@ Index: linux-3.10.4-fast/drivers/md/dm-crypt.c
 -			io->sector = sector;
 -		}
 +	io->ctx.bio_out = clone;
-+	io->ctx.idx_out = 0;
++	io->ctx.iter_out = clone->bi_iter;
  
 -		/*
 -		 * Out of memory -> run queues
@@ -205,13 +212,12 @@ Index: linux-3.10.4-fast/drivers/md/dm-crypt.c
 -		 * between fragments, so switch to a new dm_crypt_io structure.
 -		 */
 -		if (unlikely(!crypt_finished && remaining)) {
--			new_io = crypt_io_alloc(io->cc, io->base_bio,
--						sector);
+-			new_io = mempool_alloc(cc->io_pool, GFP_NOIO);
+-			crypt_io_init(new_io, io->cc, io->base_bio, sector);
 -			crypt_inc_pending(new_io);
 -			crypt_convert_init(cc, &new_io->ctx, NULL,
 -					   io->base_bio, sector);
--			new_io->ctx.idx_in = io->ctx.idx_in;
--			new_io->ctx.offset_in = io->ctx.offset_in;
+-			new_io->ctx.iter_in = io->ctx.iter_in;
 -
 -			/*
 -			 * Fragments after the first use the base_io
@@ -232,18 +238,19 @@ Index: linux-3.10.4-fast/drivers/md/dm-crypt.c
  
 -			io = new_io;
 -		}
--	}
 +	/* Encryption was already finished, submit io now */
-+	if (crypt_finished)
++	if (crypt_finished) {
 +		kcryptd_crypt_write_io_submit(io, 0);
++		io->sector = sector;
+ 	}
  
 +dec:
  	crypt_dec_pending(io);
  }
  
-@@ -1553,7 +1471,7 @@ static int crypt_ctr(struct dm_target *t
- 		goto bad;
- 	}
+@@ -1738,7 +1659,7 @@ static int crypt_ctr(struct dm_target *t
+ 				sizeof(struct dm_crypt_io) + cc->dmreq_start +
+ 				sizeof(struct dm_crypt_request) + cc->iv_size;
  
 -	cc->page_pool = mempool_create_page_pool(MIN_POOL_PAGES, 0);
 +	cc->page_pool = mempool_create_page_pool(BIO_MAX_PAGES, 0);

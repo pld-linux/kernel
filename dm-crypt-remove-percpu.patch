@@ -1,19 +1,31 @@
 dm-crypt: remove per-cpu structure
 
-Remove per-cpu structure and make it per-convert_context instead.
-This allows moving requests between different cpus.
+Dm-crypt used per-cpu structures to hold pointers to ablkcipher_request.
+The code assumed that the work item keeps executing on a single CPU, so it
+used no synchronization when accessing this structure.
+
+When we disable a CPU by writing zero to
+/sys/devices/system/cpu/cpu*/online, the work item could be moved to
+another CPU. This causes crashes in dm-crypt because the code starts using
+a wrong ablkcipher_request.
+
+This patch fixes this bug by removing the percpu definition. The structure
+ablkcipher_request is accessed via a pointer from convert_context.
+Consequently, if the work item is rescheduled to a different CPU, the
+thread still uses the same ablkcipher_request.
 
 Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+Cc: stable@vger.kernel.org
 
 ---
  drivers/md/dm-crypt.c |   61 +++++++++-----------------------------------------
  1 file changed, 12 insertions(+), 49 deletions(-)
 
-Index: linux-3.10.4-fast/drivers/md/dm-crypt.c
+Index: linux-3.14-rc1/drivers/md/dm-crypt.c
 ===================================================================
---- linux-3.10.4-fast.orig/drivers/md/dm-crypt.c	2013-07-31 16:59:48.000000000 +0200
-+++ linux-3.10.4-fast/drivers/md/dm-crypt.c	2013-07-31 17:03:10.000000000 +0200
-@@ -18,7 +18,6 @@
+--- linux-3.14-rc1.orig/drivers/md/dm-crypt.c	2014-02-03 19:18:23.000000000 +0100
++++ linux-3.14-rc1/drivers/md/dm-crypt.c	2014-02-03 19:21:35.000000000 +0100
+@@ -19,7 +19,6 @@
  #include <linux/crypto.h>
  #include <linux/workqueue.h>
  #include <linux/backing-dev.h>
@@ -21,15 +33,15 @@ Index: linux-3.10.4-fast/drivers/md/dm-crypt.c
  #include <linux/atomic.h>
  #include <linux/scatterlist.h>
  #include <asm/page.h>
-@@ -44,6 +43,7 @@ struct convert_context {
- 	unsigned int idx_out;
+@@ -43,6 +42,7 @@ struct convert_context {
+ 	struct bvec_iter iter_out;
  	sector_t cc_sector;
  	atomic_t cc_pending;
 +	struct ablkcipher_request *req;
  };
  
  /*
-@@ -105,15 +105,7 @@ struct iv_lmk_private {
+@@ -111,15 +111,7 @@ struct iv_tcw_private {
  enum flags { DM_CRYPT_SUSPENDED, DM_CRYPT_KEY_VALID };
  
  /*
@@ -46,7 +58,7 @@ Index: linux-3.10.4-fast/drivers/md/dm-crypt.c
   */
  struct crypt_config {
  	struct dm_dev *dev;
-@@ -143,12 +135,6 @@ struct crypt_config {
+@@ -150,12 +142,6 @@ struct crypt_config {
  	sector_t iv_offset;
  	unsigned int iv_size;
  
@@ -59,7 +71,7 @@ Index: linux-3.10.4-fast/drivers/md/dm-crypt.c
  	/* ESSIV: struct crypto_cipher *essiv_tfm */
  	void *iv_private;
  	struct crypto_ablkcipher **tfms;
-@@ -184,11 +170,6 @@ static void clone_init(struct dm_crypt_i
+@@ -192,11 +178,6 @@ static void clone_init(struct dm_crypt_i
  static void kcryptd_queue_crypt(struct dm_crypt_io *io);
  static u8 *iv_of_dmreq(struct crypt_config *cc, struct dm_crypt_request *dmreq);
  
@@ -71,7 +83,7 @@ Index: linux-3.10.4-fast/drivers/md/dm-crypt.c
  /*
   * Use this to access cipher attributes that are the same for each CPU.
   */
-@@ -738,16 +719,15 @@ static void kcryptd_async_done(struct cr
+@@ -903,16 +884,15 @@ static void kcryptd_async_done(struct cr
  static void crypt_alloc_req(struct crypt_config *cc,
  			    struct convert_context *ctx)
  {
@@ -93,7 +105,7 @@ Index: linux-3.10.4-fast/drivers/md/dm-crypt.c
  }
  
  /*
-@@ -756,7 +736,6 @@ static void crypt_alloc_req(struct crypt
+@@ -921,7 +901,6 @@ static void crypt_alloc_req(struct crypt
  static int crypt_convert(struct crypt_config *cc,
  			 struct convert_context *ctx)
  {
@@ -101,7 +113,7 @@ Index: linux-3.10.4-fast/drivers/md/dm-crypt.c
  	int r;
  
  	atomic_set(&ctx->cc_pending, 1);
-@@ -768,7 +747,7 @@ static int crypt_convert(struct crypt_co
+@@ -932,7 +911,7 @@ static int crypt_convert(struct crypt_co
  
  		atomic_inc(&ctx->cc_pending);
  
@@ -110,8 +122,8 @@ Index: linux-3.10.4-fast/drivers/md/dm-crypt.c
  
  		switch (r) {
  		/* async */
-@@ -777,7 +756,7 @@ static int crypt_convert(struct crypt_co
- 			INIT_COMPLETION(ctx->restart);
+@@ -941,7 +920,7 @@ static int crypt_convert(struct crypt_co
+ 			reinit_completion(&ctx->restart);
  			/* fall through*/
  		case -EINPROGRESS:
 -			this_cc->req = NULL;
@@ -119,7 +131,7 @@ Index: linux-3.10.4-fast/drivers/md/dm-crypt.c
  			ctx->cc_sector++;
  			continue;
  
-@@ -876,6 +855,7 @@ static struct dm_crypt_io *crypt_io_allo
+@@ -1040,6 +1019,7 @@ static struct dm_crypt_io *crypt_io_allo
  	io->sector = sector;
  	io->error = 0;
  	io->base_io = NULL;
@@ -127,7 +139,7 @@ Index: linux-3.10.4-fast/drivers/md/dm-crypt.c
  	atomic_set(&io->io_pending, 0);
  
  	return io;
-@@ -901,6 +881,8 @@ static void crypt_dec_pending(struct dm_
+@@ -1065,6 +1045,8 @@ static void crypt_dec_pending(struct dm_
  	if (!atomic_dec_and_test(&io->io_pending))
  		return;
  
@@ -136,7 +148,7 @@ Index: linux-3.10.4-fast/drivers/md/dm-crypt.c
  	mempool_free(io, cc->io_pool);
  
  	if (likely(!base_io))
-@@ -1326,8 +1308,6 @@ static int crypt_wipe_key(struct crypt_c
+@@ -1492,8 +1474,6 @@ static int crypt_wipe_key(struct crypt_c
  static void crypt_dtr(struct dm_target *ti)
  {
  	struct crypt_config *cc = ti->private;
@@ -145,7 +157,7 @@ Index: linux-3.10.4-fast/drivers/md/dm-crypt.c
  
  	ti->private = NULL;
  
-@@ -1339,13 +1319,6 @@ static void crypt_dtr(struct dm_target *
+@@ -1505,13 +1485,6 @@ static void crypt_dtr(struct dm_target *
  	if (cc->crypt_queue)
  		destroy_workqueue(cc->crypt_queue);
  
@@ -159,7 +171,7 @@ Index: linux-3.10.4-fast/drivers/md/dm-crypt.c
  	crypt_free_tfms(cc);
  
  	if (cc->bs)
-@@ -1364,9 +1337,6 @@ static void crypt_dtr(struct dm_target *
+@@ -1530,9 +1503,6 @@ static void crypt_dtr(struct dm_target *
  	if (cc->dev)
  		dm_put_device(ti, cc->dev);
  
@@ -169,7 +181,7 @@ Index: linux-3.10.4-fast/drivers/md/dm-crypt.c
  	kzfree(cc->cipher);
  	kzfree(cc->cipher_string);
  
-@@ -1421,13 +1391,6 @@ static int crypt_ctr_cipher(struct dm_ta
+@@ -1588,13 +1558,6 @@ static int crypt_ctr_cipher(struct dm_ta
  	if (tmp)
  		DMWARN("Ignoring unexpected additional cipher options");
  

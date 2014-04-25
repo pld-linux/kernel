@@ -13,11 +13,11 @@ Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
  drivers/md/dm-crypt.c |   50 +++++++++++++++++++++++++++++++++++---------------
  1 file changed, 35 insertions(+), 15 deletions(-)
 
-Index: linux-3.10.4-fast/drivers/md/dm-crypt.c
+Index: linux-3.14/drivers/md/dm-crypt.c
 ===================================================================
---- linux-3.10.4-fast.orig/drivers/md/dm-crypt.c	2013-07-31 17:03:27.000000000 +0200
-+++ linux-3.10.4-fast/drivers/md/dm-crypt.c	2013-07-31 17:03:30.000000000 +0200
-@@ -21,6 +21,7 @@
+--- linux-3.14.orig/drivers/md/dm-crypt.c	2014-04-04 21:06:22.000000000 +0200
++++ linux-3.14/drivers/md/dm-crypt.c	2014-04-04 21:06:55.000000000 +0200
+@@ -22,6 +22,7 @@
  #include <linux/backing-dev.h>
  #include <linux/atomic.h>
  #include <linux/scatterlist.h>
@@ -25,16 +25,16 @@ Index: linux-3.10.4-fast/drivers/md/dm-crypt.c
  #include <asm/page.h>
  #include <asm/unaligned.h>
  #include <crypto/hash.h>
-@@ -61,7 +62,7 @@ struct dm_crypt_io {
+@@ -60,7 +61,7 @@ struct dm_crypt_io {
  	int error;
  	sector_t sector;
  
 -	struct list_head list;
 +	struct rb_node rb_node;
- };
+ } CRYPTO_MINALIGN_ATTR;
  
  struct dm_crypt_request {
-@@ -128,7 +129,7 @@ struct crypt_config {
+@@ -133,7 +134,7 @@ struct crypt_config {
  
  	struct task_struct *write_thread;
  	wait_queue_head_t write_thread_wait;
@@ -43,7 +43,7 @@ Index: linux-3.10.4-fast/drivers/md/dm-crypt.c
  
  	char *cipher;
  	char *cipher_string;
-@@ -1011,7 +1012,7 @@ static int dmcrypt_write(void *data)
+@@ -1177,7 +1178,7 @@ static int dmcrypt_write(void *data)
  {
  	struct crypt_config *cc = data;
  	while (1) {
@@ -52,7 +52,7 @@ Index: linux-3.10.4-fast/drivers/md/dm-crypt.c
  		struct blk_plug plug;
  
  		DECLARE_WAITQUEUE(wait, current);
-@@ -1019,7 +1020,7 @@ static int dmcrypt_write(void *data)
+@@ -1185,7 +1186,7 @@ static int dmcrypt_write(void *data)
  		spin_lock_irq(&cc->write_thread_wait.lock);
  continue_locked:
  
@@ -61,7 +61,7 @@ Index: linux-3.10.4-fast/drivers/md/dm-crypt.c
  			goto pop_from_list;
  
  		__set_current_state(TASK_INTERRUPTIBLE);
-@@ -1041,20 +1042,23 @@ continue_locked:
+@@ -1207,20 +1208,23 @@ continue_locked:
  		goto continue_locked;
  
  pop_from_list:
@@ -94,7 +94,7 @@ Index: linux-3.10.4-fast/drivers/md/dm-crypt.c
  		blk_finish_plug(&plug);
  	}
  	return 0;
-@@ -1065,6 +1069,8 @@ static void kcryptd_crypt_write_io_submi
+@@ -1231,6 +1235,8 @@ static void kcryptd_crypt_write_io_submi
  	struct bio *clone = io->ctx.bio_out;
  	struct crypt_config *cc = io->cc;
  	unsigned long flags;
@@ -103,8 +103,8 @@ Index: linux-3.10.4-fast/drivers/md/dm-crypt.c
  
  	if (unlikely(io->error < 0)) {
  		crypt_free_buffer_pages(cc, clone);
-@@ -1079,7 +1085,21 @@ static void kcryptd_crypt_write_io_submi
- 	clone->bi_sector = cc->start + io->sector;
+@@ -1245,7 +1251,21 @@ static void kcryptd_crypt_write_io_submi
+ 	clone->bi_iter.bi_sector = cc->start + io->sector;
  
  	spin_lock_irqsave(&cc->write_thread_wait.lock, flags);
 -	list_add_tail(&io->list, &cc->write_thread_list);
@@ -126,7 +126,7 @@ Index: linux-3.10.4-fast/drivers/md/dm-crypt.c
  	wake_up_locked(&cc->write_thread_wait);
  	spin_unlock_irqrestore(&cc->write_thread_wait.lock, flags);
  }
-@@ -1639,7 +1659,7 @@ static int crypt_ctr(struct dm_target *t
+@@ -1808,7 +1828,7 @@ static int crypt_ctr(struct dm_target *t
  	}
  
  	init_waitqueue_head(&cc->write_thread_wait);
