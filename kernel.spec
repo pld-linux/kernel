@@ -69,7 +69,7 @@
 %define		have_pcmcia	0
 %endif
 
-%define		rel		1
+%define		rel		2
 %define		basever		3.10
 %define		postver		.37
 
@@ -292,7 +292,7 @@ Requires:	cpuinfo(pae)
 Suggests:	crda
 Suggests:	dracut
 Suggests:	keyutils
-Suggests:	kernel-ide = %{epoch}:%{version}-%{release}
+Suggests:	kernel%{versuffix}-ide = %{epoch}:%{version}-%{release}
 Suggests:	linux-firmware
 Provides:	%{name}(netfilter) = 20070806
 Provides:	%{name}(vermagic) = %{kernel_release}
