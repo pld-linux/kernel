@@ -306,7 +306,7 @@ Requires:	cpuinfo(pae)
 %endif
 Suggests:	dracut
 Suggests:	keyutils
-Suggests:	kernel-ide = %{epoch}:%{version}-%{release}
+Suggests:	kernel%{versuffix}-ide = %{epoch}:%{version}-%{release}
 Suggests:	linux-firmware
 Provides:	%{name}(netfilter) = 20070806
 Provides:	%{name}(vermagic) = %{kernel_release}
@@ -1311,7 +1311,7 @@ fi
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/gpu
 %endif
 %if %{have_ide}
-%exclude /lib/modules/%{kernel_release}/kernel/drivers/ide
+%exclude /lib/modules/%{kernel_release}/kernel/drivers/ide/*
 %endif
 /lib/modules/%{kernel_release}/kernel/fs
 /lib/modules/%{kernel_release}/kernel/kernel
@@ -1390,7 +1390,7 @@ fi
 %if %{have_ide}
 %files ide
 %defattr(644,root,root,755)
-/lib/modules/%{kernel_release}/kernel/drivers/ide
+/lib/modules/%{kernel_release}/kernel/drivers/ide/*
 %if %{have_pcmcia}
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/ide/ide-cs.ko*
 %endif
