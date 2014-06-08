@@ -458,17 +458,17 @@ diff -NurpP --minimal linux-3.13.10/arch/parisc/kernel/traps.c linux-3.13.10-vs2
 --- linux-3.13.10/arch/parisc/kernel/traps.c	2013-11-25 15:46:28.000000000 +0000
 +++ linux-3.13.10-vs2.3.6.11/arch/parisc/kernel/traps.c	2014-01-31 20:38:03.000000000 +0000
 @@ -229,8 +229,9 @@ void die_if_kernel(char *str, struct pt_
- 		if (err == 0)
  			return; /* STFU */
  
--		printk(KERN_CRIT "%s (pid %d): %s (code %ld) at " RFMT "\n",
+ 		parisc_printk_ratelimited(1, regs,
+-			KERN_CRIT "%s (pid %d): %s (code %ld) at " RFMT "\n",
 -			current->comm, task_pid_nr(current), str, err, regs->iaoq[0]);
-+		printk(KERN_CRIT "%s (pid %d:#%u): %s (code %ld) at " RFMT "\n",
++			KERN_CRIT "%s (pid %d:#%u): %s (code %ld) at " RFMT "\n",
 +			current->comm, task_pid_nr(current), current->xid,
 +			str, err, regs->iaoq[0]);
- #ifdef PRINT_USER_FAULTS
- 		/* XXX for debugging only */
- 		show_regs(regs);
+ 
+ 		return;
+ 	}
 @@ -263,8 +264,8 @@ void die_if_kernel(char *str, struct pt_
  		pdc_console_restart();
  	
@@ -480,21 +480,6 @@ diff -NurpP --minimal linux-3.13.10/arch/parisc/kernel/traps.c linux-3.13.10-vs2
  
  	/* Wot's wrong wif bein' racy? */
  	if (current->thread.flags & PARISC_KERNEL_DEATH) {
-diff -NurpP --minimal linux-3.13.10/arch/parisc/mm/fault.c linux-3.13.10-vs2.3.6.11/arch/parisc/mm/fault.c
---- linux-3.13.10/arch/parisc/mm/fault.c	2014-01-22 20:38:18.000000000 +0000
-+++ linux-3.13.10-vs2.3.6.11/arch/parisc/mm/fault.c	2014-01-31 20:38:03.000000000 +0000
-@@ -272,8 +272,9 @@ bad_area:
- 
- #ifdef PRINT_USER_FAULTS
- 		printk(KERN_DEBUG "\n");
--		printk(KERN_DEBUG "do_page_fault() pid=%d command='%s' type=%lu address=0x%08lx\n",
--		    task_pid_nr(tsk), tsk->comm, code, address);
-+		printk(KERN_DEBUG "do_page_fault() pid=%d:#%u "
-+		    "command='%s' type=%lu address=0x%08lx\n",
-+		    task_pid_nr(tsk), tsk->xid, tsk->comm, code, address);
- 		if (vma) {
- 			printk(KERN_DEBUG "vm_start = 0x%08lx, vm_end = 0x%08lx\n",
- 					vma->vm_start, vma->vm_end);
 diff -NurpP --minimal linux-3.13.10/arch/powerpc/Kconfig linux-3.13.10-vs2.3.6.11/arch/powerpc/Kconfig
 --- linux-3.13.10/arch/powerpc/Kconfig	2014-01-22 20:38:18.000000000 +0000
 +++ linux-3.13.10-vs2.3.6.11/arch/powerpc/Kconfig	2014-01-31 20:38:03.000000000 +0000
