@@ -569,14 +569,14 @@ diff -NurpP --minimal linux-3.13.10/arch/s390/kernel/syscalls.S linux-3.13.10-vs
 --- linux-3.13.10/arch/s390/kernel/syscalls.S	2013-07-14 17:00:34.000000000 +0000
 +++ linux-3.13.10-vs2.3.6.11/arch/s390/kernel/syscalls.S	2014-01-31 20:38:03.000000000 +0000
 @@ -271,7 +271,7 @@ SYSCALL(sys_clock_settime,sys_clock_sett
- SYSCALL(sys_clock_gettime,sys_clock_gettime,sys32_clock_gettime_wrapper)	/* 260 */
- SYSCALL(sys_clock_getres,sys_clock_getres,sys32_clock_getres_wrapper)
- SYSCALL(sys_clock_nanosleep,sys_clock_nanosleep,sys32_clock_nanosleep_wrapper)
+ SYSCALL(sys_clock_gettime,sys_clock_gettime,compat_sys_clock_gettime)	/* 260 */
+ SYSCALL(sys_clock_getres,sys_clock_getres,compat_sys_clock_getres)
+ SYSCALL(sys_clock_nanosleep,sys_clock_nanosleep,compat_sys_clock_nanosleep)
 -NI_SYSCALL							/* reserved for vserver */
 +SYSCALL(sys_vserver,sys_vserver,sys32_vserver)
- SYSCALL(sys_s390_fadvise64_64,sys_ni_syscall,sys32_fadvise64_64_wrapper)
- SYSCALL(sys_statfs64,sys_statfs64,compat_sys_statfs64_wrapper)
- SYSCALL(sys_fstatfs64,sys_fstatfs64,compat_sys_fstatfs64_wrapper)
+ SYSCALL(sys_s390_fadvise64_64,sys_ni_syscall,compat_sys_s390_fadvise64_64)
+ SYSCALL(sys_statfs64,sys_statfs64,compat_sys_statfs64)
+ SYSCALL(sys_fstatfs64,sys_fstatfs64,compat_sys_fstatfs64)
 diff -NurpP --minimal linux-3.13.10/arch/sh/Kconfig linux-3.13.10-vs2.3.6.11/arch/sh/Kconfig
 --- linux-3.13.10/arch/sh/Kconfig	2014-01-22 20:38:24.000000000 +0000
 +++ linux-3.13.10-vs2.3.6.11/arch/sh/Kconfig	2014-01-31 20:38:03.000000000 +0000
@@ -3309,9 +3309,9 @@ diff -NurpP --minimal linux-3.13.10/fs/file_table.c linux-3.13.10-vs2.3.6.11/fs/
  
  over:
 @@ -254,6 +258,8 @@ static void __fput(struct file *file)
- 		i_readcount_dec(inode);
- 	if (file->f_mode & FMODE_WRITE)
- 		drop_file_write_access(file);
+ 		put_write_access(inode);
+ 		__mnt_drop_write(mnt);
+ 	}
 +	vx_files_dec(file);
 +	file->f_xid = 0;
  	file->f_path.dentry = NULL;
@@ -4507,7 +4507,7 @@ diff -NurpP --minimal linux-3.13.10/fs/namei.c linux-3.13.10-vs2.3.6.11/fs/namei
  		return -EPERM;
  	if (!dir->i_op->link)
  		return -EPERM;
-@@ -4305,6 +4449,287 @@ int generic_readlink(struct dentry *dent
+@@ -4305,6 +4449,288 @@ int generic_readlink(struct dentry *dent
  	return res;
  }
  
@@ -4791,15 +4791,11 @@ diff -NurpP --minimal linux-3.13.10/fs/namei.c linux-3.13.10-vs2.3.6.11/fs/namei
 +	kfree(pstr);
 +	return length;
 +}
++EXPORT_SYMBOL(vx_info_mnt_namespace);
 +
  /* get the link contents into pagecache */
  static char *page_getlink(struct dentry * dentry, struct page **ppage)
  {
-@@ -4427,3 +4852,4 @@ EXPORT_SYMBOL(vfs_symlink);
- EXPORT_SYMBOL(vfs_unlink);
- EXPORT_SYMBOL(dentry_unhash);
- EXPORT_SYMBOL(generic_readlink);
-+EXPORT_SYMBOL(vx_info_mnt_namespace);
 diff -NurpP --minimal linux-3.13.10/fs/namespace.c linux-3.13.10-vs2.3.6.11/fs/namespace.c
 --- linux-3.13.10/fs/namespace.c	2014-04-17 01:12:32.000000000 +0000
 +++ linux-3.13.10-vs2.3.6.11/fs/namespace.c	2014-04-17 01:18:37.000000000 +0000
@@ -5735,9 +5731,9 @@ diff -NurpP --minimal linux-3.13.10/fs/ocfs2/namei.c linux-3.13.10-vs2.3.6.11/fs
  #include <cluster/masklog.h>
  
 @@ -475,6 +476,7 @@ static int __ocfs2_mknod_locked(struct i
- 	struct ocfs2_dinode *fe = NULL;
  	struct ocfs2_extent_list *fel;
  	u16 feat;
+ 	struct ocfs2_inode_info *oi = OCFS2_I(inode);
 +	ktag_t ktag;
  
  	*new_fe_bh = NULL;
@@ -6448,7 +6444,7 @@ diff -NurpP --minimal linux-3.13.10/fs/proc/stat.c linux-3.13.10-vs2.3.6.11/fs/p
  #include <linux/time.h>
  #include <linux/irqnr.h>
 +#include <linux/vserver/cvirt.h>
- #include <asm/cputime.h>
+ #include <linux/cputime.h>
  #include <linux/tick.h>
 +#include <linux/cpuset.h>
  
@@ -6499,7 +6495,7 @@ diff -NurpP --minimal linux-3.13.10/fs/proc/uptime.c linux-3.13.10-vs2.3.6.11/fs
  #include <linux/time.h>
  #include <linux/kernel_stat.h>
 +#include <linux/vserver/cvirt.h>
- #include <asm/cputime.h>
+ #include <linux/cputime.h>
  
  static int uptime_proc_show(struct seq_file *m, void *v)
 @@ -24,6 +25,10 @@ static int uptime_proc_show(struct seq_f
@@ -12937,9 +12933,9 @@ diff -NurpP --minimal linux-3.13.10/init/Kconfig linux-3.13.10-vs2.3.6.11/init/K
 --- linux-3.13.10/init/Kconfig	2014-04-17 01:12:39.000000000 +0000
 +++ linux-3.13.10-vs2.3.6.11/init/Kconfig	2014-04-17 01:17:11.000000000 +0000
 @@ -855,6 +855,7 @@ config NUMA_BALANCING
- 
  menuconfig CGROUPS
  	boolean "Control Group support"
+ 	select KERNFS
 +	default y
  	help
  	  This option adds support for grouping sets of processes together, for
@@ -13405,9 +13401,9 @@ diff -NurpP --minimal linux-3.13.10/kernel/fork.c linux-3.13.10-vs2.3.6.11/kerne
 --- linux-3.13.10/kernel/fork.c	2014-01-22 20:39:13.000000000 +0000
 +++ linux-3.13.10-vs2.3.6.11/kernel/fork.c	2014-01-31 20:38:03.000000000 +0000
 @@ -71,6 +71,9 @@
- #include <linux/signalfd.h>
  #include <linux/uprobes.h>
  #include <linux/aio.h>
+ #include <linux/compiler.h>
 +#include <linux/vs_context.h>
 +#include <linux/vs_network.h>
 +#include <linux/vs_limit.h>
@@ -13946,9 +13942,9 @@ diff -NurpP --minimal linux-3.13.10/kernel/sched/core.c linux-3.13.10-vs2.3.6.11
 --- linux-3.13.10/kernel/sched/core.c	2014-04-17 01:12:39.000000000 +0000
 +++ linux-3.13.10-vs2.3.6.11/kernel/sched/core.c	2014-02-25 11:26:10.000000000 +0000
 @@ -73,6 +73,8 @@
- #include <linux/init_task.h>
  #include <linux/binfmts.h>
  #include <linux/context_tracking.h>
+ #include <linux/compiler.h>
 +#include <linux/vs_sched.h>
 +#include <linux/vs_cvirt.h>
  
@@ -13974,7 +13970,20 @@ diff -NurpP --minimal linux-3.13.10/kernel/sched/cputime.c linux-3.13.10-vs2.3.6
  #include "sched.h"
  
  
-@@ -135,14 +136,17 @@ static inline void task_group_account_fi
+@@ -189,9 +193,12 @@ static inline
+ void __account_system_time(struct task_struct *p, cputime_t cputime,
+ 			cputime_t cputime_scaled, int index)
+ {
++	struct vx_info *vxi = p->vx_info;  /* p is _always_ current */
++
+ 	/* Add system time to process. */
+ 	p->stime += cputime;
+ 	p->stimescaled += cputime_scaled;
++	vx_account_system(vxi, cputime, 0 /* do we have idle time? */);
+ 	account_group_system_time(p, cputime);
+ 
+ 	/* Add system time to cpustat. */
+@@ -215,14 +216,17 @@ static inline void task_group_account_fi
  void account_user_time(struct task_struct *p, cputime_t cputime,
  		       cputime_t cputime_scaled)
  {
@@ -13993,19 +14002,6 @@ diff -NurpP --minimal linux-3.13.10/kernel/sched/cputime.c linux-3.13.10-vs2.3.6
  
  	/* Add user time to cpustat. */
  	task_group_account_field(p, index, (__force u64) cputime);
-@@ -189,9 +193,12 @@ static inline
- void __account_system_time(struct task_struct *p, cputime_t cputime,
- 			cputime_t cputime_scaled, int index)
- {
-+	struct vx_info *vxi = p->vx_info;  /* p is _always_ current */
-+
- 	/* Add system time to process. */
- 	p->stime += cputime;
- 	p->stimescaled += cputime_scaled;
-+	vx_account_system(vxi, cputime, 0 /* do we have idle time? */);
- 	account_group_system_time(p, cputime);
- 
- 	/* Add system time to cpustat. */
 diff -NurpP --minimal linux-3.13.10/kernel/sched/fair.c linux-3.13.10-vs2.3.6.11/kernel/sched/fair.c
 --- linux-3.13.10/kernel/sched/fair.c	2014-04-17 01:12:40.000000000 +0000
 +++ linux-3.13.10-vs2.3.6.11/kernel/sched/fair.c	2014-04-17 01:17:11.000000000 +0000
@@ -14063,14 +14059,14 @@ diff -NurpP --minimal linux-3.13.10/kernel/signal.c linux-3.13.10-vs2.3.6.11/ker
 --- linux-3.13.10/kernel/signal.c	2014-01-22 20:39:13.000000000 +0000
 +++ linux-3.13.10-vs2.3.6.11/kernel/signal.c	2014-01-31 20:38:03.000000000 +0000
 @@ -33,6 +33,8 @@
- #include <linux/uprobes.h>
  #include <linux/compat.h>
  #include <linux/cn_proc.h>
+ #include <linux/compiler.h>
 +#include <linux/vs_context.h>
 +#include <linux/vs_pid.h>
+ 
  #define CREATE_TRACE_POINTS
  #include <trace/events/signal.h>
- 
 @@ -790,9 +792,18 @@ static int check_kill_permission(int sig
  	struct pid *sid;
  	int error;
@@ -14158,9 +14154,9 @@ diff -NurpP --minimal linux-3.13.10/kernel/softirq.c linux-3.13.10-vs2.3.6.11/ke
 --- linux-3.13.10/kernel/softirq.c	2014-01-22 20:39:13.000000000 +0000
 +++ linux-3.13.10-vs2.3.6.11/kernel/softirq.c	2014-01-31 20:38:03.000000000 +0000
 @@ -23,6 +23,7 @@
- #include <linux/smp.h>
  #include <linux/smpboot.h>
  #include <linux/tick.h>
+ #include <linux/irq.h>
 +#include <linux/vs_context.h>
  
  #define CREATE_TRACE_POINTS
@@ -14285,9 +14281,9 @@ diff -NurpP --minimal linux-3.13.10/kernel/time/timekeeping.c linux-3.13.10-vs2.
 --- linux-3.13.10/kernel/time/timekeeping.c	2014-04-17 01:12:40.000000000 +0000
 +++ linux-3.13.10-vs2.3.6.11/kernel/time/timekeeping.c	2014-02-25 11:26:10.000000000 +0000
 @@ -22,6 +22,7 @@
- #include <linux/tick.h>
  #include <linux/stop_machine.h>
  #include <linux/pvclock_gtod.h>
+ #include <linux/compiler.h>
 +#include <linux/vs_time.h>
  
  #include "tick-internal.h"
@@ -22987,7 +22983,7 @@ diff -NurpP --minimal linux-3.13.10/mm/memcontrol.c linux-3.13.10-vs2.3.6.11/mm/
 --- linux-3.13.10/mm/memcontrol.c	2014-04-17 01:12:40.000000000 +0000
 +++ linux-3.13.10-vs2.3.6.11/mm/memcontrol.c	2014-04-17 01:17:11.000000000 +0000
 @@ -1056,6 +1056,31 @@ struct mem_cgroup *mem_cgroup_from_task(
- 	return mem_cgroup_from_css(task_css(p, mem_cgroup_subsys_id));
+ 	return mem_cgroup_from_css(task_css(p, memory_cgrp_id));
  }
  
 +u64 mem_cgroup_res_read_u64(struct mem_cgroup *mem, int member)
@@ -23015,7 +23011,7 @@ diff -NurpP --minimal linux-3.13.10/mm/memcontrol.c linux-3.13.10-vs2.3.6.11/mm/
 +	return mem_cgroup_read_stat(mem, MEM_CGROUP_STAT_FILE_MAPPED);
 +}
 +
- struct mem_cgroup *try_get_mem_cgroup_from_mm(struct mm_struct *mm)
+ static struct mem_cgroup *get_mem_cgroup_from_mm(struct mm_struct *mm)
  {
  	struct mem_cgroup *memcg = NULL;
 diff -NurpP --minimal linux-3.13.10/mm/oom_kill.c linux-3.13.10-vs2.3.6.11/mm/oom_kill.c
