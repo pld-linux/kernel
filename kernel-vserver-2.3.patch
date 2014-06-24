@@ -2937,10 +2937,10 @@ diff -NurpP --minimal linux-3.13.10/fs/ext4/inode.c linux-3.13.10-vs2.3.6.11/fs/
  	if (flags & EXT4_DIRSYNC_FL)
  		new_fl |= S_DIRSYNC;
 +
- 	set_mask_bits(&inode->i_flags,
--		      S_SYNC|S_APPEND|S_IMMUTABLE|S_NOATIME|S_DIRSYNC, new_fl);
+ 	inode_set_flags(inode, new_fl,
+-			S_SYNC|S_APPEND|S_IMMUTABLE|S_NOATIME|S_DIRSYNC);
 +		S_IXUNLINK | S_IMMUTABLE |
-+		S_SYNC | S_APPEND | S_NOATIME | S_DIRSYNC, new_fl);
++		S_SYNC | S_APPEND | S_NOATIME | S_DIRSYNC);
 +
 +	new_fl = 0;
 +	if (flags & EXT4_BARRIER_FL)
@@ -4167,23 +4167,50 @@ diff -NurpP --minimal linux-3.13.10/fs/locks.c linux-3.13.10-vs2.3.6.11/fs/locks
  }
  EXPORT_SYMBOL(posix_lock_file);
  
-@@ -1208,7 +1240,7 @@ int locks_mandatory_area(int read_write,
+@@ -1168,6 +1170,7 @@ int locks_mandatory_area(int read_write,
+ 	struct file_lock fl;
+ 	int error;
+ 	bool sleep = false;
++	vxid_t xid;
+ 
+ 	locks_init_lock(&fl);
+ 	fl.fl_pid = current->tgid;
+@@ -1208,20 +1240,24 @@ int locks_mandatory_area(int read_write,
+ 	fl.fl_type = (read_write == FLOCK_VERIFY_WRITE) ? F_WRLCK : F_RDLCK;
+ 	fl.fl_start = offset;
  	fl.fl_end = offset + count - 1;
++	if (flip)
++		xid = flip->f_xid;
++	else
++		xid = vx_current_xid();
  
  	for (;;) {
+ 		if (filp) {
+ 			fl.fl_owner = (fl_owner_t)filp;
+ 			fl.fl_flags &= ~FL_SLEEP;
+-			error = __posix_lock_file(inode, &fl, NULL);
++			error = __posix_lock_file(inode, &fl, NULL, xid);
+ 			if (!error)
+ 				break;
+ 		}
+ 
+ 		if (sleep)
+ 			fl.fl_flags |= FL_SLEEP;
+ 		fl.fl_owner = current->files;
 -		error = __posix_lock_file(inode, &fl, NULL);
-+		error = __posix_lock_file(inode, &fl, NULL, filp->f_xid);
++		error = __posix_lock_file(inode, &fl, NULL, xid);
  		if (error != FILE_LOCK_DEFERRED)
  			break;
  		error = wait_event_interruptible(fl.fl_wait, !fl.fl_next);
-@@ -1549,6 +1581,7 @@ static int generic_add_lease(struct file
- 		goto out;
- 
- 	locks_insert_lock(before, lease);
-+	vx_locks_inc(lease);
- 	error = 0;
+@@ -1549,6 +1581,8 @@ static int generic_add_lease(struct file
+ 	error = check_conflicting_open(dentry, arg);
+ 	if (error)
+ 		locks_unlink_lock(flp);
++	else
++		vx_locks_inc(lease);
  out:
  	if (is_deleg)
+ 		mutex_unlock(&inode->i_mutex);
 @@ -1991,6 +2024,11 @@ int fcntl_setlk(unsigned int fd, struct
  	if (file_lock == NULL)
  		return -ENOLCK;
@@ -6814,18 +6841,6 @@ diff -NurpP --minimal linux-3.13.10/fs/super.c linux-3.13.10-vs2.3.6.11/fs/super
  	error = security_sb_kern_mount(sb, flags, secdata);
  	if (error)
  		goto out_sb;
-diff -NurpP --minimal linux-3.13.10/fs/kernfs/mount.c linux-3.13.10-vs2.3.6.11/fs/kernfs/mount.c
---- linux-3.13.10/fs/kernfs/mount.c	2013-11-25 15:47:00.000000000 +0000
-+++ linux-3.13.10-vs2.3.6.11/fs/kernfs/mount.c	2014-01-31 20:38:03.000000000 +0000
-@@ -48,7 +48,7 @@ static int sysfs_fill_super(struct super
- 
- 	sb->s_blocksize = PAGE_CACHE_SIZE;
- 	sb->s_blocksize_bits = PAGE_CACHE_SHIFT;
--	sb->s_magic = SYSFS_MAGIC;
-+	sb->s_magic = SYSFS_SUPER_MAGIC;
- 	sb->s_op = &kernfs_sops;
- 	sb->s_time_gran = 1;
- 
 diff -NurpP --minimal linux-3.13.10/fs/utimes.c linux-3.13.10-vs2.3.6.11/fs/utimes.c
 --- linux-3.13.10/fs/utimes.c	2014-01-22 20:39:07.000000000 +0000
 +++ linux-3.13.10-vs2.3.6.11/fs/utimes.c	2014-01-31 23:49:14.000000000 +0000
@@ -7401,18 +7416,6 @@ diff -NurpP --minimal linux-3.13.10/include/linux/sunrpc/clnt.h linux-3.13.10-vs
  
  	struct rpc_rtt *	cl_rtt;		/* RTO estimator data */
  	const struct rpc_timeout *cl_timeout;	/* Timeout strategy */
-diff -NurpP --minimal linux-3.13.10/include/linux/sysfs.h linux-3.13.10-vs2.3.6.11/include/linux/sysfs.h
---- linux-3.13.10/include/linux/sysfs.h	2014-01-22 20:39:11.000000000 +0000
-+++ linux-3.13.10-vs2.3.6.11/include/linux/sysfs.h	2014-01-31 20:38:03.000000000 +0000
-@@ -20,6 +20,8 @@
- #include <linux/stat.h>
- #include <linux/atomic.h>
- 
-+#define SYSFS_SUPER_MAGIC	0x62656572
-+
- struct kobject;
- struct module;
- struct bin_attribute;
 diff -NurpP --minimal linux-3.13.10/include/linux/types.h linux-3.13.10-vs2.3.6.11/include/linux/types.h
 --- linux-3.13.10/include/linux/types.h	2013-02-19 13:58:52.000000000 +0000
 +++ linux-3.13.10-vs2.3.6.11/include/linux/types.h	2014-01-31 20:38:03.000000000 +0000
@@ -13971,6 +13974,25 @@ diff -NurpP --minimal linux-3.13.10/kernel/sched/cputime.c linux-3.13.10-vs2.3.6
  
  
 @@ -189,9 +193,12 @@ static inline
+ void account_user_time(struct task_struct *p, cputime_t cputime,
+ 		       cputime_t cputime_scaled)
+ {
++	struct vx_info *vxi = p->vx_info;  /* p is _always_ current */
++	int nice = (task_nice(p) > 0);
+ 	int index;
+ 
+ 	/* Add user time to process. */
+ 	p->utime += cputime;
+ 	p->utimescaled += cputime_scaled;
++	vx_account_user(vxi, cputime, nice);
+ 	account_group_user_time(p, cputime);
+ 
+-	index = (task_nice(p) > 0) ? CPUTIME_NICE : CPUTIME_USER;
++	index = (nice) ? CPUTIME_NICE : CPUTIME_USER;
+ 
+ 	/* Add user time to cpustat. */
+ 	task_group_account_field(p, index, (__force u64) cputime);
+@@ -215,14 +216,17 @@ static inline void task_group_account_fi
  void __account_system_time(struct task_struct *p, cputime_t cputime,
  			cputime_t cputime_scaled, int index)
  {
@@ -13983,25 +14005,6 @@ diff -NurpP --minimal linux-3.13.10/kernel/sched/cputime.c linux-3.13.10-vs2.3.6
  	account_group_system_time(p, cputime);
  
  	/* Add system time to cpustat. */
-@@ -215,14 +216,17 @@ static inline void task_group_account_fi
- void account_user_time(struct task_struct *p, cputime_t cputime,
- 		       cputime_t cputime_scaled)
- {
-+	struct vx_info *vxi = p->vx_info;  /* p is _always_ current */
-+	int nice = (TASK_NICE(p) > 0);
- 	int index;
- 
- 	/* Add user time to process. */
- 	p->utime += cputime;
- 	p->utimescaled += cputime_scaled;
-+	vx_account_user(vxi, cputime, nice);
- 	account_group_user_time(p, cputime);
- 
--	index = (TASK_NICE(p) > 0) ? CPUTIME_NICE : CPUTIME_USER;
-+	index = (nice) ? CPUTIME_NICE : CPUTIME_USER;
- 
- 	/* Add user time to cpustat. */
- 	task_group_account_field(p, index, (__force u64) cputime);
 diff -NurpP --minimal linux-3.13.10/kernel/sched/fair.c linux-3.13.10-vs2.3.6.11/kernel/sched/fair.c
 --- linux-3.13.10/kernel/sched/fair.c	2014-04-17 01:12:40.000000000 +0000
 +++ linux-3.13.10-vs2.3.6.11/kernel/sched/fair.c	2014-04-17 01:17:11.000000000 +0000
