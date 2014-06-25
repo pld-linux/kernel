@@ -30,7 +30,7 @@
 %bcond_without	ipv6		# ipv6 support
 %bcond_with	padmcrypt	# parallel dm-crypt
 
-%bcond_without	vserver		# support for VServer
+%bcond_with	vserver		# support for VServer
 
 %bcond_with	vanilla		# don't include any patches
 %bcond_with	rescuecd	# build kernel for our rescue
@@ -68,7 +68,7 @@
 %define		have_pcmcia	0
 %endif
 
-%define		rel		0.1
+%define		rel		0.2
 %define		basever		3.15
 %define		postver		.1
 
