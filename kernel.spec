@@ -72,8 +72,7 @@
 %define		basever		3.14
 %define		postver		.10
 
-# define this to '-%{basever}' for longterm branch
-%define		versuffix	%{nil}
+%define		versuffix	-%{basever}
 
 # __alt_kernel is list of features, empty string if none set
 # _alt kernel is defined as: %{nil}%{?alt_kernel:-%{?alt_kernel}} (defined in rpm.macros)
@@ -285,7 +284,7 @@ Requires:	cpuinfo(pae)
 Suggests:	crda
 Suggests:	dracut
 Suggests:	keyutils
-Suggests:	kernel-ide = %{epoch}:%{version}-%{release}
+Suggests:	kernel%{versuffix}-ide = %{epoch}:%{version}-%{release}
 Suggests:	linux-firmware
 Provides:	%{name}(netfilter) = 20070806
 Provides:	%{name}(vermagic) = %{kernel_release}
