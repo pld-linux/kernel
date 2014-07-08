@@ -14545,9 +14545,9 @@ diff -NurpP --minimal linux-3.4.91/kernel/fork.c linux-3.4.91-vs2.3.3.9/kernel/f
  			task_rlimit(p, RLIMIT_NPROC)) {
  		if (!capable(CAP_SYS_ADMIN) && !capable(CAP_SYS_RESOURCE) &&
 @@ -1441,6 +1457,18 @@ static struct task_struct *copy_process(
- 
  	total_forks++;
  	spin_unlock(&current->sighand->siglock);
+	syscall_tracepoint_update(p);
 +
 +	/* p is copy of current */
 +	vxi = p->vx_info;
@@ -14561,8 +14561,8 @@ diff -NurpP --minimal linux-3.4.91/kernel/fork.c linux-3.4.91-vs2.3.3.9/kernel/f
 +	if (nxi)
 +		claim_nx_info(nxi, p);
  	write_unlock_irq(&tasklist_lock);
+ 
  	proc_fork_connector(p);
- 	cgroup_post_fork(p);
 diff -NurpP --minimal linux-3.4.91/kernel/kthread.c linux-3.4.91-vs2.3.3.9/kernel/kthread.c
 --- linux-3.4.91/kernel/kthread.c	2014-05-20 04:08:53.000000000 +0000
 +++ linux-3.4.91-vs2.3.3.9/kernel/kthread.c	2012-10-22 13:09:53.000000000 +0000
