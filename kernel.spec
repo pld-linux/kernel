@@ -93,7 +93,7 @@
 
 %define		rel		1
 %define		basever		3.4
-%define		postver		.98
+%define		postver		.99
 
 %define		versuffix	-%{basever}
 
