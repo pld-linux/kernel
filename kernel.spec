@@ -225,15 +225,14 @@ Patch250:	kernel-fix_256colors_menuconfig.patch
 Patch400:	kernel-virtio-gl-accel.patch
 
 # http://people.redhat.com/mpatocka/patches/kernel/dm-crypt-paralelizace/current/series.html
-Patch500:	dm-crypt-remove-percpu.patch
-Patch501:	bio-kmalloc-align.patch
-Patch502:	dm-crypt-per_bio_data.patch
-Patch503:	dm-crypt-unbound-workqueue.patch
-Patch504:	dm-crypt-dont-allocate-partial-pages.patch
-Patch505:	dm-crypt-fix-allocation-deadlock.patch
-Patch506:	dm-crypt-remove-io-pool.patch
-Patch507:	dm-crypt-offload-writes-to-thread.patch
-Patch508:	dm-crypt-sort-requests.patch
+Patch500:	bio-kmalloc-align.patch
+Patch501:	dm-crypt-per_bio_data.patch
+Patch502:	dm-crypt-unbound-workqueue.patch
+Patch503:	dm-crypt-dont-allocate-partial-pages.patch
+Patch504:	dm-crypt-fix-allocation-deadlock.patch
+Patch505:	dm-crypt-remove-io-pool.patch
+Patch506:	dm-crypt-offload-writes-to-thread.patch
+Patch507:	dm-crypt-sort-requests.patch
 
 Patch2000:	kernel-small_fixes.patch
 Patch2001:	kernel-pwc-uncompress.patch
@@ -743,7 +742,6 @@ cd linux-%{basever}
 %patch505 -p1
 %patch506 -p1
 %patch507 -p1
-%patch508 -p1
 %endif
 
 %endif # vanilla
