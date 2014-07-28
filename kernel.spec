@@ -115,7 +115,7 @@ Source0:	http://www.kernel.org/pub/linux/kernel/v3.x/linux-%{basever}.tar.xz
 # Source0-md5:	b621207b3f6ecbb67db18b13258f8ea8
 %if "%{postver}" != ".0"
 Patch0:		http://www.kernel.org/pub/linux/kernel/v3.x/patch-%{version}.xz
-# Patch0-md5:	132470897fc5d57f5ac7d658100cc430
+# Patch0-md5:	a0349eb104a30f55d0aef3f960a4f0df
 %endif
 Source1:	kernel.sysconfig
 
