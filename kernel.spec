@@ -1452,6 +1452,7 @@ fi
 %{_kernelsrcdir}/scripts/module-common.lds
 %attr(755,root,root) %{_kernelsrcdir}/scripts/setlocalversion
 %{_kernelsrcdir}/scripts/*.c
+%{_kernelsrcdir}/scripts/*.h
 %attr(755,root,root) %{_kernelsrcdir}/scripts/*.sh
 %{_kernelsrcdir}/scripts/selinux/genheaders/*.c
 %{_kernelsrcdir}/scripts/selinux/mdp/*.c
@@ -1522,6 +1523,7 @@ fi
 %exclude %{_kernelsrcdir}/scripts/module-common.lds
 %exclude %{_kernelsrcdir}/scripts/setlocalversion
 %exclude %{_kernelsrcdir}/scripts/*.c
+%exclude %{_kernelsrcdir}/scripts/*.h
 %exclude %{_kernelsrcdir}/scripts/*.sh
 %exclude %dir %{_kernelsrcdir}/scripts/selinux
 %exclude %{_kernelsrcdir}/scripts/selinux/Makefile
