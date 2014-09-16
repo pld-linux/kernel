@@ -221,6 +221,7 @@ Patch59:	kernel-rndis_host-wm5.patch
 # http://patches.aircrack-ng.org/hostap-kernel-2.6.18.patch
 Patch85:	kernel-hostap.patch
 
+%define	vserver_patch 3.4.22-vs2.3.3.9
 # http://vserver.13thfloor.at/Experimental/patch-3.4.22-vs2.3.3.9.diff 
 Patch100:	kernel-vserver-2.3.patch
 Patch101:	kernel-vserver-fixes.patch
@@ -420,6 +421,7 @@ BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 %{?with_pax:PaX support - enabled}\
 %{?with_fbcondecor:Fbsplash/fbcondecor - enabled }\
 %{?with_nfsroot:Root on NFS - enabled}\
+%{?with_vserver:Linux-VServer - %{vserver_patch}}\
 
 %define Features %(echo "%{__features}" | sed '/^$/d')
 
