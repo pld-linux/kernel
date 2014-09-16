@@ -192,6 +192,7 @@ Patch85:	kernel-hostap.patch
 # http://www.linuxtv.org/wiki/index.php/TechniSat_CableStar_Combo_HD_CI#Patch
 Patch90:	kernel-technisat-combo-hd-ci.patch
 
+%define	vserver_patch 3.10.9-vs2.3.6.6
 # http://vserver.13thfloor.at/Experimental/patch-3.10.9-vs2.3.6.6.diff
 # note there are additional patches from above url:
 # - *fix* are real fixes (we want these)
@@ -405,6 +406,7 @@ BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 %define __features \
 %{?with_fbcondecor:Fbsplash/fbcondecor - enabled }\
 %{?with_nfsroot:Root on NFS - enabled}\
+%{?with_vserver:Linux-VServer - %{vserver_patch}}\
 
 %define Features %(echo "%{__features}" | sed '/^$/d')
 
