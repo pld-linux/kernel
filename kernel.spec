@@ -184,6 +184,7 @@ Patch59:	kernel-rndis_host-wm5.patch
 # http://patches.aircrack-ng.org/hostap-kernel-2.6.18.patch
 Patch85:	kernel-hostap.patch
 
+%define	vserver_patch 3.10.9-vs2.3.6.6
 # http://vserver.13thfloor.at/Experimental/patch-3.13.6-vs2.3.6.11.diff
 # note there are additional patches from above url:
 # - *fix* are real fixes (we want these)
@@ -397,6 +398,7 @@ BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 %{!?with_vserver:WARNING: VSERVER IS DISABLED IN THIS KERNEL BUILD!}\
 %{?with_fbcondecor:Fbsplash/fbcondecor - enabled }\
 %{?with_nfsroot:Root on NFS - enabled}\
+%{?with_vserver:Linux-VServer - %{vserver_patch}}\
 
 %define Features %(echo "%{__features}" | sed '/^$/d')
 
