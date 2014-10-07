@@ -20,3 +20,21 @@ diff -NurpP --minimal linux-3.14.17/init/Kconfig linux-3.14.17-vs2.3.6.13/init/K
  	default n
  	help
  	  This allows containers, i.e. vservers, to use user namespaces
+
+upstream addition of masking all capabilities above CAP_LAST_CAP did not account for linux-vserver CAP_CONTEXT
+
+https://git.kernel.org/cgit/linux/kernel/git/stable/linux-stable.git/commit/?h=linux-3.10.y&id=76f01555c78e496203105bd29b878db3431a2260
+
+diff -urNpd linux-3.10.56-vs2.3.6.9~/include/linux/capability.h linux-3.10.56-vs2.3.6.9/include/linux/capability.h
+--- linux-3.10.56-vs2.3.6.9~/include/linux/capability.h	2014-09-18 12:28:39.000000000 -0500
++++ linux-3.10.56-vs2.3.6.9/include/linux/capability.h	2014-10-05 23:00:59.000000000 -0500
+@@ -79,7 +79,8 @@ extern const kernel_cap_t __cap_init_eff
+ #else /* HAND-CODED capability initializers */
+ 
+ #define CAP_LAST_U32			((_KERNEL_CAPABILITY_U32S) - 1)
+-#define CAP_LAST_U32_VALID_MASK		(CAP_TO_MASK(CAP_LAST_CAP + 1) -1)
++#define CAP_LAST_U32_VALID_MASK		((CAP_TO_MASK(CAP_LAST_CAP + 1) -1) \
++					| CAP_TO_MASK(CAP_CONTEXT))
+ 
+ # define CAP_EMPTY_SET    ((kernel_cap_t){{ 0, 0 }})
+ # define CAP_FULL_SET     ((kernel_cap_t){{ ~0, CAP_LAST_U32_VALID_MASK }})
