@@ -1304,7 +1304,7 @@ fi
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/bluetooth/*_cs.ko*
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/isdn/hardware/avm/avm_cs.ko*
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/isdn/hardware/avm/b1pcmcia.ko*
-%exclude /lib/modules/%{kernel_release}/kernel/drivers/usb/gadget/g_midi.ko*
+%exclude /lib/modules/%{kernel_release}/kernel/drivers/usb/gadget/legacy/g_midi.ko*
 %endif
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/ide/ide-cs.ko*
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/net/wireless/*_cs.ko*
@@ -1394,7 +1394,7 @@ fi
 %exclude /lib/modules/%{kernel_release}/kernel/sound/oss
 %endif
 %ifnarch sparc
-/lib/modules/%{kernel_release}/kernel/drivers/usb/gadget/g_midi.ko*
+/lib/modules/%{kernel_release}/kernel/drivers/usb/gadget/legacy/g_midi.ko*
 /lib/modules/%{kernel_release}/kernel/drivers/media/pci/cx88/cx88-alsa.ko*
 /lib/modules/%{kernel_release}/kernel/drivers/media/usb/em28xx/em28xx-alsa.ko*
 /lib/modules/%{kernel_release}/kernel/drivers/media/pci/saa7134/saa7134-alsa.ko*
