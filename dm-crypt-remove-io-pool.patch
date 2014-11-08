@@ -47,7 +47,7 @@ Index: linux-3.14/drivers/md/dm-crypt.c
  
  	if (cc->iv_gen_ops && cc->iv_gen_ops->dtr)
  		cc->iv_gen_ops->dtr(cc);
-@@ -1664,19 +1657,13 @@ static int crypt_ctr(struct dm_target *t
+@@ -1658,13 +1658,6 @@
  	if (ret < 0)
  		goto bad;
  
@@ -60,13 +60,14 @@ Index: linux-3.14/drivers/md/dm-crypt.c
 -
  	cc->dmreq_start = sizeof(struct ablkcipher_request);
  	cc->dmreq_start += crypto_ablkcipher_reqsize(any_tfm(cc));
- 	cc->dmreq_start = ALIGN(cc->dmreq_start, crypto_tfm_ctx_alignment());
- 	cc->dmreq_start += crypto_ablkcipher_alignmask(any_tfm(cc)) &
- 			   ~(crypto_tfm_ctx_alignment() - 1);
+ 	cc->dmreq_start = ALIGN(cc->dmreq_start, __alignof__(struct dm_crypt_request));
+@@ -1682,6 +1675,7 @@
+ 		iv_size_padding = crypto_ablkcipher_alignmask(any_tfm(cc));
+ 	}
  
 +	ret = -ENOMEM;
  	cc->req_pool = mempool_create_kmalloc_pool(MIN_IOS, cc->dmreq_start +
- 			sizeof(struct dm_crypt_request) + cc->iv_size);
+ 			sizeof(struct dm_crypt_request) + iv_size_padding + cc->iv_size);
  	if (!cc->req_pool) {
 @@ -1938,14 +1925,9 @@ static int __init dm_crypt_init(void)
  {
