@@ -422,7 +422,7 @@ BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 %define		topdir		%{_builddir}/%{name}-%{version}
 %define		srcdir		%{topdir}/linux-%{basever}
 %define		objdir		%{topdir}/%{targetobj}
-%define		targetobj	%{_target_base_arch}-gcc-%(%{kgcc} -dumpversion)
+%define		targetobj	%{_target_base_arch}-gcc-%(%{__cc} -dumpversion)
 
 %define		_kernelsrcdir	/usr/src/linux%{_alt_kernel}-%{version}
 
