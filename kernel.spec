@@ -157,10 +157,9 @@ Group:		Base/Kernel
 Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{basever}.tar.bz2
 # Source0-md5:	260551284ac224c3a43c4adac7df4879
 %if "%{postver}" != "%{nil}"
-Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/longterm/v%{basever}/patch-%{version}.xz
-# Source1-md5:	bcde8b57108d4989765a616b4b8ff301
+Patch1:		http://www.kernel.org/pub/linux/kernel/v2.6/longterm/v%{basever}/patch-%{version}.xz
+# Patch1-md5:	bcde8b57108d4989765a616b4b8ff301
 %endif
-
 Source3:	kernel-autoconf.h
 Source4:	kernel-config.h
 Source6:	kernel-config.awk
@@ -338,8 +337,8 @@ BuildRequires:	elftoaout
 %ifarch ppc
 BuildRequires:	uboot-mkimage
 %endif
-BuildRequires:	/sbin/depmod
 ##BuildRequires:	gcc < 6:4.6
+BuildRequires:	/sbin/depmod
 BuildRequires:	gcc >= 5:3.2
 BuildRequires:	tar >= 1:1.22
 BuildRequires:	xz >= 1:4.999.7
@@ -696,7 +695,7 @@ cd linux-%{basever}
 sed -i 's/-Werror//' arch/alpha/kernel/Makefile
 
 %if "%{postver}" != "%{nil}"
-%{__bzip2} -dc %{SOURCE1} | patch -p1 -s
+%patch1 -p1
 %endif
 
 # tuxonice:
