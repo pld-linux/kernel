@@ -114,7 +114,7 @@
 %endif
 
 %define		basever		2.6.32
-%define		postver		.60
+%define		postver		.63
 %define		rel		1
 
 %define		_enable_debug_packages			0
@@ -157,8 +157,8 @@ Group:		Base/Kernel
 Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{basever}.tar.bz2
 # Source0-md5:	260551284ac224c3a43c4adac7df4879
 %if "%{postver}" != "%{nil}"
-Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/longterm/v%{basever}/patch-%{version}.bz2
-# Source1-md5:	1718e3b1caff13c1e731e257c4c4120b
+Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/longterm/v%{basever}/patch-%{version}.xz
+# Source1-md5:	bcde8b57108d4989765a616b4b8ff301
 %endif
 
 Source3:	kernel-autoconf.h
@@ -341,6 +341,7 @@ BuildRequires:	uboot-mkimage
 BuildRequires:	/sbin/depmod
 ##BuildRequires:	gcc < 6:4.6
 BuildRequires:	gcc >= 5:3.2
+BuildRequires:	tar >= 1:1.22
 BuildRequires:	xz >= 1:4.999.7
 AutoReqProv:	no
 # for hostname command
@@ -1142,11 +1143,11 @@ install -d $RPM_BUILD_ROOT/boot
 cp -a %{objdir}/System.map $RPM_BUILD_ROOT/boot/System.map-%{kernel_release}
 %ifarch %{ix86} %{x8664}
 cp -a %{objdir}/arch/%{target_arch_dir}/boot/bzImage $RPM_BUILD_ROOT/boot/vmlinuz-%{kernel_release}
-install %{objdir}/vmlinux $RPM_BUILD_ROOT/boot/vmlinux-%{kernel_release}
+install -p %{objdir}/vmlinux $RPM_BUILD_ROOT/boot/vmlinux-%{kernel_release}
 %endif
 %ifarch ppc ppc64
-install %{objdir}/vmlinux $RPM_BUILD_ROOT/boot/vmlinuz-%{kernel_release}
-install %{objdir}/vmlinux $RPM_BUILD_ROOT/boot/vmlinux-%{kernel_release}
+install -p %{objdir}/vmlinux $RPM_BUILD_ROOT/boot/vmlinuz-%{kernel_release}
+install -p %{objdir}/vmlinux $RPM_BUILD_ROOT/boot/vmlinux-%{kernel_release}
 %endif
 %ifarch ia64
 %{__gzip} -cfv %{objdir}/vmlinux > %{objdir}/vmlinuz
