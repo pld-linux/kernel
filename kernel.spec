@@ -1131,6 +1131,8 @@ touch $RPM_BUILD_ROOT/lib/modules/%{kernel_release}/{build,source}
 for a in \
 	dep{,.bin} \
 	alias{,.bin} \
+	devname \
+	softdep \
 	symbols{,.bin} \
 	{pci,usb,ccw,isapnp,input,ieee1394,serio,of}map \
 ; do
@@ -1384,6 +1386,8 @@ fi
 %ghost /lib/modules/%{kernel_release}/modules.ofmap
 %ghost /lib/modules/%{kernel_release}/modules.pcimap
 %ghost /lib/modules/%{kernel_release}/modules.seriomap
+%ghost /lib/modules/%{kernel_release}/modules.devname
+%ghost /lib/modules/%{kernel_release}/modules.softdep
 %ghost /lib/modules/%{kernel_release}/modules.symbols
 %ghost /lib/modules/%{kernel_release}/modules.symbols.bin
 %ghost /lib/modules/%{kernel_release}/modules.usbmap
