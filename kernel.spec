@@ -71,7 +71,7 @@
 
 %define		rel		1
 %define		basever		3.10
-%define		postver		.59
+%define		postver		.60
 
 %define		versuffix	-%{basever}
 
@@ -116,7 +116,7 @@ Source0:	http://www.kernel.org/pub/linux/kernel/v3.x/linux-%{basever}.tar.xz
 # Source0-md5:	4f25cd5bec5f8d5a7d935b3f2ccb8481
 %if "%{postver}" != ".0"
 Patch0:		http://www.kernel.org/pub/linux/kernel/v3.x/patch-%{version}.xz
-# Patch0-md5:	e57dfc77e61949e2b1be42ec700e3fd1
+# Patch0-md5:	15c4a4ec732ce21c7696e3c3bf9cdf65
 %endif
 Source1:	kernel.sysconfig
 
@@ -146,7 +146,6 @@ Source58:	kernel-inittmpfs.config
 
 # http://dev.gentoo.org/~spock/projects/fbcondecor/archive/fbcondecor-0.9.4-2.6.25-rc6.patch
 Patch3:		kernel-fbcondecor.patch
-Patch4:		kernel-fbcon-margins.patch
 Patch5:		linux-wistron-amilo8210.patch
 Patch6:		linux-wistron-nx.patch
 
@@ -666,7 +665,6 @@ cd linux-%{basever}
 %if %{with fbcondecor}
 %patch3 -p1
 %endif
-%patch4 -p1
 %patch5 -p1
 %patch6 -p1
 
