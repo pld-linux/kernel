@@ -68,9 +68,9 @@
 %define		have_pcmcia	0
 %endif
 
-%define		rel		2
+%define		rel		1
 %define		basever		3.17
-%define		postver		.2
+%define		postver		.3
 
 # define this to '-%{basever}' for longterm branch
 %define		versuffix	%{nil}
@@ -116,7 +116,7 @@ Source0:	http://www.kernel.org/pub/linux/kernel/v3.x/linux-%{basever}.tar.xz
 # Source0-md5:	fb30d0f29214d75cddd2faa94f73d5cf
 %if "%{postver}" != ".0"
 Patch0:		http://www.kernel.org/pub/linux/kernel/v3.x/patch-%{version}.xz
-# Patch0-md5:	d694b8625f834791f5e02d7c9add1406
+# Patch0-md5:	13f495e3ce72ed6ccefb38591587a6ef
 %endif
 Source1:	kernel.sysconfig
 
@@ -145,7 +145,6 @@ Source58:	kernel-inittmpfs.config
 
 # http://dev.gentoo.org/~spock/projects/fbcondecor/archive/fbcondecor-0.9.4-2.6.25-rc6.patch
 Patch3:		kernel-fbcondecor.patch
-Patch4:		kernel-fbcon-margins.patch
 Patch6:		linux-wistron-nx.patch
 
 # netfilter related stuff mostly based on patch-o-matic-ng
@@ -659,7 +658,6 @@ cd linux-%{basever}
 %if %{with fbcondecor}
 %patch3 -p1
 %endif
-%patch4 -p1
 %patch6 -p1
 
 ## netfilter
