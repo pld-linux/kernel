@@ -250,16 +250,16 @@ BuildRequires:	gcc >= 5:3.2
 BuildRequires:	xz >= 1:4.999.7
 AutoReqProv:	no
 BuildRequires:	hostname
-BuildRequires:	kmod
+BuildRequires:	kmod >= 12-2
 BuildRequires:	perl-base
 BuildRequires:	rpm-build >= 4.5-24
 BuildRequires:	rpmbuild(macros) >= 1.652
 Requires(post):	coreutils
-Requires(post):	geninitrd >= 10000-3
+Requires(post):	geninitrd >= 10000.32
 Requires(post):	kmod >= 12-2
 Requires:	/sbin/depmod
 Requires:	coreutils
-Requires:	geninitrd >= 10000-3
+Requires:	geninitrd >= 10000.32
 Requires:	kmod >= 12-2
 %if %{with pae}
 %ifarch i686 athlon pentium3 pentium4
