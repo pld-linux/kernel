@@ -68,9 +68,9 @@
 %define		have_pcmcia	0
 %endif
 
-%define		rel		1
-%define		basever		3.17
-%define		postver		.6
+%define		rel		0.1
+%define		basever		3.18
+%define		postver		.0
 
 # define this to '-%{basever}' for longterm branch
 %define		versuffix	%{nil}
@@ -113,7 +113,7 @@ Epoch:		3
 License:	GPL v2
 Group:		Base/Kernel
 Source0:	http://www.kernel.org/pub/linux/kernel/v3.x/linux-%{basever}.tar.xz
-# Source0-md5:	fb30d0f29214d75cddd2faa94f73d5cf
+# Source0-md5:	9e854df51ca3fef8bfe566dbd7b89241
 %if "%{postver}" != ".0"
 Patch0:		http://www.kernel.org/pub/linux/kernel/v3.x/patch-%{version}.xz
 # Patch0-md5:	a249818fc3c167a067b1508d86855efa
@@ -190,18 +190,6 @@ Patch85:	kernel-hostap.patch
 # - *feat* are new features/tests (we don't want these)
 Patch100:	kernel-vserver-2.3.patch
 Patch101:	kernel-vserver-fixes.patch
-
-# git clone git://kernel.opensuse.org/kernel-source.git
-# patches.suse/ovl*
-Patch110:	ovl01-vfs-add-i_op-dentry_open.patch
-Patch111:	ovl02-vfs-export-do_splice_direct-to-modules.patch
-Patch112:	ovl03-vfs-export-inode_permission-to-modules.patch
-Patch113:	ovl04-vfs-introduce-clone_private_mount.patch
-Patch114:	ovl05-overlay-filesystem.patch
-Patch115:	ovl06-overlayfs-add-statfs-support.patch
-Patch116:	ovl07-overlayfs-implement-show_options.patch
-Patch117:	ovl08-overlay-overlay-filesystem-documentation.patch
-Patch118:	ovl09-fs-limit-filesystem-stacking-depth.patch
 
 # git://aufs.git.sourceforge.net/gitroot/aufs/aufs3-standalone.git, read README
 # Patch creation:
@@ -701,16 +689,6 @@ cd linux-%{basever}
 %patch100 -p1
 %patch101 -p1
 %endif
-
-%patch110 -p1
-%patch111 -p1
-%patch112 -p1
-%patch113 -p1
-%patch114 -p1
-%patch115 -p1
-%patch116 -p1
-%patch117 -p1
-%patch118 -p1
 
 # aufs3
 %patch145 -p1
