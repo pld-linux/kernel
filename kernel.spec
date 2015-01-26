@@ -253,7 +253,7 @@ BuildRequires:	hostname
 BuildRequires:	kmod >= 12-2
 BuildRequires:	perl-base
 BuildRequires:	rpm-build >= 4.5-24
-BuildRequires:	rpmbuild(macros) >= 1.704
+BuildRequires:	rpmbuild(macros) >= 1.707
 Requires(post):	coreutils
 Requires(post):	geninitrd >= 10000.32
 Requires(post):	kmod >= 12-2
@@ -311,6 +311,8 @@ Conflicts:	xfsprogs < 2.6.0
 ExclusiveArch:	i486 i586 i686 pentium3 pentium4 athlon %{x8664} x32 alpha arm ia64 ppc ppc64 sparc sparc64
 ExclusiveOS:	Linux
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
+
+%define		kmod_compress_cmd	%{__xz}
 
 %ifarch %{ix86} %{x8664} x32
 %define		target_arch_dir		x86
@@ -947,6 +949,7 @@ rm -rf $RPM_BUILD_ROOT
 	-C %{objdir} \
 	%{?with_verbose:V=1} \
 	DEPMOD=%{DepMod} \
+	mod_compress_cmd=true \
 	INSTALL_MOD_PATH=$RPM_BUILD_ROOT \
 	INSTALL_FW_PATH=$RPM_BUILD_ROOT/lib/firmware/%{kernel_release} \
 	KERNELRELEASE=%{kernel_release}
