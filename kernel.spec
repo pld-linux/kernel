@@ -342,6 +342,7 @@ BuildRequires:	patch >= 2.6.0
 BuildRequires:	perl-base
 BuildRequires:	rpm-build >= 4.5-24
 BuildRequires:	rpmbuild(macros) >= 1.217
+BuildConflicts:	kmod
 Requires(post):	coreutils
 Requires(post):	geninitrd >= 10000-3
 Requires(post):	module-init-tools >= 0.9.9
