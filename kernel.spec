@@ -94,6 +94,9 @@
 %if %{with vanilla}
 %define		alt_kernel	vanilla
 %endif
+%if %{without pae}
+%define		alt_kernel	nopae
+%endif
 
 # kernel release (used in filesystem and eventually in uname -r)
 # modules will be looked from /lib/modules/%{kernel_release}
@@ -308,7 +311,11 @@ Conflicts:	udev < 1:081
 Conflicts:	util-linux < 2.10o
 Conflicts:	util-vserver < 0.30.216
 Conflicts:	xfsprogs < 2.6.0
+%if %{without pae}
+ExclusiveArch:	i486 i586 i686 pentium3 pentium4 athlon
+%else
 ExclusiveArch:	i486 i586 i686 pentium3 pentium4 athlon %{x8664} x32 alpha arm ia64 ppc ppc64 sparc sparc64
+%endif
 ExclusiveOS:	Linux
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 
