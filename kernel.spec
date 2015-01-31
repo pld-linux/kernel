@@ -312,7 +312,7 @@ Conflicts:	util-linux < 2.10o
 Conflicts:	util-vserver < 0.30.216
 Conflicts:	xfsprogs < 2.6.0
 %if %{without pae}
-ExclusiveArch:	i486 i586 i686 pentium3 pentium4 athlon
+ExclusiveArch:	i686 pentium3 pentium4 athlon
 %else
 ExclusiveArch:	i486 i586 i686 pentium3 pentium4 athlon %{x8664} x32 alpha arm ia64 ppc ppc64 sparc sparc64
 %endif
