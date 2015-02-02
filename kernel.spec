@@ -18,6 +18,7 @@
 %bcond_without	source		# don't build kernel-source package
 %bcond_without	doc			# don't build kernel-doc package
 %bcond_without	pcmcia		# don't build pcmcia
+%bcond_without	firmware	# don't build firmware into main package
 
 %bcond_with	verbose		# verbose build (V=1)
 
@@ -952,7 +953,7 @@ cd -
 
 %install
 rm -rf $RPM_BUILD_ROOT
-%{__make} %{MakeOpts} -j1 %{!?with_verbose:-s} modules_install firmware_install \
+%{__make} %{MakeOpts} -j1 %{!?with_verbose:-s} modules_install %{?with_firmware:firmware_install} \
 	-C %{objdir} \
 	%{?with_verbose:V=1} \
 	DEPMOD=%{DepMod} \
@@ -1248,7 +1249,9 @@ fi
 /boot/config-%{kernel_release}
 %ghost %{initrd_dir}/initrd-%{kernel_release}.gz
 %ghost %{initrd_dir}/initramfs-%{kernel_release}.img
+%if %{with firmware}
 /lib/firmware/%{kernel_release}
+%endif
 
 %dir /lib/modules/%{kernel_release}
 %dir /lib/modules/%{kernel_release}/kernel
