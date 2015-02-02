@@ -1182,7 +1182,7 @@ if [ -x /sbin/update-grub -a -f /etc/sysconfig/grub ]; then
 	fi
 fi
 if [ -x /sbin/new-kernel-pkg ]; then
-	/sbin/new-kernel-pkg --initrdfile=%{initrd_dir}/initrd-%{kernel_release}.gz --install %{kernel_release} --banner "PLD Linux (%{pld_release})%{?alt_kernel: / %{alt_kernel}}"
+	/sbin/new-kernel-pkg --initrdfile=%{initrd_dir}/$initrd_file --install %{kernel_release} --banner "PLD Linux (%{pld_release})%{?alt_kernel: / %{alt_kernel}}"
 fi
 if [ -x /sbin/rc-boot ]; then
 	/sbin/rc-boot 1>&2 || :
