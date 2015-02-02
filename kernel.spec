@@ -1,6 +1,6 @@
 #
 # LATEST VERSION CHECKER:
-# # curl -s http://www.kernel.org/kdist/finger_banner
+# # curl -s https://www.kernel.org/finger_banner
 #
 # TODO:
 # - benchmark NO_HZ & HZ=1000 vs HZ=300 on i686
