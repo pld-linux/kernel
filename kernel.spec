@@ -1168,19 +1168,19 @@ fi
 # if dracut is present then generate full-featured initramfs
 if [[ "$USE_DRACUT" != [Nn][Oo] ]] && [ -x /sbin/dracut ]; then
 	/sbin/dracut --force --quiet /boot/initramfs-%{kernel_release}.img %{kernel_release}
-        [ -n "$initrd_file" ] || initrd_file="initramfs-%{kernel_release}.img"
+	[ -n "$initrd_file" ] || initrd_file="initramfs-%{kernel_release}.img"
 fi
 
 if [[ "$CREATE_SYMLINKS" != [Nn][Oo] ]]; then
 	mv -f %{initrd_dir}/initrd{,.old} 2> /dev/null
-        if [ -n "$initrd_file" ] ; then
-	    ln -sf "$initrd_file" %{initrd_dir}/initrd
-        fi
+	if [ -n "$initrd_file" ]; then
+		ln -sf "$initrd_file" %{initrd_dir}/initrd
+	fi
 %if 0%{?alt_kernel:1}
 	mv -f %{initrd_dir}/initrd%{_alt_kernel}{,.old} 2> /dev/null
-        if [ -n "$initrd_file" ] ; then
-	    ln -sf "$initrd_file" %{initrd_dir}/initrd%{_alt_kernel}
-        fi
+	if [ -n "$initrd_file" ]; then
+		ln -sf "$initrd_file" %{initrd_dir}/initrd%{_alt_kernel}
+	fi
 %endif
 fi
 
