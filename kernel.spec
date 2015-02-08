@@ -93,7 +93,7 @@
 
 %define		rel		1
 %define		basever		3.4
-%define		postver		.105
+%define		postver		.106
 
 %define		versuffix	-%{basever}
 
@@ -142,7 +142,7 @@ Source0:	http://www.kernel.org/pub/linux/kernel/v3.x/linux-%{basever}.tar.xz
 # Source0-md5:	967f72983655e2479f951195953e8480
 %if "%{postver}" != ".0"
 Patch0:		http://www.kernel.org/pub/linux/kernel/v3.x/patch-%{version}.xz
-# Patch0-md5:	0f43fcca926776fd6fe849dcf62e633e
+# Patch0-md5:	fee956dfe6e1bb4bd0224ceb16338d9b
 %endif
 Source1:	kernel.sysconfig
 
@@ -175,7 +175,7 @@ Source58:	kernel-inittmpfs.config
 
 # http://dev.gentoo.org/~spock/projects/fbcondecor/archive/fbcondecor-0.9.4-2.6.25-rc6.patch
 Patch3:		kernel-fbcondecor.patch
-Patch4:		kernel-fbcon-margins.patch
+
 Patch5:		linux-wistron-amilo8210.patch
 
 # netfilter related stuff mostly based on patch-o-matic-ng
@@ -685,7 +685,6 @@ sed -i 's/-Werror//' arch/alpha/kernel/Makefile
 %if %{with fbcondecor}
 %patch3 -p1
 %endif
-%patch4 -p1
 %patch5 -p1
 
 ## netfilter
