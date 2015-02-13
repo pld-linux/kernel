@@ -274,7 +274,11 @@ Suggests:	crda
 Suggests:	dracut
 Suggests:	keyutils
 Suggests:	kernel%{versuffix}-ide = %{epoch}:%{version}-%{release}
+%if %{with firmware}
 Suggests:	linux-firmware
+%else
+Requires:	linux-firmware
+%endif
 Provides:	%{name}(netfilter) = 20070806
 Provides:	%{name}(vermagic) = %{kernel_release}
 Obsoletes:	kernel%{_alt_kernel}-char-lirc-ene0100
