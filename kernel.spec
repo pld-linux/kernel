@@ -25,6 +25,7 @@
 %bcond_with	fbcondecor	# build fbcondecor (disable FB_TILEBLITTING and affected fb modules)
 %bcond_without	pae		# build PAE (HIGHMEM64G) support on 32bit i686 athlon pentium3 pentium4
 %bcond_with	nfsroot		# build with root on NFS support
+%bcond_with	uksm		# build with UKSM patch, http://kerneldedup.org/projects/uksm/
 
 %bcond_without	imq		# imq support
 %bcond_without	esfq		# esfq support
@@ -144,6 +145,7 @@ Source41:	kernel-patches.config
 Source43:	kernel-vserver.config
 
 Source55:	kernel-imq.config
+Source56:	kernel-uksm.config
 
 Source58:	kernel-inittmpfs.config
 
@@ -209,6 +211,11 @@ Patch101:	kernel-vserver-fixes.patch
 #
 Patch145:	kernel-aufs3.patch
 Patch146:	kernel-aufs3+vserver.patch
+
+%define uksm_major_version 0.1.2.3
+%define uksm_version %{uksm_major_version}-for-v3.18
+Patch150:	http://kerneldedup.org/download/uksm/%{uksm_major_version}/uksm-%{uksm_version}.patch
+# Patch150-md5:	b6a2b2aae9c2844d0c74690632d7019e
 
 # Show normal colors in menuconfig with ncurses ABI 6
 Patch250:	kernel-fix_256colors_menuconfig.patch
@@ -710,6 +717,11 @@ cd linux-%{basever}
 %patch146 -p1
 %endif
 
+# UKSM
+%if %{with uksm}
+%patch150 -p1
+%endif
+
 %if %{with rescuecd}
 %patch7000 -p1
 %endif
@@ -926,6 +938,9 @@ EOCONFIG
 		\
 %if %{with imq}
 		%{SOURCE55} \
+%endif
+%if %{with uksm}
+		%{SOURCE56} \
 %endif
 %if %{with vserver}
 		%{SOURCE43} \
