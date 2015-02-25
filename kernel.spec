@@ -332,11 +332,11 @@ Conflicts:	udev < 1:081
 Conflicts:	util-linux < 2.10o
 Conflicts:	util-vserver < 0.30.216
 Conflicts:	xfsprogs < 2.6.0
-ExclusiveArch:	i486 i586 i686 pentium3 pentium4 athlon %{x8664} alpha arm ia64 ppc ppc64 sparc sparc64
+ExclusiveArch:	i486 i586 i686 pentium3 pentium4 athlon %{x8664} x32 alpha arm ia64 ppc ppc64 sparc sparc64
 ExclusiveOS:	Linux
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 
-%ifarch %{ix86} %{x8664}
+%ifarch %{ix86} %{x8664} x32
 %define		target_arch_dir		x86
 %endif
 %ifarch ppc ppc64
@@ -345,7 +345,7 @@ BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 %ifarch sparc sparc64
 %define		target_arch_dir		sparc
 %endif
-%ifnarch %{ix86} %{x8664} ppc ppc64 sparc sparc64
+%ifnarch %{ix86} %{x8664} x32 ppc ppc64 sparc sparc64
 %define		target_arch_dir		%{_target_base_arch}
 %endif
 
@@ -1022,7 +1022,7 @@ done
 install -d $RPM_BUILD_ROOT/boot
 cp -a %{objdir}/System.map $RPM_BUILD_ROOT/boot/System.map-%{kernel_release}
 cp -aL %{objdir}/.config $RPM_BUILD_ROOT/boot/config-%{kernel_release}
-%ifarch %{ix86} %{x8664}
+%ifarch %{ix86} %{x8664} x32
 	cp -a %{objdir}/arch/%{target_arch_dir}/boot/bzImage $RPM_BUILD_ROOT/boot/vmlinuz-%{kernel_release}
 	install -p %{objdir}/vmlinux $RPM_BUILD_ROOT/boot/vmlinux-%{kernel_release}
 %endif
@@ -1350,7 +1350,7 @@ fi
 %ghost /lib/modules/%{kernel_release}/build
 %ghost /lib/modules/%{kernel_release}/source
 
-%ifarch alpha %{ix86} %{x8664} ppc ppc64 sparc sparc64
+%ifarch alpha %{ix86} %{x8664} x32 ppc ppc64 sparc sparc64
 %files vmlinux
 %defattr(644,root,root,755)
 /boot/vmlinux-%{kernel_release}
