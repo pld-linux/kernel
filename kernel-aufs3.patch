@@ -26,12 +26,12 @@ index 8523f9b..11f8f74 100644
 --- a/include/uapi/linux/Kbuild
 +++ b/include/uapi/linux/Kbuild
 @@ -56,6 +56,7 @@ header-y += atmppp.h
- header-y += atmsap.h
- header-y += atmsvc.h
+ header-y += atm_tcp.h
+ header-y += atm_zatm.h
  header-y += audit.h
 +header-y += aufs_type.h
- header-y += auto_fs.h
  header-y += auto_fs4.h
+ header-y += auto_fs.h
  header-y += auxvec.h
 aufs3.18.1+ base patch
 
@@ -393,7 +393,7 @@ index 0938b30..0b66856 100644
 -	get_file(f);
 +	vma_get_file(vma);
  	up_read(&current->mm->mmap_sem);
- 	error = do_fallocate(f,
+ 	error = vfs_fallocate(f,
  				FALLOC_FL_PUNCH_HOLE | FALLOC_FL_KEEP_SIZE,
  				offset, end - start);
 -	fput(f);
@@ -766,14 +766,6 @@ index de92c13..65d8ab0 100644
 +EXPORT_SYMBOL(do_truncate);
  
  long vfs_truncate(struct path *path, loff_t length)
- {
-@@ -298,6 +299,7 @@ int do_fallocate(struct file *file, int mode, loff_t offset, loff_t len)
- 	sb_end_write(inode->i_sb);
- 	return ret;
- }
-+EXPORT_SYMBOL(do_fallocate);
- 
- SYSCALL_DEFINE4(fallocate, int, fd, int, mode, loff_t, offset, loff_t, len)
  {
 diff --git a/fs/splice.c b/fs/splice.c
 index 619359a..c14f60e 100644
@@ -13601,7 +13593,7 @@ diff -urN /usr/share/empty/fs/aufs/f_op.c linux/fs/aufs/f_op.c
 +	fi_write_unlock(file);
 +
 +	lockdep_off();
-+	err = do_fallocate(h_file, mode, offset, len);
++	err = vfs_fallocate(h_file, mode, offset, len);
 +	lockdep_on();
 +	ii_write_lock_child(inode);
 +	au_cpup_attr_timesizes(inode);

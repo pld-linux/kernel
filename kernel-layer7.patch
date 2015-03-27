@@ -2067,8 +2067,8 @@
 --- linux-2.6.28-stock/net/netfilter/nf_conntrack_standalone.c	2009-01-07 16:05:35.000000000 -0600
 +++ linux-2.6.28/net/netfilter/nf_conntrack_standalone.c	2009-01-07 16:07:31.000000000 -0600
 @@ -165,6 +165,12 @@ static int ct_seq_show(struct seq_file *
- 		return -ENOSPC;
- #endif
+ 
+ 	ct_show_delta_time(s, ct);
  
 +#if defined(CONFIG_NETFILTER_XT_MATCH_LAYER7) || defined(CONFIG_NETFILTER_XT_MATCH_LAYER7_MODULE)
 +	if(ct->layer7.app_proto &&
@@ -2076,9 +2076,9 @@
 +		return -ENOSPC;
 +#endif
 +
- 	if (seq_printf(s, "use=%u\n", atomic_read(&ct->ct_general.use)))
- 		return -ENOSPC;
+ 	seq_printf(s, "use=%u\n", atomic_read(&ct->ct_general.use));
  
+ 	if (seq_has_overflowed(s))
 --- linux-2.6.28-stock/include/net/netfilter/nf_conntrack.h	2009-01-07 16:05:30.000000000 -0600
 +++ linux-2.6.28/include/net/netfilter/nf_conntrack.h	2009-01-07 16:07:31.000000000 -0600
 @@ -118,6 +118,22 @@ struct nf_conn
