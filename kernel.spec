@@ -70,7 +70,7 @@
 %define		have_pcmcia	0
 %endif
 
-%define		rel		1
+%define		rel		2
 %define		basever		3.19
 %define		postver		.3
 
@@ -1490,7 +1490,6 @@ fi
 %{_kernelsrcdir}/arch/m68k/install.sh
 %{_kernelsrcdir}/arch/parisc/install.sh
 %{_kernelsrcdir}/arch/x86/ia32/[!M]*
-%{_kernelsrcdir}/arch/ia64/kvm
 %{_kernelsrcdir}/arch/powerpc/kvm
 %ifarch ppc ppc64
 %exclude %{_kernelsrcdir}/arch/powerpc/lib/crtsavres.*
