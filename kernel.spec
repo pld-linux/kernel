@@ -32,7 +32,7 @@
 %bcond_without	ipv6		# ipv6 support
 %bcond_with	padmcrypt	# parallel dm-crypt
 
-%bcond_with	vserver		# support for VServer
+%bcond_without	vserver		# support for VServer
 
 %bcond_with	vanilla		# don't include any patches
 %bcond_with	rescuecd	# build kernel for our rescue
