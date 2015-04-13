@@ -70,9 +70,9 @@
 %define		have_pcmcia	0
 %endif
 
-%define		rel		3
-%define		basever		3.19
-%define		postver		.3
+%define		rel		0.1
+%define		basever		4.0
+%define		postver		.0
 
 # define this to '-%{basever}' for longterm branch
 %define		versuffix	%{nil}
@@ -117,10 +117,10 @@ Release:	%{rel}
 Epoch:		3
 License:	GPL v2
 Group:		Base/Kernel
-Source0:	http://www.kernel.org/pub/linux/kernel/v3.x/linux-%{basever}.tar.xz
-# Source0-md5:	d3fc8316d4d4d04b65cbc2d70799e763
+Source0:	http://www.kernel.org/pub/linux/kernel/v4.x/linux-%{basever}.tar.xz
+# Source0-md5:	a86916bd12798220da9eb4a1eec3616d
 %if "%{postver}" != ".0"
-Patch0:		http://www.kernel.org/pub/linux/kernel/v3.x/patch-%{version}.xz
+Patch0:		http://www.kernel.org/pub/linux/kernel/v4.x/patch-%{version}.xz
 # Patch0-md5:	1fec75551b2f55fced43df8394b1fd9a
 %endif
 Source1:	kernel.sysconfig
@@ -201,7 +201,7 @@ Patch101:	kernel-vserver-fixes.patch
 # Patch creation:
 # git clone git://aufs.git.sourceforge.net/gitroot/aufs/aufs3-standalone.git
 # cd aufs3-standalone
-# git checkout -b aufs3.15 origin/aufs3.15
+# git checkout -b aufs4.0 origin/aufs4.0
 # cat aufs3-kbuild.patch aufs3-base.patch aufs3-mmap.patch aufs3-standalone.patch > ~/rpm/packages/kernel/kernel-aufs3.patch
 # mkdir linux
 # cp -a Documentation fs include linux
@@ -234,7 +234,6 @@ Patch505:	dm-crypt-sort-requests.patch
 Patch2000:	kernel-small_fixes.patch
 Patch2001:	kernel-pwc-uncompress.patch
 Patch2003:	kernel-regressions.patch
-Patch2004:	kernel-btrfs_deadlock_mount.patch
 
 # bzr co lp:apparmor
 # ls apparmor/kernel-patches/3.12
@@ -751,7 +750,6 @@ cd linux-%{basever}
 %patch2000 -p1
 %patch2001 -p1
 #%patch2003 -p1
-%patch2004 -p1
 
 # Do not remove this, please!
 #%%patch50000 -p1

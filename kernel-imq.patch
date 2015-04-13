@@ -1385,15 +1385,14 @@ index 3d13874..9842f21 100644
  
  #include "net-sysfs.h"
  
-@@ -2595,7 +2598,12 @@ static int xmit_one(struct sk_buff *skb, struct net_device *dev,
+@@ -2618,7 +2618,11 @@ static int xmit_one(struct sk_buff *skb,
  	unsigned int len;
  	int rc;
  
 +#if defined(CONFIG_IMQ) || defined(CONFIG_IMQ_MODULE)
-+	if (!list_empty(&ptype_all) &&
-+				!(skb->imq_flags & IMQ_F_ENQUEUE))
++	if ((!list_empty(&ptype_all) || !list_empty(&dev->ptype_all)) && !(skb->imq_flags & IMQ_F_ENQUEUE))
 +#else
- 	if (!list_empty(&ptype_all))
+ 	if (!list_empty(&ptype_all) || !list_empty(&dev->ptype_all))
 +#endif
  		dev_queue_xmit_nit(skb, dev);
  
