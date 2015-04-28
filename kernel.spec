@@ -234,6 +234,7 @@ Patch505:	dm-crypt-sort-requests.patch
 Patch2000:	kernel-small_fixes.patch
 Patch2001:	kernel-pwc-uncompress.patch
 Patch2003:	kernel-regressions.patch
+Patch2004:	kernel-libata-ahci-pm.patch
 
 # bzr co lp:apparmor
 # ls apparmor/kernel-patches/3.12
@@ -750,6 +751,7 @@ cd linux-%{basever}
 %patch2000 -p1
 %patch2001 -p1
 #%patch2003 -p1
+%patch2004 -p1
 
 # Do not remove this, please!
 #%%patch50000 -p1
