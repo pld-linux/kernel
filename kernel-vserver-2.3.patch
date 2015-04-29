@@ -3986,7 +3986,7 @@ diff -NurpP --minimal linux-3.14.17/fs/libfs.c linux-3.14.17-vs2.3.6.13/fs/libfs
 -	struct dentry *cursor = file->private_data;
 +	struct dentry *dentry = filp->f_path.dentry;
 +	struct dentry *cursor = filp->private_data;
- 	struct list_head *p, *q = &cursor->d_u.d_child;
+ 	struct list_head *p, *q = &cursor->d_child;
  
 -	if (!dir_emit_dots(file, ctx))
 +	if (!dir_emit_dots(filp, ctx))
@@ -3996,7 +3996,7 @@ diff -NurpP --minimal linux-3.14.17/fs/libfs.c linux-3.14.17-vs2.3.6.13/fs/libfs
 @@ -159,6 +160,8 @@ int dcache_readdir(struct file *file, st
  
  	for (p = q->next; p != &dentry->d_subdirs; p = p->next) {
- 		struct dentry *next = list_entry(p, struct dentry, d_u.d_child);
+ 		struct dentry *next = list_entry(p, struct dentry, d_child);
 +		if (filter && !filter(next))
 +			continue;
  		spin_lock_nested(&next->d_lock, DENTRY_D_LOCK_NESTED);

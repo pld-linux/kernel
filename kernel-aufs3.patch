@@ -5812,7 +5812,7 @@ diff -urN /usr/share/empty/fs/aufs/dcsub.c linux/fs/aufs/dcsub.c
 +	while (next != &this_parent->d_subdirs) {
 +		struct list_head *tmp = next;
 +		struct dentry *dentry = list_entry(tmp, struct dentry,
-+						   d_u.d_child);
++						   d_child);
 +
 +		next = tmp->next;
 +		spin_lock_nested(&dentry->d_lock, DENTRY_D_LOCK_NESTED);
@@ -5848,7 +5848,7 @@ diff -urN /usr/share/empty/fs/aufs/dcsub.c linux/fs/aufs/dcsub.c
 +		this_parent = tmp;
 +		spin_lock(&this_parent->d_lock);
 +		rcu_read_unlock();
-+		next = child->d_u.d_child.next;
++		next = child->d_child.next;
 +		goto resume;
 +	}
 +
@@ -6195,7 +6195,7 @@ diff -urN /usr/share/empty/fs/aufs/debug.c linux/fs/aufs/debug.c
 +	struct dentry *d;
 +
 +	spin_lock(&inode->i_lock);
-+	hlist_for_each_entry(d, &inode->i_dentry, d_alias)
++	hlist_for_each_entry(d, &inode->i_dentry, d_u.d_alias)
 +		au_dpri_dentry(d);
 +	spin_unlock(&inode->i_lock);
 +}
@@ -10155,7 +10155,7 @@ diff -urN /usr/share/empty/fs/aufs/export.c linux/fs/aufs/export.c
 +		dentry = d_find_alias(inode);
 +	else {
 +		spin_lock(&inode->i_lock);
-+		hlist_for_each_entry(d, &inode->i_dentry, d_alias) {
++		hlist_for_each_entry(d, &inode->i_dentry, d_u.d_alias) {
 +			spin_lock(&d->d_lock);
 +			if (!au_test_anon(d)
 +			    && d->d_parent->d_inode->i_ino == dir_ino) {
@@ -14088,7 +14088,7 @@ diff -urN /usr/share/empty/fs/aufs/hnotify.c linux/fs/aufs/hnotify.c
 +		AuDebugOn(!name);
 +		au_iigen_dec(inode);
 +		spin_lock(&inode->i_lock);
-+		hlist_for_each_entry(d, &inode->i_dentry, d_alias) {
++		hlist_for_each_entry(d, &inode->i_dentry, d_u.d_alias) {
 +			spin_lock(&d->d_lock);
 +			dname = &d->d_name;
 +			if (dname->len != nlen
@@ -14253,7 +14253,7 @@ diff -urN /usr/share/empty/fs/aufs/hnotify.c linux/fs/aufs/hnotify.c
 +
 +	dentry = NULL;
 +	spin_lock(&parent->d_lock);
-+	list_for_each_entry(d, &parent->d_subdirs, d_u.d_child) {
++	list_for_each_entry(d, &parent->d_subdirs, d_child) {
 +		/* AuDbg("%pd\n", d); */
 +		spin_lock_nested(&d->d_lock, DENTRY_D_LOCK_NESTED);
 +		dname = &d->d_name;
