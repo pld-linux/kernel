@@ -70,7 +70,7 @@
 
 %define		rel		1
 %define		basever		3.14
-%define		postver		.40
+%define		postver		.41
 
 %define		versuffix	-%{basever}
 
@@ -115,7 +115,7 @@ Source0:	http://www.kernel.org/pub/linux/kernel/v3.x/linux-%{basever}.tar.xz
 # Source0-md5:	b621207b3f6ecbb67db18b13258f8ea8
 %if "%{postver}" != ".0"
 Patch0:		http://www.kernel.org/pub/linux/kernel/v3.x/patch-%{version}.xz
-# Patch0-md5:	66247eb18af8498a9131d675d5ce4609
+# Patch0-md5:	3bd3113446b2eab974f20bce49aeb25b
 %endif
 Source1:	kernel.sysconfig
 
