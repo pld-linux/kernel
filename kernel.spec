@@ -30,7 +30,6 @@
 %bcond_without	imq		# imq support
 %bcond_without	esfq		# esfq support
 %bcond_without	ipv6		# ipv6 support
-%bcond_with	padmcrypt	# parallel dm-crypt
 
 %bcond_with	vserver		# support for VServer
 
@@ -222,14 +221,6 @@ Patch250:	kernel-fix_256colors_menuconfig.patch
 
 # https://patchwork.kernel.org/patch/236261/
 Patch400:	kernel-virtio-gl-accel.patch
-
-# http://people.redhat.com/mpatocka/patches/kernel/dm-crypt-paralelizace/current/series.html
-Patch500:	dm-crypt-unbound-workqueue.patch
-Patch501:	dm-crypt-dont-allocate-partial-pages.patch
-Patch502:	dm-crypt-fix-allocation-deadlock.patch
-Patch503:	dm-crypt-remove-io-pool.patch
-Patch504:	dm-crypt-offload-writes-to-thread.patch
-Patch505:	dm-crypt-sort-requests.patch
 
 Patch2000:	kernel-small_fixes.patch
 Patch2001:	kernel-pwc-uncompress.patch
@@ -734,16 +725,6 @@ cd linux-%{basever}
 
 # virtio-gl
 %patch400 -p1
-
-# parallel dm-crypt
-%if %{with padmcrypt}
-%patch500 -p1
-%patch501 -p1
-%patch502 -p1
-%patch503 -p1
-%patch504 -p1
-%patch505 -p1
-%endif
 
 %endif # vanilla
 
