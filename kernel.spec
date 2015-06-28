@@ -196,20 +196,20 @@ Patch85:	kernel-hostap.patch
 Patch100:	kernel-vserver-2.3.patch
 Patch101:	kernel-vserver-fixes.patch
 
-# git://aufs.git.sourceforge.net/gitroot/aufs/aufs3-standalone.git, read README
+# git://github.com/sfjro/aufs4-standalone.git, read README
 # Patch creation:
-# git clone git://aufs.git.sourceforge.net/gitroot/aufs/aufs3-standalone.git
-# cd aufs3-standalone
-# git checkout -b aufs4.0 origin/aufs4.0
-# cat aufs3-kbuild.patch aufs3-base.patch aufs3-mmap.patch aufs3-standalone.patch > ~/rpm/packages/kernel/kernel-aufs3.patch
+# git clone git://github.com/sfjro/aufs4-standalone.git
+# cd aufs4-standalone
+# git checkout -b aufs4.1 origin/aufs4.1
+# cat aufs4-kbuild.patch aufs4-base.patch aufs4-mmap.patch aufs4-standalone.patch > ~/rpm/packages/kernel/kernel-aufs4.patch
 # mkdir linux
 # cp -a Documentation fs include linux
-# diff -urN /usr/share/empty linux >> ~/rpm/packages/kernel/kernel-aufs3.patch
+# diff -urN /usr/share/empty linux >> ~/rpm/packages/kernel/kernel-aufs4.patch
 # drop hunk at the end of patch (hunk is patching include/linux/Kbuild with single line change)
-# cat aufs3-loopback.patch >> ~/rpm/packages/kernel/kernel-aufs3.patch
+# cat aufs4-loopback.patch >> ~/rpm/packages/kernel/kernel-aufs4.patch
 #
-Patch145:	kernel-aufs3.patch
-Patch146:	kernel-aufs3+vserver.patch
+Patch145:	kernel-aufs4.patch
+Patch146:	kernel-aufs4+vserver.patch
 
 %define uksm_major_version 0.1.2.3
 %define uksm_version %{uksm_major_version}-for-v3.18
