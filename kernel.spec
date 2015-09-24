@@ -69,9 +69,9 @@
 %define		have_pcmcia	0
 %endif
 
-%define		rel		1
-%define		basever		4.1
-%define		postver		.8
+%define		rel		0.1
+%define		basever		4.2
+%define		postver		.1
 
 # define this to '-%{basever}' for longterm branch
 %define		versuffix	-%{basever}
@@ -117,10 +117,10 @@ Epoch:		3
 License:	GPL v2
 Group:		Base/Kernel
 Source0:	http://www.kernel.org/pub/linux/kernel/v4.x/linux-%{basever}.tar.xz
-# Source0-md5:	fe9dc0f6729f36400ea81aa41d614c37
+# Source0-md5:	3d5ea06d767e2f35c999eeadafc76523
 %if "%{postver}" != ".0"
 Patch0:		http://www.kernel.org/pub/linux/kernel/v4.x/patch-%{version}.xz
-# Patch0-md5:	8d941859273f8b3f7e0d7d6d14e3be91
+# Patch0-md5:	3e1cc007d930f8760ef0730609dca035
 %endif
 Source1:	kernel.sysconfig
 
@@ -227,8 +227,8 @@ Patch2001:	kernel-pwc-uncompress.patch
 Patch2003:	kernel-regressions.patch
 Patch2004:	kernel-libata-ahci-pm.patch
 
-# bzr co lp:apparmor
-# ls apparmor/kernel-patches/3.12
+# git://git.kernel.org/pub/scm/linux/kernel/git/jj/linux-apparmor
+# branch v4.2-aa2.8-out-of-tree
 Patch5000:	kernel-apparmor.patch
 
 # for rescuecd

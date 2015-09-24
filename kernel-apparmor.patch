@@ -1,29 +1,11 @@
-From d29d73fa5d7b5d016f9c17236fff2a741acea247 Mon Sep 17 00:00:00 2001
+From e37c855a09ba7a8fa69334e9e3c7f5b0f66de896 Mon Sep 17 00:00:00 2001
 From: John Johansen <john.johansen@canonical.com>
 Date: Mon, 4 Oct 2010 15:03:36 -0700
-Subject: [PATCH 1/3] UBUNTU: SAUCE: AppArmor: basic networking rules
+Subject: UBUNTU: SAUCE: AppArmor: basic networking rules
 
 Base support for network mediation.
 
 Signed-off-by: John Johansen <john.johansen@canonical.com>
-
-Conflicts:
-	security/apparmor/Makefile
-	security/apparmor/policy.c
----
- security/apparmor/.gitignore       |   1 +
- security/apparmor/Makefile         |  42 +++++++++-
- security/apparmor/apparmorfs.c     |   1 +
- security/apparmor/include/audit.h  |   4 +
- security/apparmor/include/net.h    |  44 ++++++++++
- security/apparmor/include/policy.h |   3 +
- security/apparmor/lsm.c            | 112 +++++++++++++++++++++++++
- security/apparmor/net.c            | 162 +++++++++++++++++++++++++++++++++++++
- security/apparmor/policy.c         |   1 +
- security/apparmor/policy_unpack.c  |  46 +++++++++++
- 10 files changed, 414 insertions(+), 2 deletions(-)
- create mode 100644 security/apparmor/include/net.h
- create mode 100644 security/apparmor/net.c
 
 diff --git a/security/apparmor/.gitignore b/security/apparmor/.gitignore
 index 9cdec70..d5b291e 100644
@@ -110,7 +92,7 @@ index d693df8..5dbb72f 100644
 +	$(call cmd,make-af)
 +	$(call cmd,make-sock)
 diff --git a/security/apparmor/apparmorfs.c b/security/apparmor/apparmorfs.c
-index 7db9954..18fc02c 100644
+index ad4fa49..6362c5a 100644
 --- a/security/apparmor/apparmorfs.c
 +++ b/security/apparmor/apparmorfs.c
 @@ -806,6 +806,7 @@ static struct aa_fs_entry aa_fs_entry_features[] = {
@@ -122,10 +104,10 @@ index 7db9954..18fc02c 100644
  	AA_FS_DIR("rlimit",			aa_fs_entry_rlimit),
  	AA_FS_DIR("caps",			aa_fs_entry_caps),
 diff --git a/security/apparmor/include/audit.h b/security/apparmor/include/audit.h
-index 30e8d76..61abec5 100644
+index ba3dfd1..5d3c419 100644
 --- a/security/apparmor/include/audit.h
 +++ b/security/apparmor/include/audit.h
-@@ -126,6 +126,10 @@ struct apparmor_audit_data {
+@@ -125,6 +125,10 @@ struct apparmor_audit_data {
  			u32 denied;
  			kuid_t ouid;
  		} fs;
@@ -215,7 +197,7 @@ index c28b0f2..b524d88 100644
  
  	unsigned char *hash;
 diff --git a/security/apparmor/lsm.c b/security/apparmor/lsm.c
-index fb99e18..de55a7f 100644
+index dec607c..47fd244 100644
 --- a/security/apparmor/lsm.c
 +++ b/security/apparmor/lsm.c
 @@ -32,6 +32,7 @@
@@ -226,7 +208,7 @@ index fb99e18..de55a7f 100644
  #include "include/path.h"
  #include "include/policy.h"
  #include "include/procattr.h"
-@@ -615,6 +616,104 @@ static int apparmor_task_setrlimit(struct task_struct *task,
+@@ -605,6 +606,104 @@ static int apparmor_task_setrlimit(struct task_struct *task,
  	return error;
  }
  
@@ -328,29 +310,29 @@ index fb99e18..de55a7f 100644
 +	return aa_revalidate_sk(OP_SOCK_SHUTDOWN, sk);
 +}
 +
- static struct security_operations apparmor_ops = {
- 	.name =				"apparmor",
+ static struct security_hook_list apparmor_hooks[] = {
+ 	LSM_HOOK_INIT(ptrace_access_check, apparmor_ptrace_access_check),
+ 	LSM_HOOK_INIT(ptrace_traceme, apparmor_ptrace_traceme),
+@@ -634,6 +733,19 @@ static struct security_hook_list apparmor_hooks[] = {
+ 	LSM_HOOK_INIT(getprocattr, apparmor_getprocattr),
+ 	LSM_HOOK_INIT(setprocattr, apparmor_setprocattr),
  
-@@ -647,6 +746,19 @@ static struct security_operations apparmor_ops = {
- 	.getprocattr =			apparmor_getprocattr,
- 	.setprocattr =			apparmor_setprocattr,
- 
-+	.socket_create =		apparmor_socket_create,
-+	.socket_bind =			apparmor_socket_bind,
-+	.socket_connect =		apparmor_socket_connect,
-+	.socket_listen =		apparmor_socket_listen,
-+	.socket_accept =		apparmor_socket_accept,
-+	.socket_sendmsg =		apparmor_socket_sendmsg,
-+	.socket_recvmsg =		apparmor_socket_recvmsg,
-+	.socket_getsockname =		apparmor_socket_getsockname,
-+	.socket_getpeername =		apparmor_socket_getpeername,
-+	.socket_getsockopt =		apparmor_socket_getsockopt,
-+	.socket_setsockopt =		apparmor_socket_setsockopt,
-+	.socket_shutdown =		apparmor_socket_shutdown,
++	LSM_HOOK_INIT(socket_create, apparmor_socket_create),
++	LSM_HOOK_INIT(socket_bind, apparmor_socket_bind),
++	LSM_HOOK_INIT(socket_connect, apparmor_socket_connect),
++	LSM_HOOK_INIT(socket_listen, apparmor_socket_listen),
++	LSM_HOOK_INIT(socket_accept, apparmor_socket_accept),
++	LSM_HOOK_INIT(socket_sendmsg, apparmor_socket_sendmsg),
++	LSM_HOOK_INIT(socket_recvmsg, apparmor_socket_recvmsg),
++	LSM_HOOK_INIT(socket_getsockname, apparmor_socket_getsockname),
++	LSM_HOOK_INIT(socket_getpeername, apparmor_socket_getpeername),
++	LSM_HOOK_INIT(socket_getsockopt, apparmor_socket_getsockopt),
++	LSM_HOOK_INIT(socket_setsockopt, apparmor_socket_setsockopt),
++	LSM_HOOK_INIT(socket_shutdown, apparmor_socket_shutdown),
 +
- 	.cred_alloc_blank =		apparmor_cred_alloc_blank,
- 	.cred_free =			apparmor_cred_free,
- 	.cred_prepare =			apparmor_cred_prepare,
+ 	LSM_HOOK_INIT(cred_alloc_blank, apparmor_cred_alloc_blank),
+ 	LSM_HOOK_INIT(cred_free, apparmor_cred_free),
+ 	LSM_HOOK_INIT(cred_prepare, apparmor_cred_prepare),
 diff --git a/security/apparmor/net.c b/security/apparmor/net.c
 new file mode 100644
 index 0000000..003dd18
@@ -603,13 +585,12 @@ index a689f10..1a35e6b 100644
  		/* generic policy dfa - optional and may be NULL */
  		profile->policy.dfa = unpack_dfa(e);
 -- 
-1.8.3.2
+cgit v0.10.2
 
-From b452a37e97af826ba6c7548230e07c95bd13d9c4 Mon Sep 17 00:00:00 2001
+From 6b77d90baf3807b70ca17309ad6c0bd39f3297e7 Mon Sep 17 00:00:00 2001
 From: John Johansen <john.johansen@canonical.com>
 Date: Fri, 29 Jun 2012 17:34:00 -0700
-Subject: [PATCH 2/3] apparmor: Fix quieting of audit messages for network
- mediation
+Subject: apparmor: Fix quieting of audit messages for network mediation
 
 If a profile specified a quieting of network denials for a given rule by
 either the quiet or deny rule qualifiers, the resultant quiet mask for
@@ -623,9 +604,6 @@ denied requests was applied incorrectly, resulting in two potential bugs.
    they had been specifically marked as quieted.
 
 Signed-off-by: John Johansen <john.johansen@canonical.com>
----
- security/apparmor/net.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/security/apparmor/net.c b/security/apparmor/net.c
 index 003dd18..6e6e5c9 100644
@@ -641,12 +619,12 @@ index 003dd18..6e6e5c9 100644
  		if (denied & kill_mask)
  			audit_type = AUDIT_APPARMOR_KILL;
 -- 
-1.8.3.2
+cgit v0.10.2
 
-From 0f113c1f052be315f5097d8b7294a620b0adda87 Mon Sep 17 00:00:00 2001
+From a71049ba973b214e88eae89f9cb0c4965d184ead Mon Sep 17 00:00:00 2001
 From: John Johansen <john.johansen@canonical.com>
 Date: Wed, 16 May 2012 10:58:05 -0700
-Subject: [PATCH 3/3] UBUNTU: SAUCE: apparmor: Add the ability to mediate mount
+Subject: UBUNTU: SAUCE: apparmor: Add the ability to mediate mount
 
 Add the ability for apparmor to do mediation of mount operations. Mount
 rules require an updated apparmor_parser (2.8 series) for policy compilation.
@@ -686,24 +664,6 @@ See the apparmor userspace for full documentation
 Signed-off-by: John Johansen <john.johansen@canonical.com>
 Acked-by: Kees Cook <kees@ubuntu.com>
 
-Conflicts:
-	security/apparmor/Makefile
-	security/apparmor/apparmorfs.c
----
- security/apparmor/Makefile           |   2 +-
- security/apparmor/apparmorfs.c       |  15 +-
- security/apparmor/audit.c            |   4 +
- security/apparmor/domain.c           |   2 +-
- security/apparmor/include/apparmor.h |   3 +-
- security/apparmor/include/audit.h    |  11 +
- security/apparmor/include/domain.h   |   2 +
- security/apparmor/include/mount.h    |  54 +++
- security/apparmor/lsm.c              |  59 ++++
- security/apparmor/mount.c            | 620 +++++++++++++++++++++++++++++++++++
- 10 files changed, 768 insertions(+), 4 deletions(-)
- create mode 100644 security/apparmor/include/mount.h
- create mode 100644 security/apparmor/mount.c
-
 diff --git a/security/apparmor/Makefile b/security/apparmor/Makefile
 index 5dbb72f..89b3445 100644
 --- a/security/apparmor/Makefile
@@ -718,7 +678,7 @@ index 5dbb72f..89b3445 100644
  
  clean-files := capability_names.h rlim_names.h net_names.h
 diff --git a/security/apparmor/apparmorfs.c b/security/apparmor/apparmorfs.c
-index 18fc02c..e709030 100644
+index 6362c5a..4917747 100644
 --- a/security/apparmor/apparmorfs.c
 +++ b/security/apparmor/apparmorfs.c
 @@ -799,7 +799,18 @@ static struct aa_fs_entry aa_fs_entry_domain[] = {
@@ -751,7 +711,7 @@ index 18fc02c..e709030 100644
  	AA_FS_DIR("rlimit",			aa_fs_entry_rlimit),
  	AA_FS_DIR("caps",			aa_fs_entry_caps),
 diff --git a/security/apparmor/audit.c b/security/apparmor/audit.c
-index 031d2d9..02d804c 100644
+index 89c7865..7fdb5d7 100644
 --- a/security/apparmor/audit.c
 +++ b/security/apparmor/audit.c
 @@ -44,6 +44,10 @@ const char *const op_table[] = {
@@ -766,10 +726,10 @@ index 031d2d9..02d804c 100644
  	"post_create",
  	"bind",
 diff --git a/security/apparmor/domain.c b/security/apparmor/domain.c
-index 26c607c..23936c5 100644
+index dc0027b..a2e3813 100644
 --- a/security/apparmor/domain.c
 +++ b/security/apparmor/domain.c
-@@ -238,7 +238,7 @@ static const char *next_name(int xtype, const char *name)
+@@ -236,7 +236,7 @@ static const char *next_name(int xtype, const char *name)
   *
   * Returns: refcounted profile, or NULL on failure (MAYBE NULL)
   */
@@ -779,7 +739,7 @@ index 26c607c..23936c5 100644
  	struct aa_profile *new_profile = NULL;
  	struct aa_namespace *ns = profile->ns;
 diff --git a/security/apparmor/include/apparmor.h b/security/apparmor/include/apparmor.h
-index 8fb1488..22b172c 100644
+index e4ea626..ce6ff6a 100644
 --- a/security/apparmor/include/apparmor.h
 +++ b/security/apparmor/include/apparmor.h
 @@ -30,8 +30,9 @@
@@ -794,7 +754,7 @@ index 8fb1488..22b172c 100644
  /* Control parameters settable through module/boot flags */
  extern enum audit_mode aa_g_audit;
 diff --git a/security/apparmor/include/audit.h b/security/apparmor/include/audit.h
-index 61abec5..a9835c3 100644
+index 5d3c419..b9f1d57 100644
 --- a/security/apparmor/include/audit.h
 +++ b/security/apparmor/include/audit.h
 @@ -72,6 +72,10 @@ enum aa_ops {
@@ -808,7 +768,7 @@ index 61abec5..a9835c3 100644
  	OP_CREATE,
  	OP_POST_CREATE,
  	OP_BIND,
-@@ -121,6 +125,13 @@ struct apparmor_audit_data {
+@@ -120,6 +124,13 @@ struct apparmor_audit_data {
  			unsigned long max;
  		} rlim;
  		struct {
@@ -896,7 +856,7 @@ index 0000000..bc17a53
 +
 +#endif /* __AA_MOUNT_H */
 diff --git a/security/apparmor/lsm.c b/security/apparmor/lsm.c
-index de55a7f..e0dd95f 100644
+index 47fd244..fb92441 100644
 --- a/security/apparmor/lsm.c
 +++ b/security/apparmor/lsm.c
 @@ -36,6 +36,7 @@
@@ -907,7 +867,7 @@ index de55a7f..e0dd95f 100644
  
  /* Flag indicating whether initialization completed */
  int apparmor_initialized __initdata;
-@@ -502,6 +503,60 @@ static int apparmor_file_mprotect(struct vm_area_struct *vma,
+@@ -492,6 +493,60 @@ static int apparmor_file_mprotect(struct vm_area_struct *vma,
  			   !(vma->vm_flags & VM_SHARED) ? MAP_PRIVATE : 0);
  }
  
@@ -968,17 +928,17 @@ index de55a7f..e0dd95f 100644
  static int apparmor_getprocattr(struct task_struct *task, char *name,
  				char **value)
  {
-@@ -722,6 +777,10 @@ static struct security_operations apparmor_ops = {
- 	.capget =			apparmor_capget,
- 	.capable =			apparmor_capable,
+@@ -710,6 +765,10 @@ static struct security_hook_list apparmor_hooks[] = {
+ 	LSM_HOOK_INIT(capget, apparmor_capget),
+ 	LSM_HOOK_INIT(capable, apparmor_capable),
  
-+	.sb_mount =			apparmor_sb_mount,
-+	.sb_umount =			apparmor_sb_umount,
-+	.sb_pivotroot =			apparmor_sb_pivotroot,
-+
- 	.path_link =			apparmor_path_link,
- 	.path_unlink =			apparmor_path_unlink,
- 	.path_symlink =			apparmor_path_symlink,
++	LSM_HOOK_INIT(sb_mount, apparmor_sb_mount),
++	LSM_HOOK_INIT(sb_umount, apparmor_sb_umount),
++	LSM_HOOK_INIT(sb_pivotroot, apparmor_sb_pivotroot),
++	
+ 	LSM_HOOK_INIT(path_link, apparmor_path_link),
+ 	LSM_HOOK_INIT(path_unlink, apparmor_path_unlink),
+ 	LSM_HOOK_INIT(path_symlink, apparmor_path_symlink),
 diff --git a/security/apparmor/mount.c b/security/apparmor/mount.c
 new file mode 100644
 index 0000000..478aa4d
@@ -1606,5 +1566,5 @@ index 0000000..478aa4d
 +	return error;
 +}
 -- 
-1.8.3.2
+cgit v0.10.2
 
