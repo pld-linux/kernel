@@ -149,3 +149,36 @@ cgit v0.10.1
  
  static spinlock_t pnp_bios_lock;
  
+--- a/arch/x86/kernel/apm_32.c	2013-07-01 00:13:29.000000000 +0200
++++ b/arch/x86/kernel/apm_32.c	2015-08-30 20:34:09.000000000 +0200
+@@ -392,7 +391,7 @@
+ /*
+  * Local variables
+  */
+-static struct {
++__visible struct {
+ 	unsigned long	offset;
+ 	unsigned short	segment;
+ } apm_bios_entry;
+--- a/drivers/lguest/x86/core.c	2015-09-25 08:30:28.714249731 +0200
++++ b/drivers/lguest/x86/core.c	2015-08-30 20:34:09.000000000 +0200
+@@ -157,7 +158,7 @@
+ 	 * stack, then the address of this call.  This stack layout happens to
+ 	 * exactly match the stack layout created by an interrupt...
+ 	 */
+-	asm volatile("pushf; lcall *lguest_entry"
++	asm volatile("pushf; lcall *%4"
+ 		     /*
+ 		      * This is how we tell GCC that %eax ("a") and %ebx ("b")
+ 		      * are changed by this routine.  The "=" means output.
+@@ -169,7 +170,9 @@
+ 		      * physical address of the Guest's top-level page
+ 		      * directory.
+ 		      */
+-		     : "0"(pages), "1"(__pa(cpu->lg->pgdirs[cpu->cpu_pgd].pgdir))
++		     : "0"(pages), 
++		       "1"(__pa(cpu->lg->pgdirs[cpu->cpu_pgd].pgdir)),
++		       "m"(lguest_entry)
+ 		     /*
+ 		      * We tell gcc that all these registers could change,
+ 		      * which means we don't have to save and restore them in
