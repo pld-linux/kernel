@@ -258,11 +258,11 @@ BuildRequires:	perl-base
 BuildRequires:	rpm-build >= 4.5-24
 BuildRequires:	rpmbuild(macros) >= 1.707
 Requires(post):	coreutils
-Requires(post):	geninitrd >= 10000.32
+Requires(post):	geninitrd >= 12749
 Requires(post):	kmod >= 12-2
 Requires:	/sbin/depmod
 Requires:	coreutils
-Requires:	geninitrd >= 10000.32
+Requires:	geninitrd >= 12749
 Requires:	kmod >= 12-2
 %if %{with pae}
 %ifarch i686 athlon pentium3 pentium4
