@@ -71,7 +71,7 @@
 
 %define		rel		1
 %define		basever		4.1
-%define		postver		.11
+%define		postver		.12
 
 # define this to '-%{basever}' for longterm branch
 %define		versuffix	-%{basever}
@@ -120,7 +120,7 @@ Source0:	http://www.kernel.org/pub/linux/kernel/v4.x/linux-%{basever}.tar.xz
 # Source0-md5:	fe9dc0f6729f36400ea81aa41d614c37
 %if "%{postver}" != ".0"
 Patch0:		http://www.kernel.org/pub/linux/kernel/v4.x/patch-%{version}.xz
-# Patch0-md5:	46a403b167416719901565190298e680
+# Patch0-md5:	e790ae84e0109a3d95cc617be448171b
 %endif
 Source1:	kernel.sysconfig
 
@@ -189,7 +189,7 @@ Patch59:	kernel-rndis_host-wm5.patch
 Patch85:	kernel-hostap.patch
 
 %define	vserver_patch 3.18.5-vs2.3.7.3
-# http://vserver.13thfloor.at/Experimental/patch-3.18.5-vs2.3.7.3.diff
+# http://vserver.13thfloor.at/Experimental/patch-4.1.12-vs2.3.8.3.diff
 # note there are additional patches from above url:
 # - *fix* are real fixes (we want these)
 # - *feat* are new features/tests (we don't want these)
