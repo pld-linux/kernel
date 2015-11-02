@@ -31,7 +31,7 @@
 %bcond_without	esfq		# esfq support
 %bcond_without	ipv6		# ipv6 support
 
-%bcond_with	vserver		# support for VServer
+%bcond_without	vserver		# support for VServer
 
 %bcond_with	vanilla		# don't include any patches
 %bcond_with	rescuecd	# build kernel for our rescue
@@ -69,7 +69,7 @@
 %define		have_pcmcia	0
 %endif
 
-%define		rel		1
+%define		rel		2
 %define		basever		4.1
 %define		postver		.12
 
