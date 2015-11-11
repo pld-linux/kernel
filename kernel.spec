@@ -69,9 +69,9 @@
 %define		have_pcmcia	0
 %endif
 
-%define		rel		1
-%define		basever		4.2
-%define		postver		.6
+%define		rel		0.1
+%define		basever		4.3
+%define		postver		.0
 
 # define this to '-%{basever}' for longterm branch
 %define		versuffix	%{nil}
@@ -117,7 +117,7 @@ Epoch:		3
 License:	GPL v2
 Group:		Base/Kernel
 Source0:	http://www.kernel.org/pub/linux/kernel/v4.x/linux-%{basever}.tar.xz
-# Source0-md5:	3d5ea06d767e2f35c999eeadafc76523
+# Source0-md5:	58b35794eee3b6d52ce7be39357801e7
 %if "%{postver}" != ".0"
 Patch0:		http://www.kernel.org/pub/linux/kernel/v4.x/patch-%{version}.xz
 # Patch0-md5:	408f9975969da326b5804a04dbf0d4de
@@ -200,7 +200,7 @@ Patch101:	kernel-vserver-fixes.patch
 # Patch creation:
 # git clone git://github.com/sfjro/aufs4-standalone.git
 # cd aufs4-standalone
-# git checkout -b aufs4.1 origin/aufs4.1
+# git checkout -b aufs4.3 origin/aufs4.3
 # cat aufs4-kbuild.patch aufs4-base.patch aufs4-mmap.patch aufs4-standalone.patch > ~/rpm/packages/kernel/kernel-aufs4.patch
 # mkdir linux
 # cp -a Documentation fs include linux
@@ -1487,6 +1487,7 @@ fi
 %exclude %{_kernelsrcdir}/drivers/lguest/lg.h
 %exclude %{_kernelsrcdir}/drivers/media/pci/bt8xx/bttv.h
 %{_kernelsrcdir}/block
+%{_kernelsrcdir}/certs
 %{_kernelsrcdir}/crypto
 %{_kernelsrcdir}/drivers
 %{_kernelsrcdir}/firmware
