@@ -9,3 +9,22 @@
  	if (pid->hide_pid < hide_pid_min)
  		return true;
  	if (in_group_p(pid->pid_gid))
+--- linux-4.1.3-vs2.3.8.2/kernel/signal.c	2015-09-20 20:06:03.000000000 +0200
++++ testing41/kernel/signal.c	2015-12-05 13:01:00.599373873 +0100
+@@ -1369,8 +1369,14 @@
+ 	for (;;) {
+ 		rcu_read_lock();
+ 		p = pid_task(pid, PIDTYPE_PID);
+-		if (p && vx_check(vx_task_xid(p), VS_IDENT))
+-			error = group_send_sig_info(sig, info, p);
++		if (p) {
++			if (vx_check(vx_task_xid(p), VS_IDENT))
++				error = group_send_sig_info(sig, info, p);
++			else {
++				rcu_read_unlock();
++				return -ESRCH;
++			}
++		}
+ 		rcu_read_unlock();
+ 		if (likely(!p || error != -ESRCH))
+ 			return error;
