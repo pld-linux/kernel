@@ -228,6 +228,132 @@ cgit v0.11.2
 
 From: Dave Chinner <dchinner@redhat.com>
 
+When we do inode readahead in log recovery, we do can do the
+readahead before we've replayed the icreate transaction that stamps
+the buffer with inode cores. The inode readahead verifier catches
+this and marks the buffer as !done to indicate that it doesn't yet
+contain valid inodes.
+
+In adding buffer error notification  (i.e. setting b_error = -EIO at
+the same time as as we clear the done flag) to such a readahead
+verifier failure, we can then get subsequent inode recovery failing
+with this error:
+
+XFS (dm-0): metadata I/O error: block 0xa00060 ("xlog_recover_do..(read#2)") error 5 numblks 32
+
+This occurs when readahead completion races with icreate item replay
+such as:
+
+	inode readahead
+		find buffer
+		lock buffer
+		submit RA io
+	....
+	icreate recovery
+	    xfs_trans_get_buffer
+		find buffer
+		lock buffer
+		<blocks on RA completion>
+	.....
+	<ra completion>
+		fails verifier
+		clear XBF_DONE
+		set bp->b_error = -EIO
+		release and unlock buffer
+	<icreate gains lock>
+	icreate initialises buffer
+	marks buffer as done
+	adds buffer to delayed write queue
+	releases buffer
+
+At this point, we have an initialised inode buffer that is up to
+date but has an -EIO state registered against it. When we finally
+get to recovering an inode in that buffer:
+
+	inode item recovery
+	    xfs_trans_read_buffer
+		find buffer
+		lock buffer
+		sees XBF_DONE is set, returns buffer
+	    sees bp->b_error is set
+		fail log recovery!
+
+Essentially, we need xfs_trans_get_buf_map() to clear the error status of
+the buffer when doing a lookup. This function returns uninitialised
+buffers, so the buffer returned can not be in an error state and
+none of the code that uses this function expects b_error to be set
+on return. Indeed, there is an ASSERT(!bp->b_error); in the
+transaction case in xfs_trans_get_buf_map() that would have caught
+this if log recovery used transactions....
+
+This patch firstly changes the inode readahead failure to set -EIO
+on the buffer, and secondly changes xfs_buf_get_map() to never
+return a buffer with an error state set so this first change doesn't
+cause unexpected log recovery failures.
+
+Signed-off-by: Dave Chinner <dchinner@redhat.com>
+---
+ fs/xfs/libxfs/xfs_inode_buf.c | 12 +++++++-----
+ fs/xfs/xfs_buf.c              |  7 +++++++
+ 2 files changed, 14 insertions(+), 5 deletions(-)
+
+diff --git a/fs/xfs/libxfs/xfs_inode_buf.c b/fs/xfs/libxfs/xfs_inode_buf.c
+index 1b8d98a..ff17c48 100644
+--- a/fs/xfs/libxfs/xfs_inode_buf.c
++++ b/fs/xfs/libxfs/xfs_inode_buf.c
+@@ -62,11 +62,12 @@ xfs_inobp_check(
+  * has not had the inode cores stamped into it. Hence for readahead, the buffer
+  * may be potentially invalid.
+  *
+- * If the readahead buffer is invalid, we don't want to mark it with an error,
+- * but we do want to clear the DONE status of the buffer so that a followup read
+- * will re-read it from disk. This will ensure that we don't get an unnecessary
+- * warnings during log recovery and we don't get unnecssary panics on debug
+- * kernels.
++ * If the readahead buffer is invalid, we need to mark it with an error and
++ * clear the DONE status of the buffer so that a followup read will re-read it
++ * from disk. We don't report the error otherwise to avoid warnings during log
++ * recovery and we don't get unnecssary panics on debug kernels. We use EIO here
++ * because all we want to do is say readahead failed; there is no-one to report
++ * the error to, so this will distinguish it from a non-ra verifier failure.
+  */
+ static void
+ xfs_inode_buf_verify(
+@@ -93,6 +94,7 @@ xfs_inode_buf_verify(
+ 						XFS_RANDOM_ITOBP_INOTOBP))) {
+ 			if (readahead) {
+ 				bp->b_flags &= ~XBF_DONE;
++				xfs_buf_ioerror(bp, -EIO);
+ 				return;
+ 			}
+ 
+diff --git a/fs/xfs/xfs_buf.c b/fs/xfs/xfs_buf.c
+index 45a8ea7..ae86b16 100644
+--- a/fs/xfs/xfs_buf.c
++++ b/fs/xfs/xfs_buf.c
+@@ -604,6 +604,13 @@ found:
+ 		}
+ 	}
+ 
++	/*
++	 * Clear b_error if this is a lookup from a caller that doesn't expect
++	 * valid data to be found in the buffer.
++	 */
++	if (!(flags & XBF_READ))
++		xfs_buf_ioerror(bp, 0);
++
+ 	XFS_STATS_INC(xb_get);
+ 	trace_xfs_buf_get(bp, flags, _RET_IP_);
+ 	return bp;
+-- 
+2.5.0
+
+_______________________________________________
+xfs mailing list
+xfs@oss.sgi.com
+http://oss.sgi.com/mailman/listinfo/xfs
+From: Dave Chinner <dchinner@redhat.com>
+
 When we do dquot readahead in log recovery, we do not use a verifier
 as the underlying buffer may not have dquots in it. e.g. the
 allocation operation hasn't yet been replayed. Hence we do not want
@@ -266,21 +392,15 @@ together so we don't forget this behavioural link in future.
 
 cc: <stable@vger.kernel.org> # 3.12 - current
 Signed-off-by: Dave Chinner <dchinner@redhat.com>
+Reviewed-by: Brian Foster <bfoster@redhat.com>
+Signed-off-by: Dave Chinner <david@fromorbit.com>
 ---
-
-Version 2
-- fix logic error in determining if verify failed
-- set error on buffer when verifier fails
-- fix inode buffer readahead verifier to set error when it fails
-- better comments, link dquot and inode buffer ra verifiers in the
-  comments
-
  fs/xfs/libxfs/xfs_dquot_buf.c  | 36 ++++++++++++++++++++++++++++++------
- fs/xfs/libxfs/xfs_inode_buf.c  | 14 +++++++++-----
+ fs/xfs/libxfs/xfs_inode_buf.c  |  2 ++
  fs/xfs/libxfs/xfs_quota_defs.h |  2 +-
  fs/xfs/libxfs/xfs_shared.h     |  1 +
  fs/xfs/xfs_log_recover.c       |  9 +++++++--
- 5 files changed, 48 insertions(+), 14 deletions(-)
+ 5 files changed, 41 insertions(+), 9 deletions(-)
 
 diff --git a/fs/xfs/libxfs/xfs_dquot_buf.c b/fs/xfs/libxfs/xfs_dquot_buf.c
 index 11cefb2..3cc3cf7 100644
@@ -369,37 +489,18 @@ index 11cefb2..3cc3cf7 100644
 +	.verify_write = xfs_dquot_buf_write_verify,
 +};
 diff --git a/fs/xfs/libxfs/xfs_inode_buf.c b/fs/xfs/libxfs/xfs_inode_buf.c
-index 1b8d98a..4816209 100644
+index ff17c48..1aabfda 100644
 --- a/fs/xfs/libxfs/xfs_inode_buf.c
 +++ b/fs/xfs/libxfs/xfs_inode_buf.c
-@@ -62,11 +62,14 @@ xfs_inobp_check(
-  * has not had the inode cores stamped into it. Hence for readahead, the buffer
-  * may be potentially invalid.
-  *
-- * If the readahead buffer is invalid, we don't want to mark it with an error,
-- * but we do want to clear the DONE status of the buffer so that a followup read
-- * will re-read it from disk. This will ensure that we don't get an unnecessary
-- * warnings during log recovery and we don't get unnecssary panics on debug
-- * kernels.
-+ * If the readahead buffer is invalid, we need to mark it with an error and
-+ * clear the DONE status of the buffer so that a followup read will re-read it
-+ * from disk. We don't report the error otherwise to avoid warnings during log
-+ * recovery and we don't get unnecssary panics on debug kernels. We use EIO here
-+ * because all we want to do is say readahead failed; there is no-one to report
-+ * the error to, so this will distinguish it from a non-ra verifier failure.
+@@ -68,6 +68,8 @@ xfs_inobp_check(
+  * recovery and we don't get unnecssary panics on debug kernels. We use EIO here
+  * because all we want to do is say readahead failed; there is no-one to report
+  * the error to, so this will distinguish it from a non-ra verifier failure.
 + * Changes to this readahead error behavour also need to be reflected in
 + * xfs_dquot_buf_readahead_verify().
   */
  static void
  xfs_inode_buf_verify(
-@@ -92,6 +95,7 @@ xfs_inode_buf_verify(
- 						XFS_ERRTAG_ITOBP_INOTOBP,
- 						XFS_RANDOM_ITOBP_INOTOBP))) {
- 			if (readahead) {
-+				xfs_buf_ioerror(bp, -EIO);
- 				bp->b_flags &= ~XBF_DONE;
- 				return;
- 			}
 diff --git a/fs/xfs/libxfs/xfs_quota_defs.h b/fs/xfs/libxfs/xfs_quota_defs.h
 index 1b0a083..f51078f 100644
 --- a/fs/xfs/libxfs/xfs_quota_defs.h
@@ -426,10 +527,10 @@ index 5be5297..15c3ceb 100644
  extern const struct xfs_buf_ops xfs_sb_quiet_buf_ops;
  extern const struct xfs_buf_ops xfs_symlink_buf_ops;
 diff --git a/fs/xfs/xfs_log_recover.c b/fs/xfs/xfs_log_recover.c
-index 26e67b4..da37beb 100644
+index c5ecaac..5991cdc 100644
 --- a/fs/xfs/xfs_log_recover.c
 +++ b/fs/xfs/xfs_log_recover.c
-@@ -3521,6 +3521,7 @@ xlog_recover_dquot_ra_pass2(
+@@ -3204,6 +3204,7 @@ xlog_recover_dquot_ra_pass2(
  	struct xfs_disk_dquot	*recddq;
  	struct xfs_dq_logformat	*dq_f;
  	uint			type;
@@ -437,7 +538,7 @@ index 26e67b4..da37beb 100644
  
  
  	if (mp->m_qflags == 0)
-@@ -3541,8 +3542,12 @@ xlog_recover_dquot_ra_pass2(
+@@ -3224,8 +3225,12 @@ xlog_recover_dquot_ra_pass2(
  	ASSERT(dq_f);
  	ASSERT(dq_f->qlf_len == 1);
  
@@ -452,6 +553,8 @@ index 26e67b4..da37beb 100644
  }
  
  STATIC void
+-- 
+2.5.0
 
 _______________________________________________
 xfs mailing list
