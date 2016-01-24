@@ -145,7 +145,7 @@ new file mode 100644
 index 0000000..c60929b
 --- /dev/null
 +++ b/drivers/net/imq.c
-@@ -0,0 +1,908 @@
+@@ -0,0 +1,903 @@
 +/*
 + *             Pseudo-driver for the intermediate queue device.
 + *
@@ -194,7 +194,6 @@ index 0000000..c60929b
 +	{
 +	/* imq_ingress_ipv4 */
 +		.hook		= imq_nf_hook,
-+		.owner		= THIS_MODULE,
 +		.pf		= PF_INET,
 +		.hooknum	= NF_INET_PRE_ROUTING,
 +#if defined(CONFIG_IMQ_BEHAVIOR_BA) || defined(CONFIG_IMQ_BEHAVIOR_BB)
@@ -206,7 +205,6 @@ index 0000000..c60929b
 +	{
 +	/* imq_egress_ipv4 */
 +		.hook		= imq_nf_hook,
-+		.owner		= THIS_MODULE,
 +		.pf		= PF_INET,
 +		.hooknum	= NF_INET_POST_ROUTING,
 +#if defined(CONFIG_IMQ_BEHAVIOR_AA) || defined(CONFIG_IMQ_BEHAVIOR_BA)
@@ -219,7 +217,6 @@ index 0000000..c60929b
 +	{
 +	/* imq_ingress_ipv6 */
 +		.hook		= imq_nf_hook,
-+		.owner		= THIS_MODULE,
 +		.pf		= PF_INET6,
 +		.hooknum	= NF_INET_PRE_ROUTING,
 +#if defined(CONFIG_IMQ_BEHAVIOR_BA) || defined(CONFIG_IMQ_BEHAVIOR_BB)
@@ -231,7 +228,6 @@ index 0000000..c60929b
 +	{
 +	/* imq_egress_ipv6 */
 +		.hook		= imq_nf_hook,
-+		.owner		= THIS_MODULE,
 +		.pf		= PF_INET6,
 +		.hooknum	= NF_INET_POST_ROUTING,
 +#if defined(CONFIG_IMQ_BEHAVIOR_AA) || defined(CONFIG_IMQ_BEHAVIOR_BA)
@@ -541,9 +537,8 @@ index 0000000..c60929b
 +{
 +	struct nf_queue_entry *entry = kmemdup(e, e->size, GFP_ATOMIC);
 +	if (entry) {
-+		if (nf_queue_entry_get_refs(entry))
-+			return entry;
-+		kfree(entry);
++		nf_queue_entry_get_refs(entry);
++		return entry;
 +	}
 +	return NULL;
 +}
@@ -839,7 +834,7 @@ index 0000000..c60929b
 +out:
 +	return retval;
 +}
-+static unsigned int imq_nf_hook(const struct nf_hook_ops *hook_ops,
++static unsigned int imq_nf_hook(void *priv,
 +				struct sk_buff *skb,
 +				const struct nf_hook_state *state)
 +{
@@ -1488,8 +1483,8 @@ index 92b1aa3..e5a5dd5 100644
 +	skb->protocol = htons(ETH_P_IPV6);
 +	skb->dev = dev;
 +
- 	return NF_HOOK_COND(NFPROTO_IPV6, NF_INET_POST_ROUTING, sk, skb,
- 			    NULL, dev,
+ 	return NF_HOOK_COND(NFPROTO_IPV6, NF_INET_POST_ROUTING,
+ 			    net, sk, skb, NULL, dev,
  			    ip6_finish_output,
 diff --git a/net/netfilter/Kconfig b/net/netfilter/Kconfig
 index 3e1b4ab..8721e48 100644
@@ -1596,9 +1591,9 @@ index 96777f9..c42d671 100644
  	int status = -ENOENT;
  	struct nf_queue_entry *entry = NULL;
 @@ -133,7 +151,17 @@ int nf_queue(struct sk_buff *skb,
- 	/* QUEUE == DROP if no one is waiting, to be safe. */
- 	rcu_read_lock();
+ 	const struct nf_queue_handler *qh;
  
+ 	/* QUEUE == DROP if no one is waiting, to be safe. */
 -	qh = rcu_dereference(queue_handler);
 +	if (queuetype == NF_IMQ_QUEUE) {
 +#if defined(CONFIG_IMQ) || defined(CONFIG_IMQ_MODULE)
