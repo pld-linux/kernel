@@ -1,4 +1,4 @@
-aufs4.x-rcN kbuild patch
+aufs4.4 kbuild patch
 
 diff --git a/fs/Kconfig b/fs/Kconfig
 index 6ce72d8..4aa31ea 100644
@@ -33,7 +33,7 @@ index c2e5d6c..d736c11 100644
  header-y += auto_fs4.h
  header-y += auto_fs.h
  header-y += auxvec.h
-aufs4.x-rcN base patch
+aufs4.4 base patch
 
 diff --git a/MAINTAINERS b/MAINTAINERS
 index 233f834..c250892 100644
@@ -206,7 +206,7 @@ index da2751d..2e0fca6 100644
 +			 struct pipe_inode_info *pipe, size_t len,
 +			 unsigned int flags);
  #endif
-aufs4.x-rcN mmap patch
+aufs4.4 mmap patch
 
 diff --git a/fs/proc/base.c b/fs/proc/base.c
 index 4bd5d31..aa41f2a 100644
@@ -332,10 +332,10 @@ index f8d1492..c3a3760 100644
  
  #ifndef CONFIG_MMU
 diff --git a/kernel/fork.c b/kernel/fork.c
-index fce002e..2230a0f 100644
+index 1155eac..c001ea4 100644
 --- a/kernel/fork.c
 +++ b/kernel/fork.c
-@@ -464,7 +464,7 @@ static int dup_mmap(struct mm_struct *mm, struct mm_struct *oldmm)
+@@ -465,7 +465,7 @@ static int dup_mmap(struct mm_struct *mm, struct mm_struct *oldmm)
  			struct inode *inode = file_inode(file);
  			struct address_space *mapping = file->f_mapping;
  
@@ -599,7 +599,7 @@ index 0000000..b323b8a
 +		fput(pr);
 +}
 +#endif /* !CONFIG_MMU */
-aufs4.x-rcN standalone patch
+aufs4.4 standalone patch
 
 diff --git a/fs/dcache.c b/fs/dcache.c
 index 8aa7f26..f997345 100644
@@ -15758,8 +15758,8 @@ diff -urN /usr/share/empty/fs/aufs/iinfo.c linux/fs/aufs/iinfo.c
 +}
 diff -urN /usr/share/empty/fs/aufs/inode.c linux/fs/aufs/inode.c
 --- /usr/share/empty/fs/aufs/inode.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/inode.c	2016-01-13 20:11:11.669760262 +0100
-@@ -0,0 +1,528 @@
++++ linux/fs/aufs/inode.c	2016-01-24 20:34:04.746537160 +0100
+@@ -0,0 +1,527 @@
 +/*
 + * Copyright (C) 2005-2015 Junjiro R. Okajima
 + *
@@ -16048,8 +16048,7 @@ diff -urN /usr/share/empty/fs/aufs/inode.c linux/fs/aufs/inode.c
 +static int reval_inode(struct inode *inode, struct dentry *dentry)
 +{
 +	int err;
-+	unsigned int gen;
-+	struct au_iigen iigen;
++	unsigned int gen, igflags;
 +	aufs_bindex_t bindex, bend;
 +	struct inode *h_inode, *h_dinode;
 +	struct dentry *h_dentry;
@@ -16074,9 +16073,9 @@ diff -urN /usr/share/empty/fs/aufs/inode.c linux/fs/aufs/inode.c
 +			continue;
 +
 +		err = 0;
-+		gen = au_iigen(inode, &iigen);
++		gen = au_iigen(inode, &igflags);
 +		if (gen == au_digen(dentry)
-+		    && !au_ig_ftest(iigen.ig_flags, HALF_REFRESHED))
++		    && !au_ig_ftest(igflags, HALF_REFRESHED))
 +			break;
 +
 +		/* fully refresh inode using dentry */
@@ -16290,7 +16289,7 @@ diff -urN /usr/share/empty/fs/aufs/inode.c linux/fs/aufs/inode.c
 +}
 diff -urN /usr/share/empty/fs/aufs/inode.h linux/fs/aufs/inode.h
 --- /usr/share/empty/fs/aufs/inode.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/inode.h	2016-01-13 20:11:11.669760262 +0100
++++ linux/fs/aufs/inode.h	2016-01-24 20:34:04.746537160 +0100
 @@ -0,0 +1,685 @@
 +/*
 + * Copyright (C) 2005-2015 Junjiro R. Okajima
@@ -16716,7 +16715,7 @@ diff -urN /usr/share/empty/fs/aufs/inode.h linux/fs/aufs/inode.h
 +#endif
 +}
 +
-+static inline unsigned int au_iigen(struct inode *inode, struct au_iigen *iigen_arg)
++static inline unsigned int au_iigen(struct inode *inode, unsigned int *igflags)
 +{
 +	unsigned int gen;
 +	struct au_iinfo *iinfo;
@@ -16725,8 +16724,8 @@ diff -urN /usr/share/empty/fs/aufs/inode.h linux/fs/aufs/inode.h
 +	iinfo = au_ii(inode);
 +	iigen = &iinfo->ii_generation;
 +	spin_lock(&iigen->ig_spin);
-+	if (iigen_arg)
-+		*iigen_arg = *iigen;
++	if (igflags)
++		*igflags = iigen->ig_flags;
 +	gen = iigen->ig_generation;
 +	spin_unlock(&iigen->ig_spin);
 +
@@ -35071,7 +35070,7 @@ diff -urN /usr/share/empty/fs/aufs/xino.c linux/fs/aufs/xino.c
 +}
 diff -urN /usr/share/empty/include/uapi/linux/aufs_type.h linux/include/uapi/linux/aufs_type.h
 --- /usr/share/empty/include/uapi/linux/aufs_type.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux/include/uapi/linux/aufs_type.h	2016-01-13 20:11:11.673093671 +0100
++++ linux/include/uapi/linux/aufs_type.h	2016-01-24 20:34:09.159976795 +0100
 @@ -0,0 +1,419 @@
 +/*
 + * Copyright (C) 2005-2015 Junjiro R. Okajima
@@ -35114,7 +35113,7 @@ diff -urN /usr/share/empty/include/uapi/linux/aufs_type.h linux/include/uapi/lin
 +
 +#include <linux/limits.h>
 +
-+#define AUFS_VERSION	"4.x-rcN-20160111"
++#define AUFS_VERSION	"4.4-20160118"
 +
 +/* todo? move this to linux-2.6.19/include/magic.h */
 +#define AUFS_SUPER_MAGIC	('a' << 24 | 'u' << 16 | 'f' << 8 | 's')
@@ -35492,7 +35491,7 @@ diff -urN /usr/share/empty/include/uapi/linux/aufs_type.h linux/include/uapi/lin
 +#define AUFS_CTL_FHSM_FD	_IOW(AuCtlType, AuCtl_FHSM_FD, int)
 +
 +#endif /* __AUFS_TYPE_H__ */
-aufs4.x-rcN loopback patch
+aufs4.4 loopback patch
 
 diff --git a/drivers/block/loop.c b/drivers/block/loop.c
 index abfdd2b..a2e3c43 100644
