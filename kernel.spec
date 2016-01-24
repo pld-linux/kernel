@@ -68,9 +68,9 @@
 %define		have_pcmcia	0
 %endif
 
-%define		rel		2
+%define		rel		1
 %define		basever		3.14
-%define		postver		.58
+%define		postver		.59
 
 %define		versuffix	-%{basever}
 
@@ -115,7 +115,7 @@ Source0:	http://www.kernel.org/pub/linux/kernel/v3.x/linux-%{basever}.tar.xz
 # Source0-md5:	b621207b3f6ecbb67db18b13258f8ea8
 %if "%{postver}" != ".0"
 Patch0:		http://www.kernel.org/pub/linux/kernel/v3.x/patch-%{version}.xz
-# Patch0-md5:	3e5cfa1699b8a99aaa274cdcba82bf9b
+# Patch0-md5:	1659dff6662b9fab2730d47bf82acd94
 %endif
 Source1:	kernel.sysconfig
 
