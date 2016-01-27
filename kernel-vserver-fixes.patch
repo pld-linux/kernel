@@ -28,3 +28,27 @@
  		rcu_read_unlock();
  		if (likely(!p || error != -ESRCH))
  			return error;
+--- linux-4.1.3-vs2.3.8.2/kernel/exit.c	2015-09-20 20:06:03.000000000 +0200
++++ testing41/kernel/exit.c	2016-01-27 20:50:37.170221605 +0100
+@@ -580,8 +580,11 @@ static void forget_original_parent(struc
+ 
+ 	reaper = find_new_reaper(father, reaper);
+ 	list_for_each_entry(p, &father->children, sibling) {
++		struct task_struct *this_reaper = reaper;
++		if (p == reaper)
++			this_reaper = task_active_pid_ns(reaper)->child_reaper;
+ 		for_each_thread(p, t) {
+-			t->real_parent = reaper;
++			t->real_parent = this_reaper;
+ 			BUG_ON((!t->ptrace) != (t->parent == father));
+ 			if (likely(!t->ptrace))
+ 				t->parent = t->real_parent;
+@@ -593,7 +596,7 @@ static void forget_original_parent(struc
+ 		 * If this is a threaded reparent there is no need to
+ 		 * notify anyone anything has happened.
+ 		 */
+-		if (!same_thread_group(reaper, father))
++		if (!same_thread_group(this_reaper, father))
+ 			reparent_leader(father, p, dead);
+ 	}
+ 	list_splice_tail_init(&father->children, &reaper->children);
