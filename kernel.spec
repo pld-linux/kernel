@@ -1294,10 +1294,22 @@ fi
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/usb/gadget/legacy/g_midi.ko*
 %endif
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/ide/ide-cs.ko*
+%exclude /lib/modules/%{kernel_release}/kernel/drivers/net/arcnet/com20020_cs.ko*
+%exclude /lib/modules/%{kernel_release}/kernel/drivers/net/can/softing/softing_cs.ko*
+%exclude /lib/modules/%{kernel_release}/kernel/drivers/net/ethernet/3com/3c574_cs.ko*
+%exclude /lib/modules/%{kernel_release}/kernel/drivers/net/ethernet/3com/3c589_cs.ko*
+%exclude /lib/modules/%{kernel_release}/kernel/drivers/net/ethernet/8390/axnet_cs.ko*
+%exclude /lib/modules/%{kernel_release}/kernel/drivers/net/ethernet/8390/pcnet_cs.ko*
+%exclude /lib/modules/%{kernel_release}/kernel/drivers/net/ethernet/amd/nmclan_cs.ko*
+%exclude /lib/modules/%{kernel_release}/kernel/drivers/net/ethernet/fujitsu/fmvj18x_cs.ko*
+%exclude /lib/modules/%{kernel_release}/kernel/drivers/net/ethernet/smsc/smc91c92_cs.ko*
+%exclude /lib/modules/%{kernel_release}/kernel/drivers/net/ethernet/xircom/xirc2ps_cs.ko*
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/net/wireless/*_cs.ko*
-%exclude /lib/modules/%{kernel_release}/kernel/drivers/net/wireless/b43
-%exclude /lib/modules/%{kernel_release}/kernel/drivers/net/wireless/hostap/hostap_cs.ko*
-%exclude /lib/modules/%{kernel_release}/kernel/drivers/net/wireless/libertas/*_cs.ko*
+%exclude /lib/modules/%{kernel_release}/kernel/drivers/net/wireless/atmel/*_cs.ko*
+%exclude /lib/modules/%{kernel_release}/kernel/drivers/net/wireless/cisco/*_cs.ko*
+%exclude /lib/modules/%{kernel_release}/kernel/drivers/net/wireless/intersil/hostap/hostap_cs.ko*
+%exclude /lib/modules/%{kernel_release}/kernel/drivers/net/wireless/intersil/orinoco/*_cs.ko*
+%exclude /lib/modules/%{kernel_release}/kernel/drivers/net/wireless/marvell/libertas/*_cs.ko*
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/parport/parport_cs.ko*
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/tty/serial/8250/serial_cs.ko*
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/usb/host/sl811_cs.ko*
@@ -1362,10 +1374,22 @@ fi
 /lib/modules/%{kernel_release}/kernel/drivers/ata/pata_pcmcia.ko*
 %endif
 /lib/modules/%{kernel_release}/kernel/drivers/ide/ide-cs.ko*
+/lib/modules/%{kernel_release}/kernel/drivers/net/arcnet/com20020_cs.ko*
+/lib/modules/%{kernel_release}/kernel/drivers/net/can/softing/softing_cs.ko*
+/lib/modules/%{kernel_release}/kernel/drivers/net/ethernet/3com/3c574_cs.ko*
+/lib/modules/%{kernel_release}/kernel/drivers/net/ethernet/3com/3c589_cs.ko*
+/lib/modules/%{kernel_release}/kernel/drivers/net/ethernet/8390/axnet_cs.ko*
+/lib/modules/%{kernel_release}/kernel/drivers/net/ethernet/8390/pcnet_cs.ko*
+/lib/modules/%{kernel_release}/kernel/drivers/net/ethernet/amd/nmclan_cs.ko*
+/lib/modules/%{kernel_release}/kernel/drivers/net/ethernet/fujitsu/fmvj18x_cs.ko*
+/lib/modules/%{kernel_release}/kernel/drivers/net/ethernet/smsc/smc91c92_cs.ko*
+/lib/modules/%{kernel_release}/kernel/drivers/net/ethernet/xircom/xirc2ps_cs.ko*
 /lib/modules/%{kernel_release}/kernel/drivers/net/wireless/*_cs.ko*
-/lib/modules/%{kernel_release}/kernel/drivers/net/wireless/b43
-/lib/modules/%{kernel_release}/kernel/drivers/net/wireless/hostap/hostap_cs.ko*
-/lib/modules/%{kernel_release}/kernel/drivers/net/wireless/libertas/*_cs.ko*
+/lib/modules/%{kernel_release}/kernel/drivers/net/wireless/atmel/*_cs.ko*
+/lib/modules/%{kernel_release}/kernel/drivers/net/wireless/cisco/*_cs.ko*
+/lib/modules/%{kernel_release}/kernel/drivers/net/wireless/intersil/hostap/hostap_cs.ko*
+/lib/modules/%{kernel_release}/kernel/drivers/net/wireless/intersil/orinoco/*_cs.ko*
+/lib/modules/%{kernel_release}/kernel/drivers/net/wireless/marvell/libertas/*_cs.ko*
 /lib/modules/%{kernel_release}/kernel/drivers/parport/parport_cs.ko*
 /lib/modules/%{kernel_release}/kernel/drivers/tty/serial/8250/serial_cs.ko*
 /lib/modules/%{kernel_release}/kernel/drivers/usb/host/sl811_cs.ko*
