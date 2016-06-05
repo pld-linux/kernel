@@ -71,7 +71,7 @@
 
 %define		rel		0.1
 %define		basever		4.6
-%define		postver		.0
+%define		postver		.1
 
 # define this to '-%{basever}' for longterm branch
 %define		versuffix	%{nil}
@@ -120,7 +120,7 @@ Source0:	http://www.kernel.org/pub/linux/kernel/v4.x/linux-%{basever}.tar.xz
 # Source0-md5:	d2927020e24a76da4ab482a8bc3e9ef3
 %if "%{postver}" != ".0"
 Patch0:		http://www.kernel.org/pub/linux/kernel/v4.x/patch-%{version}.xz
-# Patch0-md5:	137460a1e32335e2eedc61fcfc2643fa
+# Patch0-md5:	e3479d9c8a0e8757c16eb03a4258587c
 %endif
 Source1:	kernel.sysconfig
 
@@ -218,9 +218,6 @@ Patch150:	http://kerneldedup.org/download/uksm/%{uksm_major_version}/uksm-%{uksm
 
 # Show normal colors in menuconfig with ncurses ABI 6
 Patch250:	kernel-fix_256colors_menuconfig.patch
-
-# https://patchwork.kernel.org/patch/236261/
-Patch400:	kernel-virtio-gl-accel.patch
 
 Patch2000:	kernel-small_fixes.patch
 Patch2001:	kernel-pwc-uncompress.patch
@@ -722,9 +719,6 @@ cd linux-%{basever}
 %patch5000 -p1
 
 %patch250 -p1
-
-# virtio-gl
-%patch400 -p1
 
 %endif # vanilla
 
