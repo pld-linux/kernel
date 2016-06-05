@@ -69,7 +69,7 @@
 %define		have_pcmcia	0
 %endif
 
-%define		rel		1
+%define		rel		2
 %define		basever		4.6
 %define		postver		.1
 
@@ -237,23 +237,24 @@ Patch7000:	kernel-inittmpfs.patch
 #Patch50000:	kernel-usb_reset.patch
 
 URL:		http://www.kernel.org/
+AutoReqProv:	no
+BuildRequires:	/sbin/depmod
 BuildRequires:	bc
 BuildRequires:	binutils >= 3:2.18
 %ifarch sparc sparc64
 BuildRequires:	elftoaout
 %endif
-%ifarch ppc
-BuildRequires:	uboot-mkimage
-%endif
-BuildRequires:	/sbin/depmod
+BuildRequires:	elfutils-devel
 BuildRequires:	gcc >= 5:3.2
-BuildRequires:	xz >= 1:4.999.7
-AutoReqProv:	no
 BuildRequires:	hostname
 BuildRequires:	kmod >= 12-2
 BuildRequires:	perl-base
 BuildRequires:	rpm-build >= 4.5-24
 BuildRequires:	rpmbuild(macros) >= 1.707
+%ifarch ppc
+BuildRequires:	uboot-mkimage
+%endif
+BuildRequires:	xz >= 1:4.999.7
 Requires(post):	coreutils
 Requires(post):	geninitrd >= 12749
 Requires(post):	kmod >= 12-2
@@ -567,6 +568,7 @@ Summary(de.UTF-8):	Development Dateien die beim Kernel Modul kompilationen gebra
 Summary(pl.UTF-8):	Pliki służące do budowania modułów jądra
 Group:		Development/Building
 Requires:	%{name}-headers = %{epoch}:%{version}-%{release}
+Requires:	elfutils-devel
 Requires:	make
 Conflicts:	rpmbuild(macros) < 1.704
 AutoReqProv:	no
@@ -1046,6 +1048,11 @@ for dir in $(cd %{objdir} && find arch -name generated -type d); do
 	find $RPM_BUILD_ROOT%{_kernelsrcdir}/$dir -name '.*.cmd' -exec rm "{}" ";"
 done
 
+# Needed for CONFIG_STACK_VALIDATION enabled builds
+install -d $RPM_BUILD_ROOT%{_kernelsrcdir}/tools/objtool
+cp -a %{objdir}/tools/objtool/fixdep $RPM_BUILD_ROOT%{_kernelsrcdir}/tools/objtool
+cp -a %{objdir}/tools/objtool/objtool $RPM_BUILD_ROOT%{_kernelsrcdir}/tools/objtool
+
 # version.h location changed in 3.7, but a lot of external modules don't know about it
 # add a compatibility symlink
 ln -s ../generated/uapi/linux/version.h $RPM_BUILD_ROOT%{_kernelsrcdir}/include/linux/version.h
@@ -1466,6 +1473,8 @@ fi
 %{_kernelsrcdir}/scripts/selinux/mdp/*.c
 %exclude %dir %{_kernelsrcdir}/security
 %exclude %dir %{_kernelsrcdir}/security/selinux
+%attr(755,root,root) %{_kernelsrcdir}/tools/objtool/fixdep
+%attr(755,root,root) %{_kernelsrcdir}/tools/objtool/objtool
 
 %if %{with doc}
 %files doc
@@ -1545,6 +1554,8 @@ fi
 %{_kernelsrcdir}/security
 %exclude %{_kernelsrcdir}/security/selinux/include
 %{_kernelsrcdir}/tools/*
+%exclude %{_kernelsrcdir}/tools/objtool/fixdep
+%exclude %{_kernelsrcdir}/tools/objtool/objtool
 %{_kernelsrcdir}/usr
 %{_kernelsrcdir}/COPYING
 %{_kernelsrcdir}/CREDITS
