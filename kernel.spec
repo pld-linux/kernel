@@ -69,7 +69,7 @@
 %define		have_pcmcia	0
 %endif
 
-%define		rel		2
+%define		rel		3
 %define		basever		4.6
 %define		postver		.1
 
@@ -1048,11 +1048,6 @@ for dir in $(cd %{objdir} && find arch -name generated -type d); do
 	find $RPM_BUILD_ROOT%{_kernelsrcdir}/$dir -name '.*.cmd' -exec rm "{}" ";"
 done
 
-# Needed for CONFIG_STACK_VALIDATION enabled builds
-install -d $RPM_BUILD_ROOT%{_kernelsrcdir}/tools/objtool
-cp -a %{objdir}/tools/objtool/fixdep $RPM_BUILD_ROOT%{_kernelsrcdir}/tools/objtool
-cp -a %{objdir}/tools/objtool/objtool $RPM_BUILD_ROOT%{_kernelsrcdir}/tools/objtool
-
 # version.h location changed in 3.7, but a lot of external modules don't know about it
 # add a compatibility symlink
 ln -s ../generated/uapi/linux/version.h $RPM_BUILD_ROOT%{_kernelsrcdir}/include/linux/version.h
@@ -1473,8 +1468,6 @@ fi
 %{_kernelsrcdir}/scripts/selinux/mdp/*.c
 %exclude %dir %{_kernelsrcdir}/security
 %exclude %dir %{_kernelsrcdir}/security/selinux
-%attr(755,root,root) %{_kernelsrcdir}/tools/objtool/fixdep
-%attr(755,root,root) %{_kernelsrcdir}/tools/objtool/objtool
 
 %if %{with doc}
 %files doc
@@ -1554,8 +1547,6 @@ fi
 %{_kernelsrcdir}/security
 %exclude %{_kernelsrcdir}/security/selinux/include
 %{_kernelsrcdir}/tools/*
-%exclude %{_kernelsrcdir}/tools/objtool/fixdep
-%exclude %{_kernelsrcdir}/tools/objtool/objtool
 %{_kernelsrcdir}/usr
 %{_kernelsrcdir}/COPYING
 %{_kernelsrcdir}/CREDITS
