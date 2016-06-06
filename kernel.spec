@@ -116,10 +116,10 @@ Release:	%{rel}
 Epoch:		3
 License:	GPL v2
 Group:		Base/Kernel
-Source0:	http://www.kernel.org/pub/linux/kernel/v4.x/linux-%{basever}.tar.xz
+Source0:	https://www.kernel.org/pub/linux/kernel/v4.x/linux-%{basever}.tar.xz
 # Source0-md5:	d2927020e24a76da4ab482a8bc3e9ef3
 %if "%{postver}" != ".0"
-Patch0:		http://www.kernel.org/pub/linux/kernel/v4.x/patch-%{version}.xz
+Patch0:		https://www.kernel.org/pub/linux/kernel/v4.x/patch-%{version}.xz
 # Patch0-md5:	e3479d9c8a0e8757c16eb03a4258587c
 %endif
 Source1:	kernel.sysconfig
@@ -236,7 +236,7 @@ Patch7000:	kernel-inittmpfs.patch
 # kernel.spec every time.
 #Patch50000:	kernel-usb_reset.patch
 
-URL:		http://www.kernel.org/
+URL:		https://www.kernel.org/
 AutoReqProv:	no
 BuildRequires:	/sbin/depmod
 BuildRequires:	bc
