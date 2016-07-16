@@ -72,7 +72,7 @@
 
 %define		rel		1
 %define		basever		3.18
-%define		postver		.36
+%define		postver		.37
 
 # define this to '-%{basever}' for longterm branch
 %define		versuffix	-%{basever}
@@ -121,7 +121,7 @@ Source0:	http://www.kernel.org/pub/linux/kernel/v3.x/linux-%{basever}.tar.xz
 # Source0-md5:	9e854df51ca3fef8bfe566dbd7b89241
 %if "%{postver}" != ".0"
 Patch0:		http://www.kernel.org/pub/linux/kernel/v3.x/patch-%{version}.xz
-# Patch0-md5:	e173543ed461d4e0c5b08cfd546c085f
+# Patch0-md5:	912cbca7383b99d74958ec9d72f2853d
 %endif
 Source1:	kernel.sysconfig
 
@@ -212,10 +212,8 @@ Patch101:	kernel-vserver-fixes.patch
 Patch145:	kernel-aufs3.patch
 Patch146:	kernel-aufs3+vserver.patch
 
-%define uksm_major_version 0.1.2.3
-%define uksm_version %{uksm_major_version}-for-v3.18
-Patch150:	http://kerneldedup.org/download/uksm/%{uksm_major_version}/uksm-%{uksm_version}.patch
-# Patch150-md5:	b6a2b2aae9c2844d0c74690632d7019e
+# http://kerneldedup.org/download/uksm/0.1.2.3/uksm-0.1.2.3-for-v3.18.patch
+Patch150:	uksm-0.1.2.3-for-v3.18.patch
 
 # Show normal colors in menuconfig with ncurses ABI 6
 Patch250:	kernel-fix_256colors_menuconfig.patch
