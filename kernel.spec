@@ -241,6 +241,7 @@ BuildRequires:	elfutils-devel
 BuildRequires:	gcc >= 5:3.2
 BuildRequires:	hostname
 BuildRequires:	kmod >= 12-2
+BuildRequires:	openssl-devel
 BuildRequires:	perl-base
 BuildRequires:	rpm-build >= 4.5-24
 BuildRequires:	rpmbuild(macros) >= 1.707
