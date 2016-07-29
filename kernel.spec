@@ -165,9 +165,6 @@ Patch40:	kernel-layer7.patch
 
 ### End netfilter
 
-# http://zph.bratcheda.org/linux-2.6.26.3-zph.patch
-Patch49:	kernel-zph.patch
-
 # http://www.linuximq.net
 Patch50:	kernel-imq.patch
 
@@ -218,7 +215,7 @@ Patch2003:	kernel-regressions.patch
 Patch2004:	kernel-libata-ahci-pm.patch
 
 # git://git.kernel.org/pub/scm/linux/kernel/git/jj/linux-apparmor
-# branch v4.2-aa2.8-out-of-tree
+# branch v4.7-aa2.8-out-of-tree
 Patch5000:	kernel-apparmor.patch
 
 # for rescuecd
@@ -668,10 +665,6 @@ cd linux-%{basever}
 
 ##
 # end of netfilter
-
-# zph
-# FIXME or DROPME
-%patch49 -p1
 
 %if %{with imq}
 %patch50 -p1
