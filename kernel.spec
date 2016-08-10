@@ -214,6 +214,7 @@ Patch250:	kernel-fix_256colors_menuconfig.patch
 # https://patchwork.kernel.org/patch/236261/
 Patch400:	kernel-virtio-gl-accel.patch
 
+# check for fixes: https://git.kernel.org/cgit/linux/kernel/git/sashal/linux-stable.git/log/?h=linux-4.1.y-queue
 Patch2000:	kernel-small_fixes.patch
 Patch2001:	kernel-pwc-uncompress.patch
 Patch2003:	kernel-regressions.patch
