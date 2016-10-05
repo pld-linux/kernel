@@ -1,4 +1,4 @@
-commit b661b13237991be6b5cdf0849f137c5ec58217bf
+commit 09aa4788d6052c6dc423d939319334ebb5d00847
 Author: John Johansen <john.johansen@canonical.com>
 Date:   Mon Oct 4 15:03:36 2010 -0700
 
@@ -198,7 +198,7 @@ index 52275f0..4fc4dac 100644
  
  	unsigned char *hash;
 diff --git a/security/apparmor/lsm.c b/security/apparmor/lsm.c
-index ba8207b..88d3b0a 100644
+index 41b8cb1..d96b5f7 100644
 --- a/security/apparmor/lsm.c
 +++ b/security/apparmor/lsm.c
 @@ -32,6 +32,7 @@
@@ -515,7 +515,7 @@ index 179e68d..f1a8541 100644
  
  	kzfree(profile->dirname);
 diff --git a/security/apparmor/policy_unpack.c b/security/apparmor/policy_unpack.c
-index dac2121..0107bc4 100644
+index 1381206..7dc15ff 100644
 --- a/security/apparmor/policy_unpack.c
 +++ b/security/apparmor/policy_unpack.c
 @@ -193,6 +193,19 @@ fail:
@@ -586,7 +586,7 @@ index dac2121..0107bc4 100644
  		/* generic policy dfa - optional and may be NULL */
  		profile->policy.dfa = unpack_dfa(e);
 
-commit 64c5e24470a219c79c2870c63f18f6bd55648b1b
+commit f5c5644745201b5b7d398e841e5045d0a5d14b18
 Author: John Johansen <john.johansen@canonical.com>
 Date:   Fri Jun 29 17:34:00 2012 -0700
 
@@ -619,7 +619,7 @@ index 003dd18..6e6e5c9 100644
  		if (denied & kill_mask)
  			audit_type = AUDIT_APPARMOR_KILL;
 
-commit f7cef61751a2382fb4ea26c18736d7552ffdb24a
+commit 0269f1631e1496798e5b0a319ff05b1133cfeaa3
 Author: John Johansen <john.johansen@canonical.com>
 Date:   Wed May 16 10:58:05 2012 -0700
 
@@ -738,7 +738,7 @@ index fc3036b..f2a83b4 100644
  	struct aa_profile *new_profile = NULL;
  	struct aa_namespace *ns = profile->ns;
 diff --git a/security/apparmor/include/apparmor.h b/security/apparmor/include/apparmor.h
-index e4ea626..ce6ff6a 100644
+index 5d721e9..b57da7b 100644
 --- a/security/apparmor/include/apparmor.h
 +++ b/security/apparmor/include/apparmor.h
 @@ -30,8 +30,9 @@
@@ -855,7 +855,7 @@ index 0000000..a43b1d6
 +
 +#endif /* __AA_MOUNT_H */
 diff --git a/security/apparmor/lsm.c b/security/apparmor/lsm.c
-index 88d3b0a..432cbd3 100644
+index d96b5f7..7a02376 100644
 --- a/security/apparmor/lsm.c
 +++ b/security/apparmor/lsm.c
 @@ -36,6 +36,7 @@
@@ -1565,3 +1565,44 @@ index 0000000..9cf9170
 +
 +	return error;
 +}
+
+commit 29fb087c5df8bb8ac354ab58d33c43e68270123b
+Author: John Johansen <john.johansen@canonical.com>
+Date:   Wed Aug 31 21:10:06 2016 -0700
+
+    apparmor: fix change_hat not finding hat after policy replacement
+    
+    After a policy replacement, the task cred may be out of date and need
+    to be updated. However change_hat is using the stale profiles from
+    the out of date cred resulting in either: a stale profile being applied
+    or, incorrect failure when searching for a hat profile as it has been
+    migrated to the new parent profile.
+    
+    Fixes: 01e2b670aa898a39259bc85c78e3d74820f4d3b6 (failure to find hat)
+    Fixes: 898127c34ec03291c86f4ff3856d79e9e18952bc (stale policy being applied)
+    Signed-off-by: John Johansen <john.johansen@canonical.com>
+
+diff --git a/security/apparmor/domain.c b/security/apparmor/domain.c
+index f2a83b4..dbd68f2 100644
+--- a/security/apparmor/domain.c
++++ b/security/apparmor/domain.c
+@@ -621,8 +621,8 @@ int aa_change_hat(const char *hats[], int count, u64 token, bool permtest)
+ 	/* released below */
+ 	cred = get_current_cred();
+ 	cxt = cred_cxt(cred);
+-	profile = aa_cred_profile(cred);
+-	previous_profile = cxt->previous;
++	profile = aa_get_newest_profile(aa_cred_profile(cred));
++	previous_profile = aa_get_newest_profile(cxt->previous);
+ 
+ 	if (unconfined(profile)) {
+ 		info = "unconfined";
+@@ -718,6 +718,8 @@ audit:
+ out:
+ 	aa_put_profile(hat);
+ 	kfree(name);
++	aa_put_profile(profile);
++	aa_put_profile(previous_profile);
+ 	put_cred(cred);
+ 
+ 	return error;

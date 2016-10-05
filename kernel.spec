@@ -701,7 +701,6 @@ cd linux-%{basever}
 %endif
 
 # apparmor
-# FIME
 %patch5000 -p1
 
 %patch250 -p1
