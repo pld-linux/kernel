@@ -27,7 +27,7 @@
 %bcond_with	nfsroot		# build with root on NFS support
 
 %bcond_without	imq		# imq support
-%bcond_without	esfq		# esfq support
+%bcond_with	esfq		# esfq support
 %bcond_without	ipv6		# ipv6 support
 
 %bcond_with	vserver		# support for VServer
@@ -68,9 +68,9 @@
 %define		have_pcmcia	0
 %endif
 
-%define		rel		1
-%define		basever		4.7
-%define		postver		.6
+%define		rel		0.1
+%define		basever		4.8
+%define		postver		.0
 
 # define this to '-%{basever}' for longterm branch
 %define		versuffix	%{nil}
@@ -116,7 +116,7 @@ Epoch:		3
 License:	GPL v2
 Group:		Base/Kernel
 Source0:	https://www.kernel.org/pub/linux/kernel/v4.x/linux-%{basever}.tar.xz
-# Source0-md5:	5276563eb1f39a048e4a8a887408c031
+# Source0-md5:	c1af0afbd3df35c1ccdc7a5118cd2d07
 %if "%{postver}" != ".0"
 Patch0:		https://www.kernel.org/pub/linux/kernel/v4.x/patch-%{version}.xz
 # Patch0-md5:	e0d02f6c4d6b600b91c3492c5cc825a3
