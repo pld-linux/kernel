@@ -191,7 +191,7 @@ Patch101:	kernel-vserver-fixes.patch
 # Patch creation:
 # git clone git://github.com/sfjro/aufs4-standalone.git
 # cd aufs4-standalone
-# git checkout -b aufs4.7 origin/aufs4.7
+# git checkout -b aufs4.8 origin/aufs4.8
 # cat aufs4-kbuild.patch aufs4-base.patch aufs4-mmap.patch aufs4-standalone.patch > ~/rpm/packages/kernel/kernel-aufs4.patch
 # rm -rf linux && mkdir linux
 # cp -a Documentation fs include linux
