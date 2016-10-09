@@ -27,7 +27,6 @@
 %bcond_with	nfsroot		# build with root on NFS support
 
 %bcond_without	imq		# imq support
-%bcond_with	esfq		# esfq support
 %bcond_without	ipv6		# ipv6 support
 
 %bcond_with	vserver		# support for VServer
@@ -167,9 +166,6 @@ Patch40:	kernel-layer7.patch
 
 # http://www.linuximq.net
 Patch50:	kernel-imq.patch
-
-# http://fatooh.org/esfq-2.6/sfq-2.6.24.1.tar.bz2
-Patch53:	kernel-esfq.patch
 
 # by Baggins request:
 # derived from ftp://ftp.cmf.nrl.navy.mil/pub/chas/linux-atm/vbr/vbr-kernel-diffs
@@ -668,11 +664,6 @@ cd linux-%{basever}
 
 %if %{with imq}
 %patch50 -p1
-%endif
-
-# esfq
-%if %{with esfq}
-%patch53 -p1
 %endif
 
 %patch55 -p1
