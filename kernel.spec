@@ -32,6 +32,8 @@
 
 %bcond_with	vserver		# support for VServer
 
+%bcond_with	rt		# real-time kernel (CONFIG_PREEMPT_RT) for low latencies
+
 %bcond_with	vanilla		# don't include any patches
 %bcond_with	rescuecd	# build kernel for our rescue
 %bcond_with	myown		# build with your own config (kernel-myown.config)
@@ -97,6 +99,9 @@
 %if %{without pae}
 %define		alt_kernel	nopae
 %endif
+%if %{with rt}
+%define		alt_kernel	rt
+%endif
 
 # kernel release (used in filesystem and eventually in uname -r)
 # modules will be looked from /lib/modules/%{kernel_release}
@@ -141,6 +146,7 @@ Source25:	kernel-ia64.config
 
 Source41:	kernel-patches.config
 Source43:	kernel-vserver.config
+Source44:	kernel-rt.config
 
 Source55:	kernel-imq.config
 
@@ -214,6 +220,10 @@ Patch250:	kernel-fix_256colors_menuconfig.patch
 
 # https://patchwork.kernel.org/patch/236261/
 Patch400:	kernel-virtio-gl-accel.patch
+
+# https://rt.wiki.kernel.org/
+# https://www.kernel.org/pub/linux/kernel/projects/rt/4.4/patch-4.4.23-rt33.patch.xz
+Patch500:	kernel-rt.patch
 
 Patch2000:	kernel-small_fixes.patch
 Patch2001:	kernel-pwc-uncompress.patch
@@ -390,6 +400,7 @@ BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 %{?with_fbcondecor:Fbsplash/fbcondecor - enabled }\
 %{?with_nfsroot:Root on NFS - enabled}\
 %{?with_vserver:Linux-VServer - %{vserver_patch}}\
+%{?with_rt:CONFIG_PREEMPT_RT - enabled}\
 
 %define Features %(echo "%{__features}" | sed '/^$/d')
 
@@ -656,7 +667,10 @@ cd linux-%{basever}
 #
 
 # kernel-pom-ng-IPV4OPTSSTRIP.patch
+%if %{without rt}
+# fails on -Werror=incompatible-pointer-types
 %patch10 -p1
+%endif
 
 # kernel-owner-xid.patch
 %if %{with vserver}
@@ -681,8 +695,11 @@ cd linux-%{basever}
 %patch53 -p1
 %endif
 
+%if %{without rt}
+# fails on -Werror=incompatible-pointer-types
 %patch55 -p1
 %patch56 -p1
+%endif
 
 # kernel-rndis_host-wm5.patch
 %patch59 -p1
@@ -706,13 +723,21 @@ cd linux-%{basever}
 %patch7000 -p1
 %endif
 
+%if %{with rt}
+%patch500 -p1
+rm -f localversion-rt
+%endif
+
 # apparmor
 %patch5000 -p1
 
 %patch250 -p1
 
 # virtio-gl
+%if %{without rt}
+# fails on -Werror=incompatible-pointer-types
 %patch400 -p1
+%endif
 
 %endif # vanilla
 
@@ -912,6 +937,9 @@ EOCONFIG
 %endif
 %if %{with vserver}
 		%{SOURCE43} \
+%endif
+%if %{with rt}
+		%{SOURCE44} \
 %endif
 		%{SOURCE41} %{?0:patches} \
 %endif
