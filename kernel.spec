@@ -2,6 +2,9 @@
 # LATEST VERSION CHECKER:
 # # curl -s https://www.kernel.org/finger_banner
 #
+# PENDING STABLE PATCHES:
+# https://git.kernel.org/cgit/linux/kernel/git/sashal/linux-stable.git/log/?h=linux-4.1.y-queue
+#
 # TODO:
 # - benchmark NO_HZ & HZ=1000 vs HZ=300 on i686
 # - IPv4 source address selection for multihomed vservers is completely broken
