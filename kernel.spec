@@ -222,7 +222,7 @@ Patch250:	kernel-fix_256colors_menuconfig.patch
 Patch400:	kernel-virtio-gl-accel.patch
 
 # https://rt.wiki.kernel.org/
-# https://www.kernel.org/pub/linux/kernel/projects/rt/4.4/patch-4.4.27-rt37.patch.xz
+# https://www.kernel.org/pub/linux/kernel/projects/rt/4.4/patch-4.4.30-rt41.patch.xz
 Patch500:	kernel-rt.patch
 
 Patch2000:	kernel-small_fixes.patch
