@@ -660,10 +660,7 @@ cd linux-%{basever}
 #
 
 # kernel-pom-ng-IPV4OPTSSTRIP.patch
-%if %{without rt}
-# fails on -Werror=incompatible-pointer-types
 %patch10 -p1
-%endif
 
 # kernel-owner-xid.patch
 %if %{with vserver}
@@ -680,11 +677,8 @@ cd linux-%{basever}
 %patch50 -p1
 %endif
 
-%if %{without rt}
-# fails on -Werror=incompatible-pointer-types
 %patch55 -p1
 %patch56 -p1
-%endif
 
 # kernel-rndis_host-wm5.patch
 %patch59 -p1
