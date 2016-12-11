@@ -29,6 +29,8 @@
 %bcond_without	imq		# imq support
 %bcond_without	ipv6		# ipv6 support
 
+%bcond_without	aufs		# aufs4 support
+
 %bcond_with	vserver		# support for VServer
 
 %bcond_with	rt		# real-time kernel (CONFIG_PREEMPT_RT) for low latencies
@@ -691,10 +693,12 @@ cd linux-%{basever}
 %patch101 -p1
 %endif
 
-# aufs3
+%if %{with aufs}
+# aufs4
 %patch145 -p1
 %if %{with vserver}
 %patch146 -p1
+%endif
 %endif
 
 %if %{with rescuecd}
