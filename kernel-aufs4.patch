@@ -36,7 +36,7 @@ index 185f8ea..5deb0d1 100644
 aufs4.x-rcN base patch
 
 diff --git a/MAINTAINERS b/MAINTAINERS
-index 01bff8e..ac77455 100644
+index f593300..8a17054 100644
 --- a/MAINTAINERS
 +++ b/MAINTAINERS
 @@ -2256,6 +2256,19 @@ F:	include/linux/audit.h
@@ -255,9 +255,9 @@ index da2751d..2e0fca6 100644
 --- a/include/linux/splice.h
 +++ b/include/linux/splice.h
 @@ -83,4 +83,10 @@ extern void splice_shrink_spd(struct splice_pipe_desc *);
- extern void spd_release_page(struct splice_pipe_desc *, unsigned int);
  
  extern const struct pipe_buf_operations page_cache_pipe_buf_ops;
+ extern const struct pipe_buf_operations default_pipe_buf_ops;
 +
 +extern long do_splice_from(struct pipe_inode_info *pipe, struct file *out,
 +			   loff_t *ppos, size_t len, unsigned int flags);
@@ -341,35 +341,35 @@ diff --git a/include/linux/mm.h b/include/linux/mm.h
 index ef815b9..a772481 100644
 --- a/include/linux/mm.h
 +++ b/include/linux/mm.h
-@@ -1278,6 +1278,28 @@ static inline int fixup_user_fault(struct task_struct *tsk,
+@@ -1266,6 +1266,28 @@ static inline int fixup_user_fault(struc
  }
  #endif
  
 +extern void vma_do_file_update_time(struct vm_area_struct *, const char[], int);
 +extern struct file *vma_do_pr_or_file(struct vm_area_struct *, const char[],
-+				      int);
++		int);
 +extern void vma_do_get_file(struct vm_area_struct *, const char[], int);
 +extern void vma_do_fput(struct vm_area_struct *, const char[], int);
 +
-+#define vma_file_update_time(vma)	vma_do_file_update_time(vma, __func__, \
-+								__LINE__)
-+#define vma_pr_or_file(vma)		vma_do_pr_or_file(vma, __func__, \
-+							  __LINE__)
-+#define vma_get_file(vma)		vma_do_get_file(vma, __func__, __LINE__)
-+#define vma_fput(vma)			vma_do_fput(vma, __func__, __LINE__)
++#define vma_file_update_time(vma)      vma_do_file_update_time(vma, __func__, \
++		__LINE__)
++#define vma_pr_or_file(vma)            vma_do_pr_or_file(vma, __func__, \
++		__LINE__)
++#define vma_get_file(vma)              vma_do_get_file(vma, __func__, __LINE__)
++#define vma_fput(vma)                  vma_do_fput(vma, __func__, __LINE__)
 +
 +#ifndef CONFIG_MMU
 +extern struct file *vmr_do_pr_or_file(struct vm_region *, const char[], int);
 +extern void vmr_do_fput(struct vm_region *, const char[], int);
 +
-+#define vmr_pr_or_file(region)		vmr_do_pr_or_file(region, __func__, \
-+							  __LINE__)
-+#define vmr_fput(region)		vmr_do_fput(region, __func__, __LINE__)
++#define vmr_pr_or_file(region)         vmr_do_pr_or_file(region, __func__, \
++		__LINE__)
++#define vmr_fput(region)               vmr_do_fput(region, __func__, __LINE__)
 +#endif /* !CONFIG_MMU */
 +
- extern int access_process_vm(struct task_struct *tsk, unsigned long addr, void *buf, int len, int write);
+ extern int access_process_vm(struct task_struct *tsk, unsigned long addr, void *buf, int len,
+ 		unsigned int gup_flags);
  extern int access_remote_vm(struct mm_struct *mm, unsigned long addr,
- 		void *buf, int len, int write);
 diff --git a/include/linux/mm_types.h b/include/linux/mm_types.h
 index 903200f..55fc528 100644
 --- a/include/linux/mm_types.h
@@ -417,7 +417,7 @@ index 2ca1faf..6b9da3f 100644
  obj-y += init-mm.o
  
 diff --git a/mm/filemap.c b/mm/filemap.c
-index 8a287df..7583d66 100644
+index 2d0986a..4a31bad 100644
 --- a/mm/filemap.c
 +++ b/mm/filemap.c
 @@ -2284,7 +2284,7 @@ int filemap_page_mkwrite(struct vm_area_struct *vma, struct vm_fault *vmf)
@@ -35606,7 +35606,7 @@ diff -urN /usr/share/empty/fs/aufs/xino.c linux/fs/aufs/xino.c
 +}
 diff -urN /usr/share/empty/include/uapi/linux/aufs_type.h linux/include/uapi/linux/aufs_type.h
 --- /usr/share/empty/include/uapi/linux/aufs_type.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux/include/uapi/linux/aufs_type.h	2016-10-09 16:55:38.889431135 +0200
++++ linux/include/uapi/linux/aufs_type.h	2016-12-11 21:22:05.903059512 +0100
 @@ -0,0 +1,419 @@
 +/*
 + * Copyright (C) 2005-2016 Junjiro R. Okajima
@@ -35649,7 +35649,7 @@ diff -urN /usr/share/empty/include/uapi/linux/aufs_type.h linux/include/uapi/lin
 +
 +#include <linux/limits.h>
 +
-+#define AUFS_VERSION	"4.x-rcN-20161003"
++#define AUFS_VERSION	"4.x-rcN-20161010"
 +
 +/* todo? move this to linux-2.6.19/include/magic.h */
 +#define AUFS_SUPER_MAGIC	('a' << 24 | 'u' << 16 | 'f' << 8 | 's')

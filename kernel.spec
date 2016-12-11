@@ -69,9 +69,9 @@
 %define		have_pcmcia	0
 %endif
 
-%define		rel		2
-%define		basever		4.8
-%define		postver		.14
+%define		rel		0.1
+%define		basever		4.9
+%define		postver		.0
 
 # define this to '-%{basever}' for longterm branch
 %define		versuffix	%{nil}
@@ -120,7 +120,7 @@ Epoch:		3
 License:	GPL v2
 Group:		Base/Kernel
 Source0:	https://www.kernel.org/pub/linux/kernel/v4.x/linux-%{basever}.tar.xz
-# Source0-md5:	c1af0afbd3df35c1ccdc7a5118cd2d07
+# Source0-md5:	0a68ef3615c64bd5ee54a3320e46667d
 %if "%{postver}" != ".0"
 Patch0:		https://www.kernel.org/pub/linux/kernel/v4.x/patch-%{version}.xz
 # Patch0-md5:	b8001f580c4da45ee7ae8d928275cf97
@@ -197,12 +197,11 @@ Patch101:	kernel-vserver-fixes.patch
 # Patch creation:
 # git clone git://github.com/sfjro/aufs4-standalone.git
 # cd aufs4-standalone
-# git checkout -b aufs4.8 origin/aufs4.8
+# git checkout -b aufs4.9 origin/aufs4.9
 # cat aufs4-kbuild.patch aufs4-base.patch aufs4-mmap.patch aufs4-standalone.patch > ~/rpm/packages/kernel/kernel-aufs4.patch
 # rm -rf linux && mkdir linux
 # cp -a Documentation fs include linux
-# diff -urN /usr/share/empty linux >> ~/rpm/packages/kernel/kernel-aufs4.patch
-# drop hunk at the end of patch (hunk is patching include/linux/Kbuild with single line change)
+# diff -urN /usr/share/empty linux | filterdiff -x linux/include/uapi/linux/Kbuild >> ~/rpm/packages/kernel/kernel-aufs4.patch
 # cat aufs4-loopback.patch >> ~/rpm/packages/kernel/kernel-aufs4.patch
 #
 Patch145:	kernel-aufs4.patch
