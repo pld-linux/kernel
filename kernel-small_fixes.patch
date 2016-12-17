@@ -27,3 +27,40 @@
  			fi
  		done
 
+From:   Eric Sandeen <sandeen@redhat.com>
+Subject: [PATCH] xfs: don't wrap ID in xfs_dq_get_next_id
+Message-ID: <f52de68d-abe6-1960-c0ef-1d199346f689@redhat.com>
+Date:   Fri, 16 Dec 2016 18:05:20 -0600
+
+The GETNEXTQOTA ioctl takes whatever ID is sent in,
+and looks for the next active quota for an user
+equal or higher to that ID.
+
+But if we are at the maximum ID and then ask for the "next"
+one, we may wrap back to zero.  In this case, userspace
+may loop forever, because it will start querying again
+at zero.
+
+We'll fix this in userspace as well, but for the kernel,
+return -ENOENT if we ask for the next quota ID
+past UINT_MAX so the caller knows to stop.
+
+Signed-off-by: Eric Sandeen <sandeen@redhat.com>
+---
+
+diff --git a/fs/xfs/xfs_dquot.c b/fs/xfs/xfs_dquot.c
+index 7a30b8f..dbeddd9 100644
+--- a/fs/xfs/xfs_dquot.c
++++ b/fs/xfs/xfs_dquot.c
+@@ -710,6 +710,10 @@
+ 	/* Simple advance */
+ 	next_id = *id + 1;
+ 
++	/* If we'd wrap past the max ID, stop */
++	if (next_id < *id)
++		return -ENOENT;
++
+ 	/* If new ID is within the current chunk, advancing it sufficed */
+ 	if (next_id % mp->m_quotainfo->qi_dqperchunk) {
+ 		*id = next_id;
+
