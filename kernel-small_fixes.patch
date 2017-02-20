@@ -26,47 +26,38 @@
  				exit
  			fi
  		done
-From 8af8e1c22f9994bb1849c01d66c24fe23f9bc9a0 Mon Sep 17 00:00:00 2001
-From: Dave Carroll <david.carroll@microsemi.com>
-Date: Thu, 9 Feb 2017 11:04:47 -0700
-Subject: scsi: aacraid: Fix INTx/MSI-x issue with older controllers
+From 5d12f71723762a39435d054d02bbf5fb87c5cd14 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Arkadiusz=20Mi=C5=9Bkiewicz?= <arekm@maven.pl>
+Date: Mon, 6 Feb 2017 14:45:15 +0100
+Subject: [PATCH] mac80211: Print text for disassociation reason
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
 
-commit 78cbccd3bd68 ("aacraid: Fix for KDUMP driver hang")
+When disassociation happens only numeric reason is printed
+in ieee80211_rx_mgmt_disassoc(). Add text variant, too.
 
-caused a problem on older controllers which do not support MSI-x (namely
-ASR3405,ASR3805). This patch conditionalizes the previous patch to
-controllers which support MSI-x
-
-Cc: <stable@vger.kernel.org> # v4.7+
-Fixes: 78cbccd3bd68 ("aacraid: Fix for KDUMP driver hang")
-Reported-by: Arkadiusz Miskiewicz <a.miskiewicz@gmail.com>
-Signed-off-by: Dave Carroll <david.carroll@microsemi.com>
-Reviewed-by: Raghava Aditya Renukunta <RaghavaAditya.Renukunta@microsemi.com>
-Signed-off-by: Martin K. Petersen <martin.petersen@oracle.com>
+Signed-off-by: Arkadiusz Miśkiewicz <arekm@maven.pl>
 ---
- drivers/scsi/aacraid/comminit.c | 8 ++++++--
- 1 file changed, 6 insertions(+), 2 deletions(-)
+ net/mac80211/mlme.c | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
 
-diff --git a/drivers/scsi/aacraid/comminit.c b/drivers/scsi/aacraid/comminit.c
-index 4f56b10..5b48bed 100644
---- a/drivers/scsi/aacraid/comminit.c
-+++ b/drivers/scsi/aacraid/comminit.c
-@@ -50,9 +50,13 @@ struct aac_common aac_config = {
+diff --git a/net/mac80211/mlme.c b/net/mac80211/mlme.c
+index 098ce9b179ee..fcf8d0aa66ec 100644
+--- a/net/mac80211/mlme.c
++++ b/net/mac80211/mlme.c
+@@ -2801,8 +2801,9 @@ static void ieee80211_rx_mgmt_disassoc(struct ieee80211_sub_if_data *sdata,
  
- static inline int aac_is_msix_mode(struct aac_dev *dev)
- {
--	u32 status;
-+	u32 status = 0;
+ 	reason_code = le16_to_cpu(mgmt->u.disassoc.reason_code);
  
--	status = src_readl(dev, MUnit.OMR);
-+	if (dev->pdev->device == PMC_DEVICE_S6 ||
-+		dev->pdev->device == PMC_DEVICE_S7 ||
-+		dev->pdev->device == PMC_DEVICE_S8) {
-+		status = src_readl(dev, MUnit.OMR);
-+	}
- 	return (status & AAC_INT_MODE_MSIX);
- }
+-	sdata_info(sdata, "disassociated from %pM (Reason: %u)\n",
+-		   mgmt->sa, reason_code);
++	sdata_info(sdata, "disassociated from %pM (Reason: %u=%s)\n",
++		   mgmt->sa, reason_code,
++		   ieee80211_get_reason_code_string(reason_code));
+ 
+ 	ieee80211_set_disassoc(sdata, 0, 0, false, NULL);
  
 -- 
-cgit v0.12
+2.11.0
 
