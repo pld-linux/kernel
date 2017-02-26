@@ -1267,7 +1267,7 @@ index d93f949..23fb6d1 100644
 @@ -14,7 +14,8 @@
  #define NF_QUEUE 3
  #define NF_REPEAT 4
- #define NF_STOP 5
+ #define NF_STOP 5	/* Deprecated, for userspace nf_queue compatibility. */
 -#define NF_MAX_VERDICT NF_STOP
 +#define NF_IMQ_QUEUE 6
 +#define NF_MAX_VERDICT NF_IMQ_QUEUE
@@ -1523,19 +1523,17 @@ diff --git a/net/netfilter/core.c b/net/netfilter/core.c
 index 004af03..768a08b 100644
 --- a/net/netfilter/core.c
 +++ b/net/netfilter/core.c
-@@ -360,8 +360,11 @@ int nf_hook_slow(struct sk_buff *skb, struct nf_hook_state *state)
- 		ret = NF_DROP_GETERR(verdict);
- 		if (ret == 0)
- 			ret = -EPERM;
--	} else if ((verdict & NF_VERDICT_MASK) == NF_QUEUE) {
-+	} else if ((verdict & NF_VERDICT_MASK) == NF_QUEUE ||
-+		   (verdict & NF_VERDICT_MASK) == NF_IMQ_QUEUE) {
- 		ret = nf_queue(skb, state, &entry, verdict);
-+		if (ret == -ECANCELED)
-+			goto next_hook;
- 		if (ret == 1 && entry)
- 			goto next_hook;
- 	}
+@@ -360,7 +360,10 @@ int nf_hook_slow(struct sk_buff *skb, struct nf_hook_state *state)
+ 				ret = -EPERM;
+ 			return ret;
+ 		case NF_QUEUE:
++		case NF_IMQ_QUEUE:
+ 			ret = nf_queue(skb, state, &entry, verdict);
++			if (ret == -ECANCELED)
++				continue;
+ 			if (ret == 1 && entry)
+ 				continue;
+ 			return ret;
 diff --git a/net/netfilter/nf_queue.c b/net/netfilter/nf_queue.c
 index 8f08d75..8d362c0 100644
 --- a/net/netfilter/nf_queue.c
