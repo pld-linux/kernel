@@ -73,7 +73,7 @@
 
 %define		rel		0.1
 %define		basever		4.10
-%define		postver		.1
+%define		postver		.2
 
 # define this to '-%{basever}' for longterm branch
 %define		versuffix	%{nil}
@@ -125,7 +125,7 @@ Source0:	https://www.kernel.org/pub/linux/kernel/v4.x/linux-%{basever}.tar.xz
 # Source0-md5:	b5e7f6b9b2fe1b6cc7bc56a3a0bfc090
 %if "%{postver}" != ".0"
 Patch0:		https://www.kernel.org/pub/linux/kernel/v4.x/patch-%{version}.xz
-# Patch0-md5:	d4ab54e17b686d1dbb1d28238fd0b081
+# Patch0-md5:	8c70c8028d066563cb1858ca61f85161
 %endif
 Source1:	kernel.sysconfig
 
@@ -1470,9 +1470,6 @@ fi
 %{_docdir}/%{name}-%{version}/[jkz]*.txt
 %{_docdir}/%{name}-%{version}/kbuild
 %{_docdir}/%{name}-%{version}/kdump
-%lang(ja) %{_docdir}/%{name}-%{version}/ja_JP
-%lang(ko) %{_docdir}/%{name}-%{version}/ko_KR
-%lang(zh_CN) %{_docdir}/%{name}-%{version}/zh_CN
 %endif
 
 %if %{with source}
@@ -1544,5 +1541,4 @@ fi
 %{_kernelsrcdir}/CREDITS
 %{_kernelsrcdir}/MAINTAINERS
 %{_kernelsrcdir}/README
-%{_kernelsrcdir}/REPORTING-BUGS
 %endif
