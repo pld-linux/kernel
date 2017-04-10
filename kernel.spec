@@ -124,7 +124,7 @@ Source0:	http://www.kernel.org/pub/linux/kernel/v4.x/linux-%{basever}.tar.xz
 # Source0-md5:	9a78fa2eb6c68ca5a40ed5af08142599
 %if "%{postver}" != ".0"
 Patch0:		http://www.kernel.org/pub/linux/kernel/v4.x/patch-%{version}.xz
-# Patch0-md5:	fbfec16499141aeedefac22ed2a8fdf0
+# Patch0-md5:	15a2cb54b6cc9a844875c96812438d3c
 %endif
 Source1:	kernel.sysconfig
 
