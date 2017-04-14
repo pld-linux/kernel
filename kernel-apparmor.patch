@@ -1608,3 +1608,1137 @@ index 0000000..478aa4d
 -- 
 1.8.3.2
 
+patches.apparmor/apparmor-temporary-work-around-for-bug-while-unloadi
+From: John Johansen <john.johansen@canonical.com>
+Date: Thu, 1 Oct 2015 11:57:52 -0700
+Subject: [PATCH] apparmor: temporary work around for bug while unloading policy
+Patch-mainline: TBD
+References: boo#941867
+
+Buglink: https://bugzilla.opensuse.org/show_bug.cgi?id=941867
+
+This patch will stop the bug() call from triggering while unloading/
+replacing policy. It does not address the root cause of the issue
+but will only cause some memory leakage of the sub policies that
+should have been freed before the current profile being destroyed.
+
+Signed-off-by: John Johansen <john.johansen@canonical.com>
+Acked-by: Takashi Iwai <tiwai@suse.de>
+
+---
+ security/apparmor/policy.c |    2 --
+ 1 file changed, 2 deletions(-)
+
+--- a/security/apparmor/policy.c
++++ b/security/apparmor/policy.c
+@@ -157,12 +157,10 @@ static void policy_destroy(struct aa_pol
+ 		AA_ERROR("%s: internal error, "
+ 			 "policy '%s' still contains profiles\n",
+ 			 __func__, policy->name);
+-		BUG();
+ 	}
+ 	if (on_list_rcu(&policy->list)) {
+ 		AA_ERROR("%s: internal error, policy '%s' still on list\n",
+ 			 __func__, policy->name);
+-		BUG();
+ 	}
+ 
+ 	/* don't free name as its a subset of hname */
+patches.apparmor/apparmor-fix-refcount-bug-in-profile-replacement
+From dcda617a0c5160c73e0aa02813c871339ea08004 Mon Sep 17 00:00:00 2001
+From: John Johansen <john.johansen@canonical.com>
+Date: Mon, 11 Apr 2016 16:55:10 -0700
+Subject: [PATCH] apparmor: fix refcount bug in profile replacement
+Git-commit: dcda617a0c5160c73e0aa02813c871339ea08004
+Patch-mainline: 4.8-rc1
+References: bsc#1000304
+
+Signed-off-by: John Johansen <john.johansen@canonical.com>
+Acked-by: Seth Arnold <seth.arnold@canonical.com>
+Acked-by: Takashi Iwai <tiwai@suse.de>
+
+---
+ security/apparmor/policy.c |    4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+--- a/security/apparmor/policy.c
++++ b/security/apparmor/policy.c
+@@ -1188,12 +1188,12 @@ ssize_t aa_replace_profiles(void *udata,
+ 				aa_get_profile(newest);
+ 				aa_put_profile(parent);
+ 				rcu_assign_pointer(ent->new->parent, newest);
+-			} else
+-				aa_put_profile(newest);
++			}
+ 			/* aafs interface uses replacedby */
+ 			rcu_assign_pointer(ent->new->replacedby->profile,
+ 					   aa_get_profile(ent->new));
+ 			__list_add_profile(&parent->base.profiles, ent->new);
++			aa_put_profile(newest);
+ 		} else {
+ 			/* aafs interface uses replacedby */
+ 			rcu_assign_pointer(ent->new->replacedby->profile,
+patches.apparmor/apparmor-fix-replacement-bug-that-adds-new-child-to-
+From ec34fa24a934f4c8fd68f39b84abf34c42e5b06a Mon Sep 17 00:00:00 2001
+From: John Johansen <john.johansen@canonical.com>
+Date: Mon, 11 Apr 2016 16:57:19 -0700
+Subject: [PATCH] apparmor: fix replacement bug that adds new child to old parent
+Git-commit: ec34fa24a934f4c8fd68f39b84abf34c42e5b06a
+Patch-mainline: 4.8-rc1
+References: bsc#1000304
+
+When set atomic replacement is used and the parent is updated before the
+child, and the child did not exist in the old parent so there is no
+direct replacement then the new child is incorrectly added to the old
+parent. This results in the new parent not having the child(ren) that
+it should and the old parent when being destroyed asserting the
+following error.
+
+Apparmor: policy_destroy: internal error, policy '<profile/name>' still
+contains profiles
+
+Signed-off-by: John Johansen <john.johansen@canonical.com>
+Acked-by: Seth Arnold <seth.arnold@canonical.com>
+Acked-by: Takashi Iwai <tiwai@suse.de>
+
+---
+ security/apparmor/policy.c |    2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/security/apparmor/policy.c
++++ b/security/apparmor/policy.c
+@@ -1192,7 +1192,7 @@ ssize_t aa_replace_profiles(void *udata,
+ 			/* aafs interface uses replacedby */
+ 			rcu_assign_pointer(ent->new->replacedby->profile,
+ 					   aa_get_profile(ent->new));
+-			__list_add_profile(&parent->base.profiles, ent->new);
++			__list_add_profile(&newest->base.profiles, ent->new);
+ 			aa_put_profile(newest);
+ 		} else {
+ 			/* aafs interface uses replacedby */
+patches.apparmor/apparmor-fix-uninitialized-lsm_audit-member
+From b6b1b81b3afba922505b57f4c812bba022f7c4a9 Mon Sep 17 00:00:00 2001
+From: John Johansen <john.johansen@canonical.com>
+Date: Sun, 8 Jun 2014 11:20:54 -0700
+Subject: [PATCH] apparmor: fix uninitialized lsm_audit member
+Git-commit: b6b1b81b3afba922505b57f4c812bba022f7c4a9
+Patch-mainline: 4.8-rc1
+References: bsc#1000304
+
+Buglink: http://bugs.launchpad.net/bugs/1268727
+
+The task field in the lsm_audit struct needs to be initialized if
+a change_hat fails, otherwise the following oops will occur
+
+Bug: unable to handle kernel paging request at 0000002fbead7d08
+Ip: [<ffffffff8171153e>] _raw_spin_lock+0xe/0x50
+PGD 1e3f35067 PUD 0
+Oops: 0002 [#1] SMP
+Modules linked in: pppox crc_ccitt p8023 p8022 psnap llc ax25 btrfs raid6_pq xor xfs libcrc32c dm_multipath scsi_dh kvm_amd dcdbas kvm microcode amd64_edac_mod joydev edac_core psmouse edac_mce_amd serio_raw k10temp sp5100_tco i2c_piix4 ipmi_si ipmi_msghandler acpi_power_meter mac_hid lp parport hid_generic usbhid hid pata_acpi mpt2sas ahci raid_class pata_atiixp bnx2 libahci scsi_transport_sas [last unloaded: tipc]
+Cpu: 2 PID: 699 Comm: changehat_twice Tainted: GF          O 3.13.0-7-generic #25-Ubuntu
+Hardware name: Dell Inc. PowerEdge R415/08WNM9, BIOS 1.8.6 12/06/2011
+Task: ffff8802135c6000 ti: ffff880212986000 task.ti: ffff880212986000
+Rip: 0010:[<ffffffff8171153e>]  [<ffffffff8171153e>] _raw_spin_lock+0xe/0x50
+Rsp: 0018:ffff880212987b68  EFLAGS: 00010006
+Rax: 0000000000020000 RBX: 0000002fbead7500 RCX: 0000000000000000
+Rdx: 0000000000000292 RSI: ffff880212987ba8 RDI: 0000002fbead7d08
+Rbp: ffff880212987b68 R08: 0000000000000246 R09: ffff880216e572a0
+R10: ffffffff815fd677 R11: ffffea0008469580 R12: ffffffff8130966f
+R13: ffff880212987ba8 R14: 0000002fbead7d08 R15: ffff8800d8c6b830
+Fs: 00002b5e6c84e7c0(0000) GS:ffff880216e40000(0000) knlGS:0000000055731700
+Cs: 0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+Cr2: 0000002fbead7d08 CR3: 000000021270f000 CR4: 00000000000006e0
+Stack: ffff880212987b98 ffffffff81075f17 ffffffff8130966f 0000000000000009 0000000000000000 0000000000000000 ffff880212987bd0 ffffffff81075f7c 0000000000000292 ffff880212987c08 ffff8800d8c6b800 0000000000000026
+Call Trace:
+ [<ffffffff81075f17>] __lock_task_sighand+0x47/0x80
+ [<ffffffff8130966f>] ? apparmor_cred_prepare+0x2f/0x50
+ [<ffffffff81075f7c>] do_send_sig_info+0x2c/0x80
+ [<ffffffff81075fee>] send_sig_info+0x1e/0x30
+ [<ffffffff8130242d>] aa_audit+0x13d/0x190
+ [<ffffffff8130c1dc>] aa_audit_file+0xbc/0x130
+ [<ffffffff8130966f>] ? apparmor_cred_prepare+0x2f/0x50
+ [<ffffffff81304cc2>] aa_change_hat+0x202/0x530
+ [<ffffffff81308fc6>] aa_setprocattr_changehat+0x116/0x1d0
+ [<ffffffff8130a11d>] apparmor_setprocattr+0x25d/0x300
+ [<ffffffff812cee56>] security_setprocattr+0x16/0x20
+ [<ffffffff8121fc87>] proc_pid_attr_write+0x107/0x130
+ [<ffffffff811b7604>] vfs_write+0xb4/0x1f0
+ [<ffffffff811b8039>] SyS_write+0x49/0xa0
+ [<ffffffff8171a1bf>] tracesys+0xe1/0xe6
+
+Signed-off-by: John Johansen <john.johansen@canonical.com>
+Acked-by: Seth Arnold <seth.arnold@canonical.com>
+Acked-by: Takashi Iwai <tiwai@suse.de>
+
+---
+ security/apparmor/audit.c |    3 ++-
+ security/apparmor/file.c  |    3 ++-
+ 2 files changed, 4 insertions(+), 2 deletions(-)
+
+--- a/security/apparmor/audit.c
++++ b/security/apparmor/audit.c
+@@ -200,7 +200,8 @@ int aa_audit(int type, struct aa_profile
+ 
+ 	if (sa->aad->type == AUDIT_APPARMOR_KILL)
+ 		(void)send_sig_info(SIGKILL, NULL,
+-				    sa->u.tsk ?  sa->u.tsk : current);
++			sa->type == LSM_AUDIT_DATA_TASK && sa->u.tsk ?
++				    sa->u.tsk : current);
+ 
+ 	if (sa->aad->type == AUDIT_APPARMOR_ALLOWED)
+ 		return complain_error(sa->aad->error);
+--- a/security/apparmor/file.c
++++ b/security/apparmor/file.c
+@@ -110,7 +110,8 @@ int aa_audit_file(struct aa_profile *pro
+ 	int type = AUDIT_APPARMOR_AUTO;
+ 	struct common_audit_data sa;
+ 	struct apparmor_audit_data aad = {0,};
+-	sa.type = LSM_AUDIT_DATA_NONE;
++	sa.type = LSM_AUDIT_DATA_TASK;
++	sa.u.tsk = NULL;
+ 	sa.aad = &aad;
+ 	aad.op = op,
+ 	aad.fs.request = request;
+patches.apparmor/apparmor-exec-should-not-be-returning-ENOENT-when-it
+From 9049a7922124d843a2cd26a02b1d00a17596ec0c Mon Sep 17 00:00:00 2001
+From: John Johansen <john.johansen@canonical.com>
+Date: Fri, 25 Jul 2014 04:02:03 -0700
+Subject: [PATCH] apparmor: exec should not be returning ENOENT when it denies
+Git-commit: 9049a7922124d843a2cd26a02b1d00a17596ec0c
+Patch-mainline: 4.8-rc1
+References: bsc#1000304
+
+The current behavior is confusing as it causes exec failures to report
+the executable is missing instead of identifying that apparmor
+caused the failure.
+
+Signed-off-by: John Johansen <john.johansen@canonical.com>
+Acked-by: Seth Arnold <seth.arnold@canonical.com>
+Acked-by: Takashi Iwai <tiwai@suse.de>
+
+---
+ security/apparmor/domain.c |    2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/security/apparmor/domain.c
++++ b/security/apparmor/domain.c
+@@ -433,7 +433,7 @@ int apparmor_bprm_set_creds(struct linux
+ 				new_profile = aa_get_newest_profile(ns->unconfined);
+ 				info = "ux fallback";
+ 			} else {
+-				error = -ENOENT;
++				error = -EACCES;
+ 				info = "profile not found";
+ 				/* remove MAY_EXEC to audit as failure */
+ 				perms.allow &= ~MAY_EXEC;
+patches.apparmor/apparmor-fix-update-the-mtime-of-the-profile-file-on
+From d671e890205a663429da74e1972e652bea4d73ab Mon Sep 17 00:00:00 2001
+From: John Johansen <john.johansen@canonical.com>
+Date: Fri, 25 Jul 2014 04:01:56 -0700
+Subject: [PATCH] apparmor: fix update the mtime of the profile file on replacement
+Git-commit: d671e890205a663429da74e1972e652bea4d73ab
+Patch-mainline: 4.8-rc1
+References: bsc#1000304
+
+Signed-off-by: John Johansen <john.johansen@canonical.com>
+Acked-by: Seth Arnold <seth.arnold@canonical.com>
+Acked-by: Takashi Iwai <tiwai@suse.de>
+
+---
+ security/apparmor/apparmorfs.c |    2 ++
+ 1 file changed, 2 insertions(+)
+
+--- a/security/apparmor/apparmorfs.c
++++ b/security/apparmor/apparmorfs.c
+@@ -380,6 +380,8 @@ void __aa_fs_profile_migrate_dents(struc
+ 
+ 	for (i = 0; i < AAFS_PROF_SIZEOF; i++) {
+ 		new->dents[i] = old->dents[i];
++		if (new->dents[i])
++			new->dents[i]->d_inode->i_mtime = CURRENT_TIME;
+ 		old->dents[i] = NULL;
+ 	}
+ }
+patches.apparmor/apparmor-fix-disconnected-bind-mnts-reconnection
+From f2e561d190da7ff5ee265fa460e2d7f753dddfda Mon Sep 17 00:00:00 2001
+From: John Johansen <john.johansen@canonical.com>
+Date: Fri, 25 Jul 2014 04:02:08 -0700
+Subject: [PATCH] apparmor: fix disconnected bind mnts reconnection
+Git-commit: f2e561d190da7ff5ee265fa460e2d7f753dddfda
+Patch-mainline: 4.8-rc1
+References: bsc#1000304
+
+Bind mounts can fail to be properly reconnected when PATH_CONNECT is
+specified. Ensure that when PATH_CONNECT is specified the path has
+a root.
+
+Buglink: http://bugs.launchpad.net/bugs/1319984
+
+Signed-off-by: John Johansen <john.johansen@canonical.com>
+Acked-by: Seth Arnold <seth.arnold@canonical.com>
+Acked-by: Takashi Iwai <tiwai@suse.de>
+
+---
+ security/apparmor/path.c |    5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+--- a/security/apparmor/path.c
++++ b/security/apparmor/path.c
+@@ -141,7 +141,10 @@ static int d_namespace_path(struct path
+ 			error = -EACCES;
+ 			if (*res == '/')
+ 				*name = res + 1;
+-		}
++		} else if (*res != '/')
++			/* CONNECT_PATH with missing root */
++			error = prepend(name, *name - buf, "/", 1);
++
+ 	}
+ 
+ out:
+patches.apparmor/apparmor-internal-paths-should-be-treated-as-disconn
+From bd35db8b8ca6e27fc17a9057ef78e1ddfc0de351 Mon Sep 17 00:00:00 2001
+From: John Johansen <john.johansen@canonical.com>
+Date: Fri, 25 Jul 2014 04:02:10 -0700
+Subject: [PATCH] apparmor: internal paths should be treated as disconnected
+Git-commit: bd35db8b8ca6e27fc17a9057ef78e1ddfc0de351
+Patch-mainline: 4.8-rc1
+References: bsc#1000304
+
+Internal mounts are not mounted anywhere and as such should be treated
+as disconnected paths.
+
+Signed-off-by: John Johansen <john.johansen@canonical.com>
+Acked-by: Seth Arnold <seth.arnold@canonical.com>
+Acked-by: Takashi Iwai <tiwai@suse.de>
+
+---
+ security/apparmor/path.c |   64 ++++++++++++++++++++++++++---------------------
+ 1 file changed, 36 insertions(+), 28 deletions(-)
+
+--- a/security/apparmor/path.c
++++ b/security/apparmor/path.c
+@@ -25,7 +25,6 @@
+ #include "include/path.h"
+ #include "include/policy.h"
+ 
+-
+ /* modified from dcache.c */
+ static int prepend(char **buffer, int buflen, const char *str, int namelen)
+ {
+@@ -39,6 +38,38 @@ static int prepend(char **buffer, int bu
+ 
+ #define CHROOT_NSCONNECT (PATH_CHROOT_REL | PATH_CHROOT_NSCONNECT)
+ 
++/* If the path is not connected to the expected root,
++ * check if it is a sysctl and handle specially else remove any
++ * leading / that __d_path may have returned.
++ * Unless
++ *     specifically directed to connect the path,
++ * OR
++ *     if in a chroot and doing chroot relative paths and the path
++ *     resolves to the namespace root (would be connected outside
++ *     of chroot) and specifically directed to connect paths to
++ *     namespace root.
++ */
++static int disconnect(const struct path *path, char *buf, char **name,
++		      int flags)
++{
++	int error = 0;
++
++	if (!(flags & PATH_CONNECT_PATH) &&
++	    !(((flags & CHROOT_NSCONNECT) == CHROOT_NSCONNECT) &&
++	      our_mnt(path->mnt))) {
++		/* disconnected path, don't return pathname starting
++		 * with '/'
++		 */
++		error = -EACCES;
++		if (**name == '/')
++			*name = *name + 1;
++	} else if (**name != '/')
++		/* CONNECT_PATH with missing root */
++		error = prepend(name, *name - buf, "/", 1);
++
++	return error;
++}
++
+ /**
+  * d_namespace_path - lookup a name associated with a given path
+  * @path: path to lookup  (NOT NULL)
+@@ -74,7 +105,8 @@ static int d_namespace_path(struct path
+ 			 * control instead of hard coded /proc
+ 			 */
+ 			return prepend(name, *name - buf, "/proc", 5);
+-		}
++		} else
++			return disconnect(path, buf, name, flags);
+ 		return 0;
+ 	}
+ 
+@@ -120,32 +152,8 @@ static int d_namespace_path(struct path
+ 			goto out;
+ 	}
+ 
+-	/* If the path is not connected to the expected root,
+-	 * check if it is a sysctl and handle specially else remove any
+-	 * leading / that __d_path may have returned.
+-	 * Unless
+-	 *     specifically directed to connect the path,
+-	 * OR
+-	 *     if in a chroot and doing chroot relative paths and the path
+-	 *     resolves to the namespace root (would be connected outside
+-	 *     of chroot) and specifically directed to connect paths to
+-	 *     namespace root.
+-	 */
+-	if (!connected) {
+-		if (!(flags & PATH_CONNECT_PATH) &&
+-			   !(((flags & CHROOT_NSCONNECT) == CHROOT_NSCONNECT) &&
+-			     our_mnt(path->mnt))) {
+-			/* disconnected path, don't return pathname starting
+-			 * with '/'
+-			 */
+-			error = -EACCES;
+-			if (*res == '/')
+-				*name = res + 1;
+-		} else if (*res != '/')
+-			/* CONNECT_PATH with missing root */
+-			error = prepend(name, *name - buf, "/", 1);
+-
+-	}
++	if (!connected)
++		error = disconnect(path, buf, name, flags);
+ 
+ out:
+ 	return error;
+patches.apparmor/apparmor-fix-put-parent-ref-after-updating-the-activ
+From f351841f8d41072e741e45299070d421a5833a4a Mon Sep 17 00:00:00 2001
+From: John Johansen <john.johansen@canonical.com>
+Date: Sat, 16 Apr 2016 13:59:02 -0700
+Subject: [PATCH] apparmor: fix put() parent ref after updating the active ref
+Git-commit: f351841f8d41072e741e45299070d421a5833a4a
+Patch-mainline: 4.8-rc1
+References: bsc#1000304
+
+Signed-off-by: John Johansen <john.johansen@canonical.com>
+Acked-by: Seth Arnold <seth.arnold@canonical.com>
+Acked-by: Takashi Iwai <tiwai@suse.de>
+
+---
+ security/apparmor/policy.c |    2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/security/apparmor/policy.c
++++ b/security/apparmor/policy.c
+@@ -1186,8 +1186,8 @@ ssize_t aa_replace_profiles(void *udata,
+ 			/* parent replaced in this atomic set? */
+ 			if (newest != parent) {
+ 				aa_get_profile(newest);
+-				aa_put_profile(parent);
+ 				rcu_assign_pointer(ent->new->parent, newest);
++				aa_put_profile(parent);
+ 			}
+ 			/* aafs interface uses replacedby */
+ 			rcu_assign_pointer(ent->new->replacedby->profile,
+patches.apparmor/apparmor-fix-log-failures-for-all-profiles-in-a-set
+From bf15cf0c641be8e57d45f110a9d91464f5bb461a Mon Sep 17 00:00:00 2001
+From: John Johansen <john.johansen@canonical.com>
+Date: Sat, 16 Apr 2016 14:16:50 -0700
+Subject: [PATCH] apparmor: fix log failures for all profiles in a set
+Git-commit: bf15cf0c641be8e57d45f110a9d91464f5bb461a
+Patch-mainline: 4.8-rc1
+References: bsc#1000304
+
+currently only the profile that is causing the failure is logged. This
+makes it more confusing than necessary about which profiles loaded
+and which didn't. So make sure to log success and failure messages for
+all profiles in the set being loaded.
+
+Signed-off-by: John Johansen <john.johansen@canonical.com>
+Acked-by: Seth Arnold <seth.arnold@canonical.com>
+Acked-by: Takashi Iwai <tiwai@suse.de>
+
+---
+ security/apparmor/policy.c |   29 +++++++++++++++++++----------
+ 1 file changed, 19 insertions(+), 10 deletions(-)
+
+--- a/security/apparmor/policy.c
++++ b/security/apparmor/policy.c
+@@ -1066,7 +1066,7 @@ static int __lookup_replace(struct aa_na
+  */
+ ssize_t aa_replace_profiles(void *udata, size_t size, bool noreplace)
+ {
+-	const char *ns_name, *name = NULL, *info = NULL;
++	const char *ns_name, *info = NULL;
+ 	struct aa_namespace *ns = NULL;
+ 	struct aa_load_ent *ent, *tmp;
+ 	int op = OP_PROF_REPL;
+@@ -1081,18 +1081,15 @@ ssize_t aa_replace_profiles(void *udata,
+ 	/* released below */
+ 	ns = aa_prepare_namespace(ns_name);
+ 	if (!ns) {
+-		info = "failed to prepare namespace";
+-		error = -ENOMEM;
+-		name = ns_name;
+-		goto fail;
++		error = audit_policy(op, GFP_KERNEL, ns_name,
++				     "failed to prepare namespace", -ENOMEM);
++		goto free;
+ 	}
+ 
+ 	mutex_lock(&ns->lock);
+ 	/* setup parent and ns info */
+ 	list_for_each_entry(ent, &lh, list) {
+ 		struct aa_policy *policy;
+-
+-		name = ent->new->base.hname;
+ 		error = __lookup_replace(ns, ent->new->base.hname, noreplace,
+ 					 &ent->old, &info);
+ 		if (error)
+@@ -1120,7 +1117,6 @@ ssize_t aa_replace_profiles(void *udata,
+ 			if (!p) {
+ 				error = -ENOENT;
+ 				info = "parent does not exist";
+-				name = ent->new->base.hname;
+ 				goto fail_lock;
+ 			}
+ 			rcu_assign_pointer(ent->new->parent, aa_get_profile(p));
+@@ -1213,9 +1209,22 @@ out:
+ 
+ fail_lock:
+ 	mutex_unlock(&ns->lock);
+-fail:
+-	error = audit_policy(op, GFP_KERNEL, name, info, error);
+ 
++	/* audit cause of failure */
++	op = (!ent->old) ? OP_PROF_LOAD : OP_PROF_REPL;
++	audit_policy(op, GFP_KERNEL, ent->new->base.hname, info, error);
++	/* audit status that rest of profiles in the atomic set failed too */
++	info = "valid profile in failed atomic policy load";
++	list_for_each_entry(tmp, &lh, list) {
++		if (tmp == ent) {
++			info = "unchecked profile in failed atomic policy load";
++			/* skip entry that caused failure */
++			continue;
++		}
++		op = (!ent->old) ? OP_PROF_LOAD : OP_PROF_REPL;
++		audit_policy(op, GFP_KERNEL, tmp->new->base.hname, info, error);
++	}
++free:
+ 	list_for_each_entry_safe(ent, tmp, &lh, list) {
+ 		list_del_init(&ent->list);
+ 		aa_load_ent_free(ent);
+patches.apparmor/apparmor-fix-audit-full-profile-hname-on-successful-
+From 7ee6da25dcce27b6023a8673fdf8be98dcf7cacf Mon Sep 17 00:00:00 2001
+From: John Johansen <john.johansen@canonical.com>
+Date: Sat, 16 Apr 2016 14:19:38 -0700
+Subject: [PATCH] apparmor: fix audit full profile hname on successful load
+Git-commit: 7ee6da25dcce27b6023a8673fdf8be98dcf7cacf
+Patch-mainline: 4.8-rc1
+References: bsc#1000304
+
+Currently logging of a successful profile load only logs the basename
+of the profile. This can result in confusion when a child profile has
+the same name as the another profile in the set. Logging the hname
+will ensure there is no confusion.
+
+Signed-off-by: John Johansen <john.johansen@canonical.com>
+Acked-by: Seth Arnold <seth.arnold@canonical.com>
+Acked-by: Takashi Iwai <tiwai@suse.de>
+
+---
+ security/apparmor/policy.c |    2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/security/apparmor/policy.c
++++ b/security/apparmor/policy.c
+@@ -1158,7 +1158,7 @@ ssize_t aa_replace_profiles(void *udata,
+ 		list_del_init(&ent->list);
+ 		op = (!ent->old && !ent->rename) ? OP_PROF_LOAD : OP_PROF_REPL;
+ 
+-		audit_policy(op, GFP_ATOMIC, ent->new->base.name, NULL, error);
++		audit_policy(op, GFP_ATOMIC, ent->new->base.hname, NULL, error);
+ 
+ 		if (ent->old) {
+ 			__replace_profile(ent->old, ent->new, 1);
+patches.apparmor/apparmor-ensure-the-target-profile-name-is-always-au
+From f7da2de01127b58d93cebeab165136d0998e7b1a Mon Sep 17 00:00:00 2001
+From: John Johansen <john.johansen@canonical.com>
+Date: Wed, 20 Apr 2016 14:18:18 -0700
+Subject: [PATCH] apparmor: ensure the target profile name is always audited
+Git-commit: f7da2de01127b58d93cebeab165136d0998e7b1a
+Patch-mainline: 4.8-rc1
+References: bsc#1000304
+
+The target profile name was not being correctly audited in a few
+cases because the target variable was not being set and gotos
+passed the code to set it at apply:
+
+Since it is always based on new_profile just drop the target var
+and conditionally report based on new_profile.
+
+Signed-off-by: John Johansen <john.johansen@canonical.com>
+Acked-by: Seth Arnold <seth.arnold@canonical.com>
+Acked-by: Takashi Iwai <tiwai@suse.de>
+
+---
+ security/apparmor/domain.c |   20 +++++++++-----------
+ 1 file changed, 9 insertions(+), 11 deletions(-)
+
+--- a/security/apparmor/domain.c
++++ b/security/apparmor/domain.c
+@@ -346,7 +346,7 @@ int apparmor_bprm_set_creds(struct linux
+ 		file_inode(bprm->file)->i_uid,
+ 		file_inode(bprm->file)->i_mode
+ 	};
+-	const char *name = NULL, *target = NULL, *info = NULL;
++	const char *name = NULL, *info = NULL;
+ 	int error = cap_bprm_set_creds(bprm);
+ 	if (error)
+ 		return error;
+@@ -401,6 +401,7 @@ int apparmor_bprm_set_creds(struct linux
+ 	if (cxt->onexec) {
+ 		struct file_perms cp;
+ 		info = "change_profile onexec";
++		new_profile = aa_get_newest_profile(cxt->onexec);
+ 		if (!(perms.allow & AA_MAY_ONEXEC))
+ 			goto audit;
+ 
+@@ -415,7 +416,6 @@ int apparmor_bprm_set_creds(struct linux
+ 
+ 		if (!(cp.allow & AA_MAY_ONEXEC))
+ 			goto audit;
+-		new_profile = aa_get_newest_profile(cxt->onexec);
+ 		goto apply;
+ 	}
+ 
+@@ -447,10 +447,8 @@ int apparmor_bprm_set_creds(struct linux
+ 		if (!new_profile) {
+ 			error = -ENOMEM;
+ 			info = "could not create null profile";
+-		} else {
++		} else
+ 			error = -EACCES;
+-			target = new_profile->base.hname;
+-		}
+ 		perms.xindex |= AA_X_UNSAFE;
+ 	} else
+ 		/* fail exec */
+@@ -461,7 +459,6 @@ int apparmor_bprm_set_creds(struct linux
+ 	 * fail the exec.
+ 	 */
+ 	if (bprm->unsafe & LSM_UNSAFE_NO_NEW_PRIVS) {
+-		aa_put_profile(new_profile);
+ 		error = -EPERM;
+ 		goto cleanup;
+ 	}
+@@ -476,10 +473,8 @@ int apparmor_bprm_set_creds(struct linux
+ 
+ 	if (bprm->unsafe & (LSM_UNSAFE_PTRACE | LSM_UNSAFE_PTRACE_CAP)) {
+ 		error = may_change_ptraced_domain(new_profile);
+-		if (error) {
+-			aa_put_profile(new_profile);
++		if (error)
+ 			goto audit;
+-		}
+ 	}
+ 
+ 	/* Determine if secure exec is needed.
+@@ -500,7 +495,6 @@ int apparmor_bprm_set_creds(struct linux
+ 		bprm->unsafe |= AA_SECURE_X_NEEDED;
+ 	}
+ apply:
+-	target = new_profile->base.hname;
+ 	/* when transitioning profiles clear unsafe personality bits */
+ 	bprm->per_clear |= PER_CLEAR_ON_SETID;
+ 
+@@ -508,15 +502,19 @@ x_clear:
+ 	aa_put_profile(cxt->profile);
+ 	/* transfer new profile reference will be released when cxt is freed */
+ 	cxt->profile = new_profile;
++	new_profile = NULL;
+ 
+ 	/* clear out all temporary/transitional state from the context */
+ 	aa_clear_task_cxt_trans(cxt);
+ 
+ audit:
+ 	error = aa_audit_file(profile, &perms, GFP_KERNEL, OP_EXEC, MAY_EXEC,
+-			      name, target, cond.uid, info, error);
++			      name,
++			      new_profile ? new_profile->base.hname : NULL,
++			      cond.uid, info, error);
+ 
+ cleanup:
++	aa_put_profile(new_profile);
+ 	aa_put_profile(profile);
+ 	kfree(buffer);
+ 
+patches.apparmor/apparmor-check-that-xindex-is-in-trans_table-bounds
+From 23ca7b640b4a55f8747301b6bd984dd05545f6a7 Mon Sep 17 00:00:00 2001
+From: John Johansen <john.johansen@canonical.com>
+Date: Thu, 17 Mar 2016 12:02:54 -0700
+Subject: [PATCH] apparmor: check that xindex is in trans_table bounds
+Git-commit: 23ca7b640b4a55f8747301b6bd984dd05545f6a7
+Patch-mainline: 4.8-rc1
+References: bsc#1000304
+
+Signed-off-by: John Johansen <john.johansen@canonical.com>
+Acked-by: Seth Arnold <seth.arnold@canonical.com>
+Acked-by: Takashi Iwai <tiwai@suse.de>
+
+---
+ security/apparmor/policy_unpack.c |    2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/security/apparmor/policy_unpack.c
++++ b/security/apparmor/policy_unpack.c
+@@ -722,7 +722,7 @@ static bool verify_xindex(int xindex, in
+ 	int index, xtype;
+ 	xtype = xindex & AA_X_TYPE_MASK;
+ 	index = xindex & AA_X_INDEX_MASK;
+-	if (xtype == AA_X_TABLE && index > table_size)
++	if (xtype == AA_X_TABLE && index >= table_size)
+ 		return 0;
+ 	return 1;
+ }
+patches.apparmor/apparmor-fix-refcount-race-when-finding-a-child-prof
+From de7c4cc947f9f56f61520ee7edaf380434a98c8d Mon Sep 17 00:00:00 2001
+From: John Johansen <john.johansen@canonical.com>
+Date: Wed, 16 Dec 2015 18:09:10 -0800
+Subject: [PATCH] apparmor: fix refcount race when finding a child profile
+Git-commit: de7c4cc947f9f56f61520ee7edaf380434a98c8d
+Patch-mainline: 4.8-rc1
+References: bsc#1000304
+
+When finding a child profile via an rcu critical section, the profile
+may be put and scheduled for deletion after the child is found but
+before its refcount is incremented.
+
+Protect against this by repeating the lookup if the profiles refcount
+is 0 and is one its way to deletion.
+
+Signed-off-by: John Johansen <john.johansen@canonical.com>
+Acked-by: Seth Arnold <seth.arnold@canonical.com>
+Acked-by: Takashi Iwai <tiwai@suse.de>
+
+---
+ security/apparmor/policy.c |    4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+--- a/security/apparmor/policy.c
++++ b/security/apparmor/policy.c
+@@ -765,7 +765,9 @@ struct aa_profile *aa_find_child(struct
+ 	struct aa_profile *profile;
+ 
+ 	rcu_read_lock();
+-	profile = aa_get_profile(__find_child(&parent->base.profiles, name));
++	do {
++		profile = __find_child(&parent->base.profiles, name);
++	} while (profile && !aa_get_profile_not0(profile));
+ 	rcu_read_unlock();
+ 
+ 	/* refcount released by caller */
+patches.apparmor/apparmor-use-list_next_entry-instead-of-list_entry_n
+From 38dbd7d8be36b5e68c96a24b406f3653180c1c03 Mon Sep 17 00:00:00 2001
+From: Geliang Tang <geliangtang@163.com>
+Date: Mon, 16 Nov 2015 21:46:33 +0800
+Subject: [PATCH] apparmor: use list_next_entry instead of list_entry_next
+Git-commit: 38dbd7d8be36b5e68c96a24b406f3653180c1c03
+Patch-mainline: 4.8-rc1
+References: bsc#1000304
+
+list_next_entry has been defined in list.h, so I replace list_entry_next
+with it.
+
+Signed-off-by: Geliang Tang <geliangtang@163.com>
+Acked-by: Serge Hallyn <serge.hallyn@canonical.com>
+Signed-off-by: John Johansen <john.johansen@canonical.com>
+Acked-by: Takashi Iwai <tiwai@suse.de>
+
+---
+ security/apparmor/apparmorfs.c |    8 +++-----
+ 1 file changed, 3 insertions(+), 5 deletions(-)
+
+--- a/security/apparmor/apparmorfs.c
++++ b/security/apparmor/apparmorfs.c
+@@ -552,8 +552,6 @@ fail2:
+ }
+ 
+ 
+-#define list_entry_next(pos, member) \
+-	list_entry(pos->member.next, typeof(*pos), member)
+ #define list_entry_is_head(pos, head, member) (&pos->member == (head))
+ 
+ /**
+@@ -584,7 +582,7 @@ static struct aa_namespace *__next_names
+ 	parent = ns->parent;
+ 	while (ns != root) {
+ 		mutex_unlock(&ns->lock);
+-		next = list_entry_next(ns, base.list);
++		next = list_next_entry(ns, base.list);
+ 		if (!list_entry_is_head(next, &parent->sub_ns, base.list)) {
+ 			mutex_lock(&next->lock);
+ 			return next;
+@@ -638,7 +636,7 @@ static struct aa_profile *__next_profile
+ 	parent = rcu_dereference_protected(p->parent,
+ 					   mutex_is_locked(&p->ns->lock));
+ 	while (parent) {
+-		p = list_entry_next(p, base.list);
++		p = list_next_entry(p, base.list);
+ 		if (!list_entry_is_head(p, &parent->base.profiles, base.list))
+ 			return p;
+ 		p = parent;
+@@ -647,7 +645,7 @@ static struct aa_profile *__next_profile
+ 	}
+ 
+ 	/* is next another profile in the namespace */
+-	p = list_entry_next(p, base.list);
++	p = list_next_entry(p, base.list);
+ 	if (!list_entry_is_head(p, &ns->base.profiles, base.list))
+ 		return p;
+ 
+patches.apparmor/apparmor-add-missing-id-bounds-check-on-dfa-verifica
+From 15756178c6a65b261a080e21af4766f59cafc112 Mon Sep 17 00:00:00 2001
+From: John Johansen <john.johansen@canonical.com>
+Date: Thu, 2 Jun 2016 02:37:02 -0700
+Subject: [PATCH] apparmor: add missing id bounds check on dfa verification
+Git-commit: 15756178c6a65b261a080e21af4766f59cafc112
+Patch-mainline: 4.8-rc1
+References: bsc#1000304
+
+Signed-off-by: John Johansen <john.johansen@canonical.com>
+Acked-by: Takashi Iwai <tiwai@suse.de>
+
+---
+ security/apparmor/include/match.h |    1 +
+ security/apparmor/match.c         |    2 ++
+ 2 files changed, 3 insertions(+)
+
+--- a/security/apparmor/include/match.h
++++ b/security/apparmor/include/match.h
+@@ -62,6 +62,7 @@ struct table_set_header {
+ #define YYTD_ID_ACCEPT2 6
+ #define YYTD_ID_NXT	7
+ #define YYTD_ID_TSIZE	8
++#define YYTD_ID_MAX	8
+ 
+ #define YYTD_DATA8	1
+ #define YYTD_DATA16	2
+--- a/security/apparmor/match.c
++++ b/security/apparmor/match.c
+@@ -47,6 +47,8 @@ static struct table_header *unpack_table
+ 	 * it every time we use td_id as an index
+ 	 */
+ 	th.td_id = be16_to_cpu(*(u16 *) (blob)) - 1;
++	if (th.td_id > YYTD_ID_MAX)
++		goto out;
+ 	th.td_flags = be16_to_cpu(*(u16 *) (blob + 2));
+ 	th.td_lolen = be32_to_cpu(*(u32 *) (blob + 8));
+ 	blob += sizeof(struct table_header);
+patches.apparmor/apparmor-don-t-check-for-vmalloc_addr-if-kvzalloc-fa
+From 3197f5adf539a3ee6331f433a51483f8c842f890 Mon Sep 17 00:00:00 2001
+From: John Johansen <john.johansen@canonical.com>
+Date: Wed, 15 Jun 2016 09:57:55 +0300
+Subject: [PATCH] apparmor: don't check for vmalloc_addr if kvzalloc() failed
+Git-commit: 3197f5adf539a3ee6331f433a51483f8c842f890
+Patch-mainline: 4.8-rc1
+References: bsc#1000304
+
+Signed-off-by: John Johansen <john.johansen@canonical.com>
+Acked-by: Takashi Iwai <tiwai@suse.de>
+
+---
+ security/apparmor/match.c |   10 +++++-----
+ 1 file changed, 5 insertions(+), 5 deletions(-)
+
+--- a/security/apparmor/match.c
++++ b/security/apparmor/match.c
+@@ -75,14 +75,14 @@ static struct table_header *unpack_table
+ 				     u32, be32_to_cpu);
+ 		else
+ 			goto fail;
++		/* if table was vmalloced make sure the page tables are synced
++		 * before it is used, as it goes live to all cpus.
++		 */
++		if (is_vmalloc_addr(table))
++			vm_unmap_aliases();
+ 	}
+ 
+ out:
+-	/* if table was vmalloced make sure the page tables are synced
+-	 * before it is used, as it goes live to all cpus.
+-	 */
+-	if (is_vmalloc_addr(table))
+-		vm_unmap_aliases();
+ 	return table;
+ fail:
+ 	kvfree(table);
+patches.apparmor/apparmor-fix-oops-in-profile_unpack-when-policy_db-i
+From 5f20fdfed16bc599a325a145bf0123a8e1c9beea Mon Sep 17 00:00:00 2001
+From: John Johansen <john.johansen@canonical.com>
+Date: Wed, 15 Jun 2016 10:00:55 +0300
+Subject: [PATCH] apparmor: fix oops in profile_unpack() when policy_db is not present
+Git-commit: 5f20fdfed16bc599a325a145bf0123a8e1c9beea
+Patch-mainline: 4.8-rc1
+References: bsc#1000304
+
+Buglink: http://bugs.launchpad.net/bugs/1592547
+
+If unpack_dfa() returns NULL due to the dfa not being present,
+profile_unpack() is not checking if the dfa is not present (NULL).
+
+Signed-off-by: John Johansen <john.johansen@canonical.com>
+Acked-by: Takashi Iwai <tiwai@suse.de>
+
+---
+ security/apparmor/policy_unpack.c |    3 +++
+ 1 file changed, 3 insertions(+)
+
+--- a/security/apparmor/policy_unpack.c
++++ b/security/apparmor/policy_unpack.c
+@@ -629,6 +629,9 @@ static struct aa_profile *unpack_profile
+ 			error = PTR_ERR(profile->policy.dfa);
+ 			profile->policy.dfa = NULL;
+ 			goto fail;
++		} else if (!profile->policy.dfa) {
++			error = -EPROTO;
++			goto fail;
+ 		}
+ 		if (!unpack_u32(e, &profile->policy.start[0], "start"))
+ 			/* default start state */
+patches.apparmor/apparmor-fix-module-parameters-can-be-changed-after-
+From 58acf9d911c8831156634a44d0b022d683e1e50c Mon Sep 17 00:00:00 2001
+From: John Johansen <john.johansen@canonical.com>
+Date: Wed, 22 Jun 2016 18:01:08 -0700
+Subject: [PATCH] apparmor: fix module parameters can be changed after policy is locked
+Git-commit: 58acf9d911c8831156634a44d0b022d683e1e50c
+Patch-mainline: 4.8-rc1
+References: bsc#1000304
+
+the policy_lock parameter is a one way switch that prevents policy
+from being further modified. Unfortunately some of the module parameters
+can effectively modify policy by turning off enforcement.
+
+split policy_admin_capable into a view check and a full admin check,
+and update the admin check to test the policy_lock parameter.
+
+Signed-off-by: John Johansen <john.johansen@canonical.com>
+Acked-by: Takashi Iwai <tiwai@suse.de>
+
+---
+ security/apparmor/include/policy.h |    2 ++
+ security/apparmor/lsm.c            |   22 ++++++++++------------
+ security/apparmor/policy.c         |   18 +++++++++++++++++-
+ 3 files changed, 29 insertions(+), 13 deletions(-)
+
+--- a/security/apparmor/include/policy.h
++++ b/security/apparmor/include/policy.h
+@@ -406,6 +406,8 @@ static inline int AUDIT_MODE(struct aa_p
+ 	return profile->audit;
+ }
+ 
++bool policy_view_capable(void);
++bool policy_admin_capable(void);
+ bool aa_may_manage_policy(int op);
+ 
+ #endif /* __AA_POLICY_H */
+--- a/security/apparmor/lsm.c
++++ b/security/apparmor/lsm.c
+@@ -874,51 +874,49 @@ __setup("apparmor=", apparmor_enabled_se
+ /* set global flag turning off the ability to load policy */
+ static int param_set_aalockpolicy(const char *val, const struct kernel_param *kp)
+ {
+-	if (!capable(CAP_MAC_ADMIN))
++	if (!policy_admin_capable())
+ 		return -EPERM;
+-	if (aa_g_lock_policy)
+-		return -EACCES;
+ 	return param_set_bool(val, kp);
+ }
+ 
+ static int param_get_aalockpolicy(char *buffer, const struct kernel_param *kp)
+ {
+-	if (!capable(CAP_MAC_ADMIN))
++	if (!policy_view_capable())
+ 		return -EPERM;
+ 	return param_get_bool(buffer, kp);
+ }
+ 
+ static int param_set_aabool(const char *val, const struct kernel_param *kp)
+ {
+-	if (!capable(CAP_MAC_ADMIN))
++	if (!policy_admin_capable())
+ 		return -EPERM;
+ 	return param_set_bool(val, kp);
+ }
+ 
+ static int param_get_aabool(char *buffer, const struct kernel_param *kp)
+ {
+-	if (!capable(CAP_MAC_ADMIN))
++	if (!policy_view_capable())
+ 		return -EPERM;
+ 	return param_get_bool(buffer, kp);
+ }
+ 
+ static int param_set_aauint(const char *val, const struct kernel_param *kp)
+ {
+-	if (!capable(CAP_MAC_ADMIN))
++	if (!policy_admin_capable())
+ 		return -EPERM;
+ 	return param_set_uint(val, kp);
+ }
+ 
+ static int param_get_aauint(char *buffer, const struct kernel_param *kp)
+ {
+-	if (!capable(CAP_MAC_ADMIN))
++	if (!policy_view_capable())
+ 		return -EPERM;
+ 	return param_get_uint(buffer, kp);
+ }
+ 
+ static int param_get_audit(char *buffer, struct kernel_param *kp)
+ {
+-	if (!capable(CAP_MAC_ADMIN))
++	if (!policy_view_capable())
+ 		return -EPERM;
+ 
+ 	if (!apparmor_enabled)
+@@ -930,7 +928,7 @@ static int param_get_audit(char *buffer,
+ static int param_set_audit(const char *val, struct kernel_param *kp)
+ {
+ 	int i;
+-	if (!capable(CAP_MAC_ADMIN))
++	if (!policy_admin_capable())
+ 		return -EPERM;
+ 
+ 	if (!apparmor_enabled)
+@@ -951,7 +949,7 @@ static int param_set_audit(const char *v
+ 
+ static int param_get_mode(char *buffer, struct kernel_param *kp)
+ {
+-	if (!capable(CAP_MAC_ADMIN))
++	if (!policy_admin_capable())
+ 		return -EPERM;
+ 
+ 	if (!apparmor_enabled)
+@@ -963,7 +961,7 @@ static int param_get_mode(char *buffer,
+ static int param_set_mode(const char *val, struct kernel_param *kp)
+ {
+ 	int i;
+-	if (!capable(CAP_MAC_ADMIN))
++	if (!policy_admin_capable())
+ 		return -EPERM;
+ 
+ 	if (!apparmor_enabled)
+--- a/security/apparmor/policy.c
++++ b/security/apparmor/policy.c
+@@ -917,6 +917,22 @@ static int audit_policy(int op, gfp_t gf
+ 			&sa, NULL);
+ }
+ 
++bool policy_view_capable(void)
++{
++	struct user_namespace *user_ns = current_user_ns();
++	bool response = false;
++
++	if (ns_capable(user_ns, CAP_MAC_ADMIN))
++		response = true;
++
++	return response;
++}
++
++bool policy_admin_capable(void)
++{
++	return policy_view_capable() && !aa_g_lock_policy;
++}
++
+ /**
+  * aa_may_manage_policy - can the current task manage policy
+  * @op: the policy manipulation operation being done
+@@ -931,7 +947,7 @@ bool aa_may_manage_policy(int op)
+ 		return 0;
+ 	}
+ 
+-	if (!capable(CAP_MAC_ADMIN)) {
++	if (!policy_admin_capable()) {
+ 		audit_policy(op, GFP_KERNEL, NULL, "not policy admin", -EACCES);
+ 		return 0;
+ 	}
+patches.apparmor/apparmor-do-not-expose-kernel-stack
+From f4ee2def2d70692ccff0d55353df4ee594fd0017 Mon Sep 17 00:00:00 2001
+From: Heinrich Schuchardt <xypron.glpk@gmx.de>
+Date: Fri, 10 Jun 2016 23:34:26 +0200
+Subject: [PATCH] apparmor: do not expose kernel stack
+Git-commit: f4ee2def2d70692ccff0d55353df4ee594fd0017
+Patch-mainline: 4.8-rc1
+References: bsc#1000304
+
+Do not copy uninitalized fields th.td_hilen, th.td_data.
+
+Signed-off-by: Heinrich Schuchardt <xypron.glpk@gmx.de>
+Signed-off-by: John Johansen <john.johansen@canonical.com>
+Acked-by: Takashi Iwai <tiwai@suse.de>
+
+---
+ security/apparmor/match.c |    4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+--- a/security/apparmor/match.c
++++ b/security/apparmor/match.c
+@@ -63,7 +63,9 @@ static struct table_header *unpack_table
+ 
+ 	table = kvzalloc(tsize);
+ 	if (table) {
+-		*table = th;
++		table->td_id = th.td_id;
++		table->td_flags = th.td_flags;
++		table->td_lolen = th.td_lolen;
+ 		if (th.td_flags == YYTD_DATA8)
+ 			UNPACK_ARRAY(table->td_data, blob, th.td_lolen,
+ 				     u8, byte_to_byte);
+patches.apparmor/apparmor-fix-change_hat-not-finding-hat-after-policy-replacement.patch
+From: John Johansen <john.johansen@canonical.com>
+Date: Wed, 31 Aug 2016 21:10:06 -0700
+Subject: apparmor: fix change_hat not finding hat after policy replacement
+Git-commit: 3d40658c977769ce2138f286cf131537bf68bdfe
+Patch-mainline: 4.9-rc7
+References: bsc#1000287
+
+After a policy replacement, the task cred may be out of date and need
+to be updated. However change_hat is using the stale profiles from
+the out of date cred resulting in either: a stale profile being applied
+or, incorrect failure when searching for a hat profile as it has been
+migrated to the new parent profile.
+
+Fixes: 01e2b670aa898a39259bc85c78e3d74820f4d3b6 (failure to find hat)
+Fixes: 898127c34ec03291c86f4ff3856d79e9e18952bc (stale policy being applied)
+Signed-off-by: John Johansen <john.johansen@canonical.com>
+Acked-by: Jeff Mahoney <jeffm@suse.com>
+---
+ security/apparmor/domain.c | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
+
+diff --git a/security/apparmor/domain.c b/security/apparmor/domain.c
+index f2a83b4..dbd68f2 100644
+--- a/security/apparmor/domain.c
++++ b/security/apparmor/domain.c
+@@ -621,8 +621,8 @@ int aa_change_hat(const char *hats[], int count, u64 token, bool permtest)
+ 	/* released below */
+ 	cred = get_current_cred();
+ 	cxt = cred_cxt(cred);
+-	profile = aa_cred_profile(cred);
+-	previous_profile = cxt->previous;
++	profile = aa_get_newest_profile(aa_cred_profile(cred));
++	previous_profile = aa_get_newest_profile(cxt->previous);
+ 
+ 	if (unconfined(profile)) {
+ 		info = "unconfined";
+@@ -718,6 +718,8 @@ audit:
+ out:
+ 	aa_put_profile(hat);
+ 	kfree(name);
++	aa_put_profile(profile);
++	aa_put_profile(previous_profile);
+ 	put_cred(cred);
+ 
+ 	return error;
+

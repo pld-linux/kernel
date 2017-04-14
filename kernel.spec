@@ -5,6 +5,9 @@
 # PENDING STABLE PATCHES:
 # https://git.kernel.org/cgit/linux/kernel/git/sashal/linux-stable.git/log/?h=linux-4.1.y-queue
 #
+# OTHER PATCHES:
+# http://kernel.opensuse.org/cgit/kernel/log/?h=openSUSE-42.1 ; see series.conf
+#
 # TODO:
 # - benchmark NO_HZ & HZ=1000 vs HZ=300 on i686
 # - IPv4 source address selection for multihomed vservers is completely broken
@@ -71,7 +74,7 @@
 %define		have_pcmcia	0
 %endif
 
-%define		rel		1
+%define		rel		2
 %define		basever		4.1
 %define		postver		.39
 
