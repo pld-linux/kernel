@@ -243,6 +243,7 @@ BuildRequires:	elftoaout
 %endif
 BuildRequires:	elfutils-devel
 BuildRequires:	gcc >= 5:3.2
+BuildRequires:	gcc-plugin-devel
 BuildRequires:	hostname
 BuildRequires:	kmod >= 12-2
 BuildRequires:	openssl-devel
