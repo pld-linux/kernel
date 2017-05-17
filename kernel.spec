@@ -73,7 +73,7 @@
 
 %define		rel		1
 %define		basever		4.11
-%define		postver		.0
+%define		postver		.1
 
 # define this to '-%{basever}' for longterm branch
 %define		versuffix	%{nil}
@@ -125,7 +125,7 @@ Source0:	https://www.kernel.org/pub/linux/kernel/v4.x/linux-%{basever}.tar.xz
 # Source0-md5:	251a5deee0fa6daf3f356b1bbda9eab8
 %if "%{postver}" != ".0"
 Patch0:		https://www.kernel.org/pub/linux/kernel/v4.x/patch-%{version}.xz
-# Patch0-md5:	f7f6515047207f3e4f0f32238e3ec80e
+# Patch0-md5:	947496600f57dfb4431e023816048870
 %endif
 Source1:	kernel.sysconfig
 
@@ -219,7 +219,6 @@ Patch500:	kernel-rt.patch
 Patch2000:	kernel-small_fixes.patch
 Patch2001:	kernel-pwc-uncompress.patch
 Patch2003:	kernel-regressions.patch
-Patch2004:	kernel-libata-ahci-pm.patch
 
 # git://git.kernel.org/pub/scm/linux/kernel/git/jj/linux-apparmor
 # branch v4.7-aa2.8-out-of-tree
@@ -722,7 +721,6 @@ rm -f localversion-rt
 %patch2000 -p1
 %patch2001 -p1
 #%patch2003 -p1
-%patch2004 -p1
 
 # Do not remove this, please!
 #%%patch50000 -p1
