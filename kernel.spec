@@ -5,9 +5,6 @@
 # PENDING STABLE PATCHES:
 # https://git.kernel.org/cgit/linux/kernel/git/sashal/linux-stable.git/log/?h=linux-4.1.y-queue
 #
-# OTHER PATCHES:
-# http://kernel.opensuse.org/cgit/kernel/log/?h=openSUSE-42.1 ; see series.conf
-#
 # TODO:
 # - benchmark NO_HZ & HZ=1000 vs HZ=300 on i686
 # - IPv4 source address selection for multihomed vservers is completely broken
@@ -76,7 +73,7 @@
 
 %define		rel		1
 %define		basever		4.1
-%define		postver		.40
+%define		postver		.41
 
 # define this to '-%{basever}' for longterm branch
 %define		versuffix	-%{basever}
@@ -125,7 +122,7 @@ Source0:	http://www.kernel.org/pub/linux/kernel/v4.x/linux-%{basever}.tar.xz
 # Source0-md5:	fe9dc0f6729f36400ea81aa41d614c37
 %if "%{postver}" != ".0"
 Patch0:		http://www.kernel.org/pub/linux/kernel/v4.x/patch-%{version}.xz
-# Patch0-md5:	983f7240b2089186027fbef6dec65430
+# Patch0-md5:	e18a0bf791e017b96754237b1ce20c25
 %endif
 Source1:	kernel.sysconfig
 
@@ -192,7 +189,7 @@ Patch59:	kernel-rndis_host-wm5.patch
 # http://patches.aircrack-ng.org/hostap-kernel-2.6.18.patch
 Patch85:	kernel-hostap.patch
 
-%define	vserver_patch 4.1.27-vs2.3.8.5.2
+%define	vserver_patch 4.1.40-vs2.3.8.5.3.diff
 # note there are additional patches from above url:
 # - *fix* are real fixes (we want these)
 # - *feat* are new features/tests (we don't want these)
