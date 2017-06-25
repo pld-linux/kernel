@@ -1,4 +1,4 @@
-commit 09aa4788d6052c6dc423d939319334ebb5d00847
+commit 97b3200925ba627346432edf521d49de8bb018a3
 Author: John Johansen <john.johansen@canonical.com>
 Date:   Mon Oct 4 15:03:36 2010 -0700
 
@@ -9,7 +9,7 @@ Date:   Mon Oct 4 15:03:36 2010 -0700
     Signed-off-by: John Johansen <john.johansen@canonical.com>
 
 diff --git a/security/apparmor/.gitignore b/security/apparmor/.gitignore
-index 9cdec70..d5b291e 100644
+index 9cdec70d72b8..d5b291e94264 100644
 --- a/security/apparmor/.gitignore
 +++ b/security/apparmor/.gitignore
 @@ -1,5 +1,6 @@
@@ -20,15 +20,15 @@ index 9cdec70..d5b291e 100644
  capability_names.h
  rlim_names.h
 diff --git a/security/apparmor/Makefile b/security/apparmor/Makefile
-index d693df8..5dbb72f 100644
+index ad369a7aac24..a7dc10be232d 100644
 --- a/security/apparmor/Makefile
 +++ b/security/apparmor/Makefile
 @@ -4,10 +4,10 @@ obj-$(CONFIG_SECURITY_APPARMOR) += apparmor.o
  
  apparmor-y := apparmorfs.o audit.o capability.o context.o ipc.o lib.o match.o \
                path.o domain.o policy.o policy_unpack.o procattr.o lsm.o \
--              resource.o sid.o file.o
-+              resource.o sid.o file.o net.o
+-              resource.o secid.o file.o policy_ns.o
++              resource.o secid.o file.o policy_ns.o net.o
  apparmor-$(CONFIG_SECURITY_APPARMOR_HASH) += crypto.o
  
 -clean-files := capability_names.h rlim_names.h
@@ -93,10 +93,10 @@ index d693df8..5dbb72f 100644
 +	$(call cmd,make-af)
 +	$(call cmd,make-sock)
 diff --git a/security/apparmor/apparmorfs.c b/security/apparmor/apparmorfs.c
-index 729e595..181d961 100644
+index 41073f70eb41..4d236736cfb8 100644
 --- a/security/apparmor/apparmorfs.c
 +++ b/security/apparmor/apparmorfs.c
-@@ -807,6 +807,7 @@ static struct aa_fs_entry aa_fs_entry_features[] = {
+@@ -1209,6 +1209,7 @@ static struct aa_fs_entry aa_fs_entry_features[] = {
  	AA_FS_DIR("policy",			aa_fs_entry_policy),
  	AA_FS_DIR("domain",			aa_fs_entry_domain),
  	AA_FS_DIR("file",			aa_fs_entry_file),
@@ -105,13 +105,13 @@ index 729e595..181d961 100644
  	AA_FS_DIR("rlimit",			aa_fs_entry_rlimit),
  	AA_FS_DIR("caps",			aa_fs_entry_caps),
 diff --git a/security/apparmor/include/audit.h b/security/apparmor/include/audit.h
-index ba3dfd1..5d3c419 100644
+index fdc4774318ba..0df708e8748b 100644
 --- a/security/apparmor/include/audit.h
 +++ b/security/apparmor/include/audit.h
-@@ -125,6 +125,10 @@ struct apparmor_audit_data {
- 			u32 denied;
- 			kuid_t ouid;
- 		} fs;
+@@ -127,6 +127,10 @@ struct apparmor_audit_data {
+ 			int rlim;
+ 			unsigned long max;
+ 		} rlim;
 +		struct {
 +			int type, protocol;
 +			struct sock *sk;
@@ -121,10 +121,10 @@ index ba3dfd1..5d3c419 100644
  
 diff --git a/security/apparmor/include/net.h b/security/apparmor/include/net.h
 new file mode 100644
-index 0000000..cb8a121
+index 000000000000..55da1dad8720
 --- /dev/null
 +++ b/security/apparmor/include/net.h
-@@ -0,0 +1,44 @@
+@@ -0,0 +1,59 @@
 +/*
 + * AppArmor security module
 + *
@@ -159,9 +159,24 @@ index 0000000..cb8a121
 +
 +extern struct aa_fs_entry aa_fs_entry_network[];
 +
-+extern int aa_net_perm(int op, struct aa_profile *profile, u16 family,
++#define DEFINE_AUDIT_NET(NAME, OP, SK, F, T, P)				  \
++	struct lsm_network_audit NAME ## _net = { .sk = (SK),		  \
++						  .family = (F)};	  \
++	DEFINE_AUDIT_DATA(NAME,						  \
++			  ((SK) && (F) != AF_UNIX) ? LSM_AUDIT_DATA_NET : \
++						     LSM_AUDIT_DATA_NONE, \
++			  OP);						  \
++	NAME.u.net = &(NAME ## _net);					  \
++	aad(&NAME)->net.type = (T);					  \
++	aad(&NAME)->net.protocol = (P)
++
++#define DEFINE_AUDIT_SK(NAME, OP, SK)					\
++	DEFINE_AUDIT_NET(NAME, OP, SK, (SK)->sk_family, (SK)->sk_type,	\
++			 (SK)->sk_protocol)
++
++extern int aa_net_perm(const char *op, struct aa_profile *profile, u16 family,
 +		       int type, int protocol, struct sock *sk);
-+extern int aa_revalidate_sk(int op, struct sock *sk);
++extern int aa_revalidate_sk(const char *op, struct sock *sk);
 +
 +static inline void aa_free_net_rules(struct aa_net *new)
 +{
@@ -170,18 +185,18 @@ index 0000000..cb8a121
 +
 +#endif /* __AA_NET_H */
 diff --git a/security/apparmor/include/policy.h b/security/apparmor/include/policy.h
-index 52275f0..4fc4dac 100644
+index 67bc96afe541..a3d18ea8d730 100644
 --- a/security/apparmor/include/policy.h
 +++ b/security/apparmor/include/policy.h
-@@ -27,6 +27,7 @@
+@@ -28,6 +28,7 @@
  #include "capability.h"
  #include "domain.h"
  #include "file.h"
 +#include "net.h"
+ #include "lib.h"
  #include "resource.h"
  
- extern const char *const aa_profile_mode_names[];
-@@ -176,6 +177,7 @@ struct aa_replacedby {
+@@ -132,6 +133,7 @@ struct aa_data {
   * @policy: general match rules governing policy
   * @file: The set of rules governing basic file access and domain transitions
   * @caps: capabilities for the profile
@@ -189,27 +204,27 @@ index 52275f0..4fc4dac 100644
   * @rlimits: rlimits for the profile
   *
   * @dents: dentries for the profiles file entries in apparmorfs
-@@ -217,6 +219,7 @@ struct aa_profile {
+@@ -174,6 +176,7 @@ struct aa_profile {
  	struct aa_policydb policy;
  	struct aa_file_rules file;
  	struct aa_caps caps;
 +	struct aa_net net;
  	struct aa_rlimit rlimits;
  
- 	unsigned char *hash;
+ 	struct aa_loaddata *rawdata;
 diff --git a/security/apparmor/lsm.c b/security/apparmor/lsm.c
-index 41b8cb1..d96b5f7 100644
+index 709eacd23909..e3017129a404 100644
 --- a/security/apparmor/lsm.c
 +++ b/security/apparmor/lsm.c
-@@ -32,6 +32,7 @@
+@@ -33,6 +33,7 @@
  #include "include/context.h"
  #include "include/file.h"
  #include "include/ipc.h"
 +#include "include/net.h"
  #include "include/path.h"
  #include "include/policy.h"
- #include "include/procattr.h"
-@@ -584,6 +585,104 @@ static int apparmor_task_setrlimit(struct task_struct *task,
+ #include "include/policy_ns.h"
+@@ -587,6 +588,104 @@ static int apparmor_task_setrlimit(struct task_struct *task,
  	return error;
  }
  
@@ -308,13 +323,13 @@ index 41b8cb1..d96b5f7 100644
 +{
 +	struct sock *sk = sock->sk;
 +
-+	return aa_revalidate_sk(OP_SOCK_SHUTDOWN, sk);
++	return aa_revalidate_sk(OP_SHUTDOWN, sk);
 +}
 +
  static struct security_hook_list apparmor_hooks[] = {
  	LSM_HOOK_INIT(ptrace_access_check, apparmor_ptrace_access_check),
  	LSM_HOOK_INIT(ptrace_traceme, apparmor_ptrace_traceme),
-@@ -613,6 +712,19 @@ static struct security_hook_list apparmor_hooks[] = {
+@@ -616,6 +715,19 @@ static struct security_hook_list apparmor_hooks[] = {
  	LSM_HOOK_INIT(getprocattr, apparmor_getprocattr),
  	LSM_HOOK_INIT(setprocattr, apparmor_setprocattr),
  
@@ -336,10 +351,10 @@ index 41b8cb1..d96b5f7 100644
  	LSM_HOOK_INIT(cred_prepare, apparmor_cred_prepare),
 diff --git a/security/apparmor/net.c b/security/apparmor/net.c
 new file mode 100644
-index 0000000..003dd18
+index 000000000000..b9c8cd0e882e
 --- /dev/null
 +++ b/security/apparmor/net.c
-@@ -0,0 +1,162 @@
+@@ -0,0 +1,148 @@
 +/*
 + * AppArmor security module
 + *
@@ -379,12 +394,12 @@ index 0000000..003dd18
 +		audit_log_format(ab, "\"unknown(%d)\"", sa->u.net->family);
 +	}
 +	audit_log_format(ab, " sock_type=");
-+	if (sock_type_names[sa->aad->net.type]) {
-+		audit_log_string(ab, sock_type_names[sa->aad->net.type]);
++	if (sock_type_names[aad(sa)->net.type]) {
++		audit_log_string(ab, sock_type_names[aad(sa)->net.type]);
 +	} else {
-+		audit_log_format(ab, "\"unknown(%d)\"", sa->aad->net.type);
++		audit_log_format(ab, "\"unknown(%d)\"", aad(sa)->net.type);
 +	}
-+	audit_log_format(ab, " protocol=%d", sa->aad->net.protocol);
++	audit_log_format(ab, " protocol=%d", aad(sa)->net.protocol);
 +}
 +
 +/**
@@ -399,38 +414,24 @@ index 0000000..003dd18
 + *
 + * Returns: %0 or sa->error else other errorcode on failure
 + */
-+static int audit_net(struct aa_profile *profile, int op, u16 family, int type,
-+		     int protocol, struct sock *sk, int error)
++static int audit_net(struct aa_profile *profile, const char *op, u16 family,
++		     int type, int protocol, struct sock *sk, int error)
 +{
 +	int audit_type = AUDIT_APPARMOR_AUTO;
-+	struct common_audit_data sa;
-+	struct apparmor_audit_data aad = { };
-+	struct lsm_network_audit net = { };
-+	if (sk) {
-+		sa.type = LSM_AUDIT_DATA_NET;
-+	} else {
-+		sa.type = LSM_AUDIT_DATA_NONE;
-+	}
-+	/* todo fill in socket addr info */
-+	sa.aad = &aad;
-+	sa.u.net = &net;
-+	sa.aad->op = op,
-+	sa.u.net->family = family;
-+	sa.u.net->sk = sk;
-+	sa.aad->net.type = type;
-+	sa.aad->net.protocol = protocol;
-+	sa.aad->error = error;
++	DEFINE_AUDIT_NET(sa, op, sk, family, type, protocol);
 +
-+	if (likely(!sa.aad->error)) {
++	aad(&sa)->error = error;
++
++	if (likely(!aad(&sa)->error)) {
 +		u16 audit_mask = profile->net.audit[sa.u.net->family];
 +		if (likely((AUDIT_MODE(profile) != AUDIT_ALL) &&
-+			   !(1 << sa.aad->net.type & audit_mask)))
++			   !(1 << aad(&sa)->net.type & audit_mask)))
 +			return 0;
 +		audit_type = AUDIT_APPARMOR_AUDIT;
 +	} else {
 +		u16 quiet_mask = profile->net.quiet[sa.u.net->family];
 +		u16 kill_mask = 0;
-+		u16 denied = (1 << sa.aad->net.type) & ~quiet_mask;
++		u16 denied = (1 << aad(&sa)->net.type) & ~quiet_mask;
 +
 +		if (denied & kill_mask)
 +			audit_type = AUDIT_APPARMOR_KILL;
@@ -438,10 +439,10 @@ index 0000000..003dd18
 +		if ((denied & quiet_mask) &&
 +		    AUDIT_MODE(profile) != AUDIT_NOQUIET &&
 +		    AUDIT_MODE(profile) != AUDIT_ALL)
-+			return COMPLAIN_MODE(profile) ? 0 : sa.aad->error;
++			return COMPLAIN_MODE(profile) ? 0 : aad(&sa)->error;
 +	}
 +
-+	return aa_audit(audit_type, profile, GFP_KERNEL, &sa, audit_cb);
++	return aa_audit(audit_type, profile, &sa, audit_cb);
 +}
 +
 +/**
@@ -454,8 +455,8 @@ index 0000000..003dd18
 + *
 + * Returns: %0 else error if permission denied
 + */
-+int aa_net_perm(int op, struct aa_profile *profile, u16 family, int type,
-+		int protocol, struct sock *sk)
++int aa_net_perm(const char *op, struct aa_profile *profile, u16 family,
++		int type, int protocol, struct sock *sk)
 +{
 +	u16 family_mask;
 +	int error;
@@ -484,7 +485,7 @@ index 0000000..003dd18
 + *
 + * Returns: %0 else error if permission denied
 + */
-+int aa_revalidate_sk(int op, struct sock *sk)
++int aa_revalidate_sk(const char *op, struct sock *sk)
 +{
 +	struct aa_profile *profile;
 +	int error = 0;
@@ -503,10 +504,10 @@ index 0000000..003dd18
 +	return error;
 +}
 diff --git a/security/apparmor/policy.c b/security/apparmor/policy.c
-index 179e68d..f1a8541 100644
+index def1fbd6bdfd..9fe7b9d4500f 100644
 --- a/security/apparmor/policy.c
 +++ b/security/apparmor/policy.c
-@@ -603,6 +603,7 @@ void aa_free_profile(struct aa_profile *profile)
+@@ -237,6 +237,7 @@ void aa_free_profile(struct aa_profile *profile)
  
  	aa_free_file_rules(&profile->file);
  	aa_free_cap_rules(&profile->caps);
@@ -515,10 +516,10 @@ index 179e68d..f1a8541 100644
  
  	kzfree(profile->dirname);
 diff --git a/security/apparmor/policy_unpack.c b/security/apparmor/policy_unpack.c
-index 1381206..7dc15ff 100644
+index 2e37c9c26bbd..bc23a5b3b113 100644
 --- a/security/apparmor/policy_unpack.c
 +++ b/security/apparmor/policy_unpack.c
-@@ -193,6 +193,19 @@ fail:
+@@ -217,6 +217,19 @@ static bool unpack_nameX(struct aa_ext *e, enum aa_code code, const char *name)
  	return 0;
  }
  
@@ -538,15 +539,16 @@ index 1381206..7dc15ff 100644
  static bool unpack_u32(struct aa_ext *e, u32 *data, const char *name)
  {
  	if (unpack_nameX(e, AA_U32, name)) {
-@@ -476,6 +489,7 @@ static struct aa_profile *unpack_profile(struct aa_ext *e)
+@@ -519,7 +532,7 @@ static struct aa_profile *unpack_profile(struct aa_ext *e, char **ns_name)
  {
  	struct aa_profile *profile = NULL;
- 	const char *name = NULL;
-+	size_t size = 0;
- 	int i, error = -EPROTO;
- 	kernel_cap_t tmpcap;
- 	u32 tmp;
-@@ -576,6 +590,38 @@ static struct aa_profile *unpack_profile(struct aa_ext *e)
+ 	const char *tmpname, *tmpns = NULL, *name = NULL;
+-	size_t ns_len;
++	size_t ns_len, size = 0;
+ 	struct rhashtable_params params = { 0 };
+ 	char *key = NULL;
+ 	struct aa_data *data;
+@@ -635,6 +648,38 @@ static struct aa_profile *unpack_profile(struct aa_ext *e, char **ns_name)
  	if (!unpack_rlimits(e, profile))
  		goto fail;
  
@@ -585,8 +587,7 @@ index 1381206..7dc15ff 100644
  	if (unpack_nameX(e, AA_STRUCT, "policydb")) {
  		/* generic policy dfa - optional and may be NULL */
  		profile->policy.dfa = unpack_dfa(e);
-
-commit f5c5644745201b5b7d398e841e5045d0a5d14b18
+commit b866a43c2897f5469c9d787426144074a3713f6a
 Author: John Johansen <john.johansen@canonical.com>
 Date:   Fri Jun 29 17:34:00 2012 -0700
 
@@ -606,20 +607,19 @@ Date:   Fri Jun 29 17:34:00 2012 -0700
     Signed-off-by: John Johansen <john.johansen@canonical.com>
 
 diff --git a/security/apparmor/net.c b/security/apparmor/net.c
-index 003dd18..6e6e5c9 100644
+index b9c8cd0e882e..5ba19ad1d65c 100644
 --- a/security/apparmor/net.c
 +++ b/security/apparmor/net.c
-@@ -88,7 +88,7 @@ static int audit_net(struct aa_profile *profile, int op, u16 family, int type,
+@@ -74,7 +74,7 @@ static int audit_net(struct aa_profile *profile, const char *op, u16 family,
  	} else {
  		u16 quiet_mask = profile->net.quiet[sa.u.net->family];
  		u16 kill_mask = 0;
--		u16 denied = (1 << sa.aad->net.type) & ~quiet_mask;
-+		u16 denied = (1 << sa.aad->net.type);
+-		u16 denied = (1 << aad(&sa)->net.type) & ~quiet_mask;
++		u16 denied = (1 << aad(&sa)->net.type);
  
  		if (denied & kill_mask)
  			audit_type = AUDIT_APPARMOR_KILL;
-
-commit 0269f1631e1496798e5b0a319ff05b1133cfeaa3
+commit 4429c3f9522b608300cfe1ae148dc6cdadf3d76c
 Author: John Johansen <john.johansen@canonical.com>
 Date:   Wed May 16 10:58:05 2012 -0700
 
@@ -664,30 +664,26 @@ Date:   Wed May 16 10:58:05 2012 -0700
     Acked-by: Kees Cook <kees@ubuntu.com>
 
 diff --git a/security/apparmor/Makefile b/security/apparmor/Makefile
-index 5dbb72f..89b3445 100644
+index a7dc10be232d..01368441f230 100644
 --- a/security/apparmor/Makefile
 +++ b/security/apparmor/Makefile
 @@ -4,7 +4,7 @@ obj-$(CONFIG_SECURITY_APPARMOR) += apparmor.o
  
  apparmor-y := apparmorfs.o audit.o capability.o context.o ipc.o lib.o match.o \
                path.o domain.o policy.o policy_unpack.o procattr.o lsm.o \
--              resource.o sid.o file.o net.o
-+              resource.o sid.o file.o net.o mount.o
+-              resource.o secid.o file.o policy_ns.o net.o
++              resource.o secid.o file.o policy_ns.o net.o mount.o
  apparmor-$(CONFIG_SECURITY_APPARMOR_HASH) += crypto.o
  
  clean-files := capability_names.h rlim_names.h net_names.h
 diff --git a/security/apparmor/apparmorfs.c b/security/apparmor/apparmorfs.c
-index 181d961..5fb67f6 100644
+index 4d236736cfb8..2e8d09e2368b 100644
 --- a/security/apparmor/apparmorfs.c
 +++ b/security/apparmor/apparmorfs.c
-@@ -800,7 +800,18 @@ static struct aa_fs_entry aa_fs_entry_domain[] = {
+@@ -1205,11 +1205,24 @@ static struct aa_fs_entry aa_fs_entry_policy[] = {
+ 	{ }
+ };
  
- static struct aa_fs_entry aa_fs_entry_policy[] = {
- 	AA_FS_FILE_BOOLEAN("set_load",          1),
--	{}
-+	{ }
-+};
-+
 +static struct aa_fs_entry aa_fs_entry_mount[] = {
 +	AA_FS_FILE_STRING("mask", "mount umount"),
 +	{ }
@@ -697,10 +693,10 @@ index 181d961..5fb67f6 100644
 +	AA_FS_FILE_BOOLEAN("profile",           1),
 +	AA_FS_FILE_BOOLEAN("pivot_root",        1),
 +	{ }
- };
- 
++};
++
  static struct aa_fs_entry aa_fs_entry_features[] = {
-@@ -808,6 +819,8 @@ static struct aa_fs_entry aa_fs_entry_features[] = {
+ 	AA_FS_DIR("policy",			aa_fs_entry_policy),
  	AA_FS_DIR("domain",			aa_fs_entry_domain),
  	AA_FS_DIR("file",			aa_fs_entry_file),
  	AA_FS_DIR("network",                    aa_fs_entry_network),
@@ -709,26 +705,11 @@ index 181d961..5fb67f6 100644
  	AA_FS_FILE_U64("capability",		VFS_CAP_FLAGS_MASK),
  	AA_FS_DIR("rlimit",			aa_fs_entry_rlimit),
  	AA_FS_DIR("caps",			aa_fs_entry_caps),
-diff --git a/security/apparmor/audit.c b/security/apparmor/audit.c
-index 3a7f1da..c2a8b8a 100644
---- a/security/apparmor/audit.c
-+++ b/security/apparmor/audit.c
-@@ -44,6 +44,10 @@ const char *const op_table[] = {
- 	"file_mmap",
- 	"file_mprotect",
- 
-+	"pivotroot",
-+	"mount",
-+	"umount",
-+
- 	"create",
- 	"post_create",
- 	"bind",
 diff --git a/security/apparmor/domain.c b/security/apparmor/domain.c
-index fc3036b..f2a83b4 100644
+index 001e133a3c8c..708b7e22b9b5 100644
 --- a/security/apparmor/domain.c
 +++ b/security/apparmor/domain.c
-@@ -236,7 +236,7 @@ static const char *next_name(int xtype, const char *name)
+@@ -237,7 +237,7 @@ static const char *next_name(int xtype, const char *name)
   *
   * Returns: refcounted profile, or NULL on failure (MAYBE NULL)
   */
@@ -736,12 +717,12 @@ index fc3036b..f2a83b4 100644
 +struct aa_profile *x_table_lookup(struct aa_profile *profile, u32 xindex)
  {
  	struct aa_profile *new_profile = NULL;
- 	struct aa_namespace *ns = profile->ns;
+ 	struct aa_ns *ns = profile->ns;
 diff --git a/security/apparmor/include/apparmor.h b/security/apparmor/include/apparmor.h
-index 5d721e9..b57da7b 100644
+index 1750cc0721c1..3383dc66f30f 100644
 --- a/security/apparmor/include/apparmor.h
 +++ b/security/apparmor/include/apparmor.h
-@@ -30,8 +30,9 @@
+@@ -27,8 +27,9 @@
  #define AA_CLASS_NET		4
  #define AA_CLASS_RLIMITS	5
  #define AA_CLASS_DOMAIN		6
@@ -753,36 +734,36 @@ index 5d721e9..b57da7b 100644
  /* Control parameters settable through module/boot flags */
  extern enum audit_mode aa_g_audit;
 diff --git a/security/apparmor/include/audit.h b/security/apparmor/include/audit.h
-index 5d3c419..b9f1d57 100644
+index 0df708e8748b..41374ad89547 100644
 --- a/security/apparmor/include/audit.h
 +++ b/security/apparmor/include/audit.h
-@@ -72,6 +72,10 @@ enum aa_ops {
- 	OP_FMMAP,
- 	OP_FMPROT,
+@@ -70,6 +70,10 @@ enum audit_type {
+ #define OP_FMMAP "file_mmap"
+ #define OP_FMPROT "file_mprotect"
  
-+	OP_PIVOTROOT,
-+	OP_MOUNT,
-+	OP_UMOUNT,
++#define OP_PIVOTROOT "pivotroot"
++#define OP_MOUNT "mount"
++#define OP_UMOUNT "umount"
 +
- 	OP_CREATE,
- 	OP_POST_CREATE,
- 	OP_BIND,
-@@ -120,6 +124,13 @@ struct apparmor_audit_data {
+ #define OP_CREATE "create"
+ #define OP_POST_CREATE "post_create"
+ #define OP_BIND "bind"
+@@ -127,6 +131,13 @@ struct apparmor_audit_data {
+ 			int rlim;
  			unsigned long max;
  		} rlim;
- 		struct {
++ 		struct {
 +			const char *src_name;
 +			const char *type;
 +			const char *trans;
 +			const char *data;
 +			unsigned long flags;
 +		} mnt;
-+		struct {
- 			const char *target;
- 			u32 request;
- 			u32 denied;
+ 		struct {
+ 			int type, protocol;
+ 			struct sock *sk;
 diff --git a/security/apparmor/include/domain.h b/security/apparmor/include/domain.h
-index de04464..a3f70c5 100644
+index 30544729878a..7bd21d20a2bd 100644
 --- a/security/apparmor/include/domain.h
 +++ b/security/apparmor/include/domain.h
 @@ -23,6 +23,8 @@ struct aa_domain {
@@ -796,7 +777,7 @@ index de04464..a3f70c5 100644
  void apparmor_bprm_committing_creds(struct linux_binprm *bprm);
 diff --git a/security/apparmor/include/mount.h b/security/apparmor/include/mount.h
 new file mode 100644
-index 0000000..a43b1d6
+index 000000000000..a43b1d62e428
 --- /dev/null
 +++ b/security/apparmor/include/mount.h
 @@ -0,0 +1,54 @@
@@ -855,18 +836,18 @@ index 0000000..a43b1d6
 +
 +#endif /* __AA_MOUNT_H */
 diff --git a/security/apparmor/lsm.c b/security/apparmor/lsm.c
-index d96b5f7..7a02376 100644
+index e3017129a404..ee58a2cca74f 100644
 --- a/security/apparmor/lsm.c
 +++ b/security/apparmor/lsm.c
-@@ -36,6 +36,7 @@
- #include "include/path.h"
+@@ -38,6 +38,7 @@
  #include "include/policy.h"
+ #include "include/policy_ns.h"
  #include "include/procattr.h"
 +#include "include/mount.h"
  
  /* Flag indicating whether initialization completed */
  int apparmor_initialized __initdata;
-@@ -469,6 +470,61 @@ static int apparmor_file_mprotect(struct vm_area_struct *vma,
+@@ -479,6 +480,61 @@ static int apparmor_file_mprotect(struct vm_area_struct *vma,
  			   !(vma->vm_flags & VM_SHARED) ? MAP_PRIVATE : 0);
  }
  
@@ -928,23 +909,23 @@ index d96b5f7..7a02376 100644
  static int apparmor_getprocattr(struct task_struct *task, char *name,
  				char **value)
  {
-@@ -689,6 +745,10 @@ static struct security_hook_list apparmor_hooks[] = {
+@@ -692,6 +748,10 @@ static struct security_hook_list apparmor_hooks[] = {
  	LSM_HOOK_INIT(capget, apparmor_capget),
  	LSM_HOOK_INIT(capable, apparmor_capable),
  
 +	LSM_HOOK_INIT(sb_mount, apparmor_sb_mount),
 +	LSM_HOOK_INIT(sb_umount, apparmor_sb_umount),
 +	LSM_HOOK_INIT(sb_pivotroot, apparmor_sb_pivotroot),
-+	
++
  	LSM_HOOK_INIT(path_link, apparmor_path_link),
  	LSM_HOOK_INIT(path_unlink, apparmor_path_unlink),
  	LSM_HOOK_INIT(path_symlink, apparmor_path_symlink),
 diff --git a/security/apparmor/mount.c b/security/apparmor/mount.c
 new file mode 100644
-index 0000000..9cf9170
+index 000000000000..9e95a41c015c
 --- /dev/null
 +++ b/security/apparmor/mount.c
-@@ -0,0 +1,620 @@
+@@ -0,0 +1,616 @@
 +/*
 + * AppArmor security module
 + *
@@ -1037,26 +1018,26 @@ index 0000000..9cf9170
 +{
 +	struct common_audit_data *sa = va;
 +
-+	if (sa->aad->mnt.type) {
++	if (aad(sa)->mnt.type) {
 +		audit_log_format(ab, " fstype=");
-+		audit_log_untrustedstring(ab, sa->aad->mnt.type);
++		audit_log_untrustedstring(ab, aad(sa)->mnt.type);
 +	}
-+	if (sa->aad->mnt.src_name) {
++	if (aad(sa)->mnt.src_name) {
 +		audit_log_format(ab, " srcname=");
-+		audit_log_untrustedstring(ab, sa->aad->mnt.src_name);
++		audit_log_untrustedstring(ab, aad(sa)->mnt.src_name);
 +	}
-+	if (sa->aad->mnt.trans) {
++	if (aad(sa)->mnt.trans) {
 +		audit_log_format(ab, " trans=");
-+		audit_log_untrustedstring(ab, sa->aad->mnt.trans);
++		audit_log_untrustedstring(ab, aad(sa)->mnt.trans);
 +	}
-+	if (sa->aad->mnt.flags || sa->aad->op == OP_MOUNT) {
++	if (aad(sa)->mnt.flags) {
 +		audit_log_format(ab, " flags=\"");
-+		audit_mnt_flags(ab, sa->aad->mnt.flags);
++		audit_mnt_flags(ab, aad(sa)->mnt.flags);
 +		audit_log_format(ab, "\"");
 +	}
-+	if (sa->aad->mnt.data) {
++	if (aad(sa)->mnt.data) {
 +		audit_log_format(ab, " options=");
-+		audit_log_untrustedstring(ab, sa->aad->mnt.data);
++		audit_log_untrustedstring(ab, aad(sa)->mnt.data);
 +	}
 +}
 +
@@ -1078,15 +1059,14 @@ index 0000000..9cf9170
 + *
 + * Returns: %0 or error on failure
 + */
-+static int audit_mount(struct aa_profile *profile, gfp_t gfp, int op,
++static int audit_mount(struct aa_profile *profile, gfp_t gfp, const char *op,
 +		       const char *name, const char *src_name,
 +		       const char *type, const char *trans,
 +		       unsigned long flags, const void *data, u32 request,
 +		       struct file_perms *perms, const char *info, int error)
 +{
 +	int audit_type = AUDIT_APPARMOR_AUTO;
-+	struct common_audit_data sa = { };
-+	struct apparmor_audit_data aad = { };
++	DEFINE_AUDIT_DATA(sa, LSM_AUDIT_DATA_NONE, op);
 +
 +	if (likely(!error)) {
 +		u32 mask = perms->audit;
@@ -1118,20 +1098,17 @@ index 0000000..9cf9170
 +				complain_error(error) : error;
 +	}
 +
-+	sa.type = LSM_AUDIT_DATA_NONE;
-+	sa.aad = &aad;
-+	sa.aad->op = op;
-+	sa.aad->name = name;
-+	sa.aad->mnt.src_name = src_name;
-+	sa.aad->mnt.type = type;
-+	sa.aad->mnt.trans = trans;
-+	sa.aad->mnt.flags = flags;
++	aad(&sa)->name = name;
++	aad(&sa)->mnt.src_name = src_name;
++	aad(&sa)->mnt.type = type;
++	aad(&sa)->mnt.trans = trans;
++	aad(&sa)->mnt.flags = flags;
 +	if (data && (perms->audit & AA_AUDIT_DATA))
-+		sa.aad->mnt.data = data;
-+	sa.aad->info = info;
-+	sa.aad->error = error;
++		aad(&sa)->mnt.data = data;
++	aad(&sa)->info = info;
++	aad(&sa)->error = error;
 +
-+	return aa_audit(audit_type, profile, gfp, &sa, audit_cb);
++	return aa_audit(audit_type, profile, &sa, audit_cb);
 +}
 +
 +/**
@@ -1180,7 +1157,7 @@ index 0000000..9cf9170
 +	return perms;
 +}
 +
-+static const char const *mnt_info_table[] = {
++static const char *mnt_info_table[] = {
 +	"match succeeded",
 +	"failed mntpnt match",
 +	"failed srcname match",
@@ -1565,5 +1542,3 @@ index 0000000..9cf9170
 +
 +	return error;
 +}
-
-
