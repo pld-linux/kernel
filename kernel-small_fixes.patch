@@ -26,38 +26,4 @@
  				exit
  			fi
  		done
-From 5d12f71723762a39435d054d02bbf5fb87c5cd14 Mon Sep 17 00:00:00 2001
-From: =?UTF-8?q?Arkadiusz=20Mi=C5=9Bkiewicz?= <arekm@maven.pl>
-Date: Mon, 6 Feb 2017 14:45:15 +0100
-Subject: [PATCH] mac80211: Print text for disassociation reason
-MIME-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8bit
-
-When disassociation happens only numeric reason is printed
-in ieee80211_rx_mgmt_disassoc(). Add text variant, too.
-
-Signed-off-by: Arkadiusz Miśkiewicz <arekm@maven.pl>
----
- net/mac80211/mlme.c | 5 +++--
- 1 file changed, 3 insertions(+), 2 deletions(-)
-
-diff --git a/net/mac80211/mlme.c b/net/mac80211/mlme.c
-index 098ce9b179ee..fcf8d0aa66ec 100644
---- a/net/mac80211/mlme.c
-+++ b/net/mac80211/mlme.c
-@@ -2801,8 +2801,9 @@ static void ieee80211_rx_mgmt_disassoc(struct ieee80211_sub_if_data *sdata,
- 
- 	reason_code = le16_to_cpu(mgmt->u.disassoc.reason_code);
- 
--	sdata_info(sdata, "disassociated from %pM (Reason: %u)\n",
--		   mgmt->sa, reason_code);
-+	sdata_info(sdata, "disassociated from %pM (Reason: %u=%s)\n",
-+		   mgmt->sa, reason_code,
-+		   ieee80211_get_reason_code_string(reason_code));
- 
- 	ieee80211_set_disassoc(sdata, 0, 0, false, NULL);
- 
--- 
-2.11.0
 

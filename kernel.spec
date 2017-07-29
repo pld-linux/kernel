@@ -71,9 +71,9 @@
 %define		have_pcmcia	0
 %endif
 
-%define		rel		1
-%define		basever		4.11
-%define		postver		.12
+%define		rel		0.1
+%define		basever		4.12
+%define		postver		.4
 
 # define this to '-%{basever}' for longterm branch
 %define		versuffix	%{nil}
@@ -122,10 +122,10 @@ Epoch:		3
 License:	GPL v2
 Group:		Base/Kernel
 Source0:	https://www.kernel.org/pub/linux/kernel/v4.x/linux-%{basever}.tar.xz
-# Source0-md5:	251a5deee0fa6daf3f356b1bbda9eab8
+# Source0-md5:	fc454157e2d024d401a60905d6481c6b
 %if "%{postver}" != ".0"
 Patch0:		https://www.kernel.org/pub/linux/kernel/v4.x/patch-%{version}.xz
-# Patch0-md5:	20d4c52dd76a41a4c67e6ffbd17e560a
+# Patch0-md5:	8b701bde9ab905f36c9917a6afdfb3e5
 %endif
 Source1:	kernel.sysconfig
 
@@ -199,7 +199,7 @@ Patch101:	kernel-vserver-fixes.patch
 # Patch creation:
 # git clone git://github.com/sfjro/aufs4-standalone.git
 # cd aufs4-standalone
-# git checkout -b aufs4.9 origin/aufs4.9
+# git checkout -b aufs4.12 origin/aufs4.12
 # cat aufs4-kbuild.patch aufs4-base.patch aufs4-mmap.patch aufs4-standalone.patch > ~/rpm/packages/kernel/kernel-aufs4.patch
 # rm -rf linux && mkdir linux
 # cp -a Documentation fs include linux
