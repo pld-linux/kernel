@@ -152,6 +152,7 @@ Source58:	kernel-inittmpfs.config
 
 # http://dev.gentoo.org/~spock/projects/fbcondecor/archive/fbcondecor-0.9.4-2.6.25-rc6.patch
 Patch3:		kernel-fbcondecor.patch
+Patch6:		linux-wistron-nx.patch
 
 # netfilter related stuff mostly based on patch-o-matic-ng
 # snapshot 20070806 with some fixes. Some modules
@@ -632,6 +633,7 @@ cd linux-%{basever}
 %if %{with fbcondecor}
 %patch3 -p1
 %endif
+%patch6 -p1
 
 ## netfilter
 #
