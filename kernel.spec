@@ -43,7 +43,6 @@
 
 %define		have_drm	1
 %define		have_ide	1
-%define		have_oss	1
 %define		have_sound	1
 %define		have_pcmcia	1
 
@@ -56,7 +55,6 @@
 %if %{with myown}
 %define		have_drm	0
 %define		have_ide	0
-%define		have_oss	0
 %define		have_sound	0
 %define		have_pcmcia	0
 %endif
@@ -64,7 +62,6 @@
 %ifarch sparc sparc64
 %unglobal	with_pcmcia
 %define		have_drm	0
-%define		have_oss	0
 %endif
 
 %if %{without pcmcia}
@@ -519,25 +516,6 @@ ALSA (Advanced Linux Sound Architecture) Sound-Treiber.
 
 %description sound-alsa -l pl.UTF-8
 Sterowniki dźwięku ALSA (Advanced Linux Sound Architecture).
-
-%package sound-oss
-Summary:	OSS kernel modules
-Summary(de.UTF-8):	OSS Kernel Module
-Summary(pl.UTF-8):	Sterowniki dźwięku OSS
-Group:		Base/Kernel
-Requires(postun):	%{name} = %{epoch}:%{version}-%{release}
-Requires:	%{name} = %{epoch}:%{version}-%{release}
-Obsoletes:	kernel-smp-sound-oss
-AutoReqProv:	no
-
-%description sound-oss
-OSS (Open Sound System) drivers.
-
-%description sound-oss -l de.UTF-8
-OSS (Open Sound System) Treiber.
-
-%description sound-oss -l pl.UTF-8
-Sterowniki dźwięku OSS (Open Sound System).
 
 %package headers
 Summary:	Header files for the Linux kernel
@@ -1197,12 +1175,6 @@ fi
 %postun sound-alsa
 %depmod %{kernel_release}
 
-%post sound-oss
-%depmod %{kernel_release}
-
-%postun sound-oss
-%depmod %{kernel_release}
-
 %post headers
 ln -snf %{basename:%{_kernelsrcdir}} %{_prefix}/src/linux%{versuffix}%{_alt_kernel}
 
@@ -1245,6 +1217,7 @@ fi
 %dir /lib/modules/%{kernel_release}
 %dir /lib/modules/%{kernel_release}/kernel
 /lib/modules/%{kernel_release}/kernel/arch
+/lib/modules/%{kernel_release}/kernel/block
 /lib/modules/%{kernel_release}/kernel/crypto
 /lib/modules/%{kernel_release}/kernel/drivers
 %if %{have_drm}
@@ -1389,20 +1362,11 @@ fi
 %exclude %dir /lib/modules/%{kernel_release}/kernel/sound
 %exclude /lib/modules/%{kernel_release}/kernel/sound/ac97_bus.ko*
 %exclude /lib/modules/%{kernel_release}/kernel/sound/sound*.ko*
-%if %{have_oss}
-%exclude /lib/modules/%{kernel_release}/kernel/sound/oss
-%endif
 %ifnarch sparc
 /lib/modules/%{kernel_release}/kernel/drivers/usb/gadget/legacy/g_midi.ko*
 /lib/modules/%{kernel_release}/kernel/drivers/media/pci/cx88/cx88-alsa.ko*
 /lib/modules/%{kernel_release}/kernel/drivers/media/usb/em28xx/em28xx-alsa.ko*
 /lib/modules/%{kernel_release}/kernel/drivers/media/pci/saa7134/saa7134-alsa.ko*
-%endif
-
-%if %{have_oss}
-%files sound-oss
-%defattr(644,root,root,755)
-/lib/modules/%{kernel_release}/kernel/sound/oss
 %endif
 %endif
 
