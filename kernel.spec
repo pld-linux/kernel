@@ -689,7 +689,7 @@ rm -f localversion-rt
 %endif
 
 # apparmor
-%patch5000 -p1
+#%patch5000 -p1
 
 %patch250 -p1
 
@@ -1433,6 +1433,7 @@ fi
 %{_docdir}/%{name}-%{version}/[jkz]*.txt
 %{_docdir}/%{name}-%{version}/kbuild
 %{_docdir}/%{name}-%{version}/kdump
+%{_docdir}/%{name}-%{version}/kernel-hacking
 %endif
 
 %if %{with source}
