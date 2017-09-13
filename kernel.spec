@@ -71,7 +71,7 @@
 %define		have_pcmcia	0
 %endif
 
-%define		rel		2
+%define		rel		3
 %define		basever		4.1
 %define		postver		.43
 
@@ -204,8 +204,7 @@ Patch101:	kernel-vserver-fixes.patch
 # cat aufs4-kbuild.patch aufs4-base.patch aufs4-mmap.patch aufs4-standalone.patch > ~/rpm/packages/kernel/kernel-aufs4.patch
 # mkdir linux
 # cp -a Documentation fs include linux
-# diff -urN /usr/share/empty linux >> ~/rpm/packages/kernel/kernel-aufs4.patch
-# drop hunk at the end of patch (hunk is patching include/linux/Kbuild with single line change)
+# diff -urN /usr/share/empty linux | filterdiff -x linux/include/uapi/linux/Kbuild >> ~/rpm/packages/kernel/kernel-aufs4.patch
 # cat aufs4-loopback.patch >> ~/rpm/packages/kernel/kernel-aufs4.patch
 #
 Patch145:	kernel-aufs4.patch
