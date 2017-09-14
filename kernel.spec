@@ -219,7 +219,9 @@ Patch2003:	kernel-regressions.patch
 
 # git://git.kernel.org/pub/scm/linux/kernel/git/jj/linux-apparmor
 # branch v4.7-aa2.8-out-of-tree
-Patch5000:	kernel-apparmor.patch
+Patch5000:	kernel-apparmor-net.patch
+Patch5001:	kernel-apparmor-net-audit.patch
+Patch5002:	kernel-apparmor-mount.patch
 
 # for rescuecd
 # based on ftp://ftp.leg.uct.ac.za/pub/linux/rip/tmpfs_root-2.6.30.diff.gz
@@ -689,7 +691,9 @@ rm -f localversion-rt
 %endif
 
 # apparmor
-#%patch5000 -p1
+%patch5000 -p1
+%patch5001 -p1
+%patch5002 -p1
 
 %patch250 -p1
 
