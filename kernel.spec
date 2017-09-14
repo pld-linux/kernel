@@ -30,6 +30,7 @@
 %bcond_without	ipv6		# ipv6 support
 
 %bcond_without	aufs		# aufs4 support
+%bcond_with	apparmor	# UBUNTU SAUCE apparmor patches
 
 %bcond_with	vserver		# support for VServer
 
@@ -691,9 +692,11 @@ rm -f localversion-rt
 %endif
 
 # apparmor
+%if %{with apparmor}
 %patch5000 -p1
 %patch5001 -p1
 %patch5002 -p1
+%endif
 
 %patch250 -p1
 
