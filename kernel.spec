@@ -219,7 +219,6 @@ Patch2001:	kernel-pwc-uncompress.patch
 Patch2003:	kernel-regressions.patch
 
 # http://bazaar.launchpad.net/~apparmor-dev/apparmor/master/files/head:/kernel-patches/v4.13/
-Patch5000:	0001-UBUNTU-SAUCE-efi-lockdown-MODSIGN-Fix-module-signatu.patch
 Patch5001:	0002-apparmor-Fix-shadowed-local-variable-in-unpack_trans.patch
 Patch5002:	0003-apparmor-Fix-logical-error-in-verify_header.patch
 Patch5003:	0004-apparmor-Fix-an-error-code-in-aafs_create.patch
@@ -706,7 +705,6 @@ rm -f localversion-rt
 
 # apparmor
 %if %{with apparmor}
-%patch5000 -p1
 %patch5001 -p1
 %patch5002 -p1
 %patch5003 -p1
