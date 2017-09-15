@@ -1,0 +1,36 @@
+From 7f2cdd6453518ff76c3855255c91306a2b928c9a Mon Sep 17 00:00:00 2001
+From: John Johansen <john.johansen@canonical.com>
+Date: Wed, 16 Aug 2017 05:48:06 -0700
+Subject: [PATCH 15/17] apparmor: ensure unconfined profiles have dfas
+ initialized
+
+Generally unconfined has early bailout tests and does not need the
+dfas initialized, however if an early bailout test is ever missed
+it will result in an oops.
+
+Be defensive and initialize the unconfined profile to have null dfas
+(no permission) so if an early bailout test is missed we fail
+closed (no perms granted) instead of oopsing.
+
+Signed-off-by: John Johansen <john.johansen@canonical.com>
+(cherry picked from commit 034ad2d248927722bdcd1aedb62634cdc2049113)
+---
+ security/apparmor/policy_ns.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/security/apparmor/policy_ns.c b/security/apparmor/policy_ns.c
+index 351d3bab3a3d..62a3589c62ab 100644
+--- a/security/apparmor/policy_ns.c
++++ b/security/apparmor/policy_ns.c
+@@ -112,6 +112,8 @@ static struct aa_ns *alloc_ns(const char *prefix, const char *name)
+ 	ns->unconfined->label.flags |= FLAG_IX_ON_NAME_ERROR |
+ 		FLAG_IMMUTIBLE | FLAG_NS_COUNT | FLAG_UNCONFINED;
+ 	ns->unconfined->mode = APPARMOR_UNCONFINED;
++	ns->unconfined->file.dfa = aa_get_dfa(nulldfa);
++	ns->unconfined->policy.dfa = aa_get_dfa(nulldfa);
+ 
+ 	/* ns and ns->unconfined share ns->unconfined refcount */
+ 	ns->unconfined->ns = ns;
+-- 
+2.11.0
+

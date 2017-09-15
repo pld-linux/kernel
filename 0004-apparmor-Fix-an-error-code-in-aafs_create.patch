@@ -1,0 +1,37 @@
+From 8b3851c7b83f32f2be9d4b48371ddf033afedf62 Mon Sep 17 00:00:00 2001
+From: Dan Carpenter <dan.carpenter@oracle.com>
+Date: Thu, 13 Jul 2017 10:39:20 +0300
+Subject: [PATCH 04/17] apparmor: Fix an error code in aafs_create()
+
+We accidentally forgot to set the error code on this path.  It means we
+return NULL instead of an error pointer.  I looked through a bunch of
+callers and I don't think it really causes a big issue, but the
+documentation says we're supposed to return error pointers here.
+
+Signed-off-by: Dan Carpenter <dan.carpenter@oracle.com>
+Acked-by: Serge Hallyn <serge@hallyn.com>
+Signed-off-by: John Johansen <john.johansen@canonical.com>
+(cherry picked from commit aee58bf341db52a3a3563c6b972bfd4fc2d41e46)
+---
+ security/apparmor/apparmorfs.c | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/security/apparmor/apparmorfs.c b/security/apparmor/apparmorfs.c
+index 853c2ec8e0c9..2caeb748070c 100644
+--- a/security/apparmor/apparmorfs.c
++++ b/security/apparmor/apparmorfs.c
+@@ -248,8 +248,10 @@ static struct dentry *aafs_create(const char *name, umode_t mode,
+ 
+ 	inode_lock(dir);
+ 	dentry = lookup_one_len(name, parent, strlen(name));
+-	if (IS_ERR(dentry))
++	if (IS_ERR(dentry)) {
++		error = PTR_ERR(dentry);
+ 		goto fail_lock;
++	}
+ 
+ 	if (d_really_is_positive(dentry)) {
+ 		error = -EEXIST;
+-- 
+2.11.0
+

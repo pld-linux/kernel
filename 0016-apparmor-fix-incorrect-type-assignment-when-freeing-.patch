@@ -1,0 +1,39 @@
+From 8daf877473653c06a28c86bf72d63ce7e5c1d542 Mon Sep 17 00:00:00 2001
+From: John Johansen <john.johansen@canonical.com>
+Date: Wed, 16 Aug 2017 09:33:48 -0700
+Subject: [PATCH 16/17] apparmor: fix incorrect type assignment when freeing
+ proxies
+
+sparse reports
+
+poisoning the proxy->label before freeing the struct is resulting in
+a sparse build warning.
+../security/apparmor/label.c:52:30: warning: incorrect type in assignment (different address spaces)
+../security/apparmor/label.c:52:30:    expected struct aa_label [noderef] <asn:4>*label
+../security/apparmor/label.c:52:30:    got struct aa_label *<noident>
+
+fix with RCU_INIT_POINTER as this is one of those cases where
+rcu_assign_pointer() is not needed.
+
+Signed-off-by: John Johansen <john.johansen@canonical.com>
+(cherry picked from commit 76e22e212a850bbd16cf49f9c586d4635507e0b5)
+---
+ security/apparmor/label.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/security/apparmor/label.c b/security/apparmor/label.c
+index 52b4ef14840d..c5b99b954580 100644
+--- a/security/apparmor/label.c
++++ b/security/apparmor/label.c
+@@ -49,7 +49,7 @@ static void free_proxy(struct aa_proxy *proxy)
+ 		/* p->label will not updated any more as p is dead */
+ 		aa_put_label(rcu_dereference_protected(proxy->label, true));
+ 		memset(proxy, 0, sizeof(*proxy));
+-		proxy->label = (struct aa_label *) PROXY_POISON;
++		RCU_INIT_POINTER(proxy->label, (struct aa_label *)PROXY_POISON);
+ 		kfree(proxy);
+ 	}
+ }
+-- 
+2.11.0
+

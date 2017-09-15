@@ -1,0 +1,71 @@
+From 763d17c9a18b0df7dbec2740f10dc40d378e3cc1 Mon Sep 17 00:00:00 2001
+From: John Johansen <john.johansen@canonical.com>
+Date: Sun, 6 Aug 2017 05:36:40 -0700
+Subject: [PATCH 08/17] apparmor: cleanup conditional check for label in
+ label_print
+
+Signed-off-by: John Johansen <john.johansen@canonical.com>
+Acked-by: Seth Arnold <seth.arnold@canonical.com>
+(cherry picked from commit 7e57939b9d67dcfc2c8348fd0e2c76a2f0349c75)
+---
+ security/apparmor/label.c | 22 ++++++++--------------
+ 1 file changed, 8 insertions(+), 14 deletions(-)
+
+diff --git a/security/apparmor/label.c b/security/apparmor/label.c
+index e324f4df3e34..38be7a89cc31 100644
+--- a/security/apparmor/label.c
++++ b/security/apparmor/label.c
+@@ -1450,9 +1450,11 @@ bool aa_update_label_name(struct aa_ns *ns, struct aa_label *label, gfp_t gfp)
+  * cached label name is present and visible
+  * @label->hname only exists if label is namespace hierachical
+  */
+-static inline bool use_label_hname(struct aa_ns *ns, struct aa_label *label)
++static inline bool use_label_hname(struct aa_ns *ns, struct aa_label *label,
++				   int flags)
+ {
+-	if (label->hname && labels_ns(label) == ns)
++	if (label->hname && (!ns || labels_ns(label) == ns) &&
++	    !(flags & ~FLAG_SHOW_MODE))
+ 		return true;
+ 
+ 	return false;
+@@ -1710,10 +1712,8 @@ void aa_label_xaudit(struct audit_buffer *ab, struct aa_ns *ns,
+ 	AA_BUG(!ab);
+ 	AA_BUG(!label);
+ 
+-	if (!ns)
+-		ns = labels_ns(label);
+-
+-	if (!use_label_hname(ns, label) || display_mode(ns, label, flags)) {
++	if (!use_label_hname(ns, label, flags) ||
++	    display_mode(ns, label, flags)) {
+ 		len  = aa_label_asxprint(&name, ns, label, flags, gfp);
+ 		if (len == -1) {
+ 			AA_DEBUG("label print error");
+@@ -1738,10 +1738,7 @@ void aa_label_seq_xprint(struct seq_file *f, struct aa_ns *ns,
+ 	AA_BUG(!f);
+ 	AA_BUG(!label);
+ 
+-	if (!ns)
+-		ns = labels_ns(label);
+-
+-	if (!use_label_hname(ns, label)) {
++	if (!use_label_hname(ns, label, flags)) {
+ 		char *str;
+ 		int len;
+ 
+@@ -1764,10 +1761,7 @@ void aa_label_xprintk(struct aa_ns *ns, struct aa_label *label, int flags,
+ {
+ 	AA_BUG(!label);
+ 
+-	if (!ns)
+-		ns = labels_ns(label);
+-
+-	if (!use_label_hname(ns, label)) {
++	if (!use_label_hname(ns, label, flags)) {
+ 		char *str;
+ 		int len;
+ 
+-- 
+2.11.0
+

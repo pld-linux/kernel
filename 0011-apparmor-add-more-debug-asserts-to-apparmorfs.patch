@@ -1,0 +1,78 @@
+From ba3f778a2ef31454032c2ca9c99d9212feb4dcf1 Mon Sep 17 00:00:00 2001
+From: John Johansen <john.johansen@canonical.com>
+Date: Tue, 18 Jul 2017 23:41:13 -0700
+Subject: [PATCH 11/17] apparmor: add more debug asserts to apparmorfs
+
+Signed-off-by: John Johansen <john.johansen@canonical.com>
+Acked-by: Seth Arnold <seth.arnold@canonical.com>
+(cherry picked from commit 52c9542126fb04df1f12c605b6c22719c9096794)
+---
+ security/apparmor/apparmorfs.c | 17 +++++++++++++++++
+ 1 file changed, 17 insertions(+)
+
+diff --git a/security/apparmor/apparmorfs.c b/security/apparmor/apparmorfs.c
+index 8fa6c898c44b..7acea14c850b 100644
+--- a/security/apparmor/apparmorfs.c
++++ b/security/apparmor/apparmorfs.c
+@@ -1446,6 +1446,10 @@ void __aafs_profile_migrate_dents(struct aa_profile *old,
+ {
+ 	int i;
+ 
++	AA_BUG(!old);
++	AA_BUG(!new);
++	AA_BUG(!mutex_is_locked(&profiles_ns(old)->lock));
++
+ 	for (i = 0; i < AAFS_PROF_SIZEOF; i++) {
+ 		new->dents[i] = old->dents[i];
+ 		if (new->dents[i])
+@@ -1509,6 +1513,9 @@ int __aafs_profile_mkdir(struct aa_profile *profile, struct dentry *parent)
+ 	struct dentry *dent = NULL, *dir;
+ 	int error;
+ 
++	AA_BUG(!profile);
++	AA_BUG(!mutex_is_locked(&profiles_ns(profile)->lock));
++
+ 	if (!parent) {
+ 		struct aa_profile *p;
+ 		p = aa_deref_parent(profile);
+@@ -1734,6 +1741,7 @@ void __aafs_ns_rmdir(struct aa_ns *ns)
+ 
+ 	if (!ns)
+ 		return;
++	AA_BUG(!mutex_is_locked(&ns->lock));
+ 
+ 	list_for_each_entry(child, &ns->base.profiles, base.list)
+ 		__aafs_profile_rmdir(child);
+@@ -1906,6 +1914,10 @@ static struct aa_ns *__next_ns(struct aa_ns *root, struct aa_ns *ns)
+ {
+ 	struct aa_ns *parent, *next;
+ 
++	AA_BUG(!root);
++	AA_BUG(!ns);
++	AA_BUG(ns != root && !mutex_is_locked(&ns->parent->lock));
++
+ 	/* is next namespace a child */
+ 	if (!list_empty(&ns->sub_ns)) {
+ 		next = list_first_entry(&ns->sub_ns, typeof(*ns), base.list);
+@@ -1940,6 +1952,9 @@ static struct aa_ns *__next_ns(struct aa_ns *root, struct aa_ns *ns)
+ static struct aa_profile *__first_profile(struct aa_ns *root,
+ 					  struct aa_ns *ns)
+ {
++	AA_BUG(!root);
++	AA_BUG(ns && !mutex_is_locked(&ns->lock));
++
+ 	for (; ns; ns = __next_ns(root, ns)) {
+ 		if (!list_empty(&ns->base.profiles))
+ 			return list_first_entry(&ns->base.profiles,
+@@ -1962,6 +1977,8 @@ static struct aa_profile *__next_profile(struct aa_profile *p)
+ 	struct aa_profile *parent;
+ 	struct aa_ns *ns = p->ns;
+ 
++	AA_BUG(!mutex_is_locked(&profiles_ns(p)->lock));
++
+ 	/* is next profile a child */
+ 	if (!list_empty(&p->base.profiles))
+ 		return list_first_entry(&p->base.profiles, typeof(*p),
+-- 
+2.11.0
+

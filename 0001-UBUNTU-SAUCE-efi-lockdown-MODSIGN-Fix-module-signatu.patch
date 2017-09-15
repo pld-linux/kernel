@@ -1,0 +1,41 @@
+From 00c72bc198aa85e5da02de2c0c4cc423c82a54f1 Mon Sep 17 00:00:00 2001
+From: Fedora Kernel Team <kernel-team@fedoraproject.org>
+Date: Thu, 3 Aug 2017 13:46:51 -0500
+Subject: [PATCH 01/17] UBUNTU: SAUCE: (efi-lockdown) MODSIGN: Fix module
+ signature verification
+
+BugLink: http://bugs.launchpad.net/bugs/1712168
+
+Currently mod_verify_sig() calls verify_pkcs_7_signature() with
+trusted_keys=NULL, which causes only the builtin keys to be used
+to verify the signature. This breaks self-signing of modules with
+a MOK, as the MOK is loaded into the secondary trusted keyring.
+Fix this by passing the spacial value trusted_keys=(void *)1UL,
+which tells verify_pkcs_7_signature() to use the secondary
+keyring instead.
+
+(cherry picked from commit cff4523d65b848f9c41c9e998a735ae2a820da2d
+ git://git.kernel.org/pub/scm/linux/kernel/git/jwboyer/fedora.git)
+[ saf: Taken from fedora commit without authorship information or much
+  of a commit message; modified so that commit will describe the
+  problem being fixed. ]
+Signed-off-by: Seth Forshee <seth.forshee@canonical.com>
+---
+ kernel/module_signing.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/kernel/module_signing.c b/kernel/module_signing.c
+index 937c844bee4a..d3d6f95a96b4 100644
+--- a/kernel/module_signing.c
++++ b/kernel/module_signing.c
+@@ -81,6 +81,6 @@ int mod_verify_sig(const void *mod, unsigned long *_modlen)
+ 	}
+ 
+ 	return verify_pkcs7_signature(mod, modlen, mod + modlen, sig_len,
+-				      NULL, VERIFYING_MODULE_SIGNATURE,
++				      (void *)1UL, VERIFYING_MODULE_SIGNATURE,
+ 				      NULL, NULL);
+ }
+-- 
+2.11.0
+

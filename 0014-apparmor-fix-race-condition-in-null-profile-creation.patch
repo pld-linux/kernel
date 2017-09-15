@@ -1,0 +1,60 @@
+From ab3b869791b6122c7be7e68ca4c08e2c2e8815ac Mon Sep 17 00:00:00 2001
+From: John Johansen <john.johansen@canonical.com>
+Date: Wed, 16 Aug 2017 05:40:49 -0700
+Subject: [PATCH 14/17] apparmor: fix race condition in null profile creation
+
+There is a race when null- profile is being created between the
+initial lookup/creation of the profile and lock/addition of the
+profile. This could result in multiple version of a profile being
+added to the list which need to be removed/replaced.
+
+Since these are learning profile their is no affect on mediation.
+
+Signed-off-by: John Johansen <john.johansen@canonical.com>
+(cherry picked from commit 3aa3de2a4fb8f33ec62b00998bc6b6c6850d41b1)
+---
+ security/apparmor/policy.c | 14 +++++++++++---
+ 1 file changed, 11 insertions(+), 3 deletions(-)
+
+diff --git a/security/apparmor/policy.c b/security/apparmor/policy.c
+index a81a384a63b1..4243b0c3f0e4 100644
+--- a/security/apparmor/policy.c
++++ b/security/apparmor/policy.c
+@@ -500,7 +500,8 @@ struct aa_profile *aa_fqlookupn_profile(struct aa_label *base,
+ struct aa_profile *aa_new_null_profile(struct aa_profile *parent, bool hat,
+ 				       const char *base, gfp_t gfp)
+ {
+-	struct aa_profile *profile;
++	struct aa_profile *p, *profile;
++	const char *bname;
+ 	char *name;
+ 
+ 	AA_BUG(!parent);
+@@ -523,7 +524,8 @@ struct aa_profile *aa_new_null_profile(struct aa_profile *parent, bool hat,
+ 
+ name:
+ 	/* lookup to see if this is a dup creation */
+-	profile = aa_find_child(parent, basename(name));
++	bname = basename(name);
++	profile = aa_find_child(parent, bname);
+ 	if (profile)
+ 		goto out;
+ 
+@@ -544,7 +546,13 @@ struct aa_profile *aa_new_null_profile(struct aa_profile *parent, bool hat,
+ 	profile->policy.dfa = aa_get_dfa(nulldfa);
+ 
+ 	mutex_lock(&profile->ns->lock);
+-	__add_profile(&parent->base.profiles, profile);
++	p = __find_child(&parent->base.profiles, bname);
++	if (p) {
++		aa_free_profile(profile);
++		profile = aa_get_profile(p);
++	} else {
++		__add_profile(&parent->base.profiles, profile);
++	}
+ 	mutex_unlock(&profile->ns->lock);
+ 
+ 	/* refcount released by caller */
+-- 
+2.11.0
+

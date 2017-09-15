@@ -30,7 +30,7 @@
 %bcond_without	ipv6		# ipv6 support
 
 %bcond_without	aufs		# aufs4 support
-%bcond_with	apparmor	# UBUNTU SAUCE apparmor patches
+%bcond_without	apparmor	# UBUNTU SAUCE apparmor patches
 
 %bcond_with	vserver		# support for VServer
 
@@ -69,7 +69,7 @@
 %define		have_pcmcia	0
 %endif
 
-%define		rel		1
+%define		rel		2
 %define		basever		4.13
 %define		postver		.2
 
@@ -218,11 +218,24 @@ Patch2000:	kernel-small_fixes.patch
 Patch2001:	kernel-pwc-uncompress.patch
 Patch2003:	kernel-regressions.patch
 
-# git://git.kernel.org/pub/scm/linux/kernel/git/jj/linux-apparmor
-# branch v4.7-aa2.8-out-of-tree
-Patch5000:	kernel-apparmor-net.patch
-Patch5001:	kernel-apparmor-net-audit.patch
-Patch5002:	kernel-apparmor-mount.patch
+# http://bazaar.launchpad.net/~apparmor-dev/apparmor/master/files/head:/kernel-patches/v4.13/
+Patch5000:	0001-UBUNTU-SAUCE-efi-lockdown-MODSIGN-Fix-module-signatu.patch
+Patch5001:	0002-apparmor-Fix-shadowed-local-variable-in-unpack_trans.patch
+Patch5002:	0003-apparmor-Fix-logical-error-in-verify_header.patch
+Patch5003:	0004-apparmor-Fix-an-error-code-in-aafs_create.patch
+Patch5004:	0005-apparmor-Redundant-condition-prev_ns.-in-label.c-149.patch
+Patch5005:	0006-apparmor-add-the-ability-to-mediate-signals.patch
+Patch5006:	0007-apparmor-add-mount-mediation.patch
+Patch5007:	0008-apparmor-cleanup-conditional-check-for-label-in-labe.patch
+Patch5008:	0009-apparmor-add-support-for-absolute-root-view-based-la.patch
+Patch5009:	0010-apparmor-make-policy_unpack-able-to-audit-different-.patch
+Patch5010:	0011-apparmor-add-more-debug-asserts-to-apparmorfs.patch
+Patch5011:	0012-apparmor-add-base-infastructure-for-socket-mediation.patch
+Patch5012:	0013-apparmor-move-new_null_profile-to-after-profile-look.patch
+Patch5013:	0014-apparmor-fix-race-condition-in-null-profile-creation.patch
+Patch5014:	0015-apparmor-ensure-unconfined-profiles-have-dfas-initia.patch
+Patch5015:	0016-apparmor-fix-incorrect-type-assignment-when-freeing-.patch
+Patch5016:	0017-UBUNTU-SAUCE-apparmor-af_unix-mediation.patch
 
 # for rescuecd
 # based on ftp://ftp.leg.uct.ac.za/pub/linux/rip/tmpfs_root-2.6.30.diff.gz
@@ -696,6 +709,20 @@ rm -f localversion-rt
 %patch5000 -p1
 %patch5001 -p1
 %patch5002 -p1
+%patch5003 -p1
+%patch5004 -p1
+%patch5005 -p1
+%patch5006 -p1
+%patch5007 -p1
+%patch5008 -p1
+%patch5009 -p1
+%patch5010 -p1
+%patch5011 -p1
+%patch5012 -p1
+%patch5013 -p1
+%patch5014 -p1
+%patch5015 -p1
+%patch5016 -p1
 %endif
 
 %patch250 -p1
