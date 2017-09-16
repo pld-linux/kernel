@@ -280,7 +280,6 @@ Requires:	cpuinfo(pae)
 Suggests:	crda
 Suggests:	dracut
 Suggests:	keyutils
-Suggests:	kernel%{versuffix}-ide = %{epoch}:%{version}-%{release}
 %if %{with firmware}
 Suggests:	linux-firmware
 %else
