@@ -69,9 +69,9 @@
 %define		have_pcmcia	0
 %endif
 
-%define		rel		1
-%define		basever		4.13
-%define		postver		.12
+%define		rel		0.1
+%define		basever		4.14
+%define		postver		.0
 
 # define this to '-%{basever}' for longterm branch
 %define		versuffix	%{nil}
@@ -120,7 +120,7 @@ Epoch:		3
 License:	GPL v2
 Group:		Base/Kernel
 Source0:	https://www.kernel.org/pub/linux/kernel/v4.x/linux-%{basever}.tar.xz
-# Source0-md5:	ab1a2abc6f37b752dd2595338bec4e78
+# Source0-md5:	bacdb9ffdcd922aa069a5e1520160e24
 %if "%{postver}" != ".0"
 Patch0:		https://www.kernel.org/pub/linux/kernel/v4.x/patch-%{version}.xz
 # Patch0-md5:	665b55e1f24ec56de55f7d0302d7c4f5
@@ -197,10 +197,9 @@ Patch101:	kernel-vserver-fixes.patch
 # Patch creation:
 # git clone git://github.com/sfjro/aufs4-standalone.git
 # cd aufs4-standalone
-# git checkout -b aufs4.12 origin/aufs4.12
+# git checkout -b aufs4.14 origin/aufs4.14
 # cat aufs4-kbuild.patch aufs4-base.patch aufs4-mmap.patch aufs4-standalone.patch > ~/rpm/packages/kernel/kernel-aufs4.patch
-# rm -rf linux && mkdir linux
-# cp -a Documentation fs include linux
+# rm -rf linux && mkdir linux; cp -a Documentation fs include linux
 # diff -urN /usr/share/empty linux | filterdiff -x linux/include/uapi/linux/Kbuild >> ~/rpm/packages/kernel/kernel-aufs4.patch
 # cat aufs4-loopback.patch >> ~/rpm/packages/kernel/kernel-aufs4.patch
 #
@@ -218,23 +217,9 @@ Patch2000:	kernel-small_fixes.patch
 Patch2001:	kernel-pwc-uncompress.patch
 Patch2003:	kernel-regressions.patch
 
-# http://bazaar.launchpad.net/~apparmor-dev/apparmor/master/files/head:/kernel-patches/v4.13/
-Patch5001:	0002-apparmor-Fix-shadowed-local-variable-in-unpack_trans.patch
-Patch5002:	0003-apparmor-Fix-logical-error-in-verify_header.patch
-Patch5003:	0004-apparmor-Fix-an-error-code-in-aafs_create.patch
-Patch5004:	0005-apparmor-Redundant-condition-prev_ns.-in-label.c-149.patch
-Patch5005:	0006-apparmor-add-the-ability-to-mediate-signals.patch
-Patch5006:	0007-apparmor-add-mount-mediation.patch
-Patch5007:	0008-apparmor-cleanup-conditional-check-for-label-in-labe.patch
-Patch5008:	0009-apparmor-add-support-for-absolute-root-view-based-la.patch
-Patch5009:	0010-apparmor-make-policy_unpack-able-to-audit-different-.patch
-Patch5010:	0011-apparmor-add-more-debug-asserts-to-apparmorfs.patch
-Patch5011:	0012-apparmor-add-base-infastructure-for-socket-mediation.patch
-Patch5012:	0013-apparmor-move-new_null_profile-to-after-profile-look.patch
-Patch5013:	0014-apparmor-fix-race-condition-in-null-profile-creation.patch
-Patch5014:	0015-apparmor-ensure-unconfined-profiles-have-dfas-initia.patch
-Patch5015:	0016-apparmor-fix-incorrect-type-assignment-when-freeing-.patch
-Patch5016:	0017-UBUNTU-SAUCE-apparmor-af_unix-mediation.patch
+# https://gitlab.com/apparmor/apparmor/tree/master/kernel-patches/v4.14
+Patch5001:	0012-apparmor-add-base-infastructure-for-socket-mediation.patch
+Patch5002:	0001-UBUNTU-SAUCE-apparmor-af_unix-mediation.patch
 
 # for rescuecd
 # based on ftp://ftp.leg.uct.ac.za/pub/linux/rip/tmpfs_root-2.6.30.diff.gz
@@ -706,20 +691,6 @@ rm -f localversion-rt
 %if %{with apparmor}
 %patch5001 -p1
 %patch5002 -p1
-%patch5003 -p1
-%patch5004 -p1
-%patch5005 -p1
-%patch5006 -p1
-%patch5007 -p1
-%patch5008 -p1
-%patch5009 -p1
-%patch5010 -p1
-%patch5011 -p1
-%patch5012 -p1
-%patch5013 -p1
-%patch5014 -p1
-%patch5015 -p1
-%patch5016 -p1
 %endif
 
 %patch250 -p1
