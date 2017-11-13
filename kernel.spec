@@ -18,7 +18,6 @@
 %bcond_without	source		# don't build kernel-source package
 %bcond_without	doc			# don't build kernel-doc package
 %bcond_without	pcmcia		# don't build pcmcia
-%bcond_without	firmware	# don't build firmware into main package
 
 %bcond_with	verbose		# verbose build (V=1)
 
@@ -265,11 +264,7 @@ Requires:	cpuinfo(pae)
 Suggests:	crda
 Suggests:	dracut
 Suggests:	keyutils
-%if %{with firmware}
-Suggests:	linux-firmware
-%else
 Requires:	linux-firmware
-%endif
 Provides:	%{name}(netfilter) = 20070806
 Provides:	%{name}(vermagic) = %{kernel_release}
 Obsoletes:	kernel%{_alt_kernel}-char-lirc-ene0100
@@ -922,13 +917,12 @@ cd -
 
 %install
 rm -rf $RPM_BUILD_ROOT
-%{__make} %{MakeOpts} -j1 %{!?with_verbose:-s} modules_install %{?with_firmware:firmware_install} \
+%{__make} %{MakeOpts} -j1 %{!?with_verbose:-s} modules_install \
 	-C %{objdir} \
 	%{?with_verbose:V=1} \
 	DEPMOD=%{DepMod} \
 	mod_compress_cmd=true \
 	INSTALL_MOD_PATH=$RPM_BUILD_ROOT \
-	INSTALL_FW_PATH=$RPM_BUILD_ROOT/lib/firmware/%{kernel_release} \
 	KERNELRELEASE=%{kernel_release}
 
 install -d $RPM_BUILD_ROOT/lib/modules/%{kernel_release}/misc
@@ -1212,9 +1206,6 @@ fi
 /boot/config-%{kernel_release}
 %ghost %{initrd_dir}/initrd-%{kernel_release}.gz
 %ghost %{initrd_dir}/initramfs-%{kernel_release}.img
-%if %{with firmware}
-/lib/firmware/%{kernel_release}
-%endif
 
 %dir /lib/modules/%{kernel_release}
 %dir /lib/modules/%{kernel_release}/kernel
@@ -1393,7 +1384,6 @@ fi
 %exclude %dir %{_kernelsrcdir}/arch/um
 %{_kernelsrcdir}/arch/*/kernel/asm-offsets*
 %{_kernelsrcdir}/arch/*/kernel/sigframe*.h
-%{_kernelsrcdir}/drivers/lguest/lg.h
 %{_kernelsrcdir}/drivers/media/pci/bt8xx/bttv.h
 %{_kernelsrcdir}/kernel/bounds.c
 %{_kernelsrcdir}/scripts/basic/*.c
@@ -1402,7 +1392,6 @@ fi
 %{_kernelsrcdir}/scripts/kconfig/*_shipped
 %{_kernelsrcdir}/scripts/kconfig/*.pl
 %{_kernelsrcdir}/scripts/kconfig/*.glade
-%{_kernelsrcdir}/scripts/kconfig/*.gperf
 %{_kernelsrcdir}/scripts/kconfig/*.cc
 %{_kernelsrcdir}/scripts/kconfig/*.y
 %{_kernelsrcdir}/scripts/kconfig/*.l
@@ -1460,7 +1449,6 @@ fi
 %{_kernelsrcdir}/arch/x86/kvm
 %exclude %{_kernelsrcdir}/arch/*/kernel/asm-offsets*
 %exclude %{_kernelsrcdir}/arch/*/kernel/sigframe*.h
-%exclude %{_kernelsrcdir}/drivers/lguest/lg.h
 %exclude %{_kernelsrcdir}/drivers/media/pci/bt8xx/bttv.h
 %{_kernelsrcdir}/block
 %{_kernelsrcdir}/certs
