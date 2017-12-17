@@ -73,7 +73,7 @@
 
 %define		rel		1
 %define		basever		4.1
-%define		postver		.47
+%define		postver		.48
 
 # define this to '-%{basever}' for longterm branch
 %define		versuffix	-%{basever}
@@ -122,7 +122,7 @@ Source0:	http://www.kernel.org/pub/linux/kernel/v4.x/linux-%{basever}.tar.xz
 # Source0-md5:	fe9dc0f6729f36400ea81aa41d614c37
 %if "%{postver}" != ".0"
 Patch0:		http://www.kernel.org/pub/linux/kernel/v4.x/patch-%{version}.xz
-# Patch0-md5:	44ba04c19f02602dae6a433b5ca6153c
+# Patch0-md5:	32ebfc309853cf4f1f23481b46434b5e
 %endif
 Source1:	kernel.sysconfig
 
@@ -200,9 +200,9 @@ Patch101:	kernel-vserver-fixes.patch
 # Patch creation:
 # git clone git://github.com/sfjro/aufs4-standalone.git
 # cd aufs4-standalone
-# git checkout -b aufs4.1 origin/aufs4.1
+# git checkout -b aufs4.1.13+ origin/aufs4.1.13+
 # cat aufs4-kbuild.patch aufs4-base.patch aufs4-mmap.patch aufs4-standalone.patch > ~/rpm/packages/kernel/kernel-aufs4.patch
-# mkdir linux
+# rm -rf linux && mkdir linux
 # cp -a Documentation fs include linux
 # diff -urN /usr/share/empty linux | filterdiff -x linux/include/uapi/linux/Kbuild >> ~/rpm/packages/kernel/kernel-aufs4.patch
 # cat aufs4-loopback.patch >> ~/rpm/packages/kernel/kernel-aufs4.patch
