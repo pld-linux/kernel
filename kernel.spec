@@ -71,7 +71,7 @@
 %define		have_pcmcia	0
 %endif
 
-%define		rel		1
+%define		rel		2
 %define		basever		4.9
 %define		postver		.68
 
@@ -213,7 +213,7 @@ Patch146:	kernel-aufs4+vserver.patch
 Patch250:	kernel-fix_256colors_menuconfig.patch
 
 # https://rt.wiki.kernel.org/
-# http://www.kernel.org/pub/linux/kernel/projects/rt/4.9/patch-4.9.65-rt57.patch.xz
+# http://www.kernel.org/pub/linux/kernel/projects/rt/4.9/patch-4.9.68-rt60.patch.xz
 Patch500:	kernel-rt.patch
 
 Patch2000:	kernel-small_fixes.patch
