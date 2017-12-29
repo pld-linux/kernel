@@ -70,7 +70,7 @@
 
 %define		rel		1
 %define		basever		4.14
-%define		postver		.9
+%define		postver		.10
 
 # define this to '-%{basever}' for longterm branch
 %define		versuffix	%{nil}
@@ -122,7 +122,7 @@ Source0:	https://www.kernel.org/pub/linux/kernel/v4.x/linux-%{basever}.tar.xz
 # Source0-md5:	bacdb9ffdcd922aa069a5e1520160e24
 %if "%{postver}" != ".0"
 Patch0:		https://www.kernel.org/pub/linux/kernel/v4.x/patch-%{version}.xz
-# Patch0-md5:	623ac9e64733d008d11e8d35d17d99f8
+# Patch0-md5:	986c6711da939de924926a7f5033218d
 %endif
 Source1:	kernel.sysconfig
 
@@ -699,6 +699,8 @@ rm -f localversion-rt
 
 # Do not remove this, please!
 #%%patch50000 -p1
+
+chmod 755 tools/objtool/sync-check.sh
 
 # Fix EXTRAVERSION in main Makefile
 sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{?alt_kernel:.%{alt_kernel}}#g' Makefile
