@@ -316,7 +316,7 @@ Conflicts:	reiserfsprogs < 3.6.3
 Conflicts:	rpm < 4.4.2-0.2
 Conflicts:	udev < 1:081
 Conflicts:	util-linux < 2.10o
-Conflicts:	util-vserver < 0.30.216
+Conflicts:	util-vserver < 0.30.216-1.pre3126.3
 Conflicts:	xfsprogs < 2.6.0
 %if %{without pae}
 ExclusiveArch:	i686 pentium3 pentium4 athlon
