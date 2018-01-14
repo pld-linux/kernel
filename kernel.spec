@@ -31,7 +31,7 @@
 
 %bcond_without	aufs		# aufs4 support
 
-%bcond_with	vserver		# support for VServer
+%bcond_without	vserver		# support for VServer
 
 %bcond_with	rt		# real-time kernel (CONFIG_PREEMPT_RT) for low latencies
 
@@ -71,7 +71,7 @@
 %define		have_pcmcia	0
 %endif
 
-%define		rel		1
+%define		rel		2
 %define		basever		4.9
 %define		postver		.76
 
@@ -187,8 +187,8 @@ Patch59:	kernel-rndis_host-wm5.patch
 # http://patches.aircrack-ng.org/hostap-kernel-2.6.18.patch
 Patch85:	kernel-hostap.patch
 
-%define	vserver_patch 3.18.5-vs2.3.7.3
-# http://vserver.13thfloor.at/Experimental/patch-3.18.5-vs2.3.7.3.diff
+%define	vserver_patch 4.9.76-vs2.3.9.5
+# http://vserver.13thfloor.at/Experimental/patch-4.9.76-vs2.3.9.5.diff
 # note there are additional patches from above url:
 # - *fix* are real fixes (we want these)
 # - *feat* are new features/tests (we don't want these)
@@ -309,7 +309,7 @@ Conflicts:	reiserfsprogs < 3.6.3
 Conflicts:	rpm < 4.4.2-0.2
 Conflicts:	udev < 1:081
 Conflicts:	util-linux < 2.10o
-Conflicts:	util-vserver < 0.30.216
+Conflicts:	util-vserver < 0.30.216-1.pre3126.3
 Conflicts:	xfsprogs < 2.6.0
 %if %{without pae}
 ExclusiveArch:	i686 pentium3 pentium4 athlon
