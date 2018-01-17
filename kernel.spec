@@ -68,9 +68,9 @@
 %define		have_pcmcia	0
 %endif
 
-%define		rel		2
+%define		rel		1
 %define		basever		4.14
-%define		postver		.13
+%define		postver		.14
 
 # define this to '-%{basever}' for longterm branch
 %define		versuffix	%{nil}
@@ -122,7 +122,7 @@ Source0:	https://www.kernel.org/pub/linux/kernel/v4.x/linux-%{basever}.tar.xz
 # Source0-md5:	bacdb9ffdcd922aa069a5e1520160e24
 %if "%{postver}" != ".0"
 Patch0:		https://www.kernel.org/pub/linux/kernel/v4.x/patch-%{version}.xz
-# Patch0-md5:	9ec660112113d68ab28ed0cac4ea3e91
+# Patch0-md5:	b688cbee616f4b35ab08b953519eda55
 %endif
 Source1:	kernel.sysconfig
 
@@ -237,7 +237,7 @@ BuildRequires:	binutils >= 3:2.18
 BuildRequires:	elftoaout
 %endif
 BuildRequires:	elfutils-devel
-BuildRequires:	gcc >= 5:3.2
+BuildRequires:	gcc >= 6:7.2.0-6
 BuildRequires:	gcc-plugin-devel
 BuildRequires:	hostname
 BuildRequires:	kmod >= 12-2
