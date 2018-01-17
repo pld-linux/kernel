@@ -71,7 +71,7 @@
 %define		have_pcmcia	0
 %endif
 
-%define		rel		3
+%define		rel		4
 %define		basever		4.1
 %define		postver		.48
 
