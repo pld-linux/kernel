@@ -70,9 +70,9 @@
 %define		have_pcmcia	0
 %endif
 
-%define		rel		2
+%define		rel		1
 %define		basever		4.4
-%define		postver		.112
+%define		postver		.113
 
 # define this to '-%{basever}' for longterm branch
 %define		versuffix	-%{basever}
@@ -124,7 +124,7 @@ Source0:	http://www.kernel.org/pub/linux/kernel/v4.x/linux-%{basever}.tar.xz
 # Source0-md5:	9a78fa2eb6c68ca5a40ed5af08142599
 %if "%{postver}" != ".0"
 Patch0:		http://www.kernel.org/pub/linux/kernel/v4.x/patch-%{version}.xz
-# Patch0-md5:	ed2aeb222d60effac008e8ed99618122
+# Patch0-md5:	b480cea7675b9f0394ecb99061bb0793
 %endif
 Source1:	kernel.sysconfig
 
@@ -252,7 +252,7 @@ BuildRequires:	elftoaout
 BuildRequires:	uboot-mkimage
 %endif
 BuildRequires:	/sbin/depmod
-BuildRequires:	gcc >= 5:3.2
+BuildRequires:	gcc >= 6:7.2.0-6
 BuildRequires:	xz >= 1:4.999.7
 AutoReqProv:	no
 BuildRequires:	hostname
