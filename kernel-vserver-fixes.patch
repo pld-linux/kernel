@@ -10,3 +10,26 @@
  		return true;
  	if (in_group_p(pid->pid_gid))
 
+diff -NurpP --minimal linux-4.9.78-vs2.3.9.6/kernel/sched/loadavg.c linux-4.9.78-vs2.3.9.6.1/kernel/sched/loadavg.c
+--- linux-4.9.78-vs2.3.9.6/kernel/sched/loadavg.c	2018-01-10 02:47:50.000000000 +0000
++++ linux-4.9.78-vs2.3.9.6.1/kernel/sched/loadavg.c	2018-01-26 12:19:45.000000000 +0000
+@@ -73,9 +73,16 @@ EXPORT_SYMBOL(avenrun); /* should be rem
+  */
+ void get_avenrun(unsigned long *loads, unsigned long offset, int shift)
+ {
+-	loads[0] = (avenrun[0] + offset) << shift;
+-	loads[1] = (avenrun[1] + offset) << shift;
+-	loads[2] = (avenrun[2] + offset) << shift;
++	if (vx_flags(VXF_VIRT_LOAD, 0)) {
++		struct vx_info *vxi = current_vx_info();
++		loads[0] = (vxi->cvirt.load[0] + offset) << shift;
++		loads[1] = (vxi->cvirt.load[1] + offset) << shift;
++		loads[2] = (vxi->cvirt.load[2] + offset) << shift;
++	} else {
++		loads[0] = (avenrun[0] + offset) << shift;
++		loads[1] = (avenrun[1] + offset) << shift;
++		loads[2] = (avenrun[2] + offset) << shift;
++	}
+ }
+ 
+ long calc_load_fold_active(struct rq *this_rq, long adjust)
