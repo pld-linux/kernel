@@ -68,12 +68,12 @@
 %define		have_pcmcia	0
 %endif
 
-%define		rel		2
+%define		rel		3
 %define		basever		4.14
 %define		postver		.15
 
 # define this to '-%{basever}' for longterm branch
-%define		versuffix	4.14
+%define		versuffix	-4.14
 
 # __alt_kernel is list of features, empty string if none set
 # _alt kernel is defined as: %{nil}%{?alt_kernel:-%{?alt_kernel}} (defined in rpm.macros)
