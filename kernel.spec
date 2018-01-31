@@ -73,7 +73,7 @@
 %define		postver		.15
 
 # define this to '-%{basever}' for longterm branch
-%define		versuffix	-4.14
+%define		versuffix	-%{basever}
 
 # __alt_kernel is list of features, empty string if none set
 # _alt kernel is defined as: %{nil}%{?alt_kernel:-%{?alt_kernel}} (defined in rpm.macros)
