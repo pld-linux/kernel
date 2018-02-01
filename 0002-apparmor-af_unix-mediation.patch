@@ -1,12 +1,13 @@
-From a3b0cb6676a04cdad5cc357bc422d0398083b435 Mon Sep 17 00:00:00 2001
+From 8f0a917911fe19f9911d972fe85c43243f7eaa37 Mon Sep 17 00:00:00 2001
 From: John Johansen <john.johansen@canonical.com>
 Date: Tue, 18 Jul 2017 23:27:23 -0700
-Subject: [PATCH 17/17] UBUNTU: SAUCE: apparmor: af_unix mediation
+Subject: [PATCH 2/2] apparmor: af_unix mediation
 
 af_socket mediation did not make it into 4.14 so add remaining out
 of tree patch
 
 Signed-off-by: John Johansen <john.johansen@canonical.com>
+Signed-off-by: Seth Forshee <seth.forshee@canonical.com>
 ---
  security/apparmor/Makefile          |   3 +-
  security/apparmor/af_unix.c         | 651 ++++++++++++++++++++++++++++++++++++
@@ -23,10 +24,10 @@ Signed-off-by: John Johansen <john.johansen@canonical.com>
  create mode 100644 security/apparmor/include/af_unix.h
 
 diff --git a/security/apparmor/Makefile b/security/apparmor/Makefile
-index dafdd387d42b..ef39226ff4aa 100644
+index e7ff2183532a..90c118f39e13 100644
 --- a/security/apparmor/Makefile
 +++ b/security/apparmor/Makefile
-@@ -4,7 +4,8 @@ obj-$(CONFIG_SECURITY_APPARMOR) += apparmor.o
+@@ -5,7 +5,8 @@ obj-$(CONFIG_SECURITY_APPARMOR) += apparmor.o
  
  apparmor-y := apparmorfs.o audit.o capability.o context.o ipc.o lib.o match.o \
                path.o domain.o policy.o policy_unpack.o procattr.o lsm.o \
@@ -694,7 +695,7 @@ index 000000000000..c6876db2dbde
 +	return error;
 +}
 diff --git a/security/apparmor/apparmorfs.c b/security/apparmor/apparmorfs.c
-index 125dad5c3fde..20cdb1c4b266 100644
+index 694c4f48a975..850c401502f1 100644
 --- a/security/apparmor/apparmorfs.c
 +++ b/security/apparmor/apparmorfs.c
 @@ -2187,6 +2187,11 @@ static struct aa_sfs_entry aa_sfs_entry_ns[] = {
@@ -718,7 +719,7 @@ index 125dad5c3fde..20cdb1c4b266 100644
  	{ }
  };
 diff --git a/security/apparmor/file.c b/security/apparmor/file.c
-index db80221891c6..e62791106900 100644
+index 86d57e56fabe..348c9ff3da4e 100644
 --- a/security/apparmor/file.c
 +++ b/security/apparmor/file.c
 @@ -16,6 +16,7 @@
@@ -729,7 +730,7 @@ index db80221891c6..e62791106900 100644
  #include "include/apparmor.h"
  #include "include/audit.h"
  #include "include/context.h"
-@@ -289,7 +290,8 @@ int __aa_path_perm(const char *op, struct aa_profile *profile, const char *name,
+@@ -283,7 +284,8 @@ int __aa_path_perm(const char *op, struct aa_profile *profile, const char *name,
  {
  	int e = 0;
  
@@ -920,7 +921,7 @@ index 4364088a0b9e..26660a1a50b0 100644
  	if (!state)
  		return 0;
 diff --git a/security/apparmor/lsm.c b/security/apparmor/lsm.c
-index cc5ab23a2d84..0ede66d80a53 100644
+index 0cd717614fd0..245c98ef311e 100644
 --- a/security/apparmor/lsm.c
 +++ b/security/apparmor/lsm.c
 @@ -26,6 +26,7 @@
@@ -1390,5 +1391,5 @@ index 33d54435f8d6..dd1953b08e58 100644
 +			 aa_label_sk_perm(label, op, request, sock->sk));
  }
 -- 
-2.11.0
+2.14.1
 

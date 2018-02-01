@@ -216,9 +216,9 @@ Patch2000:	kernel-small_fixes.patch
 Patch2001:	kernel-pwc-uncompress.patch
 Patch2003:	kernel-regressions.patch
 
-# https://gitlab.com/apparmor/apparmor/tree/master/kernel-patches/v4.14
-Patch5001:	0012-apparmor-add-base-infastructure-for-socket-mediation.patch
-Patch5002:	0001-UBUNTU-SAUCE-apparmor-af_unix-mediation.patch
+# https://gitlab.com/apparmor/apparmor/tree/master/kernel-patches/v4.15
+Patch5001:	0001-apparmor-add-base-infastructure-for-socket-mediation.patch
+Patch5002:	0002-apparmor-af_unix-mediation.patch
 
 # for rescuecd
 # based on ftp://ftp.leg.uct.ac.za/pub/linux/rip/tmpfs_root-2.6.30.diff.gz

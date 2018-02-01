@@ -1,7 +1,7 @@
-From 853cbdfb6924857a2ee2a1cd5b9fa494f8e7efa2 Mon Sep 17 00:00:00 2001
+From 27d9aac1346ff7feb6a49bfb33510c2d79a41da7 Mon Sep 17 00:00:00 2001
 From: John Johansen <john.johansen@canonical.com>
 Date: Tue, 18 Jul 2017 23:18:33 -0700
-Subject: [PATCH 12/17] apparmor: add base infastructure for socket mediation
+Subject: [PATCH 1/2] apparmor: add base infastructure for socket mediation
 
 Provide a basic mediation of sockets. This is not a full net mediation
 but just whether a spcific family of socket can be used by an
@@ -32,13 +32,12 @@ eg.
 
 Signed-off-by: John Johansen <john.johansen@canonical.com>
 Acked-by: Seth Arnold <seth.arnold@canonical.com>
-(cherry picked from commit 56387cbe3f287034ee6959cb9e8f419889e38bd9)
 ---
  security/apparmor/.gitignore       |   1 +
  security/apparmor/Makefile         |  43 ++++-
  security/apparmor/apparmorfs.c     |   1 +
  security/apparmor/file.c           |  30 +++
- security/apparmor/include/audit.h  |  26 ++-
+ security/apparmor/include/audit.h  |  16 +-
  security/apparmor/include/net.h    | 114 +++++++++++
  security/apparmor/include/perms.h  |   5 +-
  security/apparmor/include/policy.h |  13 ++
@@ -46,7 +45,7 @@ Acked-by: Seth Arnold <seth.arnold@canonical.com>
  security/apparmor/lsm.c            | 387 +++++++++++++++++++++++++++++++++++++
  security/apparmor/net.c            | 184 ++++++++++++++++++
  security/apparmor/policy_unpack.c  |  47 ++++-
- 12 files changed, 840 insertions(+), 16 deletions(-)
+ 12 files changed, 834 insertions(+), 12 deletions(-)
  create mode 100644 security/apparmor/include/net.h
  create mode 100644 security/apparmor/net.c
 
@@ -62,10 +61,10 @@ index 9cdec70d72b8..d5b291e94264 100644
  capability_names.h
  rlim_names.h
 diff --git a/security/apparmor/Makefile b/security/apparmor/Makefile
-index 81a34426d024..dafdd387d42b 100644
+index 9a6b4033d52b..e7ff2183532a 100644
 --- a/security/apparmor/Makefile
 +++ b/security/apparmor/Makefile
-@@ -4,11 +4,44 @@ obj-$(CONFIG_SECURITY_APPARMOR) += apparmor.o
+@@ -5,11 +5,44 @@ obj-$(CONFIG_SECURITY_APPARMOR) += apparmor.o
  
  apparmor-y := apparmorfs.o audit.o capability.o context.o ipc.o lib.o match.o \
                path.o domain.o policy.o policy_unpack.o procattr.o lsm.o \
@@ -112,7 +111,7 @@ index 81a34426d024..dafdd387d42b 100644
  
  # Build a lower case string table of capability names
  # Transforms lines from
-@@ -61,6 +94,7 @@ cmd_make-rlim = echo "static const char *const rlim_names[RLIM_NLIMITS] = {" \
+@@ -62,6 +95,7 @@ cmd_make-rlim = echo "static const char *const rlim_names[RLIM_NLIMITS] = {" \
  	    tr '\n' ' ' | sed -e 's/ $$/"\n/' >> $@
  
  $(obj)/capability.o : $(obj)/capability_names.h
@@ -120,7 +119,7 @@ index 81a34426d024..dafdd387d42b 100644
  $(obj)/resource.o : $(obj)/rlim_names.h
  $(obj)/capability_names.h : $(srctree)/include/uapi/linux/capability.h \
  			    $(src)/Makefile
-@@ -68,3 +102,8 @@ $(obj)/capability_names.h : $(srctree)/include/uapi/linux/capability.h \
+@@ -69,3 +103,8 @@ $(obj)/capability_names.h : $(srctree)/include/uapi/linux/capability.h \
  $(obj)/rlim_names.h : $(srctree)/include/uapi/asm-generic/resource.h \
  		      $(src)/Makefile
  	$(call cmd,make-rlim)
@@ -130,7 +129,7 @@ index 81a34426d024..dafdd387d42b 100644
 +	$(call cmd,make-af)
 +	$(call cmd,make-sock)
 diff --git a/security/apparmor/apparmorfs.c b/security/apparmor/apparmorfs.c
-index 7acea14c850b..125dad5c3fde 100644
+index d4fa04d91439..694c4f48a975 100644
 --- a/security/apparmor/apparmorfs.c
 +++ b/security/apparmor/apparmorfs.c
 @@ -2202,6 +2202,7 @@ static struct aa_sfs_entry aa_sfs_entry_features[] = {
@@ -142,7 +141,7 @@ index 7acea14c850b..125dad5c3fde 100644
  	AA_SFS_DIR("namespaces",		aa_sfs_entry_ns),
  	AA_SFS_FILE_U64("capability",		VFS_CAP_FLAGS_MASK),
 diff --git a/security/apparmor/file.c b/security/apparmor/file.c
-index 3382518b87fa..db80221891c6 100644
+index e79bf44396a3..86d57e56fabe 100644
 --- a/security/apparmor/file.c
 +++ b/security/apparmor/file.c
 @@ -21,6 +21,7 @@
@@ -153,7 +152,7 @@ index 3382518b87fa..db80221891c6 100644
  #include "include/path.h"
  #include "include/policy.h"
  #include "include/label.h"
-@@ -566,6 +567,32 @@ static int __file_path_perm(const char *op, struct aa_label *label,
+@@ -560,6 +561,32 @@ static int __file_path_perm(const char *op, struct aa_label *label,
  	return error;
  }
  
@@ -186,7 +185,7 @@ index 3382518b87fa..db80221891c6 100644
  /**
   * aa_file_perm - do permission revalidation check & audit for @file
   * @op: operation being checked
-@@ -610,6 +637,9 @@ int aa_file_perm(const char *op, struct aa_label *label, struct file *file,
+@@ -604,6 +631,9 @@ int aa_file_perm(const char *op, struct aa_label *label, struct file *file,
  		error = __file_path_perm(op, label, flabel, file, request,
  					 denied);
  
@@ -197,40 +196,32 @@ index 3382518b87fa..db80221891c6 100644
  	rcu_read_unlock();
  
 diff --git a/security/apparmor/include/audit.h b/security/apparmor/include/audit.h
-index 620e81169659..ff4316e1068d 100644
+index 4ac095118717..ff4316e1068d 100644
 --- a/security/apparmor/include/audit.h
 +++ b/security/apparmor/include/audit.h
-@@ -121,23 +121,29 @@ struct apparmor_audit_data {
- 		/* these entries require a custom callback fn */
- 		struct {
+@@ -123,10 +123,20 @@ struct apparmor_audit_data {
  			struct aa_label *peer;
--			union {
--				struct {
+ 			union {
+ 				struct {
 -					const char *target;
--					kuid_t ouid;
--				} fs;
--				int signal;
--			};
-+			union {
-+				struct {
-+					kuid_t ouid;
+ 					kuid_t ouid;
 +					const char *target;
-+				} fs;
+ 				} fs;
 +				struct {
 +					int type, protocol;
 +					struct sock *peer_sk;
 +					void *addr;
 +					int addrlen;
 +				} net;
-+				int signal;
+ 				int signal;
 +				struct {
 +					int rlim;
 +					unsigned long max;
 +				} rlim;
-+			};
+ 			};
  		};
  		struct {
- 			struct aa_profile *profile;
+@@ -134,10 +144,6 @@ struct apparmor_audit_data {
  			const char *ns;
  			long pos;
  		} iface;
@@ -362,10 +353,10 @@ index 000000000000..140c8efcf364
 +
 +#endif /* __AA_NET_H */
 diff --git a/security/apparmor/include/perms.h b/security/apparmor/include/perms.h
-index 2b27bb79aec4..af04d5a7d73d 100644
+index d7b7e7115160..38aa6247d00f 100644
 --- a/security/apparmor/include/perms.h
 +++ b/security/apparmor/include/perms.h
-@@ -135,9 +135,10 @@ extern struct aa_perms allperms;
+@@ -138,9 +138,10 @@ extern struct aa_perms allperms;
  
  
  void aa_perm_mask_to_str(char *str, const char *chrs, u32 mask);
@@ -424,7 +415,7 @@ index 17fe41a9cac3..4364088a0b9e 100644
   * aa_get_profile - increment refcount on profile @p
   * @p: profile  (MAYBE NULL)
 diff --git a/security/apparmor/lib.c b/security/apparmor/lib.c
-index 08ca26bcca77..8818621b5d95 100644
+index 4d5e98e49d5e..068a9f471f77 100644
 --- a/security/apparmor/lib.c
 +++ b/security/apparmor/lib.c
 @@ -211,7 +211,8 @@ void aa_perm_mask_to_str(char *str, const char *chrs, u32 mask)
@@ -447,7 +438,7 @@ index 08ca26bcca77..8818621b5d95 100644
  	char str[33];
  
 diff --git a/security/apparmor/lsm.c b/security/apparmor/lsm.c
-index 4ad0b3a45142..cc5ab23a2d84 100644
+index 9a65eeaf7dfa..0cd717614fd0 100644
 --- a/security/apparmor/lsm.c
 +++ b/security/apparmor/lsm.c
 @@ -33,6 +33,7 @@
@@ -1049,7 +1040,7 @@ index 000000000000..33d54435f8d6
 +	return aa_label_sk_perm(label, op, request, sock->sk);
 +}
 diff --git a/security/apparmor/policy_unpack.c b/security/apparmor/policy_unpack.c
-index 4ede87c30f8b..5a2aec358322 100644
+index 59a1a25b7d43..68b168e8f499 100644
 --- a/security/apparmor/policy_unpack.c
 +++ b/security/apparmor/policy_unpack.c
 @@ -275,6 +275,19 @@ static bool unpack_nameX(struct aa_ext *e, enum aa_code code, const char *name)
@@ -1121,5 +1112,5 @@ index 4ede87c30f8b..5a2aec358322 100644
  		/* generic policy dfa - optional and may be NULL */
  		info = "failed to unpack policydb";
 -- 
-2.11.0
+2.14.1
 
