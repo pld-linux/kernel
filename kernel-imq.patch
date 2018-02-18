@@ -1583,10 +1583,10 @@ index 5baa8e2..9740e8c 100644
  	int status = -ENOENT;
  	struct nf_queue_entry *entry = NULL;
 @@ -124,7 +142,17 @@ int nf_queue(struct sk_buff *skb,
- 	const struct nf_queue_handler *qh;
+ 	struct net *net = state->net;
  
  	/* QUEUE == DROP if no one is waiting, to be safe. */
--	qh = rcu_dereference(queue_handler);
+-	qh = rcu_dereference(net->nf.queue_handler);
 +	if (queuetype == NF_IMQ_QUEUE) {
 +#if defined(CONFIG_IMQ) || defined(CONFIG_IMQ_MODULE)
 +		qh = rcu_dereference(queue_imq_handler);
@@ -1595,7 +1595,7 @@ index 5baa8e2..9740e8c 100644
 +		goto err_unlock;
 +#endif
 +	} else {
-+		qh = rcu_dereference(queue_handler);
++		qh = rcu_dereference(net->nf.queue_handler);
 +	}
 +
  	if (!qh) {
