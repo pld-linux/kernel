@@ -250,11 +250,11 @@ BuildRequires:	uboot-mkimage
 %endif
 BuildRequires:	xz >= 1:4.999.7
 Requires(post):	coreutils
-Requires(post):	geninitrd >= 12749
+Requires(post):	geninitrd >= 12757-8
 Requires(post):	kmod >= 12-2
 Requires:	/sbin/depmod
 Requires:	coreutils
-Requires:	geninitrd >= 12749
+Requires:	geninitrd >= 12757-8
 Requires:	kmod >= 12-2
 %if %{with pae}
 %ifarch i686 athlon pentium3 pentium4
