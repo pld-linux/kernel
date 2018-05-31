@@ -2222,15 +2222,6 @@ diff -NurpP --minimal linux-4.9.82/fs/ext2/inode.c linux-4.9.82-vs2.3.9.7/fs/ext
  #include "ext2.h"
  #include "acl.h"
  #include "xattr.h"
-@@ -1271,7 +1272,7 @@ static void ext2_truncate_blocks(struct
- 		return;
- 	if (ext2_inode_is_fast_symlink(inode))
- 		return;
--	if (IS_APPEND(inode) || IS_IMMUTABLE(inode))
-+	if (IS_APPEND(inode) || IS_IXORUNLINK(inode))
- 		return;
- 
- 	dax_sem_down_write(EXT2_I(inode));
 @@ -1367,39 +1368,61 @@ void ext2_set_inode_flags(struct inode *
  {
  	unsigned int flags = EXT2_I(inode)->i_flags;
