@@ -68,9 +68,9 @@
 %define		have_pcmcia	0
 %endif
 
-%define		rel		1
-%define		basever		4.16
-%define		postver		.13
+%define		rel		0.1
+%define		basever		4.17
+%define		postver		.0
 
 # define this to '-%{basever}' for longterm branch
 %define		versuffix	%{nil}
@@ -119,7 +119,7 @@ Epoch:		3
 License:	GPL v2
 Group:		Base/Kernel
 Source0:	https://www.kernel.org/pub/linux/kernel/v4.x/linux-%{basever}.tar.xz
-# Source0-md5:	1357fb4ee7c288fdeac5d4e0048f5c18
+# Source0-md5:	5bb13a03274b66b56c85b26682e407d7
 %if "%{postver}" != ".0"
 Patch0:		https://www.kernel.org/pub/linux/kernel/v4.x/patch-%{version}.xz
 # Patch0-md5:	ace51349b2f09e3731709b95b8053289
@@ -217,8 +217,7 @@ Patch2001:	kernel-pwc-uncompress.patch
 Patch2003:	kernel-regressions.patch
 
 # https://gitlab.com/apparmor/apparmor/tree/master/kernel-patches/v4.15
-Patch5001:	0001-apparmor-add-base-infastructure-for-socket-mediation.patch
-Patch5002:	0002-apparmor-af_unix-mediation.patch
+Patch5001:	0002-apparmor-af_unix-mediation.patch
 
 # for rescuecd
 # based on ftp://ftp.leg.uct.ac.za/pub/linux/rip/tmpfs_root-2.6.30.diff.gz
@@ -685,7 +684,6 @@ rm -f localversion-rt
 # apparmor
 %if %{with apparmor}
 %patch5001 -p1
-%patch5002 -p1
 %endif
 
 %patch250 -p1
