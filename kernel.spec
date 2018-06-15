@@ -29,7 +29,6 @@
 %bcond_without	ipv6		# ipv6 support
 
 %bcond_without	aufs		# aufs4 support
-%bcond_without	apparmor	# UBUNTU SAUCE apparmor patches
 
 %bcond_with	vserver		# support for VServer
 
@@ -68,9 +67,9 @@
 %define		have_pcmcia	0
 %endif
 
-%define		rel		0.1
+%define		rel		1
 %define		basever		4.17
-%define		postver		.0
+%define		postver		.1
 
 # define this to '-%{basever}' for longterm branch
 %define		versuffix	%{nil}
@@ -122,7 +121,7 @@ Source0:	https://www.kernel.org/pub/linux/kernel/v4.x/linux-%{basever}.tar.xz
 # Source0-md5:	5bb13a03274b66b56c85b26682e407d7
 %if "%{postver}" != ".0"
 Patch0:		https://www.kernel.org/pub/linux/kernel/v4.x/patch-%{version}.xz
-# Patch0-md5:	ace51349b2f09e3731709b95b8053289
+# Patch0-md5:	8f430fc5bf2fd5a6ec5da8b4a08473d8
 %endif
 Source1:	kernel.sysconfig
 
@@ -196,7 +195,7 @@ Patch101:	kernel-vserver-fixes.patch
 # Patch creation:
 # git clone git://github.com/sfjro/aufs4-standalone.git
 # cd aufs4-standalone
-# git checkout -b aufs4.14 origin/aufs4.14
+# git checkout -b aufs4.17 origin/aufs4.17
 # cat aufs4-kbuild.patch aufs4-base.patch aufs4-mmap.patch aufs4-standalone.patch > ~/rpm/packages/kernel/kernel-aufs4.patch
 # rm -rf linux && mkdir linux; cp -a Documentation fs include linux
 # diff -urN /usr/share/empty linux | filterdiff -x linux/include/uapi/linux/Kbuild >> ~/rpm/packages/kernel/kernel-aufs4.patch
@@ -215,9 +214,6 @@ Patch500:	kernel-rt.patch
 Patch2000:	kernel-small_fixes.patch
 Patch2001:	kernel-pwc-uncompress.patch
 Patch2003:	kernel-regressions.patch
-
-# https://gitlab.com/apparmor/apparmor/tree/master/kernel-patches/v4.15
-Patch5001:	0002-apparmor-af_unix-mediation.patch
 
 # for rescuecd
 # based on ftp://ftp.leg.uct.ac.za/pub/linux/rip/tmpfs_root-2.6.30.diff.gz
@@ -679,11 +675,6 @@ cd linux-%{basever}
 %if %{with rt}
 %patch500 -p1
 rm -f localversion-rt
-%endif
-
-# apparmor
-%if %{with apparmor}
-%patch5001 -p1
 %endif
 
 %patch250 -p1

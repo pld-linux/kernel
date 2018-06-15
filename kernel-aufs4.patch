@@ -1,5 +1,5 @@
 SPDX-License-Identifier: GPL-2.0
-aufs4.x-rcN kbuild patch
+aufs4.17 kbuild patch
 
 diff --git a/fs/Kconfig b/fs/Kconfig
 index bc821a8..7ae814c 100644
@@ -23,13 +23,13 @@ index c9375fd..8af5671 100644
  obj-$(CONFIG_EFIVAR_FS)		+= efivarfs/
 +obj-$(CONFIG_AUFS_FS)           += aufs/
 SPDX-License-Identifier: GPL-2.0
-aufs4.x-rcN base patch
+aufs4.17 base patch
 
 diff --git a/MAINTAINERS b/MAINTAINERS
-index 92be777..138f5e6 100644
+index 9c125f7..4616bbf 100644
 --- a/MAINTAINERS
 +++ b/MAINTAINERS
-@@ -2517,6 +2517,19 @@ F:	include/linux/audit.h
+@@ -2519,6 +2519,19 @@ F:	include/linux/audit.h
  F:	include/uapi/linux/audit.h
  F:	kernel/audit*
  
@@ -50,10 +50,10 @@ index 92be777..138f5e6 100644
  M:	Miguel Ojeda Sandonis <miguel.ojeda.sandonis@gmail.com>
  W:	http://miguelojeda.es/auxdisplay.htm
 diff --git a/drivers/block/loop.c b/drivers/block/loop.c
-index c9d0449..79902c1 100644
+index 55cf554..bc965e5 100644
 --- a/drivers/block/loop.c
 +++ b/drivers/block/loop.c
-@@ -691,6 +691,24 @@ static inline int is_loop_device(struct file *file)
+@@ -713,6 +713,24 @@ static inline int is_loop_device(struct file *file)
  	return i && S_ISBLK(i->i_mode) && MAJOR(i->i_rdev) == LOOP_MAJOR;
  }
  
@@ -79,7 +79,7 @@ index c9d0449..79902c1 100644
  
  static ssize_t loop_attr_show(struct device *dev, char *page,
 diff --git a/fs/dcache.c b/fs/dcache.c
-index 86d2de6..213ddcd 100644
+index 2acfc69..ff338e2 100644
 --- a/fs/dcache.c
 +++ b/fs/dcache.c
 @@ -1234,7 +1234,7 @@ enum d_walk_ret {
@@ -114,10 +114,10 @@ index d737ff0..7550799 100644
  		return error;
  
 diff --git a/fs/inode.c b/fs/inode.c
-index 13ceb98..68b3b45 100644
+index 3b55391..e0c5255 100644
 --- a/fs/inode.c
 +++ b/fs/inode.c
-@@ -1662,7 +1662,7 @@ EXPORT_SYMBOL(generic_update_time);
+@@ -1663,7 +1663,7 @@ EXPORT_SYMBOL(generic_update_time);
   * This does the actual work of updating an inodes time or version.  Must have
   * had called mnt_want_write() before calling this.
   */
@@ -355,10 +355,10 @@ index 0233863..06e0d7a 100644
  #ifdef CONFIG_LOCK_STAT
  static DEFINE_PER_CPU(struct lock_class_stats[MAX_LOCKDEP_KEYS], cpu_lock_stats);
 SPDX-License-Identifier: GPL-2.0
-aufs4.x-rcN mmap patch
+aufs4.17 mmap patch
 
 diff --git a/fs/proc/base.c b/fs/proc/base.c
-index 1b2ede6..dc3fd6d 100644
+index 1a76d75..77f698e 100644
 --- a/fs/proc/base.c
 +++ b/fs/proc/base.c
 @@ -2024,7 +2024,7 @@ static int map_files_get_link(struct dentry *dentry, struct path *path)
@@ -428,7 +428,7 @@ index 5b62f57..dfb4a3b 100644
  		ino = inode->i_ino;
  		pgoff = (loff_t)vma->vm_pgoff << PAGE_SHIFT;
 diff --git a/include/linux/mm.h b/include/linux/mm.h
-index 1ac1f06..49997d9 100644
+index 02a616e..01b3bb9 100644
 --- a/include/linux/mm.h
 +++ b/include/linux/mm.h
 @@ -1380,6 +1380,28 @@ static inline void unmap_shared_mapping_range(struct address_space *mapping,
@@ -520,10 +520,10 @@ index 0604cb0..45d2369 100644
  	if (page->mapping != inode->i_mapping) {
  		unlock_page(page);
 diff --git a/mm/mmap.c b/mm/mmap.c
-index 188f195..3c1ca1d 100644
+index fc41c05..e376869 100644
 --- a/mm/mmap.c
 +++ b/mm/mmap.c
-@@ -171,7 +171,7 @@ static struct vm_area_struct *remove_vma(struct vm_area_struct *vma)
+@@ -180,7 +180,7 @@ static struct vm_area_struct *remove_vma(struct vm_area_struct *vma)
  	if (vma->vm_ops && vma->vm_ops->close)
  		vma->vm_ops->close(vma);
  	if (vma->vm_file)
@@ -532,7 +532,7 @@ index 188f195..3c1ca1d 100644
  	mpol_put(vma_policy(vma));
  	kmem_cache_free(vm_area_cachep, vma);
  	return next;
-@@ -896,7 +896,7 @@ int __vma_adjust(struct vm_area_struct *vma, unsigned long start,
+@@ -905,7 +905,7 @@ int __vma_adjust(struct vm_area_struct *vma, unsigned long start,
  	if (remove_next) {
  		if (file) {
  			uprobe_munmap(next, next->vm_start, next->vm_end);
@@ -541,7 +541,7 @@ index 188f195..3c1ca1d 100644
  		}
  		if (next->anon_vma)
  			anon_vma_merge(vma, next);
-@@ -1779,8 +1779,8 @@ unsigned long mmap_region(struct file *file, unsigned long addr,
+@@ -1820,8 +1820,8 @@ unsigned long mmap_region(struct file *file, unsigned long addr,
  	return addr;
  
  unmap_and_free_vma:
@@ -551,7 +551,7 @@ index 188f195..3c1ca1d 100644
  
  	/* Undo any partial mapping done by a device driver. */
  	unmap_region(mm, vma, prev, vma->vm_start, vma->vm_end);
-@@ -2604,7 +2604,7 @@ int __split_vma(struct mm_struct *mm, struct vm_area_struct *vma,
+@@ -2645,7 +2645,7 @@ int __split_vma(struct mm_struct *mm, struct vm_area_struct *vma,
  		goto out_free_mpol;
  
  	if (new->vm_file)
@@ -560,7 +560,7 @@ index 188f195..3c1ca1d 100644
  
  	if (new->vm_ops && new->vm_ops->open)
  		new->vm_ops->open(new);
-@@ -2623,7 +2623,7 @@ int __split_vma(struct mm_struct *mm, struct vm_area_struct *vma,
+@@ -2664,7 +2664,7 @@ int __split_vma(struct mm_struct *mm, struct vm_area_struct *vma,
  	if (new->vm_ops && new->vm_ops->close)
  		new->vm_ops->close(new);
  	if (new->vm_file)
@@ -569,7 +569,7 @@ index 188f195..3c1ca1d 100644
  	unlink_anon_vmas(new);
   out_free_mpol:
  	mpol_put(vma_policy(new));
-@@ -2785,7 +2785,7 @@ SYSCALL_DEFINE5(remap_file_pages, unsigned long, start, unsigned long, size,
+@@ -2826,7 +2826,7 @@ SYSCALL_DEFINE5(remap_file_pages, unsigned long, start, unsigned long, size,
  	struct vm_area_struct *vma;
  	unsigned long populate = 0;
  	unsigned long ret = -EINVAL;
@@ -578,7 +578,7 @@ index 188f195..3c1ca1d 100644
  
  	pr_warn_once("%s (%d) uses deprecated remap_file_pages() syscall. See Documentation/vm/remap_file_pages.txt.\n",
  		     current->comm, current->pid);
-@@ -2860,10 +2860,27 @@ SYSCALL_DEFINE5(remap_file_pages, unsigned long, start, unsigned long, size,
+@@ -2901,10 +2901,27 @@ SYSCALL_DEFINE5(remap_file_pages, unsigned long, start, unsigned long, size,
  		}
  	}
  
@@ -607,7 +607,7 @@ index 188f195..3c1ca1d 100644
  out:
  	up_write(&mm->mmap_sem);
  	if (populate)
-@@ -3171,7 +3188,7 @@ struct vm_area_struct *copy_vma(struct vm_area_struct **vmap,
+@@ -3220,7 +3237,7 @@ struct vm_area_struct *copy_vma(struct vm_area_struct **vmap,
  		if (anon_vma_clone(new_vma, vma))
  			goto out_free_mempol;
  		if (new_vma->vm_file)
@@ -753,10 +753,10 @@ index 0000000..14efc4f
 +}
 +#endif /* !CONFIG_MMU */
 SPDX-License-Identifier: GPL-2.0
-aufs4.x-rcN standalone patch
+aufs4.17 standalone patch
 
 diff --git a/fs/dcache.c b/fs/dcache.c
-index 213ddcd..137176b 100644
+index ff338e2..3e2bae8 100644
 --- a/fs/dcache.c
 +++ b/fs/dcache.c
 @@ -1342,6 +1342,7 @@ void d_walk(struct dentry *parent, void *data,
@@ -767,7 +767,7 @@ index 213ddcd..137176b 100644
  
  struct check_mount {
  	struct vfsmount *mnt;
-@@ -2920,6 +2921,7 @@ void d_exchange(struct dentry *dentry1, struct dentry *dentry2)
+@@ -2942,6 +2943,7 @@ void d_exchange(struct dentry *dentry1, struct dentry *dentry2)
  
  	write_sequnlock(&rename_lock);
  }
@@ -836,10 +836,10 @@ index 7ec0b3e..819ee07 100644
  void __init files_init(void)
  {
 diff --git a/fs/inode.c b/fs/inode.c
-index 68b3b45..af4551e 100644
+index e0c5255..ff36056 100644
 --- a/fs/inode.c
 +++ b/fs/inode.c
-@@ -1671,6 +1671,7 @@ int update_time(struct inode *inode, struct timespec *time, int flags)
+@@ -1672,6 +1672,7 @@ int update_time(struct inode *inode, struct timespec *time, int flags)
  
  	return update_time(inode, time, flags);
  }
@@ -948,7 +948,7 @@ index e9191b4..1f8ccfa 100644
  /*
   * Destroy all marks in destroy_list, waits for SRCU period to finish before
 diff --git a/fs/open.c b/fs/open.c
-index c5ee7cd..86bfe2d 100644
+index d0e955b..527bc1a 100644
 --- a/fs/open.c
 +++ b/fs/open.c
 @@ -64,6 +64,7 @@ int do_truncate(struct dentry *dentry, loff_t length, unsigned int time_attrs,
@@ -958,6 +958,14 @@ index c5ee7cd..86bfe2d 100644
 +EXPORT_SYMBOL_GPL(do_truncate);
  
  long vfs_truncate(const struct path *path, loff_t length)
+ {
+@@ -723,6 +724,7 @@ SYSCALL_DEFINE3(fchown, unsigned int, fd, uid_t, user, gid_t, group)
+ {
+ 	return ksys_fchown(fd, user, group);
+ }
++EXPORT_SYMBOL_GPL(open_check_o_direct);
+ 
+ int open_check_o_direct(struct file *f)
  {
 diff --git a/fs/read_write.c b/fs/read_write.c
 index ddd6e67..aabf92d 100644
@@ -1061,10 +1069,10 @@ index 0fef395..83fb1ec 100644
  }
 +EXPORT_SYMBOL_GPL(task_work_run);
 diff --git a/security/commoncap.c b/security/commoncap.c
-index 48620c9..4981104 100644
+index 1ce701f..a0d106e 100644
 --- a/security/commoncap.c
 +++ b/security/commoncap.c
-@@ -1330,12 +1330,14 @@ int cap_mmap_addr(unsigned long addr)
+@@ -1332,12 +1332,14 @@ int cap_mmap_addr(unsigned long addr)
  	}
  	return ret;
  }
@@ -2670,7 +2678,7 @@ diff -urN /usr/share/empty/Documentation/filesystems/aufs/design/10dynop.txt lin
 +regular files only.
 diff -urN /usr/share/empty/Documentation/filesystems/aufs/README linux/Documentation/filesystems/aufs/README
 --- /usr/share/empty/Documentation/filesystems/aufs/README	1970-01-01 01:00:00.000000000 +0100
-+++ linux/Documentation/filesystems/aufs/README	2017-07-29 12:14:25.893041746 +0200
++++ linux/Documentation/filesystems/aufs/README	2018-06-15 11:15:15.400449109 +0200
 @@ -0,0 +1,393 @@
 +
 +Aufs4 -- advanced multi layered unification filesystem version 4.x
@@ -3045,7 +3053,7 @@ diff -urN /usr/share/empty/Documentation/filesystems/aufs/README linux/Documenta
 +James B made a donation (2014/7 and 2015/7).
 +Stefano Di Biase made a donation (2014/8).
 +Daniel Epellei made a donation (2015/1).
-+OmegaPhil made a donation (2016/1).
++OmegaPhil made a donation (2016/1, 2018/4).
 +Tomasz Szewczyk made a donation (2016/4).
 +James Burry made a donation (2016/12).
 +
@@ -32378,8 +32386,8 @@ diff -urN /usr/share/empty/fs/aufs/vdir.c linux/fs/aufs/vdir.c
 +}
 diff -urN /usr/share/empty/fs/aufs/vfsub.c linux/fs/aufs/vfsub.c
 --- /usr/share/empty/fs/aufs/vfsub.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/vfsub.c	2018-06-04 09:08:11.628152835 +0200
-@@ -0,0 +1,893 @@
++++ linux/fs/aufs/vfsub.c	2018-06-15 11:15:15.400449109 +0200
+@@ -0,0 +1,894 @@
 +/*
 + * Copyright (C) 2005-2018 Junjiro R. Okajima
 + *
@@ -32520,6 +32528,7 @@ diff -urN /usr/share/empty/fs/aufs/vfsub.c linux/fs/aufs/vfsub.c
 +
 +	if (!err) {
 +		/* todo: call VFS:may_open() here */
++		err = open_check_o_direct(file);
 +		/* todo: ima_file_check() too? */
 +		if (!err && (args->open_flag & __FMODE_EXEC))
 +			err = deny_write_access(file);
@@ -33275,8 +33284,8 @@ diff -urN /usr/share/empty/fs/aufs/vfsub.c linux/fs/aufs/vfsub.c
 +}
 diff -urN /usr/share/empty/fs/aufs/vfsub.h linux/fs/aufs/vfsub.h
 --- /usr/share/empty/fs/aufs/vfsub.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/vfsub.h	2018-06-04 09:08:11.628152835 +0200
-@@ -0,0 +1,353 @@
++++ linux/fs/aufs/vfsub.h	2018-06-15 11:15:15.400449109 +0200
+@@ -0,0 +1,354 @@
 +/*
 + * Copyright (C) 2005-2018 Junjiro R. Okajima
 + *
@@ -33313,6 +33322,7 @@ diff -urN /usr/share/empty/fs/aufs/vfsub.h linux/fs/aufs/vfsub.h
 +/* copied from linux/fs/internal.h */
 +/* todo: BAD approach!! */
 +extern void __mnt_drop_write(struct vfsmount *);
++extern int open_check_o_direct(struct file *f);
 +
 +/* ---------------------------------------------------------------------- */
 +
@@ -37943,7 +37953,7 @@ diff -urN /usr/share/empty/fs/aufs/xino.c linux/fs/aufs/xino.c
 +}
 diff -urN /usr/share/empty/include/uapi/linux/aufs_type.h linux/include/uapi/linux/aufs_type.h
 --- /usr/share/empty/include/uapi/linux/aufs_type.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux/include/uapi/linux/aufs_type.h	2018-06-04 09:08:11.628152835 +0200
++++ linux/include/uapi/linux/aufs_type.h	2018-06-15 11:15:32.107607516 +0200
 @@ -0,0 +1,447 @@
 +/*
 + * Copyright (C) 2005-2018 Junjiro R. Okajima
@@ -37986,7 +37996,7 @@ diff -urN /usr/share/empty/include/uapi/linux/aufs_type.h linux/include/uapi/lin
 +
 +#include <linux/limits.h>
 +
-+#define AUFS_VERSION	"4.x-rcN-20180430"
++#define AUFS_VERSION	"4.17-20180611"
 +
 +/* todo? move this to linux-2.6.19/include/magic.h */
 +#define AUFS_SUPER_MAGIC	('a' << 24 | 'u' << 16 | 'f' << 8 | 's')
@@ -38393,13 +38403,13 @@ diff -urN /usr/share/empty/include/uapi/linux/aufs_type.h linux/include/uapi/lin
 +
 +#endif /* __AUFS_TYPE_H__ */
 SPDX-License-Identifier: GPL-2.0
-aufs4.x-rcN loopback patch
+aufs4.17 loopback patch
 
 diff --git a/drivers/block/loop.c b/drivers/block/loop.c
-index 79902c1..40db6d1 100644
+index bc965e5..852868a 100644
 --- a/drivers/block/loop.c
 +++ b/drivers/block/loop.c
-@@ -600,6 +600,15 @@ static inline void loop_update_dio(struct loop_device *lo)
+@@ -622,6 +622,15 @@ static inline void loop_update_dio(struct loop_device *lo)
  			lo->use_dio);
  }
  
@@ -38415,7 +38425,7 @@ index 79902c1..40db6d1 100644
  static void loop_reread_partitions(struct loop_device *lo,
  				   struct block_device *bdev)
  {
-@@ -634,6 +643,7 @@ static int loop_change_fd(struct loop_device *lo, struct block_device *bdev,
+@@ -656,6 +665,7 @@ static int loop_change_fd(struct loop_device *lo, struct block_device *bdev,
  			  unsigned int arg)
  {
  	struct file	*file, *old_file;
@@ -38423,7 +38433,7 @@ index 79902c1..40db6d1 100644
  	struct inode	*inode;
  	int		error;
  
-@@ -650,9 +660,16 @@ static int loop_change_fd(struct loop_device *lo, struct block_device *bdev,
+@@ -672,9 +682,16 @@ static int loop_change_fd(struct loop_device *lo, struct block_device *bdev,
  	file = fget(arg);
  	if (!file)
  		goto out;
@@ -38440,7 +38450,7 @@ index 79902c1..40db6d1 100644
  
  	error = -EINVAL;
  
-@@ -667,6 +684,7 @@ static int loop_change_fd(struct loop_device *lo, struct block_device *bdev,
+@@ -689,6 +706,7 @@ static int loop_change_fd(struct loop_device *lo, struct block_device *bdev,
  	blk_mq_freeze_queue(lo->lo_queue);
  	mapping_set_gfp_mask(old_file->f_mapping, lo->old_gfp_mask);
  	lo->lo_backing_file = file;
@@ -38448,7 +38458,7 @@ index 79902c1..40db6d1 100644
  	lo->old_gfp_mask = mapping_gfp_mask(file->f_mapping);
  	mapping_set_gfp_mask(file->f_mapping,
  			     lo->old_gfp_mask & ~(__GFP_IO|__GFP_FS));
-@@ -674,12 +692,16 @@ static int loop_change_fd(struct loop_device *lo, struct block_device *bdev,
+@@ -696,12 +714,16 @@ static int loop_change_fd(struct loop_device *lo, struct block_device *bdev,
  	blk_mq_unfreeze_queue(lo->lo_queue);
  
  	fput(old_file);
@@ -38465,7 +38475,7 @@ index 79902c1..40db6d1 100644
   out:
  	return error;
  }
-@@ -873,7 +895,7 @@ static int loop_prepare_queue(struct loop_device *lo)
+@@ -895,7 +917,7 @@ static int loop_prepare_queue(struct loop_device *lo)
  static int loop_set_fd(struct loop_device *lo, fmode_t mode,
  		       struct block_device *bdev, unsigned int arg)
  {
@@ -38474,7 +38484,7 @@ index 79902c1..40db6d1 100644
  	struct inode	*inode;
  	struct address_space *mapping;
  	int		lo_flags = 0;
-@@ -887,6 +909,12 @@ static int loop_set_fd(struct loop_device *lo, fmode_t mode,
+@@ -909,6 +931,12 @@ static int loop_set_fd(struct loop_device *lo, fmode_t mode,
  	file = fget(arg);
  	if (!file)
  		goto out;
@@ -38487,7 +38497,7 @@ index 79902c1..40db6d1 100644
  
  	error = -EBUSY;
  	if (lo->lo_state != Lo_unbound)
-@@ -935,6 +963,7 @@ static int loop_set_fd(struct loop_device *lo, fmode_t mode,
+@@ -957,6 +985,7 @@ static int loop_set_fd(struct loop_device *lo, fmode_t mode,
  	lo->lo_device = bdev;
  	lo->lo_flags = lo_flags;
  	lo->lo_backing_file = file;
@@ -38495,7 +38505,7 @@ index 79902c1..40db6d1 100644
  	lo->transfer = NULL;
  	lo->ioctl = NULL;
  	lo->lo_sizelimit = 0;
-@@ -968,6 +997,8 @@ static int loop_set_fd(struct loop_device *lo, fmode_t mode,
+@@ -990,6 +1019,8 @@ static int loop_set_fd(struct loop_device *lo, fmode_t mode,
  
   out_putf:
  	fput(file);
@@ -38504,7 +38514,7 @@ index 79902c1..40db6d1 100644
   out:
  	/* This is safe: open() is still holding a reference. */
  	module_put(THIS_MODULE);
-@@ -1014,6 +1045,7 @@ loop_init_xfer(struct loop_device *lo, struct loop_func_table *xfer,
+@@ -1036,6 +1067,7 @@ loop_init_xfer(struct loop_device *lo, struct loop_func_table *xfer,
  static int loop_clr_fd(struct loop_device *lo)
  {
  	struct file *filp = lo->lo_backing_file;
@@ -38512,7 +38522,7 @@ index 79902c1..40db6d1 100644
  	gfp_t gfp = lo->old_gfp_mask;
  	struct block_device *bdev = lo->lo_device;
  
-@@ -1045,6 +1077,7 @@ static int loop_clr_fd(struct loop_device *lo)
+@@ -1067,6 +1099,7 @@ static int loop_clr_fd(struct loop_device *lo)
  	spin_lock_irq(&lo->lo_lock);
  	lo->lo_state = Lo_rundown;
  	lo->lo_backing_file = NULL;
@@ -38520,7 +38530,7 @@ index 79902c1..40db6d1 100644
  	spin_unlock_irq(&lo->lo_lock);
  
  	loop_release_xfer(lo);
-@@ -1092,6 +1125,8 @@ static int loop_clr_fd(struct loop_device *lo)
+@@ -1115,6 +1148,8 @@ static int loop_clr_fd(struct loop_device *lo)
  	 * bd_mutex which is usually taken before lo_ctl_mutex.
  	 */
  	fput(filp);
@@ -38530,7 +38540,7 @@ index 79902c1..40db6d1 100644
  }
  
 diff --git a/drivers/block/loop.h b/drivers/block/loop.h
-index 0f45416..101f193 100644
+index b78de98..2bbbd92 100644
 --- a/drivers/block/loop.h
 +++ b/drivers/block/loop.h
 @@ -46,7 +46,7 @@ struct loop_device {
