@@ -38376,7 +38376,7 @@ index d44de9d..095672b 100644
  	struct inode	*inode;
  	int		error;
  
-@@ -645,9 +655,16 @@ static int loop_change_fd(struct loop_device *lo, struct block_device *bdev,
+@@ -645,13 +655,20 @@ static int loop_change_fd(struct loop_device *lo, struct block_device *bdev,
  	file = fget(arg);
  	if (!file)
  		goto out;
@@ -38386,6 +38386,10 @@ index d44de9d..095672b 100644
 +		file = f;
 +		get_file(file);
 +	}
+ 
+ 	error = loop_validate_file(file, bdev);
+ 	if (error)
+ 		goto out_putf;
  
  	inode = file->f_mapping->host;
  	old_file = lo->lo_backing_file;
@@ -38422,7 +38426,7 @@ index d44de9d..095672b 100644
  static int loop_set_fd(struct loop_device *lo, fmode_t mode,
  		       struct block_device *bdev, unsigned int arg)
  {
--	struct file	*file, *f;
+-	struct file	*file;
 +	struct file	*file, *f, *virt_file = NULL;
  	struct inode	*inode;
  	struct address_space *mapping;
