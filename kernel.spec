@@ -67,7 +67,7 @@
 %define		have_pcmcia	0
 %endif
 
-%define		rel		0.1
+%define		rel		1
 %define		basever		4.18
 %define		postver		.0
 
@@ -1386,7 +1386,6 @@ fi
 %{_kernelsrcdir}/kernel/bounds.c
 %{_kernelsrcdir}/scripts/basic/*.c
 %attr(755,root,root) %{_kernelsrcdir}/scripts/kconfig/*.sh
-%{_kernelsrcdir}/scripts/kconfig/*.in
 %{_kernelsrcdir}/scripts/kconfig/*.pl
 %{_kernelsrcdir}/scripts/kconfig/*.glade
 %{_kernelsrcdir}/scripts/kconfig/*.cc
