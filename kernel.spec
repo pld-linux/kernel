@@ -209,7 +209,7 @@ Patch146:	kernel-aufs4+vserver.patch
 Patch250:	kernel-fix_256colors_menuconfig.patch
 
 # https://rt.wiki.kernel.org/
-# https://www.kernel.org/pub/linux/kernel/projects/rt/4.14/patch-4.14.63-rt40.patch.xz with small updates
+# https://www.kernel.org/pub/linux/kernel/projects/rt/4.14/patch-4.14.71-rt44.patch.xz with small updates
 Patch500:	kernel-rt.patch
 
 Patch2000:	kernel-small_fixes.patch
