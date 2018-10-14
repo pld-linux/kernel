@@ -28,13 +28,13 @@ diff -Nur linux-2.6.26.3/net/ipv4/tcp_input.c linux-2.6.26.3-zph/net/ipv4/tcp_in
 +++ linux-2.6.26.3-zph/net/ipv4/tcp_input.c	2008-08-21 17:06:55.000000000 +0300
 @@ -3900,6 +3900,8 @@
  	struct tcp_sock *tp = tcp_sk(sk);
- 	int eaten = -1;
  	bool fragstolen = false;
+ 	int eaten = -1;
 +	struct inet_sock *inet = inet_sk(sk);
 +	struct iphdr *iph = ip_hdr(skb);
  
  	if (TCP_SKB_CB(skb)->seq == TCP_SKB_CB(skb)->end_seq)
- 		goto drop;
+ 		__kfree_skb(skb);
 @@ -3914,6 +3916,12 @@
  					     4 - tp->rx_opt.tstamp_ok);
  	}
