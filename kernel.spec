@@ -68,8 +68,8 @@
 %endif
 
 %define		rel		1
-%define		basever		4.18
-%define		postver		.14
+%define		basever		4.19
+%define		postver		.0
 
 # define this to '-%{basever}' for longterm branch
 %define		versuffix	%{nil}
@@ -118,7 +118,7 @@ Epoch:		3
 License:	GPL v2
 Group:		Base/Kernel
 Source0:	https://www.kernel.org/pub/linux/kernel/v4.x/linux-%{basever}.tar.xz
-# Source0-md5:	bee5fe53ee1c3142b8f0c12c0d3348f9
+# Source0-md5:	740a90cf810c2105df8ee12e5d0bb900
 %if "%{postver}" != ".0"
 Patch0:		https://www.kernel.org/pub/linux/kernel/v4.x/patch-%{version}.xz
 # Patch0-md5:	5e8695bf4dc16213963ba04768a23539
@@ -682,7 +682,7 @@ rm -f localversion-rt
 %endif # vanilla
 
 # Small fixes:
-%patch2000 -p1
+#%patch2000 -p1
 %patch2001 -p1
 #%patch2003 -p1
 
