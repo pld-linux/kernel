@@ -1403,6 +1403,7 @@ fi
 %{_kernelsrcdir}/scripts/mkmakefile
 %{_kernelsrcdir}/scripts/module-common.lds
 %attr(755,root,root) %{_kernelsrcdir}/scripts/setlocalversion
+%{_kernelsrcdir}/scripts/subarch.include
 %{_kernelsrcdir}/scripts/*.c
 %{_kernelsrcdir}/scripts/*.h
 %attr(755,root,root) %{_kernelsrcdir}/scripts/*.sh
