@@ -1476,6 +1476,7 @@ fi
 %exclude %{_kernelsrcdir}/scripts/mod
 %exclude %{_kernelsrcdir}/scripts/module-common.lds
 %exclude %{_kernelsrcdir}/scripts/setlocalversion
+%exclude %{_kernelsrcdir}/scripts/subarch.include
 %exclude %{_kernelsrcdir}/scripts/*.c
 %exclude %{_kernelsrcdir}/scripts/*.h
 %exclude %{_kernelsrcdir}/scripts/*.sh
