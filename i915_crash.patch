@@ -1,0 +1,42 @@
+diff -dur -x '*~' -x '*.orig' -x '*.rej' linux-4.14.orig/drivers/gpu/drm/i915/i915_gem_gtt.c linux-4.14/drivers/gpu/drm/i915/i915_gem_gtt.c
+--- linux-4.14.orig/drivers/gpu/drm/i915/i915_gem_gtt.c	2017-11-12 19:46:13.000000000 +0100
++++ linux-4.14/drivers/gpu/drm/i915/i915_gem_gtt.c	2018-11-14 20:15:43.380387823 +0100
+@@ -1099,14 +1099,17 @@
+ 
+ 	gen8_for_each_pde(pt, pd, start, length, pde) {
+ 		if (pt == vm->scratch_pt) {
++			pd->used_pdes++;
++
+ 			pt = alloc_pt(vm);
+-			if (IS_ERR(pt))
++			if (IS_ERR(pt)) {
++				pd->used_pdes--;
+ 				goto unwind;
++			}
+ 
+ 			gen8_initialize_pt(vm, pt);
+ 
+ 			gen8_ppgtt_set_pde(vm, pd, pt, pde);
+-			pd->used_pdes++;
+ 			GEM_BUG_ON(pd->used_pdes > I915_PDES);
+ 		}
+ 
+@@ -1130,13 +1133,16 @@
+ 
+ 	gen8_for_each_pdpe(pd, pdp, start, length, pdpe) {
+ 		if (pd == vm->scratch_pd) {
++			pdp->used_pdpes++;
++
+ 			pd = alloc_pd(vm);
+-			if (IS_ERR(pd))
++			if (IS_ERR(pd)) {
++				pdp->used_pdpes--;
+ 				goto unwind;
++			}
+ 
+ 			gen8_initialize_pd(vm, pd);
+ 			gen8_ppgtt_set_pdpe(vm, pdp, pd, pdpe);
+-			pdp->used_pdpes++;
+ 			GEM_BUG_ON(pdp->used_pdpes > i915_pdpes_per_pdp(vm));
+ 
+ 			mark_tlbs_dirty(i915_vm_to_ppgtt(vm));
