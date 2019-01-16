@@ -67,7 +67,7 @@
 %define		have_pcmcia	0
 %endif
 
-%define		rel		1
+%define		rel		2
 %define		basever		4.19
 %define		postver		.15
 
@@ -213,6 +213,7 @@ Patch500:	kernel-rt.patch
 
 Patch2000:	kernel-small_fixes.patch
 Patch2001:	kernel-pwc-uncompress.patch
+Patch2002:	xfs-reclaim-hack.patch
 Patch2003:	kernel-regressions.patch
 
 # for rescuecd
@@ -684,6 +685,7 @@ rm -f localversion-rt
 # Small fixes:
 %patch2000 -p1
 %patch2001 -p1
+%patch2002 -p1
 #%patch2003 -p1
 
 # Do not remove this, please!

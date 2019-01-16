@@ -1,0 +1,164 @@
+; https://github.com/bobrik/linux/pull/2
+From 1910e1157eb4b455b877a813f0a1b786dcbf799c Mon Sep 17 00:00:00 2001
+From: Ivan Babrou <ibobrik@gmail.com>
+Date: Tue, 27 Nov 2018 14:37:25 -0800
+Subject: [PATCH] xfs: add a sysctl to disable memory reclaim participation
+
+XFS may try to flush dirty inodes in reclaim and it slows things down
+considerably, especially in high page cache and slow disk environment.
+
+This sysctl allows to exclude XFS from kswapd and direct reclaim.
+
+See: https://marc.info/?t=154345187200003
+---
+ Documentation/filesystems/xfs.txt | 6 ++++++
+ fs/xfs/xfs_globals.c              | 1 +
+ fs/xfs/xfs_icache.c               | 6 +++++-
+ fs/xfs/xfs_icache.h               | 6 ++++++
+ fs/xfs/xfs_linux.h                | 1 +
+ fs/xfs/xfs_super.c                | 3 +++
+ fs/xfs/xfs_sysctl.c               | 9 +++++++++
+ fs/xfs/xfs_sysctl.h               | 2 ++
+ kernel/sysctl_binary.c            | 1 +
+ 9 files changed, 34 insertions(+), 1 deletion(-)
+
+diff --git a/Documentation/filesystems/xfs.txt b/Documentation/filesystems/xfs.txt
+index 3b9b5c149f322..b33a4822f879c 100644
+--- a/Documentation/filesystems/xfs.txt
++++ b/Documentation/filesystems/xfs.txt
+@@ -331,6 +331,12 @@ The following sysctls are available for the XFS filesystem:
+ 	is to control the rate at which the allocator moves between
+ 	allocation groups when allocating extents for new files.
+ 
++  fs.xfs.memory_reclaim		(Min: 0  Default: 2  Max: 2)
++	Set memory reclaim strategy:
++	0: no inode reclaim (background reclaim is still enabled)
++	1: async inode reclaim of clean inodes only
++	2: sync inode reclaim (includes synchronous writes)
++
+ Deprecated Sysctls
+ ==================
+ 
+diff --git a/fs/xfs/xfs_globals.c b/fs/xfs/xfs_globals.c
+index 3e1cc3001bcbf..2927cc2b12b57 100644
+--- a/fs/xfs/xfs_globals.c
++++ b/fs/xfs/xfs_globals.c
+@@ -43,6 +43,7 @@ xfs_param_t xfs_params = {
+ 	.fstrm_timer	= {	1,		30*100,		3600*100},
+ 	.eofb_timer	= {	1,		300,		3600*24},
+ 	.cowb_timer	= {	1,		1800,		3600*24},
++	.memory_reclaim	= {	0,		2,		2,	},
+ };
+ 
+ struct xfs_globals xfs_globals = {
+diff --git a/fs/xfs/xfs_icache.c b/fs/xfs/xfs_icache.c
+index 544b5211221cd..54fcf1af7e3f5 100644
+--- a/fs/xfs/xfs_icache.c
++++ b/fs/xfs/xfs_icache.c
+@@ -1380,7 +1380,11 @@ xfs_reclaim_inodes_nr(
+ 	xfs_reclaim_work_queue(mp);
+ 	xfs_ail_push_all(mp->m_ail);
+ 
+-	return xfs_reclaim_inodes_ag(mp, SYNC_TRYLOCK | SYNC_WAIT, &nr_to_scan);
++	int flags = SYNC_TRYLOCK;
++	if (xfs_memory_reclaim == XFS_MEMORY_RECLAIM_SYNC)
++		flags |= SYNC_WAIT;
++
++	return xfs_reclaim_inodes_ag(mp, flags, &nr_to_scan);
+ }
+ 
+ /*
+diff --git a/fs/xfs/xfs_icache.h b/fs/xfs/xfs_icache.h
+index bff4d85e54984..2547c0d85e5a1 100644
+--- a/fs/xfs/xfs_icache.h
++++ b/fs/xfs/xfs_icache.h
+@@ -54,6 +54,12 @@ struct xfs_eofblocks {
+  */
+ #define XFS_AGITER_INEW_WAIT	0x1	/* wait on new inodes */
+ 
++enum {
++	XFS_MEMORY_RECLAIM_NONE = 0,
++	XFS_MEMORY_RECLAIM_ASYNC,
++	XFS_MEMORY_RECLAIM_SYNC,
++};
++
+ int xfs_iget(struct xfs_mount *mp, struct xfs_trans *tp, xfs_ino_t ino,
+ 	     uint flags, uint lock_flags, xfs_inode_t **ipp);
+ 
+diff --git a/fs/xfs/xfs_linux.h b/fs/xfs/xfs_linux.h
+index dcd1292664b34..3cddbffaa8cb4 100644
+--- a/fs/xfs/xfs_linux.h
++++ b/fs/xfs/xfs_linux.h
+@@ -110,6 +110,7 @@ typedef __u32			xfs_nlink_t;
+ #define xfs_fstrm_centisecs	xfs_params.fstrm_timer.val
+ #define xfs_eofb_secs		xfs_params.eofb_timer.val
+ #define xfs_cowb_secs		xfs_params.cowb_timer.val
++#define xfs_memory_reclaim	xfs_params.memory_reclaim.val
+ 
+ #define current_cpu()		(raw_smp_processor_id())
+ #define current_pid()		(current->pid)
+diff --git a/fs/xfs/xfs_super.c b/fs/xfs/xfs_super.c
+index 0b0282d2f011c..232e3706a0a60 100644
+--- a/fs/xfs/xfs_super.c
++++ b/fs/xfs/xfs_super.c
+@@ -1828,6 +1828,8 @@ xfs_fs_nr_cached_objects(
+ 	/* Paranoia: catch incorrect calls during mount setup or teardown */
+ 	if (WARN_ON_ONCE(!sb->s_fs_info))
+ 		return 0;
++	if (xfs_memory_reclaim == XFS_MEMORY_RECLAIM_NONE)
++		return 0;
+ 	return xfs_reclaim_inodes_count(XFS_M(sb));
+ }
+ 
+diff --git a/fs/xfs/xfs_sysctl.c b/fs/xfs/xfs_sysctl.c
+index afe1f66aaa698..ccf0d1759c215 100644
+--- a/fs/xfs/xfs_sysctl.c
++++ b/fs/xfs/xfs_sysctl.c
+@@ -193,6 +193,15 @@ static struct ctl_table xfs_table[] = {
+ 		.extra1		= &xfs_params.cowb_timer.min,
+ 		.extra2		= &xfs_params.cowb_timer.max,
+ 	},
++	{
++		.procname	= "memory_reclaim",
++		.data		= &xfs_params.memory_reclaim.val,
++		.maxlen		= sizeof(int),
++		.mode		= 0644,
++		.proc_handler	= proc_dointvec_minmax,
++		.extra1		= &xfs_params.memory_reclaim.min,
++		.extra2		= &xfs_params.memory_reclaim.max,
++	},
+ 	/* please keep this the last entry */
+ #ifdef CONFIG_PROC_FS
+ 	{
+diff --git a/fs/xfs/xfs_sysctl.h b/fs/xfs/xfs_sysctl.h
+index 82afee005140a..eaf3addd486e7 100644
+--- a/fs/xfs/xfs_sysctl.h
++++ b/fs/xfs/xfs_sysctl.h
+@@ -49,6 +49,7 @@ typedef struct xfs_param {
+ 	xfs_sysctl_val_t fstrm_timer;	/* Filestream dir-AG assoc'n timeout. */
+ 	xfs_sysctl_val_t eofb_timer;	/* Interval between eofb scan wakeups */
+ 	xfs_sysctl_val_t cowb_timer;	/* Interval between cowb scan wakeups */
++	xfs_sysctl_val_t memory_reclaim;/* Memory reclaim policy. */
+ } xfs_param_t;
+ 
+ /*
+@@ -89,6 +90,7 @@ enum {
+ 	XFS_ROTORSTEP = 20,
+ 	XFS_INHERIT_NODFRG = 21,
+ 	XFS_FILESTREAM_TIMER = 22,
++	XFS_MEMORY_RECLAIM = 23,
+ };
+ 
+ extern xfs_param_t	xfs_params;
+diff --git a/kernel/sysctl_binary.c b/kernel/sysctl_binary.c
+index e8c0dab4fd653..ec2f2c52e3ab5 100644
+--- a/kernel/sysctl_binary.c
++++ b/kernel/sysctl_binary.c
+@@ -778,6 +778,7 @@ static const struct bin_table bin_fs_xfs_table[] = {
+ 	{ CTL_INT,	XFS_INHERIT_NODFRG,	"inherit_nodefrag" },
+ 	{ CTL_INT,	XFS_FILESTREAM_TIMER,	"filestream_centisecs" },
+ 	{ CTL_INT,	XFS_STATS_CLEAR,	"stats_clear" },
++	{ CTL_INT,	XFS_MEMORY_RECLAIM,	"memory_reclaim" },
+ 	{}
+ };
+ 
