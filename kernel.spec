@@ -16,8 +16,9 @@
 #
 # Conditional build:
 %bcond_without	source		# don't build kernel-source package
-%bcond_without	doc			# don't build kernel-doc package
+%bcond_without	doc		# don't build kernel-doc package
 %bcond_without	pcmcia		# don't build pcmcia
+%bcond_without	debuginfo	# debug info files
 
 %bcond_with	verbose		# verbose build (V=1)
 
@@ -838,6 +839,7 @@ BuildConfig() {
 		CONFIG_HIGHMEM64G=y
 		CONFIG_X86_PAE=y
 		CONFIG_NUMA=n
+		CONFIG_PAGE_TABLE_ISOLATION=y
 	%endif
 %endif
 
@@ -891,7 +893,7 @@ EOCONFIG
 
 cd %{objdir}
 install -d arch/%{target_arch_dir}
-BuildConfig > %{defconfig}
+BuildConfig %{!?with_debuginfo:| %{__sed} -e 's/CONFIG_DEBUG_INFO=y/# CONFIG_DEBUG_INFO is not set/'} > %{defconfig}
 ln -sf %{defconfig} .config
 cd -
 
@@ -997,6 +999,7 @@ if cp -al %{srcdir}/COPYING $RPM_BUILD_ROOT/COPYING 2>/dev/null; then
 fi
 
 cp -a$l %{srcdir}/* $RPM_BUILD_ROOT%{_kernelsrcdir}
+%{__rm} -r $RPM_BUILD_ROOT%{_kernelsrcdir}/scripts/kconfig/tests
 cp -a %{objdir}/Module.symvers $RPM_BUILD_ROOT%{_kernelsrcdir}
 cp -aL %{objdir}/.config $RPM_BUILD_ROOT%{_kernelsrcdir}
 cp -a %{objdir}/include $RPM_BUILD_ROOT%{_kernelsrcdir}
@@ -1041,7 +1044,7 @@ done
 %if %{with doc}
 # move to %{_docdir} so we wouldn't depend on any kernel package for dirs
 install -d $RPM_BUILD_ROOT%{_docdir}
-mv $RPM_BUILD_ROOT{%{_kernelsrcdir}/Documentation,%{_docdir}/%{name}-%{version}}
+%{__mv} $RPM_BUILD_ROOT{%{_kernelsrcdir}/Documentation,%{_docdir}/%{name}-%{version}}
 
 %{__rm} $RPM_BUILD_ROOT%{_docdir}/%{name}-%{version}/dontdiff
 %{__rm} $RPM_BUILD_ROOT%{_docdir}/%{name}-%{version}/Makefile
