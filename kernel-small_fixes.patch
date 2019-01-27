@@ -162,11 +162,10 @@ index 76c92e31afc0..abb5d382f64d 100644
 -- 
 cgit 1.2-0.3.lf.el7
 
-
 From 9c9e935fc038342c48461aabca666f1b544e32b1 Mon Sep 17 00:00:00 2001
 From: Tetsuo Handa <penguin-kernel@I-love.SAKURA.ne.jp>
-Date: Sat, 26 Jan 2019 21:57:25 +0900
-Subject: [PATCH v2] oom, oom_reaper: do not enqueue same task twice
+Date: Sun, 27 Jan 2019 23:51:37 +0900
+Subject: [PATCH v3] oom, oom_reaper: do not enqueue same task twice
 
 Arkadiusz reported that enabling memcg's group oom killing causes
 strange memcg statistics where there is no task in a memcg despite
@@ -191,41 +190,34 @@ Reported-by: Arkadiusz Miśkiewicz <arekm@maven.pl>
 Tested-by: Arkadiusz Miśkiewicz <arekm@maven.pl>
 Fixes: af8e15cc85a25315 ("oom, oom_reaper: do not enqueue task if it is on the oom_reaper_list head")
 ---
- mm/oom_kill.c | 17 +++++++----------
- 1 file changed, 7 insertions(+), 10 deletions(-)
+ include/linux/sched/coredump.h | 1 +
+ mm/oom_kill.c                  | 4 ++--
+ 2 files changed, 3 insertions(+), 2 deletions(-)
 
+diff --git a/include/linux/sched/coredump.h b/include/linux/sched/coredump.h
+index ec912d0..ecdc654 100644
+--- a/include/linux/sched/coredump.h
++++ b/include/linux/sched/coredump.h
+@@ -71,6 +71,7 @@ static inline int get_dumpable(struct mm_struct *mm)
+ #define MMF_HUGE_ZERO_PAGE	23      /* mm has ever used the global huge zero page */
+ #define MMF_DISABLE_THP		24	/* disable THP for all VMAs */
+ #define MMF_OOM_VICTIM		25	/* mm is the oom victim */
++#define MMF_OOM_REAP_QUEUED	26	/* mm was queued for oom_reaper */
+ #define MMF_DISABLE_THP_MASK	(1 << MMF_DISABLE_THP)
+ 
+ #define MMF_INIT_MASK		(MMF_DUMPABLE_MASK | MMF_DUMP_FILTER_MASK |\
 diff --git a/mm/oom_kill.c b/mm/oom_kill.c
-index f0e8cd9..057bfee 100644
+index f0e8cd9..059e617 100644
 --- a/mm/oom_kill.c
 +++ b/mm/oom_kill.c
-@@ -505,14 +505,6 @@ bool __oom_reap_task_mm(struct mm_struct *mm)
- 	struct vm_area_struct *vma;
- 	bool ret = true;
- 
--	/*
--	 * Tell all users of get_user/copy_from_user etc... that the content
--	 * is no longer stable. No barriers really needed because unmapping
--	 * should imply barriers already and the reader would hit a page fault
--	 * if it stumbled over a reaped memory.
--	 */
--	set_bit(MMF_UNSTABLE, &mm->flags);
--
- 	for (vma = mm->mmap ; vma; vma = vma->vm_next) {
- 		if (!can_madv_dontneed_vma(vma))
- 			continue;
-@@ -647,8 +639,13 @@ static int oom_reaper(void *unused)
+@@ -647,8 +647,8 @@ static int oom_reaper(void *unused)
  
  static void wake_oom_reaper(struct task_struct *tsk)
  {
 -	/* tsk is already queued? */
 -	if (tsk == oom_reaper_list || tsk->oom_reaper_list)
-+	/*
-+	 * Tell all users of get_user/copy_from_user etc... that the content
-+	 * is no longer stable. No barriers really needed because unmapping
-+	 * should imply barriers already and the reader would hit a page fault
-+	 * if it stumbled over a reaped memory.
-+	 */
-+	if (test_and_set_bit(MMF_UNSTABLE, &tsk->signal->oom_mm->flags))
++	/* mm is already queued? */
++	if (test_and_set_bit(MMF_OOM_REAP_QUEUED, &tsk->signal->oom_mm->flags))
  		return;
  
  	get_task_struct(tsk);
