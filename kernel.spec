@@ -1015,8 +1015,8 @@ touch $RPM_BUILD_ROOT%{initrd_dir}/initramfs-%{kernel_release}.img
 touch $RPM_BUILD_ROOT/lib/modules/%{kernel_release}/modules.dep
 %endif
 
-# /etc/modrobe.d
-install -d $RPM_BUILD_ROOT%{_sysconfdir}/modprobe.d/%{kernel_release}
+# /etc/depmod.d /etc/modrobe.d
+install -d $RPM_BUILD_ROOT%{_sysconfdir}/{depmod.d,modprobe.d}/%{kernel_release}
 
 install -d $RPM_BUILD_ROOT/etc/sysconfig
 install %{SOURCE1} $RPM_BUILD_ROOT/etc/sysconfig/kernel
@@ -1308,6 +1308,7 @@ fi
 /lib/modules/%{kernel_release}/kernel/security
 /lib/modules/%{kernel_release}/kernel/virt
 
+%dir %{_sysconfdir}/depmod.d/%{kernel_release}
 %dir %{_sysconfdir}/modprobe.d/%{kernel_release}
 
 # provided by build
