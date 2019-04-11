@@ -107,6 +107,8 @@
 %define		localversion	%{rel}
 %define		kernel_release	%{version}%{?alt_kernel:.%{alt_kernel}}-%{localversion}
 
+%define		kmod_ver	26-2
+
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de.UTF-8):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(et.UTF-8):	Linuxi kernel (ehk operatsioonisüsteemi tuum)
@@ -237,7 +239,7 @@ BuildRequires:	elfutils-devel
 BuildRequires:	gcc >= 6:7.2.0-6
 BuildRequires:	gcc-plugin-devel
 BuildRequires:	hostname
-BuildRequires:	kmod >= 12-2
+BuildRequires:	kmod >= %{kmod_ver}
 BuildRequires:	openssl-devel
 BuildRequires:	perl-base
 BuildRequires:	rpm-build >= 4.5-24
@@ -248,11 +250,11 @@ BuildRequires:	uboot-mkimage
 BuildRequires:	xz >= 1:4.999.7
 Requires(post):	coreutils
 Requires(post):	geninitrd >= 12757-8
-Requires(post):	kmod >= 12-2
+Requires(post):	kmod >= %{kmod_ver}
 Requires:	/sbin/depmod
 Requires:	coreutils
 Requires:	geninitrd >= 12757-8
-Requires:	kmod >= 12-2
+Requires:	kmod >= %{kmod_ver}
 %if %{with pae}
 %ifarch i686 athlon pentium3 pentium4
 Requires:	cpuinfo(pae)
