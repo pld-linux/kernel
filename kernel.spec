@@ -70,7 +70,7 @@
 
 %define		rel		1
 %define		basever		4.14
-%define		postver		.114
+%define		postver		.116
 
 # define this to '-%{basever}' for longterm branch
 %define		versuffix	-%{basever}
@@ -122,7 +122,7 @@ Source0:	https://www.kernel.org/pub/linux/kernel/v4.x/linux-%{basever}.tar.xz
 # Source0-md5:	bacdb9ffdcd922aa069a5e1520160e24
 %if "%{postver}" != ".0"
 Patch0:		https://www.kernel.org/pub/linux/kernel/v4.x/patch-%{version}.xz
-# Patch0-md5:	a83f6d811843157fc234fef72ee63c5e
+# Patch0-md5:	3f7324a84081130005d7ee45994e54c7
 %endif
 Source1:	kernel.sysconfig
 
@@ -241,8 +241,10 @@ BuildRequires:	elftoaout
 %endif
 BuildRequires:	elfutils-devel
 BuildRequires:	gcc >= 6:7.2.0-6
+BuildRequires:	gcc-c++
 BuildRequires:	gcc-plugin-devel
 BuildRequires:	hostname
+BuildRequires:	libstdc++-devel
 BuildRequires:	kmod >= 12-2
 BuildRequires:	openssl-devel
 BuildRequires:	perl-base
