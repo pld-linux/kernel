@@ -70,7 +70,7 @@
 
 %define		rel		1
 %define		basever		4.19
-%define		postver		.37
+%define		postver		.40
 
 # define this to '-%{basever}' for longterm branch
 %define		versuffix	-%{basever}
@@ -124,7 +124,7 @@ Source0:	https://www.kernel.org/pub/linux/kernel/v4.x/linux-%{basever}.tar.xz
 # Source0-md5:	740a90cf810c2105df8ee12e5d0bb900
 %if "%{postver}" != ".0"
 Patch0:		https://www.kernel.org/pub/linux/kernel/v4.x/patch-%{version}.xz
-# Patch0-md5:	68248facaf01b95bf15fcac786bbcff9
+# Patch0-md5:	5d0a33ce62d3bb54e174451bbf4d9440
 %endif
 Source1:	kernel.sysconfig
 
@@ -232,14 +232,18 @@ AutoReqProv:	no
 BuildRequires:	/sbin/depmod
 BuildRequires:	bc
 BuildRequires:	binutils >= 3:2.18
+BuildRequires:	bison
 %ifarch sparc sparc64
 BuildRequires:	elftoaout
 %endif
 BuildRequires:	elfutils-devel
+BuildRequires:	flex
 BuildRequires:	gcc >= 6:7.2.0-6
+BuildRequires:	gcc-c++
 BuildRequires:	gcc-plugin-devel
 BuildRequires:	hostname
 BuildRequires:	kmod >= %{kmod_ver}
+BuildRequires:	libstdc++-devel
 BuildRequires:	openssl-devel
 BuildRequires:	perl-base
 BuildRequires:	rpm-build >= 4.5-24
