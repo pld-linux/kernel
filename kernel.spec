@@ -231,14 +231,18 @@ AutoReqProv:	no
 BuildRequires:	/sbin/depmod
 BuildRequires:	bc
 BuildRequires:	binutils >= 3:2.18
+BuildRequires:	bison
 %ifarch sparc sparc64
 BuildRequires:	elftoaout
 %endif
 BuildRequires:	elfutils-devel
+BuildRequires:	flex
 BuildRequires:	gcc >= 6:7.2.0-6
+BuildRequires:	gcc-c++
 BuildRequires:	gcc-plugin-devel
 BuildRequires:	hostname
 BuildRequires:	kmod >= %{kmod_ver}
+BuildRequires:	libstdc++-devel
 BuildRequires:	openssl-devel
 BuildRequires:	perl-base
 BuildRequires:	rpm-build >= 4.5-24
