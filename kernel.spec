@@ -68,8 +68,8 @@
 %endif
 
 %define		rel		1
-%define		basever		5.0
-%define		postver		.10
+%define		basever		5.1
+%define		postver		.0
 
 # define this to '-%{basever}' for longterm branch
 %define		versuffix	%{nil}
@@ -120,7 +120,7 @@ Epoch:		3
 License:	GPL v2
 Group:		Base/Kernel
 Source0:	https://www.kernel.org/pub/linux/kernel/v5.x/linux-%{basever}.tar.xz
-# Source0-md5:	7381ce8aac80a01448e065ce795c19c0
+# Source0-md5:	15fbdff95ff98483069ac6e215b9f4f9
 %if "%{postver}" != ".0"
 Patch0:		https://www.kernel.org/pub/linux/kernel/v5.x/patch-%{version}.xz
 # Patch0-md5:	a46bbfe17039c1fa81edc847af5ea664
@@ -1399,8 +1399,11 @@ fi
 %{_kernelsrcdir}/scripts/kconfig/[c-k]*.c
 %{_kernelsrcdir}/scripts/kconfig/[c-k]*.h
 %{_kernelsrcdir}/scripts/kconfig/l*.h
-%{_kernelsrcdir}/scripts/kconfig/[m-u]*.c
-%{_kernelsrcdir}/scripts/kconfig/[m-u]*.h
+%{_kernelsrcdir}/scripts/kconfig/[m-o]*.c
+%{_kernelsrcdir}/scripts/kconfig/[m-o]*.h
+%{_kernelsrcdir}/scripts/kconfig/preprocess.c
+%{_kernelsrcdir}/scripts/kconfig/[q-u]*.c
+%{_kernelsrcdir}/scripts/kconfig/[q-u]*.h
 %{_kernelsrcdir}/scripts/kconfig/lxdialog
 %{_kernelsrcdir}/scripts/mod/*.c
 %{_kernelsrcdir}/scripts/mod/modpost.h
@@ -1460,7 +1463,6 @@ fi
 %{_kernelsrcdir}/certs
 %{_kernelsrcdir}/crypto
 %{_kernelsrcdir}/drivers
-%{_kernelsrcdir}/firmware
 %{_kernelsrcdir}/fs
 %{_kernelsrcdir}/init
 %{_kernelsrcdir}/ipc

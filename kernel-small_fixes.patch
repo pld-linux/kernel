@@ -15,15 +15,15 @@ Signed-off-by: Shaohua Li <shli@fb.com>
 
 --- linux-4.19/fs/xfs/xfs_aops.c.org	2018-11-21 10:31:12.348955352 +0100
 +++ linux-4.19/fs/xfs/xfs_aops.c	2018-11-21 10:34:35.241764742 +0100
-@@ -613,8 +613,10 @@ xfs_add_to_ioend(
+@@ -660,8 +660,10 @@ xfs_add_to_ioend(
  			list_add(&wpc->ioend->io_list, iolist);
- 		wpc->ioend = xfs_alloc_ioend(inode, wpc->io_type, offset,
- 				bdev, sector);
+ 		wpc->ioend = xfs_alloc_ioend(inode, wpc->fork,
+ 				wpc->imap.br_state, offset, bdev, sector);
 +		wbc_init_bio(wbc, wpc->ioend->io_bio);
  	}
  
 +	wbc_account_io(wbc, page, len);
- 	if (!__bio_try_merge_page(wpc->ioend->io_bio, page, len, poff)) {
+ 	if (!__bio_try_merge_page(wpc->ioend->io_bio, page, len, poff, true)) {
  		if (iop)
  			atomic_inc(&iop->write_count);
 diff --git a/fs/xfs/xfs_super.c b/fs/xfs/xfs_super.c
