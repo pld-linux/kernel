@@ -13568,14 +13568,15 @@ diff -NurpP --minimal linux-4.9.135/kernel/ptrace.c linux-4.9.135-vs2.3.9.8/kern
  #include <linux/hw_breakpoint.h>
  #include <linux/cn_proc.h>
  #include <linux/compat.h>
-@@ -325,6 +326,11 @@ ok:
- 	     !ptrace_has_cap(mm->user_ns, mode)))
- 	    return -EPERM;
+@@ -331,6 +331,12 @@ ok:
  
+ 	if (mode & PTRACE_MODE_SCHED)
+ 		return 0;
++
 +	if (!vx_check(task->xid, VS_ADMIN_P|VS_WATCH_P|VS_IDENT))
 +		return -EPERM;
 +	if (!vx_check(task->xid, VS_IDENT) &&
-+		!task_vx_flags(task, VXF_STATE_ADMIN, 0))
++			!task_vx_flags(task, VXF_STATE_ADMIN, 0))
 +		return -EACCES;
  	return security_ptrace_access_check(task, mode);
  }
