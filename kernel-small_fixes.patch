@@ -93,7 +93,7 @@ index a6f0f4761a37..9cceb90e77c5 100644
  }
  
  /*
-@@ -771,14 +770,14 @@ xfs_add_to_ioend(
+@@ -772,7 +772,7 @@ xfs_add_to_ioend(
  		if (wpc->ioend)
  			list_add(&wpc->ioend->io_list, iolist);
  		wpc->ioend = xfs_alloc_ioend(inode, wpc->fork,
@@ -101,9 +101,10 @@ index a6f0f4761a37..9cceb90e77c5 100644
 +				wpc->imap.br_state, offset, bdev, sector, wbc);
  	}
  
- 	if (!__bio_try_merge_page(wpc->ioend->io_bio, page, len, poff, true)) {
- 		if (iop)
- 			atomic_inc(&iop->write_count);
+ 	merged = __bio_try_merge_page(wpc->ioend->io_bio, page, len, poff,
+@@ -783,7 +783,7 @@ xfs_add_to_ioend(
+ 
+ 	if (!merged) {
  		if (bio_full(wpc->ioend->io_bio))
 -			xfs_chain_bio(wpc->ioend, wbc, bdev, sector);
 +			wpc->ioend->io_bio = xfs_chain_bio(wpc->ioend->io_bio);
