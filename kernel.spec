@@ -246,7 +246,7 @@ BuildRequires:	libstdc++-devel
 BuildRequires:	openssl-devel
 BuildRequires:	perl-base
 BuildRequires:	rpm-build >= 4.5-24
-BuildRequires:	rpmbuild(macros) >= 1.707
+BuildRequires:	rpmbuild(macros) >= 1.743
 %ifarch ppc
 BuildRequires:	uboot-mkimage
 %endif
