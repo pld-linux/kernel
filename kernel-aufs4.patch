@@ -17039,7 +17039,7 @@ diff -urN /usr/share/empty/fs/aufs/hfsnotify.c linux/fs/aufs/hfsnotify.c
 +	int err;
 +	struct au_hnotify *hnotify;
 +	struct inode *h_dir, *h_inode;
-+	struct qstr h_child_qstr = QSTR_INIT(file_name, strlen(file_name));
++
 +	struct fsnotify_mark *inode_mark;
 +
 +	AuDebugOn(data_type != FSNOTIFY_EVENT_INODE);
@@ -17054,11 +17054,11 @@ diff -urN /usr/share/empty/fs/aufs/hfsnotify.c linux/fs/aufs/hfsnotify.c
 +	h_inode = NULL;
 +#ifdef AuDbgHnotify
 +	au_debug_on();
-+	if (1 || h_child_qstr.len != sizeof(AUFS_XINO_FNAME) - 1
-+	    || strncmp(h_child_qstr.name, AUFS_XINO_FNAME, h_child_qstr.len)) {
++	if (1 || file_name.len != sizeof(AUFS_XINO_FNAME) - 1
++	    || strncmp(file_name.name, AUFS_XINO_FNAME, file_name.len)) {
 +		AuDbg("i%lu, mask 0x%x %s, hcname %.*s, hi%lu\n",
 +		      h_dir->i_ino, mask, au_hfsn_name(mask),
-+		      AuLNPair(&h_child_qstr), h_inode ? h_inode->i_ino : 0);
++		      AuLNPair(file_name), h_inode ? h_inode->i_ino : 0);
 +		/* WARN_ON(1); */
 +	}
 +	au_debug_off();
@@ -17067,7 +17067,7 @@ diff -urN /usr/share/empty/fs/aufs/hfsnotify.c linux/fs/aufs/hfsnotify.c
 +	inode_mark = fsnotify_iter_inode_mark(iter_info);
 +	AuDebugOn(!inode_mark);
 +	hnotify = container_of(inode_mark, struct au_hnotify, hn_mark);
-+	err = au_hnotify(h_dir, hnotify, mask, &h_child_qstr, h_inode);
++	err = au_hnotify(h_dir, hnotify, mask, file_name, h_inode);
 +
 +out:
 +	return err;
@@ -17776,7 +17776,7 @@ diff -urN /usr/share/empty/fs/aufs/hnotify.c linux/fs/aufs/hnotify.c
 +/* ---------------------------------------------------------------------- */
 +
 +int au_hnotify(struct inode *h_dir, struct au_hnotify *hnotify, u32 mask,
-+	       struct qstr *h_child_qstr, struct inode *h_child_inode)
++	       const struct qstr *h_child_qstr, struct inode *h_child_inode)
 +{
 +	int err, len;
 +	unsigned int flags[AuHnLast], f;
@@ -19389,7 +19389,7 @@ diff -urN /usr/share/empty/fs/aufs/inode.h linux/fs/aufs/inode.h
 +void au_hn_ctl(struct au_hinode *hinode, int do_set);
 +void au_hn_reset(struct inode *inode, unsigned int flags);
 +int au_hnotify(struct inode *h_dir, struct au_hnotify *hnotify, u32 mask,
-+	       struct qstr *h_child_qstr, struct inode *h_child_inode);
++	       const struct qstr *file_name, struct inode *h_child_inode);
 +int au_hnotify_reset_br(unsigned int udba, struct au_branch *br, int perm);
 +int au_hnotify_init_br(struct au_branch *br, int perm);
 +void au_hnotify_fin_br(struct au_branch *br);
