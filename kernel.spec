@@ -193,18 +193,18 @@ Patch85:	kernel-hostap.patch
 Patch100:	kernel-vserver-2.3.patch
 Patch101:	kernel-vserver-fixes.patch
 
-# git://github.com/sfjro/aufs4-standalone.git, read README
+# git://github.com/sfjro/aufs5-standalone.git, read README
 # Patch creation:
-# git clone git://github.com/sfjro/aufs4-standalone.git
-# cd aufs4-standalone
-# git checkout -b aufs4.17 origin/aufs4.17
-# cat aufs4-kbuild.patch aufs4-base.patch aufs4-mmap.patch aufs4-standalone.patch > ~/rpm/packages/kernel/kernel-aufs4.patch
+# git clone git://github.com/sfjro/aufs5-standalone.git
+# cd aufs5-standalone
+# git checkout -b aufs5.2 origin/aufs5.2
+# cat aufs5-kbuild.patch aufs5-base.patch aufs5-mmap.patch aufs5-standalone.patch > ~/rpm/packages/kernel/kernel-aufs5.patch
 # rm -rf linux && mkdir linux; cp -a Documentation fs include linux
-# diff -urN /usr/share/empty linux | filterdiff -x linux/include/uapi/linux/Kbuild >> ~/rpm/packages/kernel/kernel-aufs4.patch
-# cat aufs4-loopback.patch >> ~/rpm/packages/kernel/kernel-aufs4.patch
+# diff -urN /usr/share/empty linux | filterdiff -x linux/include/uapi/linux/Kbuild >> ~/rpm/packages/kernel/kernel-aufs5.patch
+# cat aufs5-loopback.patch >> ~/rpm/packages/kernel/kernel-aufs5.patch
 #
-Patch145:	kernel-aufs4.patch
-Patch146:	kernel-aufs4+vserver.patch
+Patch145:	kernel-aufs5.patch
+Patch146:	kernel-aufs+vserver.patch
 
 # Show normal colors in menuconfig with ncurses ABI 6
 Patch250:	kernel-fix_256colors_menuconfig.patch
