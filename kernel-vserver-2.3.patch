@@ -12712,12 +12712,16 @@ diff -NurpP --minimal linux-4.9.135/ipc/mqueue.c linux-4.9.135-vs2.3.9.8/ipc/mqu
  	} else if (S_ISDIR(mode)) {
  		inc_nlink(inode);
  		/* Some things misbehave if size == 0 on a directory */
-@@ -396,8 +404,11 @@ static void mqueue_evict_inode(struct in
- 
+@@ -402,6 +402,7 @@ static void mqueue_evict_inode(struct in
  	user = info->user;
  	if (user) {
+ 		unsigned long mq_bytes, mq_treesize;
 +		struct vx_info *vxi = info->vxi;
-+
+ 
+ 		/* Total amount of bytes accounted for the mqueue */
+ 		mq_treesize = info->attr.mq_maxmsg * sizeof(struct msg_msg) +
+@@ -413,6 +414,7 @@ static void mqueue_evict_inode(struct in
+ 
  		spin_lock(&mq_lock);
  		user->mq_bytes -= mq_bytes;
 +		vx_ipcmsg_sub(vxi, user, mq_bytes);
