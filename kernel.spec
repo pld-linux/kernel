@@ -67,7 +67,7 @@
 %define		have_pcmcia	0
 %endif
 
-%define		rel		1
+%define		rel		2
 %define		basever		5.3
 %define		postver		.0
 
@@ -1382,6 +1382,8 @@ fi
 %dir %{_kernelsrcdir}/security
 %dir %{_kernelsrcdir}/security/selinux
 %{_kernelsrcdir}/security/selinux/include
+%dir %{_kernelsrcdir}/usr
+%dir %{_kernelsrcdir}/usr/include
 %{_kernelsrcdir}/.config
 %{_kernelsrcdir}/Module.symvers
 
