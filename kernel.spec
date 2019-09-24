@@ -67,7 +67,7 @@
 %define		have_pcmcia	0
 %endif
 
-%define		rel		1
+%define		rel		2
 %define		basever		5.3
 %define		postver		.1
 
@@ -690,7 +690,7 @@ rm -f localversion-rt
 %endif # vanilla
 
 # Small fixes:
-#%patch2000 -p1
+%patch2000 -p1
 %patch2001 -p1
 #%patch2003 -p1
 %patch2004 -p1
