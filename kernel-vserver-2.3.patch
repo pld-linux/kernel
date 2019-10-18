@@ -3604,18 +3604,18 @@ diff -NurpP --minimal linux-4.9.135/fs/libfs.c linux-4.9.135-vs2.3.9.8/fs/libfs.
  	struct dentry *dentry = file->f_path.dentry;
  	struct dentry *cursor = file->private_data;
 @@ -194,9 +195,10 @@ int dcache_readdir(struct file *file, st
- 	if (ctx->pos == 2)
- 		p = &dentry->d_subdirs;
- 	while ((next = next_positive(dentry, p, 1)) != NULL) {
+ 		p = &cursor->d_child;
+ 
+ 	while ((p = scan_positives(cursor, p, 1, &next)) != anchor) {
 -		if (!dir_emit(ctx, next->d_name.name, next->d_name.len,
 +		if (!filter || filter(next))
 +			if (!dir_emit(ctx, next->d_name.name, next->d_name.len,
  			      d_inode(next)->i_ino, dt_type(d_inode(next))))
 -			break;
 +				break;
- 		moved = true;
- 		p = &next->d_child;
  		ctx->pos++;
+ 	}
+ 	spin_lock(&dentry->d_lock);
 @@ -205,8 +207,22 @@ int dcache_readdir(struct file *file, st
  		move_cursor(cursor, p);
  	return 0;
