@@ -1,1 +1,475 @@
 Nothing here for now, move along...
+commit c695793b52216ad6a11ce952fc8d29f3a9d0c7cd
+Author: Balsundar P <balsundar.p@microsemi.com>
+Date:   Tue Oct 15 11:52:04 2019 +0530
+
+    scsi: aacraid: bump version
+    
+    Bump version to 50877.
+    
+    Link: https://lore.kernel.org/r/1571120524-6037-8-git-send-email-balsundar.p@microsemi.com
+    Signed-off-by: Balsundar P <balsundar.p@microsemi.com>
+    Signed-off-by: Martin K. Petersen <martin.petersen@oracle.com>
+
+diff --git a/drivers/scsi/aacraid/aacraid.h b/drivers/scsi/aacraid/aacraid.h
+index 17a4e8b8bd00..e3e4ecbea726 100644
+--- a/drivers/scsi/aacraid/aacraid.h
++++ b/drivers/scsi/aacraid/aacraid.h
+@@ -85,7 +85,7 @@ enum {
+ #define	PMC_GLOBAL_INT_BIT0		0x00000001
+ 
+ #ifndef AAC_DRIVER_BUILD
+-# define AAC_DRIVER_BUILD 50877
++# define AAC_DRIVER_BUILD 50983
+ # define AAC_DRIVER_BRANCH "-custom"
+ #endif
+ #define MAXIMUM_NUM_CONTAINERS	32
+
+commit 26c54d0ec25c186329d845ad1beb9d3dde586af9
+Author: Balsundar P <balsundar.p@microsemi.com>
+Date:   Tue Oct 15 11:52:03 2019 +0530
+
+    scsi: aacraid: send AIF request post IOP RESET
+    
+    After IOP reset completion, AIF request command is not issued to the
+    controller. Driver schedules a worker thread to issue a AIF request command
+    after IOP reset completion.
+    
+    [mkp: fix zeroday warning]
+    
+    Link: https://lore.kernel.org/r/1571120524-6037-7-git-send-email-balsundar.p@microsemi.com
+    Acked-by: Balsundar P < Balsundar.P@microchip.com>
+    Signed-off-by: Balsundar P <balsundar.p@microsemi.com>
+    Signed-off-by: Martin K. Petersen <martin.petersen@oracle.com>
+
+diff --git a/drivers/scsi/aacraid/aacraid.h b/drivers/scsi/aacraid/aacraid.h
+index f76a33cb0259..17a4e8b8bd00 100644
+--- a/drivers/scsi/aacraid/aacraid.h
++++ b/drivers/scsi/aacraid/aacraid.h
+@@ -1330,7 +1330,7 @@ struct fib {
+ #define AAC_DEVTYPE_ARC_RAW		2
+ #define AAC_DEVTYPE_NATIVE_RAW		3
+ 
+-#define AAC_SAFW_RESCAN_DELAY		(10 * HZ)
++#define AAC_RESCAN_DELAY		(10 * HZ)
+ 
+ struct aac_hba_map_info {
+ 	__le32	rmw_nexus;		/* nexus for native HBA devices */
+@@ -1603,6 +1603,7 @@ struct aac_dev
+ 	struct fsa_dev_info	*fsa_dev;
+ 	struct task_struct	*thread;
+ 	struct delayed_work	safw_rescan_work;
++	struct delayed_work	src_reinit_aif_worker;
+ 	int			cardtype;
+ 	/*
+ 	 *This lock will protect the two 32-bit
+@@ -2647,7 +2648,12 @@ int aac_scan_host(struct aac_dev *dev);
+ 
+ static inline void aac_schedule_safw_scan_worker(struct aac_dev *dev)
+ {
+-	schedule_delayed_work(&dev->safw_rescan_work, AAC_SAFW_RESCAN_DELAY);
++	schedule_delayed_work(&dev->safw_rescan_work, AAC_RESCAN_DELAY);
++}
++
++static inline void aac_schedule_src_reinit_aif_worker(struct aac_dev *dev)
++{
++	schedule_delayed_work(&dev->src_reinit_aif_worker, AAC_RESCAN_DELAY);
+ }
+ 
+ static inline void aac_safw_rescan_worker(struct work_struct *work)
+@@ -2661,10 +2667,10 @@ static inline void aac_safw_rescan_worker(struct work_struct *work)
+ 	aac_scan_host(dev);
+ }
+ 
+-static inline void aac_cancel_safw_rescan_worker(struct aac_dev *dev)
++static inline void aac_cancel_rescan_worker(struct aac_dev *dev)
+ {
+-	if (dev->sa_firmware)
+-		cancel_delayed_work_sync(&dev->safw_rescan_work);
++	cancel_delayed_work_sync(&dev->safw_rescan_work);
++	cancel_delayed_work_sync(&dev->src_reinit_aif_worker);
+ }
+ 
+ /* SCp.phase values */
+@@ -2674,6 +2680,7 @@ static inline void aac_cancel_safw_rescan_worker(struct aac_dev *dev)
+ #define AAC_OWNER_FIRMWARE	0x106
+ 
+ void aac_safw_rescan_worker(struct work_struct *work);
++void aac_src_reinit_aif_worker(struct work_struct *work);
+ int aac_acquire_irq(struct aac_dev *dev);
+ void aac_free_irq(struct aac_dev *dev);
+ int aac_setup_safw_adapter(struct aac_dev *dev);
+@@ -2731,6 +2738,7 @@ int aac_probe_container(struct aac_dev *dev, int cid);
+ int _aac_rx_init(struct aac_dev *dev);
+ int aac_rx_select_comm(struct aac_dev *dev, int comm);
+ int aac_rx_deliver_producer(struct fib * fib);
++void aac_reinit_aif(struct aac_dev *aac, unsigned int index);
+ 
+ static inline int aac_is_src(struct aac_dev *dev)
+ {
+diff --git a/drivers/scsi/aacraid/commsup.c b/drivers/scsi/aacraid/commsup.c
+index 3f268f669cc3..5a8a999606ea 100644
+--- a/drivers/scsi/aacraid/commsup.c
++++ b/drivers/scsi/aacraid/commsup.c
+@@ -1464,6 +1464,14 @@ static void aac_handle_aif(struct aac_dev * dev, struct fib * fibptr)
+ 	}
+ }
+ 
++static void aac_schedule_bus_scan(struct aac_dev *aac)
++{
++	if (aac->sa_firmware)
++		aac_schedule_safw_scan_worker(aac);
++	else
++		aac_schedule_src_reinit_aif_worker(aac);
++}
++
+ static int _aac_reset_adapter(struct aac_dev *aac, int forced, u8 reset_type)
+ {
+ 	int index, quirks;
+@@ -1639,7 +1647,7 @@ static int _aac_reset_adapter(struct aac_dev *aac, int forced, u8 reset_type)
+ 	 */
+ 	if (!retval && !is_kdump_kernel()) {
+ 		dev_info(&aac->pdev->dev, "Scheduling bus rescan\n");
+-		aac_schedule_safw_scan_worker(aac);
++		aac_schedule_bus_scan(aac);
+ 	}
+ 
+ 	if (jafo) {
+@@ -1960,6 +1968,16 @@ int aac_scan_host(struct aac_dev *dev)
+ 	return rcode;
+ }
+ 
++void aac_src_reinit_aif_worker(struct work_struct *work)
++{
++	struct aac_dev *dev = container_of(to_delayed_work(work),
++				struct aac_dev, src_reinit_aif_worker);
++
++	wait_event(dev->scsi_host_ptr->host_wait,
++			!scsi_host_in_recovery(dev->scsi_host_ptr));
++	aac_reinit_aif(dev, dev->cardtype);
++}
++
+ /**
+  *	aac_handle_sa_aif	Handle a message from the firmware
+  *	@dev: Which adapter this fib is from
+diff --git a/drivers/scsi/aacraid/linit.c b/drivers/scsi/aacraid/linit.c
+index 55a55c56fea9..ee6bc2f9b80a 100644
+--- a/drivers/scsi/aacraid/linit.c
++++ b/drivers/scsi/aacraid/linit.c
+@@ -1593,6 +1593,19 @@ static void aac_init_char(void)
+ 	}
+ }
+ 
++void aac_reinit_aif(struct aac_dev *aac, unsigned int index)
++{
++	/*
++	 * Firmware may send a AIF messages very early and the Driver may have
++	 * ignored as it is not fully ready to process the messages. Send
++	 * AIF to firmware so that if there are any unprocessed events they
++	 * can be processed now.
++	 */
++	if (aac_drivers[index].quirks & AAC_QUIRK_SRC)
++		aac_intr_normal(aac, 0, 2, 0, NULL);
++
++}
++
+ static int aac_probe_one(struct pci_dev *pdev, const struct pci_device_id *id)
+ {
+ 	unsigned index = id->driver_data;
+@@ -1690,6 +1703,8 @@ static int aac_probe_one(struct pci_dev *pdev, const struct pci_device_id *id)
+ 	mutex_init(&aac->scan_mutex);
+ 
+ 	INIT_DELAYED_WORK(&aac->safw_rescan_work, aac_safw_rescan_worker);
++	INIT_DELAYED_WORK(&aac->src_reinit_aif_worker,
++				aac_src_reinit_aif_worker);
+ 	/*
+ 	 *	Map in the registers from the adapter.
+ 	 */
+@@ -1880,7 +1895,7 @@ static int aac_suspend(struct pci_dev *pdev, pm_message_t state)
+ 	struct aac_dev *aac = (struct aac_dev *)shost->hostdata;
+ 
+ 	scsi_block_requests(shost);
+-	aac_cancel_safw_rescan_worker(aac);
++	aac_cancel_rescan_worker(aac);
+ 	aac_send_shutdown(aac);
+ 
+ 	aac_release_resources(aac);
+@@ -1939,7 +1954,7 @@ static void aac_remove_one(struct pci_dev *pdev)
+ 	struct Scsi_Host *shost = pci_get_drvdata(pdev);
+ 	struct aac_dev *aac = (struct aac_dev *)shost->hostdata;
+ 
+-	aac_cancel_safw_rescan_worker(aac);
++	aac_cancel_rescan_worker(aac);
+ 	scsi_remove_host(shost);
+ 
+ 	__aac_shutdown(aac);
+@@ -1997,7 +2012,7 @@ static pci_ers_result_t aac_pci_error_detected(struct pci_dev *pdev,
+ 		aac->handle_pci_error = 1;
+ 
+ 		scsi_block_requests(aac->scsi_host_ptr);
+-		aac_cancel_safw_rescan_worker(aac);
++		aac_cancel_rescan_worker(aac);
+ 		aac_flush_ios(aac);
+ 		aac_release_resources(aac);
+ 
+
+commit 572ee53a9badf62f3973d66f6475f9ce69720a25
+Author: Balsundar P <balsundar.p@microsemi.com>
+Date:   Tue Oct 15 11:52:02 2019 +0530
+
+    scsi: aacraid: check adapter health
+    
+    Currently driver waits for the command IOCTL from the firmware and if the
+    firmware enters nonresponsive state, the driver doesn't respond till the
+    firmware is responsive again.
+    
+    Check that firmware is alive, otherwise return -EBUSY.
+    
+    [mkp: clarified commit desc]
+    
+    Link: https://lore.kernel.org/r/1571120524-6037-6-git-send-email-balsundar.p@microsemi.com
+    Signed-off-by: Balsundar P <balsundar.p@microsemi.com>
+    Signed-off-by: Martin K. Petersen <martin.petersen@oracle.com>
+
+diff --git a/drivers/scsi/aacraid/linit.c b/drivers/scsi/aacraid/linit.c
+index 40f78509ca94..55a55c56fea9 100644
+--- a/drivers/scsi/aacraid/linit.c
++++ b/drivers/scsi/aacraid/linit.c
+@@ -612,9 +612,13 @@ static struct device_attribute *aac_dev_attrs[] = {
+ static int aac_ioctl(struct scsi_device *sdev, unsigned int cmd,
+ 		     void __user *arg)
+ {
++	int retval;
+ 	struct aac_dev *dev = (struct aac_dev *)sdev->host->hostdata;
+ 	if (!capable(CAP_SYS_RAWIO))
+ 		return -EPERM;
++	retval = aac_adapter_check_health(dev);
++	if (retval)
++		return -EBUSY;
+ 	return aac_do_ioctl(dev, cmd, arg);
+ }
+ 
+
+commit e2fd90dd2ed87bdcfdfb640f06da48fd23efa080
+Author: Balsundar P <balsundar.p@microsemi.com>
+Date:   Tue Oct 15 11:52:01 2019 +0530
+
+    scsi: aacraid: setting different timeout for src and thor
+    
+    Set 180 second timeout for thor and 60 seconds for src controllers.
+    
+    Link: https://lore.kernel.org/r/1571120524-6037-5-git-send-email-balsundar.p@microsemi.com
+    Signed-off-by: Balsundar P <balsundar.p@microsemi.com>
+    Signed-off-by: Martin K. Petersen <martin.petersen@oracle.com>
+
+diff --git a/drivers/scsi/aacraid/aachba.c b/drivers/scsi/aacraid/aachba.c
+index 2388143d59f5..e36608ce937a 100644
+--- a/drivers/scsi/aacraid/aachba.c
++++ b/drivers/scsi/aacraid/aachba.c
+@@ -1477,6 +1477,7 @@ static struct aac_srb * aac_scsi_common(struct fib * fib, struct scsi_cmnd * cmd
+ 	struct aac_srb * srbcmd;
+ 	u32 flag;
+ 	u32 timeout;
++	struct aac_dev *dev = fib->dev;
+ 
+ 	aac_fib_init(fib);
+ 	switch(cmd->sc_data_direction){
+@@ -1503,7 +1504,7 @@ static struct aac_srb * aac_scsi_common(struct fib * fib, struct scsi_cmnd * cmd
+ 	srbcmd->flags    = cpu_to_le32(flag);
+ 	timeout = cmd->request->timeout/HZ;
+ 	if (timeout == 0)
+-		timeout = 1;
++		timeout = (dev->sa_firmware ? AAC_SA_TIMEOUT : AAC_ARC_TIMEOUT);
+ 	srbcmd->timeout  = cpu_to_le32(timeout);  // timeout in seconds
+ 	srbcmd->retry_limit = 0; /* Obsolete parameter */
+ 	srbcmd->cdb_size = cpu_to_le32(cmd->cmd_len);
+diff --git a/drivers/scsi/aacraid/aacraid.h b/drivers/scsi/aacraid/aacraid.h
+index 3fdd4583cbb5..f76a33cb0259 100644
+--- a/drivers/scsi/aacraid/aacraid.h
++++ b/drivers/scsi/aacraid/aacraid.h
+@@ -108,6 +108,8 @@ enum {
+ #define AAC_BUS_TARGET_LOOP		(AAC_MAX_BUSES * AAC_MAX_TARGETS)
+ #define AAC_MAX_NATIVE_SIZE		2048
+ #define FW_ERROR_BUFFER_SIZE		512
++#define AAC_SA_TIMEOUT			180
++#define AAC_ARC_TIMEOUT			60
+ 
+ #define get_bus_number(x)	(x/AAC_MAX_TARGETS)
+ #define get_target_number(x)	(x%AAC_MAX_TARGETS)
+diff --git a/drivers/scsi/aacraid/linit.c b/drivers/scsi/aacraid/linit.c
+index 4a858789e6c5..40f78509ca94 100644
+--- a/drivers/scsi/aacraid/linit.c
++++ b/drivers/scsi/aacraid/linit.c
+@@ -391,6 +391,7 @@ static int aac_slave_configure(struct scsi_device *sdev)
+ 	int chn, tid;
+ 	unsigned int depth = 0;
+ 	unsigned int set_timeout = 0;
++	int timeout = 0;
+ 	bool set_qd_dev_type = false;
+ 	u8 devtype = 0;
+ 
+@@ -483,10 +484,13 @@ static int aac_slave_configure(struct scsi_device *sdev)
+ 
+ 	/*
+ 	 * Firmware has an individual device recovery time typically
+-	 * of 35 seconds, give us a margin.
++	 * of 35 seconds, give us a margin. Thor devices can take longer in
++	 * error recovery, hence different value.
+ 	 */
+-	if (set_timeout && sdev->request_queue->rq_timeout < (45 * HZ))
+-		blk_queue_rq_timeout(sdev->request_queue, 45*HZ);
++	if (set_timeout) {
++		timeout = aac->sa_firmware ? AAC_SA_TIMEOUT : AAC_ARC_TIMEOUT;
++		blk_queue_rq_timeout(sdev->request_queue, timeout * HZ);
++	}
+ 
+ 	if (depth > 256)
+ 		depth = 256;
+
+commit c02a3342bad32baa9be201da39d3809b74f92239
+Author: Balsundar P <balsundar.p@microsemi.com>
+Date:   Tue Oct 15 11:52:00 2019 +0530
+
+    scsi: aacraid: fixed firmware assert issue
+    
+    Before issuing IOP reset, INTX mode is selected. This is triggering MSGU
+    lockup and ended in basecode assert. Use DROP_IO command when IOP reset is
+    sent in preparation for interrupt mode switch.
+    
+    Link: https://lore.kernel.org/r/1571120524-6037-4-git-send-email-balsundar.p@microsemi.com
+    Signed-off-by: Balsundar P <balsundar.p@microsemi.com>
+    Signed-off-by: Martin K. Petersen <martin.petersen@oracle.com>
+
+diff --git a/drivers/scsi/aacraid/aacraid.h b/drivers/scsi/aacraid/aacraid.h
+index 3fa03230f6ba..3fdd4583cbb5 100644
+--- a/drivers/scsi/aacraid/aacraid.h
++++ b/drivers/scsi/aacraid/aacraid.h
+@@ -1673,6 +1673,7 @@ struct aac_dev
+ 	u8			adapter_shutdown;
+ 	u32			handle_pci_error;
+ 	bool			init_reset;
++	u8			soft_reset_support;
+ };
+ 
+ #define aac_adapter_interrupt(dev) \
+diff --git a/drivers/scsi/aacraid/comminit.c b/drivers/scsi/aacraid/comminit.c
+index d4fcfa1e54e0..f75878d773cf 100644
+--- a/drivers/scsi/aacraid/comminit.c
++++ b/drivers/scsi/aacraid/comminit.c
+@@ -571,6 +571,11 @@ struct aac_dev *aac_init_adapter(struct aac_dev *dev)
+ 		else
+ 			dev->sa_firmware = 0;
+ 
++		if (status[4] & le32_to_cpu(AAC_EXTOPT_SOFT_RESET))
++			dev->soft_reset_support = 1;
++		else
++			dev->soft_reset_support = 0;
++
+ 		if ((dev->comm_interface == AAC_COMM_MESSAGE) &&
+ 		    (status[2] > dev->base_size)) {
+ 			aac_adapter_ioremap(dev, 0);
+diff --git a/drivers/scsi/aacraid/src.c b/drivers/scsi/aacraid/src.c
+index 3b66e06726c8..787ec9baebb0 100644
+--- a/drivers/scsi/aacraid/src.c
++++ b/drivers/scsi/aacraid/src.c
+@@ -733,10 +733,20 @@ static bool aac_is_ctrl_up_and_running(struct aac_dev *dev)
+ 	return ctrl_up;
+ }
+ 
++static void aac_src_drop_io(struct aac_dev *dev)
++{
++	if (!dev->soft_reset_support)
++		return;
++
++	aac_adapter_sync_cmd(dev, DROP_IO,
++			0, 0, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL);
++}
++
+ static void aac_notify_fw_of_iop_reset(struct aac_dev *dev)
+ {
+ 	aac_adapter_sync_cmd(dev, IOP_RESET_ALWAYS, 0, 0, 0, 0, 0, 0, NULL,
+ 						NULL, NULL, NULL, NULL);
++	aac_src_drop_io(dev);
+ }
+ 
+ static void aac_send_iop_reset(struct aac_dev *dev)
+
+commit f2244c1b35e5302070af4c729db0b0e9eb8350c9
+Author: Balsundar P <balsundar.p@microsemi.com>
+Date:   Tue Oct 15 11:51:59 2019 +0530
+
+    scsi: aacraid: fixed IO reporting error
+    
+    The problem is the driver detects FastResponse bit set and saves it to
+    Fib's flags to not check IO response status, but it never clears it for
+    next IO. Hence the next IO will pick up FastResponse bit to not check
+    the IO response status and fail to report any type IO error to kernel
+    
+    Link: https://lore.kernel.org/r/1571120524-6037-3-git-send-email-balsundar.p@microsemi.com
+    Signed-off-by: Balsundar P <balsundar.p@microsemi.com>
+    Signed-off-by: Martin K. Petersen <martin.petersen@oracle.com>
+
+diff --git a/drivers/scsi/aacraid/commsup.c b/drivers/scsi/aacraid/commsup.c
+index 2142a649e865..3f268f669cc3 100644
+--- a/drivers/scsi/aacraid/commsup.c
++++ b/drivers/scsi/aacraid/commsup.c
+@@ -232,6 +232,7 @@ struct fib *aac_fib_alloc_tag(struct aac_dev *dev, struct scsi_cmnd *scmd)
+ 	fibptr->type = FSAFS_NTC_FIB_CONTEXT;
+ 	fibptr->callback_data = NULL;
+ 	fibptr->callback = NULL;
++	fibptr->flags = 0;
+ 
+ 	return fibptr;
+ }
+
+commit c86fbe484c10b2cd1e770770db2d6b2c88801c1d
+Author: Balsundar P <balsundar.p@microsemi.com>
+Date:   Tue Oct 15 11:51:58 2019 +0530
+
+    scsi: aacraid: fix illegal IO beyond last LBA
+    
+    The driver fails to handle data when read or written beyond device reported
+    LBA, which triggers kernel panic
+    
+    Link: https://lore.kernel.org/r/1571120524-6037-2-git-send-email-balsundar.p@microsemi.com
+    Signed-off-by: Balsundar P <balsundar.p@microsemi.com>
+    Signed-off-by: Martin K. Petersen <martin.petersen@oracle.com>
+
+diff --git a/drivers/scsi/aacraid/aachba.c b/drivers/scsi/aacraid/aachba.c
+index 0ed3f806ace5..2388143d59f5 100644
+--- a/drivers/scsi/aacraid/aachba.c
++++ b/drivers/scsi/aacraid/aachba.c
+@@ -2467,13 +2467,13 @@ static int aac_read(struct scsi_cmnd * scsicmd)
+ 		scsicmd->result = DID_OK << 16 | COMMAND_COMPLETE << 8 |
+ 			SAM_STAT_CHECK_CONDITION;
+ 		set_sense(&dev->fsa_dev[cid].sense_data,
+-			  HARDWARE_ERROR, SENCODE_INTERNAL_TARGET_FAILURE,
++			  ILLEGAL_REQUEST, SENCODE_LBA_OUT_OF_RANGE,
+ 			  ASENCODE_INTERNAL_TARGET_FAILURE, 0, 0);
+ 		memcpy(scsicmd->sense_buffer, &dev->fsa_dev[cid].sense_data,
+ 		       min_t(size_t, sizeof(dev->fsa_dev[cid].sense_data),
+ 			     SCSI_SENSE_BUFFERSIZE));
+ 		scsicmd->scsi_done(scsicmd);
+-		return 1;
++		return 0;
+ 	}
+ 
+ 	dprintk((KERN_DEBUG "aac_read[cpu %d]: lba = %llu, t = %ld.\n",
+@@ -2559,13 +2559,13 @@ static int aac_write(struct scsi_cmnd * scsicmd)
+ 		scsicmd->result = DID_OK << 16 | COMMAND_COMPLETE << 8 |
+ 			SAM_STAT_CHECK_CONDITION;
+ 		set_sense(&dev->fsa_dev[cid].sense_data,
+-			  HARDWARE_ERROR, SENCODE_INTERNAL_TARGET_FAILURE,
++			  ILLEGAL_REQUEST, SENCODE_LBA_OUT_OF_RANGE,
+ 			  ASENCODE_INTERNAL_TARGET_FAILURE, 0, 0);
+ 		memcpy(scsicmd->sense_buffer, &dev->fsa_dev[cid].sense_data,
+ 		       min_t(size_t, sizeof(dev->fsa_dev[cid].sense_data),
+ 			     SCSI_SENSE_BUFFERSIZE));
+ 		scsicmd->scsi_done(scsicmd);
+-		return 1;
++		return 0;
+ 	}
+ 
+ 	dprintk((KERN_DEBUG "aac_write[cpu %d]: lba = %llu, t = %ld.\n",
+
+

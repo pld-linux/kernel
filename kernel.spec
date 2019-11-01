@@ -689,7 +689,7 @@ rm -f localversion-rt
 %endif # vanilla
 
 # Small fixes:
-#%patch2000 -p1
+%patch2000 -p1
 %patch2001 -p1
 #%patch2003 -p1
 %patch2004 -p1
