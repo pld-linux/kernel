@@ -67,7 +67,7 @@
 %define		have_pcmcia	0
 %endif
 
-%define		rel		1
+%define		rel		2
 %define		basever		5.4
 %define		postver		.6
 
@@ -704,6 +704,32 @@ sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{?alt_kernel:.%{alt_kernel}}#g' Makef
 
 # cleanup backups after patching
 find '(' -name '*~' -o -name '*.orig' -o -name '.gitignore' ')' -print0 | xargs -0 -r -l512 rm -f
+
+find -name '*.py' -print0 | \
+	xargs -0 %{__sed} -i -e '1s,/usr/bin/python,%{__python},' \
+			     -e '1s,/usr/bin/env python,%{__python},' \
+			     -e '1s,/usr/bin/env python3,%{__python3},'
+
+%{__sed} -i -e '1s,/usr/bin/python,%{__python},' \
+	    -e '1s,/usr/bin/env python,%{__python},' \
+	    -e '1s,/usr/bin/env python3,%{__python3},' \
+	drivers/staging/greybus/tools/lbtest \
+	scripts/bloat-o-meter \
+	scripts/diffconfig \
+	scripts/show_delta \
+	tools/kvm/kvm_stat/kvm_stat
+
+find -name '*.pl' -print0 | \
+	xargs -0 %{__sed} -i -e '1s,/usr/bin/env perl,%{__perl},' \
+
+%{__sed} -i -e '1s,/usr/bin/env perl,%{__perl},' \
+	scripts/dtc/dt_to_config \
+	scripts/cleanfile \
+	scripts/cleanpatch \
+	scripts/documentation-file-ref-check \
+	scripts/get_dvb_firmware \
+	scripts/kernel-doc \
+	scripts/stackdelta
 
 %build
 install -d %{objdir}
