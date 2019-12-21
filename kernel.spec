@@ -70,7 +70,7 @@
 %define		have_pcmcia	0
 %endif
 
-%define		rel		1
+%define		rel		2
 %define		basever		4.4
 %define		postver		.207
 
@@ -755,6 +755,27 @@ sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{?alt_kernel:.%{alt_kernel}}#g' Makef
 
 # cleanup backups after patching
 find '(' -name '*~' -o -name '*.orig' -o -name '.gitignore' ')' -print0 | xargs -0 -r -l512 rm -f
+
+find -name '*.py' -print0 | \
+	xargs -0 %{__sed} -i -e '1s,/usr/bin/python,%{__python},' \
+			     -e '1s,/usr/bin/env python,%{__python},' \
+			     -e '1s,/usr/bin/env python3,%{__python3},'
+
+%{__sed} -i -e '1s,/usr/bin/python,%{__python},' \
+	    -e '1s,/usr/bin/env python,%{__python},' \
+	    -e '1s,/usr/bin/env python3,%{__python3},' \
+	scripts/bloat-o-meter \
+	scripts/diffconfig \
+	scripts/show_delta
+
+find -name '*.pl' -print0 | \
+	xargs -0 %{__sed} -i -e '1s,/usr/bin/env perl,%{__perl},' \
+
+%{__sed} -i -e '1s,/usr/bin/env perl,%{__perl},' \
+	scripts/cleanfile \
+	scripts/cleanpatch \
+	scripts/kernel-doc \
+	scripts/stackdelta
 
 %build
 install -d %{objdir}
