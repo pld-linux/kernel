@@ -23721,9 +23721,9 @@ diff -NurpP --minimal linux-4.9.135/net/ipv4/tcp_ipv4.c linux-4.9.135-vs2.3.9.8/
 --- linux-4.9.135/net/ipv4/tcp_ipv4.c	2018-10-20 10:39:25.000000000 +0000
 +++ linux-4.9.135-vs2.3.9.8/net/ipv4/tcp_ipv4.c	2018-10-20 05:55:44.000000000 +0000
 @@ -1933,8 +1933,12 @@ get_head:
- 	sk = sk_next(sk);
+ 	sk = sk_nulls_next(sk);
  get_sk:
- 	sk_for_each_from(sk) {
+ 	sk_nulls_for_each_from(sk, node) {
 +		vxdprintk(VXD_CBIT(net, 6), "sk: %p [#%d] (from %d)",
 +			sk, sk->sk_nid, nx_current_nid());
  		if (!net_eq(sock_net(sk), net))
