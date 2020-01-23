@@ -70,7 +70,7 @@
 
 %define		rel		1
 %define		basever		4.19
-%define		postver		.97
+%define		postver		.98
 
 # define this to '-%{basever}' for longterm branch
 %define		versuffix	-%{basever}
@@ -124,7 +124,7 @@ Source0:	https://www.kernel.org/pub/linux/kernel/v4.x/linux-%{basever}.tar.xz
 # Source0-md5:	740a90cf810c2105df8ee12e5d0bb900
 %if "%{postver}" != ".0"
 Patch0:		https://www.kernel.org/pub/linux/kernel/v4.x/patch-%{version}.xz
-# Patch0-md5:	9c511acb7da4223e86b8290e2ef38999
+# Patch0-md5:	1a368b5d8e4f6071c1232d875fa93570
 %endif
 Source1:	kernel.sysconfig
 
