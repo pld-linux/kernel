@@ -68,11 +68,11 @@
 %endif
 
 %define		rel		1
-%define		basever		5.4
-%define		postver		.15
+%define		basever		5.5
+%define		postver		.0
 
 # define this to '-%{basever}' for longterm branch
-%define		versuffix	-%{basever}
+%define		versuffix	%{nil}
 
 # __alt_kernel is list of features, empty string if none set
 # _alt kernel is defined as: %{nil}%{?alt_kernel:-%{?alt_kernel}} (defined in rpm.macros)
@@ -120,7 +120,7 @@ Epoch:		3
 License:	GPL v2
 Group:		Base/Kernel
 Source0:	https://www.kernel.org/pub/linux/kernel/v5.x/linux-%{basever}.tar.xz
-# Source0-md5:	ce9b2d974d27408a61c53a30d3f98fb9
+# Source0-md5:	0a78b1dc48dc032fe505b170c1b92339
 %if "%{postver}" != ".0"
 Patch0:		https://www.kernel.org/pub/linux/kernel/v5.x/patch-%{version}.xz
 # Patch0-md5:	bbb20c60fad075793e7a1be91051595e
@@ -716,7 +716,9 @@ find -name '*.py' -print0 | \
 	drivers/staging/greybus/tools/lbtest \
 	scripts/bloat-o-meter \
 	scripts/diffconfig \
+	scripts/jobserver-exec \
 	scripts/show_delta \
+	tools/hv/vmbus_testing \
 	tools/kvm/kvm_stat/kvm_stat
 
 find -name '*.pl' -print0 | \
