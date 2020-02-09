@@ -22,7 +22,7 @@
 %bcond_with	verbose		# verbose build (V=1)
 
 %bcond_with	fbcondecor	# build fbcondecor (disable FB_TILEBLITTING and affected fb modules)
-%bcond_without	pae		# build PAE (HIGHMEM64G) support on 32bit i686 athlon pentium3 pentium4
+%bcond_with	pae		# build PAE (HIGHMEM64G) support on 32bit i686 athlon pentium3 pentium4
 %bcond_with	nfsroot		# build with root on NFS support
 
 %bcond_without	imq		# imq support
