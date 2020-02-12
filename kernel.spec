@@ -93,8 +93,8 @@
 %if %{with vanilla}
 %define		alt_kernel	vanilla
 %endif
-%if %{without pae}
-%define		alt_kernel	nopae
+%if %{with pae}
+%define		alt_kernel	pae
 %endif
 %if %{with rt}
 %define		alt_kernel	rt
@@ -304,7 +304,7 @@ Conflicts:	udev < 1:081
 Conflicts:	util-linux < 2.10o
 Conflicts:	util-vserver < 0.30.216
 Conflicts:	xfsprogs < 2.6.0
-%if %{without pae}
+%if %{with pae}
 ExclusiveArch:	i686 pentium3 pentium4 athlon
 %else
 ExclusiveArch:	i486 i586 i686 pentium3 pentium4 athlon %{x8664} x32 alpha arm ia64 ppc ppc64 sparc sparc64
