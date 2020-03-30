@@ -68,8 +68,8 @@
 %endif
 
 %define		rel		1
-%define		basever		5.5
-%define		postver		.13
+%define		basever		5.6
+%define		postver		.0
 
 # define this to '-%{basever}' for longterm branch
 %define		versuffix	%{nil}
@@ -120,7 +120,7 @@ Epoch:		3
 License:	GPL v2
 Group:		Base/Kernel
 Source0:	https://www.kernel.org/pub/linux/kernel/v5.x/linux-%{basever}.tar.xz
-# Source0-md5:	0a78b1dc48dc032fe505b170c1b92339
+# Source0-md5:	7b9199ec5fa563ece9ed585ffb17798f
 %if "%{postver}" != ".0"
 Patch0:		https://www.kernel.org/pub/linux/kernel/v5.x/patch-%{version}.xz
 # Patch0-md5:	914bdb8d023b52168272723c9c8eb678
@@ -1276,8 +1276,6 @@ fi
 %if %{without rescuecd}
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/ata/pata_pcmcia.ko*
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/bluetooth/*_cs.ko*
-%exclude /lib/modules/%{kernel_release}/kernel/drivers/staging/isdn/avm/avm_cs.ko*
-%exclude /lib/modules/%{kernel_release}/kernel/drivers/staging/isdn/avm/b1pcmcia.ko*
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/usb/gadget/legacy/g_midi.ko*
 %endif
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/ide/ide-cs.ko*
@@ -1357,8 +1355,6 @@ fi
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/pcmcia/pcmcia*ko*
 %if %{without rescuecd}
 /lib/modules/%{kernel_release}/kernel/drivers/bluetooth/*_cs.ko*
-/lib/modules/%{kernel_release}/kernel/drivers/staging/isdn/avm/avm_cs.ko*
-/lib/modules/%{kernel_release}/kernel/drivers/staging/isdn/avm/b1pcmcia.ko*
 /lib/modules/%{kernel_release}/kernel/drivers/ata/pata_pcmcia.ko*
 %endif
 /lib/modules/%{kernel_release}/kernel/drivers/ide/ide-cs.ko*
@@ -1480,6 +1476,7 @@ fi
 %{_kernelsrcdir}/arch/m68k/install.sh
 %{_kernelsrcdir}/arch/parisc/install.sh
 %{_kernelsrcdir}/arch/x86/ia32/[!M]*
+%{_kernelsrcdir}/arch/powerpc/kexec
 %{_kernelsrcdir}/arch/powerpc/kvm
 %ifarch ppc ppc64
 %exclude %{_kernelsrcdir}/arch/powerpc/lib/crtsavres.*
