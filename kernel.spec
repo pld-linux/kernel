@@ -41,7 +41,11 @@
 %{?debug:%define with_verbose 1}
 
 %define		have_drm	1
+%ifarch %{ix86} %{x8664} x32 alpha arm ia64 ppc ppc64 sparc sparc64
 %define		have_ide	1
+%else
+%define		have_ide	0
+%endif
 %define		have_sound	1
 %define		have_pcmcia	1
 
@@ -307,7 +311,7 @@ Conflicts:	xfsprogs < 2.6.0
 %if %{with pae}
 ExclusiveArch:	i686 pentium3 pentium4 athlon
 %else
-ExclusiveArch:	i486 i586 i686 pentium3 pentium4 athlon %{x8664} x32 alpha arm ia64 ppc ppc64 sparc sparc64
+ExclusiveArch:	i486 i586 i686 pentium3 pentium4 athlon %{x8664} x32 alpha arm ia64 ppc ppc64 sparc sparc64 aarch64
 %endif
 ExclusiveOS:	Linux
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
@@ -323,7 +327,10 @@ BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 %ifarch sparc sparc64
 %define		target_arch_dir		sparc
 %endif
-%ifnarch %{ix86} %{x8664} x32 ppc ppc64 sparc sparc64
+%ifarch aarch64
+%define		target_arch_dir		arm64
+%endif
+%ifnarch %{ix86} %{x8664} x32 ppc ppc64 sparc sparc64 aarch64
 %define		target_arch_dir		%{_target_base_arch}
 %endif
 
@@ -373,7 +380,11 @@ BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 	%ifarch ppc ppc64
 	%define CrossOpts ARCH=powerpc CC="%{__cc}"
 	%else
+	%ifarch aarch64
+	%define CrossOpts ARCH=arm64 CC="%{__cc}"
+	%else
 	%define CrossOpts ARCH=%{_target_base_arch} CC="%{__cc}"
+	%endif
 	%endif
 	%define	DepMod /sbin/depmod
 %endif
@@ -1005,6 +1016,10 @@ cp -aL %{objdir}/.config $RPM_BUILD_ROOT/boot/config-%{kernel_release}
 %endif
 %ifarch arm
 	install -p %{objdir}/arch/arm/boot/zImage $RPM_BUILD_ROOT/boot/vmlinuz-%{kernel_release}
+%endif
+%ifarch aarch64
+	cp -a %{objdir}/arch/%{target_arch_dir}/boot/Image.gz $RPM_BUILD_ROOT/boot/vmlinuz-%{kernel_release}
+	cp -a %{objdir}/arch/%{target_arch_dir}/boot/dts $RPM_BUILD_ROOT/boot/
 %endif
 
 # ghosted initrd
