@@ -41,7 +41,7 @@
 %{?debug:%define with_verbose 1}
 
 %define		have_drm	1
-%ifarch %{ix86} %{x8664} x32 alpha arm ia64 ppc ppc64 sparc sparc64
+%ifarch %{ix86} %{x8664} x32 alpha %{arm} ia64 ppc ppc64 sparc sparc64
 %define		have_ide	1
 %else
 %define		have_ide	0
@@ -311,7 +311,7 @@ Conflicts:	xfsprogs < 2.6.0
 %if %{with pae}
 ExclusiveArch:	i686 pentium3 pentium4 athlon
 %else
-ExclusiveArch:	i486 i586 i686 pentium3 pentium4 athlon %{x8664} x32 alpha arm ia64 ppc ppc64 sparc sparc64 aarch64
+ExclusiveArch:	i486 i586 i686 pentium3 pentium4 athlon %{x8664} x32 alpha %{arm} ia64 ppc ppc64 sparc sparc64 aarch64
 %endif
 ExclusiveOS:	Linux
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
@@ -1014,7 +1014,7 @@ cp -aL %{objdir}/.config $RPM_BUILD_ROOT/boot/config-%{kernel_release}
 		install -p %{objdir}/vmlinux.aout $RPM_BUILD_ROOT/boot/vmlinux.aout-%{kernel_release}
 	%endif
 %endif
-%ifarch arm
+%ifarch %{arm}
 	install -p %{objdir}/arch/arm/boot/zImage $RPM_BUILD_ROOT/boot/vmlinuz-%{kernel_release}
 %endif
 %ifarch aarch64
