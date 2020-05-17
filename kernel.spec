@@ -1281,6 +1281,7 @@ fi
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/media/pci/cx88/cx88-alsa.ko*
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/media/usb/em28xx/em28xx-alsa.ko*
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/media/pci/saa7134/saa7134-alsa.ko*
+%exclude /lib/modules/%{kernel_release}/kernel/drivers/usb/gadget/legacy/g_midi.ko*
 %endif
 %endif
 %dir /lib/modules/%{kernel_release}/misc
@@ -1291,7 +1292,6 @@ fi
 %if %{without rescuecd}
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/ata/pata_pcmcia.ko*
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/bluetooth/*_cs.ko*
-%exclude /lib/modules/%{kernel_release}/kernel/drivers/usb/gadget/legacy/g_midi.ko*
 %endif
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/ide/ide-cs.ko*
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/net/arcnet/com20020_cs.ko*
