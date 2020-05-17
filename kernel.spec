@@ -963,6 +963,13 @@ rm -rf $RPM_BUILD_ROOT
 	INSTALL_MOD_PATH=$RPM_BUILD_ROOT \
 	KERNELRELEASE=%{kernel_release}
 
+%ifarch %{arm} aarch64
+%{__make} %{MakeOpts} %{!?with_verbose:-s} dtbs_install \
+	-C %{objdir} \
+	%{?with_verbose:V=1} \
+	INSTALL_DTBS_PATH=$RPM_BUILD_ROOT/boot/dtb-%{kernel_release}
+%endif
+
 install -d $RPM_BUILD_ROOT/lib/modules/%{kernel_release}/misc
 
 # create directories which may be missing, to simplyfy %files
@@ -1019,7 +1026,6 @@ cp -aL %{objdir}/.config $RPM_BUILD_ROOT/boot/config-%{kernel_release}
 %endif
 %ifarch aarch64
 	cp -a %{objdir}/arch/%{target_arch_dir}/boot/Image.gz $RPM_BUILD_ROOT/boot/vmlinuz-%{kernel_release}
-	cp -a %{objdir}/arch/%{target_arch_dir}/boot/dts $RPM_BUILD_ROOT/boot/
 %endif
 
 # ghosted initrd
@@ -1249,6 +1255,9 @@ fi
 %endif
 %ifarch ia64
 /boot/efi/vmlinuz-%{kernel_release}
+%endif
+%ifarch %{arm} aarch64
+/boot/dtb-%{kernel_release}
 %endif
 /boot/vmlinuz-%{kernel_release}
 /boot/System.map-%{kernel_release}
