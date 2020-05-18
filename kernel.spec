@@ -1327,7 +1327,7 @@ fi
 /lib/modules/%{kernel_release}/kernel/sound
 %endif
 /lib/modules/%{kernel_release}/kernel/security
-%ifarch %{ix86} %{x8664}
+%ifarch %{ix86} %{x8664} x32
 /lib/modules/%{kernel_release}/kernel/virt
 %endif
 
