@@ -72,8 +72,8 @@
 %endif
 
 %define		rel		1
-%define		basever		5.6
-%define		postver		.15
+%define		basever		5.7
+%define		postver		.0
 
 # define this to '-%{basever}' for longterm branch
 %define		versuffix	%{nil}
@@ -124,7 +124,7 @@ Epoch:		3
 License:	GPL v2
 Group:		Base/Kernel
 Source0:	https://www.kernel.org/pub/linux/kernel/v5.x/linux-%{basever}.tar.xz
-# Source0-md5:	7b9199ec5fa563ece9ed585ffb17798f
+# Source0-md5:	f63ed18935914e1ee3e04c2a0ce1ba3b
 %if "%{postver}" != ".0"
 Patch0:		https://www.kernel.org/pub/linux/kernel/v5.x/patch-%{version}.xz
 # Patch0-md5:	e4e1faef579a6aa16d2c7a92a7a7b0d1
@@ -1507,7 +1507,6 @@ fi
 %ifarch ppc ppc64
 %exclude %{_kernelsrcdir}/arch/powerpc/lib/crtsavres.*
 %endif
-%{_kernelsrcdir}/arch/arm/kvm
 %{_kernelsrcdir}/arch/arm64/kvm
 %{_kernelsrcdir}/arch/mips/kvm
 %{_kernelsrcdir}/arch/s390/kvm
