@@ -71,9 +71,9 @@
 %define		have_pcmcia	0
 %endif
 
-%define		rel		1
-%define		basever		5.7
-%define		postver		.11
+%define		rel		0.1
+%define		basever		5.8
+%define		postver		.0
 
 # define this to '-%{basever}' for longterm branch
 %define		versuffix	%{nil}
@@ -124,7 +124,7 @@ Epoch:		3
 License:	GPL v2
 Group:		Base/Kernel
 Source0:	https://www.kernel.org/pub/linux/kernel/v5.x/linux-%{basever}.tar.xz
-# Source0-md5:	f63ed18935914e1ee3e04c2a0ce1ba3b
+# Source0-md5:	0e5c4c15266218ef26c50fac0016095b
 %if "%{postver}" != ".0"
 Patch0:		https://www.kernel.org/pub/linux/kernel/v5.x/patch-%{version}.xz
 # Patch0-md5:	a2824a09c83af1bacb337288a41c80d9
@@ -201,7 +201,7 @@ Patch101:	kernel-vserver-fixes.patch
 # Patch creation:
 # git clone git://github.com/sfjro/aufs5-standalone.git
 # cd aufs5-standalone
-# git checkout -b aufs5.4 origin/aufs5.4
+# git checkout -b aufs5.8 origin/aufs5.8
 # cat aufs5-kbuild.patch aufs5-base.patch aufs5-mmap.patch aufs5-standalone.patch > ~/rpm/packages/kernel/kernel-aufs5.patch
 # rm -rf linux && mkdir linux; cp -a Documentation fs include linux
 # diff -urN /usr/share/empty linux | filterdiff -x linux/include/uapi/linux/Kbuild >> ~/rpm/packages/kernel/kernel-aufs5.patch
@@ -730,7 +730,8 @@ find -name '*.py' -print0 | \
 	scripts/jobserver-exec \
 	scripts/show_delta \
 	tools/hv/vmbus_testing \
-	tools/kvm/kvm_stat/kvm_stat
+	tools/kvm/kvm_stat/kvm_stat \
+	tools/testing/selftests/exec/binfmt_script
 
 find -name '*.pl' -print0 | \
 	xargs -0 %{__sed} -i -e '1s,/usr/bin/env perl,%{__perl},' \
@@ -1100,7 +1101,6 @@ mv $RPM_BUILD_ROOT{%{_kernelsrcdir}/Documentation,%{_docdir}/%{name}-%{version}}
 
 %{__rm} $RPM_BUILD_ROOT%{_docdir}/%{name}-%{version}/dontdiff
 %{__rm} $RPM_BUILD_ROOT%{_docdir}/%{name}-%{version}/Makefile
-%{__rm} $RPM_BUILD_ROOT%{_docdir}/%{name}-%{version}/*/Makefile
 %{__rm} $RPM_BUILD_ROOT%{_docdir}/%{name}-%{version}/*/*/Makefile
 %else
 %{__rm} -r $RPM_BUILD_ROOT%{_kernelsrcdir}/Documentation
