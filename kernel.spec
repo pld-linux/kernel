@@ -1442,6 +1442,7 @@ fi
 %endif
 %exclude %dir %{_kernelsrcdir}/arch/um
 %{_kernelsrcdir}/arch/*/kernel/asm-offsets*
+%{_kernelsrcdir}/arch/*/kernel/module.lds
 %{_kernelsrcdir}/arch/*/kernel/sigframe*.h
 %{_kernelsrcdir}/drivers/media/pci/bt8xx/bttv.h
 %{_kernelsrcdir}/kernel/bounds.c
@@ -1512,6 +1513,7 @@ fi
 %{_kernelsrcdir}/arch/s390/kvm
 %{_kernelsrcdir}/arch/x86/kvm
 %exclude %{_kernelsrcdir}/arch/*/kernel/asm-offsets*
+%exclude %{_kernelsrcdir}/arch/*/kernel/module.lds
 %exclude %{_kernelsrcdir}/arch/*/kernel/sigframe*.h
 %exclude %{_kernelsrcdir}/drivers/media/pci/bt8xx/bttv.h
 %{_kernelsrcdir}/block
