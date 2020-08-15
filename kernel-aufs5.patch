@@ -148,7 +148,7 @@ index bbfa9b12b15eb..5d684d7d29207 100644
 --- a/fs/read_write.c
 +++ b/fs/read_write.c
 @@ -499,6 +499,28 @@ static ssize_t __vfs_write(struct file *file, const char __user *p,
- 		return -EINVAL;
+ 	return ret;
  }
  
 +vfs_readf_t vfs_readf(struct file *file)
@@ -173,9 +173,9 @@ index bbfa9b12b15eb..5d684d7d29207 100644
 +	return ERR_PTR(-ENOSYS); /* doesn't have ->write(|_iter)() op */
 +}
 +
+ /* caller is responsible for file_start_write/file_end_write */
  ssize_t __kernel_write(struct file *file, const void *buf, size_t count, loff_t *pos)
  {
- 	mm_segment_t old_fs;
 diff --git a/fs/splice.c b/fs/splice.c
 index 4e53efbd621db..9f230ee854e20 100644
 --- a/fs/splice.c
@@ -247,9 +247,9 @@ index 45cc10cdf6ddd..916efd7e612b3 100644
 +vfs_readf_t vfs_readf(struct file *file);
 +vfs_writef_t vfs_writef(struct file *file);
 +
- extern ssize_t __vfs_read(struct file *, char __user *, size_t, loff_t *);
  extern ssize_t vfs_read(struct file *, char __user *, size_t, loff_t *);
  extern ssize_t vfs_write(struct file *, const char __user *, size_t, loff_t *);
+ extern ssize_t vfs_readv(struct file *, const struct iovec __user *,
 @@ -2349,6 +2357,7 @@ extern int current_umask(void);
  extern void ihold(struct inode * inode);
  extern void iput(struct inode *);
@@ -291,15 +291,16 @@ diff --git a/include/linux/mnt_namespace.h b/include/linux/mnt_namespace.h
 index 35942084cd40d..24f5fd1a789de 100644
 --- a/include/linux/mnt_namespace.h
 +++ b/include/linux/mnt_namespace.h
-@@ -6,11 +6,14 @@
- struct mnt_namespace;
+@@ -6,12 +6,15 @@
  struct fs_struct;
  struct user_namespace;
+ struct ns_common;
 +struct vfsmount;
  
  extern struct mnt_namespace *copy_mnt_ns(unsigned long, struct mnt_namespace *,
  		struct user_namespace *, struct fs_struct *);
  extern void put_mnt_ns(struct mnt_namespace *ns);
+ extern struct ns_common *from_mnt_ns(struct mnt_namespace *);
  
 +extern int is_current_mnt_ns(struct vfsmount *mnt);
 +
@@ -39290,16 +39291,16 @@ index 0479902a0cd50..758c8ee4d4e6b 100644
  	return error;
  }
  
-@@ -973,7 +995,7 @@ static void loop_update_rotational(struct loop_device *lo)
- static int loop_set_fd(struct loop_device *lo, fmode_t mode,
- 		       struct block_device *bdev, unsigned int arg)
+@@ -973,7 +995,7 @@ static int loop_configure(struct loop_device *lo, fmode_t mode
+ 			  struct block_device *bdev,
+ 			  const struct loop_config *config)
  {
 -	struct file	*file;
 +	struct file	*file, *f, *virt_file = NULL;
  	struct inode	*inode;
  	struct address_space *mapping;
  	struct block_device *claimed_bdev = NULL;
-@@ -989,6 +1011,12 @@ static int loop_set_fd(struct loop_device *lo, fmode_t mode,
+@@ -989,6 +1011,12 @@ static int loop_configure(struct loop_device *lo, fmode_t mode,
  	file = fget(arg);
  	if (!file)
  		goto out;
@@ -39312,15 +39313,15 @@ index 0479902a0cd50..758c8ee4d4e6b 100644
  
  	/*
  	 * If we don't hold exclusive handle for the device, upgrade to it
-@@ -1037,6 +1065,7 @@ static int loop_set_fd(struct loop_device *lo, fmode_t mode,
+@@ -1037,6 +1065,7 @@ static int loop_configure(struct loop_device *lo, fmode_t mode
+ 	lo->use_dio = lo->lo_flags & LO_FLAGS_DIRECT_IO;
  	lo->lo_device = bdev;
- 	lo->lo_flags = lo_flags;
  	lo->lo_backing_file = file;
 +	lo->lo_backing_virt_file = virt_file;
- 	lo->transfer = NULL;
- 	lo->ioctl = NULL;
- 	lo->lo_sizelimit = 0;
-@@ -1090,6 +1119,8 @@ static int loop_set_fd(struct loop_device *lo, fmode_t mode,
+ 	lo->old_gfp_mask = mapping_gfp_mask(mapping);
+ 	mapping_set_gfp_mask(mapping, lo->old_gfp_mask & ~(__GFP_IO|__GFP_FS));
+ 
+@@ -1090,6 +1119,8 @@ static int loop_configure(struct loop_device *lo, fmode_t mode
  		bd_abort_claiming(bdev, claimed_bdev, loop_set_fd);
  out_putf:
  	fput(file);
