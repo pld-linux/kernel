@@ -455,6 +455,7 @@ Summary(pl.UTF-8):	Sterowniki DRM
 Group:		Base/Kernel
 Requires(postun):	%{name} = %{epoch}:%{version}-%{release}
 Requires:	%{name} = %{epoch}:%{version}-%{release}
+Provides:	kernel(vboxvideo) = %{kernel_release}
 Obsoletes:	kernel-smp-drm
 AutoReqProv:	no
 
