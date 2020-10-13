@@ -71,9 +71,9 @@
 %define		have_pcmcia	0
 %endif
 
-%define		rel		1
-%define		basever		5.8
-%define		postver		.13
+%define		rel		0.1
+%define		basever		5.9
+%define		postver		.0
 
 # define this to '-%{basever}' for longterm branch
 %define		versuffix	%{nil}
@@ -124,7 +124,7 @@ Epoch:		3
 License:	GPL v2
 Group:		Base/Kernel
 Source0:	https://www.kernel.org/pub/linux/kernel/v5.x/linux-%{basever}.tar.xz
-# Source0-md5:	0e5c4c15266218ef26c50fac0016095b
+# Source0-md5:	0959d759fd19e146367221aff504ad91
 %if "%{postver}" != ".0"
 Patch0:		https://www.kernel.org/pub/linux/kernel/v5.x/patch-%{version}.xz
 # Patch0-md5:	1f276bf9d1bc12215179a4681c29a573
@@ -220,7 +220,6 @@ Patch500:	kernel-rt.patch
 Patch2000:	kernel-small_fixes.patch
 Patch2001:	kernel-pwc-uncompress.patch
 Patch2003:	kernel-regressions.patch
-Patch2004:	xfs-reclaim-hack.patch
 
 # for rescuecd
 # based on ftp://ftp.leg.uct.ac.za/pub/linux/rip/tmpfs_root-2.6.30.diff.gz
@@ -705,7 +704,6 @@ rm -f localversion-rt
 %patch2000 -p1
 %patch2001 -p1
 #%patch2003 -p1
-%patch2004 -p1
 
 # Do not remove this, please!
 #%%patch50000 -p1
@@ -1489,7 +1487,6 @@ fi
 %dir %{_docdir}/%{name}-%{version}
 
 %{_docdir}/%{name}-%{version}/[!jkz]*
-%{_docdir}/%{name}-%{version}/[jkz]*.txt
 %{_docdir}/%{name}-%{version}/kbuild
 %{_docdir}/%{name}-%{version}/kernel-hacking
 %endif
