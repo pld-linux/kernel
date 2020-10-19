@@ -259,9 +259,9 @@ index 45cc10cdf6ddd..916efd7e612b3 100644
  /* /sys/fs */
  extern struct kobject *fs_kobj;
 @@ -2633,6 +2642,7 @@ static inline bool sb_is_blkdev_sb(struct super_block *sb)
- 	return false;
  }
- #endif
+ 
+ void emergency_thaw_all(void);
 +extern int __sync_filesystem(struct super_block *, int);
  extern int sync_filesystem(struct super_block *);
  extern const struct file_operations def_blk_fops;
@@ -575,7 +575,7 @@ index f609e9ec4a253..d554b349c653c 100644
 +	vma_get_file(vma);
 +	file = vma->vm_file;
 +	prfile = vma->vm_prfile;
- 	ret = do_mmap_pgoff(vma->vm_file, start, size,
+ 	ret = do_mmap(vma->vm_file, start, size,
  			prot, flags, pgoff, &populate, NULL);
 +	if (!IS_ERR_VALUE(ret) && file && prfile) {
 +		struct vm_area_struct *new_vma;
@@ -16959,8 +16959,8 @@ diff -urN /usr/share/empty/fs/aufs/hfsnotify.c linux/fs/aufs/hfsnotify.c
 +}
 +
 +static int au_hfsn_handle_event(struct fsnotify_group *group,
-+				struct inode *inode,
 +				u32 mask, const void *data, int data_type,
++				struct inode *inode,
 +				const struct qstr *file_name, u32 cookie,
 +				struct fsnotify_iter_info *iter_info)
 +{
