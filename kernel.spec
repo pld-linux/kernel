@@ -247,6 +247,7 @@ BuildRequires:	hostname
 BuildRequires:	kmod >= %{kmod_ver}
 BuildRequires:	libstdc++-devel
 BuildRequires:	openssl-devel
+BuildRequires:	openssl-tools
 BuildRequires:	perl-base
 BuildRequires:	rpm-build >= 4.5-24
 BuildRequires:	rpmbuild(macros) >= 1.743
