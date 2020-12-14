@@ -225,6 +225,9 @@ Patch2003:	kernel-regressions.patch
 # based on ftp://ftp.leg.uct.ac.za/pub/linux/rip/tmpfs_root-2.6.30.diff.gz
 Patch7000:	kernel-inittmpfs.patch
 
+# ARM only
+Patch8000:	rpi-wm8804.patch
+
 # Do not remove this line, please. It is easier for me to uncomment two lines, then patch
 # kernel.spec every time.
 #Patch50000:	kernel-usb_reset.patch
@@ -690,6 +693,10 @@ cd linux-%{basever}
 
 %if %{with rescuecd}
 %patch7000 -p1
+%endif
+
+%ifarch %{arm} aarch64
+%patch8000 -p1
 %endif
 
 %if %{with rt}
