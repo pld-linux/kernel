@@ -741,6 +741,10 @@ find -name '*.py' -print0 | \
 	tools/kvm/kvm_stat/kvm_stat \
 	tools/testing/selftests/exec/binfmt_script
 
+%{__sed} -i -e '1s,/usr/bin/python23,%{__python3},' \
+	scripts/bpf_helpers_doc.py \
+	scripts/checkkconfigsymbols.py
+
 find -name '*.pl' -print0 | \
 	xargs -0 %{__sed} -i -e '1s,/usr/bin/env perl,%{__perl},' \
 
@@ -1450,7 +1454,6 @@ fi
 %endif
 %exclude %dir %{_kernelsrcdir}/arch/um
 %{_kernelsrcdir}/arch/*/kernel/asm-offsets*
-%{_kernelsrcdir}/arch/*/kernel/module.lds
 %{_kernelsrcdir}/arch/*/kernel/sigframe*.h
 %{_kernelsrcdir}/drivers/media/pci/bt8xx/bttv.h
 %{_kernelsrcdir}/kernel/bounds.c
@@ -1474,7 +1477,6 @@ fi
 %{_kernelsrcdir}/scripts/mod/modpost.h
 %attr(755,root,root) %{_kernelsrcdir}/scripts/mkcompile_h
 %{_kernelsrcdir}/scripts/mkmakefile
-%{_kernelsrcdir}/scripts/module-common.lds
 %attr(755,root,root) %{_kernelsrcdir}/scripts/setlocalversion
 %{_kernelsrcdir}/scripts/subarch.include
 %{_kernelsrcdir}/scripts/*.c
