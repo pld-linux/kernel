@@ -725,13 +725,13 @@ sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{?alt_kernel:.%{alt_kernel}}#g' Makef
 find '(' -name '*~' -o -name '*.orig' -o -name '.gitignore' ')' -print0 | xargs -0 -r -l512 rm -f
 
 find -name '*.py' -print0 | \
-	xargs -0 %{__sed} -i -e '1s,/usr/bin/python,%{__python},' \
-			     -e '1s,/usr/bin/env python,%{__python},' \
-			     -e '1s,/usr/bin/env python3,%{__python3},'
+	xargs -0 %{__sed} -i -e '1s,/usr/bin/python$,%{__python},' \
+			     -e '1s,/usr/bin/env python$,%{__python},' \
+			     -e '1s,/usr/bin/env python3$,%{__python3},'
 
-%{__sed} -i -e '1s,/usr/bin/python,%{__python},' \
-	    -e '1s,/usr/bin/env python,%{__python},' \
-	    -e '1s,/usr/bin/env python3,%{__python3},' \
+%{__sed} -i -e '1s,/usr/bin/python$,%{__python},' \
+	    -e '1s,/usr/bin/env python$,%{__python},' \
+	    -e '1s,/usr/bin/env python3$,%{__python3},' \
 	drivers/staging/greybus/tools/lbtest \
 	scripts/bloat-o-meter \
 	scripts/diffconfig \
@@ -740,10 +740,6 @@ find -name '*.py' -print0 | \
 	tools/hv/vmbus_testing \
 	tools/kvm/kvm_stat/kvm_stat \
 	tools/testing/selftests/exec/binfmt_script
-
-%{__sed} -i -e '1s,/usr/bin/python23,%{__python3},' \
-	scripts/bpf_helpers_doc.py \
-	scripts/checkkconfigsymbols.py
 
 find -name '*.pl' -print0 | \
 	xargs -0 %{__sed} -i -e '1s,/usr/bin/env perl,%{__perl},' \
