@@ -1518,7 +1518,6 @@ fi
 %{_kernelsrcdir}/arch/s390/kvm
 %{_kernelsrcdir}/arch/x86/kvm
 %exclude %{_kernelsrcdir}/arch/*/kernel/asm-offsets*
-%exclude %{_kernelsrcdir}/arch/*/kernel/module.lds
 %exclude %{_kernelsrcdir}/arch/*/kernel/sigframe*.h
 %exclude %{_kernelsrcdir}/drivers/media/pci/bt8xx/bttv.h
 %{_kernelsrcdir}/block
@@ -1543,7 +1542,6 @@ fi
 %exclude %{_kernelsrcdir}/scripts/mkcompile_h
 %exclude %{_kernelsrcdir}/scripts/mkmakefile
 %exclude %{_kernelsrcdir}/scripts/mod
-%exclude %{_kernelsrcdir}/scripts/module-common.lds
 %exclude %{_kernelsrcdir}/scripts/setlocalversion
 %exclude %{_kernelsrcdir}/scripts/subarch.include
 %exclude %{_kernelsrcdir}/scripts/*.c
