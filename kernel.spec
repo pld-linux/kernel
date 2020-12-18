@@ -911,6 +911,10 @@ BuildConfig() {
 		CONFIG_NFS_FS=y
 		CONFIG_ROOT_NFS=y
 %endif
+
+%ifarch x32
+		CONFIG_BPF_PRELOAD=n
+%endif
 EOCONFIG
 
 %if %{with rescuecd}
