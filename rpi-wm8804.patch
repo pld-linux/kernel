@@ -1,16 +1,15 @@
 --- linux-5.9.orig/sound/soc/bcm/Kconfig	2020-10-11 23:15:50.000000000 +0200
 +++ linux-5.9/sound/soc/bcm/Kconfig	2020-12-14 01:08:25.450035831 +0100
-@@ -26,3 +26,10 @@
+@@ -26,3 +26,9 @@
  	  DSL/PON chips (bcm63158, bcm63178)
  
  	  If you don't know what to do here, say N
 +
-+config SND_BCM2708_SOC_HIFIBERRY_DIGI
-+	tristate "Support for HifiBerry Digi"
-+	depends on SND_BCM2708_SOC_I2S || SND_BCM2835_SOC_I2S
-+	select SND_SOC_WM8804
++config SND_RPI_WM8804_SOUNDCARD
++	tristate "Support for Raspberry Pi generic WM8804 soundcards"
 +	help
-+	  Say Y or M if you want to add support for HifiBerry Digi S/PDIF output board.
++	  Say Y or M if you want to add support for the Raspberry Pi
++	  generic driver for WM8804 based soundcards.
 --- linux-5.9.orig/sound/soc/bcm/Makefile	2020-10-11 23:15:50.000000000 +0200
 +++ linux-5.9/sound/soc/bcm/Makefile	2020-12-14 01:05:51.274295380 +0100
 @@ -12,4 +12,8 @@
@@ -143,9 +142,9 @@
 +		struct snd_pcm_hw_params *params)
 +{
 +	struct snd_soc_pcm_runtime *rtd = substream->private_data;
-+	struct snd_soc_dai *codec_dai = rtd->codec_dai;
-+	struct snd_soc_component *component = rtd->codec_dai->component;
-+	struct snd_soc_dai *cpu_dai = rtd->cpu_dai;
++	struct snd_soc_dai *codec_dai = asoc_rtd_to_codec(rtd, 0);
++	struct snd_soc_component *component = codec_dai->component;
++	struct snd_soc_dai *cpu_dai = asoc_rtd_to_cpu(rtd, 0);
 +	int sampling_freq = 1;
 +	int ret;
 +	struct wm8804_clk_cfg clk_cfg;
