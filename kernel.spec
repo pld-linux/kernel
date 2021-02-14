@@ -255,7 +255,7 @@ BuildRequires:	openssl-devel
 BuildRequires:	openssl-tools
 BuildRequires:	perl-base
 BuildRequires:	rpm-build >= 4.5-24
-BuildRequires:	rpmbuild(macros) >= 1.743
+BuildRequires:	rpmbuild(macros) >= 1.752
 %ifarch ppc
 BuildRequires:	uboot-mkimage
 %endif
@@ -583,9 +583,7 @@ Summary(pl.UTF-8):	Kod źródłowy jądra Linuksa
 Group:		Development/Building
 Requires:	%{name}-module-build = %{epoch}:%{version}-%{release}
 AutoReqProv:	no
-%if "%{_rpmversion}" >= "5"
-BuildArch:	noarch
-%endif
+%{?noarchpackage}
 
 %description source
 This is the source code for the Linux kernel. You can build a custom
@@ -616,9 +614,7 @@ Summary(de.UTF-8):	Kernel Dokumentation
 Summary(pl.UTF-8):	Dokumentacja do jądra Linuksa
 Group:		Documentation
 AutoReqProv:	no
-%if "%{_rpmversion}" >= "5"
-BuildArch:	noarch
-%endif
+%{?noarchpackage}
 
 %description doc
 This is the documentation for the Linux kernel, as found in
