@@ -256,6 +256,7 @@ BuildRequires:	openssl-tools
 BuildRequires:	perl-base
 BuildRequires:	rpm-build >= 4.5-24
 BuildRequires:	rpmbuild(macros) >= 1.752
+BuildRequires:	tar >= 1:1.22
 %ifarch ppc
 BuildRequires:	uboot-mkimage
 %endif
