@@ -71,12 +71,12 @@
 %define		have_pcmcia	0
 %endif
 
-%define		rel		1
-%define		basever		5.10
-%define		postver		.16
+%define		rel		0.1
+%define		basever		5.11
+%define		postver		.0
 
 # define this to '-%{basever}' for longterm branch
-%define		versuffix	-%{basever}
+%define		versuffix	%{nil}
 
 # __alt_kernel is list of features, empty string if none set
 # _alt kernel is defined as: %{nil}%{?alt_kernel:-%{?alt_kernel}} (defined in rpm.macros)
@@ -124,7 +124,7 @@ Epoch:		3
 License:	GPL v2
 Group:		Base/Kernel
 Source0:	https://www.kernel.org/pub/linux/kernel/v5.x/linux-%{basever}.tar.xz
-# Source0-md5:	753adc474bf799d569dec4f165ed92c3
+# Source0-md5:	d2985a3f16ef1ea3405c04c406e29dcc
 %if "%{postver}" != ".0"
 Patch0:		https://www.kernel.org/pub/linux/kernel/v5.x/patch-%{version}.xz
 # Patch0-md5:	6eb3cfa9872f7c0cbc59e5c17eca854c
@@ -752,7 +752,11 @@ find -name '*.pl' -print0 | \
 	scripts/documentation-file-ref-check \
 	scripts/get_dvb_firmware \
 	scripts/kernel-doc \
+	scripts/sphinx-pre-install \
 	scripts/stackdelta
+
+%{__sed} -i -e '1s,/usr/bin/env bash,%{__bash},' \
+	scripts/config
 
 %build
 install -d %{objdir}
