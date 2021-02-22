@@ -73,7 +73,7 @@
 
 %define		rel		1
 %define		basever		5.10
-%define		postver		.16
+%define		postver		.17
 
 # define this to '-%{basever}' for longterm branch
 %define		versuffix	-%{basever}
@@ -127,7 +127,7 @@ Source0:	https://www.kernel.org/pub/linux/kernel/v5.x/linux-%{basever}.tar.xz
 # Source0-md5:	753adc474bf799d569dec4f165ed92c3
 %if "%{postver}" != ".0"
 Patch0:		https://www.kernel.org/pub/linux/kernel/v5.x/patch-%{version}.xz
-# Patch0-md5:	6eb3cfa9872f7c0cbc59e5c17eca854c
+# Patch0-md5:	4e76f7e770d75f54db4237349cfe653f
 %endif
 Source1:	kernel.sysconfig
 
@@ -201,7 +201,7 @@ Patch101:	kernel-vserver-fixes.patch
 # Patch creation:
 # git clone git://github.com/sfjro/aufs5-standalone.git
 # cd aufs5-standalone
-# git checkout -b aufs5.8 origin/aufs5.8
+# git checkout -b aufs5.10 origin/aufs5.10
 # cat aufs5-kbuild.patch aufs5-base.patch aufs5-mmap.patch aufs5-standalone.patch > ~/rpm/packages/kernel/kernel-aufs5.patch
 # rm -rf linux && mkdir linux; cp -a Documentation fs include linux
 # diff -urN /usr/share/empty linux | filterdiff -x linux/include/uapi/linux/Kbuild >> ~/rpm/packages/kernel/kernel-aufs5.patch
