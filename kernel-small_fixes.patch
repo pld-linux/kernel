@@ -1,19 +1,32 @@
---- linux-2.6.33/scripts/mod/modpost.c~	2010-02-24 19:52:17.000000000 +0100
-+++ linux-2.6.33/scripts/mod/modpost.c	2010-03-07 14:26:47.242168558 +0100
-@@ -15,7 +15,8 @@
- #include <stdio.h>
- #include <ctype.h>
- #include "modpost.h"
--#include "../../include/generated/autoconf.h"
-+// PLD architectures don't use CONFIG_SYMBOL_PREFIX
-+//#include "../../include/generated/autoconf.h"
- #include "../../include/linux/license.h"
+diff -urNp -x '*.orig' linux-4.9/fs/xfs/xfs_aops.c linux-4.9/fs/xfs/xfs_aops.c
+--- linux-4.9/fs/xfs/xfs_aops.c	2021-02-24 16:28:24.013817047 +0100
++++ linux-4.9/fs/xfs/xfs_aops.c	2021-02-24 16:28:36.820893504 +0100
+@@ -634,8 +634,10 @@ xfs_add_to_ioend(
+ 		if (wpc->ioend)
+ 			list_add(&wpc->ioend->io_list, iolist);
+ 		wpc->ioend = xfs_alloc_ioend(inode, wpc->io_type, offset, bh);
++		wbc_init_bio(wbc, wpc->ioend->io_bio);
+ 	}
  
- /* Some toolchains use a `_' prefix for all user symbols. */
-
---- linux-3.0/scripts/kconfig/lxdialog/check-lxdialog.sh~	2011-07-22 04:17:23.000000000 +0200
-+++ linux-3.0/scripts/kconfig/lxdialog/check-lxdialog.sh	2011-08-25 21:26:04.799150642 +0200
-@@ -9,6 +9,12 @@
++	wbc_account_io(wbc, bh->b_page, bh->b_size);
+ 	/*
+ 	 * If the buffer doesn't fit into the bio we need to allocate a new
+ 	 * one.  This shouldn't happen more than once for a given buffer.
+diff -urNp -x '*.orig' linux-4.9/fs/xfs/xfs_super.c linux-4.9/fs/xfs/xfs_super.c
+--- linux-4.9/fs/xfs/xfs_super.c	2021-02-24 16:28:24.027150807 +0100
++++ linux-4.9/fs/xfs/xfs_super.c	2021-02-24 16:28:36.824226943 +0100
+@@ -1609,6 +1609,7 @@ xfs_fs_fill_super(
+ 	sb->s_max_links = XFS_MAXLINK;
+ 	sb->s_time_gran = 1;
+ 	set_posix_acl_flag(sb);
++	sb->s_iflags |= SB_I_CGROUPWB;
+ 
+ 	/* version 5 superblocks support inode version counters. */
+ 	if (XFS_SB_VERSION_NUM(&mp->m_sb) == XFS_SB_VERSION_5)
+diff -urNp -x '*.orig' linux-4.9/scripts/kconfig/lxdialog/check-lxdialog.sh linux-4.9/scripts/kconfig/lxdialog/check-lxdialog.sh
+--- linux-4.9/scripts/kconfig/lxdialog/check-lxdialog.sh	2016-12-11 20:17:54.000000000 +0100
++++ linux-4.9/scripts/kconfig/lxdialog/check-lxdialog.sh	2021-02-24 16:28:36.820893504 +0100
+@@ -11,6 +11,12 @@ ldflags()
  			$cc -print-file-name=lib${lib}.${ext} | grep -q /
  			if [ $? -eq 0 ]; then
  				echo "-l${lib}"
@@ -26,46 +39,16 @@
  				exit
  			fi
  		done
-
-From: Shaohua Li <shli@fb.com>
-
-Basically this is a copy of commit 001e4a8775f6(ext4: implement cgroup
-writeback support). Tested with a fio test, verified writeback is
-throttled against cgroup io.max write bandwidth, also verified moving
-the fio test to another cgroup and the writeback is throttled against
-new cgroup setting.
-
-Cc: Tejun Heo <tj@kernel.org>
-Signed-off-by: Shaohua Li <shli@fb.com>
----
- fs/xfs/xfs_aops.c  | 2 ++
- fs/xfs/xfs_super.c | 1 +
- 2 files changed, 3 insertions(+)
-
-diff --git a/fs/xfs/xfs_aops.c b/fs/xfs/xfs_aops.c
-index f18e593..6535054 100644
---- a/fs/xfs/xfs_aops.c
-+++ b/fs/xfs/xfs_aops.c
-@@ -630,8 +630,10 @@ xfs_add_to_ioend(
- 		if (wpc->ioend)
- 			list_add(&wpc->ioend->io_list, iolist);
- 		wpc->ioend = xfs_alloc_ioend(inode, wpc->io_type, offset, bh);
-+		wbc_init_bio(wbc, wpc->ioend->io_bio);
- 	}
+diff -urNp -x '*.orig' linux-4.9/scripts/mod/modpost.c linux-4.9/scripts/mod/modpost.c
+--- linux-4.9/scripts/mod/modpost.c	2021-02-24 16:28:24.380495447 +0100
++++ linux-4.9/scripts/mod/modpost.c	2021-02-24 16:28:36.820893504 +0100
+@@ -19,7 +19,8 @@
+ #include <stdbool.h>
+ #include <errno.h>
+ #include "modpost.h"
+-#include "../../include/generated/autoconf.h"
++// PLD architectures don't use CONFIG_SYMBOL_PREFIX
++//#include "../../include/generated/autoconf.h"
+ #include "../../include/linux/license.h"
+ #include "../../include/linux/export.h"
  
-+	wbc_account_io(wbc, bh->b_page, bh->b_size);
- 	/*
- 	 * If the buffer doesn't fit into the bio we need to allocate a new
- 	 * one.  This shouldn't happen more than once for a given buffer.
-diff --git a/fs/xfs/xfs_super.c b/fs/xfs/xfs_super.c
-index 584cf2d..aea3bc2 100644
---- a/fs/xfs/xfs_super.c
-+++ b/fs/xfs/xfs_super.c
-@@ -1634,6 +1634,7 @@ xfs_fs_fill_super(
- 	sb->s_max_links = XFS_MAXLINK;
- 	sb->s_time_gran = 1;
- 	set_posix_acl_flag(sb);
-+	sb->s_iflags |= SB_I_CGROUPWB;
- 
- 	/* version 5 superblocks support inode version counters. */
- 	if (XFS_SB_VERSION_NUM(&mp->m_sb) == XFS_SB_VERSION_5)
