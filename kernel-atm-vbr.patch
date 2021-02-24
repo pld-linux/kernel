@@ -1,11 +1,7 @@
-Index: linux/include/linux/atm.h
-===================================================================
-RCS file: /afs/cmf/project/cvsroot/linux/include/linux/atm.h,v
-retrieving revision 1.2
-diff -u -r1.2 atm.h
---- linux/include/uapi/linux/atm.h	12 Feb 2003 20:56:33 -0000	1.2
-+++ linux/include/uapi/linux/atm.h	9 Apr 2003 12:08:38 -0000
-@@ -72,7 +72,7 @@
+diff -urNp -x '*.orig' linux-4.14/include/uapi/linux/atm.h linux-4.14/include/uapi/linux/atm.h
+--- linux-4.14/include/uapi/linux/atm.h	2017-11-12 19:46:13.000000000 +0100
++++ linux-4.14/include/uapi/linux/atm.h	2021-02-24 21:41:31.414774619 +0100
+@@ -71,7 +71,7 @@
  			    /* connection identifier range; socket must be
  			       bound or connected */
  #define SO_ATMQOS	__SO_ENCODE(SOL_ATM,2,struct atm_qos)
@@ -27,7 +23,7 @@ diff -u -r1.2 atm.h
  
  #define ATM_MAX_PCR	-1		/* maximum available PCR */
  
-@@ -140,6 +142,11 @@
+@@ -140,6 +142,11 @@ struct atm_trafprm {
  	int		min_pcr;	/* minimum PCR in cells per second */
  	int		max_cdv;	/* maximum CDV in microseconds */
  	int		max_sdu;	/* maximum SDU in bytes */
@@ -39,8 +35,8 @@ diff -u -r1.2 atm.h
          /* extra params for ABR */
          unsigned int 	icr;         	/* Initial Cell Rate (24-bit) */
          unsigned int	tbe;		/* Transient Buffer Exposure (24-bit) */ 
-@@ -243,4 +251,37 @@
- };
+@@ -239,4 +246,37 @@ struct atmif_sioc {
+ 
  
  typedef unsigned short atm_backend_t;
 +struct atm_trafprm_compat {
@@ -77,14 +73,10 @@ diff -u -r1.2 atm.h
 +#define SO_ATMQOS_COMPAT __SO_ENCODE(SOL_ATM,2,struct atm_qos_compat)
 +			    /* Quality of Service setting (no vbr support) */
  #endif /* _UAPI_LINUX_ATM_H */
-Index: linux/net/atm/common.c
-===================================================================
-RCS file: /afs/cmf/project/cvsroot/linux/net/atm/common.c,v
-retrieving revision 1.13
-diff -u -r1.13 common.c
---- linux/net/atm/common.c	17 Mar 2003 16:13:12 -0000	1.13
-+++ linux/net/atm/common.c	9 Apr 2003 12:10:28 -0000
-@@ -1085,6 +1085,43 @@
+diff -urNp -x '*.orig' linux-4.14/net/atm/common.c linux-4.14/net/atm/common.c
+--- linux-4.14/net/atm/common.c	2021-02-24 21:41:23.698170252 +0100
++++ linux-4.14/net/atm/common.c	2021-02-24 21:41:31.414774619 +0100
+@@ -755,6 +755,43 @@ int vcc_setsockopt(struct socket *sock,
  
  	vcc = ATM_SD(sock);
  	switch (optname) {
@@ -128,7 +120,7 @@ diff -u -r1.13 common.c
  	case SO_ATMQOS:
  	{
  		struct atm_qos qos;
-@@ -1132,6 +1169,31 @@
+@@ -803,6 +840,31 @@ int vcc_getsockopt(struct socket *sock,
  
  	vcc = ATM_SD(sock);
  	switch (optname) {
@@ -158,5 +150,5 @@ diff -u -r1.13 common.c
 +				    -EFAULT : 0;
 +			}
  	case SO_ATMQOS:
- 		if (!test_bit(ATM_VF_HASQOS,&vcc->flags))
+ 		if (!test_bit(ATM_VF_HASQOS, &vcc->flags))
  			return -EINVAL;

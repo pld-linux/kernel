@@ -1,22 +1,10 @@
-diff -urN linux-2.4.25/drivers/atm/Makefile linux-2.4.25-atmdd/drivers/atm/Makefile
---- linux-2.4.25/drivers/atm/Makefile	2004-02-23 15:18:29.000000000 +0100
-+++ linux-2.4.25-atmdd/drivers/atm/Makefile	2004-02-29 22:51:26.000000000 +0100
-@@ -31,6 +31,7 @@
- endif
- 
- obj-$(CONFIG_ATM_DUMMY)		+= adummy.o
-+obj-$(CONFIG_ATM_DD)		+= atmdd.o
- obj-$(CONFIG_ATM_TCP)		+= atmtcp.o
- obj-$(CONFIG_ATM_FIRESTREAM)	+= firestream.o
- obj-$(CONFIG_ATM_LANAI)		+= lanai.o
-diff -urN linux-2.4.25/drivers/atm/Kconfig linux-2.4.25-atmdd/drivers/atm/Kconfig
---- linux-2.4.25/drivers/atm/Kcnfig	2003-08-25 13:44:41.000000000 +0200
-+++ linux-2.4.25-atmdd/drivers/atm/Kconfig	2004-02-29 22:52:59.000000000 +0100
-@@ -4,6 +4,14 @@
- 	default y
+diff -urNp -x '*.orig' linux-4.14/drivers/atm/Kconfig linux-4.14/drivers/atm/Kconfig
+--- linux-4.14/drivers/atm/Kconfig	2021-02-24 21:41:40.771374017 +0100
++++ linux-4.14/drivers/atm/Kconfig	2021-02-24 21:41:49.137987721 +0100
+@@ -15,6 +15,14 @@ menuconfig ATM_DRIVERS
  
  if ATM_DRIVERS && NETDEVICES && ATM
-+
+ 
 +config ATM_DD
 +	tristate "ATM loopback"
 +	depends on INET && ATM
@@ -24,12 +12,24 @@ diff -urN linux-2.4.25/drivers/atm/Kconfig linux-2.4.25-atmdd/drivers/atm/Kconfi
 +	  This is an example atm driver.  It does not require any actual ATM
 +	  hardware.  It supports AAL5 and AAL0.  Frames are merely looped back
 +	  to the sender on the same VC they were sent.
- 
++
  config ATM_DUMMY
  	tristate "Dummy ATM driver"
-diff -urN linux-2.4.25/drivers/atm/atmdd.c linux-2.4.25-atmdd/drivers/atm/atmdd.c
---- linux-2.4.25/drivers/atm/atmdd.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux-2.4.25-atmdd/drivers/atm/atmdd.c	2004-02-29 22:58:11.000000000 +0100
+ 	help
+diff -urNp -x '*.orig' linux-4.14/drivers/atm/Makefile linux-4.14/drivers/atm/Makefile
+--- linux-4.14/drivers/atm/Makefile	2017-11-12 19:46:13.000000000 +0100
++++ linux-4.14/drivers/atm/Makefile	2021-02-24 21:41:49.137987721 +0100
+@@ -26,6 +26,7 @@ ifeq ($(CONFIG_ATM_IDT77252_USE_SUNI),y)
+ endif
+ 
+ obj-$(CONFIG_ATM_DUMMY)		+= adummy.o
++obj-$(CONFIG_ATM_DD)		+= atmdd.o
+ obj-$(CONFIG_ATM_TCP)		+= atmtcp.o
+ obj-$(CONFIG_ATM_FIRESTREAM)	+= firestream.o
+ obj-$(CONFIG_ATM_LANAI)		+= lanai.o
+diff -urNp -x '*.orig' linux-4.14/drivers/atm/atmdd.c linux-4.14/drivers/atm/atmdd.c
+--- linux-4.14/drivers/atm/atmdd.c	1970-01-01 01:00:00.000000000 +0100
++++ linux-4.14/drivers/atm/atmdd.c	2021-02-24 21:41:49.137987721 +0100
 @@ -0,0 +1,921 @@
 +/*
 +#######################################################################

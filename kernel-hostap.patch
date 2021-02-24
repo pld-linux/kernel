@@ -1,7 +1,7 @@
-diff -ur linux-2.6.18-gentoo/drivers/net/wireless/intersil/hostap/hostap_80211_tx.c linux-2.6.18-gentoo-rawtx/drivers/net/wireless/intersil/hostap/hostap_80211_tx.c
---- linux-2.6.18-gentoo/drivers/net/wireless/intersil/hostap/hostap_80211_tx.c	2006-09-21 01:26:27.000000000 -0400
-+++ linux-2.6.18-gentoo-rawtx/drivers/net/wireless/intersil/hostap/hostap_80211_tx.c	2006-09-21 01:30:18.000000000 -0400
-@@ -69,6 +69,9 @@
+diff -urNp -x '*.orig' linux-4.14/drivers/net/wireless/intersil/hostap/hostap_80211_tx.c linux-4.14/drivers/net/wireless/intersil/hostap/hostap_80211_tx.c
+--- linux-4.14/drivers/net/wireless/intersil/hostap/hostap_80211_tx.c	2017-11-12 19:46:13.000000000 +0100
++++ linux-4.14/drivers/net/wireless/intersil/hostap/hostap_80211_tx.c	2021-02-24 21:42:25.184493825 +0100
+@@ -77,6 +77,9 @@ netdev_tx_t hostap_data_start_xmit(struc
  	iface = netdev_priv(dev);
  	local = iface->local;
  
@@ -11,18 +11,18 @@ diff -ur linux-2.6.18-gentoo/drivers/net/wireless/intersil/hostap/hostap_80211_t
  	if (skb->len < ETH_HLEN) {
  		printk(KERN_DEBUG "%s: hostap_data_start_xmit: short skb "
  		       "(len=%d)\n", dev->name, skb->len);
-@@ -234,6 +237,7 @@
- 		memcpy(skb_put(skb, ETH_ALEN), &hdr.addr4, ETH_ALEN);
+@@ -246,6 +249,7 @@ netdev_tx_t hostap_data_start_xmit(struc
+ 		skb_put_data(skb, &hdr.addr4, ETH_ALEN);
  	}
  
 +xmit:
  	iface->stats.tx_packets++;
  	iface->stats.tx_bytes += skb->len;
  
-diff -ur linux-2.6.18-gentoo/drivers/net/wireless/intersil/hostap/hostap_hw.c linux-2.6.18-gentoo-rawtx/drivers/net/wireless/intersil/hostap/hostap_hw.c
---- linux-2.6.18-gentoo/drivers/net/wireless/intersil/hostap/hostap_hw.c	2006-09-21 01:26:27.000000000 -0400
-+++ linux-2.6.18-gentoo-rawtx/drivers/net/wireless/intersil/hostap/hostap_hw.c	2006-09-21 01:30:18.000000000 -0400
-@@ -1005,6 +1005,35 @@
+diff -urNp -x '*.orig' linux-4.14/drivers/net/wireless/intersil/hostap/hostap_hw.c linux-4.14/drivers/net/wireless/intersil/hostap/hostap_hw.c
+--- linux-4.14/drivers/net/wireless/intersil/hostap/hostap_hw.c	2017-11-12 19:46:13.000000000 +0100
++++ linux-4.14/drivers/net/wireless/intersil/hostap/hostap_hw.c	2021-02-24 21:42:25.184493825 +0100
+@@ -1001,6 +1001,35 @@ static u16 hfa384x_allocate_fid(struct n
  	return fid;
  }
  
@@ -58,7 +58,7 @@ diff -ur linux-2.6.18-gentoo/drivers/net/wireless/intersil/hostap/hostap_hw.c li
  
  static int prism2_reset_port(struct net_device *dev)
  {
-@@ -1031,6 +1060,10 @@
+@@ -1027,6 +1056,10 @@ static int prism2_reset_port(struct net_
  			       "port\n", dev->name);
  	}
  
@@ -69,7 +69,7 @@ diff -ur linux-2.6.18-gentoo/drivers/net/wireless/intersil/hostap/hostap_hw.c li
  	/* It looks like at least some STA firmware versions reset
  	 * fragmentation threshold back to 2346 after enable command. Restore
  	 * the configured value, if it differs from this default. */
-@@ -1466,6 +1499,10 @@
+@@ -1462,6 +1495,10 @@ static int prism2_hw_enable(struct net_d
  		return 1;
  	}
  
@@ -80,7 +80,7 @@ diff -ur linux-2.6.18-gentoo/drivers/net/wireless/intersil/hostap/hostap_hw.c li
  	local->hw_ready = 1;
  	local->hw_reset_tries = 0;
  	local->hw_resetting = 0;
-@@ -3156,6 +3193,7 @@
+@@ -3135,6 +3172,7 @@ prism2_init_local_data(struct prism2_hel
  	local->func->hw_config = prism2_hw_config;
  	local->func->hw_reset = prism2_hw_reset;
  	local->func->hw_shutdown = prism2_hw_shutdown;
@@ -88,10 +88,10 @@ diff -ur linux-2.6.18-gentoo/drivers/net/wireless/intersil/hostap/hostap_hw.c li
  	local->func->reset_port = prism2_reset_port;
  	local->func->schedule_reset = prism2_schedule_reset;
  #ifdef PRISM2_DOWNLOAD_SUPPORT
-diff -ur linux-2.6.18-gentoo/drivers/net/wireless/intersil/hostap/hostap_ioctl.c linux-2.6.18-gentoo-rawtx/drivers/net/wireless/intersil/hostap/hostap_ioctl.c
---- linux-2.6.18-gentoo/drivers/net/wireless/intersil/hostap/hostap_ioctl.c	2006-09-21 01:26:27.000000000 -0400
-+++ linux-2.6.18-gentoo-rawtx/drivers/net/wireless/intersil/hostap/hostap_ioctl.c	2006-09-21 01:30:18.000000000 -0400
-@@ -1104,33 +1104,7 @@
+diff -urNp -x '*.orig' linux-4.14/drivers/net/wireless/intersil/hostap/hostap_ioctl.c linux-4.14/drivers/net/wireless/intersil/hostap/hostap_ioctl.c
+--- linux-4.14/drivers/net/wireless/intersil/hostap/hostap_ioctl.c	2017-11-12 19:46:13.000000000 +0100
++++ linux-4.14/drivers/net/wireless/intersil/hostap/hostap_ioctl.c	2021-02-24 21:42:25.184493825 +0100
+@@ -1082,33 +1082,7 @@ static int hostap_monitor_mode_enable(lo
  
  	printk(KERN_DEBUG "Enabling monitor mode\n");
  	hostap_monitor_set_type(local);
@@ -126,7 +126,7 @@ diff -ur linux-2.6.18-gentoo/drivers/net/wireless/intersil/hostap/hostap_ioctl.c
  }
  
  
-@@ -1199,7 +1173,7 @@
+@@ -1177,7 +1151,7 @@ static int prism2_ioctl_siwmode(struct n
  	local->iw_mode = *mode;
  
  	if (local->iw_mode == IW_MODE_MONITOR)
@@ -135,10 +135,10 @@ diff -ur linux-2.6.18-gentoo/drivers/net/wireless/intersil/hostap/hostap_ioctl.c
  	else if (local->iw_mode == IW_MODE_MASTER && !local->host_encrypt &&
  		 !local->fw_encrypt_ok) {
  		printk(KERN_DEBUG "%s: defaulting to host-based encryption as "
-diff -ur linux-2.6.18-gentoo/drivers/net/wireless/intersil/hostap/hostap_main.c linux-2.6.18-gentoo-rawtx/drivers/net/wireless/intersil/hostap/hostap_main.c
---- linux-2.6.18-gentoo/drivers/net/wireless/intersil/hostap/hostap_main.c	2006-09-21 01:26:27.000000000 -0400
-+++ linux-2.6.18-gentoo-rawtx/drivers/net/wireless/intersil/hostap/hostap_main.c	2006-09-21 01:30:18.000000000 -0400
-@@ -331,7 +331,7 @@
+diff -urNp -x '*.orig' linux-4.14/drivers/net/wireless/intersil/hostap/hostap_main.c linux-4.14/drivers/net/wireless/intersil/hostap/hostap_main.c
+--- linux-4.14/drivers/net/wireless/intersil/hostap/hostap_main.c	2017-11-12 19:46:13.000000000 +0100
++++ linux-4.14/drivers/net/wireless/intersil/hostap/hostap_main.c	2021-02-24 21:42:25.184493825 +0100
+@@ -322,7 +322,7 @@ u16 hostap_get_porttype(local_info_t *lo
  	if (local->iw_mode == IW_MODE_REPEAT)
  		return HFA384X_PORTTYPE_WDS;
  	if (local->iw_mode == IW_MODE_MONITOR)
@@ -147,10 +147,10 @@ diff -ur linux-2.6.18-gentoo/drivers/net/wireless/intersil/hostap/hostap_main.c 
  	return HFA384X_PORTTYPE_HOSTAP;
  }
  
-diff -ur linux-2.6.18-gentoo/drivers/net/wireless/intersil/hostap/hostap_pci.c linux-2.6.18-gentoo-rawtx/drivers/net/wireless/intersil/hostap/hostap_pci.c
---- linux-2.6.18-gentoo/drivers/net/wireless/intersil/hostap/hostap_pci.c	2006-09-21 01:26:27.000000000 -0400
-+++ linux-2.6.18-gentoo-rawtx/drivers/net/wireless/intersil/hostap/hostap_pci.c	2006-09-21 01:30:18.000000000 -0400
-@@ -48,6 +48,8 @@
+diff -urNp -x '*.orig' linux-4.14/drivers/net/wireless/intersil/hostap/hostap_pci.c linux-4.14/drivers/net/wireless/intersil/hostap/hostap_pci.c
+--- linux-4.14/drivers/net/wireless/intersil/hostap/hostap_pci.c	2017-11-12 19:46:13.000000000 +0100
++++ linux-4.14/drivers/net/wireless/intersil/hostap/hostap_pci.c	2021-02-24 21:42:25.184493825 +0100
+@@ -46,6 +46,8 @@ static const struct pci_device_id prism2
  	{ 0x1260, 0x3873, PCI_ANY_ID, PCI_ANY_ID },
  	/* Samsung MagicLAN SWL-2210P */
  	{ 0x167d, 0xa000, PCI_ANY_ID, PCI_ANY_ID },
@@ -159,10 +159,10 @@ diff -ur linux-2.6.18-gentoo/drivers/net/wireless/intersil/hostap/hostap_pci.c l
  	{ 0 }
  };
  
-diff -ur linux-2.6.18-gentoo/drivers/net/wireless/intersil/hostap/hostap_plx.c linux-2.6.18-gentoo-rawtx/drivers/net/wireless/intersil/hostap/hostap_plx.c
---- linux-2.6.18-gentoo/drivers/net/wireless/intersil/hostap/hostap_plx.c	2006-09-21 01:26:27.000000000 -0400
-+++ linux-2.6.18-gentoo-rawtx/drivers/net/wireless/intersil/hostap/hostap_plx.c	2006-09-21 01:30:18.000000000 -0400
-@@ -101,6 +101,7 @@
+diff -urNp -x '*.orig' linux-4.14/drivers/net/wireless/intersil/hostap/hostap_plx.c linux-4.14/drivers/net/wireless/intersil/hostap/hostap_plx.c
+--- linux-4.14/drivers/net/wireless/intersil/hostap/hostap_plx.c	2017-11-12 19:46:13.000000000 +0100
++++ linux-4.14/drivers/net/wireless/intersil/hostap/hostap_plx.c	2021-02-24 21:42:25.184493825 +0100
+@@ -99,6 +99,7 @@ static struct prism2_plx_manfid {
  	{ 0xc250, 0x0002 } /* EMTAC A2424i */,
  	{ 0xd601, 0x0002 } /* Z-Com XI300 */,
  	{ 0xd601, 0x0005 } /* Zcomax XI-325H 200mW */,
@@ -170,10 +170,10 @@ diff -ur linux-2.6.18-gentoo/drivers/net/wireless/intersil/hostap/hostap_plx.c l
  	{ 0, 0}
  };
  
-diff -ur linux-2.6.18-gentoo/drivers/net/wireless/intersil/hostap/hostap_wlan.h linux-2.6.18-gentoo-rawtx/drivers/net/wireless/intersil/hostap/hostap_wlan.h
---- linux-2.6.18-gentoo/drivers/net/wireless/intersil/hostap/hostap_wlan.h	2006-09-21 01:26:27.000000000 -0400
-+++ linux-2.6.18-gentoo-rawtx/drivers/net/wireless/intersil/hostap/hostap_wlan.h	2006-09-21 01:30:18.000000000 -0400
-@@ -575,6 +575,7 @@
+diff -urNp -x '*.orig' linux-4.14/drivers/net/wireless/intersil/hostap/hostap_wlan.h linux-4.14/drivers/net/wireless/intersil/hostap/hostap_wlan.h
+--- linux-4.14/drivers/net/wireless/intersil/hostap/hostap_wlan.h	2017-11-12 19:46:13.000000000 +0100
++++ linux-4.14/drivers/net/wireless/intersil/hostap/hostap_wlan.h	2021-02-24 21:42:25.184493825 +0100
+@@ -593,6 +593,7 @@ struct prism2_helper_functions {
  	int (*hw_config)(struct net_device *dev, int initial);
  	void (*hw_reset)(struct net_device *dev);
  	void (*hw_shutdown)(struct net_device *dev, int no_disable);
