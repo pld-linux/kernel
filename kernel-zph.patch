@@ -1,7 +1,7 @@
-diff -Nur linux-2.6.26.3/include/net/inet_sock.h linux-2.6.26.3-zph/include/net/inet_sock.h
---- linux-2.6.26.3/include/net/inet_sock.h	2008-08-20 21:11:37.000000000 +0300
-+++ linux-2.6.26.3-zph/include/net/inet_sock.h	2008-08-21 16:51:59.000000000 +0300
-@@ -157,6 +157,7 @@
+diff -urNp -x '*.orig' linux-4.4/include/net/inet_sock.h linux-4.4/include/net/inet_sock.h
+--- linux-4.4/include/net/inet_sock.h	2021-02-24 16:52:56.472941287 +0100
++++ linux-4.4/include/net/inet_sock.h	2021-02-24 16:53:08.266645321 +0100
+@@ -201,6 +201,7 @@ struct inet_sock {
  	__be32			mc_addr;
  	struct ip_mc_socklist __rcu	*mc_list;
  	struct inet_cork_full	cork;
@@ -9,12 +9,12 @@ diff -Nur linux-2.6.26.3/include/net/inet_sock.h linux-2.6.26.3-zph/include/net/
  };
  
  #define IPCORK_OPT	1	/* ip-options has been held in ipcork.opt */
-diff -Nur linux-2.6.26.3/net/ipv4/ip_sockglue.c linux-2.6.26.3-zph/net/ipv4/ip_sockglue.c
---- linux-2.6.26.3/net/ipv4/ip_sockglue.c	2008-08-20 21:11:37.000000000 +0300
-+++ linux-2.6.26.3-zph/net/ipv4/ip_sockglue.c	2008-08-21 16:54:21.000000000 +0300
-@@ -1126,6 +1126,10 @@
- 			int hlim = inet->mc_ttl;
- 			put_cmsg(&msg, SOL_IP, IP_TTL, sizeof(hlim), &hlim);
+diff -urNp -x '*.orig' linux-4.4/net/ipv4/ip_sockglue.c linux-4.4/net/ipv4/ip_sockglue.c
+--- linux-4.4/net/ipv4/ip_sockglue.c	2021-02-24 16:52:56.629612878 +0100
++++ linux-4.4/net/ipv4/ip_sockglue.c	2021-02-24 16:53:08.266645321 +0100
+@@ -1474,6 +1474,10 @@ static int do_ip_getsockopt(struct sock
+ 			int tos = inet->rcv_tos;
+ 			put_cmsg(&msg, SOL_IP, IP_TOS, sizeof(tos), &tos);
  		}
 +		if (inet->cmsg_flags&IP_CMSG_TOS) {
 +			int hlim = inet->zph_tos & 0xFF;
@@ -23,21 +23,21 @@ diff -Nur linux-2.6.26.3/net/ipv4/ip_sockglue.c linux-2.6.26.3-zph/net/ipv4/ip_s
  		len -= msg.msg_controllen;
  		return put_user(len, optlen);
  	}
-diff -Nur linux-2.6.26.3/net/ipv4/tcp_input.c linux-2.6.26.3-zph/net/ipv4/tcp_input.c
---- linux-2.6.26.3/net/ipv4/tcp_input.c	2008-08-20 21:11:37.000000000 +0300
-+++ linux-2.6.26.3-zph/net/ipv4/tcp_input.c	2008-08-21 17:06:55.000000000 +0300
-@@ -3900,6 +3900,8 @@
+diff -urNp -x '*.orig' linux-4.4/net/ipv4/tcp_input.c linux-4.4/net/ipv4/tcp_input.c
+--- linux-4.4/net/ipv4/tcp_input.c	2021-02-24 16:52:56.639613193 +0100
++++ linux-4.4/net/ipv4/tcp_input.c	2021-02-24 16:53:08.266645321 +0100
+@@ -4631,6 +4631,8 @@ static void tcp_data_queue(struct sock *
  	struct tcp_sock *tp = tcp_sk(sk);
  	bool fragstolen = false;
  	int eaten = -1;
 +	struct inet_sock *inet = inet_sk(sk);
 +	struct iphdr *iph = ip_hdr(skb);
  
- 	if (TCP_SKB_CB(skb)->seq == TCP_SKB_CB(skb)->end_seq)
+ 	if (TCP_SKB_CB(skb)->seq == TCP_SKB_CB(skb)->end_seq) {
  		__kfree_skb(skb);
-@@ -3914,6 +3916,12 @@
- 					     4 - tp->rx_opt.tstamp_ok);
- 	}
+@@ -4643,6 +4645,12 @@ static void tcp_data_queue(struct sock *
+ 
+ 	tp->rx_opt.dsack = 0;
  
 +	// ZPH: Copy the TOS value of the first data ACK segment
 +	// received from the remote peer.
@@ -48,17 +48,18 @@ diff -Nur linux-2.6.26.3/net/ipv4/tcp_input.c linux-2.6.26.3-zph/net/ipv4/tcp_in
  	/*  Queue data for delivery to the user.
  	 *  Packets in sequence go to the receive queue.
  	 *  Out of sequence packets to the out_of_order_queue.
-@@ -4915,5 +4923,7 @@
+@@ -5679,6 +5687,8 @@ static int tcp_rcv_synsent_state_process
+ {
  	struct inet_connection_sock *icsk = inet_csk(sk);
  	struct tcp_sock *tp = tcp_sk(sk);
 +	struct inet_sock *inet = inet_sk(sk);
 +	struct iphdr *iph = ip_hdr(skb);
  	struct tcp_fastopen_cookie foc = { .len = -1 };
  	int saved_clamp = tp->rx_opt.mss_clamp;
+ 	bool fastopen_fail;
+@@ -5739,6 +5749,15 @@ static int tcp_rcv_synsent_state_process
  
-@@ -4973,6 +4983,15 @@
- 
- 		TCP_ECN_rcv_synack(tp, th);
+ 		tcp_ecn_rcv_synack(tp, th);
  
 +		/* ZPH:
 +		 * Copy TOS field from the SYNACK packet to zph_tos field of the af_inet

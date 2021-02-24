@@ -1,19 +1,20 @@
---- linux-2.6.33/scripts/mod/modpost.c~	2010-02-24 19:52:17.000000000 +0100
-+++ linux-2.6.33/scripts/mod/modpost.c	2010-03-07 14:26:47.242168558 +0100
-@@ -15,7 +15,8 @@
- #include <stdio.h>
- #include <ctype.h>
- #include "modpost.h"
--#include "../../include/generated/autoconf.h"
-+// PLD architectures don't use CONFIG_SYMBOL_PREFIX
-+//#include "../../include/generated/autoconf.h"
- #include "../../include/linux/license.h"
+diff -urNp -x '*.orig' linux-4.4/Makefile linux-4.4/Makefile
+--- linux-4.4/Makefile	2021-02-24 17:41:14.010620493 +0100
++++ linux-4.4/Makefile	2021-02-24 17:41:27.804397388 +0100
+@@ -837,6 +837,9 @@ KBUILD_CFLAGS   += $(call cc-option,-Wer
+ # Prohibit date/time macros, which would make the build non-deterministic
+ KBUILD_CFLAGS   += $(call cc-option,-Werror=date-time)
  
- /* Some toolchains use a `_' prefix for all user symbols. */
-
---- linux-3.0/scripts/kconfig/lxdialog/check-lxdialog.sh~	2011-07-22 04:17:23.000000000 +0200
-+++ linux-3.0/scripts/kconfig/lxdialog/check-lxdialog.sh	2011-08-25 21:26:04.799150642 +0200
-@@ -9,6 +9,12 @@
++# enforce correct pointer usage
++KBUILD_CFLAGS   += $(call cc-option,-Werror=incompatible-pointer-types)
++
+ # use the deterministic mode of AR if available
+ KBUILD_ARFLAGS := $(call ar-option,D)
+ 
+diff -urNp -x '*.orig' linux-4.4/scripts/kconfig/lxdialog/check-lxdialog.sh linux-4.4/scripts/kconfig/lxdialog/check-lxdialog.sh
+--- linux-4.4/scripts/kconfig/lxdialog/check-lxdialog.sh	2016-01-11 00:01:32.000000000 +0100
++++ linux-4.4/scripts/kconfig/lxdialog/check-lxdialog.sh	2021-02-24 17:41:27.804397388 +0100
+@@ -11,6 +11,12 @@ ldflags()
  			$cc -print-file-name=lib${lib}.${ext} | grep -q /
  			if [ $? -eq 0 ]; then
  				echo "-l${lib}"
@@ -26,15 +27,16 @@
  				exit
  			fi
  		done
---- a/Makefile	2016-11-10 20:41:43.646224629 +0100
-+++ b/Makefile	2016-11-10 20:40:35.640323501 +0100
-@@ -784,6 +774,9 @@
- # Prohibit date/time macros, which would make the build non-deterministic
- KBUILD_CFLAGS   += $(call cc-option,-Werror=date-time)
- 
-+# enforce correct pointer usage
-+KBUILD_CFLAGS   += $(call cc-option,-Werror=incompatible-pointer-types)
-+
- # use the deterministic mode of AR if available
- KBUILD_ARFLAGS := $(call ar-option,D)
+diff -urNp -x '*.orig' linux-4.4/scripts/mod/modpost.c linux-4.4/scripts/mod/modpost.c
+--- linux-4.4/scripts/mod/modpost.c	2021-02-24 17:41:15.860679986 +0100
++++ linux-4.4/scripts/mod/modpost.c	2021-02-24 17:41:27.804397388 +0100
+@@ -19,7 +19,8 @@
+ #include <stdbool.h>
+ #include <errno.h>
+ #include "modpost.h"
+-#include "../../include/generated/autoconf.h"
++// PLD architectures don't use CONFIG_SYMBOL_PREFIX
++//#include "../../include/generated/autoconf.h"
+ #include "../../include/linux/license.h"
+ #include "../../include/linux/export.h"
  
