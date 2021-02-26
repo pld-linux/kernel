@@ -584,7 +584,7 @@ Summary(pl.UTF-8):	Kod źródłowy jądra Linuksa
 Group:		Development/Building
 Requires:	%{name}-module-build = %{epoch}:%{version}-%{release}
 AutoReqProv:	no
-%{?noarchpackage}
+BuildArch:	noarch
 
 %description source
 This is the source code for the Linux kernel. You can build a custom
@@ -615,7 +615,7 @@ Summary(de.UTF-8):	Kernel Dokumentation
 Summary(pl.UTF-8):	Dokumentacja do jądra Linuksa
 Group:		Documentation
 AutoReqProv:	no
-%{?noarchpackage}
+BuildArch:	noarch
 
 %description doc
 This is the documentation for the Linux kernel, as found in
