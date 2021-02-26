@@ -71,7 +71,7 @@
 %define		have_pcmcia	0
 %endif
 
-%define		rel		1
+%define		rel		2
 %define		basever		4.9
 %define		postver		.258
 
@@ -591,9 +591,7 @@ Summary(pl.UTF-8):	Kod źródłowy jądra Linuksa
 Group:		Development/Building
 Requires:	%{name}-module-build = %{epoch}:%{version}-%{release}
 AutoReqProv:	no
-%if "%{_rpmversion}" >= "5"
 BuildArch:	noarch
-%endif
 
 %description source
 This is the source code for the Linux kernel. You can build a custom
@@ -624,9 +622,7 @@ Summary(de.UTF-8):	Kernel Dokumentation
 Summary(pl.UTF-8):	Dokumentacja do jądra Linuksa
 Group:		Documentation
 AutoReqProv:	no
-%if "%{_rpmversion}" >= "5"
 BuildArch:	noarch
-%endif
 
 %description doc
 This is the documentation for the Linux kernel, as found in
