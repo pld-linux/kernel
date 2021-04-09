@@ -1300,6 +1300,9 @@ fi
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/media/pci/saa7134/saa7134-alsa.ko*
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/usb/gadget/legacy/g_midi.ko*
 %endif
+%ifarch %{arm}
+%exclude /lib/modules/%{kernel_release}/kernel/drivers/staging/vc04_services/bcm2835-audio
+%endif
 %endif
 %dir /lib/modules/%{kernel_release}/misc
 %if %{have_pcmcia}
@@ -1425,6 +1428,9 @@ fi
 /lib/modules/%{kernel_release}/kernel/drivers/media/pci/cx88/cx88-alsa.ko*
 /lib/modules/%{kernel_release}/kernel/drivers/media/usb/em28xx/em28xx-alsa.ko*
 /lib/modules/%{kernel_release}/kernel/drivers/media/pci/saa7134/saa7134-alsa.ko*
+%endif
+%ifarch %{arm}
+/lib/modules/%{kernel_release}/kernel/drivers/staging/vc04_services/bcm2835-audio
 %endif
 %endif
 
