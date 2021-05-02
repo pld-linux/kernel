@@ -47,7 +47,7 @@ index bfc1b86e3e733..cf773a5624338 100644
 +F:	include/uapi/linux/aufs_type.h
 +
  AUXILIARY DISPLAY DRIVERS
- M:	Miguel Ojeda Sandonis <miguel.ojeda.sandonis@gmail.com>
+ M:	Miguel Ojeda <ojeda@kernel.org>
  S:	Maintained
 diff --git a/drivers/block/loop.c b/drivers/block/loop.c
 index e5ff328f09175..39d539df0349d 100644
@@ -169,8 +169,8 @@ index 866d5c2367b23..55b5356262085 100644
 +		  struct pipe_inode_info *pipe, size_t len,
 +		  unsigned int flags)
  {
+ 	unsigned int p_space;
  	int ret;
- 
 diff --git a/fs/sync.c b/fs/sync.c
 index 1373a610dc784..b7b5a0a0df6ff 100644
 --- a/fs/sync.c
@@ -764,7 +764,7 @@ index e4a25c3fa9e55..497326faa1247 100644
 +EXPORT_SYMBOL_GPL(update_time);
  
  /**
-  *	touch_atime	-	update the access time
+  *	atime_needs_update	-	update the access time
 diff --git a/fs/namespace.c b/fs/namespace.c
 index 3e16fc64df8b8..eed3453ec40a8 100644
 --- a/fs/namespace.c
@@ -39099,7 +39099,7 @@ index 39d539df0349d..4109efe2f6a3a 100644
  		loop_reread_partitions(lo, bdev);
  	return 0;
 @@ -758,6 +778,8 @@ static int loop_change_fd(struct loop_device *lo, struct block_device *bdev,
- 	mutex_unlock(&loop_ctl_mutex);
+ 	mutex_unlock(&lo->lo_mutex);
  	if (file)
  		fput(file);
 +	if (virt_file)
