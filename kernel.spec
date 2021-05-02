@@ -270,12 +270,12 @@ Suggests:	keyutils
 Requires:	linux-firmware
 Provides:	%{name}(netfilter) = 20070806
 Provides:	%{name}(vermagic) = %{kernel_release}
-Obsoletes:	kernel%{_alt_kernel}-char-lirc-ene0100
-Obsoletes:	kernel%{_alt_kernel}-char-lirc-it87
-Obsoletes:	kernel%{_alt_kernel}-char-lirc-ite8709
-Obsoletes:	kernel%{_alt_kernel}-char-lirc-mceusb
-Obsoletes:	kernel%{_alt_kernel}-char-lirc-streamzap
-Obsoletes:	kernel%{_alt_kernel}-isdn-mISDN
+Obsoletes:	kernel%{_alt_kernel}-char-lirc-ene0100 < 0.9.0
+Obsoletes:	kernel%{_alt_kernel}-char-lirc-it87 < 0.9.0
+Obsoletes:	kernel%{_alt_kernel}-char-lirc-ite8709 < 0.9.0
+Obsoletes:	kernel%{_alt_kernel}-char-lirc-mceusb < 0.9.0
+Obsoletes:	kernel%{_alt_kernel}-char-lirc-streamzap < 0.9.0
+Obsoletes:	kernel%{_alt_kernel}-isdn-mISDN < 2.0.35
 Obsoletes:	kernel-firmware
 Obsoletes:	kernel-misc-acer_acpi
 Obsoletes:	kernel-misc-fuse
