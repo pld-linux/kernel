@@ -276,23 +276,23 @@ Requires:	linux-firmware
 %endif
 Provides:	%{name}(netfilter) = 20070806
 Provides:	%{name}(vermagic) = %{kernel_release}
-Obsoletes:	kernel%{_alt_kernel}-char-lirc-ene0100
-Obsoletes:	kernel%{_alt_kernel}-char-lirc-it87
-Obsoletes:	kernel%{_alt_kernel}-char-lirc-ite8709
-Obsoletes:	kernel%{_alt_kernel}-char-lirc-mceusb
-Obsoletes:	kernel%{_alt_kernel}-char-lirc-streamzap
-Obsoletes:	kernel%{_alt_kernel}-isdn-mISDN
-Obsoletes:	kernel-firmware
-Obsoletes:	kernel-misc-acer_acpi
-Obsoletes:	kernel-misc-fuse
-Obsoletes:	kernel-misc-uvc
-Obsoletes:	kernel-modules
-Obsoletes:	kernel-net-ar81
-Obsoletes:	kernel-net-hostap
-Obsoletes:	kernel-net-ieee80211
-Obsoletes:	kernel-net-ipp2p
-Obsoletes:	kernel-net-rt61
-Obsoletes:	kernel-smp
+Obsoletes:	kernel%{_alt_kernel}-char-lirc-ene0100 < 0.9.0
+Obsoletes:	kernel%{_alt_kernel}-char-lirc-it87 < 0.9.0
+Obsoletes:	kernel%{_alt_kernel}-char-lirc-ite8709 < 0.9.0
+Obsoletes:	kernel%{_alt_kernel}-char-lirc-mceusb < 0.9.0
+Obsoletes:	kernel%{_alt_kernel}-char-lirc-streamzap < 0.9.0
+Obsoletes:	kernel%{_alt_kernel}-isdn-mISDN < 2.0.35
+Obsoletes:	kernel-firmware < 3:2.6.33
+Obsoletes:	kernel-misc-acer_acpi < 0.3-2
+Obsoletes:	kernel-misc-fuse < 2.8.5-2
+Obsoletes:	kernel-misc-uvc < 0.215.1-10
+Obsoletes:	kernel-modules < 2.2.2-2
+Obsoletes:	kernel-net-ar81 < 1.0.1.0-3
+Obsoletes:	kernel-net-hostap < 0.4.7-2
+Obsoletes:	kernel-net-ieee80211 < 1.2.18-7
+Obsoletes:	kernel-net-ipp2p < 0.8.2.-17
+Obsoletes:	kernel-net-rt61 < 1.1.0-2.2007122707.13
+Obsoletes:	kernel-smp < 3:2.6.21
 Conflicts:	e2fsprogs < 1.29
 Conflicts:	isdn4k-utils < 3.1pre1
 Conflicts:	jfsutils < 1.1.3
@@ -432,7 +432,7 @@ Summary:	vmlinux - uncompressed kernel image
 Summary(de.UTF-8):	vmlinux - dekompressiertes Kernel Bild
 Summary(pl.UTF-8):	vmlinux - rozpakowany obraz jądra
 Group:		Base/Kernel
-Obsoletes:	kernel-smp-vmlinux
+Obsoletes:	kernel-smp-vmlinux < 3:2.6.21
 
 %description vmlinux
 vmlinux - uncompressed kernel image.
@@ -450,7 +450,7 @@ Summary(pl.UTF-8):	Sterowniki DRM
 Group:		Base/Kernel
 Requires(postun):	%{name} = %{epoch}:%{version}-%{release}
 Requires:	%{name} = %{epoch}:%{version}-%{release}
-Obsoletes:	kernel-smp-drm
+Obsoletes:	kernel-smp-drm < 3:2.6.21
 AutoReqProv:	no
 
 %description drm
@@ -487,7 +487,7 @@ Summary(pl.UTF-8):	Moduły PCMCIA
 Group:		Base/Kernel
 Requires(postun):	%{name} = %{epoch}:%{version}-%{release}
 Requires:	%{name} = %{epoch}:%{version}-%{release}
-Obsoletes:	kernel-smp-pcmcia
+Obsoletes:	kernel-smp-pcmcia < 3:2.6.21
 Conflicts:	pcmcia-cs < 3.1.21
 Conflicts:	pcmciautils < 004
 AutoReqProv:	no
@@ -508,7 +508,7 @@ Summary(pl.UTF-8):	Sterowniki dźwięku ALSA
 Group:		Base/Kernel
 Requires(postun):	%{name} = %{epoch}:%{version}-%{release}
 Requires:	%{name} = %{epoch}:%{version}-%{release}
-Obsoletes:	kernel-smp-sound-alsa
+Obsoletes:	kernel-smp-sound-alsa < 3:2.6.21
 AutoReqProv:	no
 
 %description sound-alsa
