@@ -219,7 +219,6 @@ Patch7000:	kernel-inittmpfs.patch
 # ARM only
 Patch8000:	rpi-wm8804.patch
 Patch8001:	kernel-pinebook-pro.patch
-Patch8002:	kernel-rk3399-afbc-ytr.patch
 
 # Do not remove this line, please. It is easier for me to uncomment two lines, then patch
 # kernel.spec every time.
@@ -688,7 +687,6 @@ cd linux-%{basever}
 %ifarch %{arm} aarch64
 %patch8000 -p1
 %patch8001 -p1
-%patch8002 -p1
 %endif
 
 %if %{with rt}

@@ -239,7 +239,7 @@ index 91da90cfb11d..7f2898a0e1e3 100644
  EXPORT_SYMBOL_GPL(led_trigger_event);
 @@ -402,10 +472,13 @@ static void led_trigger_blink_setup(struct led_trigger *trig,
  
- 	read_lock(&trig->leddev_list_lock);
+ 	read_lock_irqsave(&trig->leddev_list_lock, flags);
  	list_for_each_entry(led_cdev, &trig->led_cdevs, trig_list) {
 -		if (oneshot)
 +		bool trigger_inverted =
@@ -253,7 +253,7 @@ index 91da90cfb11d..7f2898a0e1e3 100644
 +		} else
  			led_blink_set(led_cdev, delay_on, delay_off);
  	}
- 	read_unlock(&trig->leddev_list_lock);
+ 	read_unlock_irqrestore(&trig->leddev_list_lock, flags);
 diff --git a/include/linux/leds.h b/include/linux/leds.h
 index 6a8d6409c993..9cbf42cf08e8 100644
 --- a/include/linux/leds.h
@@ -491,8 +491,8 @@ index a6fae1f86505..2908771f4d4e 100644
  #include <linux/kernel.h>
  #include <linux/kthread.h>
 @@ -369,6 +370,11 @@ struct tcpm_port {
- 	/* Sink caps have been queried */
- 	bool sink_cap_done;
+ 	enum tcpm_ams next_ams;
+ 	bool in_ams;
  
 +#ifdef CONFIG_EXTCON
 +	struct extcon_dev *extcon;
@@ -535,9 +535,9 @@ index a6fae1f86505..2908771f4d4e 100644
 +#endif
 +}
 +
- static int tcpm_pd_transmit(struct tcpm_port *port,
- 			    enum tcpm_transmit_type type,
- 			    const struct pd_message *msg)
+ static void tcpm_set_cc(struct tcpm_port *port, enum typec_cc_status cc)
+ {
+ 	tcpm_log(port, "cc:=%d", cc);
 @@ -881,6 +916,8 @@ static int tcpm_set_roles(struct tcpm_port *port, bool attached,
  	typec_set_data_role(port->typec_port, data);
  	typec_set_pwr_role(port->typec_port, role);
@@ -571,13 +571,13 @@ index a6fae1f86505..2908771f4d4e 100644
  			if (modep->svid_index < modep->nsvids) {
  				u16 svid = modep->svids[modep->svid_index];
 +				tcpm_log(port, "More modes available, sending discover");
- 				response[0] = VDO(svid, 1, CMD_DISCOVER_MODES);
+ 				response[0] = VDO(svid, 1, svdm_version, CMD_DISCOVER_MODES);
  				rlen = 1;
  			} else {
 +				tcpm_log(port, "Got all patner modes, registering");
  				tcpm_register_partner_altmodes(port);
+ 				port->vdm_sm_running = false;
  			}
- 			break;
 @@ -2836,6 +2878,7 @@ static int tcpm_src_attach(struct tcpm_port *port)
  static void tcpm_typec_disconnect(struct tcpm_port *port)
  {
@@ -986,8 +986,8 @@ index 667eeeb019de..decb212e2dca 100644
  
 +&cluster1_opp {
 +	opp08 {
-+		opp-hz = /bits/ 64 <2016000000>;
-+		opp-microvolt = <1250000>;
++		opp-hz = /bits/ 64 <2000000000>;
++		opp-microvolt = <1300000>;
 +	};
 +};
 +
