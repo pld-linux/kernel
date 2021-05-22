@@ -67,7 +67,7 @@
 %define		have_pcmcia	0
 %endif
 
-%define		rel		1
+%define		rel		2
 %define		basever		5.4
 %define		postver		.121
 
@@ -725,7 +725,11 @@ find -name '*.pl' -print0 | \
 	scripts/documentation-file-ref-check \
 	scripts/get_dvb_firmware \
 	scripts/kernel-doc \
+	scripts/sphinx-pre-install \
 	scripts/stackdelta
+
+%{__sed} -E -i -e '1s,#!\s*/usr/bin/env\s+bash(\s|$),#!/bin/bash\\1,' \
+	scripts/config
 
 %build
 install -d %{objdir}
