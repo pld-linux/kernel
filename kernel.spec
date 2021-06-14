@@ -753,6 +753,9 @@ find -name '*.pl' -print0 | \
 	scripts/kernel-doc \
 	scripts/stackdelta
 
+%{__sed} -i -e '1s,/usr/bin/env bash,/bin/bash,' \
+	scripts/config
+
 %build
 install -d %{objdir}
 cat > %{targetobj}.mk <<'EOF'
