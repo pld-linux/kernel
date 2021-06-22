@@ -955,6 +955,7 @@ cd -
 %{__awk} %{?debug:-v dieOnError=1} -v infile=%{objdir}/%{defconfig} -f %{SOURCE8} %{objdir}/.config
 
 # build kernel
+export DTC_FLAGS=-@
 %{__make} \
 	TARGETOBJ=%{targetobj} \
 	%{?with_verbose:V=1} \
@@ -971,6 +972,7 @@ rm -rf $RPM_BUILD_ROOT
 	KERNELRELEASE=%{kernel_release}
 
 %ifarch %{arm} aarch64
+export DTC_FLAGS=-@
 %{__make} %{MakeOpts} %{!?with_verbose:-s} dtbs_install \
 	-C %{objdir} \
 	%{?with_verbose:V=1} \
