@@ -71,7 +71,7 @@
 %define		have_pcmcia	0
 %endif
 
-%define		rel		1
+%define		rel		2
 %define		basever		5.13
 %define		postver		.0
 
@@ -967,8 +967,8 @@ rm -rf $RPM_BUILD_ROOT
 	-C %{objdir} \
 	%{?with_verbose:V=1} \
 	DEPMOD=%{DepMod} \
-	mod_compress_cmd=true \
 	INSTALL_MOD_PATH=$RPM_BUILD_ROOT \
+	INSTALL_MOD_STRIP=1 \
 	KERNELRELEASE=%{kernel_release}
 
 %ifarch %{arm} aarch64
