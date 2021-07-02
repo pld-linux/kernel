@@ -968,7 +968,7 @@ rm -rf $RPM_BUILD_ROOT
 	%{?with_verbose:V=1} \
 	DEPMOD=%{DepMod} \
 	INSTALL_MOD_PATH=$RPM_BUILD_ROOT \
-	INSTALL_MOD_STRIP=1 \
+	INSTALL_MOD_STRIP="--strip-debug --remove-section=.comment --remove-section=.note.GNU-stack" \
 	KERNELRELEASE=%{kernel_release}
 
 %ifarch %{arm} aarch64
