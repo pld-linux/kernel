@@ -491,9 +491,9 @@ index a6fae1f86505..2908771f4d4e 100644
  #include <linux/kernel.h>
  #include <linux/kthread.h>
 @@ -369,6 +370,11 @@ struct tcpm_port {
- 	enum tcpm_ams next_ams;
- 	bool in_ams;
- 
+ 	 * SNK_READY for non-pd link.
+ 	 */
+ 	bool slow_charger_loop;
 +#ifdef CONFIG_EXTCON
 +	struct extcon_dev *extcon;
 +	unsigned int *extcon_cables;
@@ -661,8 +661,8 @@ index a6fae1f86505..2908771f4d4e 100644
  			    struct fwnode_handle *fwnode)
  {
 @@ -4742,6 +4845,23 @@ static int tcpm_fw_get_caps(struct tcpm_port *port,
- 	if (!fwnode)
- 		return -EINVAL;
+ 	 */
+ 	fw_devlink_purge_absent_suppliers(fwnode);
  
 +#ifdef CONFIG_EXTCON
 +	ret = fwnode_property_count_u32(fwnode, "extcon-cables");
@@ -703,8 +703,8 @@ index a6fae1f86505..2908771f4d4e 100644
  	port->typec_caps.fwnode = tcpc->fwnode;
  	port->typec_caps.revision = 0x0120;	/* Type-C spec release 1.2 */
 @@ -5141,6 +5272,12 @@ struct tcpm_port *tcpm_register_port(struct device *dev, struct tcpc_dev *tcpc)
- 		goto out_role_sw_put;
- 	}
+ 				     &tcpm_altmode_ops, port,
+ 				     port->port_altmode, ALTMODE_DISCOVERY_MAX);
  
 +	err = tcpm_fw_get_caps_late(port, tcpc->fwnode);
 +	if (err < 0) {
@@ -961,39 +961,6 @@ index 0f1820f36b4d..8d9d77814f33 100644
  					       gpios[i].name);
  			if (ret)
  				goto undo;
--- 
-GitLab
-
-From 43756ac8a7e63935843e95471a9557677cedcbe0 Mon Sep 17 00:00:00 2001
-From: Tobias Schramm <t.schramm@manjaro.org>
-Date: Thu, 28 May 2020 14:43:27 +0200
-Subject: [PATCH] arm64: dts: rockchip: add oficially unsupported 2GHz opp
-
-No mainlining here.
-
-Signed-off-by: Tobias Schramm <t.schramm@manjaro.org>
----
- arch/arm64/boot/dts/rockchip/rk3399-pinebook-pro.dts | 7 +++++++
- 1 file changed, 7 insertions(+)
-
-diff --git a/arch/arm64/boot/dts/rockchip/rk3399-pinebook-pro.dts b/arch/arm64/boot/dts/rockchip/rk3399-pinebook-pro.dts
-index 667eeeb019de..decb212e2dca 100644
---- a/arch/arm64/boot/dts/rockchip/rk3399-pinebook-pro.dts
-+++ b/arch/arm64/boot/dts/rockchip/rk3399-pinebook-pro.dts
-@@ -392,6 +392,13 @@ mains_charger: dc-charger {
- 	};
- };
- 
-+&cluster1_opp {
-+	opp08 {
-+		opp-hz = /bits/ 64 <2000000000>;
-+		opp-microvolt = <1300000>;
-+	};
-+};
-+
- &cdn_dp {
- 	status = "okay";
- };
 -- 
 GitLab
 
