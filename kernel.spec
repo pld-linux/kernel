@@ -70,7 +70,7 @@
 
 %define		rel		1
 %define		basever		4.14
-%define		postver		.233
+%define		postver		.238
 
 # define this to '-%{basever}' for longterm branch
 %define		versuffix	-%{basever}
@@ -122,7 +122,7 @@ Source0:	https://www.kernel.org/pub/linux/kernel/v4.x/linux-%{basever}.tar.xz
 # Source0-md5:	bacdb9ffdcd922aa069a5e1520160e24
 %if "%{postver}" != ".0"
 Patch0:		https://www.kernel.org/pub/linux/kernel/v4.x/patch-%{version}.xz
-# Patch0-md5:	debf7683ac9be1fe36e80bd3fbe353db
+# Patch0-md5:	6bd1856e703bbb5237514b5601a1822e
 %endif
 Source1:	kernel.sysconfig
 
@@ -698,7 +698,7 @@ rm -f localversion-rt
 # Small fixes:
 %patch2000 -p1
 %patch2001 -p1
-#%patch2003 -p1
+%patch2003 -p1
 
 # Do not remove this, please!
 #%%patch50000 -p1
@@ -734,7 +734,11 @@ find -name '*.pl' -print0 | \
 	scripts/cleanpatch \
 	scripts/get_dvb_firmware \
 	scripts/kernel-doc \
+	scripts/sphinx-pre-install \
 	scripts/stackdelta
+
+%{__sed} -i -e '1s,/usr/bin/env bash,/bin/bash,' \
+	scripts/config
 
 %build
 install -d %{objdir}
