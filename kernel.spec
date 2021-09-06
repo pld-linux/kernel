@@ -41,11 +41,6 @@
 %{?debug:%define with_verbose 1}
 
 %define		have_drm	1
-%ifarch %{ix86} %{x8664} x32 alpha %{arm} ia64 ppc ppc64 sparc sparc64
-%define		have_ide	1
-%else
-%define		have_ide	0
-%endif
 %define		have_sound	1
 %define		have_pcmcia	1
 
@@ -57,7 +52,6 @@
 
 %if %{with myown}
 %define		have_drm	0
-%define		have_ide	0
 %define		have_sound	0
 %define		have_pcmcia	0
 %endif
@@ -72,8 +66,8 @@
 %endif
 
 %define		rel		1
-%define		basever		5.13
-%define		postver		.7
+%define		basever		5.14
+%define		postver		.1
 
 # define this to '-%{basever}' for longterm branch
 %define		versuffix	%{nil}
@@ -124,10 +118,10 @@ Epoch:		3
 License:	GPL v2
 Group:		Base/Kernel
 Source0:	https://www.kernel.org/pub/linux/kernel/v5.x/linux-%{basever}.tar.xz
-# Source0-md5:	76c60fb304510a7bbd9c838790bc5fe4
+# Source0-md5:	a082ef5748b813abca0649dab8be5f52
 %if "%{postver}" != ".0"
 Patch0:		https://www.kernel.org/pub/linux/kernel/v5.x/patch-%{version}.xz
-# Patch0-md5:	aebc49e4d58bd8314548a364bec99d1e
+# Patch0-md5:	0e03bc49d0db9ae31a5086ec49be3768
 %endif
 Source1:	kernel.sysconfig
 
@@ -466,24 +460,6 @@ DRM Kernel Treiber.
 %description drm -l pl.UTF-8
 Sterowniki DRM.
 
-%package ide
-Summary:	IDE kernel modules
-Summary(de.UTF-8):	IDE Kernel Treiber
-Summary(pl.UTF-8):	Sterowniki IDE
-Group:		Base/Kernel
-Requires(postun):	%{name} = %{epoch}:%{version}-%{release}
-Requires:	%{name} = %{epoch}:%{version}-%{release}
-AutoReqProv:	no
-
-%description ide
-IDE kernel modules.
-
-%description ide -l de.UTF-8
-IDE Kernel Treiber.
-
-%description ide -l pl.UTF-8
-Sterowniki IDE.
-
 %package pcmcia
 Summary:	PCMCIA modules
 Summary(de.UTF-8):	PCMCIA Module
@@ -749,6 +725,7 @@ find -name '*.pl' -print0 | \
 	scripts/stackdelta
 
 %{__sed} -i -e '1s,/usr/bin/env bash,%{__bash},' \
+	tools/testing/selftests/powerpc/security/mitigation-patching.sh \
 	scripts/config
 
 %build
@@ -1220,12 +1197,6 @@ fi
 %postun drm
 %depmod %{kernel_release}
 
-%post ide
-%depmod %{kernel_release}
-
-%postun ide
-%depmod %{kernel_release}
-
 %post pcmcia
 %depmod %{kernel_release}
 
@@ -1286,9 +1257,6 @@ fi
 %if %{have_drm}
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/gpu
 %endif
-%if %{have_ide}
-%exclude /lib/modules/%{kernel_release}/kernel/drivers/ide/*
-%endif
 /lib/modules/%{kernel_release}/kernel/fs
 /lib/modules/%{kernel_release}/kernel/kernel
 /lib/modules/%{kernel_release}/kernel/lib
@@ -1317,7 +1285,6 @@ fi
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/ata/pata_pcmcia.ko*
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/bluetooth/*_cs.ko*
 %endif
-%exclude /lib/modules/%{kernel_release}/kernel/drivers/ide/ide-cs.ko*
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/net/arcnet/com20020_cs.ko*
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/net/can/softing/softing_cs.ko*
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/net/ethernet/3com/3c574_cs.ko*
@@ -1379,15 +1346,6 @@ fi
 /lib/modules/%{kernel_release}/kernel/drivers/gpu
 %endif
 
-%if %{have_ide}
-%files ide
-%defattr(644,root,root,755)
-/lib/modules/%{kernel_release}/kernel/drivers/ide/*
-%if %{have_pcmcia}
-%exclude /lib/modules/%{kernel_release}/kernel/drivers/ide/ide-cs.ko*
-%endif
-%endif
-
 %if %{have_pcmcia}
 %files pcmcia
 %defattr(644,root,root,755)
@@ -1398,7 +1356,6 @@ fi
 /lib/modules/%{kernel_release}/kernel/drivers/bluetooth/*_cs.ko*
 /lib/modules/%{kernel_release}/kernel/drivers/ata/pata_pcmcia.ko*
 %endif
-/lib/modules/%{kernel_release}/kernel/drivers/ide/ide-cs.ko*
 /lib/modules/%{kernel_release}/kernel/drivers/net/arcnet/com20020_cs.ko*
 /lib/modules/%{kernel_release}/kernel/drivers/net/can/softing/softing_cs.ko*
 /lib/modules/%{kernel_release}/kernel/drivers/net/ethernet/3com/3c574_cs.ko*
@@ -1482,7 +1439,6 @@ fi
 %{_kernelsrcdir}/scripts/mod/*.c
 %{_kernelsrcdir}/scripts/mod/modpost.h
 %attr(755,root,root) %{_kernelsrcdir}/scripts/mkcompile_h
-%{_kernelsrcdir}/scripts/mkmakefile
 %attr(755,root,root) %{_kernelsrcdir}/scripts/setlocalversion
 %{_kernelsrcdir}/scripts/subarch.include
 %{_kernelsrcdir}/scripts/*.c
@@ -1550,7 +1506,6 @@ fi
 %exclude %{_kernelsrcdir}/scripts/basic
 %exclude %{_kernelsrcdir}/scripts/kconfig
 %exclude %{_kernelsrcdir}/scripts/mkcompile_h
-%exclude %{_kernelsrcdir}/scripts/mkmakefile
 %exclude %{_kernelsrcdir}/scripts/mod
 %exclude %{_kernelsrcdir}/scripts/setlocalversion
 %exclude %{_kernelsrcdir}/scripts/subarch.include
