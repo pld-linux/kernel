@@ -262,7 +262,7 @@ Requires:	cpuinfo(pae)
 Suggests:	crda
 Suggests:	dracut
 Suggests:	keyutils
-Requires:	linux-firmware
+Suggests:	linux-firmware
 Provides:	%{name}(netfilter) = 20070806
 Provides:	%{name}(vermagic) = %{kernel_release}
 Obsoletes:	kernel%{_alt_kernel}-char-lirc-ene0100 < 0.9.0
