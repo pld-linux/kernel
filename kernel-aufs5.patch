@@ -1,5 +1,5 @@
 SPDX-License-Identifier: GPL-2.0
-aufs5.x-rcN kbuild patch
+aufs5.15 kbuild patch
 
 diff --git a/fs/Kconfig b/fs/Kconfig
 index a6313a969bc5f..aca4b89d41a14 100644
@@ -23,10 +23,10 @@ index 84c5e4cdfee5a..b4fcdad8412ed 100644
  obj-$(CONFIG_ZONEFS_FS)		+= zonefs/
 +obj-$(CONFIG_AUFS_FS)           += aufs/
 SPDX-License-Identifier: GPL-2.0
-aufs5.x-rcN base patch
+aufs5.15 base patch
 
 diff --git a/MAINTAINERS b/MAINTAINERS
-index a4a0c2baaf274..cc2119bc60fd1 100644
+index 3b79fd441dde8..3fb0a57f61b05 100644
 --- a/MAINTAINERS
 +++ b/MAINTAINERS
 @@ -3122,6 +3122,19 @@ F:	include/uapi/linux/audit.h
@@ -113,19 +113,6 @@ index 9c6c6a3e2de51..02382fa9bd341 100644
  	if (error)
  		return error;
  
-diff --git a/fs/inode.c b/fs/inode.c
-index ed0cab8a32db1..7e53985e62e5e 100644
---- a/fs/inode.c
-+++ b/fs/inode.c
-@@ -1782,7 +1782,7 @@ EXPORT_SYMBOL(generic_update_time);
-  * This does the actual work of updating an inodes time or version.  Must have
-  * had called mnt_want_write() before calling this.
-  */
--static int update_time(struct inode *inode, struct timespec64 *time, int flags)
-+int update_time(struct inode *inode, struct timespec64 *time, int flags)
- {
- 	if (inode->i_op->update_time)
- 		return inode->i_op->update_time(inode, time, flags);
 diff --git a/fs/namespace.c b/fs/namespace.c
 index 659a8f39c61af..1283670737826 100644
 --- a/fs/namespace.c
@@ -204,14 +191,6 @@ index e7a633353fd20..376ddf1965aa2 100644
  	int (*flock) (struct file *, int, struct file_lock *);
  	ssize_t (*splice_write)(struct pipe_inode_info *, struct file *, loff_t *, size_t, unsigned int);
  	ssize_t (*splice_read)(struct file *, loff_t *, struct pipe_inode_info *, size_t, unsigned int);
-@@ -2613,6 +2615,7 @@ extern int current_umask(void);
- extern void ihold(struct inode * inode);
- extern void iput(struct inode *);
- extern int generic_update_time(struct inode *, struct timespec64 *, int);
-+extern int update_time(struct inode *, struct timespec64 *, int);
- 
- /* /sys/fs */
- extern struct kobject *fs_kobj;
 @@ -2776,6 +2779,7 @@ static inline bool sb_is_blkdev_sb(struct super_block *sb)
  }
  
@@ -290,7 +269,7 @@ index bf1c00c881e48..e0aaf34974df5 100644
  #ifdef CONFIG_LOCK_STAT
  static DEFINE_PER_CPU(struct lock_class_stats[MAX_LOCKDEP_KEYS], cpu_lock_stats);
 SPDX-License-Identifier: GPL-2.0
-aufs5.x-rcN mmap patch
+aufs5.15 mmap patch
 
 diff --git a/fs/proc/base.c b/fs/proc/base.c
 index 533d5836eb9a4..f5de60c5327f5 100644
@@ -687,7 +666,7 @@ index 0000000000000..511543ab1b418
 +}
 +#endif /* !CONFIG_MMU */
 SPDX-License-Identifier: GPL-2.0
-aufs5.x-rcN standalone patch
+aufs5.15 standalone patch
 
 diff --git a/fs/dcache.c b/fs/dcache.c
 index bc5095b734f58..9508bd57a3bc0 100644
@@ -753,18 +732,6 @@ index 45437f8e1003e..786af52904fcf 100644
  
  void __init files_init(void)
  {
-diff --git a/fs/inode.c b/fs/inode.c
-index 7e53985e62e5e..e36c5b2f96df7 100644
---- a/fs/inode.c
-+++ b/fs/inode.c
-@@ -1788,6 +1788,7 @@ int update_time(struct inode *inode, struct timespec64 *time, int flags)
- 		return inode->i_op->update_time(inode, time, flags);
- 	return generic_update_time(inode, time, flags);
- }
-+EXPORT_SYMBOL_GPL(update_time);
- 
- /**
-  *	atime_needs_update	-	update the access time
 diff --git a/fs/namespace.c b/fs/namespace.c
 index 1283670737826..db99365620118 100644
 --- a/fs/namespace.c
@@ -16695,7 +16662,7 @@ diff -urN /usr/share/empty/fs/aufs/hbl.h linux/fs/aufs/hbl.h
 +#endif /* __AUFS_HBL_H__ */
 diff -urN /usr/share/empty/fs/aufs/hfsnotify.c linux/fs/aufs/hfsnotify.c
 --- /usr/share/empty/fs/aufs/hfsnotify.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/hfsnotify.c	2021-11-01 23:48:34.206359262 +0100
++++ linux/fs/aufs/hfsnotify.c	2021-11-25 11:42:28.836641524 +0100
 @@ -0,0 +1,288 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
@@ -29395,7 +29362,7 @@ diff -urN /usr/share/empty/fs/aufs/sbinfo.c linux/fs/aufs/sbinfo.c
 +}
 diff -urN /usr/share/empty/fs/aufs/super.c linux/fs/aufs/super.c
 --- /usr/share/empty/fs/aufs/super.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/super.c	2021-11-01 23:48:34.213025928 +0100
++++ linux/fs/aufs/super.c	2021-11-25 11:42:28.836641524 +0100
 @@ -0,0 +1,1050 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
@@ -32674,7 +32641,7 @@ diff -urN /usr/share/empty/fs/aufs/vdir.c linux/fs/aufs/vdir.c
 +}
 diff -urN /usr/share/empty/fs/aufs/vfsub.c linux/fs/aufs/vfsub.c
 --- /usr/share/empty/fs/aufs/vfsub.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/vfsub.c	2021-11-01 23:48:34.213025928 +0100
++++ linux/fs/aufs/vfsub.c	2021-11-25 11:42:28.836641524 +0100
 @@ -0,0 +1,919 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
@@ -33597,7 +33564,7 @@ diff -urN /usr/share/empty/fs/aufs/vfsub.c linux/fs/aufs/vfsub.c
 +}
 diff -urN /usr/share/empty/fs/aufs/vfsub.h linux/fs/aufs/vfsub.h
 --- /usr/share/empty/fs/aufs/vfsub.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/vfsub.h	2021-11-01 23:48:34.213025928 +0100
++++ linux/fs/aufs/vfsub.h	2021-11-25 11:42:28.836641524 +0100
 @@ -0,0 +1,358 @@
 +/* SPDX-License-Identifier: GPL-2.0 */
 +/*
@@ -33830,7 +33797,7 @@ diff -urN /usr/share/empty/fs/aufs/vfsub.h linux/fs/aufs/vfsub.h
 +static inline int vfsub_update_time(struct inode *h_inode,
 +				    struct timespec64 *ts, int flags)
 +{
-+	return update_time(h_inode, ts, flags);
++	return inode_update_time(h_inode, ts, flags);
 +	/* no vfsub_update_h_iattr() since we don't have struct path */
 +}
 +
@@ -38731,7 +38698,7 @@ diff -urN /usr/share/empty/fs/aufs/xino.c linux/fs/aufs/xino.c
 +}
 diff -urN /usr/share/empty/include/uapi/linux/aufs_type.h linux/include/uapi/linux/aufs_type.h
 --- /usr/share/empty/include/uapi/linux/aufs_type.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux/include/uapi/linux/aufs_type.h	2021-11-01 23:48:34.213025928 +0100
++++ linux/include/uapi/linux/aufs_type.h	2021-11-25 11:42:28.836641524 +0100
 @@ -0,0 +1,452 @@
 +/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
 +/*
@@ -38775,7 +38742,7 @@ diff -urN /usr/share/empty/include/uapi/linux/aufs_type.h linux/include/uapi/lin
 +#include <limits.h>
 +#endif /* __KERNEL__ */
 +
-+#define AUFS_VERSION	"5.x-rcN-20211018"
++#define AUFS_VERSION	"5.15-20211115"
 +
 +/* todo? move this to linux-2.6.19/include/magic.h */
 +#define AUFS_SUPER_MAGIC	('a' << 24 | 'u' << 16 | 'f' << 8 | 's')
@@ -39186,7 +39153,7 @@ diff -urN /usr/share/empty/include/uapi/linux/aufs_type.h linux/include/uapi/lin
 +
 +#endif /* __AUFS_TYPE_H__ */
 SPDX-License-Identifier: GPL-2.0
-aufs5.x-rcN loopback patch
+aufs5.15 loopback patch
 
 diff --git a/drivers/block/loop.c b/drivers/block/loop.c
 index a62b132cbd551..79cf20555c2b1 100644
