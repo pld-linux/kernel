@@ -935,8 +935,14 @@ cd -
 
 %{__awk} %{?debug:-v dieOnError=1} -v infile=%{objdir}/%{defconfig} -f %{SOURCE8} %{objdir}/.config
 
+%{__make} \
+	TARGETOBJ=%{targetobj} \
+	%{?with_verbose:V=1} \
+	scripts
+
 # build kernel
 export DTC_FLAGS=-@
+ICECC_EXTRAFILES="${ICECC_EXTRAFILES:+$ICECC_EXTRAFILES:}$(test -d %{objdir}/scripts/gcc-plugins && find %{objdir}/scripts/gcc-plugins -name '*.so' | paste -s -d :)"
 %{__make} \
 	TARGETOBJ=%{targetobj} \
 	%{?with_verbose:V=1} \
