@@ -711,8 +711,8 @@ diff -urNp -x '*.orig' linux-4.9/block/ioprio.c linux-4.9/block/ioprio.c
  				if (ret)
  					break;
 @@ -203,6 +206,8 @@ SYSCALL_DEFINE2(ioprio_get, int, which,
- 			else
  				pgrp = find_vpid(who);
+ 			read_lock(&tasklist_lock);
  			do_each_pid_thread(pgrp, PIDTYPE_PGID, p) {
 +				if (!vx_check(p->xid, VS_ADMIN_P | VS_IDENT))
 +					continue;
