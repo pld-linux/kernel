@@ -212,7 +212,7 @@ Patch2004:	Revert-ath-add-support-for-special-0x0-regulatory-domain.patch
 Patch7000:	kernel-inittmpfs.patch
 
 # ARM only
-Patch8000:	rpi-wm8804.patch
+Patch8000:	rpi-sound.patch
 Patch8001:	kernel-pinebook-pro.patch
 Patch8002:	atheros-disallow-retrain-nongen1-pcie.patch
 

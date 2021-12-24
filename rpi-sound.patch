@@ -1,0 +1,875 @@
+--- linux-5.9.orig/sound/soc/bcm/Kconfig	2020-10-11 23:15:50.000000000 +0200
++++ linux-5.9/sound/soc/bcm/Kconfig	2020-12-14 01:08:25.450035831 +0100
+@@ -26,3 +26,22 @@
+ 	  DSL/PON chips (bcm63158, bcm63178)
+ 
+ 	  If you don't know what to do here, say N
++
++config SND_BCM2708_SOC_HIFIBERRY_DAC
++	tristate "Support for HifiBerry DAC"
++	depends on SND_BCM2708_SOC_I2S || SND_BCM2835_SOC_I2S
++	select SND_SOC_PCM5102A
++	select SND_RPI_SIMPLE_SOUNDCARD
++	help
++	  Say Y or M if you want to add support for HifiBerry DAC.
++
++config SND_RPI_SIMPLE_SOUNDCARD
++	tristate "Support for Raspberry Pi simple soundcards"
++	help
++	  Say Y or M if you want to add support Raspbery Pi simple soundcards
++
++config SND_RPI_WM8804_SOUNDCARD
++	tristate "Support for Raspberry Pi generic WM8804 soundcards"
++	help
++	  Say Y or M if you want to add support for the Raspberry Pi
++	  generic driver for WM8804 based soundcards.
+--- linux-5.9.orig/sound/soc/bcm/Makefile	2020-10-11 23:15:50.000000000 +0200
++++ linux-5.9/sound/soc/bcm/Makefile	2020-12-14 01:05:51.274295380 +0100
+@@ -12,4 +12,10 @@
+ # BCM63XX Platform Support
+ snd-soc-63xx-objs := bcm63xx-i2s-whistler.o bcm63xx-pcm-whistler.o
+ 
+-obj-$(CONFIG_SND_BCM63XX_I2S_WHISTLER) += snd-soc-63xx.o
+\ No newline at end of file
++obj-$(CONFIG_SND_BCM63XX_I2S_WHISTLER) += snd-soc-63xx.o
++
++snd-soc-rpi-simple-soundcard-objs := rpi-simple-soundcard.o
++snd-soc-rpi-wm8804-soundcard-objs := rpi-wm8804-soundcard.o
++
++obj-$(CONFIG_SND_RPI_SIMPLE_SOUNDCARD) += snd-soc-rpi-simple-soundcard.o
++obj-$(CONFIG_SND_RPI_WM8804_SOUNDCARD) += snd-soc-rpi-wm8804-soundcard.o
+--- linux-5.9.orig/sound/soc/bcm/rpi-wm8804-soundcard.c	1970-01-01 01:00:00.000000000 +0100
++++ linux-5.9/sound/soc/bcm/rpi-wm8804-soundcard.c	2020-12-14 01:02:38.688758934 +0100
+@@ -0,0 +1,410 @@
++// SPDX-License-Identifier: GPL-2.0
++/*
++ * rpi--wm8804.c -- ALSA SoC Raspberry Pi soundcard.
++ *
++ * Copyright (C) 2018 Raspberry Pi.
++ *
++ * Authors: Tim Gover <tim.gover@raspberrypi.org>
++ *
++ * Generic driver for Pi Hat WM8804 digi sounds cards
++ *
++ * Based upon code from:
++ * justboom-digi.c
++ * by Milan Neskovic <info@justboom.co>
++ *
++ * iqaudio_digi.c
++ * by Daniel Matuschek <info@crazy-audio.com>
++ *
++ * allo-digione.c
++ * by Baswaraj <jaikumar@cem-solutions.net>
++ *
++ * hifiberry-digi.c
++ * Daniel Matuschek <info@crazy-audio.com>
++ *
++ * This program is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU General Public License
++ * version 2 as published by the Free Software Foundation.
++ *
++ * This program is distributed in the hope that it will be useful, but
++ * WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++ * General Public License for more details.
++ */
++
++#include <linux/gpio/consumer.h>
++#include <linux/platform_device.h>
++#include <linux/module.h>
++
++#include <sound/core.h>
++#include <sound/pcm.h>
++#include <sound/pcm_params.h>
++#include <sound/soc.h>
++
++#include "../codecs/wm8804.h"
++
++struct wm8804_clk_cfg {
++	unsigned int sysclk_freq;
++	unsigned int mclk_freq;
++	unsigned int mclk_div;
++};
++
++/* Parameters for generic functions */
++struct snd_rpi_wm8804_drvdata {
++	/* Required - pointer to the DAI structure */
++	struct snd_soc_dai_link *dai;
++	/* Required - snd_soc_card name */
++	const char *card_name;
++	/* Optional DT node names if card info is defined in DT */
++	const char *card_name_dt;
++	const char *dai_name_dt;
++	const char *dai_stream_name_dt;
++	/* Optional probe extension - called prior to register_card */
++	int (*probe)(struct platform_device *pdev);
++};
++
++static struct gpio_desc *snd_clk44gpio;
++static struct gpio_desc *snd_clk48gpio;
++static int wm8804_samplerate = 0;
++
++/* Forward declarations */
++static struct snd_soc_dai_link snd_allo_digione_dai[];
++static struct snd_soc_card snd_rpi_wm8804;
++
++
++#define CLK_44EN_RATE 22579200UL
++#define CLK_48EN_RATE 24576000UL
++
++static unsigned int snd_rpi_wm8804_enable_clock(unsigned int samplerate)
++{
++	switch (samplerate) {
++	case 11025:
++	case 22050:
++	case 44100:
++	case 88200:
++	case 176400:
++		gpiod_set_value_cansleep(snd_clk44gpio, 1);
++		gpiod_set_value_cansleep(snd_clk48gpio, 0);
++		return CLK_44EN_RATE;
++	default:
++		gpiod_set_value_cansleep(snd_clk48gpio, 1);
++		gpiod_set_value_cansleep(snd_clk44gpio, 0);
++		return CLK_48EN_RATE;
++	}
++}
++
++static void snd_rpi_wm8804_clk_cfg(unsigned int samplerate,
++		struct wm8804_clk_cfg *clk_cfg)
++{
++	clk_cfg->sysclk_freq = 27000000;
++
++	if (samplerate <= 96000 ||
++	    snd_rpi_wm8804.dai_link == snd_allo_digione_dai) {
++		clk_cfg->mclk_freq = samplerate * 256;
++		clk_cfg->mclk_div = WM8804_MCLKDIV_256FS;
++	} else {
++		clk_cfg->mclk_freq = samplerate * 128;
++		clk_cfg->mclk_div = WM8804_MCLKDIV_128FS;
++	}
++
++	if (!(IS_ERR(snd_clk44gpio) || IS_ERR(snd_clk48gpio)))
++		clk_cfg->sysclk_freq = snd_rpi_wm8804_enable_clock(samplerate);
++}
++
++static int snd_rpi_wm8804_hw_params(struct snd_pcm_substream *substream,
++		struct snd_pcm_hw_params *params)
++{
++	struct snd_soc_pcm_runtime *rtd = substream->private_data;
++	struct snd_soc_dai *codec_dai = asoc_rtd_to_codec(rtd, 0);
++	struct snd_soc_component *component = codec_dai->component;
++	struct snd_soc_dai *cpu_dai = asoc_rtd_to_cpu(rtd, 0);
++	int sampling_freq = 1;
++	int ret;
++	struct wm8804_clk_cfg clk_cfg;
++	int samplerate = params_rate(params);
++
++	if (samplerate == wm8804_samplerate)
++		return 0;
++
++	/* clear until all clocks are setup properly */
++	wm8804_samplerate = 0;
++
++	snd_rpi_wm8804_clk_cfg(samplerate, &clk_cfg);
++
++	pr_debug("%s samplerate: %d mclk_freq: %u mclk_div: %u sysclk: %u\n",
++			__func__, samplerate, clk_cfg.mclk_freq,
++			clk_cfg.mclk_div, clk_cfg.sysclk_freq);
++
++	switch (samplerate) {
++	case 32000:
++		sampling_freq = 0x03;
++		break;
++	case 44100:
++		sampling_freq = 0x00;
++		break;
++	case 48000:
++		sampling_freq = 0x02;
++		break;
++	case 88200:
++		sampling_freq = 0x08;
++		break;
++	case 96000:
++		sampling_freq = 0x0a;
++		break;
++	case 176400:
++		sampling_freq = 0x0c;
++		break;
++	case 192000:
++		sampling_freq = 0x0e;
++		break;
++	default:
++		dev_err(rtd->card->dev,
++		"Failed to set WM8804 SYSCLK, unsupported samplerate %d\n",
++		samplerate);
++	}
++
++	snd_soc_dai_set_clkdiv(codec_dai, WM8804_MCLK_DIV, clk_cfg.mclk_div);
++	snd_soc_dai_set_pll(codec_dai, 0, 0,
++			clk_cfg.sysclk_freq, clk_cfg.mclk_freq);
++
++	ret = snd_soc_dai_set_sysclk(codec_dai, WM8804_TX_CLKSRC_PLL,
++			clk_cfg.sysclk_freq, SND_SOC_CLOCK_OUT);
++	if (ret < 0) {
++		dev_err(rtd->card->dev,
++		"Failed to set WM8804 SYSCLK: %d\n", ret);
++		return ret;
++	}
++
++	wm8804_samplerate = samplerate;
++
++	/* set sampling frequency status bits */
++	snd_soc_component_update_bits(component, WM8804_SPDTX4, 0x0f,
++			sampling_freq);
++
++	return snd_soc_dai_set_bclk_ratio(cpu_dai, 64);
++}
++
++static struct snd_soc_ops snd_rpi_wm8804_ops = {
++	.hw_params = snd_rpi_wm8804_hw_params,
++};
++
++SND_SOC_DAILINK_DEFS(justboom_digi,
++	DAILINK_COMP_ARRAY(COMP_EMPTY()),
++	DAILINK_COMP_ARRAY(COMP_EMPTY()),
++	DAILINK_COMP_ARRAY(COMP_EMPTY()));
++
++static struct snd_soc_dai_link snd_justboom_digi_dai[] = {
++{
++	.name        = "JustBoom Digi",
++	.stream_name = "JustBoom Digi HiFi",
++	SND_SOC_DAILINK_REG(justboom_digi),
++},
++};
++
++static struct snd_rpi_wm8804_drvdata drvdata_justboom_digi = {
++	.card_name            = "snd_rpi_justboom_digi",
++	.dai                  = snd_justboom_digi_dai,
++};
++
++SND_SOC_DAILINK_DEFS(iqaudio_digi,
++	DAILINK_COMP_ARRAY(COMP_EMPTY()),
++	DAILINK_COMP_ARRAY(COMP_EMPTY()),
++	DAILINK_COMP_ARRAY(COMP_EMPTY()));
++
++static struct snd_soc_dai_link snd_iqaudio_digi_dai[] = {
++{
++	.name        = "IQAudIO Digi",
++	.stream_name = "IQAudIO Digi HiFi",
++	SND_SOC_DAILINK_REG(iqaudio_digi),
++},
++};
++
++static struct snd_rpi_wm8804_drvdata drvdata_iqaudio_digi = {
++	.card_name          = "IQAudIODigi",
++	.dai                = snd_iqaudio_digi_dai,
++	.card_name_dt       = "wm8804-digi,card-name",
++	.dai_name_dt        = "wm8804-digi,dai-name",
++	.dai_stream_name_dt = "wm8804-digi,dai-stream-name",
++};
++
++static int snd_allo_digione_probe(struct platform_device *pdev)
++{
++	pr_debug("%s\n", __func__);
++
++	if (IS_ERR(snd_clk44gpio) || IS_ERR(snd_clk48gpio)) {
++		dev_err(&pdev->dev, "devm_gpiod_get() failed\n");
++		return -EINVAL;
++	}
++	return 0;
++}
++
++SND_SOC_DAILINK_DEFS(allo_digione,
++	DAILINK_COMP_ARRAY(COMP_EMPTY()),
++	DAILINK_COMP_ARRAY(COMP_EMPTY()),
++	DAILINK_COMP_ARRAY(COMP_EMPTY()));
++
++static struct snd_soc_dai_link snd_allo_digione_dai[] = {
++{
++	.name        = "Allo DigiOne",
++	.stream_name = "Allo DigiOne HiFi",
++	SND_SOC_DAILINK_REG(allo_digione),
++},
++};
++
++static struct snd_rpi_wm8804_drvdata drvdata_allo_digione = {
++	.card_name = "snd_allo_digione",
++	.dai       = snd_allo_digione_dai,
++	.probe     = snd_allo_digione_probe,
++};
++
++SND_SOC_DAILINK_DEFS(hifiberry_digi,
++	DAILINK_COMP_ARRAY(COMP_EMPTY()),
++	DAILINK_COMP_ARRAY(COMP_EMPTY()),
++	DAILINK_COMP_ARRAY(COMP_EMPTY()));
++
++static struct snd_soc_dai_link snd_hifiberry_digi_dai[] = {
++{
++	.name        = "HifiBerry Digi",
++	.stream_name = "HifiBerry Digi HiFi",
++	SND_SOC_DAILINK_REG(hifiberry_digi),
++},
++};
++
++static int snd_hifiberry_digi_probe(struct platform_device *pdev)
++{
++	pr_debug("%s\n", __func__);
++
++	if (IS_ERR(snd_clk44gpio) || IS_ERR(snd_clk48gpio))
++		return 0;
++
++	snd_hifiberry_digi_dai->name = "HiFiBerry Digi+ Pro";
++	snd_hifiberry_digi_dai->stream_name = "HiFiBerry Digi+ Pro HiFi";
++	return 0;
++}
++
++static struct snd_rpi_wm8804_drvdata drvdata_hifiberry_digi = {
++	.card_name = "snd_rpi_hifiberry_digi",
++	.dai       = snd_hifiberry_digi_dai,
++	.probe     = snd_hifiberry_digi_probe,
++};
++
++static const struct of_device_id snd_rpi_wm8804_of_match[] = {
++	{ .compatible = "justboom,justboom-digi",
++		.data = (void *) &drvdata_justboom_digi },
++	{ .compatible = "iqaudio,wm8804-digi",
++		.data = (void *) &drvdata_iqaudio_digi },
++	{ .compatible = "allo,allo-digione",
++		.data = (void *) &drvdata_allo_digione },
++	{ .compatible = "hifiberry,hifiberry-digi",
++		.data = (void *) &drvdata_hifiberry_digi },
++	{},
++};
++
++static struct snd_soc_card snd_rpi_wm8804 = {
++	.driver_name  = "RPi-WM8804",
++	.owner        = THIS_MODULE,
++	.dai_link     = NULL,
++	.num_links    = 1,
++};
++
++static int snd_rpi_wm8804_probe(struct platform_device *pdev)
++{
++	int ret = 0;
++	const struct of_device_id *of_id;
++
++	snd_rpi_wm8804.dev = &pdev->dev;
++	of_id = of_match_node(snd_rpi_wm8804_of_match, pdev->dev.of_node);
++
++	if (pdev->dev.of_node && of_id->data) {
++		struct device_node *i2s_node;
++		struct snd_rpi_wm8804_drvdata *drvdata =
++			(struct snd_rpi_wm8804_drvdata *) of_id->data;
++		struct snd_soc_dai_link *dai = drvdata->dai;
++
++		snd_soc_card_set_drvdata(&snd_rpi_wm8804, drvdata);
++
++		if (!dai->ops)
++			dai->ops = &snd_rpi_wm8804_ops;
++		if (!dai->codecs->dai_name)
++			dai->codecs->dai_name = "wm8804-spdif";
++		if (!dai->codecs->name)
++			dai->codecs->name = "wm8804.1-003b";
++		if (!dai->dai_fmt)
++			dai->dai_fmt = SND_SOC_DAIFMT_I2S |
++				SND_SOC_DAIFMT_NB_NF |
++				SND_SOC_DAIFMT_CBM_CFM;
++
++		snd_rpi_wm8804.dai_link = dai;
++		i2s_node = of_parse_phandle(pdev->dev.of_node,
++				"i2s-controller", 0);
++		if (!i2s_node) {
++			pr_err("Failed to find i2s-controller DT node\n");
++			return -ENODEV;
++		}
++
++		snd_rpi_wm8804.name = drvdata->card_name;
++
++		/* If requested by in drvdata get card & DAI names from DT */
++		if (drvdata->card_name_dt)
++			of_property_read_string(i2s_node,
++					drvdata->card_name_dt,
++					&snd_rpi_wm8804.name);
++
++		if (drvdata->dai_name_dt)
++			of_property_read_string(i2s_node,
++					drvdata->dai_name_dt,
++					&dai->name);
++
++		if (drvdata->dai_stream_name_dt)
++			of_property_read_string(i2s_node,
++					drvdata->dai_stream_name_dt,
++					&dai->stream_name);
++
++		dai->cpus->of_node = i2s_node;
++		dai->platforms->of_node = i2s_node;
++
++		/*
++		 * clk44gpio and clk48gpio are not required by all cards so
++		 * don't check the error status.
++		 */
++		snd_clk44gpio =
++			devm_gpiod_get(&pdev->dev, "clock44", GPIOD_OUT_LOW);
++
++		snd_clk48gpio =
++			devm_gpiod_get(&pdev->dev, "clock48", GPIOD_OUT_LOW);
++
++		if (drvdata->probe) {
++			ret = drvdata->probe(pdev);
++			if (ret < 0) {
++				dev_err(&pdev->dev, "Custom probe failed %d\n",
++						ret);
++				return ret;
++			}
++		}
++
++		pr_debug("%s card: %s dai: %s stream: %s\n", __func__,
++				snd_rpi_wm8804.name,
++				dai->name, dai->stream_name);
++	}
++
++	ret = devm_snd_soc_register_card(&pdev->dev, &snd_rpi_wm8804);
++	if (ret && ret != -EPROBE_DEFER)
++		dev_err(&pdev->dev, "Failed to register card %d\n", ret);
++
++	return ret;
++}
++
++static struct platform_driver snd_rpi_wm8804_driver = {
++	.driver = {
++		.name           = "snd-rpi-wm8804",
++		.owner          = THIS_MODULE,
++		.of_match_table = snd_rpi_wm8804_of_match,
++	},
++	.probe  = snd_rpi_wm8804_probe,
++};
++MODULE_DEVICE_TABLE(of, snd_rpi_wm8804_of_match);
++
++module_platform_driver(snd_rpi_wm8804_driver);
++
++MODULE_AUTHOR("Tim Gover <tim.gover@raspberrypi.org>");
++MODULE_DESCRIPTION("ASoC Raspberry Pi Hat generic digi driver for WM8804 based cards");
++MODULE_LICENSE("GPL v2");
+--- linux-5.15.orig/sound/soc/bcm/rpi-simple-soundcard.c	1970-01-01 01:00:00.000000000 +0100
++++ linux-5.15/sound/soc/bcm/rpi-simple-soundcard.c	2021-12-23 14:16:38.688758934 +0100
+@@ -0,0 +1,419 @@
++// SPDX-License-Identifier: GPL-2.0
++/*
++ * rpi-simple-soundcard.c -- ALSA SoC Raspberry Pi soundcard.
++ *
++ * Copyright (C) 2018 Raspberry Pi.
++ *
++ * Authors: Tim Gover <tim.gover@raspberrypi.org>
++ *
++ * Based on code:
++ * hifiberry_amp.c, hifiberry_dac.c, rpi-dac.c
++ * by Florian Meier <florian.meier@koalo.de>
++ *
++ * googlevoicehat-soundcard.c
++ * by Peter Malkin <petermalkin@google.com>
++ *
++ * adau1977-adc.c
++ * by Andrey Grodzovsky <andrey2805@gmail.com>
++ *
++ * merus-amp.c
++ * by Ariel Muszkat <ariel.muszkat@gmail.com>
++ *		Jorgen Kragh Jakobsen <jorgen.kraghjakobsen@infineon.com>
++ *
++ * This program is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU General Public License
++ * version 2 as published by the Free Software Foundation.
++ *
++ * This program is distributed in the hope that it will be useful, but
++ * WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++ * General Public License for more details.
++ */
++
++#include <linux/module.h>
++#include <linux/platform_device.h>
++#include <linux/gpio/consumer.h>
++
++#include <sound/core.h>
++#include <sound/pcm.h>
++#include <sound/pcm_params.h>
++#include <sound/soc.h>
++
++/* Parameters for generic RPI functions */
++struct snd_rpi_simple_drvdata {
++	struct snd_soc_dai_link *dai;
++	const char* card_name;
++	unsigned int fixed_bclk_ratio;
++};
++
++static struct snd_soc_card snd_rpi_simple = {
++	.driver_name  = "RPi-simple",
++	.owner        = THIS_MODULE,
++	.dai_link     = NULL,
++	.num_links    = 1, /* Only a single DAI supported at the moment */
++};
++
++static int snd_rpi_simple_init(struct snd_soc_pcm_runtime *rtd)
++{
++	struct snd_rpi_simple_drvdata *drvdata =
++		snd_soc_card_get_drvdata(rtd->card);
++	struct snd_soc_dai *cpu_dai = asoc_rtd_to_cpu(rtd, 0);
++
++	if (drvdata->fixed_bclk_ratio > 0)
++		return snd_soc_dai_set_bclk_ratio(cpu_dai,
++				drvdata->fixed_bclk_ratio);
++
++	return 0;
++}
++
++static int pifi_mini_210_init(struct snd_soc_pcm_runtime *rtd)
++{
++	struct snd_soc_component *dac;
++	struct gpio_desc *pdn_gpio, *rst_gpio;
++	struct snd_soc_dai *codec_dai;
++	int ret;
++
++	snd_rpi_simple_init(rtd);
++	codec_dai = asoc_rtd_to_codec(rtd, 0);
++
++	dac = codec_dai[0].component;
++
++	pdn_gpio = devm_gpiod_get_optional(snd_rpi_simple.dev, "pdn",
++						GPIOD_OUT_LOW);
++	if (IS_ERR(pdn_gpio)) {
++		ret = PTR_ERR(pdn_gpio);
++		dev_err(snd_rpi_simple.dev, "failed to get pdn gpio: %d\n", ret);
++		return ret;
++	}
++
++	rst_gpio = devm_gpiod_get_optional(snd_rpi_simple.dev, "rst",
++						GPIOD_OUT_LOW);
++	if (IS_ERR(rst_gpio)) {
++		ret = PTR_ERR(rst_gpio);
++		dev_err(snd_rpi_simple.dev, "failed to get rst gpio: %d\n", ret);
++		return ret;
++	}
++
++	// Set up cards - pulse power down and reset first, then
++	// set up according to datasheet
++	gpiod_set_value_cansleep(pdn_gpio, 1);
++	gpiod_set_value_cansleep(rst_gpio, 1);
++	usleep_range(1000, 10000);
++	gpiod_set_value_cansleep(pdn_gpio, 0);
++	usleep_range(20000, 30000);
++	gpiod_set_value_cansleep(rst_gpio, 0);
++	usleep_range(20000, 30000);
++
++	// Oscillator trim
++	snd_soc_component_write(dac, 0x1b, 0);
++	usleep_range(60000, 80000);
++
++	// MCLK at 64fs, sample rate 44.1 or 48kHz
++	snd_soc_component_write(dac, 0x00, 0x60);
++
++	// Set up for BTL - AD/BD mode - AD is 0x00107772, BD is 0x00987772
++	snd_soc_component_write(dac, 0x20, 0x00107772);
++
++	// End mute
++	snd_soc_component_write(dac, 0x05, 0x00);
++
++	return 0;
++}
++
++static int snd_rpi_simple_hw_params(struct snd_pcm_substream *substream,
++		struct snd_pcm_hw_params *params)
++{
++	struct snd_soc_pcm_runtime *rtd = substream->private_data;
++	struct snd_soc_dai *cpu_dai = asoc_rtd_to_cpu(rtd, 0);
++	struct snd_rpi_simple_drvdata *drvdata;
++	unsigned int sample_bits;
++
++	drvdata = snd_soc_card_get_drvdata(rtd->card);
++
++	if (drvdata->fixed_bclk_ratio > 0)
++		return 0; // BCLK is configured in .init
++
++	/* The simple drivers just set the bclk_ratio to sample_bits * 2 so
++	 * hard-code this for now. More complex drivers could just replace
++	 * the hw_params routine.
++	 */
++	sample_bits = snd_pcm_format_physical_width(params_format(params));
++	return snd_soc_dai_set_bclk_ratio(cpu_dai, sample_bits * 2);
++}
++
++static struct snd_soc_ops snd_rpi_simple_ops = {
++	.hw_params = snd_rpi_simple_hw_params,
++};
++
++enum adau1977_clk_id {
++	ADAU1977_SYSCLK,
++};
++
++enum adau1977_sysclk_src {
++	ADAU1977_SYSCLK_SRC_MCLK,
++	ADAU1977_SYSCLK_SRC_LRCLK,
++};
++
++static int adau1977_init(struct snd_soc_pcm_runtime *rtd)
++{
++	int ret;
++	struct snd_soc_dai *codec_dai = asoc_rtd_to_codec(rtd, 0);
++
++	ret = snd_soc_dai_set_tdm_slot(codec_dai, 0, 0, 0, 0);
++	if (ret < 0)
++		return ret;
++
++	return snd_soc_component_set_sysclk(codec_dai->component,
++			ADAU1977_SYSCLK, ADAU1977_SYSCLK_SRC_MCLK,
++			11289600, SND_SOC_CLOCK_IN);
++}
++
++SND_SOC_DAILINK_DEFS(adau1977,
++	DAILINK_COMP_ARRAY(COMP_EMPTY()),
++	DAILINK_COMP_ARRAY(COMP_CODEC("adau1977.1-0011", "adau1977-hifi")),
++	DAILINK_COMP_ARRAY(COMP_EMPTY()));
++
++static struct snd_soc_dai_link snd_rpi_adau1977_dai[] = {
++	{
++	.name           = "adau1977",
++	.stream_name    = "ADAU1977",
++	.init           = adau1977_init,
++	.dai_fmt = SND_SOC_DAIFMT_I2S |
++		SND_SOC_DAIFMT_NB_NF |
++		SND_SOC_DAIFMT_CBM_CFM,
++	SND_SOC_DAILINK_REG(adau1977),
++	},
++};
++
++static struct snd_rpi_simple_drvdata drvdata_adau1977 = {
++	.card_name = "snd_rpi_adau1977_adc",
++	.dai       = snd_rpi_adau1977_dai,
++};
++
++SND_SOC_DAILINK_DEFS(gvchat,
++	DAILINK_COMP_ARRAY(COMP_EMPTY()),
++	DAILINK_COMP_ARRAY(COMP_CODEC("voicehat-codec", "voicehat-hifi")),
++	DAILINK_COMP_ARRAY(COMP_EMPTY()));
++
++static struct snd_soc_dai_link snd_googlevoicehat_soundcard_dai[] = {
++{
++	.name           = "Google voiceHAT SoundCard",
++	.stream_name    = "Google voiceHAT SoundCard HiFi",
++	.dai_fmt        =  SND_SOC_DAIFMT_I2S | SND_SOC_DAIFMT_NB_NF |
++				SND_SOC_DAIFMT_CBS_CFS,
++	SND_SOC_DAILINK_REG(gvchat),
++},
++};
++
++static struct snd_rpi_simple_drvdata drvdata_googlevoicehat = {
++	.card_name = "snd_rpi_googlevoicehat_soundcard",
++	.dai       = snd_googlevoicehat_soundcard_dai,
++};
++
++SND_SOC_DAILINK_DEFS(hifiberry_dacplusdsp,
++	DAILINK_COMP_ARRAY(COMP_EMPTY()),
++	DAILINK_COMP_ARRAY(COMP_CODEC("dacplusdsp-codec", "dacplusdsp-hifi")),
++	DAILINK_COMP_ARRAY(COMP_EMPTY()));
++
++static struct snd_soc_dai_link snd_hifiberrydacplusdsp_soundcard_dai[] = {
++{
++	.name           = "Hifiberry DAC+DSP SoundCard",
++	.stream_name    = "Hifiberry DAC+DSP SoundCard HiFi",
++	.dai_fmt        =  SND_SOC_DAIFMT_I2S |
++			   SND_SOC_DAIFMT_NB_NF |
++			   SND_SOC_DAIFMT_CBS_CFS,
++	SND_SOC_DAILINK_REG(hifiberry_dacplusdsp),
++},
++};
++
++static struct snd_rpi_simple_drvdata drvdata_hifiberrydacplusdsp = {
++	.card_name = "snd_rpi_hifiberrydacplusdsp_soundcard",
++	.dai       = snd_hifiberrydacplusdsp_soundcard_dai,
++};
++
++SND_SOC_DAILINK_DEFS(hifiberry_amp,
++	DAILINK_COMP_ARRAY(COMP_EMPTY()),
++	DAILINK_COMP_ARRAY(COMP_CODEC("tas5713.1-001b", "tas5713-hifi")),
++	DAILINK_COMP_ARRAY(COMP_EMPTY()));
++
++static struct snd_soc_dai_link snd_hifiberry_amp_dai[] = {
++	{
++		.name           = "HifiBerry AMP",
++		.stream_name    = "HifiBerry AMP HiFi",
++		.dai_fmt        = SND_SOC_DAIFMT_I2S |
++					SND_SOC_DAIFMT_NB_NF |
++					SND_SOC_DAIFMT_CBS_CFS,
++		SND_SOC_DAILINK_REG(hifiberry_amp),
++	},
++};
++
++static struct snd_rpi_simple_drvdata drvdata_hifiberry_amp = {
++	.card_name        = "snd_rpi_hifiberry_amp",
++	.dai              = snd_hifiberry_amp_dai,
++	.fixed_bclk_ratio = 64,
++};
++
++SND_SOC_DAILINK_DEFS(hifiberry_dac,
++	DAILINK_COMP_ARRAY(COMP_EMPTY()),
++	DAILINK_COMP_ARRAY(COMP_CODEC("pcm5102a-codec", "pcm5102a-hifi")),
++	DAILINK_COMP_ARRAY(COMP_EMPTY()));
++
++static struct snd_soc_dai_link snd_hifiberry_dac_dai[] = {
++	{
++		.name           = "HifiBerry DAC",
++		.stream_name    = "HifiBerry DAC HiFi",
++		.dai_fmt        = SND_SOC_DAIFMT_I2S |
++					SND_SOC_DAIFMT_NB_NF |
++					SND_SOC_DAIFMT_CBS_CFS,
++		SND_SOC_DAILINK_REG(hifiberry_dac),
++	},
++};
++
++static struct snd_rpi_simple_drvdata drvdata_hifiberry_dac = {
++	.card_name = "snd_rpi_hifiberry_dac",
++	.dai       = snd_hifiberry_dac_dai,
++};
++
++SND_SOC_DAILINK_DEFS(rpi_dac,
++	DAILINK_COMP_ARRAY(COMP_EMPTY()),
++	DAILINK_COMP_ARRAY(COMP_CODEC("pcm1794a-codec", "pcm1794a-hifi")),
++	DAILINK_COMP_ARRAY(COMP_EMPTY()));
++
++static struct snd_soc_dai_link snd_rpi_dac_dai[] = {
++{
++	.name		= "RPi-DAC",
++	.stream_name	= "RPi-DAC HiFi",
++	.dai_fmt	= SND_SOC_DAIFMT_I2S | SND_SOC_DAIFMT_NB_NF |
++				SND_SOC_DAIFMT_CBS_CFS,
++	SND_SOC_DAILINK_REG(rpi_dac),
++},
++};
++
++static struct snd_rpi_simple_drvdata drvdata_rpi_dac = {
++	.card_name        = "snd_rpi_rpi_dac",
++	.dai              = snd_rpi_dac_dai,
++	.fixed_bclk_ratio = 64,
++};
++
++SND_SOC_DAILINK_DEFS(merus_amp,
++	DAILINK_COMP_ARRAY(COMP_EMPTY()),
++	DAILINK_COMP_ARRAY(COMP_CODEC("ma120x0p.1-0020","ma120x0p-amp")),
++	DAILINK_COMP_ARRAY(COMP_EMPTY()));
++
++static struct snd_soc_dai_link snd_merus_amp_dai[] = {
++	{
++		.name           = "MerusAmp",
++		.stream_name    = "Merus Audio Amp",
++		.dai_fmt        = SND_SOC_DAIFMT_I2S |
++					SND_SOC_DAIFMT_NB_NF |
++					SND_SOC_DAIFMT_CBS_CFS,
++		SND_SOC_DAILINK_REG(merus_amp),
++	},
++};
++
++static struct snd_rpi_simple_drvdata drvdata_merus_amp = {
++	.card_name        = "snd_rpi_merus_amp",
++	.dai              = snd_merus_amp_dai,
++	.fixed_bclk_ratio = 64,
++};
++
++SND_SOC_DAILINK_DEFS(pifi_mini_210,
++	DAILINK_COMP_ARRAY(COMP_EMPTY()),
++	DAILINK_COMP_ARRAY(COMP_CODEC("tas571x.1-001a", "tas571x-hifi")),
++	DAILINK_COMP_ARRAY(COMP_EMPTY()));
++
++static struct snd_soc_dai_link snd_pifi_mini_210_dai[] = {
++	{
++		.name           = "PiFi Mini 210",
++		.stream_name    = "PiFi Mini 210 HiFi",
++		.init			= pifi_mini_210_init,
++		.dai_fmt        = SND_SOC_DAIFMT_I2S |
++					SND_SOC_DAIFMT_NB_NF |
++					SND_SOC_DAIFMT_CBS_CFS,
++		SND_SOC_DAILINK_REG(pifi_mini_210),
++	},
++};
++
++static struct snd_rpi_simple_drvdata drvdata_pifi_mini_210 = {
++	.card_name        = "snd_pifi_mini_210",
++	.dai              = snd_pifi_mini_210_dai,
++	.fixed_bclk_ratio = 64,
++};
++
++static const struct of_device_id snd_rpi_simple_of_match[] = {
++	{ .compatible = "adi,adau1977-adc",
++		.data = (void *) &drvdata_adau1977 },
++	{ .compatible = "googlevoicehat,googlevoicehat-soundcard",
++		.data = (void *) &drvdata_googlevoicehat },
++	{ .compatible = "hifiberrydacplusdsp,hifiberrydacplusdsp-soundcard",
++		.data = (void *) &drvdata_hifiberrydacplusdsp },
++	{ .compatible = "hifiberry,hifiberry-amp",
++		.data = (void *) &drvdata_hifiberry_amp },
++	{ .compatible = "hifiberry,hifiberry-dac",
++		.data = (void *) &drvdata_hifiberry_dac },
++	{ .compatible = "rpi,rpi-dac", &drvdata_rpi_dac},
++	{ .compatible = "merus,merus-amp",
++		.data = (void *) &drvdata_merus_amp },
++	{ .compatible = "pifi,pifi-mini-210",
++		.data = (void *) &drvdata_pifi_mini_210 },
++	{},
++};
++
++static int snd_rpi_simple_probe(struct platform_device *pdev)
++{
++	int ret = 0;
++	const struct of_device_id *of_id;
++
++	snd_rpi_simple.dev = &pdev->dev;
++	of_id = of_match_node(snd_rpi_simple_of_match, pdev->dev.of_node);
++
++	if (pdev->dev.of_node && of_id->data) {
++		struct device_node *i2s_node;
++		struct snd_rpi_simple_drvdata *drvdata =
++			(struct snd_rpi_simple_drvdata *) of_id->data;
++		struct snd_soc_dai_link *dai = drvdata->dai;
++
++		snd_soc_card_set_drvdata(&snd_rpi_simple, drvdata);
++
++		/* More complex drivers might override individual functions */
++		if (!dai->init)
++			dai->init = snd_rpi_simple_init;
++		if (!dai->ops)
++			dai->ops = &snd_rpi_simple_ops;
++
++		snd_rpi_simple.name = drvdata->card_name;
++
++		snd_rpi_simple.dai_link = dai;
++		i2s_node = of_parse_phandle(pdev->dev.of_node,
++				"i2s-controller", 0);
++		if (!i2s_node) {
++			pr_err("Failed to find i2s-controller DT node\n");
++			return -ENODEV;
++		}
++
++		dai->cpus->of_node = i2s_node;
++		dai->platforms->of_node = i2s_node;
++	}
++
++	ret = devm_snd_soc_register_card(&pdev->dev, &snd_rpi_simple);
++	if (ret && ret != -EPROBE_DEFER)
++		dev_err(&pdev->dev, "Failed to register card %d\n", ret);
++
++	return ret;
++}
++
++static struct platform_driver snd_rpi_simple_driver = {
++	.driver = {
++		.name   = "snd-rpi-simple",
++		.owner  = THIS_MODULE,
++		.of_match_table = snd_rpi_simple_of_match,
++	},
++	.probe          = snd_rpi_simple_probe,
++};
++MODULE_DEVICE_TABLE(of, snd_rpi_simple_of_match);
++
++module_platform_driver(snd_rpi_simple_driver);
++
++MODULE_AUTHOR("Tim Gover <tim.gover@raspberrypi.org>");
++MODULE_DESCRIPTION("ASoC Raspberry Pi simple soundcard driver ");
++MODULE_LICENSE("GPL v2");
