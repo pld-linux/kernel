@@ -67,7 +67,7 @@
 
 %define		rel		1
 %define		basever		5.15
-%define		postver		.12
+%define		postver		.15
 
 # define this to '-%{basever}' for longterm branch
 %define		versuffix	%{nil}
