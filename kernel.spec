@@ -952,7 +952,7 @@ ICECC_EXTRAFILES="${ICECC_EXTRAFILES:+$ICECC_EXTRAFILES:}$(test -d %{objdir}/scr
 
 %install
 rm -rf $RPM_BUILD_ROOT
-%{__make} %{MakeOpts} -j1 %{!?with_verbose:-s} modules_install \
+%{__make} %{MakeOpts} %{!?with_verbose:-s} modules_install \
 	-C %{objdir} \
 	%{?with_verbose:V=1} \
 	DEPMOD=%{DepMod} \
