@@ -1127,7 +1127,8 @@ if [[ "$CREATE_SYMLINKS" != [Nn][Oo] ]]; then
 	ln -sf vmlinuz-%{kernel_release} /boot/vmlinuz
 	ln -sf System.map-%{kernel_release} /boot/System.map
 %ifarch %{arm} aarch64
-	mv -f /boot/dtb{,.old} 2> /dev/null
+	test -L /boot/dtb.old && rm /boot/dtb.old
+	test ! -e /boot/dtb.old && mv -f /boot/dtb{,.old} 2> /dev/null
 	ln -sf dtb-%{kernel_release} /boot/dtb
 %endif
 %if 0%{?alt_kernel:1}
