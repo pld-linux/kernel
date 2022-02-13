@@ -1,999 +1,1029 @@
-From c223fa5f3cded17156fb781c1861a92349c4c5be Mon Sep 17 00:00:00 2001
-From: Tobias Schramm <t.schramm@manjaro.org>
-Date: Thu, 28 May 2020 14:01:59 +0200
-Subject: [PATCH] leds: Add support for inverted LED triggers
+From 8149051c34bc3d4c55adc56d04ffb7f7a04c2fd9 Mon Sep 17 00:00:00 2001
+From: Dan Johansen <strit@manjaro.org>
+Date: Sun, 2 Jan 2022 16:45:28 +0100
+Subject: [PATCH 1/2] Add megis extcon changes to fusb302
 
-Needs to be changed for upstream, invert via sysfs not trigger duplication
-
-Signed-off-by: Tobias Schramm <t.schramm@manjaro.org>
+Signed-off-by: Dan Johansen <strit@manjaro.org>
 ---
- drivers/leds/led-core.c     |   1 +
- drivers/leds/led-triggers.c | 149 +++++++++++++++++++++++++++---------
- include/linux/leds.h        |   1 +
- 3 files changed, 113 insertions(+), 38 deletions(-)
+ drivers/phy/rockchip/phy-rockchip-typec.c |  5 +++
+ drivers/usb/typec/Kconfig                 |  7 ++++
+ drivers/usb/typec/Makefile                |  1 +
+ drivers/usb/typec/tcpm/fusb302.c          | 47 ++++++++++++++++-------
+ drivers/usb/typec/tcpm/fusb302_reg.h      | 16 ++++----
+ 5 files changed, 53 insertions(+), 23 deletions(-)
 
-diff --git a/drivers/leds/led-core.c b/drivers/leds/led-core.c
-index c4e780bdb385..3973676d6f1e 100644
---- a/drivers/leds/led-core.c
-+++ b/drivers/leds/led-core.c
-@@ -177,6 +177,7 @@ static void led_blink_setup(struct led_classdev *led_cdev,
- 		     unsigned long *delay_off)
- {
- 	if (!test_bit(LED_BLINK_ONESHOT, &led_cdev->work_flags) &&
-+	    !test_bit(LED_BLINK_INVERT, &led_cdev->work_flags) &&
- 	    led_cdev->blink_set &&
- 	    !led_cdev->blink_set(led_cdev, delay_on, delay_off))
- 		return;
-diff --git a/drivers/leds/led-triggers.c b/drivers/leds/led-triggers.c
-index 91da90cfb11d..7f2898a0e1e3 100644
---- a/drivers/leds/led-triggers.c
-+++ b/drivers/leds/led-triggers.c
-@@ -27,20 +27,89 @@ LIST_HEAD(trigger_list);
+diff --git a/drivers/phy/rockchip/phy-rockchip-typec.c b/drivers/phy/rockchip/phy-rockchip-typec.c
+index d2bbdc96a167..fa10ee9a5794 100644
+--- a/drivers/phy/rockchip/phy-rockchip-typec.c
++++ b/drivers/phy/rockchip/phy-rockchip-typec.c
+@@ -350,6 +350,7 @@ struct usb3phy_reg {
+  * struct rockchip_usb3phy_port_cfg - usb3-phy port configuration.
+  * @reg: the base address for usb3-phy config.
+  * @typec_conn_dir: the register of type-c connector direction.
++ * @typec_conn_dir_sel: the register of type-c connector direction source.
+  * @usb3tousb2_en: the register of type-c force usb2 to usb2 enable.
+  * @external_psm: the register of type-c phy external psm clock.
+  * @pipe_status: the register of type-c phy pipe status.
+@@ -360,6 +361,7 @@ struct usb3phy_reg {
+ struct rockchip_usb3phy_port_cfg {
+ 	unsigned int reg;
+ 	struct usb3phy_reg typec_conn_dir;
++	struct usb3phy_reg typec_conn_dir_sel;
+ 	struct usb3phy_reg usb3tousb2_en;
+ 	struct usb3phy_reg external_psm;
+ 	struct usb3phy_reg pipe_status;
+@@ -434,6 +436,7 @@ static const struct rockchip_usb3phy_port_cfg rk3399_usb3phy_port_cfgs[] = {
+ 	{
+ 		.reg = 0xff7c0000,
+ 		.typec_conn_dir	= { 0xe580, 0, 16 },
++		.typec_conn_dir_sel	= { 0xe580, 8, 16+8 },
+ 		.usb3tousb2_en	= { 0xe580, 3, 19 },
+ 		.external_psm	= { 0xe588, 14, 30 },
+ 		.pipe_status	= { 0xe5c0, 0, 0 },
+@@ -444,6 +447,7 @@ static const struct rockchip_usb3phy_port_cfg rk3399_usb3phy_port_cfgs[] = {
+ 	{
+ 		.reg = 0xff800000,
+ 		.typec_conn_dir	= { 0xe58c, 0, 16 },
++		.typec_conn_dir_sel	= { 0xe58c, 8, 16+8 },
+ 		.usb3tousb2_en	= { 0xe58c, 3, 19 },
+ 		.external_psm	= { 0xe594, 14, 30 },
+ 		.pipe_status	= { 0xe5c0, 16, 16 },
+@@ -739,6 +743,7 @@ static int tcphy_phy_init(struct rockchip_typec_phy *tcphy, u8 mode)
  
-  /* Used by LED Class */
+ 	reset_control_deassert(tcphy->tcphy_rst);
  
-+
- static inline bool
- trigger_relevant(struct led_classdev *led_cdev, struct led_trigger *trig)
- {
- 	return !trig->trigger_type || trig->trigger_type == led_cdev->trigger_type;
- }
++	property_enable(tcphy, &cfg->typec_conn_dir_sel, 0);
+ 	property_enable(tcphy, &cfg->typec_conn_dir, tcphy->flip);
+ 	tcphy_dp_aux_set_flip(tcphy);
  
+diff --git a/drivers/usb/typec/Kconfig b/drivers/usb/typec/Kconfig
+index ab480f38523a..01ecc5e590f1 100644
+--- a/drivers/usb/typec/Kconfig
++++ b/drivers/usb/typec/Kconfig
+@@ -88,6 +88,13 @@ config TYPEC_QCOM_PMIC
+ 	  It will also enable the VBUS output to connected devices when a
+ 	  DFP connection is made.
+ 
++config TYPEC_EXTCON
++	tristate "Type-C switch/mux -> extcon interface bridge driver"
++	depends on USB_ROLE_SWITCH
++	help
++	  Say Y or M here if your system needs bridging between typec class
++	  and extcon interfaces.
 +
-+#define TRIGGER_INVERT_SUFFIX "-inverted"
-+
-+/*
-+ * Check suffix of trigger name agains TRIGGER_INVERT_SUFFIX
-+ */
-+static bool led_trigger_is_inverted(const char *trigname)
-+{
-+	if (strlen(trigname) >= strlen(TRIGGER_INVERT_SUFFIX)) {
-+		return !strcmp(trigname + strlen(trigname) -
-+				 strlen(TRIGGER_INVERT_SUFFIX),
-+				TRIGGER_INVERT_SUFFIX);
+ source "drivers/usb/typec/mux/Kconfig"
+ 
+ source "drivers/usb/typec/altmodes/Kconfig"
+diff --git a/drivers/usb/typec/Makefile b/drivers/usb/typec/Makefile
+index a0adb8947a30..d9d829386b73 100644
+--- a/drivers/usb/typec/Makefile
++++ b/drivers/usb/typec/Makefile
+@@ -8,4 +8,5 @@ obj-$(CONFIG_TYPEC_TPS6598X)	+= tipd/
+ obj-$(CONFIG_TYPEC_HD3SS3220)	+= hd3ss3220.o
+ obj-$(CONFIG_TYPEC_QCOM_PMIC)	+= qcom-pmic-typec.o
+ obj-$(CONFIG_TYPEC_STUSB160X) 	+= stusb160x.o
++obj-$(CONFIG_TYPEC_EXTCON)	+= typec-extcon.o
+ obj-$(CONFIG_TYPEC)		+= mux/
+diff --git a/drivers/usb/typec/tcpm/fusb302.c b/drivers/usb/typec/tcpm/fusb302.c
+index 72f9001b0792..cb26793f90f8 100644
+--- a/drivers/usb/typec/tcpm/fusb302.c
++++ b/drivers/usb/typec/tcpm/fusb302.c
+@@ -440,6 +440,16 @@ static int tcpm_get_current_limit(struct tcpc_dev *dev)
+ 	int current_limit = 0;
+ 	unsigned long timeout;
+ 
++	/*
++	 * To avoid cycles in OF dependencies, we get extcon when necessary
++	 * outside of probe function.
++	 */
++	if (of_property_read_bool(chip->dev->of_node, "extcon") && !chip->extcon) {
++		chip->extcon = extcon_get_edev_by_phandle(chip->dev, 0);
++		if (IS_ERR(chip->extcon))
++			chip->extcon = NULL;
 +	}
 +
-+	return false;
-+}
-+
-+/*
-+ * Get length of trigger name name without TRIGGER_INVERT_SUFFIX
-+ */
-+static size_t led_trigger_get_name_len(const char *trigname)
-+{
-+	// Subtract length of TRIGGER_INVERT_SUFFIX if trigger is inverted
-+	if (led_trigger_is_inverted(trigname))
-+		return strlen(trigname) - strlen(TRIGGER_INVERT_SUFFIX);
-+	return strlen(trigname);
-+}
-+
-+/*
-+ * Find and set led trigger by name
-+ */
-+static int led_trigger_set_str_(struct led_classdev *led_cdev,
-+			       const char *trigname, bool lock)
-+{
-+	struct led_trigger *trig;
-+	bool inverted = led_trigger_is_inverted(trigname);
-+	size_t len = led_trigger_get_name_len(trigname);
-+
-+	down_read(&triggers_list_lock);
-+	list_for_each_entry(trig, &trigger_list, next_trig) {
-+		/* Compare trigger name without inversion suffix */
-+		if (strlen(trig->name) == len &&
-+		    !strncmp(trigname, trig->name, len) &&
-+		    trigger_relevant(led_cdev, trig)) {
-+			if (lock)
-+				down_write(&led_cdev->trigger_lock);
-+			led_trigger_set(led_cdev, trig);
-+			if (inverted)
-+				led_cdev->flags |= LED_INVERT_TRIGGER;
-+			else
-+				led_cdev->flags &= ~LED_INVERT_TRIGGER;
-+			if (lock)
-+				up_write(&led_cdev->trigger_lock);
-+
-+			up_read(&triggers_list_lock);
-+			return 0;
-+		}
-+	}
-+	/* we come here only if trigname matches no trigger */
-+	up_read(&triggers_list_lock);
-+	return -EINVAL;
-+}
-+
-+#define led_trigger_set_str(cdev, name) led_trigger_set_str_(cdev, name, true)
-+#define led_trigger_set_str_unlocked(cdev, name) \
-+		led_trigger_set_str_(cdev, name, false)
-+
-+
- ssize_t led_trigger_write(struct file *filp, struct kobject *kobj,
- 			  struct bin_attribute *bin_attr, char *buf,
- 			  loff_t pos, size_t count)
+ 	if (!chip->extcon)
+ 		return 0;
+ 
+@@ -498,6 +508,7 @@ static int fusb302_set_toggling(struct fusb302_chip *chip,
+ 				enum toggling_mode mode)
  {
- 	struct device *dev = kobj_to_dev(kobj);
- 	struct led_classdev *led_cdev = dev_get_drvdata(dev);
--	struct led_trigger *trig;
- 	int ret = count;
-+	char *name;
+ 	int ret = 0;
++	u8 reg;
  
- 	mutex_lock(&led_cdev->led_access);
- 
-@@ -54,20 +123,10 @@ ssize_t led_trigger_write(struct file *filp, struct kobject *kobj,
- 		goto unlock;
+ 	/* first disable toggling */
+ 	ret = fusb302_i2c_clear_bits(chip, FUSB_REG_CONTROL2,
+@@ -556,6 +567,12 @@ static int fusb302_set_toggling(struct fusb302_chip *chip,
+ 	} else {
+ 		/* Datasheet says vconn MUST be off when toggling */
+ 		WARN(chip->vconn_on, "Vconn is on during toggle start");
++
++		/* clear interrupts */
++                ret = fusb302_i2c_read(chip, FUSB_REG_INTERRUPT, &reg);
++		if (ret < 0)
++			return ret;
++
+ 		/* unmask TOGDONE interrupt */
+ 		ret = fusb302_i2c_clear_bits(chip, FUSB_REG_MASKA,
+ 					     FUSB_REG_MASKA_TOGDONE);
+@@ -635,6 +652,14 @@ static int tcpm_set_cc(struct tcpc_dev *dev, enum typec_cc_status cc)
+ 		goto done;
  	}
  
--	down_read(&triggers_list_lock);
--	list_for_each_entry(trig, &trigger_list, next_trig) {
--		if (sysfs_streq(buf, trig->name) && trigger_relevant(led_cdev, trig)) {
--			down_write(&led_cdev->trigger_lock);
--			led_trigger_set(led_cdev, trig);
--			up_write(&led_cdev->trigger_lock);
--
--			up_read(&triggers_list_lock);
--			goto unlock;
--		}
++	/* adjust current for SRC */
++	ret = fusb302_set_src_current(chip, cc_src_current[cc]);
++	if (ret < 0) {
++		fusb302_log(chip, "cannot set src current %s, ret=%d",
++			    typec_cc_status_name[cc], ret);
++		goto done;
++	}
++
+ 	ret = fusb302_i2c_mask_write(chip, FUSB_REG_SWITCHES0,
+ 				     switches0_mask, switches0_data);
+ 	if (ret < 0) {
+@@ -645,14 +670,6 @@ static int tcpm_set_cc(struct tcpc_dev *dev, enum typec_cc_status cc)
+ 	chip->cc1 = TYPEC_CC_OPEN;
+ 	chip->cc2 = TYPEC_CC_OPEN;
+ 
+-	/* adjust current for SRC */
+-	ret = fusb302_set_src_current(chip, cc_src_current[cc]);
+-	if (ret < 0) {
+-		fusb302_log(chip, "cannot set src current %s, ret=%d",
+-			    typec_cc_status_name[cc], ret);
+-		goto done;
 -	}
--	/* we come here only if buf matches no trigger */
--	ret = -EINVAL;
--	up_read(&triggers_list_lock);
-+	name = strim(buf);
-+	ret = led_trigger_set_str(led_cdev, name);
-+	if (!ret)
-+		ret = count;
- 
- unlock:
- 	mutex_unlock(&led_cdev->led_access);
-@@ -99,16 +158,25 @@ static int led_trigger_format(char *buf, size_t size,
- 				       led_cdev->trigger ? "none" : "[none]");
- 
- 	list_for_each_entry(trig, &trigger_list, next_trig) {
--		bool hit;
-+		bool hit = led_cdev->trigger == trig;
-+		bool inverted = led_cdev->flags & LED_INVERT_TRIGGER;
- 
- 		if (!trigger_relevant(led_cdev, trig))
- 			continue;
- 
--		hit = led_cdev->trigger && !strcmp(led_cdev->trigger->name, trig->name);
-+		/* print non-inverted trigger */
-+		len += led_trigger_snprintf(buf + len, size - len,
-+					    " %s%s%s",
-+					    hit && !inverted ? "[" : "",
-+					    trig->name,
-+					    hit && !inverted ? "]" : "");
- 
-+		/* print inverted trigger */
- 		len += led_trigger_snprintf(buf + len, size - len,
--					    " %s%s%s", hit ? "[" : "",
--					    trig->name, hit ? "]" : "");
-+					    " %s%s"TRIGGER_INVERT_SUFFIX"%s",
-+					    hit && inverted ? "[" : "",
-+					    trig->name,
-+					    hit && inverted ? "]" : "");
- 	}
- 
- 	len += led_trigger_snprintf(buf + len, size - len, "\n");
-@@ -245,22 +313,15 @@ EXPORT_SYMBOL_GPL(led_trigger_remove);
- 
- void led_trigger_set_default(struct led_classdev *led_cdev)
- {
--	struct led_trigger *trig;
-+	bool found;
- 
- 	if (!led_cdev->default_trigger)
- 		return;
- 
- 	down_read(&triggers_list_lock);
--	down_write(&led_cdev->trigger_lock);
--	list_for_each_entry(trig, &trigger_list, next_trig) {
--		if (!strcmp(led_cdev->default_trigger, trig->name) &&
--		    trigger_relevant(led_cdev, trig)) {
--			led_cdev->flags |= LED_INIT_DEFAULT_TRIGGER;
--			led_trigger_set(led_cdev, trig);
--			break;
--		}
--	}
--	up_write(&led_cdev->trigger_lock);
-+	found = !led_trigger_set_str(led_cdev, led_cdev->default_trigger);
-+	if (found)
-+		led_cdev->flags |= LED_INIT_DEFAULT_TRIGGER;
- 	up_read(&triggers_list_lock);
- }
- EXPORT_SYMBOL_GPL(led_trigger_set_default);
-@@ -305,12 +366,15 @@ int led_trigger_register(struct led_trigger *trig)
- 	/* Register with any LEDs that have this as a default trigger */
- 	down_read(&leds_list_lock);
- 	list_for_each_entry(led_cdev, &leds_list, node) {
-+		bool found;
-+
- 		down_write(&led_cdev->trigger_lock);
- 		if (!led_cdev->trigger && led_cdev->default_trigger &&
--		    !strcmp(led_cdev->default_trigger, trig->name) &&
- 		    trigger_relevant(led_cdev, trig)) {
--			led_cdev->flags |= LED_INIT_DEFAULT_TRIGGER;
--			led_trigger_set(led_cdev, trig);
-+			found = !led_trigger_set_str_unlocked(led_cdev,
-+					led_cdev->default_trigger);
-+			if (found)
-+				led_cdev->flags |= LED_INIT_DEFAULT_TRIGGER;
- 		}
- 		up_write(&led_cdev->trigger_lock);
- 	}
-@@ -383,8 +447,14 @@ void led_trigger_event(struct led_trigger *trig,
- 		return;
- 
- 	rcu_read_lock();
--	list_for_each_entry_rcu(led_cdev, &trig->led_cdevs, trig_list)
--		led_set_brightness(led_cdev, brightness);
-+	list_for_each_entry_rcu(led_cdev, &trig->led_cdevs, trig_list) {
-+		/* Reverse brightness if LED is inverted */
-+		if (led_cdev->flags & LED_INVERT_TRIGGER)
-+			led_set_brightness(led_cdev,
-+				led_cdev->max_brightness - brightness);
-+		else
-+			led_set_brightness(led_cdev, brightness);
-+	}
- 	rcu_read_unlock();
- }
- EXPORT_SYMBOL_GPL(led_trigger_event);
-@@ -402,10 +472,13 @@ static void led_trigger_blink_setup(struct led_trigger *trig,
- 
- 	rcu_read_lock();
- 	list_for_each_entry_rcu(led_cdev, &trig->led_cdevs, trig_list) {
--		if (oneshot)
-+		bool trigger_inverted =
-+			!!(led_cdev->flags & LED_INVERT_TRIGGER);
-+		if (oneshot) {
-+			/* use logical xnor to determine inversion parameter */
- 			led_blink_set_oneshot(led_cdev, delay_on, delay_off,
--					      invert);
--		else
-+					      (!!invert) == trigger_inverted);
-+		} else
- 			led_blink_set(led_cdev, delay_on, delay_off);
- 	}
- 	rcu_read_unlock();
-diff --git a/include/linux/leds.h b/include/linux/leds.h
-index 6a8d6409c993..9cbf42cf08e8 100644
---- a/include/linux/leds.h
-+++ b/include/linux/leds.h
-@@ -79,6 +79,7 @@ struct led_classdev {
- #define LED_BRIGHT_HW_CHANGED	BIT(21)
- #define LED_RETAIN_AT_SHUTDOWN	BIT(22)
- #define LED_INIT_DEFAULT_TRIGGER BIT(23)
-+#define LED_INVERT_TRIGGER	BIT(24)
- 
- 	/* set_brightness_work / blink_timer flags, atomic, private. */
- 	unsigned long		work_flags;
--- 
-GitLab
-
-From 90a117ec260f54078aabcf2c1cde72f4425116ba Mon Sep 17 00:00:00 2001
-From: Tobias Schramm <t.schramm@manjaro.org>
-Date: Thu, 28 May 2020 14:12:56 +0200
-Subject: [PATCH] tty: serdev: support shutdown op
-
-Allow serdev drivers to register a shutdown handler
-
-Signed-off-by: Tobias Schramm <t.schramm@manjaro.org>
----
- drivers/tty/serdev/core.c | 11 +++++++++++
- include/linux/serdev.h    |  1 +
- 2 files changed, 12 insertions(+)
-
-diff --git a/drivers/tty/serdev/core.c b/drivers/tty/serdev/core.c
-index c5f0d936b003..37e45c356540 100644
---- a/drivers/tty/serdev/core.c
-+++ b/drivers/tty/serdev/core.c
-@@ -432,11 +432,22 @@ static int serdev_drv_remove(struct device *dev)
- 	dev_pm_domain_detach(dev, true);
- }
- 
-+static void serdev_drv_shutdown(struct device *dev)
-+{
-+	const struct serdev_device_driver *sdrv;
-+	if (dev->driver) {
-+		sdrv = to_serdev_device_driver(dev->driver);
-+		if (sdrv->shutdown)
-+			sdrv->shutdown(to_serdev_device(dev));
-+	}
-+}
-+
- static struct bus_type serdev_bus_type = {
- 	.name		= "serial",
- 	.match		= serdev_device_match,
- 	.probe		= serdev_drv_probe,
- 	.remove		= serdev_drv_remove,
-+	.shutdown	= serdev_drv_shutdown,
- };
- 
- /**
-diff --git a/include/linux/serdev.h b/include/linux/serdev.h
-index 9f14f9c12ec4..94050561325c 100644
---- a/include/linux/serdev.h
-+++ b/include/linux/serdev.h
-@@ -63,6 +63,7 @@ struct serdev_device_driver {
- 	struct device_driver driver;
- 	int	(*probe)(struct serdev_device *);
- 	void	(*remove)(struct serdev_device *);
-+	void	(*shutdown)(struct serdev_device *);
- };
- 
- static inline struct serdev_device_driver *to_serdev_device_driver(struct device_driver *d)
--- 
-GitLab
-
-From 4381cb3400bd61288d2122f3eb74711963885323 Mon Sep 17 00:00:00 2001
-From: Tobias Schramm <t.schramm@manjaro.org>
-Date: Thu, 28 May 2020 14:14:06 +0200
-Subject: [PATCH] bluetooth: hci_serdev: Clear registered bit on unregister
-
-Signed-off-by: Tobias Schramm <t.schramm@manjaro.org>
----
- drivers/bluetooth/hci_serdev.c | 2 ++
- 1 file changed, 2 insertions(+)
-
-diff --git a/drivers/bluetooth/hci_serdev.c b/drivers/bluetooth/hci_serdev.c
-index ef96ad06fa54..95c723c0ea01 100644
---- a/drivers/bluetooth/hci_serdev.c
-+++ b/drivers/bluetooth/hci_serdev.c
-@@ -395,5 +395,7 @@ void hci_uart_unregister_device(struct hci_uart *hu)
- 		clear_bit(HCI_UART_PROTO_READY, &hu->flags);
- 		serdev_device_close(hu->serdev);
- 	}
-+
-+	clear_bit(HCI_UART_REGISTERED, &hu->flags);
- }
- EXPORT_SYMBOL_GPL(hci_uart_unregister_device);
--- 
-GitLab
-
-From 4065c5018d7d4fc7d6ea51056a954f23320688ca Mon Sep 17 00:00:00 2001
-From: Tobias Schramm <t.schramm@manjaro.org>
-Date: Thu, 28 May 2020 14:15:08 +0200
-Subject: [PATCH] bluetooth: hci_bcm: disable power on shutdown
-
-Firmware behaves wonky when not power cycled over reboots
-
-Signed-off-by: Tobias Schramm <t.schramm@manjaro.org>
----
- drivers/bluetooth/hci_bcm.c | 18 ++++++++++++++++++
- 1 file changed, 18 insertions(+)
-
-diff --git a/drivers/bluetooth/hci_bcm.c b/drivers/bluetooth/hci_bcm.c
-index 8ea5ca8d71d6..6d5871992f79 100644
---- a/drivers/bluetooth/hci_bcm.c
-+++ b/drivers/bluetooth/hci_bcm.c
-@@ -1469,6 +1469,23 @@ static void bcm_serdev_remove(struct serdev_device *serdev)
- 	hci_uart_unregister_device(&bcmdev->serdev_hu);
- }
- 
-+static void bcm_serdev_shutdown(struct serdev_device *serdev)
-+{
-+	struct bcm_device *bcmdev = serdev_device_get_drvdata(serdev);
-+
-+/*
-+	if (test_bit(HCI_UART_REGISTERED, &bcmdev->hu->flags)) {
-+		hci_uart_unregister_device(&bcmdev->serdev_hu);
-+	}
-+*/
-+	dev_info(bcmdev->dev, "Cutting power to bluetooth module\n");
-+	if (bcm_gpio_set_power(bcmdev, false)) {
-+		dev_err(bcmdev->dev, "Failed to power down\n");
-+	}
-+	usleep_range(500000, 1000000);
-+}
-+
-+
- #ifdef CONFIG_OF
- static struct bcm_device_data bcm4354_device_data = {
- 	.no_early_set_baudrate = true,
-@@ -1494,6 +1511,7 @@ MODULE_DEVICE_TABLE(of, bcm_bluetooth_of_match);
- static struct serdev_device_driver bcm_serdev_driver = {
- 	.probe = bcm_serdev_probe,
- 	.remove = bcm_serdev_remove,
-+	.shutdown = bcm_serdev_shutdown,
- 	.driver = {
- 		.name = "hci_uart_bcm",
- 		.of_match_table = of_match_ptr(bcm_bluetooth_of_match),
--- 
-GitLab
-
-From f6419edc62979c1e67202b5dc10abd7b22bdedcf Mon Sep 17 00:00:00 2001
-From: Tobias Schramm <t.schramm@manjaro.org>
-Date: Thu, 28 May 2020 14:16:52 +0200
-Subject: [PATCH] mmc: core: pwrseq_simple: disable mmc power on shutdown
-
-Fix for Broadcom SDIO WiFi modules. They misbehave if reinitialized
-without a power cycle.
-
-Signed-off-by: Tobias Schramm <t.schramm@manjaro.org>
----
- drivers/mmc/core/pwrseq_simple.c | 19 ++++++++++++++++---
- 1 file changed, 16 insertions(+), 3 deletions(-)
-
-diff --git a/drivers/mmc/core/pwrseq_simple.c b/drivers/mmc/core/pwrseq_simple.c
-index ea4d3670560e..38fe7e29aba6 100644
---- a/drivers/mmc/core/pwrseq_simple.c
-+++ b/drivers/mmc/core/pwrseq_simple.c
-@@ -80,10 +80,8 @@ static void mmc_pwrseq_simple_post_power_on(struct mmc_host *host)
- 		msleep(pwrseq->post_power_on_delay_ms);
- }
- 
--static void mmc_pwrseq_simple_power_off(struct mmc_host *host)
-+static void __mmc_pwrseq_simple_power_off(struct mmc_pwrseq_simple *pwrseq)
- {
--	struct mmc_pwrseq_simple *pwrseq = to_pwrseq_simple(host->pwrseq);
 -
- 	mmc_pwrseq_simple_set_gpios_value(pwrseq, 1);
+ 	/* enable/disable interrupts, BC_LVL for SNK and COMP_CHNG for SRC */
+ 	switch (cc) {
+ 	case TYPEC_CC_RP_DEF:
+@@ -1528,14 +1545,16 @@ static void fusb302_irq_work(struct work_struct *work)
+ 		    "IRQ: 0x%02x, a: 0x%02x, b: 0x%02x, status0: 0x%02x",
+ 		    interrupt, interrupta, interruptb, status0);
  
- 	if (pwrseq->power_off_delay_us)
-@@ -96,6 +94,12 @@ static void mmc_pwrseq_simple_power_off(struct mmc_host *host)
+-	if (interrupt & FUSB_REG_INTERRUPT_VBUSOK) {
+-		vbus_present = !!(status0 & FUSB_REG_STATUS0_VBUSOK);
++	vbus_present = !!(status0 & FUSB_REG_STATUS0_VBUSOK);
++	if (interrupt & FUSB_REG_INTERRUPT_VBUSOK)
+ 		fusb302_log(chip, "IRQ: VBUS_OK, vbus=%s",
+ 			    vbus_present ? "On" : "Off");
+-		if (vbus_present != chip->vbus_present) {
+-			chip->vbus_present = vbus_present;
+-			tcpm_vbus_change(chip->tcpm_port);
+-		}
++	if (vbus_present != chip->vbus_present) {
++		chip->vbus_present = vbus_present;
++		if (!(interrupt & FUSB_REG_INTERRUPT_VBUSOK))
++		fusb302_log(chip, "IRQ: VBUS changed without interrupt, vbus=%s",
++			    vbus_present ? "On" : "Off");
++		tcpm_vbus_change(chip->tcpm_port);
  	}
- }
  
-+static void mmc_pwrseq_simple_power_off(struct mmc_host *host)
-+{
-+	struct mmc_pwrseq_simple *pwrseq = to_pwrseq_simple(host->pwrseq);
-+	__mmc_pwrseq_simple_power_off(pwrseq);
-+}
-+
- static const struct mmc_pwrseq_ops mmc_pwrseq_simple_ops = {
- 	.pre_power_on = mmc_pwrseq_simple_pre_power_on,
- 	.post_power_on = mmc_pwrseq_simple_post_power_on,
-@@ -151,9 +155,18 @@ static int mmc_pwrseq_simple_remove(struct platform_device *pdev)
- 	return 0;
- }
- 
-+static void mmc_pwrseq_simple_shutdown(struct platform_device *pdev)
-+{
-+	struct mmc_pwrseq_simple *pwrseq = platform_get_drvdata(pdev);
-+
-+	dev_info(&pdev->dev, "Turning off mmc\n");
-+	__mmc_pwrseq_simple_power_off(pwrseq);
-+}
-+
- static struct platform_driver mmc_pwrseq_simple_driver = {
- 	.probe = mmc_pwrseq_simple_probe,
- 	.remove = mmc_pwrseq_simple_remove,
-+	.shutdown = mmc_pwrseq_simple_shutdown,
- 	.driver = {
- 		.name = "pwrseq_simple",
- 		.of_match_table = mmc_pwrseq_simple_of_match,
+ 	if ((interrupta & FUSB_REG_INTERRUPTA_TOGDONE) && intr_togdone) {
+diff --git a/drivers/usb/typec/tcpm/fusb302_reg.h b/drivers/usb/typec/tcpm/fusb302_reg.h
+index edc0e4b0f1e6..f37d226c5027 100644
+--- a/drivers/usb/typec/tcpm/fusb302_reg.h
++++ b/drivers/usb/typec/tcpm/fusb302_reg.h
+@@ -27,14 +27,13 @@
+ #define FUSB_REG_SWITCHES1_TXCC2_EN		BIT(1)
+ #define FUSB_REG_SWITCHES1_TXCC1_EN		BIT(0)
+ #define FUSB_REG_MEASURE			0x04
+-#define FUSB_REG_MEASURE_MDAC5			BIT(7)
+-#define FUSB_REG_MEASURE_MDAC4			BIT(6)
+-#define FUSB_REG_MEASURE_MDAC3			BIT(5)
+-#define FUSB_REG_MEASURE_MDAC2			BIT(4)
+-#define FUSB_REG_MEASURE_MDAC1			BIT(3)
+-#define FUSB_REG_MEASURE_MDAC0			BIT(2)
+-#define FUSB_REG_MEASURE_VBUS			BIT(1)
+-#define FUSB_REG_MEASURE_XXXX5			BIT(0)
++#define FUSB_REG_MEASURE_VBUS			BIT(6)
++#define FUSB_REG_MEASURE_MDAC5			BIT(5)
++#define FUSB_REG_MEASURE_MDAC4			BIT(4)
++#define FUSB_REG_MEASURE_MDAC3			BIT(3)
++#define FUSB_REG_MEASURE_MDAC2			BIT(2)
++#define FUSB_REG_MEASURE_MDAC1			BIT(1)
++#define FUSB_REG_MEASURE_MDAC0			BIT(0)
+ #define FUSB_REG_CONTROL0			0x06
+ #define FUSB_REG_CONTROL0_TX_FLUSH		BIT(6)
+ #define FUSB_REG_CONTROL0_INT_MASK		BIT(5)
+@@ -105,7 +104,6 @@
+ #define FUSB_REG_STATUS0A_RX_SOFT_RESET		BIT(1)
+ #define FUSB_REG_STATUS0A_RX_HARD_RESET		BIT(0)
+ #define FUSB_REG_STATUS1A			0x3D
+-#define FUSB_REG_STATUS1A_TOGSS			BIT(3)
+ #define FUSB_REG_STATUS1A_TOGSS_RUNNING		0x0
+ #define FUSB_REG_STATUS1A_TOGSS_SRC1		0x1
+ #define FUSB_REG_STATUS1A_TOGSS_SRC2		0x2
 -- 
-GitLab
+2.34.1
 
-From b0452434e75ecf257bc2ea9a5eb86be68bb56f71 Mon Sep 17 00:00:00 2001
-From: Tobias Schramm <t.schramm@manjaro.org>
-Date: Thu, 28 May 2020 14:23:54 +0200
-Subject: [PATCH] usb: typec: tcpm: add hacky generic altmode support
+From 6af2e6a2d59bd755234e5e15a47dfa669788143c Mon Sep 17 00:00:00 2001
+From: Dan Johansen <strit@manjaro.org>
+Date: Sun, 2 Jan 2022 16:47:40 +0100
+Subject: [PATCH 2/2] usb: typec: Add megis typex to extcon bridge driver
 
-This is a hack and it is based on extcon. Do not try to mainline
-unless you are in need for some retroactive abortion by the
-maintainers.
-
-Signed-off-by: Tobias Schramm <t.schramm@manjaro.org>
+Signed-off-by: Dan Johansen <strit@manjaro.org>
 ---
- drivers/usb/typec/tcpm/tcpm.c | 139 +++++++++++++++++++++++++++++++++-
- 1 file changed, 138 insertions(+), 1 deletion(-)
+ drivers/usb/typec/typec-extcon.c | 337 +++++++++++++++++++++++++++++++
+ 1 file changed, 337 insertions(+)
+ create mode 100644 drivers/usb/typec/typec-extcon.c
 
-diff --git a/drivers/usb/typec/tcpm/tcpm.c b/drivers/usb/typec/tcpm/tcpm.c
-index a6fae1f86505..2908771f4d4e 100644
---- a/drivers/usb/typec/tcpm/tcpm.c
-+++ b/drivers/usb/typec/tcpm/tcpm.c
-@@ -9,6 +9,7 @@
- #include <linux/debugfs.h>
- #include <linux/device.h>
- #include <linux/hrtimer.h>
+diff --git a/drivers/usb/typec/typec-extcon.c b/drivers/usb/typec/typec-extcon.c
+new file mode 100644
+index 000000000000..143ff2486f2f
+--- /dev/null
++++ b/drivers/usb/typec/typec-extcon.c
+@@ -0,0 +1,337 @@
++/*
++ * typec -> extcon bridge
++ * Copyright (c) 2021 Ondřej Jirman <megi@xff.cz>
++ *
++ * This driver bridges standard type-c interfaces to drivers that
++ * expect extcon interface.
++ */
++
++#include <linux/delay.h>
++#include <linux/kernel.h>
++#include <linux/module.h>
++#include <linux/power_supply.h>
++#include <linux/platform_device.h>
++#include <linux/usb/pd.h>
++#include <linux/usb/role.h>
++#include <linux/usb/typec.h>
++#include <linux/usb/typec_dp.h>
++#include <linux/usb/typec_mux.h>
 +#include <linux/extcon-provider.h>
- #include <linux/jiffies.h>
- #include <linux/kernel.h>
- #include <linux/kthread.h>
-@@ -369,6 +370,11 @@ struct tcpm_port {
- 	 * SNK_READY for non-pd link.
- 	 */
- 	bool slow_charger_loop;
-+#ifdef CONFIG_EXTCON
++
++struct typec_extcon {
++        struct device *dev;
++
++	/* consumers */
++	struct usb_role_switch *role_sw;
++        struct typec_switch *sw;
++        struct typec_mux *mux;
++
++	/* providers */
 +	struct extcon_dev *extcon;
-+	unsigned int *extcon_cables;
-+#endif
++	struct notifier_block extcon_nb;
 +
- #ifdef CONFIG_DEBUG_FS
- 	struct dentry *dentry;
- 	struct mutex logbuffer_lock;	/* log buffer access lock */
-@@ -654,6 +660,35 @@ static void tcpm_debugfs_exit(const struct tcpm_port *port) { }
- 
- #endif
- 
-+static void tcpm_update_extcon_data(struct tcpm_port *port, bool attached) {
-+#ifdef CONFIG_EXTCON
-+	unsigned int *capability = port->extcon_cables;
-+	if (port->data_role == TYPEC_HOST) {
-+		extcon_set_state(port->extcon, EXTCON_USB, false);
-+		extcon_set_state(port->extcon, EXTCON_USB_HOST, attached);
-+	} else {
-+		extcon_set_state(port->extcon, EXTCON_USB, true);
-+		extcon_set_state(port->extcon, EXTCON_USB_HOST, attached);
-+	}
-+	while (*capability != EXTCON_NONE) {
-+		if (attached) {
-+			union extcon_property_value val;
-+			val.intval = (port->polarity == TYPEC_POLARITY_CC2);
-+			extcon_set_property(port->extcon, *capability,
-+				EXTCON_PROP_USB_TYPEC_POLARITY, val);
-+		} else {
-+			extcon_set_state(port->extcon, *capability, false);
-+		}
-+		extcon_sync(port->extcon, *capability);
-+		capability++;
-+	}
-+	tcpm_log(port, "Extcon update (%s): %s, %s",
-+		attached ? "attached" : "detached",
-+		port->data_role == TYPEC_HOST ? "host" : "device",
-+		port->polarity == TYPEC_POLARITY_CC1 ? "normal" : "flipped");
-+#endif
-+}
-+
- static void tcpm_set_cc(struct tcpm_port *port, enum typec_cc_status cc)
- {
- 	tcpm_log(port, "cc:=%d", cc);
-@@ -881,6 +916,8 @@ static int tcpm_set_roles(struct tcpm_port *port, bool attached,
- 	typec_set_data_role(port->typec_port, data);
- 	typec_set_pwr_role(port->typec_port, role);
- 
-+	tcpm_update_extcon_data(port, attached);
-+
- 	return 0;
- }
- 
-@@ -1132,7 +1169,7 @@ static void svdm_consume_modes(struct tcpm_port *port, const u32 *p, int cnt)
- 		paltmode->mode = i;
- 		paltmode->vdo = p[i];
- 
--		tcpm_log(port, " Alternate mode %d: SVID 0x%04x, VDO %d: 0x%08x",
-+		tcpm_log(port, "Alternate mode %d: SVID 0x%04x, VDO %d: 0x%08x",
- 			 pmdata->altmodes, paltmode->svid,
- 			 paltmode->mode, paltmode->vdo);
- 
-@@ -1154,6 +1191,9 @@ static void tcpm_register_partner_altmodes(struct tcpm_port *port)
- 				 modep->altmode_desc[i].svid);
- 			altmode = NULL;
- 		}
-+		else
-+			tcpm_log(port, "Registered altmode 0x%04x", modep->altmode_desc[i].svid);
-+
- 		port->partner_altmode[i] = altmode;
- 	}
- }
-@@ -1249,9 +1289,11 @@ static int tcpm_pd_svdm(struct tcpm_port *port, struct typec_altmode *adev,
- 			modep->svid_index++;
- 			if (modep->svid_index < modep->nsvids) {
- 				u16 svid = modep->svids[modep->svid_index];
-+				tcpm_log(port, "More modes available, sending discover");
- 				response[0] = VDO(svid, 1, svdm_version, CMD_DISCOVER_MODES);
- 				rlen = 1;
- 			} else {
-+				tcpm_log(port, "Got all patner modes, registering");
- 				tcpm_register_partner_altmodes(port);
- 			}
- 			break;
-@@ -2836,6 +2878,7 @@ static int tcpm_src_attach(struct tcpm_port *port)
- static void tcpm_typec_disconnect(struct tcpm_port *port)
- {
- 	if (port->connected) {
-+		tcpm_update_extcon_data(port, false);
- 		typec_unregister_partner(port->partner);
- 		port->partner = NULL;
- 		port->connected = false;
-@@ -2902,6 +2945,8 @@ static void tcpm_detach(struct tcpm_port *port)
- 	}
- 
- 	tcpm_reset_port(port);
-+
-+	tcpm_update_extcon_data(port, false);
- }
- 
- static void tcpm_src_detach(struct tcpm_port *port)
-@@ -4732,6 +4777,64 @@ void tcpm_tcpc_reset(struct tcpm_port *port)
- }
- EXPORT_SYMBOL_GPL(tcpm_tcpc_reset);
- 
-+unsigned int default_supported_cables[] = {
-+	EXTCON_NONE
++	/* cached state from typec controller */
++	enum usb_role role;
++	enum typec_orientation orientation;
++	struct typec_altmode alt;
++	unsigned long mode;
++	bool has_alt;
++	struct mutex lock;
 +};
 +
-+static int tcpm_fw_get_caps_late(struct tcpm_port *port,
-+			    struct fwnode_handle *fwnode)
++static const unsigned int typec_extcon_cable[] = {
++	EXTCON_DISP_DP,
++
++	EXTCON_USB,
++	EXTCON_USB_HOST,
++
++	EXTCON_CHG_USB_SDP,
++	EXTCON_CHG_USB_CDP,
++	EXTCON_CHG_USB_DCP,
++	EXTCON_CHG_USB_ACA,
++
++	EXTCON_NONE,
++};
++
++static void typec_extcon_set_cable(struct typec_extcon *tce, int id, bool on,
++				   union extcon_property_value prop_ss,
++				   union extcon_property_value prop_or)
 +{
-+	int ret, i;
-+	ret = fwnode_property_count_u32(fwnode, "typec-altmodes");
-+	if (ret > 0) {
-+		u32 *props;
-+		if (ret % 4) {
-+			dev_err(port->dev, "Length of typec altmode array must be divisible by 4");
-+			return -EINVAL;
-+		}
++	union extcon_property_value cur_ss, cur_or;
++	bool prop_diff = false;
++	int ret;
 +
-+		props = devm_kzalloc(port->dev, sizeof(u32) * ret, GFP_KERNEL);
-+		if (!props) {
-+			dev_err(port->dev, "Failed to allocate memory for altmode properties");
-+			return -ENOMEM;
-+		}
++	ret = extcon_get_property(tce->extcon, id,
++				  EXTCON_PROP_USB_SS, &cur_ss);
++	if (ret || cur_ss.intval != prop_ss.intval)
++		prop_diff = true;
 +
-+		if(fwnode_property_read_u32_array(fwnode, "typec-altmodes", props, ret) < 0) {
-+			dev_err(port->dev, "Failed to read altmodes from port");
-+			return -EINVAL;
-+		}
++	ret = extcon_get_property(tce->extcon, id,
++				  EXTCON_PROP_USB_TYPEC_POLARITY, &cur_or);
++	if (ret || cur_or.intval != prop_or.intval)
++		prop_diff = true;
 +
-+		i = 0;
-+		while (ret > 0 && i < ARRAY_SIZE(port->port_altmode)) {
-+			struct typec_altmode *alt;
-+			struct typec_altmode_desc alt_desc = {
-+				.svid = props[i * 4],
-+				.mode = props[i * 4 + 1],
-+				.vdo  = props[i * 4 + 2],
-+				.roles = props[i * 4 + 3],
-+			};
++	if (!on && extcon_get_state(tce->extcon, id)) {
++		extcon_set_state_sync(tce->extcon, id, false);
++	} else if (on && (!extcon_get_state(tce->extcon, id) || prop_diff)) {
++		extcon_set_state(tce->extcon, id, true);
++		extcon_set_property(tce->extcon, id,
++				    EXTCON_PROP_USB_SS, prop_ss);
++		extcon_set_property(tce->extcon, id,
++				    EXTCON_PROP_USB_TYPEC_POLARITY, prop_or);
++		extcon_sync(tce->extcon, id);
++	}
++}
 +
++static int typec_extcon_sync_extcon(struct typec_extcon *tce)
++{
++	union extcon_property_value prop_ss, prop_or;
++	bool has_dp = false;
 +
-+			tcpm_log(port, "Adding altmode SVID: 0x%04x, mode: %d, vdo: %u, role: %d",
-+				alt_desc.svid, alt_desc.mode, alt_desc.vdo, alt_desc.roles);
-+			alt = typec_port_register_altmode(port->typec_port,
-+							  &alt_desc);
-+			if (IS_ERR(alt)) {
-+				tcpm_log(port,
-+					 "%s: failed to register port alternate mode 0x%x",
-+					 dev_name(port->dev), alt_desc.svid);
-+				break;
-+			}
-+			typec_altmode_set_drvdata(alt, port);
-+			alt->ops = &tcpm_altmode_ops;
-+			port->port_altmode[i] = alt;
-+			i++;
-+			ret -= 4;
++        mutex_lock(&tce->lock);
++
++	/* connector is disconnected */
++	if (tce->orientation == TYPEC_ORIENTATION_NONE) {
++		typec_extcon_set_cable(tce, EXTCON_USB, false, prop_ss, prop_or);
++		typec_extcon_set_cable(tce, EXTCON_USB_HOST, false, prop_ss, prop_or);
++		typec_extcon_set_cable(tce, EXTCON_DISP_DP, false, prop_ss, prop_or);
++
++		extcon_set_state_sync(tce->extcon, EXTCON_CHG_USB_SDP, false);
++		extcon_set_state_sync(tce->extcon, EXTCON_CHG_USB_DCP, false);
++		extcon_set_state_sync(tce->extcon, EXTCON_CHG_USB_CDP, false);
++		extcon_set_state_sync(tce->extcon, EXTCON_CHG_USB_ACA, false);
++
++                goto out_unlock;
++	}
++
++	prop_or.intval = tce->orientation == TYPEC_ORIENTATION_NORMAL ? 0 : 1;
++	prop_ss.intval = 0;
++
++	if (tce->has_alt && tce->alt.svid == USB_TYPEC_DP_SID) {
++		switch (tce->mode) {
++		case TYPEC_STATE_SAFE:
++			break;
++		case TYPEC_DP_STATE_C:
++		case TYPEC_DP_STATE_E:
++			has_dp = true;
++			break;
++		case TYPEC_DP_STATE_D:
++			has_dp = true;
++			fallthrough;
++		case TYPEC_STATE_USB:
++			prop_ss.intval = 1;
++			break;
++		default:
++			dev_err(tce->dev, "unhandled mux mode=%lu\n", tce->mode);
++			break;
 +		}
 +	}
++
++	typec_extcon_set_cable(tce, EXTCON_USB,
++			tce->role == USB_ROLE_DEVICE, prop_ss, prop_or);
++	typec_extcon_set_cable(tce, EXTCON_USB_HOST,
++			tce->role == USB_ROLE_HOST, prop_ss, prop_or);
++
++	typec_extcon_set_cable(tce, EXTCON_DISP_DP, has_dp, prop_ss, prop_or);
++
++out_unlock:
++	mutex_unlock(&tce->lock);
 +	return 0;
 +}
 +
- static int tcpm_fw_get_caps(struct tcpm_port *port,
- 			    struct fwnode_handle *fwnode)
- {
-@@ -4742,6 +4845,23 @@ static int tcpm_fw_get_caps(struct tcpm_port *port,
- 	 */
- 	fw_devlink_purge_absent_suppliers(fwnode);
- 
-+#ifdef CONFIG_EXTCON
-+	ret = fwnode_property_count_u32(fwnode, "extcon-cables");
-+	if (ret > 0) {
-+		port->extcon_cables = devm_kzalloc(port->dev, sizeof(u32) * ret, GFP_KERNEL);
-+		if (!port->extcon_cables) {
-+			dev_err(port->dev, "Failed to allocate memory for extcon cable types. "\
-+				"Using default tyes");
-+			goto extcon_default;
-+		}
-+		fwnode_property_read_u32_array(fwnode, "extcon-cables", port->extcon_cables, ret);
-+	} else {
-+extcon_default:
-+		dev_info(port->dev, "No cable types defined, using default cables");
-+		port->extcon_cables = default_supported_cables;
-+	}
-+#endif
++static int typec_extcon_sw_set(struct typec_switch *sw,
++			       enum typec_orientation orientation)
++{
++        struct typec_extcon *tce = typec_switch_get_drvdata(sw);
 +
- 	/* USB data support is optional */
- 	ret = fwnode_property_read_string(fwnode, "data-role", &cap_str);
- 	if (ret == 0) {
-@@ -5114,6 +5234,17 @@ struct tcpm_port *tcpm_register_port(struct device *dev, struct tcpc_dev *tcpc)
- 		goto out_destroy_wq;
- 
- 	port->try_role = port->typec_caps.prefer_role;
-+#ifdef CONFIG_EXTCON
-+	port->extcon = devm_extcon_dev_allocate(dev, port->extcon_cables);
-+	if (IS_ERR(port->extcon)) {
-+		dev_err(dev, "Failed to allocate extcon device: %ld", PTR_ERR(port->extcon));
-+		goto out_destroy_wq;
-+	}
-+	if((err = devm_extcon_dev_register(dev, port->extcon))) {
-+		dev_err(dev, "Failed to register extcon device: %d", err);
-+		goto out_destroy_wq;
-+	}
-+#endif
- 
- 	port->typec_caps.fwnode = tcpc->fwnode;
- 	port->typec_caps.revision = 0x0120;	/* Type-C spec release 1.2 */
-@@ -5141,6 +5272,12 @@ struct tcpm_port *tcpm_register_port(struct device *dev, struct tcpc_dev *tcpc)
- 				     port->port_altmode, ALTMODE_DISCOVERY_MAX);
- 	port->registered = true;
- 
-+	err = tcpm_fw_get_caps_late(port, tcpc->fwnode);
-+	if (err < 0) {
-+		dev_err(dev, "Failed to get altmodes from fwnode");
-+		goto out_destroy_wq;
-+	}
++	dev_dbg(tce->dev, "SW SET: orientation=%d\n", orientation);
 +
- 	mutex_lock(&port->lock);
- 	tcpm_init(port);
- 	mutex_unlock(&port->lock);
--- 
-GitLab
-
-From db4e9ffdb985752ae3c3436ff86f8f376ae8fd22 Mon Sep 17 00:00:00 2001
-From: Tobias Schramm <t.schramm@manjaro.org>
-Date: Thu, 28 May 2020 14:25:32 +0200
-Subject: [PATCH] phy: rockchip: typec: Set extcon capabilities
-
-Do not mainline, hack.
-
-Signed-off-by: Tobias Schramm <t.schramm@manjaro.org>
----
- drivers/phy/rockchip/phy-rockchip-typec.c | 17 +++++++++++++++++
- 1 file changed, 17 insertions(+)
-
-diff --git a/drivers/phy/rockchip/phy-rockchip-typec.c b/drivers/phy/rockchip/phy-rockchip-typec.c
-index 70a31251b202..5385bb4f0bd4 100644
---- a/drivers/phy/rockchip/phy-rockchip-typec.c
-+++ b/drivers/phy/rockchip/phy-rockchip-typec.c
-@@ -40,6 +40,7 @@
- #include <linux/clk-provider.h>
- #include <linux/delay.h>
- #include <linux/extcon.h>
-+#include <linux/extcon-provider.h>
- #include <linux/io.h>
- #include <linux/iopoll.h>
- #include <linux/kernel.h>
-@@ -1160,6 +1161,22 @@ static int rockchip_typec_phy_probe(struct platform_device *pdev)
- 				dev_err(dev, "Invalid or missing extcon\n");
- 			return PTR_ERR(tcphy->extcon);
- 		}
-+	} else {
-+		extcon_set_property_capability(tcphy->extcon, EXTCON_USB,
-+					       EXTCON_PROP_USB_SS);
-+		extcon_set_property_capability(tcphy->extcon, EXTCON_USB_HOST,
-+					       EXTCON_PROP_USB_SS);
-+		extcon_set_property_capability(tcphy->extcon, EXTCON_DISP_DP,
-+					       EXTCON_PROP_USB_SS);
-+		extcon_set_property_capability(tcphy->extcon, EXTCON_USB,
-+					       EXTCON_PROP_USB_TYPEC_POLARITY);
-+		extcon_set_property_capability(tcphy->extcon, EXTCON_USB_HOST,
-+					       EXTCON_PROP_USB_TYPEC_POLARITY);
-+		extcon_set_property_capability(tcphy->extcon, EXTCON_DISP_DP,
-+					       EXTCON_PROP_USB_TYPEC_POLARITY);
-+		extcon_sync(tcphy->extcon, EXTCON_USB);
-+		extcon_sync(tcphy->extcon, EXTCON_USB_HOST);
-+		extcon_sync(tcphy->extcon, EXTCON_DISP_DP);
- 	}
- 
- 	pm_runtime_enable(dev);
--- 
-GitLab
-
-From fd739ae47f9ea780a1e161a478e241df06eaff7e Mon Sep 17 00:00:00 2001
-From: Tobias Schramm <t.schramm@manjaro.org>
-Date: Thu, 28 May 2020 14:26:27 +0200
-Subject: [PATCH] usb: typec: altmodes: displayport: Add hacky, generic altmode
- detection
-
-Do not mainline, hack.
-
-Signed-off-by: Tobias Schramm <t.schramm@manjaro.org>
----
- drivers/usb/typec/altmodes/displayport.c | 55 ++++++++++++++++++++++--
- 1 file changed, 52 insertions(+), 3 deletions(-)
-
-diff --git a/drivers/usb/typec/altmodes/displayport.c b/drivers/usb/typec/altmodes/displayport.c
-index e62e5e3da01e..a3d03db476aa 100644
---- a/drivers/usb/typec/altmodes/displayport.c
-+++ b/drivers/usb/typec/altmodes/displayport.c
-@@ -9,6 +9,8 @@
-  */
- 
- #include <linux/delay.h>
-+#include <linux/extcon.h>
-+#include <linux/extcon-provider.h>
- #include <linux/mutex.h>
- #include <linux/module.h>
- #include <linux/property.h>
-@@ -68,6 +70,40 @@
- 	struct fwnode_handle *connector_fwnode;
- };
- 
-+static void dp_altmode_update_extcon(struct dp_altmode *dp, bool disconnect) {
-+	const struct device *dev = &dp->port->dev;
-+	struct extcon_dev* edev = NULL;
++        mutex_lock(&tce->lock);
++	tce->orientation = orientation;
++        mutex_unlock(&tce->lock);
 +
-+	while (dev) {
-+		edev = extcon_find_edev_by_node(dev->of_node);
-+		if(!IS_ERR(edev)) {
-+			break;
-+		}
-+		dev = dev->parent;
-+	}
++	typec_extcon_sync_extcon(tce);
 +
-+	if (IS_ERR_OR_NULL(edev)) {
-+		return;
-+	}
-+
-+	if (disconnect || !dp->data.conf) {
-+		extcon_set_state_sync(edev, EXTCON_DISP_DP, false);
-+	} else {
-+		union extcon_property_value extcon_true = { .intval = true };
-+		extcon_set_state(edev, EXTCON_DISP_DP, true);
-+		if (DP_CONF_GET_PIN_ASSIGN(dp->data.conf) & DP_PIN_ASSIGN_MULTI_FUNC_MASK) {
-+			extcon_set_state_sync(edev, EXTCON_USB_HOST, true);
-+			extcon_set_property(edev, EXTCON_DISP_DP, EXTCON_PROP_USB_SS,
-+						 extcon_true);
-+		} else {
-+			extcon_set_state_sync(edev, EXTCON_USB_HOST, false);
-+		}
-+		extcon_sync(edev, EXTCON_DISP_DP);
-+		extcon_set_state_sync(edev, EXTCON_USB, false);
-+	}
-+
++        return 0;
 +}
 +
- static int dp_altmode_notify(struct dp_altmode *dp)
- {
- 	unsigned long conf;
-@@ -76,8 +112,10 @@
- 	if (dp->data.conf) {
- 		state = get_count_order(DP_CONF_GET_PIN_ASSIGN(dp->data.conf));
- 		conf = TYPEC_MODAL_STATE(state);
-+		dp_altmode_update_extcon(dp, false);
- 	} else {
- 		conf = TYPEC_STATE_USB;
-+		dp_altmode_update_extcon(dp, true);
- 	}
- 
- 	return typec_altmode_notify(dp->alt, conf, &dp->data);
-@@ -221,6 +259,8 @@
- 	case DP_STATE_EXIT:
- 		if (typec_altmode_exit(dp->alt))
- 			dev_err(&dp->alt->dev, "Exit Mode Failed!\n");
-+		else
-+			dp_altmode_update_extcon(dp, true);
- 		break;
- 	default:
- 		break;
-@@ -532,8 +572,13 @@
- 	if (!(DP_CAP_DFP_D_PIN_ASSIGN(port->vdo) &
- 	      DP_CAP_UFP_D_PIN_ASSIGN(alt->vdo)) &&
- 	    !(DP_CAP_UFP_D_PIN_ASSIGN(port->vdo) &
--	      DP_CAP_DFP_D_PIN_ASSIGN(alt->vdo)))
-+	      DP_CAP_DFP_D_PIN_ASSIGN(alt->vdo))) {
-+		dev_err(&alt->dev, "No compatible pin configuration found:"\
-+			"%04lx -> %04lx, %04lx <- %04lx",
-+			DP_CAP_DFP_D_PIN_ASSIGN(port->vdo), DP_CAP_UFP_D_PIN_ASSIGN(alt->vdo),
-+			DP_CAP_UFP_D_PIN_ASSIGN(port->vdo), DP_CAP_DFP_D_PIN_ASSIGN(alt->vdo));
- 		return -ENODEV;
++static int typec_extcon_mux_set(struct typec_mux *mux,
++				struct typec_mux_state *state)
++{
++        struct typec_extcon *tce = typec_mux_get_drvdata(mux);
++	struct typec_altmode *alt = state->alt;
++
++	dev_dbg(tce->dev, "MUX SET: state->mode=%lu\n", state->mode);
++	if (alt)
++		dev_dbg(tce->dev, "      ...alt: svid=%04hx mode=%d vdo=%08x active=%u\n",
++			alt->svid, alt->mode, alt->vdo, alt->active);
++
++        mutex_lock(&tce->lock);
++	tce->mode = state->mode;
++	tce->has_alt = alt != NULL;
++        if (alt)
++		tce->alt = *alt;
++	mutex_unlock(&tce->lock);
++
++	typec_extcon_sync_extcon(tce);
++
++        return 0;
++}
++
++static int typec_extcon_usb_set_role(struct usb_role_switch *sw,
++				     enum usb_role role)
++{
++        struct typec_extcon *tce = usb_role_switch_get_drvdata(sw);
++
++	dev_dbg(tce->dev, "ROLE SET: role=%d\n", role);
++
++        mutex_lock(&tce->lock);
++	tce->role = role;
++	mutex_unlock(&tce->lock);
++
++	typec_extcon_sync_extcon(tce);
++
++        return 0;
++}
++
++static int typec_extcon_notifier(struct notifier_block *nb,
++					 unsigned long action, void *data)
++{
++	struct typec_extcon *tce = container_of(nb, struct typec_extcon, extcon_nb);
++
++	bool sdp = extcon_get_state(tce->extcon, EXTCON_CHG_USB_SDP);
++	bool cdp = extcon_get_state(tce->extcon, EXTCON_CHG_USB_CDP);
++	bool dcp = extcon_get_state(tce->extcon, EXTCON_CHG_USB_DCP);
++	bool usb = extcon_get_state(tce->extcon, EXTCON_USB);
++	bool usb_host = extcon_get_state(tce->extcon, EXTCON_USB_HOST);
++	bool dp = extcon_get_state(tce->extcon, EXTCON_DISP_DP);
++
++	dev_info(tce->dev, "extcon changed sdp=%d cdp=%d dcp=%d usb=%d usb_host=%d dp=%d\n",
++		 sdp, cdp, dcp, usb, usb_host, dp);
++
++	return NOTIFY_OK;
++}
++
++static int typec_extcon_probe(struct platform_device *pdev)
++{
++        struct typec_switch_desc sw_desc = { };
++        struct typec_mux_desc mux_desc = { };
++        struct usb_role_switch_desc role_desc = { };
++        struct device *dev = &pdev->dev;
++        struct typec_extcon *tce;
++        int ret = 0;
++
++        tce = devm_kzalloc(dev, sizeof(*tce), GFP_KERNEL);
++        if (!tce)
++                return -ENOMEM;
++
++        tce->dev = &pdev->dev;
++	mutex_init(&tce->lock);
++	tce->mode = TYPEC_STATE_SAFE;
++
++	sw_desc.drvdata = tce;
++	sw_desc.fwnode = dev->fwnode;
++	sw_desc.set = typec_extcon_sw_set;
++
++	tce->sw = typec_switch_register(dev, &sw_desc);
++	if (IS_ERR(tce->sw))
++		return dev_err_probe(dev, PTR_ERR(tce->sw),
++				     "Error registering typec switch\n");
++
++	mux_desc.drvdata = tce;
++	mux_desc.fwnode = dev->fwnode;
++	mux_desc.set = typec_extcon_mux_set;
++
++	tce->mux = typec_mux_register(dev, &mux_desc);
++	if (IS_ERR(tce->mux)) {
++		ret = dev_err_probe(dev, PTR_ERR(tce->mux),
++				    "Error registering typec mux\n");
++		goto err_sw;
 +	}
- 
- 	ret = sysfs_create_group(&alt->dev.kobj, &dp_altmode_group);
- 	if (ret)
--- 
-GitLab
-
-From e9d07cf5d983a3b941e604ae4ba9d277929e0650 Mon Sep 17 00:00:00 2001
-From: Tobias Schramm <t.schramm@manjaro.org>
-Date: Thu, 28 May 2020 14:34:47 +0200
-Subject: [PATCH] sound: soc: codecs: es8316: Run micdetect only if jack status
- asserted
-
-Think this is (was?) required to prevent flapping of detection status on
-the PBP.
-
-Signed-off-by: Tobias Schramm <t.schramm@manjaro.org>
----
- sound/soc/codecs/es8316.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
-
-diff --git a/sound/soc/codecs/es8316.c b/sound/soc/codecs/es8316.c
-index bd5d230c5df2..a2d8bf620b6f 100644
---- a/sound/soc/codecs/es8316.c
-+++ b/sound/soc/codecs/es8316.c
-@@ -688,7 +688,7 @@ static void es8316_disable_jack_detect(struct snd_soc_component *component)
- 	snd_soc_component_update_bits(component, ES8316_GPIO_DEBOUNCE,
- 				      ES8316_GPIO_ENABLE_INTERRUPT, 0);
- 
--	if (es8316->jack->status & SND_JACK_MICROPHONE) {
-+	if (es8316->jack && (es8316->jack->status & SND_JACK_MICROPHONE)) {
- 		es8316_disable_micbias_for_mic_gnd_short_detect(component);
- 		snd_soc_jack_report(es8316->jack, 0, SND_JACK_BTN_0);
- 	}
--- 
-GitLab
-
-From edbf5d93dbd845faa4aa74fb8a7c5e76cf35ef0d Mon Sep 17 00:00:00 2001
-From: Tobias Schramm <t.schramm@manjaro.org>
-Date: Thu, 28 May 2020 14:36:47 +0200
-Subject: [PATCH] ASoC: soc-jack.c: supported inverted jack detect GPIOs
-
-Signed-off-by: Tobias Schramm <t.schramm@manjaro.org>
----
- sound/soc/soc-jack.c | 7 ++++---
- 1 file changed, 4 insertions(+), 3 deletions(-)
-
-diff --git a/sound/soc/soc-jack.c b/sound/soc/soc-jack.c
-index 0f1820f36b4d..8d9d77814f33 100644
---- a/sound/soc/soc-jack.c
-+++ b/sound/soc/soc-jack.c
-@@ -216,8 +216,6 @@ static void snd_soc_jack_gpio_detect(struct snd_soc_jack_gpio *gpio)
- 	int report;
- 
- 	enable = gpiod_get_value_cansleep(gpio->desc);
--	if (gpio->invert)
--		enable = !enable;
- 
- 	if (enable)
- 		report = gpio->report;
-@@ -346,6 +344,9 @@ int snd_soc_jack_add_gpios(struct snd_soc_jack *jack, int count,
- 				goto undo;
- 			}
- 		} else {
-+			int flags = GPIOF_IN;
-+			if (gpios[i].invert)
-+				flags |= GPIOF_ACTIVE_LOW;
- 			/* legacy GPIO number */
- 			if (!gpio_is_valid(gpios[i].gpio)) {
- 				dev_err(jack->card->dev,
-@@ -355,7 +356,7 @@ int snd_soc_jack_add_gpios(struct snd_soc_jack *jack, int count,
- 				goto undo;
- 			}
- 
--			ret = gpio_request_one(gpios[i].gpio, GPIOF_IN,
-+			ret = gpio_request_one(gpios[i].gpio, flags,
- 					       gpios[i].name);
- 			if (ret)
- 				goto undo;
--- 
-GitLab
-
-From 948d7ade0ddcf292b91d91cb8b6819a19ab3f604 Mon Sep 17 00:00:00 2001
-From: Tobias Schramm <t.schramm@manjaro.org>
-Date: Thu, 28 May 2020 14:44:15 +0200
-Subject: [PATCH] arm64: dts: rockchip: add typec extcon hack
-
-Not for mainline
-
-Signed-off-by: Tobias Schramm <t.schramm@manjaro.org>
----
- arch/arm64/boot/dts/rockchip/rk3399-pinebook-pro.dts | 5 +++++
- 1 file changed, 5 insertions(+)
-
-diff --git a/arch/arm64/boot/dts/rockchip/rk3399-pinebook-pro.dts b/arch/arm64/boot/dts/rockchip/rk3399-pinebook-pro.dts
-index decb212e2dca..37f967a89401 100644
---- a/arch/arm64/boot/dts/rockchip/rk3399-pinebook-pro.dts
-+++ b/arch/arm64/boot/dts/rockchip/rk3399-pinebook-pro.dts
-@@ -385,6 +385,11 @@ opp08 {
- 	};
- };
- 
-+&cdn_dp {
-+	status = "okay";
-+	extcon = <&fusb0>;
++
++	role_desc.driver_data = tce;
++	role_desc.fwnode = dev->fwnode;
++	role_desc.name = fwnode_get_name(dev->fwnode);
++	role_desc.set = typec_extcon_usb_set_role;
++
++	tce->role_sw = usb_role_switch_register(dev, &role_desc);
++	if (IS_ERR(tce->role_sw)) {
++		ret = dev_err_probe(dev, PTR_ERR(tce->role_sw),
++				    "Error registering USB role switch\n");
++		goto err_mux;
++	}
++
++	tce->extcon = devm_extcon_dev_allocate(dev, typec_extcon_cable);
++	if (IS_ERR(tce->extcon)) {
++		ret = PTR_ERR(tce->extcon);
++		goto err_role;
++	}
++
++	ret = devm_extcon_dev_register(dev, tce->extcon);
++	if (ret) {
++		ret = dev_err_probe(dev, ret, "failed to register extcon device\n");
++		goto err_role;
++	}
++
++	extcon_set_property_capability(tce->extcon, EXTCON_USB,
++				       EXTCON_PROP_USB_SS);
++	extcon_set_property_capability(tce->extcon, EXTCON_USB,
++				       EXTCON_PROP_USB_TYPEC_POLARITY);
++	extcon_set_property_capability(tce->extcon, EXTCON_USB_HOST,
++				       EXTCON_PROP_USB_SS);
++	extcon_set_property_capability(tce->extcon, EXTCON_USB_HOST,
++				       EXTCON_PROP_USB_TYPEC_POLARITY);
++	extcon_set_property_capability(tce->extcon, EXTCON_DISP_DP,
++				       EXTCON_PROP_USB_SS);
++	extcon_set_property_capability(tce->extcon, EXTCON_DISP_DP,
++				       EXTCON_PROP_USB_TYPEC_POLARITY);
++
++	tce->extcon_nb.notifier_call = typec_extcon_notifier;
++	ret = devm_extcon_register_notifier_all(dev, tce->extcon, &tce->extcon_nb);
++	if (ret) {
++		dev_err_probe(dev, ret, "Failed to register extcon notifier\n");
++		goto err_role;
++	}
++
++	return 0;
++
++err_role:
++	usb_role_switch_unregister(tce->role_sw);
++err_mux:
++	typec_mux_unregister(tce->mux);
++err_sw:
++	typec_switch_unregister(tce->sw);
++	return ret;
++}
++
++static int typec_extcon_remove(struct platform_device *pdev)
++{
++        struct typec_extcon *tce = platform_get_drvdata(pdev);
++
++	usb_role_switch_unregister(tce->role_sw);
++	typec_mux_unregister(tce->mux);
++	typec_switch_unregister(tce->sw);
++
++        return 0;
++}
++
++static struct of_device_id typec_extcon_of_match_table[] = {
++        { .compatible = "linux,typec-extcon-bridge" },
++        { },
++};
++MODULE_DEVICE_TABLE(of, typec_extcon_of_match_table);
++
++static struct platform_driver typec_extcon_driver = {
++        .driver = {
++                .name = "typec-extcon",
++                .of_match_table = typec_extcon_of_match_table,
++        },
++        .probe = typec_extcon_probe,
++        .remove = typec_extcon_remove,
 +};
 +
- &cpu_b0 {
- 	cpu-supply = <&vdd_cpu_b>;
- };
-@@ -735,6 +736,9 @@ connector {
- 				<PDO_FIXED(5000, 1400, PDO_FIXED_USB_COMM)>;
- 			try-power-role = "sink";
- 
-+			extcon-cables = <1 2 5 6 9 10 12 44>;
-+			typec-altmodes = <0xff01 1 0x001c0000 1>;
++module_platform_driver(typec_extcon_driver);
 +
++MODULE_LICENSE("GPL");
++MODULE_AUTHOR("Ondrej Jirman <megous@megous.com>");
++MODULE_DESCRIPTION("typec -> extcon bridge driver");
+-- 
+2.34.1
+
+From 4c839ce95766910235ff558b2959589c9068917c Mon Sep 17 00:00:00 2001
+From: Dan Johansen <strit@manjaro.org>
+Date: Sun, 2 Jan 2022 19:15:39 +0100
+Subject: [PATCH] arm64: dts: rockchip: add typec extcon hack
+
+Signed-off-by: Dan Johansen <strit@manjaro.org>
+---
+ .../boot/dts/rockchip/rk3399-pinebook-pro.dts | 31 +++++++++++++++++--
+ 1 file changed, 29 insertions(+), 2 deletions(-)
+
+diff --git a/arch/arm64/boot/dts/rockchip/rk3399-pinebook-pro.dts b/arch/arm64/boot/dts/rockchip/rk3399-pinebook-pro.dts
+index c2f021a1a18f..fc33e111bbee 100644
+--- a/arch/arm64/boot/dts/rockchip/rk3399-pinebook-pro.dts
++++ b/arch/arm64/boot/dts/rockchip/rk3399-pinebook-pro.dts
+@@ -384,6 +384,20 @@ mains_charger: dc-charger {
+ 		pinctrl-names = "default";
+ 		pinctrl-0 = <&dc_det_pin>;
+ 	};
++	
++    typec_extcon_bridge: typec-extcon {
++		compatible = "linux,typec-extcon-bridge";
++		usb-role-switch;
++		orientation-switch;
++		mode-switch;
++		svid = /bits/ 16 <0xff01>;
++	};
++};
++
++&cdn_dp {
++	status = "okay";
++	extcon = <&typec_extcon_bridge>;
++	phys = <&tcphy0_dp>;
+ };
+ 
+ &cpu_b0 {
+@@ -705,6 +719,8 @@ fusb0: fusb30x@22 {
+ 		pinctrl-names = "default";
+ 		pinctrl-0 = <&fusb0_int_pin>;
+ 		vbus-supply = <&vbus_typec>;
++		extcon = <&typec_extcon_bridge>;
++		usb-role-switch = <&typec_extcon_bridge>;
+ 
+ 		connector {
+ 			compatible = "usb-c-connector";
+@@ -713,10 +729,20 @@ connector {
+ 			op-sink-microwatt = <1000000>;
+ 			power-role = "dual";
+ 			sink-pdos =
+-				<PDO_FIXED(5000, 2500, PDO_FIXED_USB_COMM)>;
++				<PDO_FIXED(5000, 2500, PDO_FIXED_USB_COMM | PDO_FIXED_DUAL_ROLE | PDO_FIXED_DATA_SWAP)>;
+ 			source-pdos =
+-				<PDO_FIXED(5000, 1400, PDO_FIXED_USB_COMM)>;
++				<PDO_FIXED(5000, 1400, PDO_FIXED_USB_COMM | PDO_FIXED_DUAL_ROLE | PDO_FIXED_DATA_SWAP)>;
+ 			try-power-role = "sink";
++			
++			mode-switch = <&typec_extcon_bridge>;
++			orientation-switch = <&typec_extcon_bridge>;
++
++			altmodes {
++				dp {
++					svid = <0xff01>;
++					vdo = <0x0c0046>;
++				};
++			};
+ 
  			ports {
  				#address-cells = <1>;
- 				#size-cells = <0>;
-@@ -1002,6 +1006,7 @@ spiflash: flash@0 {
+@@ -984,6 +1010,7 @@ spiflash: flash@0 {
  };
  
  &tcphy0 {
-+	extcon = <&fusb0>;
++	extcon = <&typec_extcon_bridge>;
  	status = "okay";
  };
  
 -- 
-GitLab
+2.34.1
 
+From: Hugh Cole-Baker <sigmaris@gmail.com>
+Subject: [PATCH v2 1/3] drm/rockchip: define gamma registers for RK3399
+Date: Tue, 19 Oct 2021 22:58:41 +0100
+
+The VOP on RK3399 has a different approach from previous versions for
+setting a gamma lookup table, using an update_gamma_lut register. As
+this differs from RK3288, give RK3399 its own set of "common" register
+definitions.
+
+Signed-off-by: Hugh Cole-Baker <sigmaris@gmail.com>
+---
+
+Changes from v1: no changes in this patch
+
+ drivers/gpu/drm/rockchip/rockchip_drm_vop.h |  2 ++
+ drivers/gpu/drm/rockchip/rockchip_vop_reg.c | 24 +++++++++++++++++++--
+ drivers/gpu/drm/rockchip/rockchip_vop_reg.h |  1 +
+ 3 files changed, 25 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/gpu/drm/rockchip/rockchip_drm_vop.h b/drivers/gpu/drm/rockchip/rockchip_drm_vop.h
+index 857d97cdc67c..14179e89bd21 100644
+--- a/drivers/gpu/drm/rockchip/rockchip_drm_vop.h
++++ b/drivers/gpu/drm/rockchip/rockchip_drm_vop.h
+@@ -99,6 +99,8 @@ struct vop_common {
+ 	struct vop_reg dither_down_en;
+ 	struct vop_reg dither_up;
+ 	struct vop_reg dsp_lut_en;
++	struct vop_reg update_gamma_lut;
++	struct vop_reg lut_buffer_index;
+ 	struct vop_reg gate_en;
+ 	struct vop_reg mmu_en;
+ 	struct vop_reg out_mode;
+diff --git a/drivers/gpu/drm/rockchip/rockchip_vop_reg.c b/drivers/gpu/drm/rockchip/rockchip_vop_reg.c
+index ca7cc82125cb..bfb7e130f09b 100644
+--- a/drivers/gpu/drm/rockchip/rockchip_vop_reg.c
++++ b/drivers/gpu/drm/rockchip/rockchip_vop_reg.c
+@@ -865,6 +865,24 @@ static const struct vop_output rk3399_output = {
+ 	.mipi_dual_channel_en = VOP_REG(RK3288_SYS_CTRL, 0x1, 3),
+ };
+ 
++static const struct vop_common rk3399_common = {
++	.standby = VOP_REG_SYNC(RK3399_SYS_CTRL, 0x1, 22),
++	.gate_en = VOP_REG(RK3399_SYS_CTRL, 0x1, 23),
++	.mmu_en = VOP_REG(RK3399_SYS_CTRL, 0x1, 20),
++	.dither_down_sel = VOP_REG(RK3399_DSP_CTRL1, 0x1, 4),
++	.dither_down_mode = VOP_REG(RK3399_DSP_CTRL1, 0x1, 3),
++	.dither_down_en = VOP_REG(RK3399_DSP_CTRL1, 0x1, 2),
++	.pre_dither_down = VOP_REG(RK3399_DSP_CTRL1, 0x1, 1),
++	.dither_up = VOP_REG(RK3399_DSP_CTRL1, 0x1, 6),
++	.dsp_lut_en = VOP_REG(RK3399_DSP_CTRL1, 0x1, 0),
++	.update_gamma_lut = VOP_REG(RK3399_DSP_CTRL1, 0x1, 7),
++	.lut_buffer_index = VOP_REG(RK3399_DBG_POST_REG1, 0x1, 1),
++	.data_blank = VOP_REG(RK3399_DSP_CTRL0, 0x1, 19),
++	.dsp_blank = VOP_REG(RK3399_DSP_CTRL0, 0x3, 18),
++	.out_mode = VOP_REG(RK3399_DSP_CTRL0, 0xf, 0),
++	.cfg_done = VOP_REG_SYNC(RK3399_REG_CFG_DONE, 0x1, 0),
++};
++
+ static const struct vop_yuv2yuv_phy rk3399_yuv2yuv_win01_data = {
+ 	.y2r_coefficients = {
+ 		VOP_REG(RK3399_WIN0_YUV2YUV_Y2R + 0, 0xffff, 0),
+@@ -944,7 +962,7 @@ static const struct vop_data rk3399_vop_big = {
+ 	.version = VOP_VERSION(3, 5),
+ 	.feature = VOP_FEATURE_OUTPUT_RGB10,
+ 	.intr = &rk3366_vop_intr,
+-	.common = &rk3288_common,
++	.common = &rk3399_common,
+ 	.modeset = &rk3288_modeset,
+ 	.output = &rk3399_output,
+ 	.afbc = &rk3399_vop_afbc,
+@@ -952,6 +970,7 @@ static const struct vop_data rk3399_vop_big = {
+ 	.win = rk3399_vop_win_data,
+ 	.win_size = ARRAY_SIZE(rk3399_vop_win_data),
+ 	.win_yuv2yuv = rk3399_vop_big_win_yuv2yuv_data,
++	.lut_size = 1024,
+ };
+ 
+ static const struct vop_win_data rk3399_vop_lit_win_data[] = {
+@@ -970,13 +989,14 @@ static const struct vop_win_yuv2yuv_data rk3399_vop_lit_win_yuv2yuv_data[] = {
+ static const struct vop_data rk3399_vop_lit = {
+ 	.version = VOP_VERSION(3, 6),
+ 	.intr = &rk3366_vop_intr,
+-	.common = &rk3288_common,
++	.common = &rk3399_common,
+ 	.modeset = &rk3288_modeset,
+ 	.output = &rk3399_output,
+ 	.misc = &rk3368_misc,
+ 	.win = rk3399_vop_lit_win_data,
+ 	.win_size = ARRAY_SIZE(rk3399_vop_lit_win_data),
+ 	.win_yuv2yuv = rk3399_vop_lit_win_yuv2yuv_data,
++	.lut_size = 256,
+ };
+ 
+ static const struct vop_win_data rk3228_vop_win_data[] = {
+diff --git a/drivers/gpu/drm/rockchip/rockchip_vop_reg.h b/drivers/gpu/drm/rockchip/rockchip_vop_reg.h
+index 0b3cd65ba5c1..406e981c75bd 100644
+--- a/drivers/gpu/drm/rockchip/rockchip_vop_reg.h
++++ b/drivers/gpu/drm/rockchip/rockchip_vop_reg.h
+@@ -628,6 +628,7 @@
+ #define RK3399_YUV2YUV_WIN			0x02c0
+ #define RK3399_YUV2YUV_POST			0x02c4
+ #define RK3399_AUTO_GATING_EN			0x02cc
++#define RK3399_DBG_POST_REG1			0x036c
+ #define RK3399_WIN0_CSC_COE			0x03a0
+ #define RK3399_WIN1_CSC_COE			0x03c0
+ #define RK3399_WIN2_CSC_COE			0x03e0
+
+From: Hugh Cole-Baker <sigmaris@gmail.com>
+Subject: [PATCH v2 2/3] drm/rockchip: support gamma control on RK3399
+Date: Tue, 19 Oct 2021 22:58:42 +0100
+
+The RK3399 has a 1024-entry gamma LUT with 10 bits per component on its
+"big" VOP and a 256-entry, 8 bit per component LUT on the "little" VOP.
+Compared to the RK3288, it no longer requires disabling gamma while
+updating the LUT. On the RK3399, the LUT can be updated at any time as
+the hardware has two LUT buffers, one can be written while the other is
+in use. A swap of the buffers is triggered by writing 1 to the
+update_gamma_lut register.
+
+Signed-off-by: Hugh Cole-Baker <sigmaris@gmail.com>
+---
+
+Changes from v1: Moved the vop_crtc_gamma_set call to the end of
+vop_crtc_atomic_enable after the clocks and CRTC are enabled.
+
+ drivers/gpu/drm/rockchip/rockchip_drm_vop.c | 105 +++++++++++++-------
+ 1 file changed, 71 insertions(+), 34 deletions(-)
+
+diff --git a/drivers/gpu/drm/rockchip/rockchip_drm_vop.c b/drivers/gpu/drm/rockchip/rockchip_drm_vop.c
+index ba9e14da41b4..e2c97f1b26da 100644
+--- a/drivers/gpu/drm/rockchip/rockchip_drm_vop.c
++++ b/drivers/gpu/drm/rockchip/rockchip_drm_vop.c
+@@ -9,6 +9,7 @@
+ #include <linux/delay.h>
+ #include <linux/iopoll.h>
+ #include <linux/kernel.h>
++#include <linux/log2.h>
+ #include <linux/module.h>
+ #include <linux/of.h>
+ #include <linux/of_device.h>
+@@ -66,6 +67,9 @@
+ #define VOP_REG_SET(vop, group, name, v) \
+ 		    vop_reg_set(vop, &vop->data->group->name, 0, ~0, v, #name)
+ 
++#define VOP_HAS_REG(vop, group, name) \
++		(!!(vop->data->group->name.mask))
++
+ #define VOP_INTR_SET_TYPE(vop, name, type, v) \
+ 	do { \
+ 		int i, reg = 0, mask = 0; \
+@@ -1204,17 +1208,22 @@ static bool vop_dsp_lut_is_enabled(struct vop *vop)
+ 	return vop_read_reg(vop, 0, &vop->data->common->dsp_lut_en);
+ }
+ 
++static u32 vop_lut_buffer_index(struct vop *vop)
++{
++	return vop_read_reg(vop, 0, &vop->data->common->lut_buffer_index);
++}
++
+ static void vop_crtc_write_gamma_lut(struct vop *vop, struct drm_crtc *crtc)
+ {
+ 	struct drm_color_lut *lut = crtc->state->gamma_lut->data;
+-	unsigned int i;
++	unsigned int i, bpc = ilog2(vop->data->lut_size);
+ 
+ 	for (i = 0; i < crtc->gamma_size; i++) {
+ 		u32 word;
+ 
+-		word = (drm_color_lut_extract(lut[i].red, 10) << 20) |
+-		       (drm_color_lut_extract(lut[i].green, 10) << 10) |
+-			drm_color_lut_extract(lut[i].blue, 10);
++		word = (drm_color_lut_extract(lut[i].red, bpc) << (2 * bpc)) |
++		       (drm_color_lut_extract(lut[i].green, bpc) << bpc) |
++			drm_color_lut_extract(lut[i].blue, bpc);
+ 		writel(word, vop->lut_regs + i * 4);
+ 	}
+ }
+@@ -1224,38 +1233,66 @@ static void vop_crtc_gamma_set(struct vop *vop, struct drm_crtc *crtc,
+ {
+ 	struct drm_crtc_state *state = crtc->state;
+ 	unsigned int idle;
++	u32 lut_idx, old_idx;
+ 	int ret;
+ 
+ 	if (!vop->lut_regs)
+ 		return;
+-	/*
+-	 * To disable gamma (gamma_lut is null) or to write
+-	 * an update to the LUT, clear dsp_lut_en.
+-	 */
+-	spin_lock(&vop->reg_lock);
+-	VOP_REG_SET(vop, common, dsp_lut_en, 0);
+-	vop_cfg_done(vop);
+-	spin_unlock(&vop->reg_lock);
+ 
+-	/*
+-	 * In order to write the LUT to the internal memory,
+-	 * we need to first make sure the dsp_lut_en bit is cleared.
+-	 */
+-	ret = readx_poll_timeout(vop_dsp_lut_is_enabled, vop,
+-				 idle, !idle, 5, 30 * 1000);
+-	if (ret) {
+-		DRM_DEV_ERROR(vop->dev, "display LUT RAM enable timeout!\n");
+-		return;
+-	}
++	if (!state->gamma_lut || !VOP_HAS_REG(vop, common, update_gamma_lut)) {
++		/*
++		 * To disable gamma (gamma_lut is null) or to write
++		 * an update to the LUT, clear dsp_lut_en.
++		 */
++		spin_lock(&vop->reg_lock);
++		VOP_REG_SET(vop, common, dsp_lut_en, 0);
++		vop_cfg_done(vop);
++		spin_unlock(&vop->reg_lock);
+ 
+-	if (!state->gamma_lut)
+-		return;
++		/*
++		 * In order to write the LUT to the internal memory,
++		 * we need to first make sure the dsp_lut_en bit is cleared.
++		 */
++		ret = readx_poll_timeout(vop_dsp_lut_is_enabled, vop,
++					 idle, !idle, 5, 30 * 1000);
++		if (ret) {
++			DRM_DEV_ERROR(vop->dev, "display LUT RAM enable timeout!\n");
++			return;
++		}
++
++		if (!state->gamma_lut)
++			return;
++	} else {
++		/*
++		 * On RK3399 the gamma LUT can updated without clearing dsp_lut_en,
++		 * by setting update_gamma_lut then waiting for lut_buffer_index change
++		 */
++		old_idx = vop_lut_buffer_index(vop);
++	}
+ 
+ 	spin_lock(&vop->reg_lock);
+ 	vop_crtc_write_gamma_lut(vop, crtc);
+ 	VOP_REG_SET(vop, common, dsp_lut_en, 1);
++	VOP_REG_SET(vop, common, update_gamma_lut, 1);
+ 	vop_cfg_done(vop);
+ 	spin_unlock(&vop->reg_lock);
++
++	if (VOP_HAS_REG(vop, common, update_gamma_lut)) {
++		ret = readx_poll_timeout(vop_lut_buffer_index, vop,
++					 lut_idx, lut_idx != old_idx, 5, 30 * 1000);
++		if (ret) {
++			DRM_DEV_ERROR(vop->dev, "gamma LUT update timeout!\n");
++			return;
++		}
++
++		/*
++		 * update_gamma_lut is auto cleared by HW, but write 0 to clear the bit
++		 * in our backup of the regs.
++		 */
++		spin_lock(&vop->reg_lock);
++		VOP_REG_SET(vop, common, update_gamma_lut, 0);
++		spin_unlock(&vop->reg_lock);
++	}
+ }
+ 
+ static void vop_crtc_atomic_begin(struct drm_crtc *crtc,
+@@ -1305,14 +1342,6 @@ static void vop_crtc_atomic_enable(struct drm_crtc *crtc,
+ 		return;
+ 	}
+ 
+-	/*
+-	 * If we have a GAMMA LUT in the state, then let's make sure
+-	 * it's updated. We might be coming out of suspend,
+-	 * which means the LUT internal memory needs to be re-written.
+-	 */
+-	if (crtc->state->gamma_lut)
+-		vop_crtc_gamma_set(vop, crtc, old_state);
+-
+ 	mutex_lock(&vop->vop_lock);
+ 
+ 	WARN_ON(vop->event);
+@@ -1403,6 +1432,14 @@ static void vop_crtc_atomic_enable(struct drm_crtc *crtc,
+ 
+ 	VOP_REG_SET(vop, common, standby, 0);
+ 	mutex_unlock(&vop->vop_lock);
++
++	/*
++	 * If we have a GAMMA LUT in the state, then let's make sure
++	 * it's updated. We might be coming out of suspend,
++	 * which means the LUT internal memory needs to be re-written.
++	 */
++	if (crtc->state->gamma_lut)
++		vop_crtc_gamma_set(vop, crtc, old_state);
+ }
+ 
+ static bool vop_fs_irq_is_pending(struct vop *vop)
+@@ -2125,8 +2162,8 @@ static int vop_bind(struct device *dev, struct device *master, void *data)
+ 
+ 	res = platform_get_resource(pdev, IORESOURCE_MEM, 1);
+ 	if (res) {
+-		if (!vop_data->lut_size) {
+-			DRM_DEV_ERROR(dev, "no gamma LUT size defined\n");
++		if (vop_data->lut_size != 1024 && vop_data->lut_size != 256) {
++			DRM_DEV_ERROR(dev, "unsupported gamma LUT size %d\n", vop_data->lut_size);
+ 			return -EINVAL;
+ 		}
+ 		vop->lut_regs = devm_ioremap_resource(dev, res);
+
+From: Hugh Cole-Baker <sigmaris@gmail.com>
+Subject: [PATCH v2 3/3] arm64: dts: rockchip: enable gamma control on RK3399
+Date: Tue, 19 Oct 2021 22:58:43 +0100
+
+Define the memory region on RK3399 VOPs containing the gamma LUT at
+base+0x2000.
+
+Signed-off-by: Hugh Cole-Baker <sigmaris@gmail.com>
+---
+
+Changes from v1: no changes in this patch
+
+ arch/arm64/boot/dts/rockchip/rk3399.dtsi | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/arch/arm64/boot/dts/rockchip/rk3399.dtsi b/arch/arm64/boot/dts/rockchip/rk3399.dtsi
+index 3871c7fd83b0..9cbf6ccdd256 100644
+--- a/arch/arm64/boot/dts/rockchip/rk3399.dtsi
++++ b/arch/arm64/boot/dts/rockchip/rk3399.dtsi
+@@ -1619,7 +1619,7 @@ i2s2: i2s@ff8a0000 {
+ 
+ 	vopl: vop@ff8f0000 {
+ 		compatible = "rockchip,rk3399-vop-lit";
+-		reg = <0x0 0xff8f0000 0x0 0x3efc>;
++		reg = <0x0 0xff8f0000 0x0 0x2000>, <0x0 0xff8f2000 0x0 0x400>;
+ 		interrupts = <GIC_SPI 119 IRQ_TYPE_LEVEL_HIGH 0>;
+ 		assigned-clocks = <&cru ACLK_VOP1>, <&cru HCLK_VOP1>;
+ 		assigned-clock-rates = <400000000>, <100000000>;
+@@ -1676,7 +1676,7 @@ vopl_mmu: iommu@ff8f3f00 {
+ 
+ 	vopb: vop@ff900000 {
+ 		compatible = "rockchip,rk3399-vop-big";
+-		reg = <0x0 0xff900000 0x0 0x3efc>;
++		reg = <0x0 0xff900000 0x0 0x2000>, <0x0 0xff902000 0x0 0x1000>;
+ 		interrupts = <GIC_SPI 118 IRQ_TYPE_LEVEL_HIGH 0>;
+ 		assigned-clocks = <&cru ACLK_VOP0>, <&cru HCLK_VOP0>;
+ 		assigned-clock-rates = <400000000>, <100000000>;
+From: Kyle Copperfield <kmcopper@danwin1210.me>
+Subject: [PATCH] media: rockchip/rga: do proper error checking in probe
+Date: Sat, 20 Nov 2021 12:23:02 +0000
+
+The latest fix for probe error handling contained a typo that causes
+probing to fail with the following message:
+
+  rockchip-rga: probe of ff680000.rga failed with error -12
+
+This patch fixes the typo.
+
+Fixes: e58430e1d4fd (media: rockchip/rga: fix error handling in probe)
+Reviewed-by: Dragan Simic <dragan.simic@gmail.com>
+Signed-off-by: Kyle Copperfield <kmcopper@danwin1210.me>
+Reviewed-by: Kieran Bingham <kieran.bingham+renesas@ideasonboard.com>
+Reviewed-by: Dan Carpenter <dan.carpenter@oracle.com>
+---
+ drivers/media/platform/rockchip/rga/rga.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/media/platform/rockchip/rga/rga.c b/drivers/media/platform/rockchip/rga/rga.c
+index 6759091b15e0..d99ea8973b67 100644
+--- a/drivers/media/platform/rockchip/rga/rga.c
++++ b/drivers/media/platform/rockchip/rga/rga.c
+@@ -895,7 +895,7 @@ static int rga_probe(struct platform_device *pdev)
+ 	}
+ 	rga->dst_mmu_pages =
+ 		(unsigned int *)__get_free_pages(GFP_KERNEL | __GFP_ZERO, 3);
+-	if (rga->dst_mmu_pages) {
++	if (!rga->dst_mmu_pages) {
+ 		ret = -ENOMEM;
+ 		goto free_src_pages;
+ 	}
