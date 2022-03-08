@@ -530,3 +530,88 @@ diff -ur linux-5.3/drivers/scsi/aacraid.org/linit.c linux-5.3/drivers/scsi/aacra
  		aac_define_int_mode(dev);
  
  	if (dev->msi_enabled)
+commit fd43cf600cf61c66ae0a1021aca2f636115c7fcb
+Author: Brian Foster <bfoster@redhat.com>
+Date:   Wed Apr 28 15:06:05 2021 -0700
+
+    xfs: set aside allocation btree blocks from block reservation
+    
+    The blocks used for allocation btrees (bnobt and countbt) are
+    technically considered free space. This is because as free space is
+    used, allocbt blocks are removed and naturally become available for
+    traditional allocation. However, this means that a significant
+    portion of free space may consist of in-use btree blocks if free
+    space is severely fragmented.
+    
+    On large filesystems with large perag reservations, this can lead to
+    a rare but nasty condition where a significant amount of physical
+    free space is available, but the majority of actual usable blocks
+    consist of in-use allocbt blocks. We have a record of a (~12TB, 32
+    AG) filesystem with multiple AGs in a state with ~2.5GB or so free
+    blocks tracked across ~300 total allocbt blocks, but effectively at
+    100% full because the the free space is entirely consumed by
+    refcountbt perag reservation.
+    
+    Such a large perag reservation is by design on large filesystems.
+    The problem is that because the free space is so fragmented, this AG
+    contributes the 300 or so allocbt blocks to the global counters as
+    free space. If this pattern repeats across enough AGs, the
+    filesystem lands in a state where global block reservation can
+    outrun physical block availability. For example, a streaming
+    buffered write on the affected filesystem continues to allow delayed
+    allocation beyond the point where writeback starts to fail due to
+    physical block allocation failures. The expected behavior is for the
+    delalloc block reservation to fail gracefully with -ENOSPC before
+    physical block allocation failure is a possibility.
+    
+    To address this problem, set aside in-use allocbt blocks at
+    reservation time and thus ensure they cannot be reserved until truly
+    available for physical allocation. This allows alloc btree metadata
+    to continue to reside in free space, but dynamically adjusts
+    reservation availability based on internal state. Note that the
+    logic requires that the allocbt counter is fully populated at
+    reservation time before it is fully effective. We currently rely on
+    the mount time AGF scan in the perag reservation initialization code
+    for this dependency on filesystems where it's most important (i.e.
+    with active perag reservations).
+    
+    Signed-off-by: Brian Foster <bfoster@redhat.com>
+    Reviewed-by: Chandan Babu R <chandanrlinux@gmail.com>
+    Reviewed-by: Allison Henderson <allison.henderson@oracle.com>
+    Reviewed-by: Darrick J. Wong <djwong@kernel.org>
+    Signed-off-by: Darrick J. Wong <djwong@kernel.org>
+
+diff --git a/fs/xfs/xfs_mount.c b/fs/xfs/xfs_mount.c
+index cb1e2c4702c3..bdfee1943796 100644
+--- a/fs/xfs/xfs_mount.c
++++ b/fs/xfs/xfs_mount.c
+@@ -1188,6 +1188,7 @@ xfs_mod_fdblocks(
+ 	int64_t			lcounter;
+ 	long long		res_used;
+ 	s32			batch;
++	uint64_t		set_aside;
+ 
+ 	if (delta > 0) {
+ 		/*
+@@ -1227,8 +1228,20 @@ xfs_mod_fdblocks(
+ 	else
+ 		batch = XFS_FDBLOCKS_BATCH;
+ 
++	/*
++	 * Set aside allocbt blocks because these blocks are tracked as free
++	 * space but not available for allocation. Technically this means that a
++	 * single reservation cannot consume all remaining free space, but the
++	 * ratio of allocbt blocks to usable free blocks should be rather small.
++	 * The tradeoff without this is that filesystems that maintain high
++	 * perag block reservations can over reserve physical block availability
++	 * and fail physical allocation, which leads to much more serious
++	 * problems (i.e. transaction abort, pagecache discards, etc.) than
++	 * slightly premature -ENOSPC.
++	 */
++	set_aside = mp->m_alloc_set_aside + atomic64_read(&mp->m_allocbt_blks);
+ 	percpu_counter_add_batch(&mp->m_fdblocks, delta, batch);
+-	if (__percpu_counter_compare(&mp->m_fdblocks, mp->m_alloc_set_aside,
++	if (__percpu_counter_compare(&mp->m_fdblocks, set_aside,
+ 				     XFS_FDBLOCKS_BATCH) >= 0) {
+ 		/* we had space! */
+ 		return 0;
