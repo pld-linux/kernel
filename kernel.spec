@@ -222,23 +222,24 @@ Patch8002:	atheros-disallow-retrain-nongen1-pcie.patch
 URL:		https://www.kernel.org/
 AutoReqProv:	no
 BuildRequires:	/sbin/depmod
-BuildRequires:	bc
-BuildRequires:	binutils >= 3:2.18
-BuildRequires:	bison
+BuildRequires:	bc >= 1.06.95
+BuildRequires:	binutils >= 3:2.23
+BuildRequires:	bison >= 2.0
 %ifarch sparc sparc64
 BuildRequires:	elftoaout
 %endif
 BuildRequires:	elfutils-devel
-BuildRequires:	flex
+BuildRequires:	flex >= 2.5.35
 BuildRequires:	gcc >= 6:7.2.0-6
 BuildRequires:	gcc-c++
 BuildRequires:	gcc-plugin-devel
 BuildRequires:	hostname
 BuildRequires:	kmod >= %{kmod_ver}
 BuildRequires:	libstdc++-devel
-BuildRequires:	openssl-devel
-BuildRequires:	openssl-tools
-BuildRequires:	perl-base
+BuildRequires:	make >= 1:3.81
+BuildRequires:	openssl-devel >= 1.0.0
+BuildRequires:	openssl-tools >= 1.0.0
+BuildRequires:	perl-base >= 5
 BuildRequires:	rpm-build >= 4.5-24
 BuildRequires:	rpmbuild(macros) >= 1.752
 BuildRequires:	tar >= 1:1.22
