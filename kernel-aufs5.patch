@@ -158,19 +158,6 @@ index 5dbce4dcc1a7d..3e6ba363b7775 100644
  {
  	unsigned int p_space;
  	int ret;
-diff --git a/fs/sync.c b/fs/sync.c
-index 1373a610dc784..b7b5a0a0df6ff 100644
---- a/fs/sync.c
-+++ b/fs/sync.c
-@@ -28,7 +28,7 @@
-  * wait == 1 case since in that case write_inode() functions do
-  * sync_dirty_buffer() and thus effectively write one block at a time.
-  */
--static int __sync_filesystem(struct super_block *sb, int wait)
-+int __sync_filesystem(struct super_block *sb, int wait)
- {
- 	if (wait)
- 		sync_inodes_sb(sb);
 diff --git a/include/linux/fs.h b/include/linux/fs.h
 index 56eba723477e3..e60d8ad854004 100644
 --- a/include/linux/fs.h
@@ -199,14 +186,6 @@ index 56eba723477e3..e60d8ad854004 100644
  
  /* /sys/fs */
  extern struct kobject *fs_kobj;
-@@ -2778,6 +2781,7 @@ static inline bool sb_is_blkdev_sb(struct super_block *sb)
- }
- 
- void emergency_thaw_all(void);
-+extern int __sync_filesystem(struct super_block *, int);
- extern int sync_filesystem(struct super_block *);
- extern const struct file_operations def_blk_fops;
- extern const struct file_operations def_chr_fops;
 diff --git a/include/linux/lockdep.h b/include/linux/lockdep.h
 index 9fe165beb0f9e..e47f7e15eeaf7 100644
 --- a/include/linux/lockdep.h
@@ -261,7 +240,7 @@ index d624231eab2bb..eff2ca26e6c58 100644
 +++ b/kernel/locking/lockdep.c
 @@ -189,7 +189,7 @@ static
  struct lock_class lock_classes[MAX_LOCKDEP_KEYS];
- static DECLARE_BITMAP(lock_classes_in_use, MAX_LOCKDEP_KEYS);
+ DECLARE_BITMAP(lock_classes_in_use, MAX_LOCKDEP_KEYS);
  
 -static inline struct lock_class *hlock_class(struct held_lock *hlock)
 +inline struct lock_class *lockdep_hlock_class(struct held_lock *hlock)
@@ -832,18 +811,6 @@ index 3e6ba363b7775..7c1be373eb7cd 100644
  
  /**
   * splice_direct_to_actor - splices data directly between two non-pipes
-diff --git a/fs/sync.c b/fs/sync.c
-index b7b5a0a0df6ff..fa5c7fba7f1ba 100644
---- a/fs/sync.c
-+++ b/fs/sync.c
-@@ -39,6 +39,7 @@ int __sync_filesystem(struct super_block *sb, int wait)
- 		sb->s_op->sync_fs(sb, wait);
- 	return __sync_blockdev(sb->s_bdev, wait);
- }
-+EXPORT_SYMBOL_GPL(__sync_filesystem);
- 
- /*
-  * Write out and wait upon all dirty data associated with this
 diff --git a/fs/xattr.c b/fs/xattr.c
 index 5c8c5175b385c..ff7e9ff774b73 100644
 --- a/fs/xattr.c
@@ -32696,7 +32663,7 @@ diff -urN /usr/share/empty/fs/aufs/vfsub.c linux/fs/aufs/vfsub.c
 +
 +	lockdep_off();
 +	down_read(&h_sb->s_umount);
-+	err = __sync_filesystem(h_sb, wait);
++	err = sync_filesystem(h_sb);
 +	up_read(&h_sb->s_umount);
 +	lockdep_on();
 +
