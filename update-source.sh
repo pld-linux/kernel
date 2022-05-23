@@ -7,7 +7,7 @@ BRANCH=aufs5.x-rcN
 # aufs5
 [ -d aufs5-standalone ] || git clone https://github.com/sfjro/aufs5-standalone.git
 cd aufs5-standalone
-git checkout -b ${BRANCH} origin/${BRANCH}
+git checkout -b ${BRANCH} origin/${BRANCH} || git switch ${BRANCH}
 git pull
 cat aufs5-kbuild.patch aufs5-base.patch aufs5-mmap.patch aufs5-standalone.patch > ../kernel-aufs5.patch
 rm -rf linux && mkdir linux
