@@ -247,6 +247,7 @@ BuildRequires:	tar >= 1:1.22
 BuildRequires:	uboot-mkimage
 %endif
 BuildRequires:	xz >= 1:4.999.7
+BuildConflicts:	dwarves < 1.16
 Requires(post):	coreutils
 Requires(post):	geninitrd >= 12787-6
 Requires(post):	kmod >= %{kmod_ver}
