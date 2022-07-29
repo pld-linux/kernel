@@ -67,7 +67,7 @@
 
 %define		rel		1
 %define		basever		5.18
-%define		postver		.12
+%define		postver		.14
 
 # define this to '-%{basever}' for longterm branch
 %define		versuffix	%{nil}
@@ -121,7 +121,7 @@ Source0:	https://www.kernel.org/pub/linux/kernel/v5.x/linux-%{basever}.tar.xz
 # Source0-md5:	58e80452e2d8e1993cd7ec95e697ab5a
 %if "%{postver}" != ".0"
 Patch0:		https://www.kernel.org/pub/linux/kernel/v5.x/patch-%{version}.xz
-# Patch0-md5:	49c8a948f51f29467b902a8d841becd6
+# Patch0-md5:	05dee8a9a2d04a0cde691b449114177b
 %endif
 Source1:	kernel.sysconfig
 
