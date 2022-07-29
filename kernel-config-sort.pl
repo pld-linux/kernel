@@ -4,7 +4,7 @@
 # Usage:
 #  ./kernel-config-sort.pl ../BUILD/linux-2.6.*/ kernel-multiarch.config
 #
-#  ./kernel-config-sort.pl ../BUILD/linux-2.6.*/ -a x86 kernel-x86_84.config
+#  ./kernel-config-sort.pl ../BUILD/linux-2.6.*/ -a x86 kernel-x86.config
 #
 use strict;
 use warnings;
