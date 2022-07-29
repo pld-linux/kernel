@@ -890,6 +890,12 @@ BuildConfig() {
 %ifarch x32
 		CONFIG_BPF_PRELOAD=n
 %endif
+%if %{_ver_ge %(rpm -q --qf='%%{VERSION}' gcc) 12}
+		CONFIG_INIT_STACK_ALL_ZERO=y
+		CONFIG_GCC_PLUGIN_STRUCTLEAK_BYREF_ALL=n
+%else
+		CONFIG_GCC_PLUGIN_STRUCTLEAK_BYREF_ALL=y
+%endif
 EOCONFIG
 
 %if %{with rescuecd}
