@@ -66,8 +66,8 @@
 %endif
 
 %define		rel		1
-%define		basever		5.18
-%define		postver		.14
+%define		basever		5.19
+%define		postver		.0
 
 # define this to '-%{basever}' for longterm branch
 %define		versuffix	%{nil}
@@ -118,7 +118,7 @@ Epoch:		3
 License:	GPL v2
 Group:		Base/Kernel
 Source0:	https://www.kernel.org/pub/linux/kernel/v5.x/linux-%{basever}.tar.xz
-# Source0-md5:	58e80452e2d8e1993cd7ec95e697ab5a
+# Source0-md5:	f91bfe133d2cb1692f705947282e123a
 %if "%{postver}" != ".0"
 Patch0:		https://www.kernel.org/pub/linux/kernel/v5.x/patch-%{version}.xz
 # Patch0-md5:	05dee8a9a2d04a0cde691b449114177b
@@ -726,7 +726,8 @@ find -name '*.pl' -print0 | \
 
 %{__sed} -i -e '1s,/usr/bin/env bash,%{__bash},' \
 	tools/testing/selftests/powerpc/security/mitigation-patching.sh \
-	scripts/config
+	scripts/config \
+	scripts/check-local-export
 
 %build
 install -d %{objdir}
@@ -1455,6 +1456,7 @@ fi
 %{_kernelsrcdir}/scripts/kconfig/lxdialog
 %{_kernelsrcdir}/scripts/mod/*.c
 %{_kernelsrcdir}/scripts/mod/modpost.h
+%attr(755,root,root) %{_kernelsrcdir}/scripts/check-local-export
 %attr(755,root,root) %{_kernelsrcdir}/scripts/mkcompile_h
 %attr(755,root,root) %{_kernelsrcdir}/scripts/setlocalversion
 %{_kernelsrcdir}/scripts/subarch.include
@@ -1522,6 +1524,7 @@ fi
 %exclude %{_kernelsrcdir}/scripts/Kbuild.include
 %exclude %{_kernelsrcdir}/scripts/Makefile*
 %exclude %{_kernelsrcdir}/scripts/basic
+%exclude %{_kernelsrcdir}/scripts/check-local-export
 %exclude %{_kernelsrcdir}/scripts/kconfig
 %exclude %{_kernelsrcdir}/scripts/mkcompile_h
 %exclude %{_kernelsrcdir}/scripts/mod

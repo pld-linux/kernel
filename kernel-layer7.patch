@@ -83,24 +83,6 @@ diff -urNp -x '*.orig' linux-5.11/net/netfilter/Makefile linux-5.11/net/netfilte
  obj-$(CONFIG_NETFILTER_XT_MATCH_STATISTIC) += xt_statistic.o
  obj-$(CONFIG_NETFILTER_XT_MATCH_STRING) += xt_string.o
  obj-$(CONFIG_NETFILTER_XT_MATCH_TCPMSS) += xt_tcpmss.o
-diff -urNp -x '*.orig' linux-5.11/net/netfilter/nf_conntrack_core.c linux-5.11/net/netfilter/nf_conntrack_core.c
---- linux-5.11/net/netfilter/nf_conntrack_core.c	2021-02-14 23:32:24.000000000 +0100
-+++ linux-5.11/net/netfilter/nf_conntrack_core.c	2021-02-24 13:21:48.335107407 +0100
-@@ -528,6 +528,14 @@ static void nf_ct_del_from_dying_or_unco
- {
- 	struct ct_pcpu *pcpu;
- 
-+	#if defined(CONFIG_NETFILTER_XT_MATCH_LAYER7) || defined(CONFIG_NETFILTER_XT_MATCH_LAYER7_MODULE)
-+	if(ct->layer7.app_proto)
-+		kfree(ct->layer7.app_proto);
-+	if(ct->layer7.app_data)
-+	kfree(ct->layer7.app_data);
-+	#endif
-+
-+
- 	/* We overload first tuple to link into unconfirmed list.*/
- 	pcpu = per_cpu_ptr(nf_ct_net(ct)->ct.pcpu_lists, ct->cpu);
- 
 diff -urNp -x '*.orig' linux-5.11/net/netfilter/nf_conntrack_standalone.c linux-5.11/net/netfilter/nf_conntrack_standalone.c
 --- linux-5.11/net/netfilter/nf_conntrack_standalone.c	2021-02-14 23:32:24.000000000 +0100
 +++ linux-5.11/net/netfilter/nf_conntrack_standalone.c	2021-02-24 13:21:48.338440845 +0100
