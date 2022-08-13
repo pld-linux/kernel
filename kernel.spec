@@ -65,7 +65,7 @@
 %define		have_pcmcia	0
 %endif
 
-%define		rel		1
+%define		rel		2
 %define		basever		5.19
 %define		postver		.1
 
@@ -1423,6 +1423,8 @@ fi
 %dir %{_kernelsrcdir}/security
 %dir %{_kernelsrcdir}/security/selinux
 %{_kernelsrcdir}/security/selinux/include
+%dir %{_kernelsrcdir}/tools
+%{_kernelsrcdir}/tools/include
 %dir %{_kernelsrcdir}/usr
 %dir %{_kernelsrcdir}/usr/include
 %{_kernelsrcdir}/.config
@@ -1545,6 +1547,7 @@ fi
 %{_kernelsrcdir}/security
 %exclude %{_kernelsrcdir}/security/selinux/include
 %{_kernelsrcdir}/tools/*
+%exclude %{_kernelsrcdir}/tools/include
 %ifarch %{x8664} x32
 %exclude %{_kernelsrcdir}/tools/objtool/fixdep
 %exclude %{_kernelsrcdir}/tools/objtool/objtool
