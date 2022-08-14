@@ -65,7 +65,7 @@
 %define		have_pcmcia	0
 %endif
 
-%define		rel		2
+%define		rel		3
 %define		basever		5.19
 %define		postver		.1
 
@@ -241,7 +241,7 @@ BuildRequires:	openssl-devel >= 1.0.0
 BuildRequires:	openssl-tools >= 1.0.0
 BuildRequires:	perl-base >= 5
 BuildRequires:	rpm-build >= 4.5-24
-BuildRequires:	rpmbuild(macros) >= 1.752
+BuildRequires:	rpmbuild(macros) >= 2.019
 BuildRequires:	tar >= 1:1.22
 %ifarch ppc
 BuildRequires:	uboot-mkimage
