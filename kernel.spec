@@ -531,7 +531,7 @@ Group:		Development/Building
 Requires:	%{name}-headers = %{epoch}:%{version}-%{release}
 Requires:	elfutils-devel
 Requires:	make
-Conflicts:	rpmbuild(macros) < 1.704
+Conflicts:	rpmbuild(macros) < 2.019
 AutoReqProv:	no
 
 %description module-build
