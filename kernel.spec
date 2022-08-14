@@ -71,7 +71,7 @@
 %define		have_pcmcia	0
 %endif
 
-%define		rel		2
+%define		rel		3
 %define		basever		5.10
 %define		postver		.136
 
@@ -255,7 +255,7 @@ BuildRequires:	openssl-devel
 BuildRequires:	openssl-tools
 BuildRequires:	perl-base
 BuildRequires:	rpm-build >= 4.5-24
-BuildRequires:	rpmbuild(macros) >= 1.752
+BuildRequires:	rpmbuild(macros) >= 2.019
 BuildRequires:	tar >= 1:1.22
 %ifarch ppc
 BuildRequires:	uboot-mkimage
@@ -562,7 +562,7 @@ Group:		Development/Building
 Requires:	%{name}-headers = %{epoch}:%{version}-%{release}
 Requires:	elfutils-devel
 Requires:	make
-Conflicts:	rpmbuild(macros) < 1.704
+Conflicts:	rpmbuild(macros) < 2.019
 AutoReqProv:	no
 
 %description module-build
