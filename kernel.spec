@@ -140,6 +140,8 @@ Source22:	kernel-sparc.config
 Source23:	kernel-alpha.config
 Source24:	kernel-powerpc.config
 Source25:	kernel-ia64.config
+Source26:	kernel-arm.config
+Source27:	kernel-arm64.config
 
 Source41:	kernel-patches.config
 Source43:	kernel-vserver.config
