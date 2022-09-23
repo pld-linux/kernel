@@ -158,19 +158,6 @@ index 866d5c2367b23..55b5356262085 100644
  {
  	int ret;
  
-diff --git a/fs/sync.c b/fs/sync.c
-index 1373a610dc784..b7b5a0a0df6ff 100644
---- a/fs/sync.c
-+++ b/fs/sync.c
-@@ -28,7 +28,7 @@
-  * wait == 1 case since in that case write_inode() functions do
-  * sync_dirty_buffer() and thus effectively write one block at a time.
-  */
--static int __sync_filesystem(struct super_block *sb, int wait)
-+int __sync_filesystem(struct super_block *sb, int wait)
- {
- 	if (wait)
- 		sync_inodes_sb(sb);
 diff --git a/include/linux/fs.h b/include/linux/fs.h
 index 42d246a942283..2cc1a02e444c4 100644
 --- a/include/linux/fs.h
@@ -199,14 +186,6 @@ index 42d246a942283..2cc1a02e444c4 100644
  
  /* /sys/fs */
  extern struct kobject *fs_kobj;
-@@ -2566,6 +2569,7 @@ static inline bool sb_is_blkdev_sb(struct super_block *sb)
- }
- 
- void emergency_thaw_all(void);
-+extern int __sync_filesystem(struct super_block *, int);
- extern int sync_filesystem(struct super_block *);
- extern const struct file_operations def_blk_fops;
- extern const struct file_operations def_chr_fops;
 diff --git a/include/linux/lockdep.h b/include/linux/lockdep.h
 index 20b6797babe2c..7888c04c3ffaf 100644
 --- a/include/linux/lockdep.h
@@ -833,18 +812,6 @@ index 55b5356262085..c13ac0fbac318 100644
  
  /**
   * splice_direct_to_actor - splices data directly between two non-pipes
-diff --git a/fs/sync.c b/fs/sync.c
-index b7b5a0a0df6ff..fa5c7fba7f1ba 100644
---- a/fs/sync.c
-+++ b/fs/sync.c
-@@ -39,6 +39,7 @@ int __sync_filesystem(struct super_block *sb, int wait)
- 		sb->s_op->sync_fs(sb, wait);
- 	return __sync_blockdev(sb->s_bdev, wait);
- }
-+EXPORT_SYMBOL_GPL(__sync_filesystem);
- 
- /*
-  * Write out and wait upon all dirty data associated with this
 diff --git a/fs/xattr.c b/fs/xattr.c
 index cd7a563e8bcd4..7d989d57b0f0d 100644
 --- a/fs/xattr.c
@@ -32624,7 +32591,7 @@ diff -urN /usr/share/empty/fs/aufs/vfsub.c linux/fs/aufs/vfsub.c
 +
 +	lockdep_off();
 +	down_read(&h_sb->s_umount);
-+	err = __sync_filesystem(h_sb, wait);
++	err = sync_filesystem(h_sb);
 +	up_read(&h_sb->s_umount);
 +	lockdep_on();
 +
