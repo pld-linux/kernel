@@ -65,7 +65,7 @@
 %define		have_pcmcia	0
 %endif
 
-%define		rel		0.1
+%define		rel		1
 %define		basever		6.0
 %define		postver		.0
 
@@ -1516,6 +1516,7 @@ fi
 %{_kernelsrcdir}/drivers
 %{_kernelsrcdir}/fs
 %{_kernelsrcdir}/init
+%{_kernelsrcdir}/io_uring
 %{_kernelsrcdir}/ipc
 %{_kernelsrcdir}/kernel
 %exclude %{_kernelsrcdir}/kernel/bounds.c
