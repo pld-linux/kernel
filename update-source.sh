@@ -5,7 +5,7 @@ set -xe
 BRANCH=aufs5.15.41
 
 # aufs5
-[ -d aufs5-standalone ] || git clone git://github.com/sfjro/aufs5-standalone.git
+[ -d aufs5-standalone ] || git clone https://github.com/sfjro/aufs5-standalone.git
 cd aufs5-standalone
 git checkout -b ${BRANCH} origin/${BRANCH}
 git pull
