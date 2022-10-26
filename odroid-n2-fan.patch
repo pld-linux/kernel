@@ -1,0 +1,80 @@
+From 44a201df71739a3c5ef3c40e58ebaccfd052d430 Mon Sep 17 00:00:00 2001
+From: Anand Moon <linux.amoon@gmail.com>
+Date: Fri, 21 Oct 2022 05:09:03 +0000
+Subject: arm64: dts: meson: Enable active coling using gpio-fan on Odroid
+ N2/N2+
+
+Odroid N2/N2+ support active cooling via gpio-fan controller.
+Add fan controls and tip point for cpu and ddr thermal sensor
+on this boards.
+
+Signed-off-by: Anand Moon <linux.amoon@gmail.com>
+Link: https://lore.kernel.org/r/20221021050906.1158-1-linux.amoon@gmail.com
+Signed-off-by: Neil Armstrong <neil.armstrong@linaro.org>
+---
+ .../boot/dts/amlogic/meson-g12b-odroid-n2.dtsi     | 42 ++++++++++++++++++++++
+ 1 file changed, 42 insertions(+)
+
+diff --git a/arch/arm64/boot/dts/amlogic/meson-g12b-odroid-n2.dtsi b/arch/arm64/boot/dts/amlogic/meson-g12b-odroid-n2.dtsi
+index fd3fa82e4c330..667d2b7749244 100644
+--- a/arch/arm64/boot/dts/amlogic/meson-g12b-odroid-n2.dtsi
++++ b/arch/arm64/boot/dts/amlogic/meson-g12b-odroid-n2.dtsi
+@@ -39,6 +39,14 @@
+ 		reset-gpios = <&gpio BOOT_12 GPIO_ACTIVE_LOW>;
+ 	};
+ 
++	fan: gpio-fan {
++		compatible = "gpio-fan";
++		gpios = <&gpio_ao GPIOAO_10 GPIO_ACTIVE_HIGH>;
++		/* Using Dummy Speed */
++		gpio-fan,speed-map = <0 0>, <1 1>;
++		#cooling-cells = <2>;
++	};
++
+ 	leds {
+ 		compatible = "gpio-leds";
+ 
+@@ -410,6 +418,40 @@
+ 	clock-latency = <50000>;
+ };
+ 
++&cpu_thermal {
++	trips {
++		cpu_active: cpu-active {
++			temperature = <60000>; /* millicelsius */
++			hysteresis = <2000>; /* millicelsius */
++			type = "active";
++		};
++	};
++
++	cooling-maps {
++		map {
++			trip = <&cpu_active>;
++			cooling-device = <&fan THERMAL_NO_LIMIT THERMAL_NO_LIMIT>;
++		};
++	};
++};
++
++&ddr_thermal {
++	trips {
++		ddr_active: ddr-active {
++			temperature = <60000>; /* millicelsius */
++			hysteresis = <2000>; /* millicelsius */
++			type = "active";
++		};
++	};
++
++	cooling-maps {
++		map {
++			trip = <&ddr_active>;
++			cooling-device = <&fan THERMAL_NO_LIMIT THERMAL_NO_LIMIT>;
++		};
++	};
++};
++
+ &ext_mdio {
+ 	external_phy: ethernet-phy@0 {
+ 		/* Realtek RTL8211F (0x001cc916) */
+-- 
+cgit 
+
