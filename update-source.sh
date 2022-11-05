@@ -1,18 +1,18 @@
 #!/bin/sh
 set -xe
 
-BRANCH=aufs5.x-rcN
-#BRANCH=aufs5.16
+BRANCH=aufs6.0
+#BRANCH=aufs6.x-rcN
 
-# aufs5
-[ -d aufs5-standalone ] || git clone https://github.com/sfjro/aufs5-standalone.git
-cd aufs5-standalone
+# aufs6
+[ -d aufs-standalone ] || git clone https://github.com/sfjro/aufs-standalone.git
+cd aufs-standalone
 git checkout -b ${BRANCH} origin/${BRANCH} || git switch ${BRANCH}
 git pull
-cat aufs5-kbuild.patch aufs5-base.patch aufs5-mmap.patch aufs5-standalone.patch > ../kernel-aufs5.patch
+cat aufs6-kbuild.patch aufs6-base.patch aufs6-mmap.patch aufs6-standalone.patch > ../kernel-aufs.patch
 rm -rf linux && mkdir linux
 cp -a Documentation fs include linux
-diff -urN /usr/share/empty linux | filterdiff -x linux/include/uapi/linux/Kbuild >> ../kernel-aufs5.patch
-cat aufs5-loopback.patch >> ../kernel-aufs5.patch
+diff -urN /usr/share/empty linux | filterdiff -x linux/include/uapi/linux/Kbuild >> ../kernel-aufs.patch
+cat aufs6-loopback.patch >> ../kernel-aufs.patch
 
 # other

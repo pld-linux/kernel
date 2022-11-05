@@ -67,7 +67,7 @@
 
 %define		rel		1
 %define		basever		6.0
-%define		postver		.6
+%define		postver		.7
 
 # define this to '-%{basever}' for longterm branch
 %define		versuffix	%{nil}
@@ -121,7 +121,7 @@ Source0:	https://www.kernel.org/pub/linux/kernel/v6.x/linux-%{basever}.tar.xz
 # Source0-md5:	d681bd1d62d48049a4874646f6774d92
 %if "%{postver}" != ".0"
 Patch0:		https://www.kernel.org/pub/linux/kernel/v6.x/patch-%{version}.xz
-# Patch0-md5:	cf1eefacef3381cee848a45c343fc38c
+# Patch0-md5:	563ee75865b377496172e408ed7eed60
 %endif
 Source1:	kernel.sysconfig
 
@@ -194,7 +194,7 @@ Patch100:	kernel-vserver-2.3.patch
 Patch101:	kernel-vserver-fixes.patch
 
 # see update-source.sh
-Patch145:	kernel-aufs5.patch
+Patch145:	kernel-aufs.patch
 Patch146:	kernel-aufs+vserver.patch
 
 # Show normal colors in menuconfig with ncurses ABI 6

@@ -1,5 +1,5 @@
 SPDX-License-Identifier: GPL-2.0
-aufs5.x-rcN kbuild patch
+aufs6.0 kbuild patch
 
 diff --git a/fs/Kconfig b/fs/Kconfig
 index a547307c1ae8..919ca5404804 100644
@@ -23,13 +23,13 @@ index 93b80529f8e8..a26c58d09435 100644
  obj-$(CONFIG_ZONEFS_FS)		+= zonefs/
 +obj-$(CONFIG_AUFS_FS)           += aufs/
 SPDX-License-Identifier: GPL-2.0
-aufs5.x-rcN base patch
+aufs6.0 base patch
 
 diff --git a/MAINTAINERS b/MAINTAINERS
-index d30f26e07cd3..2331a15f3550 100644
+index 72b9654f764c..53fc0e89d1ea 100644
 --- a/MAINTAINERS
 +++ b/MAINTAINERS
-@@ -3426,6 +3426,19 @@ F:	include/uapi/linux/audit.h
+@@ -3425,6 +3425,19 @@ F:	include/uapi/linux/audit.h
  F:	kernel/audit*
  F:	lib/*audit.c
  
@@ -159,7 +159,7 @@ index 0878b852b355..d83f9e5cddbc 100644
  	unsigned int p_space;
  	int ret;
 diff --git a/include/linux/fs.h b/include/linux/fs.h
-index 9eced4cc286e..773ebd5696e4 100644
+index 9eced4cc286e..9c5a33fce3a8 100644
 --- a/include/linux/fs.h
 +++ b/include/linux/fs.h
 @@ -1364,6 +1364,7 @@ extern void fasync_free(struct fasync_struct *);
@@ -178,22 +178,6 @@ index 9eced4cc286e..773ebd5696e4 100644
  	int (*flock) (struct file *, int, struct file_lock *);
  	ssize_t (*splice_write)(struct pipe_inode_info *, struct file *, loff_t *, size_t, unsigned int);
  	ssize_t (*splice_read)(struct file *, loff_t *, struct pipe_inode_info *, size_t, unsigned int);
-@@ -2615,6 +2617,7 @@ extern int current_umask(void);
- extern void ihold(struct inode * inode);
- extern void iput(struct inode *);
- extern int generic_update_time(struct inode *, struct timespec64 *, int);
-+extern int update_time(struct inode *, struct timespec64 *, int);
- 
- /* /sys/fs */
- extern struct kobject *fs_kobj;
-@@ -2795,6 +2798,7 @@ static inline bool sb_is_blkdev_sb(struct super_block *sb)
- }
- 
- void emergency_thaw_all(void);
-+extern int __sync_filesystem(struct super_block *, int);
- extern int sync_filesystem(struct super_block *);
- extern const struct file_operations def_blk_fops;
- extern const struct file_operations def_chr_fops;
 diff --git a/include/linux/lockdep.h b/include/linux/lockdep.h
 index 1f1099dac3f0..81d10b8e9dc0 100644
 --- a/include/linux/lockdep.h
@@ -264,7 +248,7 @@ index 64a13eb56078..c9f30e12aa32 100644
  #ifdef CONFIG_LOCK_STAT
  static DEFINE_PER_CPU(struct lock_class_stats[MAX_LOCKDEP_KEYS], cpu_lock_stats);
 SPDX-License-Identifier: GPL-2.0
-aufs5.x-rcN mmap patch
+aufs6.0 mmap patch
 
 diff --git a/fs/proc/base.c b/fs/proc/base.c
 index 93f7e3d971e4..23aa1626020a 100644
@@ -409,7 +393,7 @@ index cf97f3884fda..a783130a669d 100644
  
  #ifdef CONFIG_SWAP
 diff --git a/kernel/fork.c b/kernel/fork.c
-index 90c85b17bf69..55406414ade4 100644
+index 2b6bd511c6ed..944adfb5189a 100644
 --- a/kernel/fork.c
 +++ b/kernel/fork.c
 @@ -662,7 +662,7 @@ static __latent_entropy int dup_mmap(struct mm_struct *mm,
@@ -466,8 +450,8 @@ index 9d780f415be3..e744ba276454 100644
  		if (next->anon_vma)
  			anon_vma_merge(vma, next);
 @@ -1845,7 +1845,7 @@ unsigned long mmap_region(struct file *file, unsigned long addr,
-	if (vma->vm_ops && vma->vm_ops->close)
-		vma->vm_ops->close(vma);
+ 	if (vma->vm_ops && vma->vm_ops->close)
+ 		vma->vm_ops->close(vma);
  unmap_and_free_vma:
 -	fput(vma->vm_file);
 +	vma_fput(vma);
@@ -592,7 +576,7 @@ index e819cbc21b39..dc7d40fb197f 100644
  
 diff --git a/mm/prfile.c b/mm/prfile.c
 new file mode 100644
-index 000000000000..511543ab1b41
+index 000000000000..8f820a235364
 --- /dev/null
 +++ b/mm/prfile.c
 @@ -0,0 +1,86 @@
@@ -604,7 +588,7 @@ index 000000000000..511543ab1b41
 + *
 + * See Documentation/filesystems/aufs/design/06mmap.txt
 + *
-+ * Copyright (c) 2014-2021 Junjro R. Okajima
++ * Copyright (c) 2014-2022 Junjro R. Okajima
 + * Copyright (c) 2014 Ian Campbell
 + */
 +
@@ -683,7 +667,7 @@ index 000000000000..511543ab1b41
 +}
 +#endif /* !CONFIG_MMU */
 SPDX-License-Identifier: GPL-2.0
-aufs5.x-rcN standalone patch
+aufs6.0 standalone patch
 
 diff --git a/fs/dcache.c b/fs/dcache.c
 index d753ad7d77e6..1a3b40ebc12b 100644
@@ -706,10 +690,10 @@ index d753ad7d77e6..1a3b40ebc12b 100644
  /**
   * d_ancestor - search for an ancestor
 diff --git a/fs/exec.c b/fs/exec.c
-index 9a5ca7b82bfc..22cda82470f0 100644
+index d046dbb9cbd0..5b9023e75de0 100644
 --- a/fs/exec.c
 +++ b/fs/exec.c
-@@ -112,6 +112,7 @@ bool path_noexec(const struct path *path)
+@@ -111,6 +111,7 @@ bool path_noexec(const struct path *path)
  	return (path->mnt->mnt_flags & MNT_NOEXEC) ||
  	       (path->mnt->mnt_sb->s_iflags & SB_I_NOEXEC);
  }
@@ -782,7 +766,7 @@ index 1de6631a3925..3008eb37a18d 100644
  /*
   * Drop a reference to a group.  Free it if it's through.
 diff --git a/fs/open.c b/fs/open.c
-index 8a813fa5ca56..29f5960ec109 100644
+index cf7e5c350a54..c99195ee46ba 100644
 --- a/fs/open.c
 +++ b/fs/open.c
 @@ -66,6 +66,7 @@ int do_truncate(struct user_namespace *mnt_userns, struct dentry *dentry,
@@ -794,7 +778,7 @@ index 8a813fa5ca56..29f5960ec109 100644
  long vfs_truncate(const struct path *path, loff_t length)
  {
 diff --git a/fs/read_write.c b/fs/read_write.c
-index 1a261dcf1778..937646c50ea4 100644
+index 328ce8cf9a85..59931848f794 100644
 --- a/fs/read_write.c
 +++ b/fs/read_write.c
 @@ -477,6 +477,7 @@ ssize_t vfs_read(struct file *file, char __user *buf, size_t count, loff_t *pos)
@@ -805,7 +789,7 @@ index 1a261dcf1778..937646c50ea4 100644
  
  static ssize_t new_sync_write(struct file *filp, const char __user *buf, size_t len, loff_t *ppos)
  {
-@@ -586,6 +587,7 @@ ssize_t vfs_write(struct file *file, const char __user *buf, size_t count, loff_
+@@ -592,6 +593,7 @@ ssize_t vfs_write(struct file *file, const char __user *buf, size_t count, loff_
  	file_end_write(file);
  	return ret;
  }
@@ -936,7 +920,7 @@ index 4b95de24bc8d..139e1443c49b 100644
  {
 diff -urN /usr/share/empty/Documentation/ABI/testing/debugfs-aufs linux/Documentation/ABI/testing/debugfs-aufs
 --- /usr/share/empty/Documentation/ABI/testing/debugfs-aufs	1970-01-01 01:00:00.000000000 +0100
-+++ linux/Documentation/ABI/testing/debugfs-aufs	2022-03-21 14:49:05.713299677 +0100
++++ linux/Documentation/ABI/testing/debugfs-aufs	2022-11-05 23:02:18.955889283 +0100
 @@ -0,0 +1,55 @@
 +What:		/debug/aufs/si_<id>/
 +Date:		March 2009
@@ -995,7 +979,7 @@ diff -urN /usr/share/empty/Documentation/ABI/testing/debugfs-aufs linux/Document
 +		will be empty. About XINO files, see the aufs manual.
 diff -urN /usr/share/empty/Documentation/ABI/testing/sysfs-aufs linux/Documentation/ABI/testing/sysfs-aufs
 --- /usr/share/empty/Documentation/ABI/testing/sysfs-aufs	1970-01-01 01:00:00.000000000 +0100
-+++ linux/Documentation/ABI/testing/sysfs-aufs	2022-03-21 14:49:05.713299677 +0100
++++ linux/Documentation/ABI/testing/sysfs-aufs	2022-11-05 23:02:18.955889283 +0100
 @@ -0,0 +1,31 @@
 +What:		/sys/fs/aufs/si_<id>/
 +Date:		March 2009
@@ -1030,21 +1014,21 @@ diff -urN /usr/share/empty/Documentation/ABI/testing/sysfs-aufs linux/Documentat
 +		will be empty. About XINO files, see the aufs manual.
 diff -urN /usr/share/empty/Documentation/filesystems/aufs/design/01intro.txt linux/Documentation/filesystems/aufs/design/01intro.txt
 --- /usr/share/empty/Documentation/filesystems/aufs/design/01intro.txt	1970-01-01 01:00:00.000000000 +0100
-+++ linux/Documentation/filesystems/aufs/design/01intro.txt	2022-03-21 14:49:05.713299677 +0100
++++ linux/Documentation/filesystems/aufs/design/01intro.txt	2022-11-05 23:02:18.955889283 +0100
 @@ -0,0 +1,171 @@
 +
-+# Copyright (C) 2005-2021 Junjiro R. Okajima
-+# 
++# Copyright (C) 2005-2022 Junjiro R. Okajima
++#
 +# This program is free software; you can redistribute it and/or modify
 +# it under the terms of the GNU General Public License as published by
 +# the Free Software Foundation; either version 2 of the License, or
 +# (at your option) any later version.
-+# 
++#
 +# This program is distributed in the hope that it will be useful,
 +# but WITHOUT ANY WARRANTY; without even the implied warranty of
 +# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 +# GNU General Public License for more details.
-+# 
++#
 +# You should have received a copy of the GNU General Public License
 +# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 +
@@ -1205,21 +1189,21 @@ diff -urN /usr/share/empty/Documentation/filesystems/aufs/design/01intro.txt lin
 +about it. But currently I have implemented it in kernel space.
 diff -urN /usr/share/empty/Documentation/filesystems/aufs/design/02struct.txt linux/Documentation/filesystems/aufs/design/02struct.txt
 --- /usr/share/empty/Documentation/filesystems/aufs/design/02struct.txt	1970-01-01 01:00:00.000000000 +0100
-+++ linux/Documentation/filesystems/aufs/design/02struct.txt	2022-03-21 14:49:05.713299677 +0100
++++ linux/Documentation/filesystems/aufs/design/02struct.txt	2022-11-05 23:02:18.955889283 +0100
 @@ -0,0 +1,258 @@
 +
-+# Copyright (C) 2005-2021 Junjiro R. Okajima
-+# 
++# Copyright (C) 2005-2022 Junjiro R. Okajima
++#
 +# This program is free software; you can redistribute it and/or modify
 +# it under the terms of the GNU General Public License as published by
 +# the Free Software Foundation; either version 2 of the License, or
 +# (at your option) any later version.
-+# 
++#
 +# This program is distributed in the hope that it will be useful,
 +# but WITHOUT ANY WARRANTY; without even the implied warranty of
 +# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 +# GNU General Public License for more details.
-+# 
++#
 +# You should have received a copy of the GNU General Public License
 +# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 +
@@ -1467,21 +1451,21 @@ diff -urN /usr/share/empty/Documentation/filesystems/aufs/design/02struct.txt li
 +For this purpose, use "aumvdown" command in aufs-util.git.
 diff -urN /usr/share/empty/Documentation/filesystems/aufs/design/03atomic_open.txt linux/Documentation/filesystems/aufs/design/03atomic_open.txt
 --- /usr/share/empty/Documentation/filesystems/aufs/design/03atomic_open.txt	1970-01-01 01:00:00.000000000 +0100
-+++ linux/Documentation/filesystems/aufs/design/03atomic_open.txt	2022-03-21 14:49:05.713299677 +0100
++++ linux/Documentation/filesystems/aufs/design/03atomic_open.txt	2022-11-05 23:02:18.955889283 +0100
 @@ -0,0 +1,85 @@
 +
-+# Copyright (C) 2015-2021 Junjiro R. Okajima
-+# 
++# Copyright (C) 2015-2022 Junjiro R. Okajima
++#
 +# This program is free software; you can redistribute it and/or modify
 +# it under the terms of the GNU General Public License as published by
 +# the Free Software Foundation; either version 2 of the License, or
 +# (at your option) any later version.
-+# 
++#
 +# This program is distributed in the hope that it will be useful,
 +# but WITHOUT ANY WARRANTY; without even the implied warranty of
 +# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 +# GNU General Public License for more details.
-+# 
++#
 +# You should have received a copy of the GNU General Public License
 +# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 +
@@ -1556,21 +1540,21 @@ diff -urN /usr/share/empty/Documentation/filesystems/aufs/design/03atomic_open.t
 +       be implemented in aufs, but not all I am afraid.
 diff -urN /usr/share/empty/Documentation/filesystems/aufs/design/03lookup.txt linux/Documentation/filesystems/aufs/design/03lookup.txt
 --- /usr/share/empty/Documentation/filesystems/aufs/design/03lookup.txt	1970-01-01 01:00:00.000000000 +0100
-+++ linux/Documentation/filesystems/aufs/design/03lookup.txt	2022-03-21 14:49:05.713299677 +0100
++++ linux/Documentation/filesystems/aufs/design/03lookup.txt	2022-11-05 23:02:18.959222617 +0100
 @@ -0,0 +1,113 @@
 +
-+# Copyright (C) 2005-2021 Junjiro R. Okajima
-+# 
++# Copyright (C) 2005-2022 Junjiro R. Okajima
++#
 +# This program is free software; you can redistribute it and/or modify
 +# it under the terms of the GNU General Public License as published by
 +# the Free Software Foundation; either version 2 of the License, or
 +# (at your option) any later version.
-+# 
++#
 +# This program is distributed in the hope that it will be useful,
 +# but WITHOUT ANY WARRANTY; without even the implied warranty of
 +# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 +# GNU General Public License for more details.
-+# 
++#
 +# You should have received a copy of the GNU General Public License
 +# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 +
@@ -1673,21 +1657,21 @@ diff -urN /usr/share/empty/Documentation/filesystems/aufs/design/03lookup.txt li
 +   by over-mounting something (or another method).
 diff -urN /usr/share/empty/Documentation/filesystems/aufs/design/04branch.txt linux/Documentation/filesystems/aufs/design/04branch.txt
 --- /usr/share/empty/Documentation/filesystems/aufs/design/04branch.txt	1970-01-01 01:00:00.000000000 +0100
-+++ linux/Documentation/filesystems/aufs/design/04branch.txt	2022-03-21 14:49:05.713299677 +0100
++++ linux/Documentation/filesystems/aufs/design/04branch.txt	2022-11-05 23:02:18.959222617 +0100
 @@ -0,0 +1,74 @@
 +
-+# Copyright (C) 2005-2021 Junjiro R. Okajima
-+# 
++# Copyright (C) 2005-2022 Junjiro R. Okajima
++#
 +# This program is free software; you can redistribute it and/or modify
 +# it under the terms of the GNU General Public License as published by
 +# the Free Software Foundation; either version 2 of the License, or
 +# (at your option) any later version.
-+# 
++#
 +# This program is distributed in the hope that it will be useful,
 +# but WITHOUT ANY WARRANTY; without even the implied warranty of
 +# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 +# GNU General Public License for more details.
-+# 
++#
 +# You should have received a copy of the GNU General Public License
 +# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 +
@@ -1751,21 +1735,21 @@ diff -urN /usr/share/empty/Documentation/filesystems/aufs/design/04branch.txt li
 +    same named entry on the upper branch.
 diff -urN /usr/share/empty/Documentation/filesystems/aufs/design/05wbr_policy.txt linux/Documentation/filesystems/aufs/design/05wbr_policy.txt
 --- /usr/share/empty/Documentation/filesystems/aufs/design/05wbr_policy.txt	1970-01-01 01:00:00.000000000 +0100
-+++ linux/Documentation/filesystems/aufs/design/05wbr_policy.txt	2022-03-21 14:49:05.713299677 +0100
++++ linux/Documentation/filesystems/aufs/design/05wbr_policy.txt	2022-11-05 23:02:18.959222617 +0100
 @@ -0,0 +1,64 @@
 +
-+# Copyright (C) 2005-2021 Junjiro R. Okajima
-+# 
++# Copyright (C) 2005-2022 Junjiro R. Okajima
++#
 +# This program is free software; you can redistribute it and/or modify
 +# it under the terms of the GNU General Public License as published by
 +# the Free Software Foundation; either version 2 of the License, or
 +# (at your option) any later version.
-+# 
++#
 +# This program is distributed in the hope that it will be useful,
 +# but WITHOUT ANY WARRANTY; without even the implied warranty of
 +# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 +# GNU General Public License for more details.
-+# 
++#
 +# You should have received a copy of the GNU General Public License
 +# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 +
@@ -1819,10 +1803,23 @@ diff -urN /usr/share/empty/Documentation/filesystems/aufs/design/05wbr_policy.tx
 +  copyup policy.
 diff -urN /usr/share/empty/Documentation/filesystems/aufs/design/06dirren.dot linux/Documentation/filesystems/aufs/design/06dirren.dot
 --- /usr/share/empty/Documentation/filesystems/aufs/design/06dirren.dot	1970-01-01 01:00:00.000000000 +0100
-+++ linux/Documentation/filesystems/aufs/design/06dirren.dot	2022-03-21 14:49:05.713299677 +0100
-@@ -0,0 +1,31 @@
++++ linux/Documentation/filesystems/aufs/design/06dirren.dot	2022-11-05 23:02:18.959222617 +0100
+@@ -0,0 +1,44 @@
 +
 +// to view this graph, run dot(1) command in GRAPHVIZ.
++//
++// This program is free software; you can redistribute it and/or modify
++// it under the terms of the GNU General Public License as published by
++// the Free Software Foundation; either version 2 of the License, or
++// (at your option) any later version.
++//
++// This program is distributed in the hope that it will be useful,
++// but WITHOUT ANY WARRANTY; without even the implied warranty of
++// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++// GNU General Public License for more details.
++//
++// You should have received a copy of the GNU General Public License
++// along with this program.  If not, see <http://www.gnu.org/licenses/>.
 +
 +digraph G {
 +node [shape=box];
@@ -1854,10 +1851,10 @@ diff -urN /usr/share/empty/Documentation/filesystems/aufs/design/06dirren.dot li
 +}
 diff -urN /usr/share/empty/Documentation/filesystems/aufs/design/06dirren.txt linux/Documentation/filesystems/aufs/design/06dirren.txt
 --- /usr/share/empty/Documentation/filesystems/aufs/design/06dirren.txt	1970-01-01 01:00:00.000000000 +0100
-+++ linux/Documentation/filesystems/aufs/design/06dirren.txt	2022-10-03 07:51:14.926209260 +0200
++++ linux/Documentation/filesystems/aufs/design/06dirren.txt	2022-11-05 23:02:18.959222617 +0100
 @@ -0,0 +1,102 @@
 +
-+# Copyright (C) 2017-2021 Junjiro R. Okajima
++# Copyright (C) 2017-2022 Junjiro R. Okajima
 +#
 +# This program is free software; you can redistribute it and/or modify
 +# it under the terms of the GNU General Public License as published by
@@ -1960,25 +1957,23 @@ diff -urN /usr/share/empty/Documentation/filesystems/aufs/design/06dirren.txt li
 +equivalen to udba=reval case.
 diff -urN /usr/share/empty/Documentation/filesystems/aufs/design/06fhsm.txt linux/Documentation/filesystems/aufs/design/06fhsm.txt
 --- /usr/share/empty/Documentation/filesystems/aufs/design/06fhsm.txt	1970-01-01 01:00:00.000000000 +0100
-+++ linux/Documentation/filesystems/aufs/design/06fhsm.txt	2022-03-21 14:49:05.716633010 +0100
-@@ -0,0 +1,120 @@
++++ linux/Documentation/filesystems/aufs/design/06fhsm.txt	2022-11-05 23:02:18.959222617 +0100
+@@ -0,0 +1,118 @@
 +
-+# Copyright (C) 2011-2021 Junjiro R. Okajima
-+# 
++# Copyright (C) 2011-2022 Junjiro R. Okajima
++#
 +# This program is free software; you can redistribute it and/or modify
 +# it under the terms of the GNU General Public License as published by
 +# the Free Software Foundation; either version 2 of the License, or
 +# (at your option) any later version.
-+# 
++#
 +# This program is distributed in the hope that it will be useful,
 +# but WITHOUT ANY WARRANTY; without even the implied warranty of
 +# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 +# GNU General Public License for more details.
-+# 
++#
 +# You should have received a copy of the GNU General Public License
-+# along with this program; if not, write to the Free Software
-+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-+
++# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 +
 +File-based Hierarchical Storage Management (FHSM)
 +----------------------------------------------------------------------
@@ -2084,21 +2079,21 @@ diff -urN /usr/share/empty/Documentation/filesystems/aufs/design/06fhsm.txt linu
 +should restore the original file state after an error happens.
 diff -urN /usr/share/empty/Documentation/filesystems/aufs/design/06mmap.txt linux/Documentation/filesystems/aufs/design/06mmap.txt
 --- /usr/share/empty/Documentation/filesystems/aufs/design/06mmap.txt	1970-01-01 01:00:00.000000000 +0100
-+++ linux/Documentation/filesystems/aufs/design/06mmap.txt	2022-03-21 14:49:05.716633010 +0100
++++ linux/Documentation/filesystems/aufs/design/06mmap.txt	2022-11-05 23:02:18.959222617 +0100
 @@ -0,0 +1,72 @@
 +
-+# Copyright (C) 2005-2021 Junjiro R. Okajima
-+# 
++# Copyright (C) 2005-2022 Junjiro R. Okajima
++#
 +# This program is free software; you can redistribute it and/or modify
 +# it under the terms of the GNU General Public License as published by
 +# the Free Software Foundation; either version 2 of the License, or
 +# (at your option) any later version.
-+# 
++#
 +# This program is distributed in the hope that it will be useful,
 +# but WITHOUT ANY WARRANTY; without even the implied warranty of
 +# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 +# GNU General Public License for more details.
-+# 
++#
 +# You should have received a copy of the GNU General Public License
 +# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 +
@@ -2160,10 +2155,10 @@ diff -urN /usr/share/empty/Documentation/filesystems/aufs/design/06mmap.txt linu
 +I have to give up this "looks-smater" approach.
 diff -urN /usr/share/empty/Documentation/filesystems/aufs/design/06xattr.txt linux/Documentation/filesystems/aufs/design/06xattr.txt
 --- /usr/share/empty/Documentation/filesystems/aufs/design/06xattr.txt	1970-01-01 01:00:00.000000000 +0100
-+++ linux/Documentation/filesystems/aufs/design/06xattr.txt	2022-03-21 14:49:05.716633010 +0100
-@@ -0,0 +1,96 @@
++++ linux/Documentation/filesystems/aufs/design/06xattr.txt	2022-11-05 23:02:18.959222617 +0100
+@@ -0,0 +1,94 @@
 +
-+# Copyright (C) 2014-2021 Junjiro R. Okajima
++# Copyright (C) 2014-2022 Junjiro R. Okajima
 +#
 +# This program is free software; you can redistribute it and/or modify
 +# it under the terms of the GNU General Public License as published by
@@ -2176,9 +2171,7 @@ diff -urN /usr/share/empty/Documentation/filesystems/aufs/design/06xattr.txt lin
 +# GNU General Public License for more details.
 +#
 +# You should have received a copy of the GNU General Public License
-+# along with this program; if not, write to the Free Software
-+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-+
++# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 +
 +Listing XATTR/EA and getting the value
 +----------------------------------------------------------------------
@@ -2260,21 +2253,21 @@ diff -urN /usr/share/empty/Documentation/filesystems/aufs/design/06xattr.txt lin
 +now, aufs implements the branch attributes to ignore the error.
 diff -urN /usr/share/empty/Documentation/filesystems/aufs/design/07export.txt linux/Documentation/filesystems/aufs/design/07export.txt
 --- /usr/share/empty/Documentation/filesystems/aufs/design/07export.txt	1970-01-01 01:00:00.000000000 +0100
-+++ linux/Documentation/filesystems/aufs/design/07export.txt	2022-03-21 14:49:05.716633010 +0100
++++ linux/Documentation/filesystems/aufs/design/07export.txt	2022-11-05 23:02:18.959222617 +0100
 @@ -0,0 +1,58 @@
 +
-+# Copyright (C) 2005-2021 Junjiro R. Okajima
-+# 
++# Copyright (C) 2005-2022 Junjiro R. Okajima
++#
 +# This program is free software; you can redistribute it and/or modify
 +# it under the terms of the GNU General Public License as published by
 +# the Free Software Foundation; either version 2 of the License, or
 +# (at your option) any later version.
-+# 
++#
 +# This program is distributed in the hope that it will be useful,
 +# but WITHOUT ANY WARRANTY; without even the implied warranty of
 +# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 +# GNU General Public License for more details.
-+# 
++#
 +# You should have received a copy of the GNU General Public License
 +# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 +
@@ -2322,21 +2315,21 @@ diff -urN /usr/share/empty/Documentation/filesystems/aufs/design/07export.txt li
 +  lookup_one_len(), vfs_getattr(), encode_fh() and others.
 diff -urN /usr/share/empty/Documentation/filesystems/aufs/design/08shwh.txt linux/Documentation/filesystems/aufs/design/08shwh.txt
 --- /usr/share/empty/Documentation/filesystems/aufs/design/08shwh.txt	1970-01-01 01:00:00.000000000 +0100
-+++ linux/Documentation/filesystems/aufs/design/08shwh.txt	2022-03-21 14:49:05.716633010 +0100
++++ linux/Documentation/filesystems/aufs/design/08shwh.txt	2022-11-05 23:02:18.959222617 +0100
 @@ -0,0 +1,52 @@
 +
-+# Copyright (C) 2005-2021 Junjiro R. Okajima
-+# 
++# Copyright (C) 2005-2022 Junjiro R. Okajima
++#
 +# This program is free software; you can redistribute it and/or modify
 +# it under the terms of the GNU General Public License as published by
 +# the Free Software Foundation; either version 2 of the License, or
 +# (at your option) any later version.
-+# 
++#
 +# This program is distributed in the hope that it will be useful,
 +# but WITHOUT ANY WARRANTY; without even the implied warranty of
 +# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 +# GNU General Public License for more details.
-+# 
++#
 +# You should have received a copy of the GNU General Public License
 +# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 +
@@ -2378,10 +2371,10 @@ diff -urN /usr/share/empty/Documentation/filesystems/aufs/design/08shwh.txt linu
 +initramfs will use it to replace the old one at the next boot.
 diff -urN /usr/share/empty/Documentation/filesystems/aufs/design/10dynop.txt linux/Documentation/filesystems/aufs/design/10dynop.txt
 --- /usr/share/empty/Documentation/filesystems/aufs/design/10dynop.txt	1970-01-01 01:00:00.000000000 +0100
-+++ linux/Documentation/filesystems/aufs/design/10dynop.txt	2022-03-21 14:49:05.716633010 +0100
++++ linux/Documentation/filesystems/aufs/design/10dynop.txt	2022-11-05 23:02:18.959222617 +0100
 @@ -0,0 +1,47 @@
 +
-+# Copyright (C) 2010-2021 Junjiro R. Okajima
++# Copyright (C) 2010-2022 Junjiro R. Okajima
 +#
 +# This program is free software; you can redistribute it and/or modify
 +# it under the terms of the GNU General Public License as published by
@@ -2429,10 +2422,10 @@ diff -urN /usr/share/empty/Documentation/filesystems/aufs/design/10dynop.txt lin
 +regular files only.
 diff -urN /usr/share/empty/Documentation/filesystems/aufs/README linux/Documentation/filesystems/aufs/README
 --- /usr/share/empty/Documentation/filesystems/aufs/README	1970-01-01 01:00:00.000000000 +0100
-+++ linux/Documentation/filesystems/aufs/README	2022-10-03 07:51:14.922875926 +0200
-@@ -0,0 +1,397 @@
++++ linux/Documentation/filesystems/aufs/README	2022-11-05 23:02:18.955889283 +0100
+@@ -0,0 +1,403 @@
 +
-+Aufs5 -- advanced multi layered unification filesystem version 5.x
++Aufs6 -- advanced multi layered unification filesystem version 6.x
 +http://aufs.sf.net
 +Junjiro R. Okajima
 +
@@ -2448,12 +2441,18 @@ diff -urN /usr/share/empty/Documentation/filesystems/aufs/README linux/Documenta
 +Unionfs was being developed by Professor Erez Zadok at Stony Brook
 +University and his team.
 +
-+Aufs5 supports linux-v5.0 and later, If you want older kernel version
-+support,
++Aufs6 supports linux-v6.0 and later, try aufs6.0 branch in
++aufs-linux.git or aufs-standalone.git.
++If you want older kernel version support,
++- for linux-v5.x series, try aufs-linux.git or aufs-standalone.git
 +- for linux-v4.x series, try aufs4-linux.git or aufs4-standalone.git
 +- for linux-v3.x series, try aufs3-linux.git or aufs3-standalone.git
 +- for linux-v2.6.16 and later, try aufs2-2.6.git, aufs2-standalone.git
 +  or aufs1 from CVS on SourceForge.
++
++Note: the name of aufs5-linux.git and aufs5-standalone.git on github
++      were changed. Now they are aufs-linux.git and
++      aufs-standalone.git and they contain aufs5 and later branches.
 +
 +Note: it becomes clear that "Aufs was rejected. Let's give it up."
 +      According to Christoph Hellwig, linux rejects all union-type
@@ -2513,7 +2512,7 @@ diff -urN /usr/share/empty/Documentation/filesystems/aufs/README linux/Documenta
 +- userspace wrapper for pathconf(3)/fpathconf(3) with _PC_LINK_MAX.
 +- and more...
 +
-+Currently these features are dropped temporary from aufs5.
++Currently these features are dropped temporary from aufs6.
 +See design/08plan.txt in detail.
 +- nested mount, i.e. aufs as readonly no-whiteout branch of another aufs
 +  (robr)
@@ -2531,64 +2530,64 @@ diff -urN /usr/share/empty/Documentation/filesystems/aufs/README linux/Documenta
 +
 +2. Download
 +----------------------------------------
-+There are three GIT trees for aufs5, aufs5-linux.git,
-+aufs5-standalone.git, and aufs-util.git. Note that there is no "5" in
++There are three GIT trees for aufs6, aufs6-linux.git,
++aufs6-standalone.git, and aufs-util.git. Note that there is no "6" in
 +"aufs-util.git."
-+While the aufs-util is always necessary, you need either of aufs5-linux
-+or aufs5-standalone.
++While the aufs-util is always necessary, you need either of aufs6-linux
++or aufs6-standalone.
 +
-+The aufs5-linux tree includes the whole linux mainline GIT tree,
++The aufs6-linux tree includes the whole linux mainline GIT tree,
 +git://git.kernel.org/.../torvalds/linux.git.
 +And you cannot select CONFIG_AUFS_FS=m for this version, eg. you cannot
-+build aufs5 as an external kernel module.
++build aufs6 as an external kernel module.
 +Several extra patches are not included in this tree. Only
-+aufs5-standalone tree contains them. They are described in the later
++aufs6-standalone tree contains them. They are described in the later
 +section "Configuration and Compilation."
 +
-+On the other hand, the aufs5-standalone tree has only aufs source files
++On the other hand, the aufs6-standalone tree has only aufs source files
 +and necessary patches, and you can select CONFIG_AUFS_FS=m.
 +But you need to apply all aufs patches manually.
 +
-+You will find GIT branches whose name is in form of "aufs5.x" where "x"
-+represents the linux kernel version, "linux-5.x". For instance,
-+"aufs5.0" is for linux-5.0. For latest "linux-5.x-rcN", use
-+"aufs5.x-rcN" branch.
++You will find GIT branches whose name is in form of "aufs6.x" where "x"
++represents the linux kernel version, "linux-6.x". For instance,
++"aufs6.0" is for linux-6.0. For latest "linux-6.x-rcN", use
++"aufs6.x-rcN" branch.
 +
-+o aufs5-linux tree
++o aufs6-linux tree
 +$ git clone --reference /your/linux/git/tree \
-+	git://github.com/sfjro/aufs5-linux.git aufs5-linux.git
++	git://github.com/sfjro/aufs6-linux.git aufs6-linux.git
 +- if you don't have linux GIT tree, then remove "--reference ..."
-+$ cd aufs5-linux.git
-+$ git checkout origin/aufs5.0
++$ cd aufs6-linux.git
++$ git checkout origin/aufs6.0
 +
 +Or You may want to directly git-pull aufs into your linux GIT tree, and
 +leave the patch-work to GIT.
 +$ cd /your/linux/git/tree
-+$ git remote add aufs5 git://github.com/sfjro/aufs5-linux.git
-+$ git fetch aufs5
-+$ git checkout -b my5.0 v5.0
++$ git remote add aufs6 git://github.com/sfjro/aufs6-linux.git
++$ git fetch aufs6
++$ git checkout -b my6.0 v6.0
 +$ (add your local change...)
-+$ git pull aufs5 aufs5.0
-+- now you have v5.0 + your_changes + aufs5.0 in you my5.0 branch.
++$ git pull aufs6 aufs6.0
++- now you have v6.0 + your_changes + aufs6.0 in you my6.0 branch.
 +- you may need to solve some conflicts between your_changes and
-+  aufs5.0. in this case, git-rerere is recommended so that you can
-+  solve the similar conflicts automatically when you upgrade to 5.1 or
++  aufs6.0. in this case, git-rerere is recommended so that you can
++  solve the similar conflicts automatically when you upgrade to 6.1 or
 +  later in the future.
 +
-+o aufs5-standalone tree
-+$ git clone git://github.com/sfjro/aufs5-standalone.git aufs5-standalone.git
-+$ cd aufs5-standalone.git
-+$ git checkout origin/aufs5.0
++o aufs6-standalone tree
++$ git clone git://github.com/sfjro/aufs6-standalone.git aufs6-standalone.git
++$ cd aufs6-standalone.git
++$ git checkout origin/aufs6.0
 +
 +o aufs-util tree
 +$ git clone git://git.code.sf.net/p/aufs/aufs-util aufs-util.git
 +- note that the public aufs-util.git is on SourceForge instead of
 +  GitHUB.
 +$ cd aufs-util.git
-+$ git checkout origin/aufs5.0
++$ git checkout origin/aufs6.0
 +
-+Note: The 5.x-rcN branch is to be used with `rc' kernel versions ONLY.
-+The minor version number, 'x' in '5.x', of aufs may not always
++Note: The 6.x-rcN branch is to be used with `rc' kernel versions ONLY.
++The minor version number, 'x' in '6.x', of aufs may not always
 +follow the minor version number of the kernel.
 +Because changes in the kernel that cause the use of a new
 +minor version number do not always require changes to aufs-util.
@@ -2600,8 +2599,8 @@ diff -urN /usr/share/empty/Documentation/filesystems/aufs/README linux/Documenta
 +nearest lower number.
 +
 +For (an unreleased) example:
-+If you are using "linux-5.10" and the "aufs5.10" branch
-+does not exist in aufs-util repository, then "aufs5.9", "aufs5.8"
++If you are using "linux-6.10" and the "aufs6.10" branch
++does not exist in aufs-util repository, then "aufs6.9", "aufs6.8"
 +or something numerically smaller is the branch for your kernel.
 +
 +Also you can view all branches by
@@ -2612,7 +2611,7 @@ diff -urN /usr/share/empty/Documentation/filesystems/aufs/README linux/Documenta
 +----------------------------------------
 +Make sure you have git-checkout'ed the correct branch.
 +
-+For aufs5-linux tree,
++For aufs6-linux tree,
 +- enable CONFIG_AUFS_FS.
 +- set other aufs configurations if necessary.
 +- for aufs5.13 and later
@@ -2626,15 +2625,15 @@ diff -urN /usr/share/empty/Documentation/filesystems/aufs/README linux/Documenta
 +	CONFIG_LOCKDEP_CHAINS_BITS=21
 +	CONFIG_LOCKDEP_STACK_TRACE_BITS=24
 +
-+For aufs5-standalone tree,
++For aufs6-standalone tree,
 +There are several ways to build.
 +
 +1.
-+- apply ./aufs5-kbuild.patch to your kernel source files.
-+- apply ./aufs5-base.patch too.
-+- apply ./aufs5-mmap.patch too.
-+- apply ./aufs5-standalone.patch too, if you have a plan to set
-+  CONFIG_AUFS_FS=m. otherwise you don't need ./aufs5-standalone.patch.
++- apply ./aufs6-kbuild.patch to your kernel source files.
++- apply ./aufs6-base.patch too.
++- apply ./aufs6-mmap.patch too.
++- apply ./aufs6-standalone.patch too, if you have a plan to set
++  CONFIG_AUFS_FS=m. otherwise you don't need ./aufs6-standalone.patch.
 +- copy ./{Documentation,fs,include/uapi/linux/aufs_type.h} files to your
 +  kernel source tree. Never copy $PWD/include/uapi/linux/Kbuild.
 +- enable CONFIG_AUFS_FS, you can select either
@@ -2648,9 +2647,9 @@ diff -urN /usr/share/empty/Documentation/filesystems/aufs/README linux/Documenta
 +
 +2.
 +- module only (CONFIG_AUFS_FS=m).
-+- apply ./aufs5-base.patch to your kernel source files.
-+- apply ./aufs5-mmap.patch too.
-+- apply ./aufs5-standalone.patch too.
++- apply ./aufs6-base.patch to your kernel source files.
++- apply ./aufs6-mmap.patch too.
++- apply ./aufs6-standalone.patch too.
 +- build your kernel, don't forget "make headers_install", and reboot.
 +- edit ./config.mk and set other aufs configurations if necessary.
 +  Note: You should read $PWD/fs/aufs/Kconfig carefully which describes
@@ -2666,7 +2665,7 @@ diff -urN /usr/share/empty/Documentation/filesystems/aufs/README linux/Documenta
 +    available in aufs standalone version's Makefile only), or copy
 +    $PWD/usr/include/linux/aufs_type.h to /usr/include/linux or wherever
 +    you like manually. By default, the target directory is $PWD/usr.
-+- no need to apply aufs5-kbuild.patch, nor copying source files to your
++- no need to apply aufs6-kbuild.patch, nor copying source files to your
 +  kernel source tree.
 +
 +Note: The header file aufs_type.h is necessary to build aufs-util
@@ -2686,9 +2685,9 @@ diff -urN /usr/share/empty/Documentation/filesystems/aufs/README linux/Documenta
 +  then run "make install_ulib" too. And refer to the aufs manual in
 +  detail.
 +
-+There several other patches in aufs5-standalone.git. They are all
++There several other patches in aufs6-standalone.git. They are all
 +optional. When you meet some problems, they will help you.
-+- aufs5-loopback.patch
++- aufs6-loopback.patch
 +  Supports a nested loopback mount in a branch-fs. This patch is
 +  unnecessary until aufs produces a message like "you may want to try
 +  another patch for loopback file".
@@ -2707,8 +2706,8 @@ diff -urN /usr/share/empty/Documentation/filesystems/aufs/README linux/Documenta
 +4. Usage
 +----------------------------------------
 +At first, make sure aufs-util are installed, and please read the aufs
-+manual, aufs.5 in aufs-util.git tree.
-+$ man -l aufs.5
++manual, aufs.6 in aufs-util.git tree.
++$ man -l aufs.6
 +
 +And then,
 +$ mkdir /tmp/rw /tmp/aufs
@@ -2726,7 +2725,7 @@ diff -urN /usr/share/empty/Documentation/filesystems/aufs/README linux/Documenta
 +/tmp/rw. And all of your modification to a file will be applied to
 +the one under /tmp/rw. This is called the file based Copy on Write
 +(COW) method.
-+Aufs mount options are described in aufs.5.
++Aufs mount options are described in aufs.6.
 +If you run chroot or something and make your aufs as a root directory,
 +then you need to customize the shutdown script. See the aufs manual in
 +detail.
@@ -2830,13 +2829,13 @@ diff -urN /usr/share/empty/Documentation/filesystems/aufs/README linux/Documenta
 +# End: ;
 diff -urN /usr/share/empty/fs/aufs/aufs.h linux/fs/aufs/aufs.h
 --- /usr/share/empty/fs/aufs/aufs.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/aufs.h	2022-03-21 14:49:05.716633010 +0100
++++ linux/fs/aufs/aufs.h	2022-11-05 23:02:18.959222617 +0100
 @@ -0,0 +1,62 @@
 +/* SPDX-License-Identifier: GPL-2.0 */
 +/*
-+ * Copyright (C) 2005-2021 Junjiro R. Okajima
++ * Copyright (C) 2005-2022 Junjiro R. Okajima
 + *
-+ * This program, aufs is free software; you can redistribute it and/or modify
++ * This program is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
 + * the Free Software Foundation; either version 2 of the License, or
 + * (at your option) any later version.
@@ -2896,13 +2895,13 @@ diff -urN /usr/share/empty/fs/aufs/aufs.h linux/fs/aufs/aufs.h
 +#endif /* __AUFS_H__ */
 diff -urN /usr/share/empty/fs/aufs/branch.c linux/fs/aufs/branch.c
 --- /usr/share/empty/fs/aufs/branch.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/branch.c	2022-10-03 07:51:14.926209260 +0200
++++ linux/fs/aufs/branch.c	2022-11-05 23:02:18.959222617 +0100
 @@ -0,0 +1,1427 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
-+ * Copyright (C) 2005-2021 Junjiro R. Okajima
++ * Copyright (C) 2005-2022 Junjiro R. Okajima
 + *
-+ * This program, aufs is free software; you can redistribute it and/or modify
++ * This program is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
 + * the Free Software Foundation; either version 2 of the License, or
 + * (at your option) any later version.
@@ -4327,13 +4326,13 @@ diff -urN /usr/share/empty/fs/aufs/branch.c linux/fs/aufs/branch.c
 +}
 diff -urN /usr/share/empty/fs/aufs/branch.h linux/fs/aufs/branch.h
 --- /usr/share/empty/fs/aufs/branch.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/branch.h	2022-03-21 14:49:05.719966344 +0100
++++ linux/fs/aufs/branch.h	2022-11-05 23:02:18.959222617 +0100
 @@ -0,0 +1,375 @@
 +/* SPDX-License-Identifier: GPL-2.0 */
 +/*
-+ * Copyright (C) 2005-2021 Junjiro R. Okajima
++ * Copyright (C) 2005-2022 Junjiro R. Okajima
 + *
-+ * This program, aufs is free software; you can redistribute it and/or modify
++ * This program is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
 + * the Free Software Foundation; either version 2 of the License, or
 + * (at your option) any later version.
@@ -4706,7 +4705,7 @@ diff -urN /usr/share/empty/fs/aufs/branch.h linux/fs/aufs/branch.h
 +#endif /* __AUFS_BRANCH_H__ */
 diff -urN /usr/share/empty/fs/aufs/conf.mk linux/fs/aufs/conf.mk
 --- /usr/share/empty/fs/aufs/conf.mk	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/conf.mk	2022-03-21 14:49:05.719966344 +0100
++++ linux/fs/aufs/conf.mk	2022-11-05 23:02:18.959222617 +0100
 @@ -0,0 +1,40 @@
 +# SPDX-License-Identifier: GPL-2.0
 +
@@ -4750,13 +4749,13 @@ diff -urN /usr/share/empty/fs/aufs/conf.mk linux/fs/aufs/conf.mk
 +-include ${srctree}/${src}/conf_priv.mk
 diff -urN /usr/share/empty/fs/aufs/cpup.c linux/fs/aufs/cpup.c
 --- /usr/share/empty/fs/aufs/cpup.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/cpup.c	2022-03-21 14:49:05.719966344 +0100
++++ linux/fs/aufs/cpup.c	2022-11-05 23:02:18.962555950 +0100
 @@ -0,0 +1,1459 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
-+ * Copyright (C) 2005-2021 Junjiro R. Okajima
++ * Copyright (C) 2005-2022 Junjiro R. Okajima
 + *
-+ * This program, aufs is free software; you can redistribute it and/or modify
++ * This program is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
 + * the Free Software Foundation; either version 2 of the License, or
 + * (at your option) any later version.
@@ -6213,13 +6212,13 @@ diff -urN /usr/share/empty/fs/aufs/cpup.c linux/fs/aufs/cpup.c
 +}
 diff -urN /usr/share/empty/fs/aufs/cpup.h linux/fs/aufs/cpup.h
 --- /usr/share/empty/fs/aufs/cpup.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/cpup.h	2022-03-21 14:49:05.719966344 +0100
++++ linux/fs/aufs/cpup.h	2022-11-05 23:02:18.962555950 +0100
 @@ -0,0 +1,100 @@
 +/* SPDX-License-Identifier: GPL-2.0 */
 +/*
-+ * Copyright (C) 2005-2021 Junjiro R. Okajima
++ * Copyright (C) 2005-2022 Junjiro R. Okajima
 + *
-+ * This program, aufs is free software; you can redistribute it and/or modify
++ * This program is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
 + * the Free Software Foundation; either version 2 of the License, or
 + * (at your option) any later version.
@@ -6317,13 +6316,13 @@ diff -urN /usr/share/empty/fs/aufs/cpup.h linux/fs/aufs/cpup.h
 +#endif /* __AUFS_CPUP_H__ */
 diff -urN /usr/share/empty/fs/aufs/dbgaufs.c linux/fs/aufs/dbgaufs.c
 --- /usr/share/empty/fs/aufs/dbgaufs.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/dbgaufs.c	2022-03-21 14:49:05.719966344 +0100
++++ linux/fs/aufs/dbgaufs.c	2022-11-05 23:02:18.962555950 +0100
 @@ -0,0 +1,526 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
-+ * Copyright (C) 2005-2021 Junjiro R. Okajima
++ * Copyright (C) 2005-2022 Junjiro R. Okajima
 + *
-+ * This program, aufs is free software; you can redistribute it and/or modify
++ * This program is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
 + * the Free Software Foundation; either version 2 of the License, or
 + * (at your option) any later version.
@@ -6847,13 +6846,13 @@ diff -urN /usr/share/empty/fs/aufs/dbgaufs.c linux/fs/aufs/dbgaufs.c
 +}
 diff -urN /usr/share/empty/fs/aufs/dbgaufs.h linux/fs/aufs/dbgaufs.h
 --- /usr/share/empty/fs/aufs/dbgaufs.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/dbgaufs.h	2022-03-21 14:49:05.719966344 +0100
++++ linux/fs/aufs/dbgaufs.h	2022-11-05 23:02:18.962555950 +0100
 @@ -0,0 +1,53 @@
 +/* SPDX-License-Identifier: GPL-2.0 */
 +/*
-+ * Copyright (C) 2005-2021 Junjiro R. Okajima
++ * Copyright (C) 2005-2022 Junjiro R. Okajima
 + *
-+ * This program, aufs is free software; you can redistribute it and/or modify
++ * This program is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
 + * the Free Software Foundation; either version 2 of the License, or
 + * (at your option) any later version.
@@ -6904,13 +6903,13 @@ diff -urN /usr/share/empty/fs/aufs/dbgaufs.h linux/fs/aufs/dbgaufs.h
 +#endif /* __DBGAUFS_H__ */
 diff -urN /usr/share/empty/fs/aufs/dcsub.c linux/fs/aufs/dcsub.c
 --- /usr/share/empty/fs/aufs/dcsub.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/dcsub.c	2022-03-21 14:49:05.719966344 +0100
++++ linux/fs/aufs/dcsub.c	2022-11-05 23:02:18.962555950 +0100
 @@ -0,0 +1,225 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
-+ * Copyright (C) 2005-2021 Junjiro R. Okajima
++ * Copyright (C) 2005-2022 Junjiro R. Okajima
 + *
-+ * This program, aufs is free software; you can redistribute it and/or modify
++ * This program is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
 + * the Free Software Foundation; either version 2 of the License, or
 + * (at your option) any later version.
@@ -7133,13 +7132,13 @@ diff -urN /usr/share/empty/fs/aufs/dcsub.c linux/fs/aufs/dcsub.c
 +}
 diff -urN /usr/share/empty/fs/aufs/dcsub.h linux/fs/aufs/dcsub.h
 --- /usr/share/empty/fs/aufs/dcsub.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/dcsub.h	2022-03-21 14:49:05.719966344 +0100
++++ linux/fs/aufs/dcsub.h	2022-11-05 23:02:18.962555950 +0100
 @@ -0,0 +1,137 @@
 +/* SPDX-License-Identifier: GPL-2.0 */
 +/*
-+ * Copyright (C) 2005-2021 Junjiro R. Okajima
++ * Copyright (C) 2005-2022 Junjiro R. Okajima
 + *
-+ * This program, aufs is free software; you can redistribute it and/or modify
++ * This program is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
 + * the Free Software Foundation; either version 2 of the License, or
 + * (at your option) any later version.
@@ -7274,13 +7273,13 @@ diff -urN /usr/share/empty/fs/aufs/dcsub.h linux/fs/aufs/dcsub.h
 +#endif /* __AUFS_DCSUB_H__ */
 diff -urN /usr/share/empty/fs/aufs/debug.c linux/fs/aufs/debug.c
 --- /usr/share/empty/fs/aufs/debug.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/debug.c	2022-10-03 07:51:14.926209260 +0200
++++ linux/fs/aufs/debug.c	2022-11-05 23:02:18.962555950 +0100
 @@ -0,0 +1,444 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
-+ * Copyright (C) 2005-2021 Junjiro R. Okajima
++ * Copyright (C) 2005-2022 Junjiro R. Okajima
 + *
-+ * This program, aufs is free software; you can redistribute it and/or modify
++ * This program is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
 + * the Free Software Foundation; either version 2 of the License, or
 + * (at your option) any later version.
@@ -7722,13 +7721,13 @@ diff -urN /usr/share/empty/fs/aufs/debug.c linux/fs/aufs/debug.c
 +}
 diff -urN /usr/share/empty/fs/aufs/debug.h linux/fs/aufs/debug.h
 --- /usr/share/empty/fs/aufs/debug.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/debug.h	2022-03-21 14:49:05.719966344 +0100
++++ linux/fs/aufs/debug.h	2022-11-05 23:02:18.962555950 +0100
 @@ -0,0 +1,226 @@
 +/* SPDX-License-Identifier: GPL-2.0 */
 +/*
-+ * Copyright (C) 2005-2021 Junjiro R. Okajima
++ * Copyright (C) 2005-2022 Junjiro R. Okajima
 + *
-+ * This program, aufs is free software; you can redistribute it and/or modify
++ * This program is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
 + * the Free Software Foundation; either version 2 of the License, or
 + * (at your option) any later version.
@@ -7952,13 +7951,13 @@ diff -urN /usr/share/empty/fs/aufs/debug.h linux/fs/aufs/debug.h
 +#endif /* __AUFS_DEBUG_H__ */
 diff -urN /usr/share/empty/fs/aufs/dentry.c linux/fs/aufs/dentry.c
 --- /usr/share/empty/fs/aufs/dentry.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/dentry.c	2022-03-21 14:49:05.719966344 +0100
++++ linux/fs/aufs/dentry.c	2022-11-05 23:02:18.962555950 +0100
 @@ -0,0 +1,1168 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
-+ * Copyright (C) 2005-2021 Junjiro R. Okajima
++ * Copyright (C) 2005-2022 Junjiro R. Okajima
 + *
-+ * This program, aufs is free software; you can redistribute it and/or modify
++ * This program is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
 + * the Free Software Foundation; either version 2 of the License, or
 + * (at your option) any later version.
@@ -9124,13 +9123,13 @@ diff -urN /usr/share/empty/fs/aufs/dentry.c linux/fs/aufs/dentry.c
 +};
 diff -urN /usr/share/empty/fs/aufs/dentry.h linux/fs/aufs/dentry.h
 --- /usr/share/empty/fs/aufs/dentry.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/dentry.h	2022-03-21 14:49:05.719966344 +0100
++++ linux/fs/aufs/dentry.h	2022-11-05 23:02:18.962555950 +0100
 @@ -0,0 +1,269 @@
 +/* SPDX-License-Identifier: GPL-2.0 */
 +/*
-+ * Copyright (C) 2005-2021 Junjiro R. Okajima
++ * Copyright (C) 2005-2022 Junjiro R. Okajima
 + *
-+ * This program, aufs is free software; you can redistribute it and/or modify
++ * This program is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
 + * the Free Software Foundation; either version 2 of the License, or
 + * (at your option) any later version.
@@ -9397,13 +9396,13 @@ diff -urN /usr/share/empty/fs/aufs/dentry.h linux/fs/aufs/dentry.h
 +#endif /* __AUFS_DENTRY_H__ */
 diff -urN /usr/share/empty/fs/aufs/dinfo.c linux/fs/aufs/dinfo.c
 --- /usr/share/empty/fs/aufs/dinfo.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/dinfo.c	2022-03-21 14:49:05.719966344 +0100
++++ linux/fs/aufs/dinfo.c	2022-11-05 23:02:18.962555950 +0100
 @@ -0,0 +1,554 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
-+ * Copyright (C) 2005-2021 Junjiro R. Okajima
++ * Copyright (C) 2005-2022 Junjiro R. Okajima
 + *
-+ * This program, aufs is free software; you can redistribute it and/or modify
++ * This program is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
 + * the Free Software Foundation; either version 2 of the License, or
 + * (at your option) any later version.
@@ -9955,13 +9954,13 @@ diff -urN /usr/share/empty/fs/aufs/dinfo.c linux/fs/aufs/dinfo.c
 +}
 diff -urN /usr/share/empty/fs/aufs/dir.c linux/fs/aufs/dir.c
 --- /usr/share/empty/fs/aufs/dir.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/dir.c	2022-03-21 14:49:05.719966344 +0100
++++ linux/fs/aufs/dir.c	2022-11-05 23:02:18.962555950 +0100
 @@ -0,0 +1,765 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
-+ * Copyright (C) 2005-2021 Junjiro R. Okajima
++ * Copyright (C) 2005-2022 Junjiro R. Okajima
 + *
-+ * This program, aufs is free software; you can redistribute it and/or modify
++ * This program is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
 + * the Free Software Foundation; either version 2 of the License, or
 + * (at your option) any later version.
@@ -10724,13 +10723,13 @@ diff -urN /usr/share/empty/fs/aufs/dir.c linux/fs/aufs/dir.c
 +};
 diff -urN /usr/share/empty/fs/aufs/dir.h linux/fs/aufs/dir.h
 --- /usr/share/empty/fs/aufs/dir.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/dir.h	2022-03-21 14:49:05.719966344 +0100
++++ linux/fs/aufs/dir.h	2022-11-05 23:02:18.962555950 +0100
 @@ -0,0 +1,134 @@
 +/* SPDX-License-Identifier: GPL-2.0 */
 +/*
-+ * Copyright (C) 2005-2021 Junjiro R. Okajima
++ * Copyright (C) 2005-2022 Junjiro R. Okajima
 + *
-+ * This program, aufs is free software; you can redistribute it and/or modify
++ * This program is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
 + * the Free Software Foundation; either version 2 of the License, or
 + * (at your option) any later version.
@@ -10862,13 +10861,13 @@ diff -urN /usr/share/empty/fs/aufs/dir.h linux/fs/aufs/dir.h
 +#endif /* __AUFS_DIR_H__ */
 diff -urN /usr/share/empty/fs/aufs/dirren.c linux/fs/aufs/dirren.c
 --- /usr/share/empty/fs/aufs/dirren.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/dirren.c	2022-03-21 14:49:05.723299677 +0100
++++ linux/fs/aufs/dirren.c	2022-11-05 23:02:18.962555950 +0100
 @@ -0,0 +1,1315 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
-+ * Copyright (C) 2017-2021 Junjiro R. Okajima
++ * Copyright (C) 2017-2022 Junjiro R. Okajima
 + *
-+ * This program, aufs is free software; you can redistribute it and/or modify
++ * This program is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
 + * the Free Software Foundation; either version 2 of the License, or
 + * (at your option) any later version.
@@ -12181,13 +12180,13 @@ diff -urN /usr/share/empty/fs/aufs/dirren.c linux/fs/aufs/dirren.c
 +}
 diff -urN /usr/share/empty/fs/aufs/dirren.h linux/fs/aufs/dirren.h
 --- /usr/share/empty/fs/aufs/dirren.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/dirren.h	2022-03-21 14:49:05.723299677 +0100
++++ linux/fs/aufs/dirren.h	2022-11-05 23:02:18.962555950 +0100
 @@ -0,0 +1,140 @@
 +/* SPDX-License-Identifier: GPL-2.0 */
 +/*
-+ * Copyright (C) 2017-2021 Junjiro R. Okajima
++ * Copyright (C) 2017-2022 Junjiro R. Okajima
 + *
-+ * This program, aufs is free software; you can redistribute it and/or modify
++ * This program is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
 + * the Free Software Foundation; either version 2 of the License, or
 + * (at your option) any later version.
@@ -12325,13 +12324,13 @@ diff -urN /usr/share/empty/fs/aufs/dirren.h linux/fs/aufs/dirren.h
 +#endif /* __AUFS_DIRREN_H__ */
 diff -urN /usr/share/empty/fs/aufs/dynop.c linux/fs/aufs/dynop.c
 --- /usr/share/empty/fs/aufs/dynop.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/dynop.c	2022-10-03 07:51:14.926209260 +0200
++++ linux/fs/aufs/dynop.c	2022-11-05 23:02:18.962555950 +0100
 @@ -0,0 +1,366 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
-+ * Copyright (C) 2010-2021 Junjiro R. Okajima
++ * Copyright (C) 2010-2022 Junjiro R. Okajima
 + *
-+ * This program, aufs is free software; you can redistribute it and/or modify
++ * This program is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
 + * the Free Software Foundation; either version 2 of the License, or
 + * (at your option) any later version.
@@ -12695,13 +12694,13 @@ diff -urN /usr/share/empty/fs/aufs/dynop.c linux/fs/aufs/dynop.c
 +}
 diff -urN /usr/share/empty/fs/aufs/dynop.h linux/fs/aufs/dynop.h
 --- /usr/share/empty/fs/aufs/dynop.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/dynop.h	2022-03-21 14:49:05.723299677 +0100
++++ linux/fs/aufs/dynop.h	2022-11-05 23:02:18.962555950 +0100
 @@ -0,0 +1,77 @@
 +/* SPDX-License-Identifier: GPL-2.0 */
 +/*
-+ * Copyright (C) 2010-2021 Junjiro R. Okajima
++ * Copyright (C) 2010-2022 Junjiro R. Okajima
 + *
-+ * This program, aufs is free software; you can redistribute it and/or modify
++ * This program is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
 + * the Free Software Foundation; either version 2 of the License, or
 + * (at your option) any later version.
@@ -12776,13 +12775,13 @@ diff -urN /usr/share/empty/fs/aufs/dynop.h linux/fs/aufs/dynop.h
 +#endif /* __AUFS_DYNOP_H__ */
 diff -urN /usr/share/empty/fs/aufs/export.c linux/fs/aufs/export.c
 --- /usr/share/empty/fs/aufs/export.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/export.c	2022-03-21 14:49:05.723299677 +0100
++++ linux/fs/aufs/export.c	2022-11-05 23:02:18.962555950 +0100
 @@ -0,0 +1,830 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
-+ * Copyright (C) 2005-2021 Junjiro R. Okajima
++ * Copyright (C) 2005-2022 Junjiro R. Okajima
 + *
-+ * This program, aufs is free software; you can redistribute it and/or modify
++ * This program is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
 + * the Free Software Foundation; either version 2 of the License, or
 + * (at your option) any later version.
@@ -13610,13 +13609,13 @@ diff -urN /usr/share/empty/fs/aufs/export.c linux/fs/aufs/export.c
 +}
 diff -urN /usr/share/empty/fs/aufs/fhsm.c linux/fs/aufs/fhsm.c
 --- /usr/share/empty/fs/aufs/fhsm.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/fhsm.c	2022-03-21 14:49:05.723299677 +0100
-@@ -0,0 +1,427 @@
++++ linux/fs/aufs/fhsm.c	2022-11-05 23:02:18.962555950 +0100
+@@ -0,0 +1,426 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
-+ * Copyright (C) 2011-2021 Junjiro R. Okajima
++ * Copyright (C) 2011-2022 Junjiro R. Okajima
 + *
-+ * This program, aufs is free software; you can redistribute it and/or modify
++ * This program is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
 + * the Free Software Foundation; either version 2 of the License, or
 + * (at your option) any later version.
@@ -13627,8 +13626,7 @@ diff -urN /usr/share/empty/fs/aufs/fhsm.c linux/fs/aufs/fhsm.c
 + * GNU General Public License for more details.
 + *
 + * You should have received a copy of the GNU General Public License
-+ * along with this program; if not, write to the Free Software
-+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
++ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 + */
 +
 +/*
@@ -14041,13 +14039,13 @@ diff -urN /usr/share/empty/fs/aufs/fhsm.c linux/fs/aufs/fhsm.c
 +}
 diff -urN /usr/share/empty/fs/aufs/file.c linux/fs/aufs/file.c
 --- /usr/share/empty/fs/aufs/file.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/file.c	2022-10-03 07:51:14.926209260 +0200
++++ linux/fs/aufs/file.c	2022-11-05 23:02:18.965889284 +0100
 @@ -0,0 +1,858 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
-+ * Copyright (C) 2005-2021 Junjiro R. Okajima
++ * Copyright (C) 2005-2022 Junjiro R. Okajima
 + *
-+ * This program, aufs is free software; you can redistribute it and/or modify
++ * This program is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
 + * the Free Software Foundation; either version 2 of the License, or
 + * (at your option) any later version.
@@ -14903,13 +14901,13 @@ diff -urN /usr/share/empty/fs/aufs/file.c linux/fs/aufs/file.c
 +};
 diff -urN /usr/share/empty/fs/aufs/file.h linux/fs/aufs/file.h
 --- /usr/share/empty/fs/aufs/file.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/file.h	2022-03-21 14:49:05.723299677 +0100
++++ linux/fs/aufs/file.h	2022-11-05 23:02:18.965889284 +0100
 @@ -0,0 +1,342 @@
 +/* SPDX-License-Identifier: GPL-2.0 */
 +/*
-+ * Copyright (C) 2005-2021 Junjiro R. Okajima
++ * Copyright (C) 2005-2022 Junjiro R. Okajima
 + *
-+ * This program, aufs is free software; you can redistribute it and/or modify
++ * This program is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
 + * the Free Software Foundation; either version 2 of the License, or
 + * (at your option) any later version.
@@ -15249,13 +15247,13 @@ diff -urN /usr/share/empty/fs/aufs/file.h linux/fs/aufs/file.h
 +#endif /* __AUFS_FILE_H__ */
 diff -urN /usr/share/empty/fs/aufs/finfo.c linux/fs/aufs/finfo.c
 --- /usr/share/empty/fs/aufs/finfo.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/finfo.c	2022-03-21 14:49:05.723299677 +0100
++++ linux/fs/aufs/finfo.c	2022-11-05 23:02:18.965889284 +0100
 @@ -0,0 +1,149 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
-+ * Copyright (C) 2005-2021 Junjiro R. Okajima
++ * Copyright (C) 2005-2022 Junjiro R. Okajima
 + *
-+ * This program, aufs is free software; you can redistribute it and/or modify
++ * This program is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
 + * the Free Software Foundation; either version 2 of the License, or
 + * (at your option) any later version.
@@ -15402,13 +15400,13 @@ diff -urN /usr/share/empty/fs/aufs/finfo.c linux/fs/aufs/finfo.c
 +}
 diff -urN /usr/share/empty/fs/aufs/f_op.c linux/fs/aufs/f_op.c
 --- /usr/share/empty/fs/aufs/f_op.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/f_op.c	2022-03-21 14:49:05.723299677 +0100
++++ linux/fs/aufs/f_op.c	2022-11-05 23:02:18.962555950 +0100
 @@ -0,0 +1,771 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
-+ * Copyright (C) 2005-2021 Junjiro R. Okajima
++ * Copyright (C) 2005-2022 Junjiro R. Okajima
 + *
-+ * This program, aufs is free software; you can redistribute it and/or modify
++ * This program is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
 + * the Free Software Foundation; either version 2 of the License, or
 + * (at your option) any later version.
@@ -16177,13 +16175,13 @@ diff -urN /usr/share/empty/fs/aufs/f_op.c linux/fs/aufs/f_op.c
 +};
 diff -urN /usr/share/empty/fs/aufs/fsctx.c linux/fs/aufs/fsctx.c
 --- /usr/share/empty/fs/aufs/fsctx.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/fsctx.c	2022-10-03 07:51:14.926209260 +0200
++++ linux/fs/aufs/fsctx.c	2022-11-05 23:02:18.965889284 +0100
 @@ -0,0 +1,1242 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
 + * Copyright (C) 2022 Junjiro R. Okajima
 + *
-+ * This program, aufs is free software; you can redistribute it and/or modify
++ * This program is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
 + * the Free Software Foundation; either version 2 of the License, or
 + * (at your option) any later version.
@@ -17423,13 +17421,13 @@ diff -urN /usr/share/empty/fs/aufs/fsctx.c linux/fs/aufs/fsctx.c
 +}
 diff -urN /usr/share/empty/fs/aufs/fstype.h linux/fs/aufs/fstype.h
 --- /usr/share/empty/fs/aufs/fstype.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/fstype.h	2022-03-21 14:49:05.723299677 +0100
++++ linux/fs/aufs/fstype.h	2022-11-05 23:02:18.965889284 +0100
 @@ -0,0 +1,401 @@
 +/* SPDX-License-Identifier: GPL-2.0 */
 +/*
-+ * Copyright (C) 2005-2021 Junjiro R. Okajima
++ * Copyright (C) 2005-2022 Junjiro R. Okajima
 + *
-+ * This program, aufs is free software; you can redistribute it and/or modify
++ * This program is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
 + * the Free Software Foundation; either version 2 of the License, or
 + * (at your option) any later version.
@@ -17828,13 +17826,13 @@ diff -urN /usr/share/empty/fs/aufs/fstype.h linux/fs/aufs/fstype.h
 +#endif /* __AUFS_FSTYPE_H__ */
 diff -urN /usr/share/empty/fs/aufs/hbl.h linux/fs/aufs/hbl.h
 --- /usr/share/empty/fs/aufs/hbl.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/hbl.h	2022-03-21 14:49:05.723299677 +0100
++++ linux/fs/aufs/hbl.h	2022-11-05 23:02:18.965889284 +0100
 @@ -0,0 +1,65 @@
 +/* SPDX-License-Identifier: GPL-2.0 */
 +/*
-+ * Copyright (C) 2017-2021 Junjiro R. Okajima
++ * Copyright (C) 2017-2022 Junjiro R. Okajima
 + *
-+ * This program, aufs is free software; you can redistribute it and/or modify
++ * This program is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
 + * the Free Software Foundation; either version 2 of the License, or
 + * (at your option) any later version.
@@ -17897,13 +17895,13 @@ diff -urN /usr/share/empty/fs/aufs/hbl.h linux/fs/aufs/hbl.h
 +#endif /* __AUFS_HBL_H__ */
 diff -urN /usr/share/empty/fs/aufs/hfsnotify.c linux/fs/aufs/hfsnotify.c
 --- /usr/share/empty/fs/aufs/hfsnotify.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/hfsnotify.c	2022-10-03 07:51:14.926209260 +0200
++++ linux/fs/aufs/hfsnotify.c	2022-11-05 23:02:18.965889284 +0100
 @@ -0,0 +1,290 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
-+ * Copyright (C) 2005-2021 Junjiro R. Okajima
++ * Copyright (C) 2005-2022 Junjiro R. Okajima
 + *
-+ * This program, aufs is free software; you can redistribute it and/or modify
++ * This program is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
 + * the Free Software Foundation; either version 2 of the License, or
 + * (at your option) any later version.
@@ -18084,11 +18082,11 @@ diff -urN /usr/share/empty/fs/aufs/hfsnotify.c linux/fs/aufs/hfsnotify.c
 +	h_inode = NULL;
 +#ifdef AuDbgHnotify
 +	au_debug_on();
-+	if (1 || h_child_qstr.len != sizeof(AUFS_XINO_FNAME) - 1
-+	    || strncmp(h_child_qstr.name, AUFS_XINO_FNAME, h_child_qstr.len)) {
++	if (1 || file_name.len != sizeof(AUFS_XINO_FNAME) - 1
++	    || strncmp(file_name.name, AUFS_XINO_FNAME, file_name.len)) {
 +		AuDbg("i%lu, mask 0x%x %s, hcname %.*s, hi%lu\n",
 +		      h_dir->i_ino, mask, au_hfsn_name(mask),
-+		      AuLNPair(&h_child_qstr), h_inode ? h_inode->i_ino : 0);
++		      AuLNPair(file_name), h_inode ? h_inode->i_ino : 0);
 +		/* WARN_ON(1); */
 +	}
 +	au_debug_off();
@@ -18191,13 +18189,13 @@ diff -urN /usr/share/empty/fs/aufs/hfsnotify.c linux/fs/aufs/hfsnotify.c
 +};
 diff -urN /usr/share/empty/fs/aufs/hfsplus.c linux/fs/aufs/hfsplus.c
 --- /usr/share/empty/fs/aufs/hfsplus.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/hfsplus.c	2022-03-21 14:49:05.723299677 +0100
++++ linux/fs/aufs/hfsplus.c	2022-11-05 23:02:18.965889284 +0100
 @@ -0,0 +1,60 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
-+ * Copyright (C) 2010-2021 Junjiro R. Okajima
++ * Copyright (C) 2010-2022 Junjiro R. Okajima
 + *
-+ * This program, aufs is free software; you can redistribute it and/or modify
++ * This program is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
 + * the Free Software Foundation; either version 2 of the License, or
 + * (at your option) any later version.
@@ -18255,13 +18253,13 @@ diff -urN /usr/share/empty/fs/aufs/hfsplus.c linux/fs/aufs/hfsplus.c
 +}
 diff -urN /usr/share/empty/fs/aufs/hnotify.c linux/fs/aufs/hnotify.c
 --- /usr/share/empty/fs/aufs/hnotify.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/hnotify.c	2022-03-21 14:49:05.723299677 +0100
++++ linux/fs/aufs/hnotify.c	2022-11-05 23:02:18.965889284 +0100
 @@ -0,0 +1,715 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
-+ * Copyright (C) 2005-2021 Junjiro R. Okajima
++ * Copyright (C) 2005-2022 Junjiro R. Okajima
 + *
-+ * This program, aufs is free software; you can redistribute it and/or modify
++ * This program is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
 + * the Free Software Foundation; either version 2 of the License, or
 + * (at your option) any later version.
@@ -18974,13 +18972,13 @@ diff -urN /usr/share/empty/fs/aufs/hnotify.c linux/fs/aufs/hnotify.c
 +}
 diff -urN /usr/share/empty/fs/aufs/iinfo.c linux/fs/aufs/iinfo.c
 --- /usr/share/empty/fs/aufs/iinfo.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/iinfo.c	2022-03-21 14:49:05.726633010 +0100
++++ linux/fs/aufs/iinfo.c	2022-11-05 23:02:18.965889284 +0100
 @@ -0,0 +1,286 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
-+ * Copyright (C) 2005-2021 Junjiro R. Okajima
++ * Copyright (C) 2005-2022 Junjiro R. Okajima
 + *
-+ * This program, aufs is free software; you can redistribute it and/or modify
++ * This program is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
 + * the Free Software Foundation; either version 2 of the License, or
 + * (at your option) any later version.
@@ -19264,13 +19262,13 @@ diff -urN /usr/share/empty/fs/aufs/iinfo.c linux/fs/aufs/iinfo.c
 +}
 diff -urN /usr/share/empty/fs/aufs/inode.c linux/fs/aufs/inode.c
 --- /usr/share/empty/fs/aufs/inode.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/inode.c	2022-03-21 14:49:05.726633010 +0100
++++ linux/fs/aufs/inode.c	2022-11-05 23:02:18.965889284 +0100
 @@ -0,0 +1,531 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
-+ * Copyright (C) 2005-2021 Junjiro R. Okajima
++ * Copyright (C) 2005-2022 Junjiro R. Okajima
 + *
-+ * This program, aufs is free software; you can redistribute it and/or modify
++ * This program is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
 + * the Free Software Foundation; either version 2 of the License, or
 + * (at your option) any later version.
@@ -19799,13 +19797,13 @@ diff -urN /usr/share/empty/fs/aufs/inode.c linux/fs/aufs/inode.c
 +}
 diff -urN /usr/share/empty/fs/aufs/inode.h linux/fs/aufs/inode.h
 --- /usr/share/empty/fs/aufs/inode.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/inode.h	2022-10-03 07:51:14.929542593 +0200
++++ linux/fs/aufs/inode.h	2022-11-05 23:02:18.965889284 +0100
 @@ -0,0 +1,705 @@
 +/* SPDX-License-Identifier: GPL-2.0 */
 +/*
-+ * Copyright (C) 2005-2021 Junjiro R. Okajima
++ * Copyright (C) 2005-2022 Junjiro R. Okajima
 + *
-+ * This program, aufs is free software; you can redistribute it and/or modify
++ * This program is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
 + * the Free Software Foundation; either version 2 of the License, or
 + * (at your option) any later version.
@@ -20508,13 +20506,13 @@ diff -urN /usr/share/empty/fs/aufs/inode.h linux/fs/aufs/inode.h
 +#endif /* __AUFS_INODE_H__ */
 diff -urN /usr/share/empty/fs/aufs/ioctl.c linux/fs/aufs/ioctl.c
 --- /usr/share/empty/fs/aufs/ioctl.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/ioctl.c	2022-03-21 14:49:05.726633010 +0100
++++ linux/fs/aufs/ioctl.c	2022-11-05 23:02:18.965889284 +0100
 @@ -0,0 +1,220 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
-+ * Copyright (C) 2005-2021 Junjiro R. Okajima
++ * Copyright (C) 2005-2022 Junjiro R. Okajima
 + *
-+ * This program, aufs is free software; you can redistribute it and/or modify
++ * This program is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
 + * the Free Software Foundation; either version 2 of the License, or
 + * (at your option) any later version.
@@ -20732,13 +20730,13 @@ diff -urN /usr/share/empty/fs/aufs/ioctl.c linux/fs/aufs/ioctl.c
 +#endif
 diff -urN /usr/share/empty/fs/aufs/i_op_add.c linux/fs/aufs/i_op_add.c
 --- /usr/share/empty/fs/aufs/i_op_add.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/i_op_add.c	2022-03-21 14:49:05.726633010 +0100
++++ linux/fs/aufs/i_op_add.c	2022-11-05 23:02:18.965889284 +0100
 @@ -0,0 +1,941 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
-+ * Copyright (C) 2005-2021 Junjiro R. Okajima
++ * Copyright (C) 2005-2022 Junjiro R. Okajima
 + *
-+ * This program, aufs is free software; you can redistribute it and/or modify
++ * This program is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
 + * the Free Software Foundation; either version 2 of the License, or
 + * (at your option) any later version.
@@ -21677,13 +21675,13 @@ diff -urN /usr/share/empty/fs/aufs/i_op_add.c linux/fs/aufs/i_op_add.c
 +}
 diff -urN /usr/share/empty/fs/aufs/i_op.c linux/fs/aufs/i_op.c
 --- /usr/share/empty/fs/aufs/i_op.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/i_op.c	2022-03-21 14:49:05.726633010 +0100
++++ linux/fs/aufs/i_op.c	2022-11-05 23:02:18.965889284 +0100
 @@ -0,0 +1,1512 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
-+ * Copyright (C) 2005-2021 Junjiro R. Okajima
++ * Copyright (C) 2005-2022 Junjiro R. Okajima
 + *
-+ * This program, aufs is free software; you can redistribute it and/or modify
++ * This program is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
 + * the Free Software Foundation; either version 2 of the License, or
 + * (at your option) any later version.
@@ -23142,7 +23140,7 @@ diff -urN /usr/share/empty/fs/aufs/i_op.c linux/fs/aufs/i_op.c
 +		.listxattr	= aufs_listxattr,
 +#endif
 +
-+		.get_link	= aufs_get_link,
++		.get_link	= aufs_get_link
 +
 +		/* .update_time	= aufs_update_time */
 +	},
@@ -23193,13 +23191,13 @@ diff -urN /usr/share/empty/fs/aufs/i_op.c linux/fs/aufs/i_op.c
 +};
 diff -urN /usr/share/empty/fs/aufs/i_op_del.c linux/fs/aufs/i_op_del.c
 --- /usr/share/empty/fs/aufs/i_op_del.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/i_op_del.c	2022-03-21 14:49:05.726633010 +0100
++++ linux/fs/aufs/i_op_del.c	2022-11-05 23:02:18.965889284 +0100
 @@ -0,0 +1,522 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
-+ * Copyright (C) 2005-2021 Junjiro R. Okajima
++ * Copyright (C) 2005-2022 Junjiro R. Okajima
 + *
-+ * This program, aufs is free software; you can redistribute it and/or modify
++ * This program is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
 + * the Free Software Foundation; either version 2 of the License, or
 + * (at your option) any later version.
@@ -23719,13 +23717,13 @@ diff -urN /usr/share/empty/fs/aufs/i_op_del.c linux/fs/aufs/i_op_del.c
 +}
 diff -urN /usr/share/empty/fs/aufs/i_op_ren.c linux/fs/aufs/i_op_ren.c
 --- /usr/share/empty/fs/aufs/i_op_ren.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/i_op_ren.c	2022-03-21 14:49:05.726633010 +0100
++++ linux/fs/aufs/i_op_ren.c	2022-11-05 23:02:18.965889284 +0100
 @@ -0,0 +1,1257 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
-+ * Copyright (C) 2005-2021 Junjiro R. Okajima
++ * Copyright (C) 2005-2022 Junjiro R. Okajima
 + *
-+ * This program, aufs is free software; you can redistribute it and/or modify
++ * This program is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
 + * the Free Software Foundation; either version 2 of the License, or
 + * (at your option) any later version.
@@ -24980,7 +24978,7 @@ diff -urN /usr/share/empty/fs/aufs/i_op_ren.c linux/fs/aufs/i_op_ren.c
 +}
 diff -urN /usr/share/empty/fs/aufs/Kconfig linux/fs/aufs/Kconfig
 --- /usr/share/empty/fs/aufs/Kconfig	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/Kconfig	2022-10-03 07:51:14.926209260 +0200
++++ linux/fs/aufs/Kconfig	2022-11-05 23:02:18.959222617 +0100
 @@ -0,0 +1,199 @@
 +# SPDX-License-Identifier: GPL-2.0
 +config AUFS_FS
@@ -25183,13 +25181,13 @@ diff -urN /usr/share/empty/fs/aufs/Kconfig linux/fs/aufs/Kconfig
 +endif
 diff -urN /usr/share/empty/fs/aufs/lcnt.h linux/fs/aufs/lcnt.h
 --- /usr/share/empty/fs/aufs/lcnt.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/lcnt.h	2022-03-21 14:49:05.726633010 +0100
++++ linux/fs/aufs/lcnt.h	2022-11-05 23:02:18.965889284 +0100
 @@ -0,0 +1,186 @@
 +/* SPDX-License-Identifier: GPL-2.0 */
 +/*
-+ * Copyright (C) 2018-2021 Junjiro R. Okajima
++ * Copyright (C) 2018-2022 Junjiro R. Okajima
 + *
-+ * This program, aufs is free software; you can redistribute it and/or modify
++ * This program is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
 + * the Free Software Foundation; either version 2 of the License, or
 + * (at your option) any later version.
@@ -25373,13 +25371,13 @@ diff -urN /usr/share/empty/fs/aufs/lcnt.h linux/fs/aufs/lcnt.h
 +#endif /* __AUFS_LCNT_H__ */
 diff -urN /usr/share/empty/fs/aufs/loop.c linux/fs/aufs/loop.c
 --- /usr/share/empty/fs/aufs/loop.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/loop.c	2022-03-21 14:49:05.726633010 +0100
++++ linux/fs/aufs/loop.c	2022-11-05 23:02:18.965889284 +0100
 @@ -0,0 +1,148 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
-+ * Copyright (C) 2005-2021 Junjiro R. Okajima
++ * Copyright (C) 2005-2022 Junjiro R. Okajima
 + *
-+ * This program, aufs is free software; you can redistribute it and/or modify
++ * This program is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
 + * the Free Software Foundation; either version 2 of the License, or
 + * (at your option) any later version.
@@ -25525,13 +25523,13 @@ diff -urN /usr/share/empty/fs/aufs/loop.c linux/fs/aufs/loop.c
 +}
 diff -urN /usr/share/empty/fs/aufs/loop.h linux/fs/aufs/loop.h
 --- /usr/share/empty/fs/aufs/loop.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/loop.h	2022-03-21 14:49:05.726633010 +0100
++++ linux/fs/aufs/loop.h	2022-11-05 23:02:18.965889284 +0100
 @@ -0,0 +1,55 @@
 +/* SPDX-License-Identifier: GPL-2.0 */
 +/*
-+ * Copyright (C) 2005-2021 Junjiro R. Okajima
++ * Copyright (C) 2005-2022 Junjiro R. Okajima
 + *
-+ * This program, aufs is free software; you can redistribute it and/or modify
++ * This program is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
 + * the Free Software Foundation; either version 2 of the License, or
 + * (at your option) any later version.
@@ -25584,7 +25582,7 @@ diff -urN /usr/share/empty/fs/aufs/loop.h linux/fs/aufs/loop.h
 +#endif /* __AUFS_LOOP_H__ */
 diff -urN /usr/share/empty/fs/aufs/magic.mk linux/fs/aufs/magic.mk
 --- /usr/share/empty/fs/aufs/magic.mk	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/magic.mk	2022-03-21 14:49:05.726633010 +0100
++++ linux/fs/aufs/magic.mk	2022-11-05 23:02:18.965889284 +0100
 @@ -0,0 +1,31 @@
 +# SPDX-License-Identifier: GPL-2.0
 +
@@ -25619,7 +25617,7 @@ diff -urN /usr/share/empty/fs/aufs/magic.mk linux/fs/aufs/magic.mk
 +endif
 diff -urN /usr/share/empty/fs/aufs/Makefile linux/fs/aufs/Makefile
 --- /usr/share/empty/fs/aufs/Makefile	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/Makefile	2022-03-21 14:49:05.716633010 +0100
++++ linux/fs/aufs/Makefile	2022-11-05 23:02:18.959222617 +0100
 @@ -0,0 +1,46 @@
 +# SPDX-License-Identifier: GPL-2.0
 +
@@ -25669,13 +25667,13 @@ diff -urN /usr/share/empty/fs/aufs/Makefile linux/fs/aufs/Makefile
 +aufs-$(CONFIG_AUFS_MAGIC_SYSRQ) += sysrq.o
 diff -urN /usr/share/empty/fs/aufs/module.c linux/fs/aufs/module.c
 --- /usr/share/empty/fs/aufs/module.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/module.c	2022-03-21 14:49:05.726633010 +0100
++++ linux/fs/aufs/module.c	2022-11-05 23:02:18.965889284 +0100
 @@ -0,0 +1,273 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
-+ * Copyright (C) 2005-2021 Junjiro R. Okajima
++ * Copyright (C) 2005-2022 Junjiro R. Okajima
 + *
-+ * This program, aufs is free software; you can redistribute it and/or modify
++ * This program is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
 + * the Free Software Foundation; either version 2 of the License, or
 + * (at your option) any later version.
@@ -25946,13 +25944,13 @@ diff -urN /usr/share/empty/fs/aufs/module.c linux/fs/aufs/module.c
 +module_exit(aufs_exit);
 diff -urN /usr/share/empty/fs/aufs/module.h linux/fs/aufs/module.h
 --- /usr/share/empty/fs/aufs/module.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/module.h	2022-05-23 09:44:37.729839166 +0200
++++ linux/fs/aufs/module.h	2022-11-05 23:02:18.969222617 +0100
 @@ -0,0 +1,180 @@
 +/* SPDX-License-Identifier: GPL-2.0 */
 +/*
-+ * Copyright (C) 2005-2021 Junjiro R. Okajima
++ * Copyright (C) 2005-2022 Junjiro R. Okajima
 + *
-+ * This program, aufs is free software; you can redistribute it and/or modify
++ * This program is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
 + * the Free Software Foundation; either version 2 of the License, or
 + * (at your option) any later version.
@@ -26130,13 +26128,13 @@ diff -urN /usr/share/empty/fs/aufs/module.h linux/fs/aufs/module.h
 +#endif /* __AUFS_MODULE_H__ */
 diff -urN /usr/share/empty/fs/aufs/mvdown.c linux/fs/aufs/mvdown.c
 --- /usr/share/empty/fs/aufs/mvdown.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/mvdown.c	2022-03-21 14:49:05.729966343 +0100
++++ linux/fs/aufs/mvdown.c	2022-11-05 23:02:18.969222617 +0100
 @@ -0,0 +1,706 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
-+ * Copyright (C) 2011-2021 Junjiro R. Okajima
++ * Copyright (C) 2011-2022 Junjiro R. Okajima
 + *
-+ * This program, aufs is free software; you can redistribute it and/or modify
++ * This program is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
 + * the Free Software Foundation; either version 2 of the License, or
 + * (at your option) any later version.
@@ -26840,13 +26838,13 @@ diff -urN /usr/share/empty/fs/aufs/mvdown.c linux/fs/aufs/mvdown.c
 +}
 diff -urN /usr/share/empty/fs/aufs/opts.c linux/fs/aufs/opts.c
 --- /usr/share/empty/fs/aufs/opts.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/opts.c	2022-03-21 14:49:05.729966343 +0100
++++ linux/fs/aufs/opts.c	2022-11-05 23:02:18.969222617 +0100
 @@ -0,0 +1,1032 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
-+ * Copyright (C) 2005-2021 Junjiro R. Okajima
++ * Copyright (C) 2005-2022 Junjiro R. Okajima
 + *
-+ * This program, aufs is free software; you can redistribute it and/or modify
++ * This program is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
 + * the Free Software Foundation; either version 2 of the License, or
 + * (at your option) any later version.
@@ -27876,13 +27874,13 @@ diff -urN /usr/share/empty/fs/aufs/opts.c linux/fs/aufs/opts.c
 +}
 diff -urN /usr/share/empty/fs/aufs/opts.h linux/fs/aufs/opts.h
 --- /usr/share/empty/fs/aufs/opts.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/opts.h	2022-03-21 14:49:05.729966343 +0100
++++ linux/fs/aufs/opts.h	2022-11-05 23:02:18.969222617 +0100
 @@ -0,0 +1,263 @@
 +/* SPDX-License-Identifier: GPL-2.0 */
 +/*
-+ * Copyright (C) 2005-2021 Junjiro R. Okajima
++ * Copyright (C) 2005-2022 Junjiro R. Okajima
 + *
-+ * This program, aufs is free software; you can redistribute it and/or modify
++ * This program is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
 + * the Free Software Foundation; either version 2 of the License, or
 + * (at your option) any later version.
@@ -28143,13 +28141,13 @@ diff -urN /usr/share/empty/fs/aufs/opts.h linux/fs/aufs/opts.h
 +#endif /* __AUFS_OPTS_H__ */
 diff -urN /usr/share/empty/fs/aufs/plink.c linux/fs/aufs/plink.c
 --- /usr/share/empty/fs/aufs/plink.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/plink.c	2022-03-21 14:49:05.729966343 +0100
++++ linux/fs/aufs/plink.c	2022-11-05 23:02:18.969222617 +0100
 @@ -0,0 +1,516 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
-+ * Copyright (C) 2005-2021 Junjiro R. Okajima
++ * Copyright (C) 2005-2022 Junjiro R. Okajima
 + *
-+ * This program, aufs is free software; you can redistribute it and/or modify
++ * This program is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
 + * the Free Software Foundation; either version 2 of the License, or
 + * (at your option) any later version.
@@ -28663,13 +28661,13 @@ diff -urN /usr/share/empty/fs/aufs/plink.c linux/fs/aufs/plink.c
 +}
 diff -urN /usr/share/empty/fs/aufs/poll.c linux/fs/aufs/poll.c
 --- /usr/share/empty/fs/aufs/poll.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/poll.c	2022-03-21 14:49:05.729966343 +0100
++++ linux/fs/aufs/poll.c	2022-11-05 23:02:18.969222617 +0100
 @@ -0,0 +1,51 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
-+ * Copyright (C) 2005-2021 Junjiro R. Okajima
++ * Copyright (C) 2005-2022 Junjiro R. Okajima
 + *
-+ * This program, aufs is free software; you can redistribute it and/or modify
++ * This program is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
 + * the Free Software Foundation; either version 2 of the License, or
 + * (at your option) any later version.
@@ -28718,13 +28716,13 @@ diff -urN /usr/share/empty/fs/aufs/poll.c linux/fs/aufs/poll.c
 +}
 diff -urN /usr/share/empty/fs/aufs/posix_acl.c linux/fs/aufs/posix_acl.c
 --- /usr/share/empty/fs/aufs/posix_acl.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/posix_acl.c	2022-03-21 14:49:05.729966343 +0100
++++ linux/fs/aufs/posix_acl.c	2022-11-05 23:02:18.969222617 +0100
 @@ -0,0 +1,111 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
-+ * Copyright (C) 2014-2021 Junjiro R. Okajima
++ * Copyright (C) 2014-2022 Junjiro R. Okajima
 + *
-+ * This program, aufs is free software; you can redistribute it and/or modify
++ * This program is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
 + * the Free Software Foundation; either version 2 of the License, or
 + * (at your option) any later version.
@@ -28833,13 +28831,13 @@ diff -urN /usr/share/empty/fs/aufs/posix_acl.c linux/fs/aufs/posix_acl.c
 +}
 diff -urN /usr/share/empty/fs/aufs/procfs.c linux/fs/aufs/procfs.c
 --- /usr/share/empty/fs/aufs/procfs.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/procfs.c	2022-03-21 14:49:05.729966343 +0100
++++ linux/fs/aufs/procfs.c	2022-11-05 23:02:18.969222617 +0100
 @@ -0,0 +1,170 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
-+ * Copyright (C) 2010-2021 Junjiro R. Okajima
++ * Copyright (C) 2010-2022 Junjiro R. Okajima
 + *
-+ * This program, aufs is free software; you can redistribute it and/or modify
++ * This program is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
 + * the Free Software Foundation; either version 2 of the License, or
 + * (at your option) any later version.
@@ -29007,13 +29005,13 @@ diff -urN /usr/share/empty/fs/aufs/procfs.c linux/fs/aufs/procfs.c
 +}
 diff -urN /usr/share/empty/fs/aufs/rdu.c linux/fs/aufs/rdu.c
 --- /usr/share/empty/fs/aufs/rdu.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/rdu.c	2022-03-21 14:49:05.729966343 +0100
++++ linux/fs/aufs/rdu.c	2022-11-05 23:02:18.969222617 +0100
 @@ -0,0 +1,384 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
-+ * Copyright (C) 2005-2021 Junjiro R. Okajima
++ * Copyright (C) 2005-2022 Junjiro R. Okajima
 + *
-+ * This program, aufs is free software; you can redistribute it and/or modify
++ * This program is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
 + * the Free Software Foundation; either version 2 of the License, or
 + * (at your option) any later version.
@@ -29395,13 +29393,13 @@ diff -urN /usr/share/empty/fs/aufs/rdu.c linux/fs/aufs/rdu.c
 +#endif
 diff -urN /usr/share/empty/fs/aufs/rwsem.h linux/fs/aufs/rwsem.h
 --- /usr/share/empty/fs/aufs/rwsem.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/rwsem.h	2022-03-21 14:49:05.729966343 +0100
++++ linux/fs/aufs/rwsem.h	2022-11-05 23:02:18.969222617 +0100
 @@ -0,0 +1,85 @@
 +/* SPDX-License-Identifier: GPL-2.0 */
 +/*
-+ * Copyright (C) 2005-2021 Junjiro R. Okajima
++ * Copyright (C) 2005-2022 Junjiro R. Okajima
 + *
-+ * This program, aufs is free software; you can redistribute it and/or modify
++ * This program is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
 + * the Free Software Foundation; either version 2 of the License, or
 + * (at your option) any later version.
@@ -29484,13 +29482,13 @@ diff -urN /usr/share/empty/fs/aufs/rwsem.h linux/fs/aufs/rwsem.h
 +#endif /* __AUFS_RWSEM_H__ */
 diff -urN /usr/share/empty/fs/aufs/sbinfo.c linux/fs/aufs/sbinfo.c
 --- /usr/share/empty/fs/aufs/sbinfo.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/sbinfo.c	2022-03-21 14:49:05.729966343 +0100
++++ linux/fs/aufs/sbinfo.c	2022-11-05 23:02:18.969222617 +0100
 @@ -0,0 +1,316 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
-+ * Copyright (C) 2005-2021 Junjiro R. Okajima
++ * Copyright (C) 2005-2022 Junjiro R. Okajima
 + *
-+ * This program, aufs is free software; you can redistribute it and/or modify
++ * This program is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
 + * the Free Software Foundation; either version 2 of the License, or
 + * (at your option) any later version.
@@ -29804,13 +29802,13 @@ diff -urN /usr/share/empty/fs/aufs/sbinfo.c linux/fs/aufs/sbinfo.c
 +}
 diff -urN /usr/share/empty/fs/aufs/super.c linux/fs/aufs/super.c
 --- /usr/share/empty/fs/aufs/super.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/super.c	2022-05-23 09:44:37.729839166 +0200
++++ linux/fs/aufs/super.c	2022-11-05 23:02:18.969222617 +0100
 @@ -0,0 +1,871 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
-+ * Copyright (C) 2005-2021 Junjiro R. Okajima
++ * Copyright (C) 2005-2022 Junjiro R. Okajima
 + *
-+ * This program, aufs is free software; you can redistribute it and/or modify
++ * This program is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
 + * the Free Software Foundation; either version 2 of the License, or
 + * (at your option) any later version.
@@ -30679,13 +30677,13 @@ diff -urN /usr/share/empty/fs/aufs/super.c linux/fs/aufs/super.c
 +};
 diff -urN /usr/share/empty/fs/aufs/super.h linux/fs/aufs/super.h
 --- /usr/share/empty/fs/aufs/super.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/super.h	2022-03-21 14:49:05.729966343 +0100
++++ linux/fs/aufs/super.h	2022-11-05 23:02:18.969222617 +0100
 @@ -0,0 +1,592 @@
 +/* SPDX-License-Identifier: GPL-2.0 */
 +/*
-+ * Copyright (C) 2005-2021 Junjiro R. Okajima
++ * Copyright (C) 2005-2022 Junjiro R. Okajima
 + *
-+ * This program, aufs is free software; you can redistribute it and/or modify
++ * This program is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
 + * the Free Software Foundation; either version 2 of the License, or
 + * (at your option) any later version.
@@ -31275,13 +31273,13 @@ diff -urN /usr/share/empty/fs/aufs/super.h linux/fs/aufs/super.h
 +#endif /* __AUFS_SUPER_H__ */
 diff -urN /usr/share/empty/fs/aufs/sysaufs.c linux/fs/aufs/sysaufs.c
 --- /usr/share/empty/fs/aufs/sysaufs.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/sysaufs.c	2022-05-23 09:44:37.729839166 +0200
++++ linux/fs/aufs/sysaufs.c	2022-11-05 23:02:18.969222617 +0100
 @@ -0,0 +1,94 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
-+ * Copyright (C) 2005-2021 Junjiro R. Okajima
++ * Copyright (C) 2005-2022 Junjiro R. Okajima
 + *
-+ * This program, aufs is free software; you can redistribute it and/or modify
++ * This program is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
 + * the Free Software Foundation; either version 2 of the License, or
 + * (at your option) any later version.
@@ -31373,13 +31371,13 @@ diff -urN /usr/share/empty/fs/aufs/sysaufs.c linux/fs/aufs/sysaufs.c
 +}
 diff -urN /usr/share/empty/fs/aufs/sysaufs.h linux/fs/aufs/sysaufs.h
 --- /usr/share/empty/fs/aufs/sysaufs.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/sysaufs.h	2022-03-21 14:49:05.729966343 +0100
++++ linux/fs/aufs/sysaufs.h	2022-11-05 23:02:18.969222617 +0100
 @@ -0,0 +1,102 @@
 +/* SPDX-License-Identifier: GPL-2.0 */
 +/*
-+ * Copyright (C) 2005-2021 Junjiro R. Okajima
++ * Copyright (C) 2005-2022 Junjiro R. Okajima
 + *
-+ * This program, aufs is free software; you can redistribute it and/or modify
++ * This program is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
 + * the Free Software Foundation; either version 2 of the License, or
 + * (at your option) any later version.
@@ -31479,13 +31477,13 @@ diff -urN /usr/share/empty/fs/aufs/sysaufs.h linux/fs/aufs/sysaufs.h
 +#endif /* __SYSAUFS_H__ */
 diff -urN /usr/share/empty/fs/aufs/sysfs.c linux/fs/aufs/sysfs.c
 --- /usr/share/empty/fs/aufs/sysfs.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/sysfs.c	2022-03-21 14:49:05.729966343 +0100
++++ linux/fs/aufs/sysfs.c	2022-11-05 23:02:18.969222617 +0100
 @@ -0,0 +1,374 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
-+ * Copyright (C) 2005-2021 Junjiro R. Okajima
++ * Copyright (C) 2005-2022 Junjiro R. Okajima
 + *
-+ * This program, aufs is free software; you can redistribute it and/or modify
++ * This program is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
 + * the Free Software Foundation; either version 2 of the License, or
 + * (at your option) any later version.
@@ -31857,13 +31855,13 @@ diff -urN /usr/share/empty/fs/aufs/sysfs.c linux/fs/aufs/sysfs.c
 +}
 diff -urN /usr/share/empty/fs/aufs/sysrq.c linux/fs/aufs/sysrq.c
 --- /usr/share/empty/fs/aufs/sysrq.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/sysrq.c	2022-03-21 14:49:05.729966343 +0100
++++ linux/fs/aufs/sysrq.c	2022-11-05 23:02:18.969222617 +0100
 @@ -0,0 +1,149 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
-+ * Copyright (C) 2005-2021 Junjiro R. Okajima
++ * Copyright (C) 2005-2022 Junjiro R. Okajima
 + *
-+ * This program, aufs is free software; you can redistribute it and/or modify
++ * This program is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
 + * the Free Software Foundation; either version 2 of the License, or
 + * (at your option) any later version.
@@ -32010,13 +32008,13 @@ diff -urN /usr/share/empty/fs/aufs/sysrq.c linux/fs/aufs/sysrq.c
 +}
 diff -urN /usr/share/empty/fs/aufs/vdir.c linux/fs/aufs/vdir.c
 --- /usr/share/empty/fs/aufs/vdir.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/vdir.c	2022-03-21 14:49:05.733299677 +0100
++++ linux/fs/aufs/vdir.c	2022-11-05 23:02:18.969222617 +0100
 @@ -0,0 +1,896 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
-+ * Copyright (C) 2005-2021 Junjiro R. Okajima
++ * Copyright (C) 2005-2022 Junjiro R. Okajima
 + *
-+ * This program, aufs is free software; you can redistribute it and/or modify
++ * This program is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
 + * the Free Software Foundation; either version 2 of the License, or
 + * (at your option) any later version.
@@ -32910,13 +32908,13 @@ diff -urN /usr/share/empty/fs/aufs/vdir.c linux/fs/aufs/vdir.c
 +}
 diff -urN /usr/share/empty/fs/aufs/vfsub.c linux/fs/aufs/vfsub.c
 --- /usr/share/empty/fs/aufs/vfsub.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/vfsub.c	2022-03-21 14:49:05.733299677 +0100
++++ linux/fs/aufs/vfsub.c	2022-11-05 23:02:18.969222617 +0100
 @@ -0,0 +1,918 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
-+ * Copyright (C) 2005-2021 Junjiro R. Okajima
++ * Copyright (C) 2005-2022 Junjiro R. Okajima
 + *
-+ * This program, aufs is free software; you can redistribute it and/or modify
++ * This program is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
 + * the Free Software Foundation; either version 2 of the License, or
 + * (at your option) any later version.
@@ -33832,13 +33830,13 @@ diff -urN /usr/share/empty/fs/aufs/vfsub.c linux/fs/aufs/vfsub.c
 +}
 diff -urN /usr/share/empty/fs/aufs/vfsub.h linux/fs/aufs/vfsub.h
 --- /usr/share/empty/fs/aufs/vfsub.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/vfsub.h	2022-10-03 07:51:14.929542593 +0200
++++ linux/fs/aufs/vfsub.h	2022-11-05 23:02:18.969222617 +0100
 @@ -0,0 +1,362 @@
 +/* SPDX-License-Identifier: GPL-2.0 */
 +/*
-+ * Copyright (C) 2005-2021 Junjiro R. Okajima
++ * Copyright (C) 2005-2022 Junjiro R. Okajima
 + *
-+ * This program, aufs is free software; you can redistribute it and/or modify
++ * This program is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
 + * the Free Software Foundation; either version 2 of the License, or
 + * (at your option) any later version.
@@ -34198,13 +34196,13 @@ diff -urN /usr/share/empty/fs/aufs/vfsub.h linux/fs/aufs/vfsub.h
 +#endif /* __AUFS_VFSUB_H__ */
 diff -urN /usr/share/empty/fs/aufs/wbr_policy.c linux/fs/aufs/wbr_policy.c
 --- /usr/share/empty/fs/aufs/wbr_policy.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/wbr_policy.c	2022-03-21 14:49:05.733299677 +0100
++++ linux/fs/aufs/wbr_policy.c	2022-11-05 23:02:18.969222617 +0100
 @@ -0,0 +1,830 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
-+ * Copyright (C) 2005-2021 Junjiro R. Okajima
++ * Copyright (C) 2005-2022 Junjiro R. Okajima
 + *
-+ * This program, aufs is free software; you can redistribute it and/or modify
++ * This program is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
 + * the Free Software Foundation; either version 2 of the License, or
 + * (at your option) any later version.
@@ -35032,13 +35030,13 @@ diff -urN /usr/share/empty/fs/aufs/wbr_policy.c linux/fs/aufs/wbr_policy.c
 +};
 diff -urN /usr/share/empty/fs/aufs/whout.c linux/fs/aufs/whout.c
 --- /usr/share/empty/fs/aufs/whout.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/whout.c	2022-03-21 14:49:05.733299677 +0100
++++ linux/fs/aufs/whout.c	2022-11-05 23:02:18.972555950 +0100
 @@ -0,0 +1,1072 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
-+ * Copyright (C) 2005-2021 Junjiro R. Okajima
++ * Copyright (C) 2005-2022 Junjiro R. Okajima
 + *
-+ * This program, aufs is free software; you can redistribute it and/or modify
++ * This program is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
 + * the Free Software Foundation; either version 2 of the License, or
 + * (at your option) any later version.
@@ -36108,13 +36106,13 @@ diff -urN /usr/share/empty/fs/aufs/whout.c linux/fs/aufs/whout.c
 +}
 diff -urN /usr/share/empty/fs/aufs/whout.h linux/fs/aufs/whout.h
 --- /usr/share/empty/fs/aufs/whout.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/whout.h	2022-03-21 14:49:05.733299677 +0100
++++ linux/fs/aufs/whout.h	2022-11-05 23:02:18.972555950 +0100
 @@ -0,0 +1,87 @@
 +/* SPDX-License-Identifier: GPL-2.0 */
 +/*
-+ * Copyright (C) 2005-2021 Junjiro R. Okajima
++ * Copyright (C) 2005-2022 Junjiro R. Okajima
 + *
-+ * This program, aufs is free software; you can redistribute it and/or modify
++ * This program is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
 + * the Free Software Foundation; either version 2 of the License, or
 + * (at your option) any later version.
@@ -36199,13 +36197,13 @@ diff -urN /usr/share/empty/fs/aufs/whout.h linux/fs/aufs/whout.h
 +#endif /* __AUFS_WHOUT_H__ */
 diff -urN /usr/share/empty/fs/aufs/wkq.c linux/fs/aufs/wkq.c
 --- /usr/share/empty/fs/aufs/wkq.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/wkq.c	2022-03-21 14:49:05.733299677 +0100
++++ linux/fs/aufs/wkq.c	2022-11-05 23:02:18.972555950 +0100
 @@ -0,0 +1,372 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
-+ * Copyright (C) 2005-2021 Junjiro R. Okajima
++ * Copyright (C) 2005-2022 Junjiro R. Okajima
 + *
-+ * This program, aufs is free software; you can redistribute it and/or modify
++ * This program is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
 + * the Free Software Foundation; either version 2 of the License, or
 + * (at your option) any later version.
@@ -36575,13 +36573,13 @@ diff -urN /usr/share/empty/fs/aufs/wkq.c linux/fs/aufs/wkq.c
 +}
 diff -urN /usr/share/empty/fs/aufs/wkq.h linux/fs/aufs/wkq.h
 --- /usr/share/empty/fs/aufs/wkq.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/wkq.h	2022-03-21 14:49:05.733299677 +0100
++++ linux/fs/aufs/wkq.h	2022-11-05 23:02:18.972555950 +0100
 @@ -0,0 +1,89 @@
 +/* SPDX-License-Identifier: GPL-2.0 */
 +/*
-+ * Copyright (C) 2005-2021 Junjiro R. Okajima
++ * Copyright (C) 2005-2022 Junjiro R. Okajima
 + *
-+ * This program, aufs is free software; you can redistribute it and/or modify
++ * This program is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
 + * the Free Software Foundation; either version 2 of the License, or
 + * (at your option) any later version.
@@ -36668,13 +36666,13 @@ diff -urN /usr/share/empty/fs/aufs/wkq.h linux/fs/aufs/wkq.h
 +#endif /* __AUFS_WKQ_H__ */
 diff -urN /usr/share/empty/fs/aufs/xattr.c linux/fs/aufs/xattr.c
 --- /usr/share/empty/fs/aufs/xattr.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/xattr.c	2022-10-03 07:51:14.929542593 +0200
++++ linux/fs/aufs/xattr.c	2022-11-05 23:02:18.972555950 +0100
 @@ -0,0 +1,372 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
-+ * Copyright (C) 2014-2021 Junjiro R. Okajima
++ * Copyright (C) 2014-2022 Junjiro R. Okajima
 + *
-+ * This program, aufs is free software; you can redistribute it and/or modify
++ * This program is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
 + * the Free Software Foundation; either version 2 of the License, or
 + * (at your option) any later version.
@@ -37044,13 +37042,13 @@ diff -urN /usr/share/empty/fs/aufs/xattr.c linux/fs/aufs/xattr.c
 +}
 diff -urN /usr/share/empty/fs/aufs/xino.c linux/fs/aufs/xino.c
 --- /usr/share/empty/fs/aufs/xino.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/xino.c	2022-03-21 14:49:05.733299677 +0100
++++ linux/fs/aufs/xino.c	2022-11-05 23:02:18.972555950 +0100
 @@ -0,0 +1,1926 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
-+ * Copyright (C) 2005-2021 Junjiro R. Okajima
++ * Copyright (C) 2005-2022 Junjiro R. Okajima
 + *
-+ * This program, aufs is free software; you can redistribute it and/or modify
++ * This program is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
 + * the Free Software Foundation; either version 2 of the License, or
 + * (at your option) any later version.
@@ -38974,13 +38972,13 @@ diff -urN /usr/share/empty/fs/aufs/xino.c linux/fs/aufs/xino.c
 +}
 diff -urN /usr/share/empty/include/uapi/linux/aufs_type.h linux/include/uapi/linux/aufs_type.h
 --- /usr/share/empty/include/uapi/linux/aufs_type.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux/include/uapi/linux/aufs_type.h	2022-10-03 07:51:14.929542593 +0200
++++ linux/include/uapi/linux/aufs_type.h	2022-11-05 23:02:18.972555950 +0100
 @@ -0,0 +1,452 @@
 +/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
 +/*
-+ * Copyright (C) 2005-2021 Junjiro R. Okajima
++ * Copyright (C) 2005-2022 Junjiro R. Okajima
 + *
-+ * This program, aufs is free software; you can redistribute it and/or modify
++ * This program is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
 + * the Free Software Foundation; either version 2 of the License, or
 + * (at your option) any later version.
@@ -39018,7 +39016,7 @@ diff -urN /usr/share/empty/include/uapi/linux/aufs_type.h linux/include/uapi/lin
 +#include <limits.h>
 +#endif /* __KERNEL__ */
 +
-+#define AUFS_VERSION	"5.x-rcN-20220912"
++#define AUFS_VERSION	"6.0-20221031"
 +
 +/* todo? move this to linux-2.6.19/include/magic.h */
 +#define AUFS_SUPER_MAGIC	('a' << 24 | 'u' << 16 | 'f' << 8 | 's')
@@ -39429,7 +39427,7 @@ diff -urN /usr/share/empty/include/uapi/linux/aufs_type.h linux/include/uapi/lin
 +
 +#endif /* __AUFS_TYPE_H__ */
 SPDX-License-Identifier: GPL-2.0
-aufs5.x-rcN loopback patch
+aufs6.0 loopback patch
 
 diff --git a/drivers/block/loop.c b/drivers/block/loop.c
 index 8ca56da3ca69..9ac6f67edf09 100644
@@ -39579,7 +39577,7 @@ index 8ca56da3ca69..9ac6f67edf09 100644
  
  static int loop_clr_fd(struct loop_device *lo)
 diff --git a/fs/aufs/f_op.c b/fs/aufs/f_op.c
-index 99ceca144044..e49dfe855032 100644
+index 5c5641222d67..79504ea71dad 100644
 --- a/fs/aufs/f_op.c
 +++ b/fs/aufs/f_op.c
 @@ -304,7 +304,7 @@ static ssize_t aufs_read_iter(struct kiocb *kio, struct iov_iter *iov_iter)
@@ -39592,7 +39590,7 @@ index 99ceca144044..e49dfe855032 100644
  		if (file->f_mapping != h_file->f_mapping) {
  			file->f_mapping = h_file->f_mapping;
 diff --git a/fs/aufs/loop.c b/fs/aufs/loop.c
-index 74347bd75b38..5ef888a1d53f 100644
+index 58043e31e5f3..e2bfae6f9d59 100644
 --- a/fs/aufs/loop.c
 +++ b/fs/aufs/loop.c
 @@ -133,3 +133,19 @@ void au_loopback_fin(void)
@@ -39616,7 +39614,7 @@ index 74347bd75b38..5ef888a1d53f 100644
 +	return f;
 +}
 diff --git a/fs/aufs/loop.h b/fs/aufs/loop.h
-index 7293bee427f9..3345c098d0d4 100644
+index 03d4908a6c03..34d356e181d5 100644
 --- a/fs/aufs/loop.h
 +++ b/fs/aufs/loop.h
 @@ -26,6 +26,8 @@ void au_warn_loopback(struct super_block *h_sb);
@@ -39638,7 +39636,7 @@ index 7293bee427f9..3345c098d0d4 100644
  
  #endif /* __KERNEL__ */
 diff --git a/fs/aufs/super.c b/fs/aufs/super.c
-index 7d9bcc074c87..0eefe350c01c 100644
+index 81922d4faf54..c8a62c267d72 100644
 --- a/fs/aufs/super.c
 +++ b/fs/aufs/super.c
 @@ -758,7 +758,10 @@ const struct super_operations aufs_sop = {
@@ -39654,7 +39652,7 @@ index 7d9bcc074c87..0eefe350c01c 100644
  
  /* ---------------------------------------------------------------------- */
 diff --git a/include/linux/fs.h b/include/linux/fs.h
-index 773ebd5696e4..4baca7d85d52 100644
+index 9c5a33fce3a8..a3c40bc66852 100644
 --- a/include/linux/fs.h
 +++ b/include/linux/fs.h
 @@ -2253,6 +2253,10 @@ struct super_operations {
