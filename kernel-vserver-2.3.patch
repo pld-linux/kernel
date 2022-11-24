@@ -23643,7 +23643,7 @@ diff -urNp -x '*.orig' linux-4.4/net/ipv4/raw.c linux-4.4/net/ipv4/raw.c
  	security_sk_classify_flow(sk, flowi4_to_flowi(&fl4));
  	rt = ip_route_output_flow(net, &fl4, sk);
  	if (IS_ERR(rt)) {
-@@ -706,17 +722,19 @@ static int raw_bind(struct sock *sk, str
+@@ -722,6 +722,7 @@ static int raw_bind(struct sock *sk, str
  {
  	struct inet_sock *inet = inet_sk(sk);
  	struct sockaddr_in *addr = (struct sockaddr_in *) uaddr;
@@ -23651,18 +23651,20 @@ diff -urNp -x '*.orig' linux-4.4/net/ipv4/raw.c linux-4.4/net/ipv4/raw.c
  	int ret = -EINVAL;
  	int chk_addr_ret;
  
+@@ -728,12 +728,13 @@ static int raw_bind(struct sock *sk, str
+ 	lock_sock(sk);
  	if (sk->sk_state != TCP_CLOSE || addr_len < sizeof(struct sockaddr_in))
  		goto out;
 -	chk_addr_ret = inet_addr_type(sock_net(sk), addr->sin_addr.s_addr);
-+	v4_map_sock_addr(inet, addr, &nsa);
-+	chk_addr_ret = inet_addr_type(sock_net(sk), nsa.saddr);
++        v4_map_sock_addr(inet, addr, &nsa);
++        chk_addr_ret = inet_addr_type(sock_net(sk), nsa.saddr);
  	ret = -EADDRNOTAVAIL;
 -	if (addr->sin_addr.s_addr && chk_addr_ret != RTN_LOCAL &&
-+	if (nsa.saddr && chk_addr_ret != RTN_LOCAL &&
++        if (nsa.saddr && chk_addr_ret != RTN_LOCAL &&
  	    chk_addr_ret != RTN_MULTICAST && chk_addr_ret != RTN_BROADCAST)
  		goto out;
 -	inet->inet_rcv_saddr = inet->inet_saddr = addr->sin_addr.s_addr;
-+	v4_set_sock_addr(inet, &nsa);
++        v4_set_sock_addr(inet, &nsa);
  	if (chk_addr_ret == RTN_MULTICAST || chk_addr_ret == RTN_BROADCAST)
  		inet->inet_saddr = 0;  /* Use device */
  	sk_dst_reset(sk);
