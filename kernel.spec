@@ -164,10 +164,6 @@ Patch10:	kernel-pom-ng-IPV4OPTSSTRIP.patch
 # http://ftp.linux-vserver.org/pub/people/dhozac/p/k/delta-owner-xid-feat02.diff
 Patch37:	kernel-owner-xid.patch
 
-# based on kernel-2.6.25-layer7-2.20.patch from
-# http://switch.dl.sourceforge.net/sourceforge/l7-filter/netfilter-layer7-v2.20.tar.gz
-Patch40:	kernel-layer7.patch
-
 ### End netfilter
 
 # http://www.linuximq.net
@@ -628,9 +624,6 @@ cd linux-%{basever}
 %if %{with vserver}
 %patch37 -p1
 %endif
-
-# kernel-layer7.patch
-%patch40 -p1
 
 ##
 # end of netfilter
