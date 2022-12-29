@@ -1,0 +1,106 @@
+--- a/drivers/android/Kconfig
++++ b/drivers/android/Kconfig
+@@ -2,7 +2,7 @@
+ menu "Android"
+ 
+ config ANDROID_BINDER_IPC
+-	bool "Android Binder IPC Driver"
++	tristate "Android Binder IPC Driver"
+ 	depends on MMU
+ 	default n
+ 	help
+--- a/drivers/android/Makefile
++++ b/drivers/android/Makefile
+@@ -1,6 +1,7 @@
+ # SPDX-License-Identifier: GPL-2.0-only
+ ccflags-y += -I$(src)			# needed for trace events
+ 
+-obj-$(CONFIG_ANDROID_BINDERFS)		+= binderfs.o
+-obj-$(CONFIG_ANDROID_BINDER_IPC)	+= binder.o binder_alloc.o
+-obj-$(CONFIG_ANDROID_BINDER_IPC_SELFTEST) += binder_alloc_selftest.o
++obj-$(CONFIG_ANDROID_BINDER_IPC)	+= binder_linux.o
++binder_linux-y := binder.o binder_alloc.o
++binder_linux-$(CONFIG_ANDROID_BINDERFS)	+= binderfs.o
++binder_linux-$(CONFIG_ANDROID_BINDER_IPC_SELFTEST) += binder_alloc_selftest.o
+--- a/drivers/android/binder_alloc.c
++++ b/drivers/android/binder_alloc.c
+@@ -38,7 +38,7 @@ enum {
+ };
+ static uint32_t binder_alloc_debug_mask = BINDER_DEBUG_USER_ERROR;
+ 
+-module_param_named(debug_mask, binder_alloc_debug_mask,
++module_param_named(alloc_debug_mask, binder_alloc_debug_mask,
+ 		   uint, 0644);
+ 
+ #define binder_alloc_debug(mask, x...) \
+--- a/fs/file.c
++++ b/fs/file.c
+@@ -813,6 +813,7 @@ struct file *close_fd_get_file(unsigned
+ 
+ 	return file;
+ }
++EXPORT_SYMBOL_GPL(close_fd_get_file);
+ 
+ void do_close_on_exec(struct files_struct *files)
+ {
+--- a/kernel/sched/core.c
++++ b/kernel/sched/core.c
+@@ -7052,6 +7052,7 @@ static bool is_nice_reduction(const stru
+ 
+ 	return (nice_rlim <= task_rlimit(p, RLIMIT_NICE));
+ }
++EXPORT_SYMBOL_GPL(can_nice);
+ 
+ /*
+  * can_nice - check if a task can reduce its nice value
+--- a/kernel/task_work.c
++++ b/kernel/task_work.c
+@@ -73,6 +73,7 @@ int task_work_add(struct task_struct *ta
+ 
+ 	return 0;
+ }
++EXPORT_SYMBOL_GPL(task_work_add);
+ 
+ /**
+  * task_work_cancel_match - cancel a pending work added by task_work_add()
+--- a/mm/memory.c
++++ b/mm/memory.c
+@@ -1757,6 +1757,7 @@ void zap_page_range(struct vm_area_struc
+ 	mmu_notifier_invalidate_range_end(&range);
+ 	tlb_finish_mmu(&tlb);
+ }
++EXPORT_SYMBOL_GPL(zap_page_range);
+ 
+ /**
+  * zap_page_range_single - remove user pages in a given range
+--- a/security/security.c
++++ b/security/security.c
+@@ -752,24 +752,28 @@ int security_binder_set_context_mgr(cons
+ {
+ 	return call_int_hook(binder_set_context_mgr, 0, mgr);
+ }
++EXPORT_SYMBOL_GPL(security_binder_set_context_mgr);
+ 
+ int security_binder_transaction(const struct cred *from,
+ 				const struct cred *to)
+ {
+ 	return call_int_hook(binder_transaction, 0, from, to);
+ }
++EXPORT_SYMBOL_GPL(security_binder_transaction);
+ 
+ int security_binder_transfer_binder(const struct cred *from,
+ 				    const struct cred *to)
+ {
+ 	return call_int_hook(binder_transfer_binder, 0, from, to);
+ }
++EXPORT_SYMBOL_GPL(security_binder_transfer_binder);
+ 
+ int security_binder_transfer_file(const struct cred *from,
+ 				  const struct cred *to, struct file *file)
+ {
+ 	return call_int_hook(binder_transfer_file, 0, from, to, file);
+ }
++EXPORT_SYMBOL_GPL(security_binder_transfer_file);
+ 
+ int security_ptrace_access_check(struct task_struct *child, unsigned int mode)
+ {
