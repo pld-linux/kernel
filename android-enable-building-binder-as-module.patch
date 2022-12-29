@@ -104,3 +104,33 @@
  
  int security_ptrace_access_check(struct task_struct *child, unsigned int mode)
  {
+--- a/ipc/namespace.c~	2022-12-11 23:15:18.000000000 +0100
++++ b/ipc/namespace.c	2022-12-29 16:10:27.771070995 +0100
+@@ -188,6 +188,7 @@
+ 			schedule_work(&free_ipc_work);
+ 	}
+ }
++EXPORT_SYMBOL_GPL(put_ipc_ns);
+ 
+ static inline struct ipc_namespace *to_ipc_ns(struct ns_common *ns)
+ {
+--- a/kernel/sched/wait.c~	2022-12-11 23:15:18.000000000 +0100
++++ b/kernel/sched/wait.c	2022-12-29 16:11:51.746470281 +0100
+@@ -243,6 +243,7 @@
+ 	/* POLLFREE must have cleared the queue. */
+ 	WARN_ON_ONCE(waitqueue_active(wq_head));
+ }
++EXPORT_SYMBOL_GPL(__wake_up_pollfree);
+ 
+ /*
+  * Note: we use "set_current_state()" _after_ the wait-queue add,
+--- a/ipc/msgutil.c~	2022-12-11 23:15:18.000000000 +0100
++++ b/ipc/msgutil.c	2022-12-29 16:22:49.139136583 +0100
+@@ -33,6 +33,7 @@
+ 	.ns.ops = &ipcns_operations,
+ #endif
+ };
++EXPORT_SYMBOL_GPL(init_ipc_ns);
+ 
+ struct msg_msgseg {
+ 	struct msg_msgseg *next;
