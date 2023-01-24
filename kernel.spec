@@ -67,7 +67,7 @@
 
 %define		rel		1
 %define		basever		6.1
-%define		postver		.7
+%define		postver		.8
 
 # define this to '-%{basever}' for longterm branch
 %define		versuffix	%{nil}
@@ -121,7 +121,7 @@ Source0:	https://www.kernel.org/pub/linux/kernel/v6.x/linux-%{basever}.tar.xz
 # Source0-md5:	475320de08f16c9fa486fc4edfe98b30
 %if "%{postver}" != ".0"
 Patch0:		https://www.kernel.org/pub/linux/kernel/v6.x/patch-%{version}.xz
-# Patch0-md5:	299a204c0c3537ebcd05f57a97582859
+# Patch0-md5:	73819a74f7a811f76ab1b12fdbe5bc84
 %endif
 Source1:	kernel.sysconfig
 
@@ -215,7 +215,6 @@ Patch8000:	rpi-sound.patch
 Patch8001:	kernel-pinebook-pro.patch
 Patch8002:	atheros-disallow-retrain-nongen1-pcie.patch
 Patch8003:	odroid-n2-fan.patch
-Patch8004:	typec-tcpm-fixes.patch
 
 # Do not remove this line, please. It is easier for me to uncomment two lines, then patch
 # kernel.spec every time.
@@ -669,7 +668,6 @@ cd linux-%{basever}
 %patch8001 -p1
 %patch8002 -p1
 %patch8003 -p1
-%patch8004 -p1
 %endif
 
 %if %{with rt}
