@@ -67,10 +67,10 @@
 
 %define		rel		1
 %define		basever		6.1
-%define		postver		.9
+%define		postver		.10
 
 # define this to '-%{basever}' for longterm branch
-%define		versuffix	%{nil}
+%define		versuffix	-%{basever}
 
 # __alt_kernel is list of features, empty string if none set
 # _alt kernel is defined as: %{nil}%{?alt_kernel:-%{?alt_kernel}} (defined in rpm.macros)
@@ -121,7 +121,7 @@ Source0:	https://www.kernel.org/pub/linux/kernel/v6.x/linux-%{basever}.tar.xz
 # Source0-md5:	475320de08f16c9fa486fc4edfe98b30
 %if "%{postver}" != ".0"
 Patch0:		https://www.kernel.org/pub/linux/kernel/v6.x/patch-%{version}.xz
-# Patch0-md5:	14bc8ed6e48750bb48ee534173abbfcd
+# Patch0-md5:	6b16a31f1d9ec696ed17acbaa7d0d868
 %endif
 Source1:	kernel.sysconfig
 
