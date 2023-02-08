@@ -1524,6 +1524,7 @@ fi
 %{_kernelsrcdir}/mm
 %{_kernelsrcdir}/net
 %{_kernelsrcdir}/virt
+%{_kernelsrcdir}/rust
 %{_kernelsrcdir}/samples
 %{_kernelsrcdir}/scripts/*
 %exclude %{_kernelsrcdir}/scripts/Kbuild.include
