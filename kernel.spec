@@ -66,11 +66,11 @@
 %endif
 
 %define		rel		1
-%define		basever		6.1
-%define		postver		.10
+%define		basever		6.2
+%define		postver		.0
 
 # define this to '-%{basever}' for longterm branch
-%define		versuffix	-%{basever}
+%define		versuffix	%{nil}
 
 # __alt_kernel is list of features, empty string if none set
 # _alt kernel is defined as: %{nil}%{?alt_kernel:-%{?alt_kernel}} (defined in rpm.macros)
@@ -118,7 +118,7 @@ Epoch:		3
 License:	GPL v2
 Group:		Base/Kernel
 Source0:	https://www.kernel.org/pub/linux/kernel/v6.x/linux-%{basever}.tar.xz
-# Source0-md5:	475320de08f16c9fa486fc4edfe98b30
+# Source0-md5:	787862593d7bf354cf1a5c37e21fc147
 %if "%{postver}" != ".0"
 Patch0:		https://www.kernel.org/pub/linux/kernel/v6.x/patch-%{version}.xz
 # Patch0-md5:	6b16a31f1d9ec696ed17acbaa7d0d868
@@ -151,7 +151,6 @@ Source55:	kernel-imq.config
 
 Source58:	kernel-inittmpfs.config
 
-Patch1:		make-4.4.patch
 Patch2:		android-enable-building-binder-as-module.patch
 # http://dev.gentoo.org/~spock/projects/fbcondecor/archive/fbcondecor-0.9.4-2.6.25-rc6.patch
 Patch3:		kernel-fbcondecor.patch
@@ -610,7 +609,6 @@ cd linux-%{basever}
 %endif
 
 %if %{without vanilla}
-%patch1 -p1
 %patch2 -p1
 
 %if %{with fbcondecor}

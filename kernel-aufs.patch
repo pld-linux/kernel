@@ -26,10 +26,10 @@ SPDX-License-Identifier: GPL-2.0
 aufs6.x-rcN base patch
 
 diff --git a/MAINTAINERS b/MAINTAINERS
-index 379945f82a64..b3b8fbca497b 100644
+index f61eb221415b..b192cff97244 100644
 --- a/MAINTAINERS
 +++ b/MAINTAINERS
-@@ -3455,6 +3455,19 @@ F:	include/uapi/linux/audit.h
+@@ -3522,6 +3522,19 @@ F:	include/uapi/linux/audit.h
  F:	kernel/audit*
  F:	lib/*audit.c
  
@@ -50,7 +50,7 @@ index 379945f82a64..b3b8fbca497b 100644
  M:	Miguel Ojeda <ojeda@kernel.org>
  S:	Maintained
 diff --git a/drivers/block/loop.c b/drivers/block/loop.c
-index ad92192c7d61..8ca56da3ca69 100644
+index 1518a6423279..7a9928c6db9d 100644
 --- a/drivers/block/loop.c
 +++ b/drivers/block/loop.c
 @@ -645,6 +645,24 @@ static int loop_change_fd(struct loop_device *lo, struct block_device *bdev,
@@ -114,10 +114,10 @@ index 146c9ab0cd4b..c980a0524118 100644
  		return error;
  
 diff --git a/fs/namespace.c b/fs/namespace.c
-index df137ba19d37..faae7f8644ac 100644
+index ab467ee58341..8cd34f760f63 100644
 --- a/fs/namespace.c
 +++ b/fs/namespace.c
-@@ -852,6 +852,12 @@ static inline int check_mnt(struct mount *mnt)
+@@ -963,6 +963,12 @@ static inline int check_mnt(struct mount *mnt)
  	return mnt->mnt_ns == current->nsproxy->mnt_ns;
  }
  
@@ -131,7 +131,7 @@ index df137ba19d37..faae7f8644ac 100644
   * vfsmount lock must be held for write
   */
 diff --git a/fs/splice.c b/fs/splice.c
-index 0878b852b355..d83f9e5cddbc 100644
+index 5969b7a1d353..21db9b057d60 100644
 --- a/fs/splice.c
 +++ b/fs/splice.c
 @@ -756,8 +756,8 @@ static int warn_unsupported(struct file *file, const char *op)
@@ -159,10 +159,10 @@ index 0878b852b355..d83f9e5cddbc 100644
  	unsigned int p_space;
  	int ret;
 diff --git a/include/linux/fs.h b/include/linux/fs.h
-index e654435f1651..433a4f08dab4 100644
+index 066555ad1bf8..2d30def9a580 100644
 --- a/include/linux/fs.h
 +++ b/include/linux/fs.h
-@@ -1364,6 +1364,7 @@ extern void fasync_free(struct fasync_struct *);
+@@ -1383,6 +1383,7 @@ extern void fasync_free(struct fasync_struct *);
  /* can be called from interrupts */
  extern void kill_fasync(struct fasync_struct **, int, int);
  
@@ -170,7 +170,7 @@ index e654435f1651..433a4f08dab4 100644
  extern void __f_setown(struct file *filp, struct pid *, enum pid_type, int force);
  extern int f_setown(struct file *filp, unsigned long arg, int force);
  extern void f_delown(struct file *filp);
-@@ -2117,6 +2118,7 @@ struct file_operations {
+@@ -2110,6 +2111,7 @@ struct file_operations {
  	ssize_t (*sendpage) (struct file *, struct page *, int, size_t, loff_t *, int);
  	unsigned long (*get_unmapped_area)(struct file *, unsigned long, unsigned long, unsigned long, unsigned long);
  	int (*check_flags)(int);
@@ -280,10 +280,10 @@ index 4d3493579458..42edd9a42c78 100644
  		ino = inode->i_ino;
  	}
 diff --git a/fs/proc/task_mmu.c b/fs/proc/task_mmu.c
-index 8a74cdcc9af0..c05071b53f5b 100644
+index e35a0398db63..d9080329fd7a 100644
 --- a/fs/proc/task_mmu.c
 +++ b/fs/proc/task_mmu.c
-@@ -284,7 +284,10 @@ show_map_vma(struct seq_file *m, struct vm_area_struct *vma)
+@@ -285,7 +285,10 @@ show_map_vma(struct seq_file *m, struct vm_area_struct *vma)
  	const char *name = NULL;
  
  	if (file) {
@@ -295,7 +295,7 @@ index 8a74cdcc9af0..c05071b53f5b 100644
  		dev = inode->i_sb->s_dev;
  		ino = inode->i_ino;
  		pgoff = ((loff_t)vma->vm_pgoff) << PAGE_SHIFT;
-@@ -1934,7 +1937,7 @@ static int show_numa_map(struct seq_file *m, void *v)
+@@ -1942,7 +1945,7 @@ static int show_numa_map(struct seq_file *m, void *v)
  	struct proc_maps_private *proc_priv = &numa_priv->proc_maps;
  	struct vm_area_struct *vma = v;
  	struct numa_maps *md = &numa_priv->md;
@@ -321,10 +321,10 @@ index 2fd06f52b6a4..b01030da424f 100644
  		ino = inode->i_ino;
  		pgoff = (loff_t)vma->vm_pgoff << PAGE_SHIFT;
 diff --git a/include/linux/mm.h b/include/linux/mm.h
-index 8bbcccbc5565..d5006a1f4271 100644
+index f3f196e4d66d..831812fd4d07 100644
 --- a/include/linux/mm.h
 +++ b/include/linux/mm.h
-@@ -1933,6 +1933,43 @@ static inline void unmap_shared_mapping_range(struct address_space *mapping,
+@@ -2059,6 +2059,43 @@ static inline void unmap_shared_mapping_range(struct address_space *mapping,
  	unmap_mapping_range(mapping, holebegin, holelen, 0);
  }
  
@@ -369,10 +369,10 @@ index 8bbcccbc5565..d5006a1f4271 100644
  		void *buf, int len, unsigned int gup_flags);
  extern int access_remote_vm(struct mm_struct *mm, unsigned long addr,
 diff --git a/include/linux/mm_types.h b/include/linux/mm_types.h
-index 500e536796ca..ad766e2110ca 100644
+index 3b8475007734..7a2de3f818bc 100644
 --- a/include/linux/mm_types.h
 +++ b/include/linux/mm_types.h
-@@ -413,6 +413,9 @@ struct vm_region {
+@@ -504,6 +504,9 @@ struct vm_region {
  	unsigned long	vm_top;		/* region allocated to here */
  	unsigned long	vm_pgoff;	/* the offset in vm_file corresponding to vm_start */
  	struct file	*vm_file;	/* the backing file or NULL */
@@ -382,7 +382,7 @@ index 500e536796ca..ad766e2110ca 100644
  
  	int		vm_usage;	/* region usage count (access under nommu_region_sem) */
  	bool		vm_icache_flushed : 1; /* true if the icache has been flushed for
-@@ -494,6 +497,9 @@ struct vm_area_struct {
+@@ -575,6 +578,9 @@ struct vm_area_struct {
  	unsigned long vm_pgoff;		/* Offset (within vm_file) in PAGE_SIZE
  					   units */
  	struct file * vm_file;		/* File we map to (can be NULL). */
@@ -391,12 +391,12 @@ index 500e536796ca..ad766e2110ca 100644
 +#endif
  	void * vm_private_data;		/* was vm_pte (shared mem) */
  
- #ifdef CONFIG_SWAP
+ #ifdef CONFIG_ANON_VMA_NAME
 diff --git a/kernel/fork.c b/kernel/fork.c
-index 08969f5aa38d..61871700033a 100644
+index 9f7fe3541897..f9e44ca88a7d 100644
 --- a/kernel/fork.c
 +++ b/kernel/fork.c
-@@ -661,7 +661,7 @@ static __latent_entropy int dup_mmap(struct mm_struct *mm,
+@@ -664,7 +664,7 @@ static __latent_entropy int dup_mmap(struct mm_struct *mm,
  		if (file) {
  			struct address_space *mapping = file->f_mapping;
  
@@ -415,10 +415,10 @@ index 8e105e5b3e29..c218d042dbce 100644
  obj-$(CONFIG_SHRINKER_DEBUG) += shrinker_debug.o
 +obj-$(CONFIG_AUFS_FS:m=y) += prfile.o
 diff --git a/mm/filemap.c b/mm/filemap.c
-index 08341616ae7a..410ca60fbf39 100644
+index c4d4ace9cc70..257da81286d1 100644
 --- a/mm/filemap.c
 +++ b/mm/filemap.c
-@@ -3418,7 +3418,7 @@ vm_fault_t filemap_page_mkwrite(struct vm_fault *vmf)
+@@ -3437,7 +3437,7 @@ vm_fault_t filemap_page_mkwrite(struct vm_fault *vmf)
  	vm_fault_t ret = VM_FAULT_LOCKED;
  
  	sb_start_pagefault(mapping->host->i_sb);
@@ -428,7 +428,7 @@ index 08341616ae7a..410ca60fbf39 100644
  	if (folio->mapping != mapping) {
  		folio_unlock(folio);
 diff --git a/mm/mmap.c b/mm/mmap.c
-index 2def55555e05..fefc5c67e96e 100644
+index 87d929316d57..fac904cd41cd 100644
 --- a/mm/mmap.c
 +++ b/mm/mmap.c
 @@ -139,7 +139,7 @@ static void remove_vma(struct vm_area_struct *vma)
@@ -440,7 +440,7 @@ index 2def55555e05..fefc5c67e96e 100644
  	mpol_put(vma_policy(vma));
  	vm_area_free(vma);
  }
-@@ -590,7 +590,7 @@ inline int vma_expand(struct ma_state *mas, struct vm_area_struct *vma,
+@@ -589,7 +589,7 @@ inline int vma_expand(struct ma_state *mas, struct vm_area_struct *vma,
  	if (remove_next) {
  		if (file) {
  			uprobe_munmap(next, next->vm_start, next->vm_end);
@@ -449,7 +449,7 @@ index 2def55555e05..fefc5c67e96e 100644
  		}
  		if (next->anon_vma)
  			anon_vma_merge(vma, next);
-@@ -831,7 +831,7 @@ int __vma_adjust(struct vm_area_struct *vma, unsigned long start,
+@@ -830,7 +830,7 @@ int __vma_adjust(struct vm_area_struct *vma, unsigned long start,
  again:
  		if (file) {
  			uprobe_munmap(next, next->vm_start, next->vm_end);
@@ -458,7 +458,7 @@ index 2def55555e05..fefc5c67e96e 100644
  		}
  		if (next->anon_vma)
  			anon_vma_merge(vma, next);
-@@ -2228,7 +2228,7 @@ int __split_vma(struct mm_struct *mm, struct vm_area_struct *vma,
+@@ -2224,7 +2224,7 @@ int __split_vma(struct mm_struct *mm, struct vm_area_struct *vma,
  		goto out_free_mpol;
  
  	if (new->vm_file)
@@ -467,7 +467,7 @@ index 2def55555e05..fefc5c67e96e 100644
  
  	if (new->vm_ops && new->vm_ops->open)
  		new->vm_ops->open(new);
-@@ -2250,7 +2250,7 @@ int __split_vma(struct mm_struct *mm, struct vm_area_struct *vma,
+@@ -2246,7 +2246,7 @@ int __split_vma(struct mm_struct *mm, struct vm_area_struct *vma,
  	if (new->vm_ops && new->vm_ops->close)
  		new->vm_ops->close(new);
  	if (new->vm_file)
@@ -530,7 +530,7 @@ index 2def55555e05..fefc5c67e96e 100644
  out:
  	mmap_write_unlock(mm);
  	if (populate)
-@@ -3227,7 +3254,7 @@ struct vm_area_struct *copy_vma(struct vm_area_struct **vmap,
+@@ -3222,7 +3249,7 @@ struct vm_area_struct *copy_vma(struct vm_area_struct **vmap,
  		if (anon_vma_clone(new_vma, vma))
  			goto out_free_mempol;
  		if (new_vma->vm_file)
@@ -570,16 +570,16 @@ index 214c70e1d059..dccbb939d2a9 100644
  			kmem_cache_free(vm_region_jar, region);
  			region = pregion;
  			result = start;
-@@ -1241,10 +1241,10 @@ unsigned long do_mmap(struct file *file,
+@@ -1242,10 +1242,11 @@ error_just_free:
  error:
  	mas_destroy(&mas);
  	if (region->vm_file)
 -		fput(region->vm_file);
-+		vmr_fput(region);
++                vmr_fput(region);
  	kmem_cache_free(vm_region_jar, region);
  	if (vma->vm_file)
--		fput(vma->vm_file);
-+		vma_fput(vma);
+ 		fput(vma->vm_file);
++                vmr_fput(vma);
  	vm_area_free(vma);
  	return ret;
  
@@ -699,10 +699,10 @@ index 519321f32f95..267e0c65914a 100644
  /**
   * d_ancestor - search for an ancestor
 diff --git a/fs/exec.c b/fs/exec.c
-index a0b1f0337a62..2038fdb508c9 100644
+index ab913243a367..d84461fddf7d 100644
 --- a/fs/exec.c
 +++ b/fs/exec.c
-@@ -110,6 +110,7 @@ bool path_noexec(const struct path *path)
+@@ -111,6 +111,7 @@ bool path_noexec(const struct path *path)
  	return (path->mnt->mnt_flags & MNT_NOEXEC) ||
  	       (path->mnt->mnt_sb->s_iflags & SB_I_NOEXEC);
  }
@@ -735,10 +735,10 @@ index dd88701e54a9..ecdb7817b074 100644
  /*
   * Variant of alloc_empty_file() that doesn't check and modify nr_files.
 diff --git a/fs/namespace.c b/fs/namespace.c
-index faae7f8644ac..0310c99a83dd 100644
+index 8cd34f760f63..799a94205906 100644
 --- a/fs/namespace.c
 +++ b/fs/namespace.c
-@@ -456,6 +456,7 @@ void __mnt_drop_write(struct vfsmount *mnt)
+@@ -571,6 +571,7 @@ void __mnt_drop_write(struct vfsmount *mnt)
  	mnt_dec_writers(real_mount(mnt));
  	preempt_enable();
  }
@@ -746,7 +746,7 @@ index faae7f8644ac..0310c99a83dd 100644
  
  /**
   * mnt_drop_write - give up write access to a mount
-@@ -857,6 +858,7 @@ int is_current_mnt_ns(struct vfsmount *mnt)
+@@ -968,6 +969,7 @@ int is_current_mnt_ns(struct vfsmount *mnt)
  {
  	return check_mnt(real_mount(mnt));
  }
@@ -754,7 +754,7 @@ index faae7f8644ac..0310c99a83dd 100644
  
  /*
   * vfsmount lock must be held for write
-@@ -2060,6 +2062,7 @@ int iterate_mounts(int (*f)(struct vfsmount *, void *), void *arg,
+@@ -2165,6 +2167,7 @@ int iterate_mounts(int (*f)(struct vfsmount *, void *), void *arg,
  	}
  	return 0;
  }
@@ -775,7 +775,7 @@ index 1de6631a3925..3008eb37a18d 100644
  /*
   * Drop a reference to a group.  Free it if it's through.
 diff --git a/fs/open.c b/fs/open.c
-index a81319b6177f..50bb15ea3fb5 100644
+index 82c1a28b3308..e7bd6f1c9474 100644
 --- a/fs/open.c
 +++ b/fs/open.c
 @@ -66,6 +66,7 @@ int do_truncate(struct user_namespace *mnt_userns, struct dentry *dentry,
@@ -787,7 +787,7 @@ index a81319b6177f..50bb15ea3fb5 100644
  long vfs_truncate(const struct path *path, loff_t length)
  {
 diff --git a/fs/read_write.c b/fs/read_write.c
-index 328ce8cf9a85..59931848f794 100644
+index 7a2ff6157eda..76f5d4d08687 100644
 --- a/fs/read_write.c
 +++ b/fs/read_write.c
 @@ -477,6 +477,7 @@ ssize_t vfs_read(struct file *file, char __user *buf, size_t count, loff_t *pos)
@@ -807,7 +807,7 @@ index 328ce8cf9a85..59931848f794 100644
  /* file_ppos returns &file->f_pos or NULL if file is stream */
  static inline loff_t *file_ppos(struct file *file)
 diff --git a/fs/splice.c b/fs/splice.c
-index d83f9e5cddbc..ac355ebeb9f0 100644
+index 21db9b057d60..abcd14f52c1e 100644
 --- a/fs/splice.c
 +++ b/fs/splice.c
 @@ -763,6 +763,7 @@ long do_splice_from(struct pipe_inode_info *pipe, struct file *out,
@@ -827,10 +827,10 @@ index d83f9e5cddbc..ac355ebeb9f0 100644
  /**
   * splice_direct_to_actor - splices data directly between two non-pipes
 diff --git a/fs/xattr.c b/fs/xattr.c
-index 61107b6bbed2..243855024966 100644
+index adab9a70b536..b2dc4fc0b25b 100644
 --- a/fs/xattr.c
 +++ b/fs/xattr.c
-@@ -392,6 +392,7 @@ vfs_getxattr_alloc(struct user_namespace *mnt_userns, struct dentry *dentry,
+@@ -407,6 +407,7 @@ vfs_getxattr_alloc(struct user_namespace *mnt_userns, struct dentry *dentry,
  	*xattr_value = value;
  	return error;
  }
@@ -860,10 +860,10 @@ index 065e1ef8fc8d..c623c6f0c645 100644
  }
 +EXPORT_SYMBOL_GPL(task_work_run);
 diff --git a/security/security.c b/security/security.c
-index 79d82cb6e469..1c50e6faadcd 100644
+index d1571900a8c7..c8333d54e590 100644
 --- a/security/security.c
 +++ b/security/security.c
-@@ -1167,6 +1167,7 @@ int security_path_rmdir(const struct path *dir, struct dentry *dentry)
+@@ -1195,6 +1195,7 @@ int security_path_rmdir(const struct path *dir, struct dentry *dentry)
  		return 0;
  	return call_int_hook(path_rmdir, 0, dir, dentry);
  }
@@ -871,7 +871,7 @@ index 79d82cb6e469..1c50e6faadcd 100644
  
  int security_path_unlink(const struct path *dir, struct dentry *dentry)
  {
-@@ -1183,6 +1184,7 @@ int security_path_symlink(const struct path *dir, struct dentry *dentry,
+@@ -1211,6 +1212,7 @@ int security_path_symlink(const struct path *dir, struct dentry *dentry,
  		return 0;
  	return call_int_hook(path_symlink, 0, dir, dentry, old_name);
  }
@@ -879,7 +879,7 @@ index 79d82cb6e469..1c50e6faadcd 100644
  
  int security_path_link(struct dentry *old_dentry, const struct path *new_dir,
  		       struct dentry *new_dentry)
-@@ -1191,6 +1193,7 @@ int security_path_link(struct dentry *old_dentry, const struct path *new_dir,
+@@ -1219,6 +1221,7 @@ int security_path_link(struct dentry *old_dentry, const struct path *new_dir,
  		return 0;
  	return call_int_hook(path_link, 0, old_dentry, new_dir, new_dentry);
  }
@@ -887,7 +887,7 @@ index 79d82cb6e469..1c50e6faadcd 100644
  
  int security_path_rename(const struct path *old_dir, struct dentry *old_dentry,
  			 const struct path *new_dir, struct dentry *new_dentry,
-@@ -1211,6 +1214,7 @@ int security_path_truncate(const struct path *path)
+@@ -1239,6 +1242,7 @@ int security_path_truncate(const struct path *path)
  		return 0;
  	return call_int_hook(path_truncate, 0, path);
  }
@@ -895,7 +895,7 @@ index 79d82cb6e469..1c50e6faadcd 100644
  
  int security_path_chmod(const struct path *path, umode_t mode)
  {
-@@ -1218,6 +1222,7 @@ int security_path_chmod(const struct path *path, umode_t mode)
+@@ -1246,6 +1250,7 @@ int security_path_chmod(const struct path *path, umode_t mode)
  		return 0;
  	return call_int_hook(path_chmod, 0, path, mode);
  }
@@ -903,7 +903,7 @@ index 79d82cb6e469..1c50e6faadcd 100644
  
  int security_path_chown(const struct path *path, kuid_t uid, kgid_t gid)
  {
-@@ -1225,6 +1230,7 @@ int security_path_chown(const struct path *path, kuid_t uid, kgid_t gid)
+@@ -1253,6 +1258,7 @@ int security_path_chown(const struct path *path, kuid_t uid, kgid_t gid)
  		return 0;
  	return call_int_hook(path_chown, 0, path, uid, gid);
  }
@@ -911,7 +911,7 @@ index 79d82cb6e469..1c50e6faadcd 100644
  
  int security_path_chroot(const struct path *path)
  {
-@@ -1325,6 +1331,7 @@ int security_inode_permission(struct inode *inode, int mask)
+@@ -1353,6 +1359,7 @@ int security_inode_permission(struct inode *inode, int mask)
  		return 0;
  	return call_int_hook(inode_permission, 0, inode, mask);
  }
@@ -919,13 +919,21 @@ index 79d82cb6e469..1c50e6faadcd 100644
  
  int security_inode_setattr(struct user_namespace *mnt_userns,
  			   struct dentry *dentry, struct iattr *attr)
-@@ -1523,6 +1530,7 @@ int security_file_permission(struct file *file, int mask)
+@@ -1593,6 +1600,7 @@ int security_file_permission(struct file *file, int mask)
  
  	return fsnotify_perm(file, mask);
  }
 +EXPORT_SYMBOL_GPL(security_file_permission);
  
  int security_file_alloc(struct file *file)
+ {
+@@ -1726,6 +1734,7 @@ int security_file_truncate(struct file *file)
+ {
+ 	return call_int_hook(file_truncate, 0, file);
+ }
++EXPORT_SYMBOL_GPL(security_file_truncate);
+ 
+ int security_task_alloc(struct task_struct *task, unsigned long clone_flags)
  {
 diff -urN /usr/share/empty/Documentation/ABI/testing/debugfs-aufs linux/Documentation/ABI/testing/debugfs-aufs
 --- /usr/share/empty/Documentation/ABI/testing/debugfs-aufs	1970-01-01 01:00:00.000000000 +0100
@@ -2431,8 +2439,8 @@ diff -urN /usr/share/empty/Documentation/filesystems/aufs/design/10dynop.txt lin
 +regular files only.
 diff -urN /usr/share/empty/Documentation/filesystems/aufs/README linux/Documentation/filesystems/aufs/README
 --- /usr/share/empty/Documentation/filesystems/aufs/README	1970-01-01 01:00:00.000000000 +0100
-+++ linux/Documentation/filesystems/aufs/README	2022-11-05 23:02:18.955889283 +0100
-@@ -0,0 +1,403 @@
++++ linux/Documentation/filesystems/aufs/README	2023-02-20 21:05:51.959693785 +0100
+@@ -0,0 +1,408 @@
 +
 +Aufs6 -- advanced multi layered unification filesystem version 6.x
 +http://aufs.sf.net
@@ -2539,21 +2547,20 @@ diff -urN /usr/share/empty/Documentation/filesystems/aufs/README linux/Documenta
 +
 +2. Download
 +----------------------------------------
-+There are three GIT trees for aufs6, aufs6-linux.git,
-+aufs6-standalone.git, and aufs-util.git. Note that there is no "6" in
-+"aufs-util.git."
-+While the aufs-util is always necessary, you need either of aufs6-linux
-+or aufs6-standalone.
++There are three GIT trees for aufs6, aufs-linux.git,
++aufs-standalone.git, and aufs-util.git.
++While the aufs-util is always necessary, you need either of aufs-linux
++or aufs-standalone.
 +
-+The aufs6-linux tree includes the whole linux mainline GIT tree,
++The aufs-linux tree includes the whole linux mainline GIT tree,
 +git://git.kernel.org/.../torvalds/linux.git.
 +And you cannot select CONFIG_AUFS_FS=m for this version, eg. you cannot
 +build aufs6 as an external kernel module.
 +Several extra patches are not included in this tree. Only
-+aufs6-standalone tree contains them. They are described in the later
++aufs-standalone tree contains them. They are described in the later
 +section "Configuration and Compilation."
 +
-+On the other hand, the aufs6-standalone tree has only aufs source files
++On the other hand, the aufs-standalone tree has only aufs source files
 +and necessary patches, and you can select CONFIG_AUFS_FS=m.
 +But you need to apply all aufs patches manually.
 +
@@ -2562,30 +2569,30 @@ diff -urN /usr/share/empty/Documentation/filesystems/aufs/README linux/Documenta
 +"aufs6.0" is for linux-6.0. For latest "linux-6.x-rcN", use
 +"aufs6.x-rcN" branch.
 +
-+o aufs6-linux tree
++o aufs-linux tree
 +$ git clone --reference /your/linux/git/tree \
-+	git://github.com/sfjro/aufs6-linux.git aufs6-linux.git
++	git://github.com/sfjro/aufs-linux.git aufs-linux.git
 +- if you don't have linux GIT tree, then remove "--reference ..."
-+$ cd aufs6-linux.git
++$ cd aufs-linux.git
 +$ git checkout origin/aufs6.0
 +
 +Or You may want to directly git-pull aufs into your linux GIT tree, and
 +leave the patch-work to GIT.
 +$ cd /your/linux/git/tree
-+$ git remote add aufs6 git://github.com/sfjro/aufs6-linux.git
-+$ git fetch aufs6
++$ git remote add aufs git://github.com/sfjro/aufs-linux.git
++$ git fetch aufs
 +$ git checkout -b my6.0 v6.0
 +$ (add your local change...)
-+$ git pull aufs6 aufs6.0
++$ git pull aufs aufs6.0
 +- now you have v6.0 + your_changes + aufs6.0 in you my6.0 branch.
 +- you may need to solve some conflicts between your_changes and
 +  aufs6.0. in this case, git-rerere is recommended so that you can
 +  solve the similar conflicts automatically when you upgrade to 6.1 or
 +  later in the future.
 +
-+o aufs6-standalone tree
-+$ git clone git://github.com/sfjro/aufs6-standalone.git aufs6-standalone.git
-+$ cd aufs6-standalone.git
++o aufs-standalone tree
++$ git clone git://github.com/sfjro/aufs-standalone.git aufs-standalone.git
++$ cd aufs-standalone.git
 +$ git checkout origin/aufs6.0
 +
 +o aufs-util tree
@@ -2620,7 +2627,7 @@ diff -urN /usr/share/empty/Documentation/filesystems/aufs/README linux/Documenta
 +----------------------------------------
 +Make sure you have git-checkout'ed the correct branch.
 +
-+For aufs6-linux tree,
++For aufs-linux tree,
 +- enable CONFIG_AUFS_FS.
 +- set other aufs configurations if necessary.
 +- for aufs5.13 and later
@@ -2633,8 +2640,10 @@ diff -urN /usr/share/empty/Documentation/filesystems/aufs/README linux/Documenta
 +	CONFIG_LOCKDEP_BITS=21
 +	CONFIG_LOCKDEP_CHAINS_BITS=21
 +	CONFIG_LOCKDEP_STACK_TRACE_BITS=24
++  Also you will need to expand some constant values in LOCKDEP. Refer
++  to lockdep-debug.patch in aufs-standalone.git.
 +
-+For aufs6-standalone tree,
++For aufs-standalone tree,
 +There are several ways to build.
 +
 +1.
@@ -2642,7 +2651,7 @@ diff -urN /usr/share/empty/Documentation/filesystems/aufs/README linux/Documenta
 +- apply ./aufs6-base.patch too.
 +- apply ./aufs6-mmap.patch too.
 +- apply ./aufs6-standalone.patch too, if you have a plan to set
-+  CONFIG_AUFS_FS=m. otherwise you don't need ./aufs6-standalone.patch.
++  CONFIG_AUFS_FS=m. otherwise you don't need ./aufs-standalone.patch.
 +- copy ./{Documentation,fs,include/uapi/linux/aufs_type.h} files to your
 +  kernel source tree. Never copy $PWD/include/uapi/linux/Kbuild.
 +- enable CONFIG_AUFS_FS, you can select either
@@ -2694,7 +2703,7 @@ diff -urN /usr/share/empty/Documentation/filesystems/aufs/README linux/Documenta
 +  then run "make install_ulib" too. And refer to the aufs manual in
 +  detail.
 +
-+There several other patches in aufs6-standalone.git. They are all
++There several other patches in aufs-standalone.git. They are all
 +optional. When you meet some problems, they will help you.
 +- aufs6-loopback.patch
 +  Supports a nested loopback mount in a branch-fs. This patch is
@@ -2710,13 +2719,17 @@ diff -urN /usr/share/empty/Documentation/filesystems/aufs/README linux/Documenta
 +  duplication of inode number, which is important for backup tools and
 +  other utilities. When you find aufs XINO files for tmpfs branch
 +  growing too much, try this patch.
++- lockdep-debug.patch
++  Similar to some kernel configurations for LOCKDEP (see the top of
++  this section), you will need expand some constants in LOCKDEP for
++  aufs if you enable CONFIG_LOCKDEP.
 +
 +
 +4. Usage
 +----------------------------------------
 +At first, make sure aufs-util are installed, and please read the aufs
-+manual, aufs.6 in aufs-util.git tree.
-+$ man -l aufs.6
++manual, aufs.5 in aufs-util.git tree.
++$ man -l aufs.5
 +
 +And then,
 +$ mkdir /tmp/rw /tmp/aufs
@@ -2734,7 +2747,7 @@ diff -urN /usr/share/empty/Documentation/filesystems/aufs/README linux/Documenta
 +/tmp/rw. And all of your modification to a file will be applied to
 +the one under /tmp/rw. This is called the file based Copy on Write
 +(COW) method.
-+Aufs mount options are described in aufs.6.
++Aufs mount options are described in aufs.5.
 +If you run chroot or something and make your aufs as a root directory,
 +then you need to customize the shutdown script. See the aufs manual in
 +detail.
@@ -4758,7 +4771,7 @@ diff -urN /usr/share/empty/fs/aufs/conf.mk linux/fs/aufs/conf.mk
 +-include ${srctree}/${src}/conf_priv.mk
 diff -urN /usr/share/empty/fs/aufs/cpup.c linux/fs/aufs/cpup.c
 --- /usr/share/empty/fs/aufs/cpup.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/cpup.c	2022-11-05 23:02:18.962555950 +0100
++++ linux/fs/aufs/cpup.c	2023-02-20 21:05:51.959693785 +0100
 @@ -0,0 +1,1459 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
@@ -5351,23 +5364,23 @@ diff -urN /usr/share/empty/fs/aufs/cpup.c linux/fs/aufs/cpup.c
 + * regardless 'acl' option, reset all ACL.
 + * All ACL will be copied up later from the original entry on the lower branch.
 + */
-+static int au_reset_acl(struct inode *h_dir, struct path *h_path, umode_t mode)
++static int au_reset_acl(struct path *h_path, umode_t mode)
 +{
 +	int err;
 +	struct dentry *h_dentry;
-+	struct inode *h_inode;
++	/* struct inode *h_inode; */
 +	struct user_namespace *h_userns;
 +
 +	h_userns = mnt_user_ns(h_path->mnt);
 +	h_dentry = h_path->dentry;
-+	h_inode = d_inode(h_dentry);
++	/* h_inode = d_inode(h_dentry); */
 +	/* forget_all_cached_acls(h_inode)); */
-+	err = vfsub_removexattr(h_userns, h_dentry, XATTR_NAME_POSIX_ACL_ACCESS);
++	err = vfsub_remove_acl(h_userns, h_dentry, XATTR_NAME_POSIX_ACL_ACCESS);
 +	AuTraceErr(err);
 +	if (err == -EOPNOTSUPP)
 +		err = 0;
 +	if (!err)
-+		err = vfsub_acl_chmod(h_userns, h_inode, mode);
++		err = vfsub_acl_chmod(h_userns, h_dentry, mode);
 +
 +	AuTraceErr(err);
 +	return err;
@@ -5381,8 +5394,8 @@ diff -urN /usr/share/empty/fs/aufs/cpup.c linux/fs/aufs/cpup.c
 +	struct user_namespace *h_userns;
 +
 +	h_userns = mnt_user_ns(h_path->mnt);
-+	err = vfsub_removexattr(h_userns, h_path->dentry,
-+				XATTR_NAME_POSIX_ACL_DEFAULT);
++	err = vfsub_remove_acl(h_userns, h_path->dentry,
++			       XATTR_NAME_POSIX_ACL_DEFAULT);
 +	AuTraceErr(err);
 +	if (err == -EOPNOTSUPP)
 +		err = 0;
@@ -5473,7 +5486,7 @@ diff -urN /usr/share/empty/fs/aufs/cpup.c linux/fs/aufs/cpup.c
 +		err = -EIO;
 +	}
 +	if (!err)
-+		err = au_reset_acl(h_dir, &h_path, mode);
++		err = au_reset_acl(&h_path, mode);
 +
 +	mnt_flags = au_mntflags(sb);
 +	if (!au_opt_test(mnt_flags, UDBA_NONE)
@@ -7282,8 +7295,8 @@ diff -urN /usr/share/empty/fs/aufs/dcsub.h linux/fs/aufs/dcsub.h
 +#endif /* __AUFS_DCSUB_H__ */
 diff -urN /usr/share/empty/fs/aufs/debug.c linux/fs/aufs/debug.c
 --- /usr/share/empty/fs/aufs/debug.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/debug.c	2022-11-05 23:02:18.962555950 +0100
-@@ -0,0 +1,444 @@
++++ linux/fs/aufs/debug.c	2023-02-20 21:05:51.959693785 +0100
+@@ -0,0 +1,446 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
 + * Copyright (C) 2005-2022 Junjiro R. Okajima
@@ -7413,11 +7426,13 @@ diff -urN /usr/share/empty/fs/aufs/debug.c linux/fs/aufs/debug.c
 +	}
 +
 +	dpri("i%d: %p, i%lu, %s, cnt %d, nl %u, 0%o, sz %llu, blk %llu,"
++	     " acl %p, def_acl %p,"
 +	     " hn %d, ct %lld, np %lu, st 0x%lx, f 0x%x, v %llu, g %x%s%.*s\n",
 +	     bindex, inode,
 +	     inode->i_ino, inode->i_sb ? au_sbtype(inode->i_sb) : "??",
 +	     atomic_read(&inode->i_count), inode->i_nlink, inode->i_mode,
 +	     i_size_read(inode), (unsigned long long)inode->i_blocks,
++	     inode->i_acl, inode->i_default_acl,
 +	     hn, (long long)timespec64_to_ns(&inode->i_ctime) & 0x0ffff,
 +	     inode->i_mapping ? inode->i_mapping->nrpages : 0,
 +	     inode->i_state, inode->i_flags, inode_peek_iversion(inode),
@@ -15413,8 +15428,8 @@ diff -urN /usr/share/empty/fs/aufs/finfo.c linux/fs/aufs/finfo.c
 +}
 diff -urN /usr/share/empty/fs/aufs/f_op.c linux/fs/aufs/f_op.c
 --- /usr/share/empty/fs/aufs/f_op.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/f_op.c	2022-12-17 09:21:34.799855195 +0100
-@@ -0,0 +1,776 @@
++++ linux/fs/aufs/f_op.c	2023-02-20 21:05:51.959693785 +0100
+@@ -0,0 +1,780 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
 + * Copyright (C) 2005-2022 Junjiro R. Okajima
@@ -15865,6 +15880,10 @@ diff -urN /usr/share/empty/fs/aufs/f_op.c linux/fs/aufs/f_op.c
 +	lockdep_off();
 +	err = vfs_fallocate(h_file, mode, offset, len);
 +	lockdep_on();
++	/*
++	 * we don't need to call file_modifed() here since au_write_post()
++	 * is equivalent and copies-up all timestamps and permission bits.
++	 */
 +	au_write_post(inode, h_file, &wpre, /*written*/1);
 +
 +out:
@@ -19280,7 +19299,7 @@ diff -urN /usr/share/empty/fs/aufs/iinfo.c linux/fs/aufs/iinfo.c
 +}
 diff -urN /usr/share/empty/fs/aufs/inode.c linux/fs/aufs/inode.c
 --- /usr/share/empty/fs/aufs/inode.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/inode.c	2022-11-05 23:02:18.965889284 +0100
++++ linux/fs/aufs/inode.c	2023-02-20 21:05:51.959693785 +0100
 @@ -0,0 +1,531 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
@@ -19558,7 +19577,7 @@ diff -urN /usr/share/empty/fs/aufs/inode.c linux/fs/aufs/inode.c
 +	}
 +	au_cpup_attr_all(inode, /*force*/1);
 +	/*
-+	 * to force calling aufs_get_acl() every time,
++	 * to force calling aufs_get_inode_acl() every time,
 +	 * do not call cache_no_acl() for aufs inode.
 +	 */
 +
@@ -19815,8 +19834,8 @@ diff -urN /usr/share/empty/fs/aufs/inode.c linux/fs/aufs/inode.c
 +}
 diff -urN /usr/share/empty/fs/aufs/inode.h linux/fs/aufs/inode.h
 --- /usr/share/empty/fs/aufs/inode.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/inode.h	2022-12-17 09:21:34.799855195 +0100
-@@ -0,0 +1,705 @@
++++ linux/fs/aufs/inode.h	2023-02-20 21:05:51.959693785 +0100
+@@ -0,0 +1,707 @@
 +/* SPDX-License-Identifier: GPL-2.0 */
 +/*
 + * Copyright (C) 2005-2022 Junjiro R. Okajima
@@ -20143,8 +20162,10 @@ diff -urN /usr/share/empty/fs/aufs/inode.h linux/fs/aufs/inode.h
 +#endif
 +
 +#ifdef CONFIG_FS_POSIX_ACL
-+struct posix_acl *aufs_get_acl(struct inode *inode, int type, bool rcu);
-+int aufs_set_acl(struct user_namespace *userns, struct inode *inode,
++struct posix_acl *aufs_get_inode_acl(struct inode *inode, int type, bool rcu);
++struct posix_acl *aufs_get_acl(struct user_namespace *userns,
++			       struct dentry *dentry, int type);
++int aufs_set_acl(struct user_namespace *userns, struct dentry *dentry,
 +		 struct posix_acl *acl, int type);
 +#endif
 +
@@ -20748,7 +20769,7 @@ diff -urN /usr/share/empty/fs/aufs/ioctl.c linux/fs/aufs/ioctl.c
 +#endif
 diff -urN /usr/share/empty/fs/aufs/i_op_add.c linux/fs/aufs/i_op_add.c
 --- /usr/share/empty/fs/aufs/i_op_add.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/i_op_add.c	2022-12-17 09:21:34.799855195 +0100
++++ linux/fs/aufs/i_op_add.c	2023-02-20 21:05:51.959693785 +0100
 @@ -0,0 +1,972 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
@@ -21236,7 +21257,7 @@ diff -urN /usr/share/empty/fs/aufs/i_op_add.c linux/fs/aufs/i_op_add.c
 +	h_ppath.mnt = h_mnt;
 +	h_ppath.dentry = h_parent;
 +	h_file = vfs_tmpfile_open(h_userns, &h_ppath, mode, /*open_flag*/0,
-+				    /*cred*/NULL);
++				  current_cred());
 +	if (IS_ERR(h_file)) {
 +		err = PTR_ERR(h_file);
 +		h_file = NULL;
@@ -21724,8 +21745,8 @@ diff -urN /usr/share/empty/fs/aufs/i_op_add.c linux/fs/aufs/i_op_add.c
 +}
 diff -urN /usr/share/empty/fs/aufs/i_op.c linux/fs/aufs/i_op.c
 --- /usr/share/empty/fs/aufs/i_op.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/i_op.c	2022-11-05 23:02:18.965889284 +0100
-@@ -0,0 +1,1512 @@
++++ linux/fs/aufs/i_op.c	2023-02-20 21:05:51.959693785 +0100
+@@ -0,0 +1,1516 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
 + * Copyright (C) 2005-2022 Junjiro R. Okajima
@@ -21785,7 +21806,8 @@ diff -urN /usr/share/empty/fs/aufs/i_op.c linux/fs/aufs/i_op.c
 +		&& write_mask && !(mask & MAY_READ))
 +	    || !h_inode->i_op->permission) {
 +		/* AuLabel(generic_permission); */
-+		/* AuDbg("get_acl %ps\n", h_inode->i_op->get_acl); */
++		/* AuDbg("get_inode_acl %ps\n",
++		   h_inode->i_op->get_inode_acl); */
 +		err = generic_permission(h_userns, h_inode, mask);
 +		if (err == -EOPNOTSUPP && au_test_nfs_noacl(h_inode))
 +			err = h_inode->i_op->permission(h_userns, h_inode,
@@ -22763,7 +22785,7 @@ diff -urN /usr/share/empty/fs/aufs/i_op.c linux/fs/aufs/i_op.c
 +	 */
 +	if (!err && (ia->ia_valid & ATTR_MODE)) {
 +		h_userns = mnt_user_ns(a->h_path.mnt);
-+		err = vfsub_acl_chmod(h_userns, a->h_inode, ia->ia_mode);
++		err = vfsub_acl_chmod(h_userns, a->h_path.dentry, ia->ia_mode);
 +	}
 +	if (!err)
 +		au_cpup_attr_changeable(inode);
@@ -22860,7 +22882,7 @@ diff -urN /usr/share/empty/fs/aufs/i_op.c linux/fs/aufs/i_op.c
 +		h_inode = d_inode(h_path.dentry);
 +		if (h_inode->i_op->set_acl) {
 +			/* this will call posix_acl_update_mode */
-+			err = h_inode->i_op->set_acl(h_userns, h_inode,
++			err = h_inode->i_op->set_acl(h_userns, h_path.dentry,
 +						     arg->u.acl_set.acl,
 +						     arg->u.acl_set.type);
 +		}
@@ -23178,6 +23200,7 @@ diff -urN /usr/share/empty/fs/aufs/i_op.c linux/fs/aufs/i_op.c
 +	[AuIop_SYMLINK] = {
 +		.permission	= aufs_permission,
 +#ifdef CONFIG_FS_POSIX_ACL
++		.get_inode_acl	= aufs_get_inode_acl,
 +		.get_acl	= aufs_get_acl,
 +		.set_acl	= aufs_set_acl, /* unsupport for symlink? */
 +#endif
@@ -23206,6 +23229,7 @@ diff -urN /usr/share/empty/fs/aufs/i_op.c linux/fs/aufs/i_op.c
 +
 +		.permission	= aufs_permission,
 +#ifdef CONFIG_FS_POSIX_ACL
++		.get_inode_acl	= aufs_get_inode_acl,
 +		.get_acl	= aufs_get_acl,
 +		.set_acl	= aufs_set_acl,
 +#endif
@@ -23224,6 +23248,7 @@ diff -urN /usr/share/empty/fs/aufs/i_op.c linux/fs/aufs/i_op.c
 +	[AuIop_OTHER] = {
 +		.permission	= aufs_permission,
 +#ifdef CONFIG_FS_POSIX_ACL
++		.get_inode_acl	= aufs_get_inode_acl,
 +		.get_acl	= aufs_get_acl,
 +		.set_acl	= aufs_set_acl,
 +#endif
@@ -28765,8 +28790,8 @@ diff -urN /usr/share/empty/fs/aufs/poll.c linux/fs/aufs/poll.c
 +}
 diff -urN /usr/share/empty/fs/aufs/posix_acl.c linux/fs/aufs/posix_acl.c
 --- /usr/share/empty/fs/aufs/posix_acl.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/posix_acl.c	2022-11-05 23:02:18.969222617 +0100
-@@ -0,0 +1,111 @@
++++ linux/fs/aufs/posix_acl.c	2023-02-20 21:05:51.959693785 +0100
+@@ -0,0 +1,108 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
 + * Copyright (C) 2014-2022 Junjiro R. Okajima
@@ -28792,7 +28817,7 @@ diff -urN /usr/share/empty/fs/aufs/posix_acl.c linux/fs/aufs/posix_acl.c
 +#include <linux/fs.h>
 +#include "aufs.h"
 +
-+struct posix_acl *aufs_get_acl(struct inode *inode, int type, bool rcu)
++struct posix_acl *aufs_get_inode_acl(struct inode *inode, int type, bool rcu)
 +{
 +	struct posix_acl *acl;
 +	int err;
@@ -28822,7 +28847,7 @@ diff -urN /usr/share/empty/fs/aufs/posix_acl.c linux/fs/aufs/posix_acl.c
 +	}
 +
 +	/* always topmost only */
-+	acl = get_acl(h_inode, type);
++	acl = get_inode_acl(h_inode, type);
 +	if (IS_ERR(acl))
 +		forget_cached_acl(inode, type);
 +	else
@@ -28837,12 +28862,24 @@ diff -urN /usr/share/empty/fs/aufs/posix_acl.c linux/fs/aufs/posix_acl.c
 +	return acl;
 +}
 +
-+int aufs_set_acl(struct user_namespace *userns, struct inode *inode,
++struct posix_acl *aufs_get_acl(struct user_namespace *userns,
++			       struct dentry *dentry, int type)
++{
++	struct posix_acl *acl;
++	struct inode *inode;
++
++	inode = d_inode(dentry);
++	acl = aufs_get_inode_acl(inode, type, /*rcu*/false);
++
++	return acl;
++}
++
++int aufs_set_acl(struct user_namespace *userns, struct dentry *dentry,
 +		 struct posix_acl *acl, int type)
 +{
 +	int err;
 +	ssize_t ssz;
-+	struct dentry *dentry;
++	struct inode *inode;
 +	struct au_sxattr arg = {
 +		.type = AU_ACL_SET,
 +		.u.acl_set = {
@@ -28851,31 +28888,16 @@ diff -urN /usr/share/empty/fs/aufs/posix_acl.c linux/fs/aufs/posix_acl.c
 +		},
 +	};
 +
++	inode = d_inode(dentry);
 +	IMustLock(inode);
-+
-+	if (inode->i_ino == AUFS_ROOT_INO)
-+		dentry = dget(inode->i_sb->s_root);
-+	else {
-+		dentry = d_find_alias(inode);
-+		if (!dentry)
-+			dentry = d_find_any_alias(inode);
-+		if (!dentry) {
-+			pr_warn("cannot handle this inode, "
-+				"please report to aufs-users ML\n");
-+			err = -ENOENT;
-+			goto out;
-+		}
-+	}
 +
 +	ssz = au_sxattr(dentry, inode, &arg);
 +	/* forget even it if succeeds since the branch might set differently */
 +	forget_cached_acl(inode, type);
-+	dput(dentry);
 +	err = ssz;
 +	if (ssz >= 0)
 +		err = 0;
 +
-+out:
 +	return err;
 +}
 diff -urN /usr/share/empty/fs/aufs/procfs.c linux/fs/aufs/procfs.c
@@ -32957,7 +32979,7 @@ diff -urN /usr/share/empty/fs/aufs/vdir.c linux/fs/aufs/vdir.c
 +}
 diff -urN /usr/share/empty/fs/aufs/vfsub.c linux/fs/aufs/vfsub.c
 --- /usr/share/empty/fs/aufs/vfsub.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/vfsub.c	2022-11-05 23:02:18.969222617 +0100
++++ linux/fs/aufs/vfsub.c	2023-02-20 21:05:51.959693785 +0100
 @@ -0,0 +1,918 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
@@ -33637,7 +33659,7 @@ diff -urN /usr/share/empty/fs/aufs/vfsub.c linux/fs/aufs/vfsub.c
 +	lockdep_off();
 +	sb_start_write(h_sb);
 +	lockdep_on();
-+	err = security_path_truncate(h_path);
++	err = security_file_truncate(h_file);
 +	if (!err) {
 +		h_userns = mnt_user_ns(h_path->mnt);
 +		lockdep_off();
@@ -33879,8 +33901,8 @@ diff -urN /usr/share/empty/fs/aufs/vfsub.c linux/fs/aufs/vfsub.c
 +}
 diff -urN /usr/share/empty/fs/aufs/vfsub.h linux/fs/aufs/vfsub.h
 --- /usr/share/empty/fs/aufs/vfsub.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/vfsub.h	2022-12-17 09:21:34.799855195 +0100
-@@ -0,0 +1,358 @@
++++ linux/fs/aufs/vfsub.h	2023-02-20 21:05:51.959693785 +0100
+@@ -0,0 +1,390 @@
 +/* SPDX-License-Identifier: GPL-2.0 */
 +/*
 + * Copyright (C) 2005-2022 Junjiro R. Okajima
@@ -34118,18 +34140,18 @@ diff -urN /usr/share/empty/fs/aufs/vfsub.h linux/fs/aufs/vfsub.h
 +
 +#ifdef CONFIG_FS_POSIX_ACL
 +static inline int vfsub_acl_chmod(struct user_namespace *h_userns,
-+				  struct inode *h_inode, umode_t h_mode)
++				  struct dentry *h_dentry, umode_t h_mode)
 +{
 +	int err;
 +
-+	err = posix_acl_chmod(h_userns, h_inode, h_mode);
++	err = posix_acl_chmod(h_userns, h_dentry, h_mode);
 +	if (err == -EOPNOTSUPP)
 +		err = 0;
 +	return err;
 +}
 +#else
 +AuStubInt0(vfsub_acl_chmod, struct user_namespace *h_userns,
-+	   struct inode *h_inode, umode_t h_mode);
++	   struct dentry *h_dentry, umode_t h_mode);
 +#endif
 +
 +long vfsub_splice_to(struct file *in, loff_t *ppos,
@@ -34236,6 +34258,38 @@ diff -urN /usr/share/empty/fs/aufs/vfsub.h linux/fs/aufs/vfsub.h
 +
 +	return err;
 +}
++
++#ifdef CONFIG_FS_POSIX_ACL
++static inline int vfsub_set_acl(struct user_namespace *userns,
++				struct dentry *dentry, const char *name,
++				struct posix_acl *acl)
++{
++	int err;
++
++	lockdep_off();
++	err = vfs_set_acl(userns, dentry, name, acl);
++	lockdep_on();
++
++	return err;
++}
++
++static inline int vfsub_remove_acl(struct user_namespace *userns,
++				   struct dentry *dentry, const char *name)
++{
++	int err;
++
++	lockdep_off();
++	err = vfs_remove_acl(userns, dentry, name);
++	lockdep_on();
++
++	return err;
++}
++#else
++AuStubInt0(vfsub_set_acl, struct user_namespace *userns, struct dentry *dentry,
++	   const char *name, struct posix_acl *acl);
++AuStubInt0(vfsub_remove_acl, struct user_namespace *userns,
++	   struct dentry *dentry, const char *name);
++#endif
 +
 +#endif /* __KERNEL__ */
 +#endif /* __AUFS_VFSUB_H__ */
@@ -36711,8 +36765,8 @@ diff -urN /usr/share/empty/fs/aufs/wkq.h linux/fs/aufs/wkq.h
 +#endif /* __AUFS_WKQ_H__ */
 diff -urN /usr/share/empty/fs/aufs/xattr.c linux/fs/aufs/xattr.c
 --- /usr/share/empty/fs/aufs/xattr.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/xattr.c	2022-12-17 09:21:34.799855195 +0100
-@@ -0,0 +1,368 @@
++++ linux/fs/aufs/xattr.c	2023-02-20 21:05:51.959693785 +0100
+@@ -0,0 +1,365 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
 + * Copyright (C) 2014-2022 Junjiro R. Okajima
@@ -36783,30 +36837,44 @@ diff -urN /usr/share/empty/fs/aufs/xattr.c linux/fs/aufs/xattr.c
 +			    char *name, char **buf, unsigned int ignore_flags,
 +			    unsigned int verbose)
 +{
-+	int err;
++	int err, is_acl;
 +	ssize_t ssz;
 +	struct inode *h_idst;
 +	struct dentry *h_dst_dentry, *h_src_dentry;
 +	struct user_namespace *h_dst_userns, *h_src_userns;
++	struct posix_acl *acl;
 +
++	is_acl = !!is_posix_acl_xattr(name);
 +	h_src_userns = mnt_user_ns(h_src->mnt);
 +	h_src_dentry = h_src->dentry;
-+	ssz = vfs_getxattr_alloc(h_src_userns, h_src_dentry, name, buf, 0,
-+				 GFP_NOFS);
-+	err = ssz;
-+	if (unlikely(err <= 0)) {
-+		if (err == -ENODATA
-+		    || (err == -EOPNOTSUPP
-+			&& ((ignore_flags & au_xattr_out_of_list)
-+			    || (au_test_nfs_noacl(d_inode(h_src_dentry))
-+				&& (!strcmp(name, XATTR_NAME_POSIX_ACL_ACCESS)
-+				    || !strcmp(name,
-+					       XATTR_NAME_POSIX_ACL_DEFAULT))))
-+			    ))
-+			err = 0;
-+		if (err && (verbose || au_debug_test()))
-+			pr_err("%s, err %d\n", name, err);
-+		goto out;
++	if (is_acl) {
++		acl = vfs_get_acl(h_src_userns, h_src_dentry, name);
++		AuDebugOn(!acl);
++		if (unlikely(IS_ERR(acl))) {
++			err = PTR_ERR(acl);
++			if (err == -ENODATA)
++				err = 0;
++			else if (err == -EOPNOTSUPP
++				 && au_test_nfs_noacl(d_inode(h_src_dentry)))
++				err = 0;
++			else if (verbose || au_debug_test())
++				pr_err("%s, err %d\n", name, err);
++			goto out;
++		}
++	} else {
++		ssz = vfs_getxattr_alloc(h_src_userns, h_src_dentry, name, buf,
++					 0, GFP_NOFS);
++		if (unlikely(ssz <= 0)) {
++			err = ssz;
++			if (err == -ENODATA)
++				err = 0;
++			else if (err == -EOPNOTSUPP
++				 && (ignore_flags & au_xattr_out_of_list))
++				 err = 0;
++			else if (err && (verbose || au_debug_test()))
++				pr_err("%s, err %d\n", name, err);
++			goto out;
++		}
 +	}
 +
 +	/* unlock it temporary */
@@ -36814,8 +36882,12 @@ diff -urN /usr/share/empty/fs/aufs/xattr.c linux/fs/aufs/xattr.c
 +	h_dst_dentry = h_dst->dentry;
 +	h_idst = d_inode(h_dst_dentry);
 +	inode_unlock(h_idst);
-+	err = vfsub_setxattr(h_dst_userns, h_dst_dentry, name, *buf, ssz,
-+			     /*flags*/0);
++	if (is_acl) {
++		err = vfsub_set_acl(h_dst_userns, h_dst_dentry, name, acl);
++		posix_acl_release(acl);
++	} else
++		err = vfsub_setxattr(h_dst_userns, h_dst_dentry, name, *buf,
++				     ssz, /*flags*/0);
 +	inode_lock_nested(h_idst, AuLsc_I_CHILD2);
 +	if (unlikely(err)) {
 +		if (verbose || au_debug_test())
@@ -36830,7 +36902,7 @@ diff -urN /usr/share/empty/fs/aufs/xattr.c linux/fs/aufs/xattr.c
 +int au_cpup_xattr(struct path *h_dst, struct path *h_src, int ignore_flags,
 +		  unsigned int verbose)
 +{
-+	int err, unlocked, acl_access, acl_default;
++	int err, unlocked;
 +	ssize_t ssz;
 +	struct dentry *h_dst_dentry, *h_src_dentry;
 +	struct inode *h_isrc, *h_idst;
@@ -36878,33 +36950,12 @@ diff -urN /usr/share/empty/fs/aufs/xattr.c linux/fs/aufs/xattr.c
 +	err = 0;
 +	e = p + ssz;
 +	value = NULL;
-+	acl_access = 0;
-+	acl_default = 0;
++	ignore_flags |= au_xattr_out_of_list;
 +	while (!err && p < e) {
-+		acl_access |= !strncmp(p, XATTR_NAME_POSIX_ACL_ACCESS,
-+				       sizeof(XATTR_NAME_POSIX_ACL_ACCESS) - 1);
-+		acl_default |= !strncmp(p, XATTR_NAME_POSIX_ACL_DEFAULT,
-+					sizeof(XATTR_NAME_POSIX_ACL_DEFAULT)
-+					- 1);
 +		err = au_do_cpup_xattr(h_dst, h_src, p, &value, ignore_flags,
 +				       verbose);
 +		p += strlen(p) + 1;
 +	}
-+	AuTraceErr(err);
-+	ignore_flags |= au_xattr_out_of_list;
-+	if (!err && !acl_access) {
-+		err = au_do_cpup_xattr(h_dst, h_src,
-+				       XATTR_NAME_POSIX_ACL_ACCESS, &value,
-+				       ignore_flags, verbose);
-+		AuTraceErr(err);
-+	}
-+	if (!err && !acl_default) {
-+		err = au_do_cpup_xattr(h_dst, h_src,
-+				       XATTR_NAME_POSIX_ACL_DEFAULT, &value,
-+				       ignore_flags, verbose);
-+		AuTraceErr(err);
-+	}
-+
 +	au_kfree_try_rcu(value);
 +
 +out_free:
@@ -39013,7 +39064,7 @@ diff -urN /usr/share/empty/fs/aufs/xino.c linux/fs/aufs/xino.c
 +}
 diff -urN /usr/share/empty/include/uapi/linux/aufs_type.h linux/include/uapi/linux/aufs_type.h
 --- /usr/share/empty/include/uapi/linux/aufs_type.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux/include/uapi/linux/aufs_type.h	2022-12-17 09:21:34.803188528 +0100
++++ linux/include/uapi/linux/aufs_type.h	2023-02-20 21:05:51.959693785 +0100
 @@ -0,0 +1,452 @@
 +/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
 +/*
@@ -39057,7 +39108,7 @@ diff -urN /usr/share/empty/include/uapi/linux/aufs_type.h linux/include/uapi/lin
 +#include <limits.h>
 +#endif /* __KERNEL__ */
 +
-+#define AUFS_VERSION	"6.x-rcN-20221107"
++#define AUFS_VERSION	"6.x-rcN-20230109"
 +
 +/* todo? move this to linux-2.6.19/include/magic.h */
 +#define AUFS_SUPER_MAGIC	('a' << 24 | 'u' << 16 | 'f' << 8 | 's')
@@ -39471,7 +39522,7 @@ SPDX-License-Identifier: GPL-2.0
 aufs6.x-rcN loopback patch
 
 diff --git a/drivers/block/loop.c b/drivers/block/loop.c
-index 8ca56da3ca69..9ac6f67edf09 100644
+index 7a9928c6db9d..0bac486deea2 100644
 --- a/drivers/block/loop.c
 +++ b/drivers/block/loop.c
 @@ -54,7 +54,7 @@ struct loop_device {
@@ -39618,7 +39669,7 @@ index 8ca56da3ca69..9ac6f67edf09 100644
  
  static int loop_clr_fd(struct loop_device *lo)
 diff --git a/fs/aufs/f_op.c b/fs/aufs/f_op.c
-index 66ddf86a3331..6cbef597d5b9 100644
+index 1ed300047a41..ea63191d6473 100644
 --- a/fs/aufs/f_op.c
 +++ b/fs/aufs/f_op.c
 @@ -309,7 +309,7 @@ static ssize_t aufs_read_iter(struct kiocb *kio, struct iov_iter *iov_iter)
@@ -39693,10 +39744,10 @@ index 81922d4faf54..c8a62c267d72 100644
  
  /* ---------------------------------------------------------------------- */
 diff --git a/include/linux/fs.h b/include/linux/fs.h
-index 433a4f08dab4..0b17b7e5ee11 100644
+index 2d30def9a580..84a83c480302 100644
 --- a/include/linux/fs.h
 +++ b/include/linux/fs.h
-@@ -2257,6 +2257,10 @@ struct super_operations {
+@@ -2252,6 +2252,10 @@ struct super_operations {
  				  struct shrink_control *);
  	long (*free_cached_objects)(struct super_block *,
  				    struct shrink_control *);
