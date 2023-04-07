@@ -39562,8 +39562,8 @@ index 8ca56da3ca69..9ac6f67edf09 100644
  	struct address_space *mapping;
  	int error;
 @@ -1031,6 +1055,13 @@ static int loop_configure(struct loop_device *lo, fmode_t mode,
- 	/* suppress uevents while reconfiguring the device */
- 	dev_set_uevent_suppress(disk_to_dev(lo->lo_disk), 1);
+ 	/* This is safe, since we have a reference from open(). */
+ 	__module_get(THIS_MODULE);
  
 +	f = loop_real_file(file);
 +	if (f) {
@@ -39591,7 +39591,7 @@ index 8ca56da3ca69..9ac6f67edf09 100644
 +		fput(virt_file);
  	/* This is safe: open() is still holding a reference. */
  	module_put(THIS_MODULE);
- 	goto done;
+ 	return error;
 @@ -1154,6 +1188,7 @@ static int loop_configure(struct loop_device *lo, fmode_t mode,
  static void __loop_clr_fd(struct loop_device *lo, bool release)
  {
