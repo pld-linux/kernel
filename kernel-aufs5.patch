@@ -54,7 +54,7 @@ index 8cba10aafadb..7a9e40b97831 100644
 --- a/drivers/block/loop.c
 +++ b/drivers/block/loop.c
 @@ -799,6 +799,24 @@ static int loop_change_fd(struct loop_device *lo, struct block_device *bdev,
- 	return error;
+ 	goto done;
  }
  
 +/*
@@ -39477,14 +39477,14 @@ index 7a9e40b97831..5ed06240cc9c 100644
 +		fput(old_virt_file);
  	if (partscan)
  		loop_reread_partitions(lo);
- 	return 0;
+ 
 @@ -796,6 +817,8 @@ static int loop_change_fd(struct loop_device *lo, struct block_device *bdev,
  	loop_global_unlock(lo, is_loop);
  out_putf:
  	fput(file);
 +	if (virt_file)
 +		fput(virt_file);
- 	return error;
+ 	goto done;
  }
  
 @@ -1201,6 +1224,7 @@ static int loop_configure(struct loop_device *lo, fmode_t mode,

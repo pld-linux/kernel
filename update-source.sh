@@ -2,7 +2,7 @@
 set -xe
 
 #BRANCH=aufs5.x-rcN
-BRANCH=aufs5.15.41
+BRANCH=aufs5.15
 
 # aufs5
 [ -d aufs5-standalone ] || git clone https://github.com/sfjro/aufs5-standalone.git
