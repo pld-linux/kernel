@@ -725,7 +725,8 @@ find -name '*.pl' -print0 | \
 %{__sed} -i -e '1s,/usr/bin/env bash,%{__bash},' \
 	tools/testing/selftests/powerpc/security/mitigation-patching.sh \
 	scripts/config \
-	scripts/check-local-export
+	scripts/check-local-export \
+	scripts/coccicheck
 
 %build
 install -d %{objdir}
