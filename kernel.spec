@@ -193,6 +193,7 @@ Patch101:	kernel-vserver-fixes.patch
 # see update-source.sh
 Patch145:	kernel-aufs.patch
 Patch146:	kernel-aufs+vserver.patch
+Patch147:	kernel-aufs-make.patch
 
 # Show normal colors in menuconfig with ncurses ABI 6
 Patch250:	kernel-fix_256colors_menuconfig.patch
@@ -650,8 +651,9 @@ cd linux-%{basever}
 %endif
 
 %if %{with aufs}
-# aufs4
+# aufs
 %patch145 -p1
+%patch147 -p1
 %if %{with vserver}
 %patch146 -p1
 %endif
