@@ -150,6 +150,7 @@ Source55:	kernel-imq.config
 
 Source58:	kernel-inittmpfs.config
 
+Patch1:		gcc13.patch
 # https://bugs.freedesktop.org/show_bug.cgi?id=104773
 Patch2:		i915_crash.patch
 
@@ -625,6 +626,7 @@ cd linux-%{basever}
 
 %if %{without vanilla}
 
+%patch1 -p1
 %patch2 -p1
 
 %if %{with fbcondecor}
