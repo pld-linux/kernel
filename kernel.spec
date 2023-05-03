@@ -152,6 +152,7 @@ Source55:	kernel-imq.config
 
 Source58:	kernel-inittmpfs.config
 
+Patch1:		gcc13.patch
 # http://dev.gentoo.org/~spock/projects/fbcondecor/archive/fbcondecor-0.9.4-2.6.25-rc6.patch
 Patch3:		kernel-fbcondecor.patch
 Patch6:		linux-wistron-nx.patch
@@ -622,6 +623,8 @@ cd linux-%{basever}
 %endif
 
 %if %{without vanilla}
+
+%patch1 -p1
 
 %if %{with fbcondecor}
 %patch3 -p1
