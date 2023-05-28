@@ -260,3 +260,25 @@
  	wiphy->regulatory_flags |= REGULATORY_STRICT_REG |
  				   REGULATORY_CUSTOM_REG;
  
+--- linux-6.3/drivers/net/wireless/ath/ath9k/init.c.orig	2023-04-23 21:02:52.000000000 +0200
++++ linux-6.3/drivers/net/wireless/ath/ath9k/init.c	2023-05-28 12:29:58.335041933 +0200
+@@ -1108,7 +1108,7 @@
+ 	}
+ 
+ 	/* Handle world regulatory */
+-	if (!ath_is_world_regd(reg)) {
++	if (!IS_ENABLED(CONFIG_ATH_USER_REGD) && !ath_is_world_regd(reg)) {
+ 		error = regulatory_hint(hw->wiphy, reg->alpha2);
+ 		if (error)
+ 			goto debug_cleanup;
+--- linux-6.3/drivers/net/wireless/ath/ath10k/mac.c.orig	2023-04-23 21:02:52.000000000 +0200
++++ linux-6.3/drivers/net/wireless/ath/ath10k/mac.c	2023-05-28 12:29:12.823062813 +0200
+@@ -10278,7 +10278,7 @@
+ 		ar->hw->wiphy->software_iftypes |= BIT(NL80211_IFTYPE_AP_VLAN);
+ 	}
+ 
+-	if (!ath_is_world_regd(&ar->ath_common.reg_world_copy) &&
++	if (!IS_ENABLED(CONFIG_ATH_USER_REGD) && !ath_is_world_regd(&ar->ath_common.reg_world_copy) &&
+ 	    !ath_is_world_regd(&ar->ath_common.regulatory)) {
+ 		ret = regulatory_hint(ar->hw->wiphy,
+ 				      ar->ath_common.regulatory.alpha2);
