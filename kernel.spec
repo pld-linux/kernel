@@ -215,6 +215,7 @@ Patch8000:	rpi-sound.patch
 Patch8001:	kernel-pinebook-pro.patch
 Patch8002:	atheros-disallow-retrain-nongen1-pcie.patch
 Patch8003:	unbreak-pci-mvebu.patch
+Patch8004:	ath-regd.patch
 
 # Do not remove this line, please. It is easier for me to uncomment two lines, then patch
 # kernel.spec every time.
@@ -668,6 +669,7 @@ cd linux-%{basever}
 %patch8001 -p1
 %patch8002 -p1
 %patch8003 -p1
+%patch8004 -p1
 %endif
 
 %if %{with rt}
