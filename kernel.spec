@@ -66,8 +66,8 @@
 %endif
 
 %define		rel		1
-%define		basever		6.3
-%define		postver		.11
+%define		basever		6.4
+%define		postver		.1
 
 # define this to '-%{basever}' for longterm branch
 %define		versuffix	%{nil}
@@ -118,10 +118,10 @@ Epoch:		3
 License:	GPL v2
 Group:		Base/Kernel
 Source0:	https://www.kernel.org/pub/linux/kernel/v6.x/linux-%{basever}.tar.xz
-# Source0-md5:	df4f97e65bde4174dd8be2af836f28e1
+# Source0-md5:	bb65b2232cf596e7044c56a7c4205f51
 %if "%{postver}" != ".0"
 Patch0:		https://www.kernel.org/pub/linux/kernel/v6.x/patch-%{version}.xz
-# Patch0-md5:	78f688ad461012bf6212e274a9f445c0
+# Patch0-md5:	b6dffe6dad87039097de07a02bc16970
 %endif
 Source1:	kernel.sysconfig
 
@@ -707,7 +707,6 @@ find -name '*.py' -print0 | \
 %{__sed} -i -e '1s,/usr/bin/python$,%{__python},' \
 	    -e '1s,/usr/bin/env python$,%{__python},' \
 	    -e '1s,/usr/bin/env python3$,%{__python3},' \
-	drivers/staging/greybus/tools/lbtest \
 	scripts/bloat-o-meter \
 	scripts/diffconfig \
 	scripts/dtc/dt-extract-compatibles \
@@ -1320,7 +1319,6 @@ fi
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/net/ethernet/fujitsu/fmvj18x_cs.ko*
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/net/ethernet/smsc/smc91c92_cs.ko*
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/net/ethernet/xircom/xirc2ps_cs.ko*
-%exclude /lib/modules/%{kernel_release}/kernel/drivers/net/wireless/*_cs.ko*
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/net/wireless/atmel/*_cs.ko*
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/net/wireless/cisco/*_cs.ko*
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/net/wireless/intersil/hostap/hostap_cs.ko*
@@ -1391,7 +1389,6 @@ fi
 /lib/modules/%{kernel_release}/kernel/drivers/net/ethernet/fujitsu/fmvj18x_cs.ko*
 /lib/modules/%{kernel_release}/kernel/drivers/net/ethernet/smsc/smc91c92_cs.ko*
 /lib/modules/%{kernel_release}/kernel/drivers/net/ethernet/xircom/xirc2ps_cs.ko*
-/lib/modules/%{kernel_release}/kernel/drivers/net/wireless/*_cs.ko*
 /lib/modules/%{kernel_release}/kernel/drivers/net/wireless/atmel/*_cs.ko*
 /lib/modules/%{kernel_release}/kernel/drivers/net/wireless/cisco/*_cs.ko*
 /lib/modules/%{kernel_release}/kernel/drivers/net/wireless/intersil/hostap/hostap_cs.ko*
