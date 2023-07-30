@@ -67,7 +67,7 @@
 %define		have_pcmcia	0
 %endif
 
-%define		rel		1
+%define		rel		2
 %define		basever		5.4
 %define		postver		.251
 
@@ -150,6 +150,8 @@ Source44:	kernel-rt.config
 Source55:	kernel-imq.config
 
 Source58:	kernel-inittmpfs.config
+
+Patch1:		gcc13.patch
 
 # http://dev.gentoo.org/~spock/projects/fbcondecor/archive/fbcondecor-0.9.4-2.6.25-rc6.patch
 Patch3:		kernel-fbcondecor.patch
@@ -621,6 +623,8 @@ cd linux-%{basever}
 %endif
 
 %if %{without vanilla}
+
+%patch1 -p1
 
 %if %{with fbcondecor}
 %patch3 -p1
