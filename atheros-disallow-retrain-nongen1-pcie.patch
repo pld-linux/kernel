@@ -143,12 +143,10 @@ Changes since v2:
  include/linux/pci.h     |  2 ++
  3 files changed, 77 insertions(+), 8 deletions(-)
 
-diff --git a/drivers/pci/pcie/aspm.c b/drivers/pci/pcie/aspm.c
-index ac0557a305af..729b0389562b 100644
---- a/drivers/pci/pcie/aspm.c
-+++ b/drivers/pci/pcie/aspm.c
-@@ -192,12 +192,56 @@ static void pcie_clkpm_cap_init(struct pcie_link_state *link, int blacklist)
- 	link->clkpm_disable = blacklist ? 1 : 0;
+--- linux-6.4/drivers/pci/pcie/aspm.c.orig	2023-08-03 14:40:42.800427402 +0200
++++ linux-6.4/drivers/pci/pcie/aspm.c	2023-08-03 14:44:34.622963310 +0200
+@@ -210,6 +210,44 @@
+ 	return -ETIMEDOUT;
  }
  
 +static int pcie_downgrade_link_to_gen1(struct pci_dev *parent)
@@ -189,11 +187,12 @@ index ac0557a305af..729b0389562b 100644
 +	return 0;
 +}
 +
- static bool pcie_retrain_link(struct pcie_link_state *link)
+ static int pcie_retrain_link(struct pcie_link_state *link)
  {
  	struct pci_dev *parent = link->pdev;
- 	unsigned long end_jiffies;
- 	u16 reg16;
+@@ -226,6 +264,12 @@
+ 	if (rc)
+ 		return rc;
  
 +	if ((link->downstream->dev_flags & PCI_DEV_FLAGS_NO_RETRAIN_LINK_WHEN_NOT_GEN1) &&
 +	    pcie_downgrade_link_to_gen1(parent)) {
