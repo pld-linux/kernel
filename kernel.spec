@@ -67,7 +67,7 @@
 
 %define		rel		1
 %define		basever		6.4
-%define		postver		.10
+%define		postver		.11
 
 # define this to '-%{basever}' for longterm branch
 %define		versuffix	%{nil}
@@ -121,7 +121,7 @@ Source0:	https://www.kernel.org/pub/linux/kernel/v6.x/linux-%{basever}.tar.xz
 # Source0-md5:	bb65b2232cf596e7044c56a7c4205f51
 %if "%{postver}" != ".0"
 Patch0:		https://www.kernel.org/pub/linux/kernel/v6.x/patch-%{version}.xz
-# Patch0-md5:	98b2cc6da5d6211b0f903ce806c28cec
+# Patch0-md5:	2615856a8e6093234575cc390bb4b2fa
 %endif
 Source1:	kernel.sysconfig
 
@@ -214,7 +214,6 @@ Patch7000:	kernel-inittmpfs.patch
 Patch8000:	rpi-sound.patch
 Patch8001:	kernel-pinebook-pro.patch
 Patch8002:	atheros-disallow-retrain-nongen1-pcie.patch
-Patch8003:	unbreak-pci-mvebu.patch
 Patch8004:	ath-regd.patch
 Patch8005:	rkvdec-hevc.patch
 
@@ -669,7 +668,6 @@ cd linux-%{basever}
 %patch8000 -p1
 %patch8001 -p1
 %patch8002 -p1
-%patch8003 -p1
 %patch8004 -p1
 %patch8005 -p1
 %endif
