@@ -26,10 +26,10 @@ SPDX-License-Identifier: GPL-2.0
 aufs6.x-rcN base patch
 
 diff --git a/MAINTAINERS b/MAINTAINERS
-index 7e0b87d5aa2e..ce2984ca2f06 100644
+index e0ad886d3163..a27659e1886b 100644
 --- a/MAINTAINERS
 +++ b/MAINTAINERS
-@@ -3387,6 +3387,19 @@ F:	include/uapi/linux/audit.h
+@@ -3380,6 +3380,19 @@ F:	include/uapi/linux/audit.h
  F:	kernel/audit*
  F:	lib/*audit.c
  
@@ -428,7 +428,7 @@ index b4c9bd368b7e..ec4f4e5c1a92 100644
  	if (folio->mapping != mapping) {
  		folio_unlock(folio);
 diff --git a/mm/mmap.c b/mm/mmap.c
-index 13678edaa22c..4de00f38822c 100644
+index 13678edaa22c..3b5dd8a8d627 100644
 --- a/mm/mmap.c
 +++ b/mm/mmap.c
 @@ -140,7 +140,7 @@ static void remove_vma(struct vm_area_struct *vma, bool unreachable)
@@ -440,6 +440,15 @@ index 13678edaa22c..4de00f38822c 100644
  	mpol_put(vma_policy(vma));
  	if (unreachable)
  		__vm_area_free(vma);
+@@ -607,7 +607,7 @@ static inline void vma_complete(struct vma_prepare *vp,
+ 		if (vp->file) {
+ 			uprobe_munmap(vp->remove, vp->remove->vm_start,
+ 				      vp->remove->vm_end);
+-			fput(vp->file);
++			vma_fput(vp->vma);
+ 		}
+ 		if (vp->remove->anon_vma)
+ 			anon_vma_merge(vp->vma, vp->remove);
 @@ -2269,7 +2269,7 @@ int __split_vma(struct vma_iterator *vmi, struct vm_area_struct *vma,
  		goto out_free_mpol;
  
@@ -449,6 +458,15 @@ index 13678edaa22c..4de00f38822c 100644
  
  	if (new->vm_ops && new->vm_ops->open)
  		new->vm_ops->open(new);
+@@ -2679,7 +2679,7 @@ unsigned long mmap_region(struct file *file, unsigned long addr,
+ 				 * and cause general protection fault
+ 				 * ultimately.
+ 				 */
+-				fput(vma->vm_file);
++				vma_fput(vma);
+ 				vm_area_free(vma);
+ 				vma = merge;
+ 				/* Update vm_flags to pick up the change. */
 @@ -2774,7 +2774,7 @@ unsigned long mmap_region(struct file *file, unsigned long addr,
  
  	if (file || vma->vm_file) {
@@ -484,7 +502,7 @@ index 13678edaa22c..4de00f38822c 100644
 +		new_vma = find_vma(mm, ret);
 +		if (!new_vma->vm_prfile)
 +			new_vma->vm_prfile = prfile;
-+		if (new_vma != vma)
++		if (prfile)
 +			get_file(prfile);
 +	}
 +	/*
@@ -2413,8 +2431,8 @@ diff -urN /usr/share/empty/Documentation/filesystems/aufs/design/10dynop.txt lin
 +regular files only.
 diff -urN /usr/share/empty/Documentation/filesystems/aufs/README linux/Documentation/filesystems/aufs/README
 --- /usr/share/empty/Documentation/filesystems/aufs/README	1970-01-01 01:00:00.000000000 +0100
-+++ linux/Documentation/filesystems/aufs/README	2023-07-04 23:43:55.846316200 +0200
-@@ -0,0 +1,408 @@
++++ linux/Documentation/filesystems/aufs/README	2023-08-28 12:34:41.669969465 +0200
+@@ -0,0 +1,409 @@
 +
 +Aufs6 -- advanced multi layered unification filesystem version 6.x
 +http://aufs.sf.net
@@ -2805,7 +2823,8 @@ diff -urN /usr/share/empty/Documentation/filesystems/aufs/README linux/Documenta
 +James Burry made a donation (2016/12).
 +Carsten Rose made a donation (2018/9).
 +Porteus Kiosk made a donation (2018/10).
-+huronOS team: Enya Quetzalli made donations (2022/5 and 2023/5).
++huronOS team: Enya Quetzalli made donations (2022/5, 2023/5 and 8).
++Vasily Mikhaylichenko made a donation (2023/5).
 +
 +Thank you very much.
 +Donations are always, including future donations, very important and
@@ -4322,7 +4341,7 @@ diff -urN /usr/share/empty/fs/aufs/branch.c linux/fs/aufs/branch.c
 +}
 diff -urN /usr/share/empty/fs/aufs/branch.h linux/fs/aufs/branch.h
 --- /usr/share/empty/fs/aufs/branch.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/branch.h	2023-04-24 08:13:40.969576115 +0200
++++ linux/fs/aufs/branch.h	2023-08-28 12:34:39.956636132 +0200
 @@ -0,0 +1,375 @@
 +/* SPDX-License-Identifier: GPL-2.0 */
 +/*
@@ -4745,7 +4764,7 @@ diff -urN /usr/share/empty/fs/aufs/conf.mk linux/fs/aufs/conf.mk
 +-include ${srctree}/${src}/conf_priv.mk
 diff -urN /usr/share/empty/fs/aufs/cpup.c linux/fs/aufs/cpup.c
 --- /usr/share/empty/fs/aufs/cpup.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/cpup.c	2023-04-24 08:13:40.969576115 +0200
++++ linux/fs/aufs/cpup.c	2023-08-28 12:34:39.956636132 +0200
 @@ -0,0 +1,1459 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
@@ -7269,7 +7288,7 @@ diff -urN /usr/share/empty/fs/aufs/dcsub.h linux/fs/aufs/dcsub.h
 +#endif /* __AUFS_DCSUB_H__ */
 diff -urN /usr/share/empty/fs/aufs/debug.c linux/fs/aufs/debug.c
 --- /usr/share/empty/fs/aufs/debug.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/debug.c	2023-02-20 21:05:51.959693785 +0100
++++ linux/fs/aufs/debug.c	2023-08-28 12:34:39.956636132 +0200
 @@ -0,0 +1,446 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
@@ -7949,7 +7968,7 @@ diff -urN /usr/share/empty/fs/aufs/debug.h linux/fs/aufs/debug.h
 +#endif /* __AUFS_DEBUG_H__ */
 diff -urN /usr/share/empty/fs/aufs/dentry.c linux/fs/aufs/dentry.c
 --- /usr/share/empty/fs/aufs/dentry.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/dentry.c	2023-04-24 08:13:40.969576115 +0200
++++ linux/fs/aufs/dentry.c	2023-08-28 12:34:39.956636132 +0200
 @@ -0,0 +1,1168 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
@@ -9121,7 +9140,7 @@ diff -urN /usr/share/empty/fs/aufs/dentry.c linux/fs/aufs/dentry.c
 +};
 diff -urN /usr/share/empty/fs/aufs/dentry.h linux/fs/aufs/dentry.h
 --- /usr/share/empty/fs/aufs/dentry.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/dentry.h	2023-04-24 08:13:40.969576115 +0200
++++ linux/fs/aufs/dentry.h	2023-08-28 12:34:39.956636132 +0200
 @@ -0,0 +1,270 @@
 +/* SPDX-License-Identifier: GPL-2.0 */
 +/*
@@ -9954,7 +9973,7 @@ diff -urN /usr/share/empty/fs/aufs/dinfo.c linux/fs/aufs/dinfo.c
 +}
 diff -urN /usr/share/empty/fs/aufs/dir.c linux/fs/aufs/dir.c
 --- /usr/share/empty/fs/aufs/dir.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/dir.c	2023-04-24 08:13:40.969576115 +0200
++++ linux/fs/aufs/dir.c	2023-08-28 12:34:39.956636132 +0200
 @@ -0,0 +1,765 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
@@ -19273,7 +19292,7 @@ diff -urN /usr/share/empty/fs/aufs/iinfo.c linux/fs/aufs/iinfo.c
 +}
 diff -urN /usr/share/empty/fs/aufs/inode.c linux/fs/aufs/inode.c
 --- /usr/share/empty/fs/aufs/inode.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/inode.c	2023-04-24 08:13:40.969576115 +0200
++++ linux/fs/aufs/inode.c	2023-08-28 12:34:39.956636132 +0200
 @@ -0,0 +1,531 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
@@ -19808,7 +19827,7 @@ diff -urN /usr/share/empty/fs/aufs/inode.c linux/fs/aufs/inode.c
 +}
 diff -urN /usr/share/empty/fs/aufs/inode.h linux/fs/aufs/inode.h
 --- /usr/share/empty/fs/aufs/inode.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/inode.h	2023-04-24 08:13:40.969576115 +0200
++++ linux/fs/aufs/inode.h	2023-08-28 12:34:39.956636132 +0200
 @@ -0,0 +1,707 @@
 +/* SPDX-License-Identifier: GPL-2.0 */
 +/*
@@ -20743,7 +20762,7 @@ diff -urN /usr/share/empty/fs/aufs/ioctl.c linux/fs/aufs/ioctl.c
 +#endif
 diff -urN /usr/share/empty/fs/aufs/i_op_add.c linux/fs/aufs/i_op_add.c
 --- /usr/share/empty/fs/aufs/i_op_add.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/i_op_add.c	2023-04-24 08:13:40.969576115 +0200
++++ linux/fs/aufs/i_op_add.c	2023-08-28 12:34:39.956636132 +0200
 @@ -0,0 +1,972 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
@@ -21719,7 +21738,7 @@ diff -urN /usr/share/empty/fs/aufs/i_op_add.c linux/fs/aufs/i_op_add.c
 +}
 diff -urN /usr/share/empty/fs/aufs/i_op.c linux/fs/aufs/i_op.c
 --- /usr/share/empty/fs/aufs/i_op.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/i_op.c	2023-04-24 08:13:40.969576115 +0200
++++ linux/fs/aufs/i_op.c	2023-08-28 12:34:39.956636132 +0200
 @@ -0,0 +1,1517 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
@@ -23240,7 +23259,7 @@ diff -urN /usr/share/empty/fs/aufs/i_op.c linux/fs/aufs/i_op.c
 +};
 diff -urN /usr/share/empty/fs/aufs/i_op_del.c linux/fs/aufs/i_op_del.c
 --- /usr/share/empty/fs/aufs/i_op_del.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/i_op_del.c	2023-04-24 08:13:40.969576115 +0200
++++ linux/fs/aufs/i_op_del.c	2023-08-28 12:34:39.956636132 +0200
 @@ -0,0 +1,522 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
@@ -23766,7 +23785,7 @@ diff -urN /usr/share/empty/fs/aufs/i_op_del.c linux/fs/aufs/i_op_del.c
 +}
 diff -urN /usr/share/empty/fs/aufs/i_op_ren.c linux/fs/aufs/i_op_ren.c
 --- /usr/share/empty/fs/aufs/i_op_ren.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/i_op_ren.c	2023-04-24 08:13:40.969576115 +0200
++++ linux/fs/aufs/i_op_ren.c	2023-08-28 12:34:39.956636132 +0200
 @@ -0,0 +1,1257 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
@@ -28765,7 +28784,7 @@ diff -urN /usr/share/empty/fs/aufs/poll.c linux/fs/aufs/poll.c
 +}
 diff -urN /usr/share/empty/fs/aufs/posix_acl.c linux/fs/aufs/posix_acl.c
 --- /usr/share/empty/fs/aufs/posix_acl.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/posix_acl.c	2023-04-24 08:13:40.969576115 +0200
++++ linux/fs/aufs/posix_acl.c	2023-08-28 12:34:39.959969465 +0200
 @@ -0,0 +1,108 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
@@ -32954,7 +32973,7 @@ diff -urN /usr/share/empty/fs/aufs/vdir.c linux/fs/aufs/vdir.c
 +}
 diff -urN /usr/share/empty/fs/aufs/vfsub.c linux/fs/aufs/vfsub.c
 --- /usr/share/empty/fs/aufs/vfsub.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/vfsub.c	2023-04-24 08:13:40.969576115 +0200
++++ linux/fs/aufs/vfsub.c	2023-08-28 12:34:39.999969465 +0200
 @@ -0,0 +1,918 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
@@ -33876,7 +33895,7 @@ diff -urN /usr/share/empty/fs/aufs/vfsub.c linux/fs/aufs/vfsub.c
 +}
 diff -urN /usr/share/empty/fs/aufs/vfsub.h linux/fs/aufs/vfsub.h
 --- /usr/share/empty/fs/aufs/vfsub.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/vfsub.h	2023-04-24 08:13:40.969576115 +0200
++++ linux/fs/aufs/vfsub.h	2023-08-28 12:34:39.999969465 +0200
 @@ -0,0 +1,390 @@
 +/* SPDX-License-Identifier: GPL-2.0 */
 +/*
@@ -35104,7 +35123,7 @@ diff -urN /usr/share/empty/fs/aufs/wbr_policy.c linux/fs/aufs/wbr_policy.c
 +};
 diff -urN /usr/share/empty/fs/aufs/whout.c linux/fs/aufs/whout.c
 --- /usr/share/empty/fs/aufs/whout.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/whout.c	2023-04-24 08:13:40.972909448 +0200
++++ linux/fs/aufs/whout.c	2023-08-28 12:34:39.999969465 +0200
 @@ -0,0 +1,1072 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
@@ -36180,7 +36199,7 @@ diff -urN /usr/share/empty/fs/aufs/whout.c linux/fs/aufs/whout.c
 +}
 diff -urN /usr/share/empty/fs/aufs/whout.h linux/fs/aufs/whout.h
 --- /usr/share/empty/fs/aufs/whout.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/whout.h	2023-04-24 08:13:40.972909448 +0200
++++ linux/fs/aufs/whout.h	2023-08-28 12:34:39.999969465 +0200
 @@ -0,0 +1,87 @@
 +/* SPDX-License-Identifier: GPL-2.0 */
 +/*
@@ -36740,7 +36759,7 @@ diff -urN /usr/share/empty/fs/aufs/wkq.h linux/fs/aufs/wkq.h
 +#endif /* __AUFS_WKQ_H__ */
 diff -urN /usr/share/empty/fs/aufs/xattr.c linux/fs/aufs/xattr.c
 --- /usr/share/empty/fs/aufs/xattr.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/xattr.c	2023-07-04 23:43:55.849649534 +0200
++++ linux/fs/aufs/xattr.c	2023-08-28 12:34:39.999969465 +0200
 @@ -0,0 +1,360 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
@@ -37104,7 +37123,7 @@ diff -urN /usr/share/empty/fs/aufs/xattr.c linux/fs/aufs/xattr.c
 +}
 diff -urN /usr/share/empty/fs/aufs/xino.c linux/fs/aufs/xino.c
 --- /usr/share/empty/fs/aufs/xino.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/fs/aufs/xino.c	2023-04-24 08:13:40.972909448 +0200
++++ linux/fs/aufs/xino.c	2023-08-28 12:34:39.999969465 +0200
 @@ -0,0 +1,1926 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
@@ -39034,7 +39053,7 @@ diff -urN /usr/share/empty/fs/aufs/xino.c linux/fs/aufs/xino.c
 +}
 diff -urN /usr/share/empty/include/uapi/linux/aufs_type.h linux/include/uapi/linux/aufs_type.h
 --- /usr/share/empty/include/uapi/linux/aufs_type.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux/include/uapi/linux/aufs_type.h	2023-07-04 23:43:55.849649534 +0200
++++ linux/include/uapi/linux/aufs_type.h	2023-08-28 12:34:41.669969465 +0200
 @@ -0,0 +1,452 @@
 +/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
 +/*
@@ -39078,7 +39097,7 @@ diff -urN /usr/share/empty/include/uapi/linux/aufs_type.h linux/include/uapi/lin
 +#include <limits.h>
 +#endif /* __KERNEL__ */
 +
-+#define AUFS_VERSION	"6.x-rcN-20230515"
++#define AUFS_VERSION	"6.x-rcN-20230828"
 +
 +/* todo? move this to linux-2.6.19/include/magic.h */
 +#define AUFS_SUPER_MAGIC	('a' << 24 | 'u' << 16 | 'f' << 8 | 's')

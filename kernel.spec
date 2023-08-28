@@ -65,9 +65,9 @@
 %define		have_pcmcia	0
 %endif
 
-%define		rel		1
-%define		basever		6.4
-%define		postver		.12
+%define		rel		0.1
+%define		basever		6.5
+%define		postver		.0
 
 # define this to '-%{basever}' for longterm branch
 %define		versuffix	%{nil}
@@ -118,7 +118,7 @@ Epoch:		3
 License:	GPL v2
 Group:		Base/Kernel
 Source0:	https://www.kernel.org/pub/linux/kernel/v6.x/linux-%{basever}.tar.xz
-# Source0-md5:	bb65b2232cf596e7044c56a7c4205f51
+# Source0-md5:	42c2796f9babe4a1be3f2001c817ff4a
 %if "%{postver}" != ".0"
 Patch0:		https://www.kernel.org/pub/linux/kernel/v6.x/patch-%{version}.xz
 # Patch0-md5:	8e950aaeded83ce47ff85cae9771ca6a
@@ -730,7 +730,6 @@ find -name '*.pl' -print0 | \
 %{__sed} -i -e '1s,/usr/bin/env bash,%{__bash},' \
 	tools/testing/selftests/powerpc/security/mitigation-patching.sh \
 	scripts/config \
-	scripts/check-local-export \
 	scripts/coccicheck
 
 %build
@@ -1460,7 +1459,6 @@ fi
 %{_kernelsrcdir}/scripts/kconfig/lxdialog
 %{_kernelsrcdir}/scripts/mod/*.c
 %{_kernelsrcdir}/scripts/mod/modpost.h
-%attr(755,root,root) %{_kernelsrcdir}/scripts/check-local-export
 %attr(755,root,root) %{_kernelsrcdir}/scripts/mkcompile_h
 %attr(755,root,root) %{_kernelsrcdir}/scripts/setlocalversion
 %{_kernelsrcdir}/scripts/subarch.include
