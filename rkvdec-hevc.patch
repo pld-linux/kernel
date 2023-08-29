@@ -204,13 +204,13 @@ index 40f56e044640..be23e319fb3a 100644
 +++ b/drivers/media/v4l2-core/v4l2-common.c
 @@ -262,6 +262,8 @@ const struct v4l2_format_info *v4l2_format_info(u32 format)
  		/* YUV planar formats */
- 		{ .format = V4L2_PIX_FMT_NV12,    .pixel_enc = V4L2_PIXEL_ENC_YUV, .mem_planes = 1, .comp_planes = 2, .bpp = { 1, 2, 0, 0 }, .hdiv = 2, .vdiv = 2 },
- 		{ .format = V4L2_PIX_FMT_NV21,    .pixel_enc = V4L2_PIXEL_ENC_YUV, .mem_planes = 1, .comp_planes = 2, .bpp = { 1, 2, 0, 0 }, .hdiv = 2, .vdiv = 2 },
-+		{ .format = V4L2_PIX_FMT_NV15,    .pixel_enc = V4L2_PIXEL_ENC_YUV, .mem_planes = 1, .comp_planes = 2, .bpp = { 5, 5, 0, 0 }, .hdiv = 2, .vdiv = 2,
+ 		{ .format = V4L2_PIX_FMT_NV12,    .pixel_enc = V4L2_PIXEL_ENC_YUV, .mem_planes = 1, .comp_planes = 2, .bpp = { 1, 2, 0, 0 }, .bpp_div = { 1, 1, 1, 1 }, .hdiv = 2, .vdiv = 2 },
+ 		{ .format = V4L2_PIX_FMT_NV21,    .pixel_enc = V4L2_PIXEL_ENC_YUV, .mem_planes = 1, .comp_planes = 2, .bpp = { 1, 2, 0, 0 }, .bpp_div = { 1, 1, 1, 1 }, .hdiv = 2, .vdiv = 2 },
++		{ .format = V4L2_PIX_FMT_NV15,    .pixel_enc = V4L2_PIXEL_ENC_YUV, .mem_planes = 1, .comp_planes = 2, .bpp = { 5, 5, 0, 0 }, .bpp_div = { 1, 1, 1, 1 }, .hdiv = 2, .vdiv = 2,
 +		  .block_w = { 4, 2, 0, 0 }, .block_h = { 1, 1, 0, 0 } },
- 		{ .format = V4L2_PIX_FMT_NV16,    .pixel_enc = V4L2_PIXEL_ENC_YUV, .mem_planes = 1, .comp_planes = 2, .bpp = { 1, 2, 0, 0 }, .hdiv = 2, .vdiv = 1 },
- 		{ .format = V4L2_PIX_FMT_NV61,    .pixel_enc = V4L2_PIXEL_ENC_YUV, .mem_planes = 1, .comp_planes = 2, .bpp = { 1, 2, 0, 0 }, .hdiv = 2, .vdiv = 1 },
- 		{ .format = V4L2_PIX_FMT_NV24,    .pixel_enc = V4L2_PIXEL_ENC_YUV, .mem_planes = 1, .comp_planes = 2, .bpp = { 1, 2, 0, 0 }, .hdiv = 1, .vdiv = 1 },
+ 		{ .format = V4L2_PIX_FMT_NV16,    .pixel_enc = V4L2_PIXEL_ENC_YUV, .mem_planes = 1, .comp_planes = 2, .bpp = { 1, 2, 0, 0 }, .bpp_div = { 1, 1, 1, 1 }, .hdiv = 2, .vdiv = 1 },
+ 		{ .format = V4L2_PIX_FMT_NV61,    .pixel_enc = V4L2_PIXEL_ENC_YUV, .mem_planes = 1, .comp_planes = 2, .bpp = { 1, 2, 0, 0 }, .bpp_div = { 1, 1, 1, 1 }, .hdiv = 2, .vdiv = 1 },
+ 		{ .format = V4L2_PIX_FMT_NV24,    .pixel_enc = V4L2_PIXEL_ENC_YUV, .mem_planes = 1, .comp_planes = 2, .bpp = { 1, 2, 0, 0 }, .bpp_div = { 1, 1, 1, 1 }, .hdiv = 1, .vdiv = 1 },
 diff --git a/drivers/media/v4l2-core/v4l2-ioctl.c b/drivers/media/v4l2-core/v4l2-ioctl.c
 index 8e0a0ff62a70..1c80ad78ef00 100644
 --- a/drivers/media/v4l2-core/v4l2-ioctl.c
@@ -370,7 +370,7 @@ index be23e319fb3a..12c1d2f409b0 100644
  
  	if (info->mem_planes == 1) {
  		plane = &pixfmt->plane_fmt[0];
--		plane->bytesperline = ALIGN(width, v4l2_format_block_width(info, 0)) * info->bpp[0];
+-		plane->bytesperline = ALIGN(width, v4l2_format_block_width(info, 0)) * info->bpp[0] / info->bpp_div[0];
 +		plane->bytesperline = v4l2_format_plane_width(info, 0, width);
  		plane->sizeimage = 0;
  
@@ -385,7 +385,7 @@ index be23e319fb3a..12c1d2f409b0 100644
 -
 -			plane->sizeimage += info->bpp[i] *
 -				DIV_ROUND_UP(aligned_width, hdiv) *
--				DIV_ROUND_UP(aligned_height, vdiv);
+-				DIV_ROUND_UP(aligned_height, vdiv) / info->bpp_div[i];
 -		}
 +		for (i = 0; i < info->comp_planes; i++)
 +			plane->sizeimage +=
@@ -402,7 +402,7 @@ index be23e319fb3a..12c1d2f409b0 100644
 -
  			plane = &pixfmt->plane_fmt[i];
  			plane->bytesperline =
--				info->bpp[i] * DIV_ROUND_UP(aligned_width, hdiv);
+-				info->bpp[i] * DIV_ROUND_UP(aligned_width, hdiv) / info->bpp_div[i];
 -			plane->sizeimage =
 -				plane->bytesperline * DIV_ROUND_UP(aligned_height, vdiv);
 +				v4l2_format_plane_width(info, i, width);
@@ -415,7 +415,7 @@ index be23e319fb3a..12c1d2f409b0 100644
  	pixfmt->width = width;
  	pixfmt->height = height;
  	pixfmt->pixelformat = pixelformat;
--	pixfmt->bytesperline = ALIGN(width, v4l2_format_block_width(info, 0)) * info->bpp[0];
+-	pixfmt->bytesperline = ALIGN(width, v4l2_format_block_width(info, 0)) * info->bpp[0] / info->bpp_div[0];
 +	pixfmt->bytesperline = v4l2_format_plane_width(info, 0, width);
  	pixfmt->sizeimage = 0;
  
@@ -430,7 +430,7 @@ index be23e319fb3a..12c1d2f409b0 100644
 -
 -		pixfmt->sizeimage += info->bpp[i] *
 -			DIV_ROUND_UP(aligned_width, hdiv) *
--			DIV_ROUND_UP(aligned_height, vdiv);
+-			DIV_ROUND_UP(aligned_height, vdiv) / info->bpp_div[i];
 -	}
 +	for (i = 0; i < info->comp_planes; i++)
 +		pixfmt->sizeimage +=

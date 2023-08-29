@@ -143,10 +143,10 @@ Changes since v2:
  include/linux/pci.h     |  2 ++
  3 files changed, 77 insertions(+), 8 deletions(-)
 
---- linux-6.4/drivers/pci/pcie/aspm.c.orig	2023-08-03 14:40:42.800427402 +0200
-+++ linux-6.4/drivers/pci/pcie/aspm.c	2023-08-03 14:44:34.622963310 +0200
-@@ -210,6 +210,44 @@
- 	return -ETIMEDOUT;
+--- linux-6.5/drivers/pci/pcie/aspm.c.orig	2023-08-27 23:49:51.000000000 +0200
++++ linux-6.5/drivers/pci/pcie/aspm.c	2023-08-29 19:04:58.069254559 +0200
+@@ -191,6 +191,44 @@
+ 	link->clkpm_disable = blacklist ? 1 : 0;
  }
  
 +static int pcie_downgrade_link_to_gen1(struct pci_dev *parent)
@@ -187,22 +187,25 @@ Changes since v2:
 +	return 0;
 +}
 +
- static int pcie_retrain_link(struct pcie_link_state *link)
- {
- 	struct pci_dev *parent = link->pdev;
-@@ -226,6 +264,12 @@
- 	if (rc)
- 		return rc;
- 
-+	if ((link->downstream->dev_flags & PCI_DEV_FLAGS_NO_RETRAIN_LINK_WHEN_NOT_GEN1) &&
-+	    pcie_downgrade_link_to_gen1(parent)) {
-+		pci_err(parent, "ASPM: Retrain Link at higher speed is disallowed by quirk\n");
-+		return false;
-+	}
-+
- 	pcie_capability_read_word(parent, PCI_EXP_LNKCTL, &reg16);
- 	reg16 |= PCI_EXP_LNKCTL_RL;
+ /*
+  * pcie_aspm_configure_common_clock: check if the 2 ends of a link
+  *   could use common clock. If they are, configure them to use the
+@@ -257,7 +295,14 @@
+ 		reg16 &= ~PCI_EXP_LNKCTL_CCC;
  	pcie_capability_write_word(parent, PCI_EXP_LNKCTL, reg16);
+ 
+-	if (pcie_retrain_link(link->pdev, true)) {
++	bool skip_retrain = false;
++	if (link->downstream->dev_flags & PCI_DEV_FLAGS_NO_RETRAIN_LINK_WHEN_NOT_GEN1) {
++		if (pcie_downgrade_link_to_gen1(parent)) {
++			pci_err(parent, "ASPM: Retrain Link at higher speed is disallowed by quirk\n");
++			skip_retrain = true;
++		}
++	}
++	if (!skip_retrain && pcie_retrain_link(link->pdev, true)) {
+ 
+ 		/* Training failed. Restore common clock configurations */
+ 		pci_err(parent, "ASPM: Could not configure common clock\n");
 diff --git a/drivers/pci/quirks.c b/drivers/pci/quirks.c
 index 653660e3ba9e..4999ad9d08b8 100644
 --- a/drivers/pci/quirks.c
