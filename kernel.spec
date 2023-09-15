@@ -65,7 +65,7 @@
 %define		have_pcmcia	0
 %endif
 
-%define		rel		1
+%define		rel		2
 %define		basever		6.1
 %define		postver		.53
 
@@ -155,6 +155,7 @@ Patch2:		android-enable-building-binder-as-module.patch
 # http://dev.gentoo.org/~spock/projects/fbcondecor/archive/fbcondecor-0.9.4-2.6.25-rc6.patch
 Patch3:		kernel-fbcondecor.patch
 Patch6:		linux-wistron-nx.patch
+Patch7:		apparmor.patch
 
 # netfilter related stuff mostly based on patch-o-matic-ng
 # snapshot 20070806 with some fixes. Some modules
@@ -615,6 +616,7 @@ cd linux-%{basever}
 %patch3 -p1
 %endif
 %patch6 -p1
+%patch7 -p1
 
 ## netfilter
 #
