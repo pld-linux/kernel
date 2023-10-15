@@ -68,9 +68,10 @@
 %define		have_pcmcia	0
 %endif
 
-%define		rel		1
+%define		rel		2
 %define		basever		4.19
 %define		postver		.295
+%define         cipver          cip103
 
 # define this to '-%{basever}' for longterm branch
 %define		versuffix	-%{basever}
@@ -120,9 +121,11 @@ Release:	%{rel}
 Epoch:		3
 License:	GPL v2
 Group:		Base/Kernel
-Source0:	https://www.kernel.org/pub/linux/kernel/v4.x/linux-%{basever}.tar.xz
-# Source0-md5:	740a90cf810c2105df8ee12e5d0bb900
-%if "%{postver}" != ".0"
+# Source0:	https://www.kernel.org/pub/linux/kernel/v4.x/linux-%{basever}.tar.xz
+# https://wiki.linuxfoundation.org/civilinfrastructureplatform/start
+Source0:        https://www.kernel.org/pub/linux/kernel/projects/cip/4.19/linux-cip-%{basever}%{postver}-%{cipver}.tar.xz
+# Source0-md5:	5d23dc75ee29c1f8081efdc2cbeccf6f
+%if 0 && "%{postver}" != ".0"
 Patch0:		https://www.kernel.org/pub/linux/kernel/v4.x/patch-%{version}.xz
 # Patch0-md5:	97959b550c97ae656f7e321cc0e4767e
 %endif
@@ -343,7 +346,7 @@ BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 %endif
 
 %define		topdir		%{_builddir}/%{name}-%{version}
-%define		srcdir		%{topdir}/linux-%{basever}
+%define		srcdir		%{topdir}/linux-cip-%{basever}%{postver}-%{cipver}
 %define		objdir		%{topdir}/%{targetobj}
 %define		targetobj	%{_target_base_arch}-gcc-%(%{__cc} -dumpversion)
 
@@ -616,9 +619,9 @@ Pakiet zawiera dokumentację do jądra Linuksa pochodzącą z katalogu
 %setup -qc
 ln -s %{SOURCE7} kernel-module-build.pl
 ln -s %{SOURCE10} Makefile
-cd linux-%{basever}
+cd linux-cip-%{basever}%{postver}-%{cipver}
 
-%if "%{postver}" != ".0"
+%if 0 && "%{postver}" != ".0"
 %patch0 -p1
 %endif
 
