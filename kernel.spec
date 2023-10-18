@@ -18,7 +18,7 @@
 %bcond_without	source		# don't build kernel-source package
 %bcond_without	doc			# don't build kernel-doc package
 %bcond_without	pcmcia		# don't build pcmcia
-%bcond_without	firmware	# don't build firmware into main package
+%bcond_with	firmware	# don't build firmware into main package
 
 %bcond_with	verbose		# verbose build (V=1)
 
@@ -70,9 +70,10 @@
 %define		have_pcmcia	0
 %endif
 
-%define		rel		1
+%define		rel		2
 %define		basever		4.4
 %define		postver		.302
+%define         cipver          cip80
 
 # define this to '-%{basever}' for longterm branch
 %define		versuffix	-%{basever}
@@ -120,9 +121,11 @@ Release:	%{rel}
 Epoch:		3
 License:	GPL v2
 Group:		Base/Kernel
-Source0:	http://www.kernel.org/pub/linux/kernel/v4.x/linux-%{basever}.tar.xz
-# Source0-md5:	9a78fa2eb6c68ca5a40ed5af08142599
-%if "%{postver}" != ".0"
+# Source0:	http://www.kernel.org/pub/linux/kernel/v4.x/linux-%{basever}.tar.xz
+# https://wiki.linuxfoundation.org/civilinfrastructureplatform/start
+Source0:        https://www.kernel.org/pub/linux/kernel/projects/cip/4.4/linux-cip-%{basever}%{postver}-%{cipver}.tar.xz
+# Source0-md5:	bc45ba3bcbe51588bd96e1270c16bf43
+%if 0 && "%{postver}" != ".0"
 Patch0:		http://www.kernel.org/pub/linux/kernel/v4.x/patch-%{version}.xz
 # Patch0-md5:	4aa4dc0f2534cf9dd0c964e0b692fe8b
 %endif
@@ -355,7 +358,7 @@ BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 %endif
 
 %define		topdir		%{_builddir}/%{name}-%{version}
-%define		srcdir		%{topdir}/linux-%{basever}
+%define		srcdir		%{topdir}/linux-cip-%{basever}%{postver}-%{cipver}
 %define		objdir		%{topdir}/%{targetobj}
 %define		targetobj	%{_target_base_arch}-gcc-%(%{__cc} -dumpversion)
 
@@ -646,9 +649,9 @@ Pakiet zawiera dokumentację do jądra Linuksa pochodzącą z katalogu
 %setup -qc
 ln -s %{SOURCE7} kernel-module-build.pl
 ln -s %{SOURCE10} Makefile
-cd linux-%{basever}
+cd linux-cip-%{basever}%{postver}-%{cipver}
 
-%if "%{postver}" != ".0"
+%if 0 && "%{postver}" != ".0"
 %patch0 -p1
 %endif
 

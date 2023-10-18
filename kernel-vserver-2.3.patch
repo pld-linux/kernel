@@ -1142,9 +1142,9 @@ diff -urNp -x '*.orig' linux-4.4/drivers/md/dm-ioctl.c linux-4.4/drivers/md/dm-i
 --- linux-4.4/drivers/md/dm-ioctl.c	2021-02-24 16:56:10.939059645 +0100
 +++ linux-4.4/drivers/md/dm-ioctl.c	2021-02-24 16:56:24.546154835 +0100
 @@ -16,6 +16,7 @@
- #include <linux/dm-ioctl.h>
  #include <linux/hdreg.h>
  #include <linux/compat.h>
+ #include <linux/nospec.h>
 +#include <linux/vs_context.h>
  
  #include <asm/uaccess.h>
@@ -23268,7 +23268,7 @@ diff -urNp -x '*.orig' linux-4.4/net/core/sock.c linux-4.4/net/core/sock.c
 +
  #ifdef CONFIG_NET_RX_BUSY_POLL
  	sk->sk_napi_id		=	0;
- 	sk->sk_ll_usec		=	sysctl_net_busy_read;
+ 	sk->sk_ll_usec		=	READ_ONCE(sysctl_net_busy_read);
 diff -urNp -x '*.orig' linux-4.4/net/ipv4/af_inet.c linux-4.4/net/ipv4/af_inet.c
 --- linux-4.4/net/ipv4/af_inet.c	2021-02-24 16:56:12.069095231 +0100
 +++ linux-4.4/net/ipv4/af_inet.c	2021-02-24 16:56:24.622823916 +0100
@@ -24408,7 +24408,7 @@ diff -urNp -x '*.orig' linux-4.4/net/ipv6/udp.c linux-4.4/net/ipv6/udp.c
  #include <linux/proc_fs.h>
  #include <linux/seq_file.h>
 @@ -76,32 +77,60 @@ static u32 udp6_ehashfn(const struct net
- 			       udp_ipv6_hash_secret + net_hash_mix(net));
+ 			       udp6_ehash_secret + net_hash_mix(net));
  }
  
 -int ipv6_rcv_saddr_equal(const struct sock *sk, const struct sock *sk2)
