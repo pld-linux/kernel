@@ -69,7 +69,7 @@
 
 %define		rel		1
 %define		basever		5.4
-%define		postver		.257
+%define		postver		.260
 
 # define this to '-%{basever}' for longterm branch
 %define		versuffix	-%{basever}
@@ -123,7 +123,7 @@ Source0:	https://www.kernel.org/pub/linux/kernel/v5.x/linux-%{basever}.tar.xz
 # Source0-md5:	ce9b2d974d27408a61c53a30d3f98fb9
 %if "%{postver}" != ".0"
 Patch0:		https://www.kernel.org/pub/linux/kernel/v5.x/patch-%{version}.xz
-# Patch0-md5:	a9a0950a344ad06f6181106c01512e83
+# Patch0-md5:	4607fea4dfd6c6b537c9c81cb7459945
 %endif
 Source1:	kernel.sysconfig
 
@@ -150,8 +150,6 @@ Source44:	kernel-rt.config
 Source55:	kernel-imq.config
 
 Source58:	kernel-inittmpfs.config
-
-Patch1:		gcc13.patch
 
 # http://dev.gentoo.org/~spock/projects/fbcondecor/archive/fbcondecor-0.9.4-2.6.25-rc6.patch
 Patch3:		kernel-fbcondecor.patch
@@ -623,8 +621,6 @@ cd linux-%{basever}
 %endif
 
 %if %{without vanilla}
-
-%patch1 -p1
 
 %if %{with fbcondecor}
 %patch3 -p1
