@@ -68,10 +68,9 @@
 %define		have_pcmcia	0
 %endif
 
-%define		rel		2
+%define		rel		1
 %define		basever		4.19
-%define		postver		.295
-%define         cipver          cip103
+%define		postver		.298
 
 # define this to '-%{basever}' for longterm branch
 %define		versuffix	-%{basever}
@@ -123,11 +122,11 @@ License:	GPL v2
 Group:		Base/Kernel
 # Source0:	https://www.kernel.org/pub/linux/kernel/v4.x/linux-%{basever}.tar.xz
 # https://wiki.linuxfoundation.org/civilinfrastructureplatform/start
-Source0:        https://www.kernel.org/pub/linux/kernel/projects/cip/4.19/linux-cip-%{basever}%{postver}-%{cipver}.tar.xz
-# Source0-md5:	5d23dc75ee29c1f8081efdc2cbeccf6f
-%if 0 && "%{postver}" != ".0"
+Source0:        https://www.kernel.org/pub/linux/kernel/4.19/linux-%{basever}.tar.xz
+# Source0-md5:	740a90cf810c2105df8ee12e5d0bb900
+%if "%{postver}" != ".0"
 Patch0:		https://www.kernel.org/pub/linux/kernel/v4.x/patch-%{version}.xz
-# Patch0-md5:	97959b550c97ae656f7e321cc0e4767e
+# Patch0-md5:	9f1b2c6f71936e1a1c1f159b899cc5fe
 %endif
 Source1:	kernel.sysconfig
 
@@ -155,7 +154,6 @@ Source55:	kernel-imq.config
 
 Source58:	kernel-inittmpfs.config
 
-Patch1:		gcc13.patch
 # http://dev.gentoo.org/~spock/projects/fbcondecor/archive/fbcondecor-0.9.4-2.6.25-rc6.patch
 Patch3:		kernel-fbcondecor.patch
 Patch6:		linux-wistron-nx.patch
@@ -346,7 +344,7 @@ BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 %endif
 
 %define		topdir		%{_builddir}/%{name}-%{version}
-%define		srcdir		%{topdir}/linux-cip-%{basever}%{postver}-%{cipver}
+%define		srcdir		%{topdir}/linux-%{basever}
 %define		objdir		%{topdir}/%{targetobj}
 %define		targetobj	%{_target_base_arch}-gcc-%(%{__cc} -dumpversion)
 
@@ -619,15 +617,13 @@ Pakiet zawiera dokumentację do jądra Linuksa pochodzącą z katalogu
 %setup -qc
 ln -s %{SOURCE7} kernel-module-build.pl
 ln -s %{SOURCE10} Makefile
-cd linux-cip-%{basever}%{postver}-%{cipver}
+cd linux-%{basever}
 
-%if 0 && "%{postver}" != ".0"
+%if "%{postver}" != ".0"
 %patch0 -p1
 %endif
 
 %if %{without vanilla}
-
-%patch1 -p1
 
 %if %{with fbcondecor}
 %patch3 -p1
