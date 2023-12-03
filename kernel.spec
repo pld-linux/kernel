@@ -204,7 +204,6 @@ Patch500:	kernel-rt.patch
 
 Patch2000:	kernel-small_fixes.patch
 Patch2001:	kernel-pwc-uncompress.patch
-Patch2003:	kernel-regressions.patch
 
 # for rescuecd
 # based on ftp://ftp.leg.uct.ac.za/pub/linux/rip/tmpfs_root-2.6.30.diff.gz
@@ -684,7 +683,6 @@ rm -f localversion-rt
 # Small fixes:
 %patch2000 -p1
 %patch2001 -p1
-#%patch2003 -p1
 
 # Do not remove this, please!
 #%%patch50000 -p1
