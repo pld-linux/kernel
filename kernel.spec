@@ -25,7 +25,6 @@
 %bcond_with	pae		# build PAE (HIGHMEM64G) support on 32bit i686 athlon pentium3 pentium4
 %bcond_with	nfsroot		# build with root on NFS support
 
-%bcond_without	imq		# imq support
 %bcond_without	ipv6		# ipv6 support
 
 %bcond_without	aufs		# aufs4 support
@@ -147,8 +146,6 @@ Source41:	kernel-patches.config
 Source43:	kernel-vserver.config
 Source44:	kernel-rt.config
 
-Source55:	kernel-imq.config
-
 Source58:	kernel-inittmpfs.config
 
 Patch2:		android-enable-building-binder-as-module.patch
@@ -166,9 +163,6 @@ Patch10:	kernel-pom-ng-IPV4OPTSSTRIP.patch
 Patch37:	kernel-owner-xid.patch
 
 ### End netfilter
-
-# http://www.linuximq.net
-Patch50:	kernel-imq.patch
 
 # by Baggins request:
 # derived from ftp://ftp.cmf.nrl.navy.mil/pub/chas/linux-atm/vbr/vbr-kernel-diffs
@@ -631,10 +625,6 @@ cd linux-%{basever}
 ##
 # end of netfilter
 
-%if %{with imq}
-#%patch50 -p1
-%endif
-
 %patch55 -p1
 %patch56 -p1
 
@@ -915,9 +905,6 @@ EOCONFIG
 		rescue.config \
 %endif
 		\
-%if %{with imq}
-		%{SOURCE55} \
-%endif
 %if %{with vserver}
 		%{SOURCE43} \
 %endif
