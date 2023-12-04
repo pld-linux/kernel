@@ -210,6 +210,8 @@ Patch8002:	atheros-disallow-retrain-nongen1-pcie.patch
 Patch8004:	ath-regd.patch
 Patch8005:	rkvdec-hevc.patch
 
+Patch9000:	neighbour-randomize-layout-crash.patch
+
 # Do not remove this line, please. It is easier for me to uncomment two lines, then patch
 # kernel.spec every time.
 #Patch50000:	kernel-usb_reset.patch
@@ -660,6 +662,8 @@ cd linux-%{basever}
 %patch8004 -p1
 %patch8005 -p1
 %endif
+
+%patch9000 -p1
 
 %if %{with rt}
 %patch500 -p1
