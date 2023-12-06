@@ -4,8 +4,6 @@
 #
 # TODO:
 # - benchmark NO_HZ & HZ=1000 vs HZ=300 on i686
-# - IPv4 source address selection for multihomed vservers is completely broken
-#	meaning routing table is ignored except for default
 #
 # HOWTO update configuration files:
 # - run build
@@ -29,8 +27,6 @@
 
 %bcond_without	aufs		# aufs4 support
 
-%bcond_with	vserver		# support for VServer
-
 %bcond_with	rt		# real-time kernel (CONFIG_PREEMPT_RT) for low latencies
 
 %bcond_with	vanilla		# don't include any patches
@@ -44,7 +40,6 @@
 %define		have_pcmcia	1
 
 %if %{with rescuecd}
-%unglobal	with_vserver
 %define		have_drm	0
 %define		have_sound	0
 %endif
@@ -143,7 +138,6 @@ Source26:	kernel-arm.config
 Source27:	kernel-arm64.config
 
 Source41:	kernel-patches.config
-Source43:	kernel-vserver.config
 Source44:	kernel-rt.config
 
 Source58:	kernel-inittmpfs.config
@@ -159,9 +153,6 @@ Patch6:		linux-wistron-nx.patch
 
 Patch10:	kernel-pom-ng-IPV4OPTSSTRIP.patch
 
-# http://ftp.linux-vserver.org/pub/people/dhozac/p/k/delta-owner-xid-feat02.diff
-Patch37:	kernel-owner-xid.patch
-
 ### End netfilter
 
 # by Baggins request:
@@ -176,17 +167,8 @@ Patch59:	kernel-rndis_host-wm5.patch
 # http://patches.aircrack-ng.org/hostap-kernel-2.6.18.patch
 Patch85:	kernel-hostap.patch
 
-%define	vserver_patch 3.18.5-vs2.3.7.3
-# http://vserver.13thfloor.at/Experimental/patch-3.18.5-vs2.3.7.3.diff
-# note there are additional patches from above url:
-# - *fix* are real fixes (we want these)
-# - *feat* are new features/tests (we don't want these)
-Patch100:	kernel-vserver-2.3.patch
-Patch101:	kernel-vserver-fixes.patch
-
 # see update-source.sh
 Patch145:	kernel-aufs.patch
-Patch146:	kernel-aufs+vserver.patch
 Patch147:	kernel-aufs-make.patch
 
 # Show normal colors in menuconfig with ncurses ABI 6
@@ -297,7 +279,6 @@ Conflicts:	reiserfsprogs < 3.6.3
 Conflicts:	rpm < 4.4.2-0.2
 Conflicts:	udev < 1:081
 Conflicts:	util-linux < 2.10o
-Conflicts:	util-vserver < 0.30.216
 Conflicts:	xfsprogs < 2.6.0
 %if %{with pae}
 ExclusiveArch:	i686 pentium3 pentium4 athlon
@@ -383,11 +364,8 @@ BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 %define MakeOpts %{CrossOpts} HOSTCC="%{__cc} -D_FILE_OFFSET_BITS=64"
 
 %define __features \
-%{?with_vserver:Vserver - enabled}\
-%{!?with_vserver:WARNING: VSERVER IS DISABLED IN THIS KERNEL BUILD!}\
 %{?with_fbcondecor:Fbsplash/fbcondecor - enabled }\
 %{?with_nfsroot:Root on NFS - enabled}\
-%{?with_vserver:Linux-VServer - %{vserver_patch}}\
 %{?with_rt:CONFIG_PREEMPT_RT - enabled}\
 
 %define Features %(echo "%{__features}" | sed '/^$/d')
@@ -619,11 +597,6 @@ cd linux-%{basever}
 # kernel-pom-ng-IPV4OPTSSTRIP.patch
 %patch10 -p1
 
-# kernel-owner-xid.patch
-%if %{with vserver}
-%patch37 -p1
-%endif
-
 ##
 # end of netfilter
 
@@ -636,19 +609,10 @@ cd linux-%{basever}
 # hostap enhancements from/for aircrack-ng
 %patch85 -p1
 
-# vserver
-%if %{with vserver}
-%patch100 -p1
-%patch101 -p1
-%endif
-
 %if %{with aufs}
 # aufs
 %patch145 -p1
 %patch147 -p1
-%if %{with vserver}
-%patch146 -p1
-%endif
 %endif
 
 %if %{with rescuecd}
@@ -909,9 +873,6 @@ EOCONFIG
 		rescue.config \
 %endif
 		\
-%if %{with vserver}
-		%{SOURCE43} \
-%endif
 %if %{with rt}
 		%{SOURCE44} \
 %endif
@@ -1142,14 +1103,6 @@ if [[ "$CREATE_SYMLINKS" != [Nn][Oo] ]]; then
 fi
 
 %depmod %{kernel_release}
-
-%if %{without vserver}
-%banner -e -a kernel <<EOF
-
-WARNING: Vserver support is DISABLED in this kernel build!
-
-EOF
-%endif
 
 %posttrans
 # use posttrans to generate initrd after all dependant module packages (-drm, etc) are installed
