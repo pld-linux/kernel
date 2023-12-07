@@ -194,10 +194,6 @@ Patch8005:	rkvdec-hevc.patch
 
 Patch9000:	neighbour-randomize-layout-crash.patch
 
-# Do not remove this line, please. It is easier for me to uncomment two lines, then patch
-# kernel.spec every time.
-#Patch50000:	kernel-usb_reset.patch
-
 URL:		https://www.kernel.org/
 AutoReqProv:	no
 BuildRequires:	/sbin/depmod
@@ -641,9 +637,6 @@ rm -f localversion-rt
 # Small fixes:
 %patch2000 -p1
 %patch2001 -p1
-
-# Do not remove this, please!
-#%%patch50000 -p1
 
 chmod 755 tools/objtool/sync-check.sh
 
