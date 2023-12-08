@@ -59,9 +59,9 @@
 %define		have_pcmcia	0
 %endif
 
-%define		rel		2
+%define		rel		1
 %define		basever		6.6
-%define		postver		.4
+%define		postver		.5
 
 # define this to '-%{basever}' for longterm branch
 %define		versuffix	%{nil}
@@ -115,7 +115,7 @@ Source0:	https://www.kernel.org/pub/linux/kernel/v6.x/linux-%{basever}.tar.xz
 # Source0-md5:	452098d80ba925af3a4ab35998f3aef5
 %if "%{postver}" != ".0"
 Patch0:		https://www.kernel.org/pub/linux/kernel/v6.x/patch-%{version}.xz
-# Patch0-md5:	0d2c1c3ef1c023d9c5f34d19eaad4cb0
+# Patch0-md5:	16bc0dc7e680a14817eab74a28267620
 %endif
 Source1:	kernel.sysconfig
 
@@ -191,8 +191,6 @@ Patch8001:	kernel-pinebook-pro.patch
 Patch8002:	atheros-disallow-retrain-nongen1-pcie.patch
 Patch8004:	ath-regd.patch
 Patch8005:	rkvdec-hevc.patch
-
-Patch9000:	neighbour-randomize-layout-crash.patch
 
 URL:		https://www.kernel.org/
 AutoReqProv:	no
@@ -622,8 +620,6 @@ cd linux-%{basever}
 %patch8004 -p1
 %patch8005 -p1
 %endif
-
-%patch9000 -p1
 
 %if %{with rt}
 %patch500 -p1
