@@ -59,9 +59,9 @@
 %define		have_pcmcia	0
 %endif
 
-%define		rel		1
-%define		basever		6.6
-%define		postver		.10
+%define		rel		0.1
+%define		basever		6.7
+%define		postver		.0
 
 # define this to '-%{basever}' for longterm branch
 %define		versuffix	%{nil}
@@ -112,7 +112,7 @@ Epoch:		3
 License:	GPL v2
 Group:		Base/Kernel
 Source0:	https://www.kernel.org/pub/linux/kernel/v6.x/linux-%{basever}.tar.xz
-# Source0-md5:	452098d80ba925af3a4ab35998f3aef5
+# Source0-md5:	7861a2ed9d33c0694df738203532b715
 %if "%{postver}" != ".0"
 Patch0:		https://www.kernel.org/pub/linux/kernel/v6.x/patch-%{version}.xz
 # Patch0-md5:	f8232b7bae1e82941f139bf4ef1f1f27
@@ -1374,7 +1374,6 @@ fi
 %endif
 %exclude %dir %{_kernelsrcdir}/arch/um
 %{_kernelsrcdir}/arch/*/kernel/asm-offsets*
-%{_kernelsrcdir}/arch/*/kernel/sigframe*.h
 %{_kernelsrcdir}/drivers/media/pci/bt8xx/bttv.h
 %{_kernelsrcdir}/kernel/bounds.c
 %{_kernelsrcdir}/scripts/basic/*.c
@@ -1425,7 +1424,6 @@ fi
 %defattr(644,root,root,755)
 %{_kernelsrcdir}/arch/*/[!Mik]*
 %{_kernelsrcdir}/arch/*/kernel/[!M]*
-%{_kernelsrcdir}/arch/ia64/install.sh
 %{_kernelsrcdir}/arch/m68k/ifpsp060/[!M]*
 %{_kernelsrcdir}/arch/m68k/ifpsp060/MISC
 %{_kernelsrcdir}/arch/m68k/install.sh
@@ -1438,11 +1436,11 @@ fi
 %exclude %{_kernelsrcdir}/arch/powerpc/lib/crtsavres.*
 %endif
 %{_kernelsrcdir}/arch/arm64/kvm
+%{_kernelsrcdir}/arch/loongarch/kvm
 %{_kernelsrcdir}/arch/mips/kvm
 %{_kernelsrcdir}/arch/s390/kvm
 %{_kernelsrcdir}/arch/x86/kvm
 %exclude %{_kernelsrcdir}/arch/*/kernel/asm-offsets*
-%exclude %{_kernelsrcdir}/arch/*/kernel/sigframe*.h
 %exclude %{_kernelsrcdir}/drivers/media/pci/bt8xx/bttv.h
 %{_kernelsrcdir}/block
 %{_kernelsrcdir}/certs
@@ -1464,7 +1462,6 @@ fi
 %exclude %{_kernelsrcdir}/scripts/Kbuild.include
 %exclude %{_kernelsrcdir}/scripts/Makefile*
 %exclude %{_kernelsrcdir}/scripts/basic
-%exclude %{_kernelsrcdir}/scripts/check-local-export
 %exclude %{_kernelsrcdir}/scripts/kconfig
 %exclude %{_kernelsrcdir}/scripts/mkcompile_h
 %exclude %{_kernelsrcdir}/scripts/mod

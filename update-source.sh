@@ -1,7 +1,7 @@
 #!/bin/sh
 set -xe
 
-#BRANCH=aufs6.5
+#BRANCH=aufs6.6
 BRANCH=aufs6.x-rcN
 
 # aufs6
