@@ -1,5 +1,5 @@
 SPDX-License-Identifier: GPL-2.0
-aufs6.x-rcN kbuild patch
+aufs6.6 kbuild patch
 
 diff --git a/fs/Kconfig b/fs/Kconfig
 index aa7e03cc1941..bf780967b6c4 100644
@@ -23,13 +23,13 @@ index f9541f40be4e..3a0e13ee39e7 100644
  obj-$(CONFIG_ZONEFS_FS)		+= zonefs/
 +obj-$(CONFIG_AUFS_FS)           += aufs/
 SPDX-License-Identifier: GPL-2.0
-aufs6.x-rcN base patch
+aufs6.6 base patch
 
 diff --git a/MAINTAINERS b/MAINTAINERS
-index bf0f54c24f81..39b1844bce57 100644
+index dd5de540ec0b..1b495555a80c 100644
 --- a/MAINTAINERS
 +++ b/MAINTAINERS
-@@ -3316,6 +3316,19 @@ F:	include/uapi/linux/audit.h
+@@ -3334,6 +3334,19 @@ F:	include/uapi/linux/audit.h
  F:	kernel/audit*
  F:	lib/*audit.c
  
@@ -146,7 +146,7 @@ index d983d375ff11..7216ef993b5f 100644
  	if (unlikely(!out->f_op->splice_write))
  		return warn_unsupported(out, "write");
 diff --git a/include/linux/fs.h b/include/linux/fs.h
-index 4aeb3fa11927..dd5871d0c429 100644
+index 4a40823c3c67..a46e516bfc32 100644
 --- a/include/linux/fs.h
 +++ b/include/linux/fs.h
 @@ -1099,6 +1099,7 @@ extern void fasync_free(struct fasync_struct *);
@@ -157,7 +157,7 @@ index 4aeb3fa11927..dd5871d0c429 100644
  extern void __f_setown(struct file *filp, struct pid *, enum pid_type, int force);
  extern int f_setown(struct file *filp, int who, int force);
  extern void f_delown(struct file *filp);
-@@ -1901,6 +1902,7 @@ struct file_operations {
+@@ -1872,6 +1873,7 @@ struct file_operations {
  	int (*lock) (struct file *, int, struct file_lock *);
  	unsigned long (*get_unmapped_area)(struct file *, unsigned long, unsigned long, unsigned long, unsigned long);
  	int (*check_flags)(int);
@@ -235,7 +235,7 @@ index e85b5ad3e206..db4297f60bd3 100644
  #ifdef CONFIG_LOCK_STAT
  static DEFINE_PER_CPU(struct lock_class_stats[MAX_LOCKDEP_KEYS], cpu_lock_stats);
 SPDX-License-Identifier: GPL-2.0
-aufs6.x-rcN mmap patch
+aufs6.6 mmap patch
 
 diff --git a/fs/proc/base.c b/fs/proc/base.c
 index ffd54617c354..29ec720c8038 100644
@@ -292,7 +292,7 @@ index 3dd5be96691b..40d9d970b308 100644
  	struct mempolicy *pol;
  	char buffer[64];
 diff --git a/fs/proc/task_nommu.c b/fs/proc/task_nommu.c
-index a8ac0dd8041e..9fca456e2259 100644
+index 7cebd397cc26..81be1641c7fb 100644
 --- a/fs/proc/task_nommu.c
 +++ b/fs/proc/task_nommu.c
 @@ -137,7 +137,10 @@ static int nommu_vma_show(struct seq_file *m, struct vm_area_struct *vma)
@@ -402,10 +402,10 @@ index ec65984e2ade..d59461647ccd 100644
  obj-$(CONFIG_SHRINKER_DEBUG) += shrinker_debug.o
 +obj-y += prfile.o
 diff --git a/mm/filemap.c b/mm/filemap.c
-index 582f5317ff71..c024ebb30073 100644
+index f0a15ce1bd1b..a5eba9bbe416 100644
 --- a/mm/filemap.c
 +++ b/mm/filemap.c
-@@ -3599,7 +3599,7 @@ vm_fault_t filemap_page_mkwrite(struct vm_fault *vmf)
+@@ -3626,7 +3626,7 @@ vm_fault_t filemap_page_mkwrite(struct vm_fault *vmf)
  	vm_fault_t ret = VM_FAULT_LOCKED;
  
  	sb_start_pagefault(mapping->host->i_sb);
@@ -415,7 +415,7 @@ index 582f5317ff71..c024ebb30073 100644
  	if (folio->mapping != mapping) {
  		folio_unlock(folio);
 diff --git a/mm/mmap.c b/mm/mmap.c
-index b56a7f0c9f85..5eb114409e07 100644
+index 9e018d8dd7d6..047bd4a0ced8 100644
 --- a/mm/mmap.c
 +++ b/mm/mmap.c
 @@ -140,7 +140,7 @@ static void remove_vma(struct vm_area_struct *vma, bool unreachable)
@@ -436,7 +436,7 @@ index b56a7f0c9f85..5eb114409e07 100644
  		}
  		if (vp->remove->anon_vma)
  			anon_vma_merge(vp->vma, vp->remove);
-@@ -2364,7 +2364,7 @@ int __split_vma(struct vma_iterator *vmi, struct vm_area_struct *vma,
+@@ -2384,7 +2384,7 @@ int __split_vma(struct vma_iterator *vmi, struct vm_area_struct *vma,
  		goto out_free_mpol;
  
  	if (new->vm_file)
@@ -445,7 +445,7 @@ index b56a7f0c9f85..5eb114409e07 100644
  
  	if (new->vm_ops && new->vm_ops->open)
  		new->vm_ops->open(new);
-@@ -2781,7 +2781,7 @@ unsigned long mmap_region(struct file *file, unsigned long addr,
+@@ -2801,7 +2801,7 @@ unsigned long mmap_region(struct file *file, unsigned long addr,
  				 * and cause general protection fault
  				 * ultimately.
  				 */
@@ -454,7 +454,7 @@ index b56a7f0c9f85..5eb114409e07 100644
  				vm_area_free(vma);
  				vma = merge;
  				/* Update vm_flags to pick up the change. */
-@@ -2876,7 +2876,7 @@ unsigned long mmap_region(struct file *file, unsigned long addr,
+@@ -2896,7 +2896,7 @@ unsigned long mmap_region(struct file *file, unsigned long addr,
  
  	if (file || vma->vm_file) {
  unmap_and_free_vma:
@@ -463,7 +463,7 @@ index b56a7f0c9f85..5eb114409e07 100644
  		vma->vm_file = NULL;
  
  		vma_iter_set(&vmi, vma->vm_end);
-@@ -2938,6 +2938,9 @@ SYSCALL_DEFINE5(remap_file_pages, unsigned long, start, unsigned long, size,
+@@ -2958,6 +2958,9 @@ SYSCALL_DEFINE5(remap_file_pages, unsigned long, start, unsigned long, size,
  	unsigned long populate = 0;
  	unsigned long ret = -EINVAL;
  	struct file *file;
@@ -473,7 +473,7 @@ index b56a7f0c9f85..5eb114409e07 100644
  
  	pr_warn_once("%s (%d) uses deprecated remap_file_pages() syscall. See Documentation/mm/remap_file_pages.rst.\n",
  		     current->comm, current->pid);
-@@ -2996,10 +2999,34 @@ SYSCALL_DEFINE5(remap_file_pages, unsigned long, start, unsigned long, size,
+@@ -3016,10 +3019,34 @@ SYSCALL_DEFINE5(remap_file_pages, unsigned long, start, unsigned long, size,
  	if (vma->vm_flags & VM_LOCKED)
  		flags |= MAP_LOCKED;
  
@@ -508,7 +508,7 @@ index b56a7f0c9f85..5eb114409e07 100644
  out:
  	mmap_write_unlock(mm);
  	if (populate)
-@@ -3350,7 +3377,7 @@ struct vm_area_struct *copy_vma(struct vm_area_struct **vmap,
+@@ -3370,7 +3397,7 @@ struct vm_area_struct *copy_vma(struct vm_area_struct **vmap,
  		if (anon_vma_clone(new_vma, vma))
  			goto out_free_mempol;
  		if (new_vma->vm_file)
@@ -517,7 +517,7 @@ index b56a7f0c9f85..5eb114409e07 100644
  		if (new_vma->vm_ops && new_vma->vm_ops->open)
  			new_vma->vm_ops->open(new_vma);
  		if (vma_link(mm, new_vma))
-@@ -3364,7 +3391,7 @@ struct vm_area_struct *copy_vma(struct vm_area_struct **vmap,
+@@ -3384,7 +3411,7 @@ struct vm_area_struct *copy_vma(struct vm_area_struct **vmap,
  		new_vma->vm_ops->close(new_vma);
  
  	if (new_vma->vm_file)
@@ -663,7 +663,7 @@ index 000000000000..8f820a235364
 +}
 +#endif /* !CONFIG_MMU */
 SPDX-License-Identifier: GPL-2.0
-aufs6.x-rcN standalone patch
+aufs6.6 standalone patch
 
 diff --git a/fs/dcache.c b/fs/dcache.c
 index 6c930ceed526..576ad162cdec 100644
@@ -830,10 +830,10 @@ index db4297f60bd3..9aca18312afb 100644
  
  #ifdef CONFIG_LOCK_STAT
 diff --git a/kernel/task_work.c b/kernel/task_work.c
-index 065e1ef8fc8d..c623c6f0c645 100644
+index 95a7e1b7f1da..5053670775d3 100644
 --- a/kernel/task_work.c
 +++ b/kernel/task_work.c
-@@ -182,3 +182,4 @@ void task_work_run(void)
+@@ -183,3 +183,4 @@ void task_work_run(void)
  		} while (work);
  	}
  }
@@ -39046,7 +39046,7 @@ diff -urN /usr/share/empty/fs/aufs/xino.c linux/fs/aufs/xino.c
 +}
 diff -urN /usr/share/empty/include/uapi/linux/aufs_type.h linux/include/uapi/linux/aufs_type.h
 --- /usr/share/empty/include/uapi/linux/aufs_type.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux/include/uapi/linux/aufs_type.h	2023-10-31 09:31:04.203214083 +0100
++++ linux/include/uapi/linux/aufs_type.h	2024-01-08 11:20:10.579994807 +0100
 @@ -0,0 +1,452 @@
 +/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
 +/*
@@ -39090,7 +39090,7 @@ diff -urN /usr/share/empty/include/uapi/linux/aufs_type.h linux/include/uapi/lin
 +#include <limits.h>
 +#endif /* __KERNEL__ */
 +
-+#define AUFS_VERSION	"6.x-rcN-20230925"
++#define AUFS_VERSION	"6.6-20231106"
 +
 +/* todo? move this to linux-2.6.19/include/magic.h */
 +#define AUFS_SUPER_MAGIC	('a' << 24 | 'u' << 16 | 'f' << 8 | 's')
@@ -39501,7 +39501,7 @@ diff -urN /usr/share/empty/include/uapi/linux/aufs_type.h linux/include/uapi/lin
 +
 +#endif /* __AUFS_TYPE_H__ */
 SPDX-License-Identifier: GPL-2.0
-aufs6.x-rcN loopback patch
+aufs6.6 loopback patch
 
 diff --git a/drivers/block/loop.c b/drivers/block/loop.c
 index 1fefc6a8d049..86f1f66305d2 100644
@@ -39726,10 +39726,10 @@ index 07d3412e950f..c4a00f620e57 100644
  
  /* ---------------------------------------------------------------------- */
 diff --git a/include/linux/fs.h b/include/linux/fs.h
-index dd5871d0c429..748091221f2d 100644
+index a46e516bfc32..a0d040eef83d 100644
 --- a/include/linux/fs.h
 +++ b/include/linux/fs.h
-@@ -2056,6 +2056,11 @@ struct super_operations {
+@@ -2027,6 +2027,11 @@ struct super_operations {
  	long (*free_cached_objects)(struct super_block *,
  				    struct shrink_control *);
  	void (*shutdown)(struct super_block *sb);
