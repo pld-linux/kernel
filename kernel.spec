@@ -133,7 +133,6 @@ Source21:	kernel-x86.config
 Source22:	kernel-sparc.config
 Source23:	kernel-alpha.config
 Source24:	kernel-powerpc.config
-Source25:	kernel-ia64.config
 Source26:	kernel-arm.config
 Source27:	kernel-arm64.config
 
@@ -277,7 +276,7 @@ Conflicts:	xfsprogs < 2.6.0
 %if %{with pae}
 ExclusiveArch:	i686 pentium3 pentium4 athlon
 %else
-ExclusiveArch:	i486 i586 i686 pentium3 pentium4 athlon %{x8664} x32 alpha %{arm} ia64 ppc ppc64 sparc sparc64 aarch64
+ExclusiveArch:	i486 i586 i686 pentium3 pentium4 athlon %{x8664} x32 alpha %{arm} ppc ppc64 sparc sparc64 aarch64
 %endif
 ExclusiveOS:	Linux
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
@@ -307,11 +306,7 @@ BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 %define		_noautochrpath	.*%{_kernelsrcdir}/.*
 %define		_enable_debug_packages	0
 
-%ifarch ia64
-%define		initrd_dir	/boot/efi
-%else
 %define		initrd_dir	/boot
-%endif
 
 %define		topdir		%{_builddir}/%{name}-%{version}
 %define		srcdir		%{topdir}/linux-%{basever}
@@ -948,11 +943,6 @@ cp -aL %{objdir}/.config $RPM_BUILD_ROOT/boot/config-%{kernel_release}
 	install -p %{objdir}/vmlinux $RPM_BUILD_ROOT/boot/vmlinuz-%{kernel_release}
 	install -p %{objdir}/vmlinux $RPM_BUILD_ROOT/boot/vmlinux-%{kernel_release}
 %endif
-%ifarch ia64
-	%{__gzip} -cfv %{objdir}/vmlinux > %{objdir}/vmlinuz
-	cp -a %{objdir}/vmlinuz $RPM_BUILD_ROOT/boot/efi/vmlinuz-%{kernel_release}
-	ln -sf efi/vmlinuz-%{kernel_release} $RPM_BUILD_ROOT/boot/vmlinuz-%{kernel_release}
-%endif
 %ifarch alpha sparc sparc64
 	%{__gzip} -cfv %{objdir}/vmlinux > %{objdir}/vmlinuz
 	cp -a %{objdir}/vmlinuz $RPM_BUILD_ROOT/boot/vmlinuz-%{kernel_release}
@@ -1061,14 +1051,6 @@ fi
 %post
 [ -f /etc/sysconfig/kernel ] && . /etc/sysconfig/kernel
 if [[ "$CREATE_SYMLINKS" != [Nn][Oo] ]]; then
-%ifarch ia64
-	mv -f /boot/efi/vmlinuz{,.old} 2> /dev/null
-	ln -sf vmlinuz-%{kernel_release} /boot/efi/vmlinuz
-%if 0%{?alt_kernel:1}
-	mv -f /boot/efi/vmlinuz%{_alt_kernel}{,.old} 2> /dev/null
-	ln -sf vmlinuz-%{kernel_release} /boot/efi/vmlinuz%{_alt_kernel}
-%endif
-%endif
 	mv -f /boot/vmlinuz{,.old} 2> /dev/null
 	mv -f /boot/System.map{,.old} 2> /dev/null
 	ln -sf vmlinuz-%{kernel_release} /boot/vmlinuz
@@ -1192,9 +1174,6 @@ fi
 %attr(640,root,root) %config(noreplace) %verify(not md5 mtime size) /etc/sysconfig/kernel
 %ifarch sparc sparc64
 /boot/vmlinux.aout-%{kernel_release}
-%endif
-%ifarch ia64
-/boot/efi/vmlinuz-%{kernel_release}
 %endif
 %ifarch %{arm} aarch64
 /boot/dtb-%{kernel_release}
