@@ -59,7 +59,7 @@
 %define		have_pcmcia	0
 %endif
 
-%define		rel		0.1
+%define		rel		1
 %define		basever		6.7
 %define		postver		.2
 
@@ -169,6 +169,7 @@ Patch85:	kernel-hostap.patch
 # see update-source.sh
 Patch145:	kernel-aufs.patch
 Patch147:	kernel-aufs-make.patch
+Patch148:	kernel-aufs-fixes.patch
 
 # Show normal colors in menuconfig with ncurses ABI 6
 Patch250:	kernel-fix_256colors_menuconfig.patch
@@ -602,6 +603,7 @@ cd linux-%{basever}
 # aufs
 %patch145 -p1
 %patch147 -p1
+%patch148 -p1
 %endif
 
 %if %{with rescuecd}
