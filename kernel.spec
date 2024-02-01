@@ -233,7 +233,6 @@ Requires:	kmod >= %{kmod_ver}
 Requires:	cpuinfo(pae)
 %endif
 %endif
-Suggests:	crda
 Suggests:	dracut
 Suggests:	keyutils
 Suggests:	linux-firmware
