@@ -59,9 +59,9 @@
 %define		have_pcmcia	0
 %endif
 
-%define		rel		1
-%define		basever		6.7
-%define		postver		.9
+%define		rel		0.1
+%define		basever		6.8
+%define		postver		.0
 
 # define this to '-%{basever}' for longterm branch
 %define		versuffix	%{nil}
@@ -112,7 +112,7 @@ Epoch:		3
 License:	GPL v2
 Group:		Base/Kernel
 Source0:	https://www.kernel.org/pub/linux/kernel/v6.x/linux-%{basever}.tar.xz
-# Source0-md5:	7861a2ed9d33c0694df738203532b715
+# Source0-md5:	72d623b959a11850b57406f0b9fe3946
 %if "%{postver}" != ".0"
 Patch0:		https://www.kernel.org/pub/linux/kernel/v6.x/patch-%{version}.xz
 # Patch0-md5:	5b31116070986a56ee2747daf53ca48c
@@ -162,14 +162,9 @@ Patch56:	kernel-atmdd.patch
 # http://synce.svn.sourceforge.net/svnroot/synce/trunk/patches/linux-2.6.22-rndis_host-wm5.patch
 Patch59:	kernel-rndis_host-wm5.patch
 
-# adds some ids for hostap suported cards and monitor_enable from/for aircrack-ng
-# http://patches.aircrack-ng.org/hostap-kernel-2.6.18.patch
-Patch85:	kernel-hostap.patch
-
 # see update-source.sh
 Patch145:	kernel-aufs.patch
 Patch147:	kernel-aufs-make.patch
-Patch148:	kernel-aufs-fixes.patch
 
 # Show normal colors in menuconfig with ncurses ABI 6
 Patch250:	kernel-fix_256colors_menuconfig.patch
@@ -595,14 +590,10 @@ cd linux-%{basever}
 # kernel-rndis_host-wm5.patch
 %patch59 -p1
 
-# hostap enhancements from/for aircrack-ng
-%patch85 -p1
-
 %if %{with aufs}
 # aufs
 %patch145 -p1
 %patch147 -p1
-%patch148 -p1
 %endif
 
 %if %{with rescuecd}
