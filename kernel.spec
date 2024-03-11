@@ -15,7 +15,6 @@
 # Conditional build:
 %bcond_without	source		# don't build kernel-source package
 %bcond_without	doc			# don't build kernel-doc package
-%bcond_without	pcmcia		# don't build pcmcia
 
 %bcond_with	verbose		# verbose build (V=1)
 
@@ -37,7 +36,6 @@
 
 %define		have_drm	1
 %define		have_sound	1
-%define		have_pcmcia	1
 
 %if %{with rescuecd}
 %define		have_drm	0
@@ -47,16 +45,10 @@
 %if %{with myown}
 %define		have_drm	0
 %define		have_sound	0
-%define		have_pcmcia	0
 %endif
 
 %ifarch sparc sparc64
-%unglobal	with_pcmcia
 %define		have_drm	0
-%endif
-
-%if %{without pcmcia}
-%define		have_pcmcia	0
 %endif
 
 %define		rel		0.1
@@ -419,27 +411,6 @@ DRM Kernel Treiber.
 
 %description drm -l pl.UTF-8
 Sterowniki DRM.
-
-%package pcmcia
-Summary:	PCMCIA modules
-Summary(de.UTF-8):	PCMCIA Module
-Summary(pl.UTF-8):	Moduły PCMCIA
-Group:		Base/Kernel
-Requires(postun):	%{name} = %{epoch}:%{version}-%{release}
-Requires:	%{name} = %{epoch}:%{version}-%{release}
-Obsoletes:	kernel-smp-pcmcia < 3:2.6.21
-Conflicts:	pcmcia-cs < 3.1.21
-Conflicts:	pcmciautils < 004
-AutoReqProv:	no
-
-%description pcmcia
-PCMCIA modules.
-
-%description pcmcia -l de.UTF-8
-PCMCIA Module.
-
-%description pcmcia -l pl.UTF-8
-Moduły PCMCIA.
 
 %package sound-alsa
 Summary:	ALSA kernel modules
@@ -806,10 +777,6 @@ BuildConfig() {
 	%endif
 %endif
 
-%if %{without pcmcia}
-		CONFIG_PCMCIA=n
-%endif
-
 %if %{with fbcondecor}
 		CONFIG_FB_S3=n
 		CONFIG_FB_VT8623=n
@@ -1128,12 +1095,6 @@ fi
 %postun drm
 %depmod %{kernel_release}
 
-%post pcmcia
-%depmod %{kernel_release}
-
-%postun pcmcia
-%depmod %{kernel_release}
-
 %post sound-alsa
 %depmod %{kernel_release}
 
@@ -1205,33 +1166,6 @@ fi
 %endif
 %endif
 %dir /lib/modules/%{kernel_release}/misc
-%if %{have_pcmcia}
-%exclude /lib/modules/%{kernel_release}/kernel/drivers/pcmcia/[!p]*
-%exclude /lib/modules/%{kernel_release}/kernel/drivers/pcmcia/pd6729.ko*
-%exclude /lib/modules/%{kernel_release}/kernel/drivers/*/pcmcia
-%if %{without rescuecd}
-%exclude /lib/modules/%{kernel_release}/kernel/drivers/ata/pata_pcmcia.ko*
-%exclude /lib/modules/%{kernel_release}/kernel/drivers/bluetooth/*_cs.ko*
-%endif
-%exclude /lib/modules/%{kernel_release}/kernel/drivers/net/arcnet/com20020_cs.ko*
-%exclude /lib/modules/%{kernel_release}/kernel/drivers/net/can/softing/softing_cs.ko*
-%exclude /lib/modules/%{kernel_release}/kernel/drivers/net/ethernet/3com/3c574_cs.ko*
-%exclude /lib/modules/%{kernel_release}/kernel/drivers/net/ethernet/3com/3c589_cs.ko*
-%exclude /lib/modules/%{kernel_release}/kernel/drivers/net/ethernet/8390/axnet_cs.ko*
-%exclude /lib/modules/%{kernel_release}/kernel/drivers/net/ethernet/8390/pcnet_cs.ko*
-%exclude /lib/modules/%{kernel_release}/kernel/drivers/net/ethernet/amd/nmclan_cs.ko*
-%exclude /lib/modules/%{kernel_release}/kernel/drivers/net/ethernet/fujitsu/fmvj18x_cs.ko*
-%exclude /lib/modules/%{kernel_release}/kernel/drivers/net/ethernet/smsc/smc91c92_cs.ko*
-%exclude /lib/modules/%{kernel_release}/kernel/drivers/net/ethernet/xircom/xirc2ps_cs.ko*
-%exclude /lib/modules/%{kernel_release}/kernel/drivers/net/wireless/atmel/*_cs.ko*
-%exclude /lib/modules/%{kernel_release}/kernel/drivers/net/wireless/cisco/*_cs.ko*
-%exclude /lib/modules/%{kernel_release}/kernel/drivers/net/wireless/intersil/hostap/hostap_cs.ko*
-%exclude /lib/modules/%{kernel_release}/kernel/drivers/net/wireless/intersil/orinoco/*_cs.ko*
-%exclude /lib/modules/%{kernel_release}/kernel/drivers/net/wireless/marvell/libertas/*_cs.ko*
-%exclude /lib/modules/%{kernel_release}/kernel/drivers/parport/parport_cs.ko*
-%exclude /lib/modules/%{kernel_release}/kernel/drivers/tty/serial/8250/serial_cs.ko*
-%exclude /lib/modules/%{kernel_release}/kernel/drivers/usb/host/sl811_cs.ko*
-%endif
 %if %{with myown}
 /lib/modules/%{kernel_release}/kernel/sound
 %endif
@@ -1271,36 +1205,6 @@ fi
 %files drm
 %defattr(644,root,root,755)
 /lib/modules/%{kernel_release}/kernel/drivers/gpu
-%endif
-
-%if %{have_pcmcia}
-%files pcmcia
-%defattr(644,root,root,755)
-/lib/modules/%{kernel_release}/kernel/drivers/pcmcia/*ko*
-/lib/modules/%{kernel_release}/kernel/drivers/*/pcmcia
-%exclude /lib/modules/%{kernel_release}/kernel/drivers/pcmcia/pcmcia*ko*
-%if %{without rescuecd}
-/lib/modules/%{kernel_release}/kernel/drivers/bluetooth/*_cs.ko*
-/lib/modules/%{kernel_release}/kernel/drivers/ata/pata_pcmcia.ko*
-%endif
-/lib/modules/%{kernel_release}/kernel/drivers/net/arcnet/com20020_cs.ko*
-/lib/modules/%{kernel_release}/kernel/drivers/net/can/softing/softing_cs.ko*
-/lib/modules/%{kernel_release}/kernel/drivers/net/ethernet/3com/3c574_cs.ko*
-/lib/modules/%{kernel_release}/kernel/drivers/net/ethernet/3com/3c589_cs.ko*
-/lib/modules/%{kernel_release}/kernel/drivers/net/ethernet/8390/axnet_cs.ko*
-/lib/modules/%{kernel_release}/kernel/drivers/net/ethernet/8390/pcnet_cs.ko*
-/lib/modules/%{kernel_release}/kernel/drivers/net/ethernet/amd/nmclan_cs.ko*
-/lib/modules/%{kernel_release}/kernel/drivers/net/ethernet/fujitsu/fmvj18x_cs.ko*
-/lib/modules/%{kernel_release}/kernel/drivers/net/ethernet/smsc/smc91c92_cs.ko*
-/lib/modules/%{kernel_release}/kernel/drivers/net/ethernet/xircom/xirc2ps_cs.ko*
-/lib/modules/%{kernel_release}/kernel/drivers/net/wireless/atmel/*_cs.ko*
-/lib/modules/%{kernel_release}/kernel/drivers/net/wireless/cisco/*_cs.ko*
-/lib/modules/%{kernel_release}/kernel/drivers/net/wireless/intersil/hostap/hostap_cs.ko*
-/lib/modules/%{kernel_release}/kernel/drivers/net/wireless/intersil/orinoco/*_cs.ko*
-/lib/modules/%{kernel_release}/kernel/drivers/net/wireless/marvell/libertas/*_cs.ko*
-/lib/modules/%{kernel_release}/kernel/drivers/parport/parport_cs.ko*
-/lib/modules/%{kernel_release}/kernel/drivers/tty/serial/8250/serial_cs.ko*
-/lib/modules/%{kernel_release}/kernel/drivers/usb/host/sl811_cs.ko*
 %endif
 
 %if %{have_sound}
