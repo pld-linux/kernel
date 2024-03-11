@@ -51,7 +51,7 @@
 %define		have_drm	0
 %endif
 
-%define		rel		0.1
+%define		rel		1
 %define		basever		6.8
 %define		postver		.0
 
@@ -774,6 +774,8 @@ BuildConfig() {
 		CONFIG_HIGHMEM64G=y
 		CONFIG_X86_PAE=y
 		CONFIG_NUMA=n
+	%else
+		CONFIG_X86_PAE=n
 	%endif
 %endif
 
