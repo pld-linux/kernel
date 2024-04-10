@@ -1,66 +1,25 @@
-From 8149051c34bc3d4c55adc56d04ffb7f7a04c2fd9 Mon Sep 17 00:00:00 2001
-From: Dan Johansen <strit@manjaro.org>
-Date: Sun, 2 Jan 2022 16:45:28 +0100
-Subject: [PATCH 1/2] Add megis extcon changes to fusb302
+From ecf210d50915efb265d93f8b84cfd53a492ffefc Mon Sep 17 00:00:00 2001
+From: Ondřej Jirman
+Date: Sun, 7 Nov 2021 19:24:40 +0100
+Subject: usb: typec: typec-extcon: Add typec -> extcon bridge driver
 
-Signed-off-by: Dan Johansen <strit@manjaro.org>
+This bridge connects standard Type C port interfaces for controling
+muxes, switches and usb roles to muxes, switches and usb role
+drivers controlled via extcon interface.
+
+Signed-off-by: Ondrej Jirman <megi@xff.cz>
 ---
- drivers/phy/rockchip/phy-rockchip-typec.c |  5 +++
- drivers/usb/typec/Kconfig                 |  7 ++++
- drivers/usb/typec/Makefile                |  1 +
- drivers/usb/typec/tcpm/fusb302.c          | 47 ++++++++++++++++-------
- drivers/usb/typec/tcpm/fusb302_reg.h      | 16 ++++----
- 5 files changed, 53 insertions(+), 23 deletions(-)
+ drivers/usb/typec/Kconfig        |   7 +
+ drivers/usb/typec/Makefile       |   1 +
+ drivers/usb/typec/typec-extcon.c | 332 +++++++++++++++++++++++++++++++++++++++
+ 3 files changed, 340 insertions(+)
+ create mode 100644 drivers/usb/typec/typec-extcon.c
 
-diff --git a/drivers/phy/rockchip/phy-rockchip-typec.c b/drivers/phy/rockchip/phy-rockchip-typec.c
-index d2bbdc96a167..fa10ee9a5794 100644
---- a/drivers/phy/rockchip/phy-rockchip-typec.c
-+++ b/drivers/phy/rockchip/phy-rockchip-typec.c
-@@ -350,6 +350,7 @@ struct usb3phy_reg {
-  * struct rockchip_usb3phy_port_cfg - usb3-phy port configuration.
-  * @reg: the base address for usb3-phy config.
-  * @typec_conn_dir: the register of type-c connector direction.
-+ * @typec_conn_dir_sel: the register of type-c connector direction source.
-  * @usb3tousb2_en: the register of type-c force usb2 to usb2 enable.
-  * @external_psm: the register of type-c phy external psm clock.
-  * @pipe_status: the register of type-c phy pipe status.
-@@ -360,6 +361,7 @@ struct usb3phy_reg {
- struct rockchip_usb3phy_port_cfg {
- 	unsigned int reg;
- 	struct usb3phy_reg typec_conn_dir;
-+	struct usb3phy_reg typec_conn_dir_sel;
- 	struct usb3phy_reg usb3tousb2_en;
- 	struct usb3phy_reg external_psm;
- 	struct usb3phy_reg pipe_status;
-@@ -434,6 +436,7 @@ static const struct rockchip_usb3phy_port_cfg rk3399_usb3phy_port_cfgs[] = {
- 	{
- 		.reg = 0xff7c0000,
- 		.typec_conn_dir	= { 0xe580, 0, 16 },
-+		.typec_conn_dir_sel	= { 0xe580, 8, 16+8 },
- 		.usb3tousb2_en	= { 0xe580, 3, 19 },
- 		.external_psm	= { 0xe588, 14, 30 },
- 		.pipe_status	= { 0xe5c0, 0, 0 },
-@@ -444,6 +447,7 @@ static const struct rockchip_usb3phy_port_cfg rk3399_usb3phy_port_cfgs[] = {
- 	{
- 		.reg = 0xff800000,
- 		.typec_conn_dir	= { 0xe58c, 0, 16 },
-+		.typec_conn_dir_sel	= { 0xe58c, 8, 16+8 },
- 		.usb3tousb2_en	= { 0xe58c, 3, 19 },
- 		.external_psm	= { 0xe594, 14, 30 },
- 		.pipe_status	= { 0xe5c0, 16, 16 },
-@@ -739,6 +743,7 @@ static int tcphy_phy_init(struct rockchip_typec_phy *tcphy, u8 mode)
- 
- 	reset_control_deassert(tcphy->tcphy_rst);
- 
-+	property_enable(tcphy, &cfg->typec_conn_dir_sel, 0);
- 	property_enable(tcphy, &cfg->typec_conn_dir, tcphy->flip);
- 	tcphy_dp_aux_set_flip(tcphy);
- 
 diff --git a/drivers/usb/typec/Kconfig b/drivers/usb/typec/Kconfig
-index ab480f38523a..01ecc5e590f1 100644
+index 2f80c2792dbd..40a2934691d6 100644
 --- a/drivers/usb/typec/Kconfig
 +++ b/drivers/usb/typec/Kconfig
-@@ -88,6 +88,13 @@ config TYPEC_QCOM_PMIC
+@@ -110,6 +110,13 @@ config TYPEC_WUSB3801
  	  If you choose to build this driver as a dynamically linked module, the
  	  module will be called wusb3801.ko.
  
@@ -75,164 +34,21 @@ index ab480f38523a..01ecc5e590f1 100644
  
  source "drivers/usb/typec/altmodes/Kconfig"
 diff --git a/drivers/usb/typec/Makefile b/drivers/usb/typec/Makefile
-index a0adb8947a30..d9d829386b73 100644
+index 7a368fea61bc..fe4bf3b8ff60 100644
 --- a/drivers/usb/typec/Makefile
 +++ b/drivers/usb/typec/Makefile
-@@ -8,4 +8,5 @@ obj-$(CONFIG_TYPEC_TPS6598X)	+= tipd/
+@@ -11,4 +11,5 @@ obj-$(CONFIG_TYPEC_HD3SS3220)	+= hd3ss3220.o
  obj-$(CONFIG_TYPEC_STUSB160X) 	+= stusb160x.o
  obj-$(CONFIG_TYPEC_RT1719)	+= rt1719.o
  obj-$(CONFIG_TYPEC_WUSB3801)	+= wusb3801.o
 +obj-$(CONFIG_TYPEC_EXTCON)	+= typec-extcon.o
  obj-$(CONFIG_TYPEC)		+= mux/
-diff --git a/drivers/usb/typec/tcpm/fusb302.c b/drivers/usb/typec/tcpm/fusb302.c
-index 72f9001b0792..cb26793f90f8 100644
---- a/drivers/usb/typec/tcpm/fusb302.c
-+++ b/drivers/usb/typec/tcpm/fusb302.c
-@@ -440,6 +440,16 @@ static int tcpm_get_current_limit(struct tcpc_dev *dev)
- 	int current_limit = 0;
- 	unsigned long timeout;
- 
-+	/*
-+	 * To avoid cycles in OF dependencies, we get extcon when necessary
-+	 * outside of probe function.
-+	 */
-+	if (of_property_read_bool(chip->dev->of_node, "extcon") && !chip->extcon) {
-+		chip->extcon = extcon_get_edev_by_phandle(chip->dev, 0);
-+		if (IS_ERR(chip->extcon))
-+			chip->extcon = NULL;
-+	}
-+
- 	if (!chip->extcon)
- 		return 0;
- 
-@@ -498,6 +508,7 @@ static int fusb302_set_toggling(struct fusb302_chip *chip,
- 				enum toggling_mode mode)
- {
- 	int ret = 0;
-+	u8 reg;
- 
- 	/* first disable toggling */
- 	ret = fusb302_i2c_clear_bits(chip, FUSB_REG_CONTROL2,
-@@ -556,6 +567,12 @@ static int fusb302_set_toggling(struct fusb302_chip *chip,
- 	} else {
- 		/* Datasheet says vconn MUST be off when toggling */
- 		WARN(chip->vconn_on, "Vconn is on during toggle start");
-+
-+		/* clear interrupts */
-+                ret = fusb302_i2c_read(chip, FUSB_REG_INTERRUPT, &reg);
-+		if (ret < 0)
-+			return ret;
-+
- 		/* unmask TOGDONE interrupt */
- 		ret = fusb302_i2c_clear_bits(chip, FUSB_REG_MASKA,
- 					     FUSB_REG_MASKA_TOGDONE);
-@@ -635,6 +652,14 @@ static int tcpm_set_cc(struct tcpc_dev *dev, enum typec_cc_status cc)
- 		goto done;
- 	}
- 
-+	/* adjust current for SRC */
-+	ret = fusb302_set_src_current(chip, cc_src_current[cc]);
-+	if (ret < 0) {
-+		fusb302_log(chip, "cannot set src current %s, ret=%d",
-+			    typec_cc_status_name[cc], ret);
-+		goto done;
-+	}
-+
- 	ret = fusb302_i2c_mask_write(chip, FUSB_REG_SWITCHES0,
- 				     switches0_mask, switches0_data);
- 	if (ret < 0) {
-@@ -645,14 +670,6 @@ static int tcpm_set_cc(struct tcpc_dev *dev, enum typec_cc_status cc)
- 	chip->cc1 = TYPEC_CC_OPEN;
- 	chip->cc2 = TYPEC_CC_OPEN;
- 
--	/* adjust current for SRC */
--	ret = fusb302_set_src_current(chip, cc_src_current[cc]);
--	if (ret < 0) {
--		fusb302_log(chip, "cannot set src current %s, ret=%d",
--			    typec_cc_status_name[cc], ret);
--		goto done;
--	}
--
- 	/* enable/disable interrupts, BC_LVL for SNK and COMP_CHNG for SRC */
- 	switch (cc) {
- 	case TYPEC_CC_RP_DEF:
-@@ -1528,14 +1545,16 @@ static void fusb302_irq_work(struct work_struct *work)
- 		    "IRQ: 0x%02x, a: 0x%02x, b: 0x%02x, status0: 0x%02x",
- 		    interrupt, interrupta, interruptb, status0);
- 
--	if (interrupt & FUSB_REG_INTERRUPT_VBUSOK) {
--		vbus_present = !!(status0 & FUSB_REG_STATUS0_VBUSOK);
-+	vbus_present = !!(status0 & FUSB_REG_STATUS0_VBUSOK);
-+	if (interrupt & FUSB_REG_INTERRUPT_VBUSOK)
- 		fusb302_log(chip, "IRQ: VBUS_OK, vbus=%s",
- 			    vbus_present ? "On" : "Off");
--		if (vbus_present != chip->vbus_present) {
--			chip->vbus_present = vbus_present;
--			tcpm_vbus_change(chip->tcpm_port);
--		}
-+	if (vbus_present != chip->vbus_present) {
-+		chip->vbus_present = vbus_present;
-+		if (!(interrupt & FUSB_REG_INTERRUPT_VBUSOK))
-+		fusb302_log(chip, "IRQ: VBUS changed without interrupt, vbus=%s",
-+			    vbus_present ? "On" : "Off");
-+		tcpm_vbus_change(chip->tcpm_port);
- 	}
- 
- 	if ((interrupta & FUSB_REG_INTERRUPTA_TOGDONE) && intr_togdone) {
-diff --git a/drivers/usb/typec/tcpm/fusb302_reg.h b/drivers/usb/typec/tcpm/fusb302_reg.h
-index edc0e4b0f1e6..f37d226c5027 100644
---- a/drivers/usb/typec/tcpm/fusb302_reg.h
-+++ b/drivers/usb/typec/tcpm/fusb302_reg.h
-@@ -27,14 +27,13 @@
- #define FUSB_REG_SWITCHES1_TXCC2_EN		BIT(1)
- #define FUSB_REG_SWITCHES1_TXCC1_EN		BIT(0)
- #define FUSB_REG_MEASURE			0x04
--#define FUSB_REG_MEASURE_MDAC5			BIT(7)
--#define FUSB_REG_MEASURE_MDAC4			BIT(6)
--#define FUSB_REG_MEASURE_MDAC3			BIT(5)
--#define FUSB_REG_MEASURE_MDAC2			BIT(4)
--#define FUSB_REG_MEASURE_MDAC1			BIT(3)
--#define FUSB_REG_MEASURE_MDAC0			BIT(2)
--#define FUSB_REG_MEASURE_VBUS			BIT(1)
--#define FUSB_REG_MEASURE_XXXX5			BIT(0)
-+#define FUSB_REG_MEASURE_VBUS			BIT(6)
-+#define FUSB_REG_MEASURE_MDAC5			BIT(5)
-+#define FUSB_REG_MEASURE_MDAC4			BIT(4)
-+#define FUSB_REG_MEASURE_MDAC3			BIT(3)
-+#define FUSB_REG_MEASURE_MDAC2			BIT(2)
-+#define FUSB_REG_MEASURE_MDAC1			BIT(1)
-+#define FUSB_REG_MEASURE_MDAC0			BIT(0)
- #define FUSB_REG_CONTROL0			0x06
- #define FUSB_REG_CONTROL0_TX_FLUSH		BIT(6)
- #define FUSB_REG_CONTROL0_INT_MASK		BIT(5)
-@@ -105,7 +104,6 @@
- #define FUSB_REG_STATUS0A_RX_SOFT_RESET		BIT(1)
- #define FUSB_REG_STATUS0A_RX_HARD_RESET		BIT(0)
- #define FUSB_REG_STATUS1A			0x3D
--#define FUSB_REG_STATUS1A_TOGSS			BIT(3)
- #define FUSB_REG_STATUS1A_TOGSS_RUNNING		0x0
- #define FUSB_REG_STATUS1A_TOGSS_SRC1		0x1
- #define FUSB_REG_STATUS1A_TOGSS_SRC2		0x2
--- 
-2.34.1
-
-From 6af2e6a2d59bd755234e5e15a47dfa669788143c Mon Sep 17 00:00:00 2001
-From: Dan Johansen <strit@manjaro.org>
-Date: Sun, 2 Jan 2022 16:47:40 +0100
-Subject: [PATCH 2/2] usb: typec: Add megis typex to extcon bridge driver
-
-Signed-off-by: Dan Johansen <strit@manjaro.org>
----
- drivers/usb/typec/typec-extcon.c | 337 +++++++++++++++++++++++++++++++
- 1 file changed, 337 insertions(+)
- create mode 100644 drivers/usb/typec/typec-extcon.c
-
 diff --git a/drivers/usb/typec/typec-extcon.c b/drivers/usb/typec/typec-extcon.c
 new file mode 100644
-index 000000000000..143ff2486f2f
+index 000000000000..e460f35c8390
 --- /dev/null
 +++ b/drivers/usb/typec/typec-extcon.c
-@@ -0,0 +1,337 @@
+@@ -0,0 +1,332 @@
 +/*
 + * typec -> extcon bridge
 + * Copyright (c) 2021 Ondřej Jirman <megi@xff.cz>
@@ -330,11 +146,6 @@ index 000000000000..143ff2486f2f
 +		typec_extcon_set_cable(tce, EXTCON_USB, false, prop_ss, prop_or);
 +		typec_extcon_set_cable(tce, EXTCON_USB_HOST, false, prop_ss, prop_or);
 +		typec_extcon_set_cable(tce, EXTCON_DISP_DP, false, prop_ss, prop_or);
-+
-+		extcon_set_state_sync(tce->extcon, EXTCON_CHG_USB_SDP, false);
-+		extcon_set_state_sync(tce->extcon, EXTCON_CHG_USB_DCP, false);
-+		extcon_set_state_sync(tce->extcon, EXTCON_CHG_USB_CDP, false);
-+		extcon_set_state_sync(tce->extcon, EXTCON_CHG_USB_ACA, false);
 +
 +                goto out_unlock;
 +	}
@@ -568,56 +379,125 @@ index 000000000000..143ff2486f2f
 +module_platform_driver(typec_extcon_driver);
 +
 +MODULE_LICENSE("GPL");
-+MODULE_AUTHOR("Ondrej Jirman <megous@megous.com>");
++MODULE_AUTHOR("Ondrej Jirman <megi@xff.cz>");
 +MODULE_DESCRIPTION("typec -> extcon bridge driver");
 -- 
-2.34.1
+cgit v1.2.3
 
-From 4c839ce95766910235ff558b2959589c9068917c Mon Sep 17 00:00:00 2001
-From: Dan Johansen <strit@manjaro.org>
-Date: Sun, 2 Jan 2022 19:15:39 +0100
-Subject: [PATCH] arm64: dts: rockchip: add typec extcon hack
+From 509e948e64f676d1347dbcbd077f1c4ce34f0f25 Mon Sep 17 00:00:00 2001
+From: Ondrej Jirman
+Date: Thu, 9 Feb 2023 20:33:50 +0100
+Subject: usb: typec: typec-extcon: Allow to force reset on each mux change
 
-Signed-off-by: Dan Johansen <strit@manjaro.org>
+This may help with some Alt-DP USB adapters.
+
+Signed-off-by: Ondrej Jirman <megi@xff.cz>
 ---
- .../boot/dts/rockchip/rk3399-pinebook-pro.dts | 31 +++++++++++++++++--
- 1 file changed, 29 insertions(+), 2 deletions(-)
+ drivers/usb/typec/typec-extcon.c | 15 +++++++++++++++
+ 1 file changed, 15 insertions(+)
+
+diff --git a/drivers/usb/typec/typec-extcon.c b/drivers/usb/typec/typec-extcon.c
+index 12be8f203f76..d5a7f40f0921 100644
+--- a/drivers/usb/typec/typec-extcon.c
++++ b/drivers/usb/typec/typec-extcon.c
+@@ -19,6 +19,10 @@
+ #include <linux/usb/typec_mux.h>
+ #include <linux/extcon-provider.h>
+ 
++static bool reset_on_mux;
++module_param(reset_on_mux, bool, S_IRUGO | S_IWUSR);
++MODULE_PARM_DESC(reset_on_mux, "Set DP=0 on each type-c mux change");
++
+ struct typec_extcon {
+         struct device *dev;
+ 
+@@ -162,6 +166,17 @@ static int typec_extcon_mux_set(struct typec_mux_dev *mux,
+ 		dev_dbg(tce->dev, "      ...alt: svid=%04hx mode=%d vdo=%08x active=%u\n",
+ 			alt->svid, alt->mode, alt->vdo, alt->active);
+ 
++        mutex_lock(&tce->lock);
++	if (reset_on_mux && alt != NULL && tce->has_alt) {
++		tce->mode = state->mode;
++		tce->has_alt = false;
++		mutex_unlock(&tce->lock);
++
++		typec_extcon_sync_extcon(tce);
++	} else {
++		mutex_unlock(&tce->lock);
++	}
++
+         mutex_lock(&tce->lock);
+ 	tce->mode = state->mode;
+ 	tce->has_alt = alt != NULL;
+-- 
+cgit v1.2.3
+
+From c132654f50ab4726cdf0e116236c33c6038da08a Mon Sep 17 00:00:00 2001
+From: Ondřej Jirman
+Date: Wed, 2 Dec 2020 12:09:45 +0100
+Subject: arm64: dts: rk3399-pinebook-pro: Improve Type-C support on Pinebook
+ Pro
+
+This is using the same extcon bridge developed by me for Pinephone Pro.
+
+Signed-off-by: Ondrej Jirman <megi@xff.cz>
+---
+ .../boot/dts/rockchip/rk3399-pinebook-pro.dts      | 57 +++++++++++++++++++---
+ 1 file changed, 50 insertions(+), 7 deletions(-)
 
 diff --git a/arch/arm64/boot/dts/rockchip/rk3399-pinebook-pro.dts b/arch/arm64/boot/dts/rockchip/rk3399-pinebook-pro.dts
-index c2f021a1a18f..fc33e111bbee 100644
+index 15e90f836745..0d0310c4a82f 100644
 --- a/arch/arm64/boot/dts/rockchip/rk3399-pinebook-pro.dts
 +++ b/arch/arm64/boot/dts/rockchip/rk3399-pinebook-pro.dts
-@@ -384,6 +384,20 @@ mains_charger: dc-charger {
+@@ -335,7 +335,7 @@
+ 
+ 	/* Regulators supplied by vcc5v0_usb */
+ 	/* Type C port power supply regulator */
+-	vbus_5vout: vbus_typec: vbus-5vout {
++	vbus_5vout: vbus-5vout {
+ 		compatible = "regulator-fixed";
+ 		enable-active-high;
+ 		gpio = <&gpio1 RK_PA3 GPIO_ACTIVE_HIGH>;
+@@ -374,6 +374,14 @@
  		pinctrl-names = "default";
  		pinctrl-0 = <&dc_det_pin>;
  	};
-+	
-+    typec_extcon_bridge: typec-extcon {
++
++	typec_extcon_bridge: typec-extcon {
 +		compatible = "linux,typec-extcon-bridge";
 +		usb-role-switch;
 +		orientation-switch;
 +		mode-switch;
 +		svid = /bits/ 16 <0xff01>;
 +	};
-+};
-+
+ };
+ 
+ &cpu_b0 {
+@@ -400,6 +408,12 @@
+ 	cpu-supply = <&vdd_cpu_l>;
+ };
+ 
 +&cdn_dp {
 +	status = "okay";
 +	extcon = <&typec_extcon_bridge>;
 +	phys = <&tcphy0_dp>;
- };
- 
- &cpu_b0 {
-@@ -705,6 +719,8 @@ fusb0: fusb30x@22 {
++};
++
+ &edp {
+ 	force-hpd;
+ 	pinctrl-names = "default";
+@@ -691,7 +705,9 @@
+ 		interrupts = <RK_PA2 IRQ_TYPE_LEVEL_LOW>;
  		pinctrl-names = "default";
  		pinctrl-0 = <&fusb0_int_pin>;
- 		vbus-supply = <&vbus_typec>;
-+		extcon = <&typec_extcon_bridge>;
+-		vbus-supply = <&vbus_typec>;
++		vbus-supply = <&vbus_5vout>;
 +		usb-role-switch = <&typec_extcon_bridge>;
++		extcon = <&typec_extcon_bridge>;
  
  		connector {
  			compatible = "usb-c-connector";
-@@ -713,10 +729,20 @@ connector {
+@@ -700,10 +716,19 @@
  			op-sink-microwatt = <1000000>;
  			power-role = "dual";
  			sink-pdos =
@@ -627,20 +507,19 @@ index c2f021a1a18f..fc33e111bbee 100644
 -				<PDO_FIXED(5000, 1400, PDO_FIXED_USB_COMM)>;
 +				<PDO_FIXED(5000, 1400, PDO_FIXED_USB_COMM | PDO_FIXED_DUAL_ROLE | PDO_FIXED_DATA_SWAP)>;
  			try-power-role = "sink";
-+			
 +			mode-switch = <&typec_extcon_bridge>;
 +			orientation-switch = <&typec_extcon_bridge>;
 +
 +			altmodes {
 +				dp {
 +					svid = <0xff01>;
-+					vdo = <0x0c0006>;
++					vdo = <0x0c46>;
 +				};
 +			};
  
  			ports {
  				#address-cells = <1>;
-@@ -984,6 +1010,7 @@ spiflash: flash@0 {
+@@ -971,6 +996,7 @@
  };
  
  &tcphy0 {
@@ -648,6 +527,60 @@ index c2f021a1a18f..fc33e111bbee 100644
  	status = "okay";
  };
  
+@@ -1004,13 +1030,21 @@
+ 
+ &u2phy0 {
+ 	status = "okay";
++	extcon = <&typec_extcon_bridge>;
++	extcon,ignore-usb;
+ 
+ 	u2phy0_otg: otg-port {
++		/*
++		 * Type-C port on the left side of the chasis.
++		 */
+ 		status = "okay";
+ 	};
+ 
+ 	u2phy0_host: host-port {
+-		phy-supply = <&vcc5v0_otg>;
++		/*
++		 * USB 2.0 host port for the keyboard (internally connected).
++		 */
++		phy-supply = <&vcc5v0_usb>;
+ 		status = "okay";
+ 	};
+ 
+@@ -1025,11 +1059,18 @@
+ 	status = "okay";
+ 
+ 	u2phy1_otg: otg-port {
++		/*
++		 * USB 3.0 A port on the left side of the chasis.
++		 */
+ 		status = "okay";
+ 	};
+ 
+ 	u2phy1_host: host-port {
+-		phy-supply = <&vcc5v0_otg>;
++		/*
++		 * To the HUB that has USB camera and USB 2.0 port on the right
++		 * side of the chasis.
++		 */
++		phy-supply = <&vcc5v0_usb>;
+ 		status = "okay";
+ 	};
+ };
+@@ -1080,7 +1121,9 @@
+ };
+ 
+ &usbdrd_dwc3_0 {
+-	dr_mode = "host";
++	dr_mode = "otg";
++	extcon = <&typec_extcon_bridge>;
++	snps,usb3-phy-reset-quirk;
+ 	status = "okay";
+ };
+ 
 -- 
-2.34.1
+cgit v1.2.3
 
