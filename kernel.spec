@@ -71,7 +71,7 @@
 %define		have_pcmcia	0
 %endif
 
-%define		rel		1
+%define		rel		2
 %define		basever		4.9
 %define		postver		.337
 
@@ -187,7 +187,7 @@ Patch59:	kernel-rndis_host-wm5.patch
 # http://patches.aircrack-ng.org/hostap-kernel-2.6.18.patch
 Patch85:	kernel-hostap.patch
 
-%define	vserver_patch 4.9.217-vs2.3.9.12
+%define	vserver_patch 4.9.312-vs2.3.9.13
 # http://vserver.13thfloor.at/Experimental/patch-4.9.217-vs2.3.9.12.diff
 # note there are additional patches from above url:
 # - *fix* are real fixes (we want these)
