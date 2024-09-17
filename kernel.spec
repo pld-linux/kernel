@@ -613,6 +613,7 @@ find -name '*.py' -print0 | \
 	scripts/dtc/dt-extract-compatibles \
 	scripts/jobserver-exec \
 	scripts/show_delta \
+	tools/hv/lsvmbus \
 	tools/hv/vmbus_testing \
 	tools/kvm/kvm_stat/kvm_stat \
 	tools/testing/selftests/exec/binfmt_script.py
