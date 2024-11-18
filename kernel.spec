@@ -52,8 +52,8 @@
 %endif
 
 %define		rel		1
-%define		basever		6.11
-%define		postver		.8
+%define		basever		6.12
+%define		postver		.0
 
 # define this to '-%{basever}' for longterm branch
 %define		versuffix	%{nil}
@@ -104,7 +104,7 @@ Epoch:		3
 License:	GPL v2
 Group:		Base/Kernel
 Source0:	https://www.kernel.org/pub/linux/kernel/v6.x/linux-%{basever}.tar.xz
-# Source0-md5:	612a9feef07be8663098a0a58cddf7a6
+# Source0-md5:	844fae6a58c7f43af44d8cea8484b4a1
 %if "%{postver}" != ".0"
 Patch0:		https://www.kernel.org/pub/linux/kernel/v6.x/patch-%{version}.xz
 # Patch0-md5:	af1a452e23327a6d6a51ac9a34fd188b
@@ -616,6 +616,7 @@ find -name '*.py' -print0 | \
 	tools/hv/lsvmbus \
 	tools/hv/vmbus_testing \
 	tools/kvm/kvm_stat/kvm_stat \
+	tools/net/sunrpc/xdrgen/xdrgen \
 	tools/testing/selftests/exec/binfmt_script.py
 
 find -name '*.pl' -print0 | \
@@ -632,9 +633,11 @@ find -name '*.pl' -print0 | \
 	scripts/stackdelta
 
 %{__sed} -i -e '1s,/usr/bin/env bash,%{__bash},' \
-	tools/testing/selftests/powerpc/security/mitigation-patching.sh \
+	scripts/coccicheck \
 	scripts/config \
-	scripts/coccicheck
+	scripts/decode_stacktrace.sh \
+	tools/testing/selftests/drivers/net/netcons_basic.sh \
+	tools/testing/selftests/powerpc/security/mitigation-patching.sh
 
 %build
 install -d %{objdir}
