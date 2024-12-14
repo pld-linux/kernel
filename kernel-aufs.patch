@@ -416,8 +416,8 @@ index 9e018d8dd7d6..047bd4a0ced8 100644
 --- a/mm/mmap.c
 +++ b/mm/mmap.c
 @@ -140,7 +140,7 @@ static void remove_vma(struct vm_area_struct *vma, bool unreachable)
- 	if (vma->vm_ops && vma->vm_ops->close)
- 		vma->vm_ops->close(vma);
+ 	might_sleep();
+ 	vma_close(vma);
  	if (vma->vm_file)
 -		fput(vma->vm_file);
 +		vma_fput(vma);
@@ -442,7 +442,7 @@ index 9e018d8dd7d6..047bd4a0ced8 100644
  
  	if (new->vm_ops && new->vm_ops->open)
  		new->vm_ops->open(new);
-@@ -2801,7 +2801,7 @@ unsigned long mmap_region(struct file *file, unsigned long addr,
+@@ -2801,7 +2801,7 @@ static unsigned long __mmap_region(struct file *file, unsigned long addr,
  				 * and cause general protection fault
  				 * ultimately.
  				 */
@@ -451,15 +451,15 @@ index 9e018d8dd7d6..047bd4a0ced8 100644
  				vm_area_free(vma);
  				vma = merge;
  				/* Update vm_flags to pick up the change. */
-@@ -2896,7 +2896,7 @@ unsigned long mmap_region(struct file *file, unsigned long addr,
+@@ -2896,7 +2896,7 @@ static unsigned long __mmap_region(struct file *file, unsigned long addr,
+ 	return addr;
  
- 	if (file || vma->vm_file) {
- unmap_and_free_vma:
--		fput(vma->vm_file);
-+		vma_fput(vma);
- 		vma->vm_file = NULL;
+ unmap_and_free_file_vma:
+-	fput(vma->vm_file);
++	vma_fput(vma);
+ 	vma->vm_file = NULL;
  
- 		vma_iter_set(&vmi, vma->vm_end);
+ 	vma_iter_set(&vmi, vma->vm_end);
 @@ -2958,6 +2958,9 @@ SYSCALL_DEFINE5(remap_file_pages, unsigned long, start, unsigned long, size,
  	unsigned long populate = 0;
  	unsigned long ret = -EINVAL;
@@ -522,7 +522,7 @@ index 9e018d8dd7d6..047bd4a0ced8 100644
  			new_vma->vm_ops->open(new_vma);
  		if (vma_link(mm, new_vma))
 @@ -3384,7 +3411,7 @@ struct vm_area_struct *copy_vma(struct vm_area_struct **vmap,
- 		new_vma->vm_ops->close(new_vma);
+ 	vma_close(new_vma);
  
  	if (new_vma->vm_file)
 -		fput(new_vma->vm_file);
@@ -544,8 +544,8 @@ index 7f9e9e5a0e12..69663f2bd4c4 100644
  		/* IO memory and memory shared directly out of the pagecache
  		 * from ramfs/tmpfs mustn't be released here */
 @@ -603,7 +603,7 @@ static void delete_vma(struct mm_struct *mm, struct vm_area_struct *vma)
- 	if (vma->vm_ops && vma->vm_ops->close)
- 		vma->vm_ops->close(vma);
+ {
+ 	vma_close(vma);
  	if (vma->vm_file)
 -		fput(vma->vm_file);
 +		vma_fput(vma);
