@@ -432,8 +432,8 @@ index 2def55555e05..fefc5c67e96e 100644
 --- a/mm/mmap.c
 +++ b/mm/mmap.c
 @@ -139,7 +139,7 @@ static void remove_vma(struct vm_area_struct *vma)
- 	if (vma->vm_ops && vma->vm_ops->close)
- 		vma->vm_ops->close(vma);
+ 	might_sleep();
+ 	vma_close(vma);
  	if (vma->vm_file)
 -		fput(vma->vm_file);
 +		vma_fput(vma);
@@ -468,18 +468,18 @@ index 2def55555e05..fefc5c67e96e 100644
  	if (new->vm_ops && new->vm_ops->open)
  		new->vm_ops->open(new);
 @@ -2250,7 +2250,7 @@ int __split_vma(struct mm_struct *mm, struct vm_area_struct *vma,
- 	if (new->vm_ops && new->vm_ops->close)
- 		new->vm_ops->close(new);
+ 	/* Clean everything up if vma_adjust failed. */
+ 	vma_close(new);
  	if (new->vm_file)
 -		fput(new->vm_file);
 +		vma_fput(new);
  	unlink_anon_vmas(new);
   out_free_mpol:
  	mpol_put(vma_policy(new));
-@@ -2746,7 +2746,7 @@ unsigned long mmap_region(struct file *file, unsigned long addr,
- 	if (vma->vm_ops && vma->vm_ops->close)
- 		vma->vm_ops->close(vma);
- unmap_and_free_vma:
+@@ -2746,7 +2746,7 @@ static unsigned long __mmap_region(struct file *file, unsigned long addr,
+ 	return addr;
+ 
+ unmap_and_free_file_vma:
 -	fput(vma->vm_file);
 +	vma_fput(vma);
  	vma->vm_file = NULL;
@@ -553,8 +553,8 @@ index 214c70e1d059..dccbb939d2a9 100644
  		/* IO memory and memory shared directly out of the pagecache
  		 * from ramfs/tmpfs mustn't be released here */
 @@ -653,7 +653,7 @@ static void delete_vma(struct mm_struct *mm, struct vm_area_struct *vma)
- 	if (vma->vm_ops && vma->vm_ops->close)
- 		vma->vm_ops->close(vma);
+ {
+ 	vma_close(vma);
  	if (vma->vm_file)
 -		fput(vma->vm_file);
 +		vma_fput(vma);
