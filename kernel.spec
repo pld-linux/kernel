@@ -52,8 +52,8 @@
 %endif
 
 %define		rel		1
-%define		basever		6.12
-%define		postver		.10
+%define		basever		6.13
+%define		postver		.0
 
 # define this to '-%{basever}' for longterm branch
 %define		versuffix	%{nil}
@@ -104,7 +104,7 @@ Epoch:		3
 License:	GPL v2
 Group:		Base/Kernel
 Source0:	https://www.kernel.org/pub/linux/kernel/v6.x/linux-%{basever}.tar.xz
-# Source0-md5:	844fae6a58c7f43af44d8cea8484b4a1
+# Source0-md5:	7a1ec5edbbdcaad287ca3c16f71abaa6
 %if "%{postver}" != ".0"
 Patch0:		https://www.kernel.org/pub/linux/kernel/v6.x/patch-%{version}.xz
 # Patch0-md5:	642e142b6cacec9e81e339af50f1868f
@@ -998,7 +998,6 @@ done
 install -d $RPM_BUILD_ROOT%{_docdir}
 mv $RPM_BUILD_ROOT{%{_kernelsrcdir}/Documentation,%{_docdir}/%{name}-%{version}}
 
-%{__rm} $RPM_BUILD_ROOT%{_docdir}/%{name}-%{version}/dontdiff
 %{__rm} $RPM_BUILD_ROOT%{_docdir}/%{name}-%{version}/Makefile
 %{__rm} $RPM_BUILD_ROOT%{_docdir}/%{name}-%{version}/*/*/Makefile
 %else
@@ -1278,7 +1277,6 @@ fi
 %{_kernelsrcdir}/scripts/*.c
 %{_kernelsrcdir}/scripts/*.h
 %attr(755,root,root) %{_kernelsrcdir}/scripts/*.sh
-%{_kernelsrcdir}/scripts/selinux/genheaders/*.c
 %{_kernelsrcdir}/scripts/selinux/mdp/*.c
 %exclude %dir %{_kernelsrcdir}/security
 %exclude %dir %{_kernelsrcdir}/security/selinux
@@ -1350,9 +1348,6 @@ fi
 %exclude %{_kernelsrcdir}/scripts/*.sh
 %exclude %dir %{_kernelsrcdir}/scripts/selinux
 %exclude %{_kernelsrcdir}/scripts/selinux/Makefile
-%exclude %dir %{_kernelsrcdir}/scripts/selinux/genheaders
-%exclude %{_kernelsrcdir}/scripts/selinux/genheaders/Makefile
-%exclude %{_kernelsrcdir}/scripts/selinux/genheaders/*.c
 %exclude %dir %{_kernelsrcdir}/scripts/selinux/mdp
 %exclude %{_kernelsrcdir}/scripts/selinux/mdp/Makefile
 %exclude %{_kernelsrcdir}/scripts/selinux/mdp/*.c
