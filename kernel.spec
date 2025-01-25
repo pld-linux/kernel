@@ -535,62 +535,62 @@ ln -s %{SOURCE10} Makefile
 cd linux-%{basever}
 
 %if "%{postver}" != ".0"
-%patch0 -p1
+%patch -P0 -p1
 %endif
 
 %if %{without vanilla}
-%patch2 -p1
+%patch -P2 -p1
 
 %if %{with fbcondecor}
-%patch3 -p1
+%patch -P3 -p1
 %endif
-%patch6 -p1
+%patch -P6 -p1
 
 ## netfilter
 #
 
 # kernel-pom-ng-IPV4OPTSSTRIP.patch
-%patch10 -p1
+%patch -P10 -p1
 
 ##
 # end of netfilter
 
-%patch55 -p1
-%patch56 -p1
+%patch -P55 -p1
+%patch -P56 -p1
 
 # kernel-rndis_host-wm5.patch
-%patch59 -p1
+%patch -P59 -p1
 
 %if %{with aufs}
 # aufs
-%patch145 -p1
-%patch147 -p1
+%patch -P145 -p1
+%patch -P147 -p1
 %endif
 
 %if %{with rescuecd}
-%patch7000 -p1
+%patch -P7000 -p1
 %endif
 
 %ifarch %{arm} aarch64
-%patch8000 -p1
-%patch8001 -p1
-%patch8002 -p1
-%patch8004 -p1
-%patch8005 -p1
+%patch -P8000 -p1
+%patch -P8001 -p1
+%patch -P8002 -p1
+%patch -P8004 -p1
+%patch -P8005 -p1
 %endif
 
 %if %{with rt}
-%patch500 -p1
+%patch -P500 -p1
 rm -f localversion-rt
 %endif
 
-%patch250 -p1
+%patch -P250 -p1
 
 %endif # vanilla
 
 # Small fixes:
-%patch2000 -p1
-%patch2001 -p1
+%patch -P2000 -p1
+%patch -P2001 -p1
 
 chmod 755 tools/objtool/sync-check.sh
 
