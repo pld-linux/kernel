@@ -1,8 +1,8 @@
 #!/bin/sh
 set -xe
 
-#BRANCH=aufs6.10
-BRANCH=aufs6.x-rcN
+BRANCH=aufs6.13
+#BRANCH=aufs6.x-rcN
 
 # aufs6
 [ -d aufs-standalone ] || git clone https://github.com/sfjro/aufs-standalone.git
