@@ -178,6 +178,7 @@ Patch8001:	kernel-pinebook-pro.patch
 Patch8002:	atheros-disallow-retrain-nongen1-pcie.patch
 Patch8004:	ath-regd.patch
 Patch8005:	rkvdec-hevc.patch
+Patch8006:	rk3588-vop2-improve-modes-handling.patch
 
 URL:		https://www.kernel.org/
 AutoReqProv:	no
@@ -577,6 +578,7 @@ cd linux-%{basever}
 %patch -P8002 -p1
 %patch -P8004 -p1
 %patch -P8005 -p1
+%patch -P8006 -p1
 %endif
 
 %if %{with rt}

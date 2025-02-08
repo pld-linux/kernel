@@ -1,0 +1,859 @@
+From mboxrd@z Thu Jan  1 00:00:00 1970
+Return-Path: <linux-rockchip-bounces+linux-rockchip=archiver.kernel.org@lists.infradead.org>
+X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
+	aws-us-west-2-korg-lkml-1.web.codeaurora.org
+Received: from bombadil.infradead.org (bombadil.infradead.org [198.137.202.133])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+	(No client certificate requested)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 9208CC02194
+	for <linux-rockchip@archiver.kernel.org>; Tue,  4 Feb 2025 12:47:19 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+	d=lists.infradead.org; s=bombadil.20210309; h=Sender:
+	Content-Transfer-Encoding:Content-Type:List-Subscribe:List-Help:List-Post:
+	List-Archive:List-Unsubscribe:List-Id:Cc:To:In-Reply-To:References:Message-Id
+	:MIME-Version:Subject:Date:From:Reply-To:Content-ID:Content-Description:
+	Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:
+	List-Owner; bh=RDx7Wgczzjv8CEZBXBMimLtBjFWdWgDmdj9wHaPvuo0=; b=04O3POePopglhd
+	k/TwNGzEtMrCa6cBdyQyCOZMTyR0OhLaEThzj5Q0m+ete7br5RyLs9k7u5zaIfG6Cnu3xDyZBFZxl
+	BI86AO/D5/QtyZ9kGvuV1CUkaqkMFELkazPIrw4j9okZuRNmb+lN0iLUBpezQ7V2FT9+eFWhaC+aP
+	S1aXYz9nOPJ03eBNGjMHaZFRYB5thlo9AkIcY41CphEtCHolDVh9Tc3vsKJUQOGQaZdsgP1GnYJRC
+	N8h2xaH4HJ5p677588k9KD3OwvOSVayRsTkMAdfDmY2Q7loKHA33v7ykV+LsYF0WE4wqyQBVqnacK
+	hYXGeMLyXiuXX/fOv+XA==;
+Received: from localhost ([::1] helo=bombadil.infradead.org)
+	by bombadil.infradead.org with esmtp (Exim 4.98 #2 (Red Hat Linux))
+	id 1tfIKf-00000000STa-306V;
+	Tue, 04 Feb 2025 12:47:13 +0000
+Received: from bali.collaboradmins.com ([2a01:4f8:201:9162::2])
+	by bombadil.infradead.org with esmtps (Exim 4.98 #2 (Red Hat Linux))
+	id 1tfIDz-00000000Rh1-1JBS;
+	Tue, 04 Feb 2025 12:40:20 +0000
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=collabora.com;
+	s=mail; t=1738672817;
+	bh=3J9xxfQwD8O+MObCBKMhxdwcXLG6TsI/zNsabrCHt74=;
+	h=From:Date:Subject:References:In-Reply-To:To:Cc:From;
+	b=KWUz5lep24R+x82pNGmkKte6dB2oHv7l/Htv0qQLrXRAJDMu2UaZj9upKko2HWPuB
+	 7JRkkVuf/Y/lM9At+n7nDvJh4ur3Fwlt1t4EXn2uMHsHg9LaJaMS4KpFXcsrzbaVCx
+	 poraT2lYXK1hf/LDkQtKjy6dH3bCauCJ1ceMS4Ff4JB9oFt7JW5X31pZG4amygXokO
+	 UOSJ9deUoHZ4SwZtobEopdyLW+8xAj1dhWZg/C90KTYd7jhsBldphLYBoOACTwOe0F
+	 ZE7omuLf3VD2jcbnL0e0lr8KQnHbwNYUmm1gHJk1bbr6MX5ghCltCS+yYnTmKafNAy
+	 ALRZwl7NRVotQ==
+Received: from localhost (unknown [188.27.43.189])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange ECDHE (prime256v1) server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	(No client certificate requested)
+	(Authenticated sender: cristicc)
+	by bali.collaboradmins.com (Postfix) with UTF8SMTPSA id 84A8417E151F;
+	Tue,  4 Feb 2025 13:40:17 +0100 (CET)
+From: Cristian Ciocaltea <cristian.ciocaltea@collabora.com>
+Date: Tue, 04 Feb 2025 14:40:07 +0200
+Subject: [PATCH v3 4/5] arm64: dts: rockchip: Enable HDMI0 PHY clk provider
+ on RK3588
+MIME-Version: 1.0
+Message-Id: <20250204-vop2-hdmi0-disp-modes-v3-4-d71c6a196e58@collabora.com>
+References: <20250204-vop2-hdmi0-disp-modes-v3-0-d71c6a196e58@collabora.com>
+In-Reply-To: <20250204-vop2-hdmi0-disp-modes-v3-0-d71c6a196e58@collabora.com>
+To: Sandy Huang <hjc@rock-chips.com>, 
+ =?utf-8?q?Heiko_St=C3=BCbner?= <heiko@sntech.de>, 
+ Andy Yan <andy.yan@rock-chips.com>, 
+ Maarten Lankhorst <maarten.lankhorst@linux.intel.com>, 
+ Maxime Ripard <mripard@kernel.org>, Thomas Zimmermann <tzimmermann@suse.de>, 
+ David Airlie <airlied@gmail.com>, Simona Vetter <simona@ffwll.ch>, 
+ Rob Herring <robh@kernel.org>, Krzysztof Kozlowski <krzk+dt@kernel.org>, 
+ Conor Dooley <conor+dt@kernel.org>
+Cc: kernel@collabora.com, dri-devel@lists.freedesktop.org, 
+ devicetree@vger.kernel.org, linux-arm-kernel@lists.infradead.org, 
+ linux-rockchip@lists.infradead.org, linux-kernel@vger.kernel.org
+X-Mailer: b4 0.14.2
+X-CRM114-Version: 20100106-BlameMichelson ( TRE 0.8.0 (BSD) ) MR-646709E3 
+X-CRM114-CacheID: sfid-20250204_044019_509265_0579D4BB 
+X-CRM114-Status: UNSURE (   8.93  )
+X-CRM114-Notice: Please train this message.
+X-BeenThere: linux-rockchip@lists.infradead.org
+X-Mailman-Version: 2.1.34
+Precedence: list
+List-Id: Upstream kernel work for Rockchip platforms <linux-rockchip.lists.infradead.org>
+List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-rockchip>,
+ <mailto:linux-rockchip-request@lists.infradead.org?subject=unsubscribe>
+List-Archive: <http://lists.infradead.org/pipermail/linux-rockchip/>
+List-Post: <mailto:linux-rockchip@lists.infradead.org>
+List-Help: <mailto:linux-rockchip-request@lists.infradead.org?subject=help>
+List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-rockchip>,
+ <mailto:linux-rockchip-request@lists.infradead.org?subject=subscribe>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Sender: "Linux-rockchip" <linux-rockchip-bounces@lists.infradead.org>
+Errors-To: linux-rockchip-bounces+linux-rockchip=archiver.kernel.org@lists.infradead.org
+
+Since commit c4b09c562086 ("phy: phy-rockchip-samsung-hdptx: Add clock
+provider support"), the HDMI PHY PLL can be used as an alternative and
+more accurate pixel clock source for VOP2 to improve display modes
+handling on RK3588 SoC.
+
+Add the missing #clock-cells property to allow using the clock provider
+functionality of HDMI0 PHY.
+
+Signed-off-by: Cristian Ciocaltea <cristian.ciocaltea@collabora.com>
+---
+ arch/arm64/boot/dts/rockchip/rk3588-base.dtsi | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/arch/arm64/boot/dts/rockchip/rk3588-base.dtsi b/arch/arm64/boot/dts/rockchip/rk3588-base.dtsi
+index 8cfa30837ce72581d0b513a8274ab0177eb5ae15..c2d1f08e55d4cb4b4d2b6a89f26542fdc99fd604 100644
+--- a/arch/arm64/boot/dts/rockchip/rk3588-base.dtsi
++++ b/arch/arm64/boot/dts/rockchip/rk3588-base.dtsi
+@@ -2812,6 +2812,7 @@ hdptxphy_hdmi0: phy@fed60000 {
+ 		reg = <0x0 0xfed60000 0x0 0x2000>;
+ 		clocks = <&cru CLK_USB2PHY_HDPTXRXPHY_REF>, <&cru PCLK_HDPTX0>;
+ 		clock-names = "ref", "apb";
++		#clock-cells = <0>;
+ 		#phy-cells = <0>;
+ 		resets = <&cru SRST_HDPTX0>, <&cru SRST_P_HDPTX0>,
+ 			 <&cru SRST_HDPTX0_INIT>, <&cru SRST_HDPTX0_CMN>,
+
+-- 
+2.48.1
+
+
+_______________________________________________
+Linux-rockchip mailing list
+Linux-rockchip@lists.infradead.org
+http://lists.infradead.org/mailman/listinfo/linux-rockchip
+
+From mboxrd@z Thu Jan  1 00:00:00 1970
+Return-Path: <linux-rockchip-bounces+linux-rockchip=archiver.kernel.org@lists.infradead.org>
+X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
+	aws-us-west-2-korg-lkml-1.web.codeaurora.org
+Received: from bombadil.infradead.org (bombadil.infradead.org [198.137.202.133])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+	(No client certificate requested)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 990FDC02194
+	for <linux-rockchip@archiver.kernel.org>; Tue,  4 Feb 2025 12:48:36 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+	d=lists.infradead.org; s=bombadil.20210309; h=Sender:
+	Content-Transfer-Encoding:Content-Type:List-Subscribe:List-Help:List-Post:
+	List-Archive:List-Unsubscribe:List-Id:Cc:To:In-Reply-To:References:Message-Id
+	:MIME-Version:Subject:Date:From:Reply-To:Content-ID:Content-Description:
+	Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:
+	List-Owner; bh=jrCMOSxMfMcceaqlCYpPEvvyLsoYlK57Vavy4JU/PKc=; b=AbhHawBnPiRZ2/
+	+bgRDbTIlozQ8MMEQ1al6+T/UCG3ZpMUqGEsV8hXYzThCfRCXmmYUMMdU5k0xbdp7c2dEYANxTGmt
+	qLPqF8y5HJ4lMuP0lr0F28zNAfvcl85Mg/j9X2sQbXRs0CjG0l4LzDkfRx/IDI/HS1PLCy/PyfhS5
+	rrlAjk5hpu+hBI9YGvnxDNl7rIAspfjEDMqFlfsDNtE0GoEXejoYjFQPUimF0CT3YxOme6YgrtoSL
+	9nvaQ/StLJvdiEPT0/ta/4NLQh9eDkMW+w5rj1+BX0Hdxrcc/2JIbJSpd93rdsrgt9kaEuNgXakhM
+	qa3Fd9PDuFMq4LZErsAg==;
+Received: from localhost ([::1] helo=bombadil.infradead.org)
+	by bombadil.infradead.org with esmtp (Exim 4.98 #2 (Red Hat Linux))
+	id 1tfILx-00000000Seh-3rgk;
+	Tue, 04 Feb 2025 12:48:33 +0000
+Received: from bali.collaboradmins.com ([2a01:4f8:201:9162::2])
+	by bombadil.infradead.org with esmtps (Exim 4.98 #2 (Red Hat Linux))
+	id 1tfIE0-00000000Rhk-1CR6;
+	Tue, 04 Feb 2025 12:40:21 +0000
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=collabora.com;
+	s=mail; t=1738672818;
+	bh=fwoOPfxtLFJ4fVTrja/ABWK9UK3wUv/NKNwiIh28t0g=;
+	h=From:Date:Subject:References:In-Reply-To:To:Cc:From;
+	b=SDRz9mNTtjcmQVzJyaumGKp5SACJoZughm8o/TVpYCptdrFz+SV9+qTkWP67hL9je
+	 sbHy5e5o2SE3ZRsupnyT+ptU+95iqOpQVtZCo18C6Pr2zvDlX8d7zsrIpXujFYRYRl
+	 1MLhnxlsFD6gW0VmfHkVRT5MA/dVgwmLQxGWVRchpss+JFKEzSnnoWa9oLg6CmMa1J
+	 u2ndYhdW5KKWLIXKKxx56QzmgiC7qzYzd+RKwfZBoRlIPp66l6ssJKG3GPv04u1myJ
+	 sougejvkxO7dCa43gW9EPtFKgAZRLgRxxxclD2NHfTscGxCzgfNhIK+aGIvhvpuLL2
+	 f41CVz21W0Gug==
+Received: from localhost (unknown [188.27.43.189])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange ECDHE (prime256v1) server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	(No client certificate requested)
+	(Authenticated sender: cristicc)
+	by bali.collaboradmins.com (Postfix) with UTF8SMTPSA id 579D617E1531;
+	Tue,  4 Feb 2025 13:40:18 +0100 (CET)
+From: Cristian Ciocaltea <cristian.ciocaltea@collabora.com>
+Date: Tue, 04 Feb 2025 14:40:08 +0200
+Subject: [PATCH v3 5/5] arm64: dts: rockchip: Add HDMI0 PHY PLL clock
+ source to VOP2 on RK3588
+MIME-Version: 1.0
+Message-Id: <20250204-vop2-hdmi0-disp-modes-v3-5-d71c6a196e58@collabora.com>
+References: <20250204-vop2-hdmi0-disp-modes-v3-0-d71c6a196e58@collabora.com>
+In-Reply-To: <20250204-vop2-hdmi0-disp-modes-v3-0-d71c6a196e58@collabora.com>
+To: Sandy Huang <hjc@rock-chips.com>, 
+ =?utf-8?q?Heiko_St=C3=BCbner?= <heiko@sntech.de>, 
+ Andy Yan <andy.yan@rock-chips.com>, 
+ Maarten Lankhorst <maarten.lankhorst@linux.intel.com>, 
+ Maxime Ripard <mripard@kernel.org>, Thomas Zimmermann <tzimmermann@suse.de>, 
+ David Airlie <airlied@gmail.com>, Simona Vetter <simona@ffwll.ch>, 
+ Rob Herring <robh@kernel.org>, Krzysztof Kozlowski <krzk+dt@kernel.org>, 
+ Conor Dooley <conor+dt@kernel.org>
+Cc: kernel@collabora.com, dri-devel@lists.freedesktop.org, 
+ devicetree@vger.kernel.org, linux-arm-kernel@lists.infradead.org, 
+ linux-rockchip@lists.infradead.org, linux-kernel@vger.kernel.org, 
+ FUKAUMI Naoki <naoki@radxa.com>
+X-Mailer: b4 0.14.2
+X-CRM114-Version: 20100106-BlameMichelson ( TRE 0.8.0 (BSD) ) MR-646709E3 
+X-CRM114-CacheID: sfid-20250204_044020_518442_F5D1678B 
+X-CRM114-Status: GOOD (  10.62  )
+X-BeenThere: linux-rockchip@lists.infradead.org
+X-Mailman-Version: 2.1.34
+Precedence: list
+List-Id: Upstream kernel work for Rockchip platforms <linux-rockchip.lists.infradead.org>
+List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-rockchip>,
+ <mailto:linux-rockchip-request@lists.infradead.org?subject=unsubscribe>
+List-Archive: <http://lists.infradead.org/pipermail/linux-rockchip/>
+List-Post: <mailto:linux-rockchip@lists.infradead.org>
+List-Help: <mailto:linux-rockchip-request@lists.infradead.org?subject=help>
+List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-rockchip>,
+ <mailto:linux-rockchip-request@lists.infradead.org?subject=subscribe>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Sender: "Linux-rockchip" <linux-rockchip-bounces@lists.infradead.org>
+Errors-To: linux-rockchip-bounces+linux-rockchip=archiver.kernel.org@lists.infradead.org
+
+VOP2 on RK3588 is able to use the HDMI PHY PLL as an alternative and
+more accurate pixel clock source to improve handling of display modes up
+to 4K@60Hz on video ports 0, 1 and 2.
+
+For now only HDMI0 output is supported, hence add the related PLL clock.
+
+Tested-by: FUKAUMI Naoki <naoki@radxa.com>
+Signed-off-by: Cristian Ciocaltea <cristian.ciocaltea@collabora.com>
+---
+ arch/arm64/boot/dts/rockchip/rk3588-base.dtsi | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
+
+diff --git a/arch/arm64/boot/dts/rockchip/rk3588-base.dtsi b/arch/arm64/boot/dts/rockchip/rk3588-base.dtsi
+index c2d1f08e55d4cb4b4d2b6a89f26542fdc99fd604..13146793188c466faabe6a88e6230ba09f36770c 100644
+--- a/arch/arm64/boot/dts/rockchip/rk3588-base.dtsi
++++ b/arch/arm64/boot/dts/rockchip/rk3588-base.dtsi
+@@ -1261,14 +1261,16 @@ vop: vop@fdd90000 {
+ 			 <&cru DCLK_VOP1>,
+ 			 <&cru DCLK_VOP2>,
+ 			 <&cru DCLK_VOP3>,
+-			 <&cru PCLK_VOP_ROOT>;
++			 <&cru PCLK_VOP_ROOT>,
++			 <&hdptxphy_hdmi0>;
+ 		clock-names = "aclk",
+ 			      "hclk",
+ 			      "dclk_vp0",
+ 			      "dclk_vp1",
+ 			      "dclk_vp2",
+ 			      "dclk_vp3",
+-			      "pclk_vop";
++			      "pclk_vop",
++			      "pll_hdmiphy0";
+ 		iommus = <&vop_mmu>;
+ 		power-domains = <&power RK3588_PD_VOP>;
+ 		rockchip,grf = <&sys_grf>;
+
+-- 
+2.48.1
+
+
+_______________________________________________
+Linux-rockchip mailing list
+Linux-rockchip@lists.infradead.org
+http://lists.infradead.org/mailman/listinfo/linux-rockchip
+
+From mboxrd@z Thu Jan  1 00:00:00 1970
+Return-Path: <linux-rockchip-bounces+linux-rockchip=archiver.kernel.org@lists.infradead.org>
+X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
+	aws-us-west-2-korg-lkml-1.web.codeaurora.org
+Received: from bombadil.infradead.org (bombadil.infradead.org [198.137.202.133])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+	(No client certificate requested)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 599DEC02194
+	for <linux-rockchip@archiver.kernel.org>; Tue,  4 Feb 2025 12:50:00 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+	d=lists.infradead.org; s=bombadil.20210309; h=Sender:
+	Content-Transfer-Encoding:Content-Type:List-Subscribe:List-Help:List-Post:
+	List-Archive:List-Unsubscribe:List-Id:Cc:To:In-Reply-To:References:Message-Id
+	:MIME-Version:Subject:Date:From:Reply-To:Content-ID:Content-Description:
+	Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:
+	List-Owner; bh=u0vXmQhtWHzUaBQi1oLD60weMB+Wyg5D/pxEWtvgy/s=; b=dD1lXwLKsd+WBo
+	HJym4QM/+bnAlPLSe1CKmACunmWaxVCcqX83lxfoQi6G7K82YQULxsrNJ0l9q0YNBngFzTKACS7PV
+	K4Ty/h6tF5HAZ0iePNfkFw+rYDFqAfhBANagcotIVITgy+eGa/LKIpGUkJov8g4Bsj99Tu59IEFBT
+	9uJAYfH89aOWE/53Supg5jZQxswIfiz3ezbSge4+tynrtxRtSv5Gmjdc+1i7DkqwWmoeeDo/j8WHp
+	GxB/3iJ4tpjJwHxOvoJtrJi7ujWcUKbsOHq+Pl0HiBOw+hH+abZwMLFvDZ2PffYI2YlfSU45Bdya1
+	umYfKtKFjJmEhY1dfpsg==;
+Received: from localhost ([::1] helo=bombadil.infradead.org)
+	by bombadil.infradead.org with esmtp (Exim 4.98 #2 (Red Hat Linux))
+	id 1tfING-00000000SsD-47iu;
+	Tue, 04 Feb 2025 12:49:54 +0000
+Received: from desiato.infradead.org ([2001:8b0:10b:1:d65d:64ff:fe57:4e05])
+	by bombadil.infradead.org with esmtps (Exim 4.98 #2 (Red Hat Linux))
+	id 1tfIE5-00000000Rko-0CeU;
+	Tue, 04 Feb 2025 12:40:25 +0000
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+	d=infradead.org; s=desiato.20200630; h=Cc:To:In-Reply-To:References:
+	Message-Id:Content-Transfer-Encoding:Content-Type:MIME-Version:Subject:Date:
+	From:Sender:Reply-To:Content-ID:Content-Description;
+	bh=T0yohgYkQjzb94VDSiHA83Zz/hS6Vidm1VcQmoIPwK0=; b=HLE9Up1XqICOkC+jL9X4gMm6OL
+	1q/7bToo0a6/MWpzWe9D+n6HjmCtN4fHEjqymUqrTEbvqnu4TYExCv+zGIbzltQzBMFd3lWl96qJW
+	AyMbo6Yd1lSr0rLJCzcZl9BrLF7LKsdIn8effNALH+W6BxG6owYUi2evVZQAnKvdRhcXkb5kKRYkW
+	bBq1RKUHVfqtn8uMKmg2vepFoNtLmReR3tvtbygLLdfODbccDCGx786ec0ilVx9TCYV2beDZzoyhn
+	qBNrvSK50mfDzOzj9rL7BV8g5XHIWqpCEUwXEarJasf1Vxnqb3Mq/Q8MTl0MR/hz8NMpzdbxnN9dP
+	LFbKflug==;
+Received: from bali.collaboradmins.com ([2a01:4f8:201:9162::2])
+	by desiato.infradead.org with esmtps (Exim 4.98 #2 (Red Hat Linux))
+	id 1tfIE1-0000000GIvj-3gui;
+	Tue, 04 Feb 2025 12:40:23 +0000
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=collabora.com;
+	s=mail; t=1738672815;
+	bh=+lrETwUWImzgNwi0/PC9cnZAZnFk6zd3T35vyvvzK/g=;
+	h=From:Date:Subject:References:In-Reply-To:To:Cc:From;
+	b=qgPcuxaynp2S0Bx5f+Zgnuu7LCp4sN6mr+I2PN+WknFqNMUdCUR1/SB1AOjX4Ymzy
+	 fuBmX8SR7+au3oK3tHz0LkFLY7/TbCmIQGIS7S3/kBgp4aEidEjFA/qfO+tygE2K2y
+	 UpNkV7O8JQXAyU0SN1o57yb5fy0Rxe7RNd79gQKJzmdzW6lh0sv0VQpiN1i+zBrDma
+	 09dlbTjPk+pU+uzXyoGpGR/gFESBPS/UoJpvfab28v0PGsEJnwtmNvw+Rq0IyGPiIJ
+	 3v1S6w51lfQjqBfC/CkP06OiZNb2Q/WDyMalZkZ+BHgoZGnVYWPjPBJxhJfKDqqmB8
+	 wy3/vzfIWlGDw==
+Received: from localhost (unknown [188.27.43.189])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange ECDHE (prime256v1) server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	(No client certificate requested)
+	(Authenticated sender: cristicc)
+	by bali.collaboradmins.com (Postfix) with UTF8SMTPSA id C164517E0FB0;
+	Tue,  4 Feb 2025 13:40:15 +0100 (CET)
+From: Cristian Ciocaltea <cristian.ciocaltea@collabora.com>
+Date: Tue, 04 Feb 2025 14:40:05 +0200
+Subject: [PATCH v3 2/5] drm/rockchip: vop2: Drop unnecessary if_pixclk_rate
+ computation
+MIME-Version: 1.0
+Message-Id: <20250204-vop2-hdmi0-disp-modes-v3-2-d71c6a196e58@collabora.com>
+References: <20250204-vop2-hdmi0-disp-modes-v3-0-d71c6a196e58@collabora.com>
+In-Reply-To: <20250204-vop2-hdmi0-disp-modes-v3-0-d71c6a196e58@collabora.com>
+To: Sandy Huang <hjc@rock-chips.com>, 
+ =?utf-8?q?Heiko_St=C3=BCbner?= <heiko@sntech.de>, 
+ Andy Yan <andy.yan@rock-chips.com>, 
+ Maarten Lankhorst <maarten.lankhorst@linux.intel.com>, 
+ Maxime Ripard <mripard@kernel.org>, Thomas Zimmermann <tzimmermann@suse.de>, 
+ David Airlie <airlied@gmail.com>, Simona Vetter <simona@ffwll.ch>, 
+ Rob Herring <robh@kernel.org>, Krzysztof Kozlowski <krzk+dt@kernel.org>, 
+ Conor Dooley <conor+dt@kernel.org>
+Cc: kernel@collabora.com, dri-devel@lists.freedesktop.org, 
+ devicetree@vger.kernel.org, linux-arm-kernel@lists.infradead.org, 
+ linux-rockchip@lists.infradead.org, linux-kernel@vger.kernel.org
+X-Mailer: b4 0.14.2
+X-CRM114-Version: 20100106-BlameMichelson ( TRE 0.8.0 (BSD) ) MR-646709E3 
+X-CRM114-CacheID: sfid-20250204_124022_136351_93180C2D 
+X-CRM114-Status: GOOD (  10.29  )
+X-BeenThere: linux-rockchip@lists.infradead.org
+X-Mailman-Version: 2.1.34
+Precedence: list
+List-Id: Upstream kernel work for Rockchip platforms <linux-rockchip.lists.infradead.org>
+List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-rockchip>,
+ <mailto:linux-rockchip-request@lists.infradead.org?subject=unsubscribe>
+List-Archive: <http://lists.infradead.org/pipermail/linux-rockchip/>
+List-Post: <mailto:linux-rockchip@lists.infradead.org>
+List-Help: <mailto:linux-rockchip-request@lists.infradead.org?subject=help>
+List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-rockchip>,
+ <mailto:linux-rockchip-request@lists.infradead.org?subject=subscribe>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Sender: "Linux-rockchip" <linux-rockchip-bounces@lists.infradead.org>
+Errors-To: linux-rockchip-bounces+linux-rockchip=archiver.kernel.org@lists.infradead.org
+
+The if_pixclk_rate variable is not being used outside of the if-block in
+rk3588_calc_cru_cfg(), hence move the superfluous assignment from the
+first branch to the inner comment-block.
+
+Signed-off-by: Cristian Ciocaltea <cristian.ciocaltea@collabora.com>
+---
+ drivers/gpu/drm/rockchip/rockchip_drm_vop2.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/gpu/drm/rockchip/rockchip_drm_vop2.c b/drivers/gpu/drm/rockchip/rockchip_drm_vop2.c
+index 17a98845fd31b5b223b734ae9f72f171230aa7cf..2455d4a55abd6751d54b7c6ecad3dda8a614bd36 100644
+--- a/drivers/gpu/drm/rockchip/rockchip_drm_vop2.c
++++ b/drivers/gpu/drm/rockchip/rockchip_drm_vop2.c
+@@ -1905,8 +1905,8 @@ static unsigned long rk3588_calc_cru_cfg(struct vop2_video_port *vp, int id,
+ 			K = 2;
+ 		}
+ 
+-		if_pixclk_rate = (dclk_core_rate << 1) / K;
+ 		/*
++		 * if_pixclk_rate = (dclk_core_rate << 1) / K;
+ 		 * if_dclk_rate = dclk_core_rate / K;
+ 		 * *if_pixclk_div = dclk_rate / if_pixclk_rate;
+ 		 * *if_dclk_div = dclk_rate / if_dclk_rate;
+
+-- 
+2.48.1
+
+
+_______________________________________________
+Linux-rockchip mailing list
+Linux-rockchip@lists.infradead.org
+http://lists.infradead.org/mailman/listinfo/linux-rockchip
+
+From mboxrd@z Thu Jan  1 00:00:00 1970
+Return-Path: <linux-rockchip-bounces+linux-rockchip=archiver.kernel.org@lists.infradead.org>
+X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
+	aws-us-west-2-korg-lkml-1.web.codeaurora.org
+Received: from bombadil.infradead.org (bombadil.infradead.org [198.137.202.133])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+	(No client certificate requested)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 8ACE4C02196
+	for <linux-rockchip@archiver.kernel.org>; Tue,  4 Feb 2025 13:46:04 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+	d=lists.infradead.org; s=bombadil.20210309; h=Sender:
+	Content-Transfer-Encoding:Content-Type:List-Subscribe:List-Help:List-Post:
+	List-Archive:List-Unsubscribe:List-Id:Cc:To:MIME-Version:Message-Id:Date:
+	Subject:From:Reply-To:Content-ID:Content-Description:Resent-Date:Resent-From:
+	Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:In-Reply-To:References:
+	List-Owner; bh=iGmWoYike2sd47kQgVfKkFnbVRByULrzVCIUavRe7Os=; b=AK5h6NZKwWtl1l
+	E0CDy7JxJjZY7h1E/RGmBI2GEGWLbLvh4quSaJ6htFKV4qZxz3vcY/KmTVmVXbx2iu0uhWThgBfv9
+	3Ma5SRQ9tUG9zpOu5H5dxoHQpDyoa6PO13E1eGobP4AiW0QWYfk+JXJ5WsouJEr9tn0CW8p4qYAfd
+	sOXMUtsJ6ANfGoZrDXGhJkhumer4RG13xI51oIRr9TWV4V+dbXTG3BdCBVw9THH0hmS9QllHcHKuH
+	JuNjzfbsYghNv7dbNNSjsxbOYr/+ZJNEFtusb+KI7Z2cTtt/EmCVaw/4zeZi9A9SrMVTwfR4QL74J
+	T7RtEw5pv0rXEvveOEWg==;
+Received: from localhost ([::1] helo=bombadil.infradead.org)
+	by bombadil.infradead.org with esmtp (Exim 4.98 #2 (Red Hat Linux))
+	id 1tfJFX-00000000ZD1-1Rie;
+	Tue, 04 Feb 2025 13:45:59 +0000
+Received: from bali.collaboradmins.com ([148.251.105.195])
+	by bombadil.infradead.org with esmtps (Exim 4.98 #2 (Red Hat Linux))
+	id 1tfIDw-00000000RfJ-1oIM;
+	Tue, 04 Feb 2025 12:40:17 +0000
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=collabora.com;
+	s=mail; t=1738672814;
+	bh=sCD3UAqTLlx31/Pe8SSEC1P6gHo0WdI2HK57DyCsFLA=;
+	h=From:Subject:Date:To:Cc:From;
+	b=aZy9MkAizdhNdDigZnoM4HwqQuIgR7jZ3Cz0mTPmTu/dbuJnFMPG20+QCFJCsqka/
+	 8ZWsXVyTxt4aO4oE1Augpv/OpHCpJfM3ZmaFLvlQ7Lczhq0yokRVhX6iJo/c5z1rxM
+	 HU+PWlG4dnkGQL5S5senHh1b+mubDBTtyQlnqmPadUfyeNWyDozY38F2aOElQrLFEx
+	 q7dv1AFPXQUQF4F9aGaaddhvH5Cla92hoiDPp1Nu60uU00kXTS6D+V/28TtDnzkbHA
+	 kzRNk9Kdn34n26Q4bsSGftIDS4yw2XuWSa30YKuiVon+3HGBTiWi0IWIFw+B8Tc1TF
+	 QroCertfrGhTw==
+Received: from localhost (unknown [188.27.43.189])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange ECDHE (prime256v1) server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	(No client certificate requested)
+	(Authenticated sender: cristicc)
+	by bali.collaboradmins.com (Postfix) with UTF8SMTPSA id 14DA917E0848;
+	Tue,  4 Feb 2025 13:40:14 +0100 (CET)
+From: Cristian Ciocaltea <cristian.ciocaltea@collabora.com>
+Subject: [PATCH v3 0/5] Improve Rockchip VOP2 display modes handling on
+ RK3588 HDMI0
+Date: Tue, 04 Feb 2025 14:40:03 +0200
+Message-Id: <20250204-vop2-hdmi0-disp-modes-v3-0-d71c6a196e58@collabora.com>
+MIME-Version: 1.0
+X-B4-Tracking: v=1; b=H4sIAKMKomcC/4XNywrCMBCF4VcpWRvJpOnNle8hLnKZ2oHWlESCU
+ vrupt0Igrj8D8w3C4sYCCM7FQsLmCiSv+coDwWzg77fkJPLzaSQCgBqnvws+eAmEtxRnPnkHUZ
+ uyg7LGrqmbnuWb+eAPT1393LNPVB8+PDa3yTY1n9iAi64NFZX4Ixqu/Zs/Thq44M+Wj+xTU3yI
+ 0mAX5LMkmrA9pUQgKr6ltZ1fQMvH9NECAEAAA==
+X-Change-ID: 20241116-vop2-hdmi0-disp-modes-b39e3619768f
+To: Sandy Huang <hjc@rock-chips.com>, 
+ =?utf-8?q?Heiko_St=C3=BCbner?= <heiko@sntech.de>, 
+ Andy Yan <andy.yan@rock-chips.com>, 
+ Maarten Lankhorst <maarten.lankhorst@linux.intel.com>, 
+ Maxime Ripard <mripard@kernel.org>, Thomas Zimmermann <tzimmermann@suse.de>, 
+ David Airlie <airlied@gmail.com>, Simona Vetter <simona@ffwll.ch>, 
+ Rob Herring <robh@kernel.org>, Krzysztof Kozlowski <krzk+dt@kernel.org>, 
+ Conor Dooley <conor+dt@kernel.org>
+Cc: kernel@collabora.com, dri-devel@lists.freedesktop.org, 
+ devicetree@vger.kernel.org, linux-arm-kernel@lists.infradead.org, 
+ linux-rockchip@lists.infradead.org, linux-kernel@vger.kernel.org, 
+ FUKAUMI Naoki <naoki@radxa.com>
+X-Mailer: b4 0.14.2
+X-CRM114-Version: 20100106-BlameMichelson ( TRE 0.8.0 (BSD) ) MR-646709E3 
+X-CRM114-CacheID: sfid-20250204_044016_639424_9ACBDB38 
+X-CRM114-Status: GOOD (  12.89  )
+X-BeenThere: linux-rockchip@lists.infradead.org
+X-Mailman-Version: 2.1.34
+Precedence: list
+List-Id: Upstream kernel work for Rockchip platforms <linux-rockchip.lists.infradead.org>
+List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-rockchip>,
+ <mailto:linux-rockchip-request@lists.infradead.org?subject=unsubscribe>
+List-Archive: <http://lists.infradead.org/pipermail/linux-rockchip/>
+List-Post: <mailto:linux-rockchip@lists.infradead.org>
+List-Help: <mailto:linux-rockchip-request@lists.infradead.org?subject=help>
+List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-rockchip>,
+ <mailto:linux-rockchip-request@lists.infradead.org?subject=subscribe>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Sender: "Linux-rockchip" <linux-rockchip-bounces@lists.infradead.org>
+Errors-To: linux-rockchip-bounces+linux-rockchip=archiver.kernel.org@lists.infradead.org
+
+VOP2 support for RK3588 SoC is currently not capable to handle the full
+range of display modes advertised by the connected screens, e.g. it
+doesn't cope well with non-integer refresh rates like 59.94, 29.97,
+23.98, etc.
+
+There are two HDMI PHYs available on RK3588, each providing a PLL that
+can be used by three out of the four VOP2 video ports as an alternative
+and more accurate pixel clock source. They are able to handle display
+modes up to 4K@60Hz, anything above that, e.g. the maximum supported
+8K@60Hz resolution, is supposed to be handled by the system CRU.
+
+There is quite a bit of complexity in downstream driver to handle all
+possible usecases - see [1] for a brief description on how was that
+designed to work.
+
+As for the moment HDMI1 output support [2] is not fully merged upstream,
+the patch series targets HDMI0 only.
+
+Additionally, please note that testing any HDMI 2.0 specific modes, e.g.
+4K@60Hz, requires high TMDS clock ratio and scrambling capability [3].
+
+Thanks,
+Cristian
+
+[1] https://github.com/radxa/kernel/blob/linux-6.1-stan-rkr4.1/drivers/gpu/drm/rockchip/rockchip_drm_vop2.c#L4742
+[2] https://lore.kernel.org/lkml/20241211-rk3588-hdmi1-v2-0-02cdca22ff68@collabora.com/
+[3] https://gitlab.collabora.com/hardware-enablement/rockchip-3588/linux/-/commits/rk3588-hdmi-bridge-v6.14-rc1
+
+Signed-off-by: Cristian Ciocaltea <cristian.ciocaltea@collabora.com>
+---
+Changes in v3:
+- Check the already computed clock instead of mode->crtc_clock in the
+  conditional that triggers the switch to HDMI PHY PLL
+- Rebased series onto v6.14-rc1
+- Link to v2: https://lore.kernel.org/r/20241211-vop2-hdmi0-disp-modes-v2-0-471cf5001e45@collabora.com
+
+Changes in v2:
+- Collected Acked-by tag from Rob and Tested-by from Naoki
+- Rebased series onto v6.13-rc1
+- Link to v1: https://lore.kernel.org/r/20241116-vop2-hdmi0-disp-modes-v1-0-2bca51db4898@collabora.com
+
+---
+Cristian Ciocaltea (5):
+      dt-bindings: display: vop2: Add optional PLL clock properties
+      drm/rockchip: vop2: Drop unnecessary if_pixclk_rate computation
+      drm/rockchip: vop2: Improve display modes handling on RK3588 HDMI0
+      arm64: dts: rockchip: Enable HDMI0 PHY clk provider on RK3588
+      arm64: dts: rockchip: Add HDMI0 PHY PLL clock source to VOP2 on RK3588
+
+ .../bindings/display/rockchip/rockchip-vop2.yaml   |  4 +++
+ arch/arm64/boot/dts/rockchip/rk3588-base.dtsi      |  7 +++--
+ drivers/gpu/drm/rockchip/rockchip_drm_vop2.c       | 36 +++++++++++++++++++++-
+ 3 files changed, 44 insertions(+), 3 deletions(-)
+---
+base-commit: 2014c95afecee3e76ca4a56956a936e23283f05b
+change-id: 20241116-vop2-hdmi0-disp-modes-b39e3619768f
+
+
+_______________________________________________
+Linux-rockchip mailing list
+Linux-rockchip@lists.infradead.org
+http://lists.infradead.org/mailman/listinfo/linux-rockchip
+
+From mboxrd@z Thu Jan  1 00:00:00 1970
+Return-Path: <linux-rockchip-bounces+linux-rockchip=archiver.kernel.org@lists.infradead.org>
+X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
+	aws-us-west-2-korg-lkml-1.web.codeaurora.org
+Received: from bombadil.infradead.org (bombadil.infradead.org [198.137.202.133])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+	(No client certificate requested)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id E6165C02194
+	for <linux-rockchip@archiver.kernel.org>; Tue,  4 Feb 2025 13:46:04 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+	d=lists.infradead.org; s=bombadil.20210309; h=Sender:
+	Content-Transfer-Encoding:Content-Type:List-Subscribe:List-Help:List-Post:
+	List-Archive:List-Unsubscribe:List-Id:Cc:To:In-Reply-To:References:Message-Id
+	:MIME-Version:Subject:Date:From:Reply-To:Content-ID:Content-Description:
+	Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:
+	List-Owner; bh=XdcsArBIh9977ZRe+4L/eruhtlcmGDtuuqbDkuc0J9g=; b=igg20tIKkDO4ve
+	MhFGBkyfd3T6/tbNtD7hI6dRu9A4C5B2S8ukDpN1Kek3iV8Az1zk23jgzWBXAujCu8q+7MSD9ALdc
+	BvzFaJPRaodEBVYWt2Oq8RpHapvHLCRpVAcdJYLCIY54rbi+Kcl9JtdpYbhuAVaXCUv4xEKvo1Zt+
+	a2EykGXrxEIWpmR6U9jRZ8HXxwgLpI3O/nPCDFztOsB851SaHQKJwv/sYK2OL8VmRJALPWb/xqRyO
+	pMvvweZILtL0WeTN7mNUXG/T2iquB4661dFm2TyqCddskB7fkF1tPi9D6r0Y8YQfB7q7+aZv1lMkY
+	C0dVnGhuywPvyxeomf0w==;
+Received: from localhost ([::1] helo=bombadil.infradead.org)
+	by bombadil.infradead.org with esmtp (Exim 4.98 #2 (Red Hat Linux))
+	id 1tfJFX-00000000ZDl-2yWC;
+	Tue, 04 Feb 2025 13:45:59 +0000
+Received: from bali.collaboradmins.com ([2a01:4f8:201:9162::2])
+	by bombadil.infradead.org with esmtps (Exim 4.98 #2 (Red Hat Linux))
+	id 1tfIDx-00000000RfM-2EK6;
+	Tue, 04 Feb 2025 12:40:18 +0000
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=collabora.com;
+	s=mail; t=1738672815;
+	bh=1PDp2WlZu6IqKiEMkFkB1f2lJPaUATGjxKu+MBdRSg4=;
+	h=From:Date:Subject:References:In-Reply-To:To:Cc:From;
+	b=UWmgAvNQbIvH3JBPouUxdANztFGheO9xh3ifAxP8lUHuiKkkwRdpLeRIvWHhM09VL
+	 u2OiTsZEA+rQbYOyBspKg54VzPRWDxh9FnNhLs+XsnKo0RoMC3tqBtBpg6Y43vw12T
+	 KIkngbAWl+LANkE6GaCS6tehh9ovig8KyYHRhTF9XgPdg1NA9J9YbO1UE5UZop7RF1
+	 FtgS0HFrBLwoPz47NfgK4iPeTfL5lT3gGPCqmmhVlpGaI0JroFfUe1KJhJXM5ZA6UJ
+	 ESvNvS+wH99tDZ/2lloIGF2/cKqxE7UyNoce3ch7FgfGhXAxF17oEIBqt9S/WaWKQf
+	 ZfNieCMtXS3TA==
+Received: from localhost (unknown [188.27.43.189])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange ECDHE (prime256v1) server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	(No client certificate requested)
+	(Authenticated sender: cristicc)
+	by bali.collaboradmins.com (Postfix) with UTF8SMTPSA id E7C8517E0E48;
+	Tue,  4 Feb 2025 13:40:14 +0100 (CET)
+From: Cristian Ciocaltea <cristian.ciocaltea@collabora.com>
+Date: Tue, 04 Feb 2025 14:40:04 +0200
+Subject: [PATCH v3 1/5] dt-bindings: display: vop2: Add optional PLL clock
+ properties
+MIME-Version: 1.0
+Message-Id: <20250204-vop2-hdmi0-disp-modes-v3-1-d71c6a196e58@collabora.com>
+References: <20250204-vop2-hdmi0-disp-modes-v3-0-d71c6a196e58@collabora.com>
+In-Reply-To: <20250204-vop2-hdmi0-disp-modes-v3-0-d71c6a196e58@collabora.com>
+To: Sandy Huang <hjc@rock-chips.com>, 
+ =?utf-8?q?Heiko_St=C3=BCbner?= <heiko@sntech.de>, 
+ Andy Yan <andy.yan@rock-chips.com>, 
+ Maarten Lankhorst <maarten.lankhorst@linux.intel.com>, 
+ Maxime Ripard <mripard@kernel.org>, Thomas Zimmermann <tzimmermann@suse.de>, 
+ David Airlie <airlied@gmail.com>, Simona Vetter <simona@ffwll.ch>, 
+ Rob Herring <robh@kernel.org>, Krzysztof Kozlowski <krzk+dt@kernel.org>, 
+ Conor Dooley <conor+dt@kernel.org>
+Cc: kernel@collabora.com, dri-devel@lists.freedesktop.org, 
+ devicetree@vger.kernel.org, linux-arm-kernel@lists.infradead.org, 
+ linux-rockchip@lists.infradead.org, linux-kernel@vger.kernel.org
+X-Mailer: b4 0.14.2
+X-CRM114-Version: 20100106-BlameMichelson ( TRE 0.8.0 (BSD) ) MR-646709E3 
+X-CRM114-CacheID: sfid-20250204_044017_725245_7FA6336E 
+X-CRM114-Status: UNSURE (   8.71  )
+X-CRM114-Notice: Please train this message.
+X-BeenThere: linux-rockchip@lists.infradead.org
+X-Mailman-Version: 2.1.34
+Precedence: list
+List-Id: Upstream kernel work for Rockchip platforms <linux-rockchip.lists.infradead.org>
+List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-rockchip>,
+ <mailto:linux-rockchip-request@lists.infradead.org?subject=unsubscribe>
+List-Archive: <http://lists.infradead.org/pipermail/linux-rockchip/>
+List-Post: <mailto:linux-rockchip@lists.infradead.org>
+List-Help: <mailto:linux-rockchip-request@lists.infradead.org?subject=help>
+List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-rockchip>,
+ <mailto:linux-rockchip-request@lists.infradead.org?subject=subscribe>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Sender: "Linux-rockchip" <linux-rockchip-bounces@lists.infradead.org>
+Errors-To: linux-rockchip-bounces+linux-rockchip=archiver.kernel.org@lists.infradead.org
+
+On RK3588, HDMI PHY PLL can be used as an alternative and more accurate
+pixel clock source for VOP2 video ports 0, 1 and 2.
+
+Document the optional PLL clock properties corresponding to the two HDMI
+PHYs available on the SoC.
+
+Acked-by: Rob Herring (Arm) <robh@kernel.org>
+Signed-off-by: Cristian Ciocaltea <cristian.ciocaltea@collabora.com>
+---
+ Documentation/devicetree/bindings/display/rockchip/rockchip-vop2.yaml | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/Documentation/devicetree/bindings/display/rockchip/rockchip-vop2.yaml b/Documentation/devicetree/bindings/display/rockchip/rockchip-vop2.yaml
+index 2531726af306bd388c00c3c0a1785b2c7367e2bd..46d956e63338e196361483a668fbf5597ebce24f 100644
+--- a/Documentation/devicetree/bindings/display/rockchip/rockchip-vop2.yaml
++++ b/Documentation/devicetree/bindings/display/rockchip/rockchip-vop2.yaml
+@@ -53,6 +53,8 @@ properties:
+       - description: Pixel clock for video port 2.
+       - description: Pixel clock for video port 3.
+       - description: Peripheral(vop grf/dsi) clock.
++      - description: Alternative pixel clock provided by HDMI0 PHY PLL.
++      - description: Alternative pixel clock provided by HDMI1 PHY PLL.
+ 
+   clock-names:
+     minItems: 5
+@@ -64,6 +66,8 @@ properties:
+       - const: dclk_vp2
+       - const: dclk_vp3
+       - const: pclk_vop
++      - const: pll_hdmiphy0
++      - const: pll_hdmiphy1
+ 
+   rockchip,grf:
+     $ref: /schemas/types.yaml#/definitions/phandle
+
+-- 
+2.48.1
+
+
+_______________________________________________
+Linux-rockchip mailing list
+Linux-rockchip@lists.infradead.org
+http://lists.infradead.org/mailman/listinfo/linux-rockchip
+
+From mboxrd@z Thu Jan  1 00:00:00 1970
+Return-Path: <linux-rockchip-bounces+linux-rockchip=archiver.kernel.org@lists.infradead.org>
+X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
+	aws-us-west-2-korg-lkml-1.web.codeaurora.org
+Received: from bombadil.infradead.org (bombadil.infradead.org [198.137.202.133])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+	(No client certificate requested)
+	by smtp.lore.kernel.org (Postfix) with ESMTPS id 4D7E3C0219A
+	for <linux-rockchip@archiver.kernel.org>; Tue,  4 Feb 2025 13:46:05 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+	d=lists.infradead.org; s=bombadil.20210309; h=Sender:
+	Content-Transfer-Encoding:Content-Type:List-Subscribe:List-Help:List-Post:
+	List-Archive:List-Unsubscribe:List-Id:Cc:To:In-Reply-To:References:Message-Id
+	:MIME-Version:Subject:Date:From:Reply-To:Content-ID:Content-Description:
+	Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:
+	List-Owner; bh=NeTymUBvns3I+Y6vo172rMW7QsPvE7B3oDSkqdbq60w=; b=y0z3F91D0Nkh+3
+	sHBFvyxxwLF8ezdXpWO16s0XlYV3rrGKf4lvfxkPiZVWtwmqpsvEkmA0DMTObu7BKaGZdqBaf8NCI
+	mycLVWebIeTXvy6SB5aE/taf32yiaWfILhNHz+0/i9/FAMeYYUT5yAeNJsiTjWYGUQ+OJVqsySYs4
+	YRFqN7Dw11Cl/rZDBSrQnE541PjAX0/uXe/qsZEM+hzGLqqeMrVlPt+zpnZa8ooRiOCKY4ClOMVWN
+	ug77mV/rSk5T74h7EH4ohAUj9FM0m0ZMlf0v1PL2fg/3Z33u2AkrBtAuMqjyK1FqlVc/KuYnSte52
+	t1wQNpt0QV9DTJk3gWxQ==;
+Received: from localhost ([::1] helo=bombadil.infradead.org)
+	by bombadil.infradead.org with esmtp (Exim 4.98 #2 (Red Hat Linux))
+	id 1tfJFY-00000000ZFQ-37C4;
+	Tue, 04 Feb 2025 13:46:00 +0000
+Received: from bali.collaboradmins.com ([2a01:4f8:201:9162::2])
+	by bombadil.infradead.org with esmtps (Exim 4.98 #2 (Red Hat Linux))
+	id 1tfIDy-00000000RgE-2g7B;
+	Tue, 04 Feb 2025 12:40:19 +0000
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=collabora.com;
+	s=mail; t=1738672816;
+	bh=E2DH134eg3qKxsbKhKobxdsTu3LZxl7lb6JGqVi8yCM=;
+	h=From:Date:Subject:References:In-Reply-To:To:Cc:From;
+	b=Bn8Z63OXMcU+BHS3oATHsShK7+1fYGiTmEWhw0sIyFXu3tG5BsDMsTL765PwM0UID
+	 M+3PVgTimXE5xtyKwx2CxyX4MsfB12Oj5T/5elvfSwF4QYgXZraEEDrbDZvGAYeuCL
+	 lA8DN+PG/Z6rBaN3e4zdlEj0jPh6l11ETEI9lrFY1/PxePllTiyl6O3g3VLjfRT+Lz
+	 SLqnV82FC7Pib/z2M19OVUiF1l75m2svv6mF4aaVzrz8pbPYL7KUjeR9QdZyTfJxQp
+	 4lN6LLiyjd/tRs5TfF0Wg72dExS4JnO9TOY3nP+S3xkNxvQvCFUVIcjhmrvj9LbvN0
+	 j3LkGMkxgjT/Q==
+Received: from localhost (unknown [188.27.43.189])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange ECDHE (prime256v1) server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	(No client certificate requested)
+	(Authenticated sender: cristicc)
+	by bali.collaboradmins.com (Postfix) with UTF8SMTPSA id A514F17E1519;
+	Tue,  4 Feb 2025 13:40:16 +0100 (CET)
+From: Cristian Ciocaltea <cristian.ciocaltea@collabora.com>
+Date: Tue, 04 Feb 2025 14:40:06 +0200
+Subject: [PATCH v3 3/5] drm/rockchip: vop2: Improve display modes handling
+ on RK3588 HDMI0
+MIME-Version: 1.0
+Message-Id: <20250204-vop2-hdmi0-disp-modes-v3-3-d71c6a196e58@collabora.com>
+References: <20250204-vop2-hdmi0-disp-modes-v3-0-d71c6a196e58@collabora.com>
+In-Reply-To: <20250204-vop2-hdmi0-disp-modes-v3-0-d71c6a196e58@collabora.com>
+To: Sandy Huang <hjc@rock-chips.com>, 
+ =?utf-8?q?Heiko_St=C3=BCbner?= <heiko@sntech.de>, 
+ Andy Yan <andy.yan@rock-chips.com>, 
+ Maarten Lankhorst <maarten.lankhorst@linux.intel.com>, 
+ Maxime Ripard <mripard@kernel.org>, Thomas Zimmermann <tzimmermann@suse.de>, 
+ David Airlie <airlied@gmail.com>, Simona Vetter <simona@ffwll.ch>, 
+ Rob Herring <robh@kernel.org>, Krzysztof Kozlowski <krzk+dt@kernel.org>, 
+ Conor Dooley <conor+dt@kernel.org>
+Cc: kernel@collabora.com, dri-devel@lists.freedesktop.org, 
+ devicetree@vger.kernel.org, linux-arm-kernel@lists.infradead.org, 
+ linux-rockchip@lists.infradead.org, linux-kernel@vger.kernel.org, 
+ FUKAUMI Naoki <naoki@radxa.com>
+X-Mailer: b4 0.14.2
+X-CRM114-Version: 20100106-BlameMichelson ( TRE 0.8.0 (BSD) ) MR-646709E3 
+X-CRM114-CacheID: sfid-20250204_044018_863872_9267B972 
+X-CRM114-Status: GOOD (  15.71  )
+X-BeenThere: linux-rockchip@lists.infradead.org
+X-Mailman-Version: 2.1.34
+Precedence: list
+List-Id: Upstream kernel work for Rockchip platforms <linux-rockchip.lists.infradead.org>
+List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-rockchip>,
+ <mailto:linux-rockchip-request@lists.infradead.org?subject=unsubscribe>
+List-Archive: <http://lists.infradead.org/pipermail/linux-rockchip/>
+List-Post: <mailto:linux-rockchip@lists.infradead.org>
+List-Help: <mailto:linux-rockchip-request@lists.infradead.org?subject=help>
+List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-rockchip>,
+ <mailto:linux-rockchip-request@lists.infradead.org?subject=subscribe>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Sender: "Linux-rockchip" <linux-rockchip-bounces@lists.infradead.org>
+Errors-To: linux-rockchip-bounces+linux-rockchip=archiver.kernel.org@lists.infradead.org
+
+The RK3588 specific implementation is currently quite limited in terms
+of handling the full range of display modes supported by the connected
+screens, e.g. 2560x1440@75Hz, 2048x1152@60Hz, 1024x768@60Hz are just a
+few of them.
+
+Additionally, it doesn't cope well with non-integer refresh rates like
+59.94, 29.97, 23.98, etc.
+
+Make use of HDMI0 PHY PLL as a more accurate DCLK source to handle
+all display modes up to 4K@60Hz.
+
+Tested-by: FUKAUMI Naoki <naoki@radxa.com>
+Signed-off-by: Cristian Ciocaltea <cristian.ciocaltea@collabora.com>
+---
+ drivers/gpu/drm/rockchip/rockchip_drm_vop2.c | 34 ++++++++++++++++++++++++++++
+ 1 file changed, 34 insertions(+)
+
+diff --git a/drivers/gpu/drm/rockchip/rockchip_drm_vop2.c b/drivers/gpu/drm/rockchip/rockchip_drm_vop2.c
+index 2455d4a55abd6751d54b7c6ecad3dda8a614bd36..afc946ead87091373605e59dbca281a9e91bea57 100644
+--- a/drivers/gpu/drm/rockchip/rockchip_drm_vop2.c
++++ b/drivers/gpu/drm/rockchip/rockchip_drm_vop2.c
+@@ -159,6 +159,7 @@ struct vop2_video_port {
+ 	struct drm_crtc crtc;
+ 	struct vop2 *vop2;
+ 	struct clk *dclk;
++	struct clk *dclk_src;
+ 	unsigned int id;
+ 	const struct vop2_video_port_data *data;
+ 
+@@ -214,6 +215,7 @@ struct vop2 {
+ 	struct clk *hclk;
+ 	struct clk *aclk;
+ 	struct clk *pclk;
++	struct clk *pll_hdmiphy0;
+ 
+ 	/* optional internal rgb encoder */
+ 	struct rockchip_rgb *rgb;
+@@ -222,6 +224,8 @@ struct vop2 {
+ 	struct vop2_win win[];
+ };
+ 
++#define VOP2_MAX_DCLK_RATE		600000000
++
+ #define vop2_output_if_is_hdmi(x)	((x) == ROCKCHIP_VOP2_EP_HDMI0 || \
+ 					 (x) == ROCKCHIP_VOP2_EP_HDMI1)
+ 
+@@ -1155,6 +1159,9 @@ static void vop2_crtc_atomic_disable(struct drm_crtc *crtc,
+ 
+ 	vop2_crtc_disable_irq(vp, VP_INT_DSP_HOLD_VALID);
+ 
++	if (vp->dclk_src)
++		clk_set_parent(vp->dclk, vp->dclk_src);
++
+ 	clk_disable_unprepare(vp->dclk);
+ 
+ 	vop2->enable_count--;
+@@ -2259,6 +2266,27 @@ static void vop2_crtc_atomic_enable(struct drm_crtc *crtc,
+ 
+ 	vop2_vp_write(vp, RK3568_VP_MIPI_CTRL, 0);
+ 
++	/*
++	 * Switch to HDMI PHY PLL as DCLK source for display modes up
++	 * to 4K@60Hz, if available, otherwise keep using the system CRU.
++	 */
++	if (vop2->pll_hdmiphy0 && clock <= VOP2_MAX_DCLK_RATE) {
++		drm_for_each_encoder_mask(encoder, crtc->dev, crtc_state->encoder_mask) {
++			struct rockchip_encoder *rkencoder = to_rockchip_encoder(encoder);
++
++			if (rkencoder->crtc_endpoint_id == ROCKCHIP_VOP2_EP_HDMI0) {
++				if (!vp->dclk_src)
++					vp->dclk_src = clk_get_parent(vp->dclk);
++
++				ret = clk_set_parent(vp->dclk, vop2->pll_hdmiphy0);
++				if (ret < 0)
++					drm_warn(vop2->drm,
++						 "Could not switch to HDMI0 PHY PLL: %d\n", ret);
++				break;
++			}
++		}
++	}
++
+ 	clk_set_rate(vp->dclk, clock);
+ 
+ 	vop2_post_config(crtc);
+@@ -3699,6 +3727,12 @@ static int vop2_bind(struct device *dev, struct device *master, void *data)
+ 		return PTR_ERR(vop2->pclk);
+ 	}
+ 
++	vop2->pll_hdmiphy0 = devm_clk_get_optional(vop2->dev, "pll_hdmiphy0");
++	if (IS_ERR(vop2->pll_hdmiphy0)) {
++		drm_err(vop2->drm, "failed to get pll_hdmiphy0\n");
++		return PTR_ERR(vop2->pll_hdmiphy0);
++	}
++
+ 	vop2->irq = platform_get_irq(pdev, 0);
+ 	if (vop2->irq < 0) {
+ 		drm_err(vop2->drm, "cannot find irq for vop2\n");
+
+-- 
+2.48.1
+
+
+_______________________________________________
+Linux-rockchip mailing list
+Linux-rockchip@lists.infradead.org
+http://lists.infradead.org/mailman/listinfo/linux-rockchip
+
