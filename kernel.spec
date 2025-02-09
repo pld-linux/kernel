@@ -67,7 +67,7 @@
 
 %define		rel		1
 %define		basever		6.1
-%define		postver		.127
+%define		postver		.128
 
 # define this to '-%{basever}' for longterm branch
 %define		versuffix	-%{basever}
@@ -121,7 +121,7 @@ Source0:	https://www.kernel.org/pub/linux/kernel/v6.x/linux-%{basever}.tar.xz
 # Source0-md5:	475320de08f16c9fa486fc4edfe98b30
 %if "%{postver}" != ".0"
 Patch0:		https://www.kernel.org/pub/linux/kernel/v6.x/patch-%{version}.xz
-# Patch0-md5:	790707a780b63bacd9278efb0e55fd41
+# Patch0-md5:	d25a48085cd0dbbed087559ef208572e
 %endif
 Source1:	kernel.sysconfig
 
@@ -605,85 +605,85 @@ ln -s %{SOURCE10} Makefile
 cd linux-%{basever}
 
 %if "%{postver}" != ".0"
-%patch0 -p1
+%patch -P 0 -p1
 %endif
 
 %if %{without vanilla}
-%patch2 -p1
+%patch -P 2 -p1
 
 %if %{with fbcondecor}
-%patch3 -p1
+%patch -P 3 -p1
 %endif
-%patch6 -p1
+%patch -P 6 -p1
 
 ## netfilter
 #
 
 # kernel-pom-ng-IPV4OPTSSTRIP.patch
-%patch10 -p1
+%patch -P 10 -p1
 
 # kernel-owner-xid.patch
 %if %{with vserver}
-%patch37 -p1
+%patch -P 37 -p1
 %endif
 
 ##
 # end of netfilter
 
 %if %{with imq}
-#%patch50 -p1
+#patch -P 50 -p1
 %endif
 
-%patch55 -p1
-%patch56 -p1
+%patch -P 55 -p1
+%patch -P 56 -p1
 
 # kernel-rndis_host-wm5.patch
-%patch59 -p1
+%patch -P 59 -p1
 
 # hostap enhancements from/for aircrack-ng
-%patch85 -p1
+%patch -P 85 -p1
 
 # vserver
 %if %{with vserver}
-%patch100 -p1
-%patch101 -p1
+%patch -P 100 -p1
+%patch -P 101 -p1
 %endif
 
 %if %{with aufs}
 # aufs4
-%patch145 -p1
+%patch -P 145 -p1
 %if %{with vserver}
-%patch146 -p1
+%patch -P 146 -p1
 %endif
 %endif
 
 %if %{with rescuecd}
-%patch7000 -p1
+%patch -P 7000 -p1
 %endif
 
 %ifarch %{arm} aarch64
-%patch8000 -p1
-%patch8001 -p1
-%patch8002 -p1
-%patch8003 -p1
+%patch -P 8000 -p1
+%patch -P 8001 -p1
+%patch -P 8002 -p1
+%patch -P 8003 -p1
 %endif
 
 %if %{with rt}
-%patch500 -p1
+%patch -P 500 -p1
 rm -f localversion-rt
 %endif
 
-%patch250 -p1
+%patch -P 250 -p1
 
 %endif # vanilla
 
 # Small fixes:
-%patch2000 -p1
-%patch2001 -p1
-#%patch2003 -p1
+%patch -P 2000 -p1
+%patch -P 2001 -p1
+#patch -P 2003 -p1
 
 # Do not remove this, please!
-#%%patch50000 -p1
+#patch -P 50000 -p1
 
 chmod 755 tools/objtool/sync-check.sh
 
