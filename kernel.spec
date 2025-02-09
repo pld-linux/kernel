@@ -53,7 +53,7 @@
 
 %define		rel		1
 %define		basever		6.12
-%define		postver		.12
+%define		postver		.13
 
 # define this to '-%{basever}' for longterm branch
 %define		versuffix	-%{basever}
@@ -107,7 +107,7 @@ Source0:	https://www.kernel.org/pub/linux/kernel/v6.x/linux-%{basever}.tar.xz
 # Source0-md5:	844fae6a58c7f43af44d8cea8484b4a1
 %if "%{postver}" != ".0"
 Patch0:		https://www.kernel.org/pub/linux/kernel/v6.x/patch-%{version}.xz
-# Patch0-md5:	7d97f10e9720c2df78eda9fb818819dc
+# Patch0-md5:	b843b8644e7ba2e444e2b0b98f8693c3
 %endif
 Source1:	kernel.sysconfig
 
@@ -535,62 +535,62 @@ ln -s %{SOURCE10} Makefile
 cd linux-%{basever}
 
 %if "%{postver}" != ".0"
-%patch0 -p1
+%patch -P 0 -p1
 %endif
 
 %if %{without vanilla}
-%patch2 -p1
+%patch -P 2 -p1
 
 %if %{with fbcondecor}
-%patch3 -p1
+%patch -P 3 -p1
 %endif
-%patch6 -p1
+%patch -P 6 -p1
 
 ## netfilter
 #
 
 # kernel-pom-ng-IPV4OPTSSTRIP.patch
-%patch10 -p1
+%patch -P 10 -p1
 
 ##
 # end of netfilter
 
-%patch55 -p1
-%patch56 -p1
+%patch -P 55 -p1
+%patch -P 56 -p1
 
 # kernel-rndis_host-wm5.patch
-%patch59 -p1
+%patch -P 59 -p1
 
 %if %{with aufs}
 # aufs
-%patch145 -p1
-%patch147 -p1
+%patch -P 145 -p1
+%patch -P 147 -p1
 %endif
 
 %if %{with rescuecd}
-%patch7000 -p1
+%patch -P 7000 -p1
 %endif
 
 %ifarch %{arm} aarch64
-%patch8000 -p1
-%patch8001 -p1
-%patch8002 -p1
-%patch8004 -p1
-%patch8005 -p1
+%patch -P 8000 -p1
+%patch -P 8001 -p1
+%patch -P 8002 -p1
+%patch -P 8004 -p1
+%patch -P 8005 -p1
 %endif
 
 %if %{with rt}
-%patch500 -p1
+%patch -P 500 -p1
 rm -f localversion-rt
 %endif
 
-%patch250 -p1
+%patch -P 250 -p1
 
 %endif # vanilla
 
 # Small fixes:
-%patch2000 -p1
-%patch2001 -p1
+%patch -P 2000 -p1
+%patch -P 2001 -p1
 
 chmod 755 tools/objtool/sync-check.sh
 
