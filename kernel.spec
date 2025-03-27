@@ -634,11 +634,16 @@ find -name '*.pl' -print0 | \
 	scripts/sphinx-pre-install \
 	scripts/stackdelta
 
+%{__sed} -i -e '1s,/usr/bin/env sh,%{__sh},' \
+	samples/check-exec/run-script-ask.inc
+
 %{__sed} -i -e '1s,/usr/bin/env bash,%{__bash},' \
 	scripts/coccicheck \
 	scripts/config \
 	scripts/decode_stacktrace.sh \
 	tools/testing/selftests/drivers/net/netcons_basic.sh \
+	tools/testing/selftests/drivers/net/netcons_overflow.sh \
+	tools/testing/selftests/exec/check-exec-tests.sh \
 	tools/testing/selftests/powerpc/security/mitigation-patching.sh
 
 %build
@@ -969,6 +974,9 @@ install -d $RPM_BUILD_ROOT%{_kernelsrcdir}/tools/objtool
 cp -a %{objdir}/tools/objtool/fixdep $RPM_BUILD_ROOT%{_kernelsrcdir}/tools/objtool
 cp -a %{objdir}/tools/objtool/objtool $RPM_BUILD_ROOT%{_kernelsrcdir}/tools/objtool
 %endif
+
+# we don't build inc interpreter, so prevent shebang checking
+chmod -x $RPM_BUILD_ROOT%{_kernelsrcdir}/samples/check-exec/{script-ask.inc,script-exec.inc}
 
 # version.h location changed in 3.7, but a lot of external modules don't know about it
 # add a compatibility symlink
