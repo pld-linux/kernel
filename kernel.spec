@@ -51,7 +51,7 @@
 %define		have_drm	0
 %endif
 
-%define		rel		0.1
+%define		rel		1
 %define		basever		6.14
 %define		postver		.0
 
