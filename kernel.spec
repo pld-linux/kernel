@@ -53,7 +53,7 @@
 
 %define		rel		1
 %define		basever		6.12
-%define		postver		.25
+%define		postver		.26
 
 # define this to '-%{basever}' for longterm branch
 %define		versuffix	-%{basever}
@@ -107,7 +107,7 @@ Source0:	https://www.kernel.org/pub/linux/kernel/v6.x/linux-%{basever}.tar.xz
 # Source0-md5:	844fae6a58c7f43af44d8cea8484b4a1
 %if "%{postver}" != ".0"
 Patch0:		https://www.kernel.org/pub/linux/kernel/v6.x/patch-%{version}.xz
-# Patch0-md5:	28e8ff98cc9c07e332dda9048a0ca098
+# Patch0-md5:	6eaf813b408bbfca82cba72e23afa16b
 %endif
 Source1:	kernel.sysconfig
 
@@ -268,7 +268,7 @@ ExclusiveArch:	i486 i586 i686 pentium3 pentium4 athlon %{x8664} x32 alpha %{arm}
 ExclusiveOS:	Linux
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 
-%define		kmod_compress_cmd	%{__xz}
+%define		kmod_compress_cmd	%{__xz} --check=crc32 --lzma2=dict=1MiB
 
 %ifarch %{ix86} %{x8664} x32
 %define		target_arch_dir		x86
