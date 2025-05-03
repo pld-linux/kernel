@@ -39773,20 +39773,20 @@ index 73dae3b1bd4e..ae84fb81acbf 100644
  	mapping_set_gfp_mask(file->f_mapping,
  			     lo->old_gfp_mask & ~(__GFP_IO|__GFP_FS));
 @@ -624,6 +643,8 @@ static int loop_change_fd(struct loop_device *lo, struct block_device *bdev,
- 	 * dependency.
  	 */
  	fput(old_file);
 +	if (old_virt_file)
 +		fput(old_virt_file);
+	dev_set_uevent_suppress(disk_to_dev(lo->lo_disk), 0);
  	if (partscan)
  		loop_reread_partitions(lo);
  
 @@ -637,6 +658,8 @@ static int loop_change_fd(struct loop_device *lo, struct block_device *bdev,
- 	loop_global_unlock(lo, is_loop);
  out_putf:
  	fput(file);
 +	if (virt_file)
 +		fput(virt_file);
+	dev_set_uevent_suppress(disk_to_dev(lo->lo_disk), 0);
  	goto done;
  }
  
