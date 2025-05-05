@@ -51,7 +51,7 @@
 %define		have_drm	0
 %endif
 
-%define		rel		1
+%define		rel		2
 %define		basever		6.14
 %define		postver		.5
 
@@ -1185,6 +1185,7 @@ fi
 /lib/modules/%{kernel_release}/kernel/sound
 %endif
 /lib/modules/%{kernel_release}/kernel/security
+/lib/modules/%{kernel_release}/kernel/virt
 
 %dir %{_sysconfdir}/depmod.d/%{kernel_release}
 %dir %{_sysconfdir}/modprobe.d/%{kernel_release}
