@@ -1176,6 +1176,7 @@ fi
 /lib/modules/%{kernel_release}/kernel/sound
 %endif
 /lib/modules/%{kernel_release}/kernel/security
+/lib/modules/%{kernel_release}/kernel/virt
 
 %dir %{_sysconfdir}/depmod.d/%{kernel_release}
 %dir %{_sysconfdir}/modprobe.d/%{kernel_release}
