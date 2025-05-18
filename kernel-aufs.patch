@@ -39813,14 +39813,14 @@ index 479480f25a6c0..ba3477c30e294 100644
  
  	error = -EINVAL;
  
-@@ -623,6 +641,7 @@ static int loop_change_fd(struct loop_device *lo, struct block_device *bdev,
+@@ -586,6 +586,7 @@ static int loop_change_fd(struct loop_de
+ 	disk_force_media_change(lo->lo_disk);
  	blk_mq_freeze_queue(lo->lo_queue);
  	mapping_set_gfp_mask(old_file->f_mapping, lo->old_gfp_mask);
- 	lo->lo_backing_file = file;
 +	lo->lo_backing_virt_file = virt_file;
- 	lo->old_gfp_mask = mapping_gfp_mask(file->f_mapping);
- 	mapping_set_gfp_mask(file->f_mapping,
- 			     lo->old_gfp_mask & ~(__GFP_IO|__GFP_FS));
+ 	loop_assign_backing_file(lo, file);
+ 	loop_update_dio(lo);
+ 	blk_mq_unfreeze_queue(lo->lo_queue);
 @@ -645,6 +664,8 @@ static int loop_change_fd(struct loop_device *lo, struct block_device *bdev,
  	 * dependency.
  	 */
@@ -39844,7 +39844,7 @@ index 479480f25a6c0..ba3477c30e294 100644
  {
  	struct file *file = fget(config->fd);
 +	struct file *f, *virt_file = NULL;
- 	struct address_space *mapping;
+ 	struct queue_limits lim;
  	int error;
  	loff_t size;
 @@ -1052,6 +1076,13 @@ static int loop_configure(struct loop_device *lo, blk_mode_t mode,
@@ -39861,14 +39861,14 @@ index 479480f25a6c0..ba3477c30e294 100644
  	/*
  	 * If we don't hold exclusive handle for the device, upgrade to it
  	 * here to avoid changing device under exclusive owner.
-@@ -1108,6 +1139,7 @@ static int loop_configure(struct loop_device *lo, blk_mode_t mode,
+@@ -1084,6 +1085,7 @@ static int loop_configure(struct loop_de
+ 
  	lo->use_dio = lo->lo_flags & LO_FLAGS_DIRECT_IO;
  	lo->lo_device = bdev;
- 	lo->lo_backing_file = file;
 +	lo->lo_backing_virt_file = virt_file;
- 	lo->old_gfp_mask = mapping_gfp_mask(mapping);
- 	mapping_set_gfp_mask(mapping, lo->old_gfp_mask & ~(__GFP_IO|__GFP_FS));
+ 	loop_assign_backing_file(lo, file);
  
+ 	lim = queue_limits_start_update(lo->lo_queue);
 @@ -1150,6 +1182,8 @@ static int loop_configure(struct loop_device *lo, blk_mode_t mode,
  		bd_abort_claiming(bdev, loop_configure);
  out_putf:
