@@ -51,9 +51,9 @@
 %define		have_drm	0
 %endif
 
-%define		rel		2
+%define		rel		1
 %define		basever		6.14
-%define		postver		.5
+%define		postver		.7
 
 # define this to '-%{basever}' for longterm branch
 %define		versuffix	%{nil}
@@ -107,7 +107,7 @@ Source0:	https://www.kernel.org/pub/linux/kernel/v6.x/linux-%{basever}.tar.xz
 # Source0-md5:	05238030095d2be98aac79bfbc58f5d3
 %if "%{postver}" != ".0"
 Patch0:		https://www.kernel.org/pub/linux/kernel/v6.x/patch-%{version}.xz
-# Patch0-md5:	bd6b5cb965fc56b8dbae37dc94314b78
+# Patch0-md5:	972b7891da095321e1d1d6c53ba2ff79
 %endif
 Source1:	kernel.sysconfig
 

@@ -39819,7 +39819,7 @@ index 360a30bda4ec7..d46554da825c9 100644
  	struct block_device *lo_device;
  
  	gfp_t		old_gfp_mask;
-@@ -529,6 +529,15 @@ static int do_req_filebacked(struct loop_device *lo, struct request *rq)
+@@ -452,6 +452,15 @@ static int do_req_filebacked(struct loop
  	}
  }
  
@@ -39835,7 +39835,19 @@ index 360a30bda4ec7..d46554da825c9 100644
  static void loop_reread_partitions(struct loop_device *lo)
  {
  	int rc;
-@@ -586,6 +595,7 @@ static int loop_change_fd(struct loop_device *lo, struct block_device *bdev,
+@@ -496,9 +505,10 @@ static int loop_validate_file(struct fil
+ 	return 0;
+ }
+ 
+-static void loop_assign_backing_file(struct loop_device *lo, struct file *file)
++static void loop_assign_backing_file(struct loop_device *lo, struct file *file, struct file *virt_file)
+ {
+ 	lo->lo_backing_file = file;
++	lo->lo_backing_virt_file = virt_file;
+ 	lo->old_gfp_mask = mapping_gfp_mask(file->f_mapping);
+ 	mapping_set_gfp_mask(file->f_mapping,
+ 			lo->old_gfp_mask & ~(__GFP_IO | __GFP_FS));
+@@ -528,6 +538,7 @@ static int loop_change_fd(struct loop_de
  {
  	struct file *file = fget(arg);
  	struct file *old_file;
@@ -39843,7 +39855,7 @@ index 360a30bda4ec7..d46554da825c9 100644
  	unsigned int memflags;
  	int error;
  	bool partscan;
-@@ -610,11 +620,19 @@ static int loop_change_fd(struct loop_device *lo, struct block_device *bdev,
+@@ -556,11 +567,19 @@ static int loop_change_fd(struct loop_de
  	if (!(lo->lo_flags & LO_FLAGS_READ_ONLY))
  		goto out_err;
  
@@ -39863,41 +39875,42 @@ index 360a30bda4ec7..d46554da825c9 100644
  
  	error = -EINVAL;
  
-@@ -627,6 +645,7 @@ static int loop_change_fd(struct loop_device *lo, struct block_device *bdev,
+@@ -572,7 +591,7 @@ static int loop_change_fd(struct loop_de
+ 	disk_force_media_change(lo->lo_disk);
  	memflags = blk_mq_freeze_queue(lo->lo_queue);
  	mapping_set_gfp_mask(old_file->f_mapping, lo->old_gfp_mask);
- 	lo->lo_backing_file = file;
-+	lo->lo_backing_virt_file = virt_file;
- 	lo->old_gfp_mask = mapping_gfp_mask(file->f_mapping);
- 	mapping_set_gfp_mask(file->f_mapping,
- 			     lo->old_gfp_mask & ~(__GFP_IO|__GFP_FS));
-@@ -649,6 +668,8 @@ static int loop_change_fd(struct loop_device *lo, struct block_device *bdev,
+-	loop_assign_backing_file(lo, file);
++	loop_assign_backing_file(lo, file, virt_file);
+ 	loop_update_dio(lo);
+ 	blk_mq_unfreeze_queue(lo->lo_queue, memflags);
+ 	partscan = lo->lo_flags & LO_FLAGS_PARTSCAN;
+@@ -592,6 +611,8 @@ static int loop_change_fd(struct loop_de
+ 	 * dependency.
  	 */
  	fput(old_file);
 +	if (old_virt_file)
 +		fput(old_virt_file);
-	dev_set_uevent_suppress(disk_to_dev(lo->lo_disk), 0);
+ 	dev_set_uevent_suppress(disk_to_dev(lo->lo_disk), 0);
  	if (partscan)
  		loop_reread_partitions(lo);
- 
-@@ -662,6 +683,8 @@ static int loop_change_fd(struct loop_device *lo, struct block_device *bdev,
+@@ -605,6 +626,8 @@ out_err:
+ 	loop_global_unlock(lo, is_loop);
  out_putf:
  	fput(file);
 +	if (virt_file)
 +		fput(virt_file);
-	dev_set_uevent_suppress(disk_to_dev(lo->lo_disk), 0);
+ 	dev_set_uevent_suppress(disk_to_dev(lo->lo_disk), 0);
  	goto done;
  }
- 
-@@ -1039,6 +1062,7 @@ static int loop_configure(struct loop_device *lo, blk_mode_t mode,
+@@ -963,6 +1006,7 @@ static int loop_configure(struct loop_de
  			  const struct loop_config *config)
  {
  	struct file *file = fget(config->fd);
 +	struct file *f, *virt_file = NULL;
- 	struct address_space *mapping;
  	struct queue_limits lim;
  	int error;
-@@ -1053,6 +1077,13 @@ static int loop_configure(struct loop_device *lo, blk_mode_t mode,
+ 	loff_t size;
+@@ -984,6 +1028,13 @@ static int loop_configure(struct loop_de
  	/* This is safe, since we have a reference from open(). */
  	__module_get(THIS_MODULE);
  
@@ -39911,15 +39924,16 @@ index 360a30bda4ec7..d46554da825c9 100644
  	/*
  	 * If we don't hold exclusive handle for the device, upgrade to it
  	 * here to avoid changing device under exclusive owner.
-@@ -1109,6 +1140,7 @@ static int loop_configure(struct loop_device *lo, blk_mode_t mode,
+@@ -1037,7 +1088,7 @@ static int loop_configure(struct loop_de
+ 	set_disk_ro(lo->lo_disk, (lo->lo_flags & LO_FLAGS_READ_ONLY) != 0);
  
  	lo->lo_device = bdev;
- 	lo->lo_backing_file = file;
-+	lo->lo_backing_virt_file = virt_file;
- 	lo->old_gfp_mask = mapping_gfp_mask(mapping);
- 	mapping_set_gfp_mask(mapping, lo->old_gfp_mask & ~(__GFP_IO|__GFP_FS));
+-	loop_assign_backing_file(lo, file);
++	loop_assign_backing_file(lo, file, virt_file);
  
-@@ -1154,6 +1186,8 @@ static int loop_configure(struct loop_device *lo, blk_mode_t mode,
+ 	lim = queue_limits_start_update(lo->lo_queue);
+ 	loop_update_limits(lo, &lim, config->block_size);
+@@ -1081,6 +1132,8 @@ out_bdev:
  		bd_abort_claiming(bdev, loop_configure);
  out_putf:
  	fput(file);
@@ -39928,7 +39942,7 @@ index 360a30bda4ec7..d46554da825c9 100644
  	/* This is safe: open() is still holding a reference. */
  	module_put(THIS_MODULE);
  	return error;
-@@ -1163,11 +1197,13 @@ static void __loop_clr_fd(struct loop_device *lo)
+@@ -1090,11 +1143,13 @@ static void __loop_clr_fd(struct loop_de
  {
  	struct queue_limits lim;
  	struct file *filp;
@@ -39942,7 +39956,7 @@ index 360a30bda4ec7..d46554da825c9 100644
  	spin_unlock_irq(&lo->lo_lock);
  
  	lo->lo_device = NULL;
-@@ -1234,6 +1270,8 @@ static void __loop_clr_fd(struct loop_device *lo)
+@@ -1161,6 +1216,8 @@ static void __loop_clr_fd(struct loop_de
  	 * fput can take open_mutex which is usually taken before lo_mutex.
  	 */
  	fput(filp);
