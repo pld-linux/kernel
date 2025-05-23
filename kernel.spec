@@ -1185,7 +1185,9 @@ fi
 /lib/modules/%{kernel_release}/kernel/sound
 %endif
 /lib/modules/%{kernel_release}/kernel/security
+%ifnarch aarch64 ppc ppc64
 /lib/modules/%{kernel_release}/kernel/virt
+%endif
 
 %dir %{_sysconfdir}/depmod.d/%{kernel_release}
 %dir %{_sysconfdir}/modprobe.d/%{kernel_release}
