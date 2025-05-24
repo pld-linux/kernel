@@ -107,3 +107,49 @@ diff -ur linux-5.3/drivers/scsi/aacraid.org/linit.c linux-5.3/drivers/scsi/aacra
  
  	if (dev->msi_enabled)
 
+--- linux-5.15/arch/x86/kernel/alternative.c.orig	2025-05-24 14:33:00.616663327 +0200
++++ linux-5.15/arch/x86/kernel/alternative.c	2025-05-24 14:42:49.963329920 +0200
+@@ -359,6 +359,21 @@
+ 	return insn->opcode.bytes[0] == 0x0f && (insn->opcode.bytes[1] & 0xf0) == 0x80;
+ }
+ 
++bool cpu_wants_rethunk(void)
++{
++	return cpu_feature_enabled(X86_FEATURE_RETHUNK);
++}
++
++bool cpu_wants_rethunk_at(void *addr)
++{
++	if (!cpu_feature_enabled(X86_FEATURE_RETHUNK))
++		return false;
++	if (x86_return_thunk != its_return_thunk)
++		return true;
++
++	return !((unsigned long)addr & 0x20);
++}
++
+ #if defined(CONFIG_RETPOLINE) && defined(CONFIG_STACK_VALIDATION)
+ 
+ /*
+@@ -749,21 +764,6 @@
+ 
+ #ifdef CONFIG_RETHUNK
+ 
+-bool cpu_wants_rethunk(void)
+-{
+-	return cpu_feature_enabled(X86_FEATURE_RETHUNK);
+-}
+-
+-bool cpu_wants_rethunk_at(void *addr)
+-{
+-	if (!cpu_feature_enabled(X86_FEATURE_RETHUNK))
+-		return false;
+-	if (x86_return_thunk != its_return_thunk)
+-		return true;
+-
+-	return !((unsigned long)addr & 0x20);
+-}
+-
+ /*
+  * Rewrite the compiler generated return thunk tail-calls.
+  *
