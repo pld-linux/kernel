@@ -51,9 +51,9 @@
 %define		have_drm	0
 %endif
 
-%define		rel		2
-%define		basever		6.14
-%define		postver		.8
+%define		rel		0.1
+%define		basever		6.15
+%define		postver		.0
 
 # define this to '-%{basever}' for longterm branch
 %define		versuffix	%{nil}
@@ -104,7 +104,7 @@ Epoch:		3
 License:	GPL v2
 Group:		Base/Kernel
 Source0:	https://www.kernel.org/pub/linux/kernel/v6.x/linux-%{basever}.tar.xz
-# Source0-md5:	05238030095d2be98aac79bfbc58f5d3
+# Source0-md5:	c0f205cc27982a875c519f644a6288c4
 %if "%{postver}" != ".0"
 Patch0:		https://www.kernel.org/pub/linux/kernel/v6.x/patch-%{version}.xz
 # Patch0-md5:	1b2dbe1a2dec277570b4361f1d35c940
@@ -635,7 +635,7 @@ find -name '*.pl' -print0 | \
 	scripts/stackdelta
 
 %{__sed} -i -e '1s,/usr/bin/env sh,%{__sh},' \
-	samples/check-exec/run-script-ask.inc
+	samples/check-exec/run-script-ask.sh
 
 %{__sed} -i -e '1s,/usr/bin/env bash,%{__bash},' \
 	scripts/coccicheck \
