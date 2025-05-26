@@ -51,7 +51,7 @@
 %define		have_drm	0
 %endif
 
-%define		rel		0.1
+%define		rel		1
 %define		basever		6.15
 %define		postver		.0
 
@@ -638,11 +638,12 @@ find -name '*.pl' -print0 | \
 	samples/check-exec/run-script-ask.sh
 
 %{__sed} -i -e '1s,/usr/bin/env bash,%{__bash},' \
+	drivers/gpu/drm/ci/lava-submit.sh \
+	lib/tests/module/gen_test_kallsyms.sh \
 	scripts/coccicheck \
 	scripts/config \
 	scripts/decode_stacktrace.sh \
-	tools/testing/selftests/drivers/net/netcons_basic.sh \
-	tools/testing/selftests/drivers/net/netcons_overflow.sh \
+	tools/testing/selftests/drivers/net/*.sh \
 	tools/testing/selftests/exec/check-exec-tests.sh \
 	tools/testing/selftests/powerpc/security/mitigation-patching.sh
 
