@@ -65,9 +65,9 @@
 %define		have_pcmcia	0
 %endif
 
-%define		rel		2
+%define		rel		1
 %define		basever		6.1
-%define		postver		.140
+%define		postver		.141
 
 # define this to '-%{basever}' for longterm branch
 %define		versuffix	-%{basever}
@@ -121,7 +121,7 @@ Source0:	https://www.kernel.org/pub/linux/kernel/v6.x/linux-%{basever}.tar.xz
 # Source0-md5:	475320de08f16c9fa486fc4edfe98b30
 %if "%{postver}" != ".0"
 Patch0:		https://www.kernel.org/pub/linux/kernel/v6.x/patch-%{version}.xz
-# Patch0-md5:	cfb19b6eba9b13ab9ca16bc0c85e12ed
+# Patch0-md5:	277cbd444b8452683c231f762be3b096
 %endif
 Source1:	kernel.sysconfig
 
