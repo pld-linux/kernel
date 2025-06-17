@@ -71,7 +71,7 @@
 %define		have_pcmcia	0
 %endif
 
-%define		rel		1
+%define		rel		2
 %define		basever		5.10
 %define		postver		.238
 
@@ -220,6 +220,7 @@ Patch500:	kernel-rt.patch
 Patch2000:	kernel-small_fixes.patch
 Patch2001:	kernel-pwc-uncompress.patch
 Patch2003:	kernel-regressions.patch
+Patch2004:	soc-intel-platform.patch
 
 # for rescuecd
 # based on ftp://ftp.leg.uct.ac.za/pub/linux/rip/tmpfs_root-2.6.30.diff.gz
@@ -713,6 +714,7 @@ rm -f localversion-rt
 %patch -P 2000 -p1
 %patch -P 2001 -p1
 #patch -P 2003 -p1
+%patch -P 2004 -p1
 
 # Do not remove this, please!
 #patch -P 50000 -p1

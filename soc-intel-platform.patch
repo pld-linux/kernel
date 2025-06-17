@@ -1,0 +1,99 @@
+From 3c561a090c7920624b83005a279a66cc8a7bed2b Mon Sep 17 00:00:00 2001
+From: Brent Lu <brent.lu@intel.com>
+Date: Mon, 27 Sep 2021 22:32:49 +0800
+Subject: ASoC: intel: sof_rt5682: update platform device name for Maxim
+ amplifier
+
+To follow 20-character length limitation of platform device name, we
+have only 7 character space for amplifier. Therefore, the last
+character of mx98357a and mx98360a is removed to save space.
+
+Signed-off-by: Brent Lu <brent.lu@intel.com>
+Fixes: e224ef76fa8a ('ASoC: intel: sof_rt5682: support jsl_rt5682s_mx98360a board')
+Acked-by: Pierre-Louis Bossart <pierre-louis.bossart@linux.intel.com>
+Link: https://lore.kernel.org/r/20210927143249.439129-1-brent.lu@intel.com
+Signed-off-by: Mark Brown <broonie@kernel.org>
+---
+ sound/soc/intel/boards/sof_rt5682.c               | 8 ++++----
+ sound/soc/intel/common/soc-acpi-intel-adl-match.c | 2 +-
+ sound/soc/intel/common/soc-acpi-intel-jsl-match.c | 4 ++--
+ sound/soc/intel/common/soc-acpi-intel-tgl-match.c | 2 +-
+ 4 files changed, 8 insertions(+), 8 deletions(-)
+
+diff --git a/sound/soc/intel/boards/sof_rt5682.c b/sound/soc/intel/boards/sof_rt5682.c
+index 3f6f19d9b19e60..ad42d4c7ade5f6 100644
+--- a/sound/soc/intel/boards/sof_rt5682.c
++++ b/sound/soc/intel/boards/sof_rt5682.c
+@@ -959,7 +959,7 @@ static const struct platform_device_id board_ids[] = {
+ 		.name = "sof_rt5682",
+ 	},
+ 	{
+-		.name = "tgl_max98357a_rt5682",
++		.name = "tgl_mx98357_rt5682",
+ 		.driver_data = (kernel_ulong_t)(SOF_RT5682_MCLK_EN |
+ 					SOF_RT5682_SSP_CODEC(0) |
+ 					SOF_SPEAKER_AMP_PRESENT |
+@@ -989,7 +989,7 @@ static const struct platform_device_id board_ids[] = {
+ 					SOF_RT5682_NUM_HDMIDEV(4)),
+ 	},
+ 	{
+-		.name = "jsl_rt5682_max98360a",
++		.name = "jsl_rt5682_mx98360",
+ 		.driver_data = (kernel_ulong_t)(SOF_RT5682_MCLK_EN |
+ 					SOF_RT5682_MCLK_24MHZ |
+ 					SOF_RT5682_SSP_CODEC(0) |
+diff --git a/sound/soc/intel/common/soc-acpi-intel-jsl-match.c b/sound/soc/intel/common/soc-acpi-intel-jsl-match.c
+index cfd6bf756215b4..20fd9dcc74af6a 100644
+--- a/sound/soc/intel/common/soc-acpi-intel-jsl-match.c
++++ b/sound/soc/intel/common/soc-acpi-intel-jsl-match.c
+@@ -40,7 +40,7 @@
+ 	},
+ 	{
+ 		.id = "DLGS7219",
+-		.drv_name = "sof_da7219_max98360a",
++		.drv_name = "sof_da7219_mx98360",
+ 		.sof_fw_filename = "sof-jsl.ri",
+ 		.sof_tplg_filename = "sof-jsl-da7219-mx98360a.tplg",
+ 	},
+@@ -67,7 +67,7 @@ struct snd_soc_acpi_mach snd_soc_acpi_intel_jsl_machines[] = {
+ 	},
+ 	{
+ 		.id = "10EC5682",
+-		.drv_name = "jsl_rt5682_max98360a",
++		.drv_name = "jsl_rt5682_mx98360",
+ 		.sof_fw_filename = "sof-jsl.ri",
+ 		.machine_quirk = snd_soc_acpi_codec_list,
+ 		.quirk_data = &mx98360a_spk,
+diff --git a/sound/soc/intel/common/soc-acpi-intel-tgl-match.c b/sound/soc/intel/common/soc-acpi-intel-tgl-match.c
+index 785d5f5f8a9c9c..91ef71c2535d0a 100644
+--- a/sound/soc/intel/common/soc-acpi-intel-tgl-match.c
++++ b/sound/soc/intel/common/soc-acpi-intel-tgl-match.c
+@@ -333,7 +333,7 @@ static const struct snd_soc_acpi_codecs tgl_rt1011_amp = {
+ 	},
+ 	{
+ 		.id = "10EC5682",
+-		.drv_name = "tgl_max98357a_rt5682",
++		.drv_name = "tgl_mx98357_rt5682",
+ 		.machine_quirk = snd_soc_acpi_codec_list,
+ 		.quirk_data = &tgl_codecs,
+ 		.sof_fw_filename = "sof-tgl.ri",
+--- a/sound/soc/intel/boards/sof_da7219_max98373.c~	2025-06-17 03:55:18.000000000 +0200
++++ b/sound/soc/intel/boards/sof_da7219_max98373.c	2025-06-17 21:25:14.469998291 +0200
+@@ -404,7 +404,7 @@
+ 		return -ENOMEM;
+ 
+ 	/* By default dais[0] is configured for max98373 */
+-	if (!strcmp(pdev->name, "sof_da7219_max98360a")) {
++	if (!strcmp(pdev->name, "sof_da7219_mx98360")) {
+ 		dais[0] = (struct snd_soc_dai_link) {
+ 			.name = "SSP1-Codec",
+ 			.id = 0,
+@@ -435,7 +435,7 @@
+ 		.driver_data = (kernel_ulong_t)&card_da7219_m98373,
+ 	},
+ 	{
+-		.name = "sof_da7219_max98360a",
++		.name = "sof_da7219_mx98360",
+ 		.driver_data = (kernel_ulong_t)&card_da7219_m98360a,
+ 	},
+ 	{ }
