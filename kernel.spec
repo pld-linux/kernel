@@ -1204,6 +1204,7 @@ fi
 %ghost /lib/modules/%{kernel_release}/modules.softdep
 %ghost /lib/modules/%{kernel_release}/modules.symbols
 %ghost /lib/modules/%{kernel_release}/modules.symbols.bin
+%ghost /lib/modules/%{kernel_release}/modules.weakdep
 
 # symlinks pointing to kernelsrcdir
 %ghost /lib/modules/%{kernel_release}/build
