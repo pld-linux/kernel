@@ -178,6 +178,7 @@ Patch8001:	kernel-pinebook-pro.patch
 Patch8002:	atheros-disallow-retrain-nongen1-pcie.patch
 Patch8004:	ath-regd.patch
 Patch8005:	rkvdec-hevc.patch
+# Patch8005-md5:	c357a58f19f1466d89ec8ef008ce7e34
 
 URL:		https://www.kernel.org/
 AutoReqProv:	no
