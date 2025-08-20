@@ -183,15 +183,16 @@ Patch8005:	rkvdec-hevc.patch
 URL:		https://www.kernel.org/
 AutoReqProv:	no
 BuildRequires:	/sbin/depmod
+BuildRequires:	bash >= 4.2
 BuildRequires:	bc >= 1.06.95
-BuildRequires:	binutils >= 3:2.23
+BuildRequires:	binutils >= 4:2.30
 BuildRequires:	bison >= 2.0
 %ifarch sparc sparc64
 BuildRequires:	elftoaout
 %endif
 BuildRequires:	elfutils-devel
 BuildRequires:	flex >= 2.5.35
-BuildRequires:	gcc >= 6:7.2.0-6
+BuildRequires:	gcc >= 6:8.1
 BuildRequires:	gcc-c++
 BuildRequires:	gcc-plugin-devel
 BuildRequires:	hostname
@@ -243,7 +244,7 @@ Obsoletes:	kernel-net-ieee80211 < 1.2.18-7
 Obsoletes:	kernel-net-ipp2p < 0.8.2.-17
 Obsoletes:	kernel-net-rt61 < 1.1.0-2.2007122707.13
 Obsoletes:	kernel-smp < 3:2.6.21
-Conflicts:	e2fsprogs < 1.29
+Conflicts:	e2fsprogs < 1.41.4
 Conflicts:	isdn4k-utils < 3.1pre1
 Conflicts:	jfsutils < 1.1.3
 Conflicts:	libcap-libs < 1:2.34
