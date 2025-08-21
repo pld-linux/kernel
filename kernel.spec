@@ -462,6 +462,7 @@ Summary(pl.UTF-8):	Pliki służące do budowania modułów jądra
 Group:		Development/Building
 Requires:	%{name}-headers = %{epoch}:%{version}-%{release}
 Requires:	elfutils-devel
+%requires_releq	gcc
 Requires:	make
 Conflicts:	rpmbuild(macros) < 2.019
 AutoReqProv:	no
