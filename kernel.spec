@@ -243,7 +243,9 @@ Obsoletes:	kernel-net-hostap < 0.4.7-2
 Obsoletes:	kernel-net-ieee80211 < 1.2.18-7
 Obsoletes:	kernel-net-ipp2p < 0.8.2.-17
 Obsoletes:	kernel-net-rt61 < 1.1.0-2.2007122707.13
+Obsoletes:	kernel-pcmcia < 3:6.8
 Obsoletes:	kernel-smp < 3:2.6.21
+Obsoletes:	kernel-smp-pcmcia < 3:2.6.21
 Conflicts:	e2fsprogs < 1.41.4
 Conflicts:	isdn4k-utils < 3.1pre1
 Conflicts:	jfsutils < 1.1.3
