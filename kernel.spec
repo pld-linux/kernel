@@ -53,7 +53,7 @@
 
 %define		rel		1
 %define		basever		6.16
-%define		postver		.5
+%define		postver		.6
 
 # define this to '-%{basever}' for longterm branch
 %define		versuffix	%{nil}
@@ -107,7 +107,7 @@ Source0:	https://www.kernel.org/pub/linux/kernel/v6.x/linux-%{basever}.tar.xz
 # Source0-md5:	dd850269c3f456c0ff5518b1a2a81836
 %if "%{postver}" != ".0"
 Patch0:		https://www.kernel.org/pub/linux/kernel/v6.x/patch-%{version}.xz
-# Patch0-md5:	d5f5585ded5abc846a51e3d9781fa6cf
+# Patch0-md5:	e4e57c716fd8c61d619d9dec4527c282
 %endif
 Source1:	kernel.sysconfig
 
@@ -902,6 +902,7 @@ for a in \
 	devname \
 	softdep \
 	symbols{,.bin} \
+	weakdep \
 ; do
 	test -f $RPM_BUILD_ROOT/lib/modules/%{kernel_release}/modules.$a
 	> $RPM_BUILD_ROOT/lib/modules/%{kernel_release}/modules.$a
