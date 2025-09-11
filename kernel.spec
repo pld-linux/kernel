@@ -71,9 +71,9 @@
 %define		have_pcmcia	0
 %endif
 
-%define		rel		2
+%define		rel		1
 %define		basever		5.10
-%define		postver		.238
+%define		postver		.243
 
 # define this to '-%{basever}' for longterm branch
 %define		versuffix	-%{basever}
@@ -127,7 +127,7 @@ Source0:	https://www.kernel.org/pub/linux/kernel/v5.x/linux-%{basever}.tar.xz
 # Source0-md5:	753adc474bf799d569dec4f165ed92c3
 %if "%{postver}" != ".0"
 Patch0:		https://www.kernel.org/pub/linux/kernel/v5.x/patch-%{version}.xz
-# Patch0-md5:	86cc93474bb5bda73ceaa58ace8cbaac
+# Patch0-md5:	1d05af239b01a80881b81d7d54fa1baa
 %endif
 Source1:	kernel.sysconfig
 
@@ -220,7 +220,6 @@ Patch500:	kernel-rt.patch
 Patch2000:	kernel-small_fixes.patch
 Patch2001:	kernel-pwc-uncompress.patch
 Patch2003:	kernel-regressions.patch
-Patch2004:	soc-intel-platform.patch
 
 # for rescuecd
 # based on ftp://ftp.leg.uct.ac.za/pub/linux/rip/tmpfs_root-2.6.30.diff.gz
@@ -714,7 +713,6 @@ rm -f localversion-rt
 %patch -P 2000 -p1
 %patch -P 2001 -p1
 #patch -P 2003 -p1
-%patch -P 2004 -p1
 
 # Do not remove this, please!
 #patch -P 50000 -p1
