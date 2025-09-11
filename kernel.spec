@@ -176,7 +176,6 @@ Patch50:	kernel-imq.patch
 # by Baggins request:
 # derived from ftp://ftp.cmf.nrl.navy.mil/pub/chas/linux-atm/vbr/vbr-kernel-diffs
 Patch55:	kernel-atm-vbr.patch
-Patch56:	kernel-atmdd.patch
 
 # http://synce.svn.sourceforge.net/svnroot/synce/trunk/patches/linux-2.6.22-rndis_host-wm5.patch
 Patch59:	kernel-rndis_host-wm5.patch
@@ -649,7 +648,6 @@ cd linux-%{basever}
 %endif
 
 %patch -P 55 -p1
-%patch -P 56 -p1
 
 # kernel-rndis_host-wm5.patch
 %patch -P 59 -p1
