@@ -175,7 +175,6 @@ Patch7000:	kernel-inittmpfs.patch
 # ARM only
 Patch8000:	rpi-sound.patch
 Patch8001:	kernel-pinebook-pro.patch
-Patch8002:	atheros-disallow-retrain-nongen1-pcie.patch
 Patch8004:	ath-regd.patch
 Patch8005:	rkvdec-hevc.patch
 # Patch8005-md5:	c357a58f19f1466d89ec8ef008ce7e34
@@ -579,7 +578,6 @@ cd linux-%{basever}
 %ifarch %{arm} aarch64
 %patch -P8000 -p1
 %patch -P8001 -p1
-%patch -P8002 -p1
 %patch -P8004 -p1
 %patch -P8005 -p1
 %endif
