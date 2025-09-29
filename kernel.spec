@@ -51,9 +51,9 @@
 %define		have_drm	0
 %endif
 
-%define		rel		1
-%define		basever		6.16
-%define		postver		.9
+%define		rel		0.1
+%define		basever		6.17
+%define		postver		.0
 
 # define this to '-%{basever}' for longterm branch
 %define		versuffix	%{nil}
@@ -104,7 +104,7 @@ Epoch:		3
 License:	GPL v2
 Group:		Base/Kernel
 Source0:	https://www.kernel.org/pub/linux/kernel/v6.x/linux-%{basever}.tar.xz
-# Source0-md5:	dd850269c3f456c0ff5518b1a2a81836
+# Source0-md5:	ac8cfd661ca56a142bb92f9d9e7754a0
 %if "%{postver}" != ".0"
 Patch0:		https://www.kernel.org/pub/linux/kernel/v6.x/patch-%{version}.xz
 # Patch0-md5:	3f71c40f62c2ecf122192deb7785fbf6
@@ -641,14 +641,15 @@ find -name '*.pl' -print0 | \
 	samples/check-exec/run-script-ask.sh
 
 %{__sed} -i -e '1s,/usr/bin/env bash,%{__bash},' \
-	drivers/gpu/drm/ci/lava-submit.sh \
+	drivers/gpu/drm/ci/*.sh \
 	lib/tests/module/gen_test_kallsyms.sh \
 	scripts/coccicheck \
 	scripts/config \
 	scripts/decode_stacktrace.sh \
 	tools/testing/selftests/drivers/net/*.sh \
 	tools/testing/selftests/exec/check-exec-tests.sh \
-	tools/testing/selftests/powerpc/security/mitigation-patching.sh
+	tools/testing/selftests/powerpc/security/mitigation-patching.sh \
+	tools/testing/selftests/sysctl/sysctl.sh
 
 %build
 install -d %{objdir}
