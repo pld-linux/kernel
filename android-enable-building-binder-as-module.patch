@@ -17,11 +17,11 @@
  
 -obj-$(CONFIG_ANDROID_BINDERFS)		+= binderfs.o
 -obj-$(CONFIG_ANDROID_BINDER_IPC)	+= binder.o binder_alloc.o
--obj-$(CONFIG_ANDROID_BINDER_IPC_SELFTEST) += binder_alloc_selftest.o
+-obj-$(CONFIG_ANDROID_BINDER_ALLOC_KUNIT_TEST)	+= tests/
 +obj-$(CONFIG_ANDROID_BINDER_IPC)	+= binder_linux.o
 +binder_linux-y := binder.o binder_alloc.o
 +binder_linux-$(CONFIG_ANDROID_BINDERFS)	+= binderfs.o
-+binder_linux-$(CONFIG_ANDROID_BINDER_IPC_SELFTEST) += binder_alloc_selftest.o
++binder_linux-$(CONFIG_ANDROID_BINDER_ALLOC_KUNIT_TEST)	+= tests/
 --- a/drivers/android/binder_alloc.c
 +++ b/drivers/android/binder_alloc.c
 @@ -38,7 +38,7 @@ enum {
@@ -162,6 +162,6 @@
  	return NULL;
  }
 +EXPORT_SYMBOL_GPL(lock_vma_under_rcu);
- #endif /* CONFIG_PER_VMA_LOCK */
  
- #ifdef CONFIG_LOCK_MM_AND_FIND_VMA
+ static struct vm_area_struct *lock_next_vma_under_mmap_lock(struct mm_struct *mm,
+ 							    struct vma_iterator *vmi,
