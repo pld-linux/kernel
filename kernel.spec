@@ -651,6 +651,12 @@ find -name '*.pl' -print0 | \
 	tools/testing/selftests/powerpc/security/mitigation-patching.sh \
 	tools/testing/selftests/sysctl/sysctl.sh
 
+%{__sed} -i -e '1s,/usr/bin/env -S gawk,/usr/bin/gawk,' \
+	scripts/check-sysctl-docs
+
+%{__sed} -i -e '1s,/usr/bin/env drgn,/usr/bin/drgn,' \
+	tools/testing/selftests/damon/drgn_dump_damon_status.py
+
 %build
 install -d %{objdir}
 cat > %{targetobj}.mk <<'EOF'
