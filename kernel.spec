@@ -178,7 +178,7 @@ Patch8001:	kernel-pinebook-pro.patch
 Patch8002:	arm-scmi-init-quirks.patch
 Patch8004:	ath-regd.patch
 Patch8005:	rkvdec-hevc.patch
-# Patch8005-md5:	c357a58f19f1466d89ec8ef008ce7e34
+# Patch8005-md5:	be31dd14250cc9e4eb496a5471e88d0f
 
 URL:		https://www.kernel.org/
 AutoReqProv:	no
