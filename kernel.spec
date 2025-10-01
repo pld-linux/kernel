@@ -1282,7 +1282,6 @@ fi
 %{_kernelsrcdir}/scripts/basic/*.c
 %attr(755,root,root) %{_kernelsrcdir}/scripts/kconfig/*.sh
 %{_kernelsrcdir}/scripts/kconfig/*.pl
-%{_kernelsrcdir}/scripts/kconfig/*.glade
 %{_kernelsrcdir}/scripts/kconfig/*.cc
 %{_kernelsrcdir}/scripts/kconfig/*.y
 %{_kernelsrcdir}/scripts/kconfig/*.l
