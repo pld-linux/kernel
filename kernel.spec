@@ -133,6 +133,7 @@ Source44:	kernel-rt.config
 
 Source58:	kernel-inittmpfs.config
 
+Patch1:		ksmbd-one-conn-per-ip.patch
 Patch2:		android-enable-building-binder-as-module.patch
 # http://dev.gentoo.org/~spock/projects/fbcondecor/archive/fbcondecor-0.9.4-2.6.25-rc6.patch
 Patch3:		kernel-fbcondecor.patch
@@ -544,6 +545,7 @@ cd linux-%{basever}
 %endif
 
 %if %{without vanilla}
+%patch -P1 -p1 -R
 %patch -P2 -p1
 
 %if %{with fbcondecor}
