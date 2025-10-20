@@ -53,7 +53,7 @@
 
 %define		rel		1
 %define		basever		6.17
-%define		postver		.3
+%define		postver		.4
 
 # define this to '-%{basever}' for longterm branch
 %define		versuffix	%{nil}
@@ -107,7 +107,7 @@ Source0:	https://www.kernel.org/pub/linux/kernel/v6.x/linux-%{basever}.tar.xz
 # Source0-md5:	ac8cfd661ca56a142bb92f9d9e7754a0
 %if "%{postver}" != ".0"
 Patch0:		https://www.kernel.org/pub/linux/kernel/v6.x/patch-%{version}.xz
-# Patch0-md5:	66830be3d3dddab8b04a5e79062461b1
+# Patch0-md5:	57d152fee7aab29215ea1afe2750a7d1
 %endif
 Source1:	kernel.sysconfig
 
@@ -176,7 +176,6 @@ Patch7000:	kernel-inittmpfs.patch
 # ARM only
 Patch8000:	rpi-sound.patch
 Patch8001:	kernel-pinebook-pro.patch
-Patch8002:	arm-scmi-init-quirks.patch
 Patch8004:	ath-regd.patch
 Patch8005:	rkvdec-hevc.patch
 # Patch8005-md5:	be31dd14250cc9e4eb496a5471e88d0f
@@ -583,7 +582,6 @@ cd linux-%{basever}
 %ifarch %{arm} aarch64
 %patch -P8000 -p1
 %patch -P8001 -p1
-%patch -P8002 -p1
 %patch -P8004 -p1
 %patch -P8005 -p1
 %endif
