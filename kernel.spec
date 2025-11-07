@@ -73,7 +73,7 @@
 
 %define		rel		1
 %define		basever		5.10
-%define		postver		.245
+%define		postver		.246
 
 # define this to '-%{basever}' for longterm branch
 %define		versuffix	-%{basever}
@@ -127,7 +127,7 @@ Source0:	https://www.kernel.org/pub/linux/kernel/v5.x/linux-%{basever}.tar.xz
 # Source0-md5:	753adc474bf799d569dec4f165ed92c3
 %if "%{postver}" != ".0"
 Patch0:		https://www.kernel.org/pub/linux/kernel/v5.x/patch-%{version}.xz
-# Patch0-md5:	fda84b02d95fb91196136ca7aa743913
+# Patch0-md5:	61ae49ddd49720d495643f79ccdc1e09
 %endif
 Source1:	kernel.sysconfig
 
@@ -220,6 +220,7 @@ Patch500:	kernel-rt.patch
 Patch2000:	kernel-small_fixes.patch
 Patch2001:	kernel-pwc-uncompress.patch
 Patch2003:	kernel-regressions.patch
+Patch2004:	gcc15.patch
 
 # for rescuecd
 # based on ftp://ftp.leg.uct.ac.za/pub/linux/rip/tmpfs_root-2.6.30.diff.gz
@@ -713,6 +714,7 @@ rm -f localversion-rt
 %patch -P 2000 -p1
 %patch -P 2001 -p1
 #patch -P 2003 -p1
+%patch -P 2004 -p1
 
 # Do not remove this, please!
 #patch -P 50000 -p1
