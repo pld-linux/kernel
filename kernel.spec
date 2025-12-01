@@ -616,6 +616,8 @@ find -name '*.py' -print0 | \
 	scripts/dtc/dt-extract-compatibles \
 	scripts/jobserver-exec \
 	scripts/show_delta \
+	scripts/sphinx-pre-install \
+	scripts/sphinx-build-wrapper \
 	tools/hv/lsvmbus \
 	tools/hv/vmbus_testing \
 	tools/kvm/kvm_stat/kvm_stat \
@@ -645,6 +647,7 @@ find -name '*.pl' -print0 | \
 	scripts/config \
 	scripts/decode_stacktrace.sh \
 	tools/testing/selftests/drivers/net/*.sh \
+	tools/testing/selftests/drivers/net/bonding/netcons_over_bonding.sh \
 	tools/testing/selftests/exec/check-exec-tests.sh \
 	tools/testing/selftests/powerpc/security/mitigation-patching.sh \
 	tools/testing/selftests/sysctl/sysctl.sh
