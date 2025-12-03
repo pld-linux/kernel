@@ -1,5 +1,5 @@
---- a/drivers/android/Kconfig
-+++ b/drivers/android/Kconfig
+--- a/drivers/android/Kconfig~	2025-11-30 23:42:10.000000000 +0100
++++ b/drivers/android/Kconfig	2025-12-03 18:43:47.909352635 +0100
 @@ -2,7 +2,7 @@
  menu "Android"
  
@@ -7,21 +7,23 @@
 -	bool "Android Binder IPC Driver"
 +	tristate "Android Binder IPC Driver"
  	depends on MMU
+ 	depends on NET
  	default n
- 	help
---- a/drivers/android/Makefile
-+++ b/drivers/android/Makefile
-@@ -1,6 +1,7 @@
+--- a/drivers/android/Makefile~	2025-11-30 23:42:10.000000000 +0100
++++ b/drivers/android/Makefile	2025-12-03 18:48:33.118536606 +0100
+@@ -1,7 +1,8 @@
  # SPDX-License-Identifier: GPL-2.0-only
  ccflags-y += -I$(src)			# needed for trace events
  
 -obj-$(CONFIG_ANDROID_BINDERFS)		+= binderfs.o
--obj-$(CONFIG_ANDROID_BINDER_IPC)	+= binder.o binder_alloc.o
+-obj-$(CONFIG_ANDROID_BINDER_IPC)	+= binder.o binder_alloc.o binder_netlink.o
 -obj-$(CONFIG_ANDROID_BINDER_ALLOC_KUNIT_TEST)	+= tests/
-+obj-$(CONFIG_ANDROID_BINDER_IPC)	+= binder_linux.o
-+binder_linux-y := binder.o binder_alloc.o
-+binder_linux-$(CONFIG_ANDROID_BINDERFS)	+= binderfs.o
-+binder_linux-$(CONFIG_ANDROID_BINDER_ALLOC_KUNIT_TEST)	+= tests/
+-obj-$(CONFIG_ANDROID_BINDER_IPC_RUST)	+= binder/
++obj-$(CONFIG_ANDROID_BINDER_IPC)       += binder_linux.o
++binder_linux-y := binder.o binder_alloc.o binder_netlink.o
++binder_linux-$(CONFIG_ANDROID_BINDERFS)        += binderfs.o
++binder_linux-$(CONFIG_ANDROID_BINDER_ALLOC_KUNIT_TEST) += tests/
++binder_linux-$(CONFIG_ANDROID_BINDER_IPC_RUST)   += binder/
 --- a/drivers/android/binder_alloc.c
 +++ b/drivers/android/binder_alloc.c
 @@ -38,7 +38,7 @@ enum {
@@ -97,15 +99,15 @@
  
  /**
   * security_ptrace_access_check() - Check if tracing is allowed
---- a/ipc/namespace.c~	2022-12-11 23:15:18.000000000 +0100
-+++ b/ipc/namespace.c	2022-12-29 16:10:27.771070995 +0100
-@@ -188,6 +188,7 @@
+--- a/ipc/namespace.c~	2025-11-30 23:42:10.000000000 +0100
++++ b8/ipc/namespace.c	2025-12-03 18:49:49.032978968 +0100
+@@ -208,6 +208,7 @@ void put_ipc_ns(struct ipc_namespace *ns
  			schedule_work(&free_ipc_work);
  	}
  }
 +EXPORT_SYMBOL_GPL(put_ipc_ns);
  
- static inline struct ipc_namespace *to_ipc_ns(struct ns_common *ns)
+ static struct ns_common *ipcns_get(struct task_struct *task)
  {
 --- a/kernel/sched/wait.c~	2022-12-11 23:15:18.000000000 +0100
 +++ b/kernel/sched/wait.c	2022-12-29 16:11:51.746470281 +0100
@@ -117,11 +119,11 @@
  
  /*
   * Note: we use "set_current_state()" _after_ the wait-queue add,
---- a/ipc/msgutil.c~	2022-12-11 23:15:18.000000000 +0100
-+++ b/ipc/msgutil.c	2022-12-29 16:22:49.139136583 +0100
-@@ -33,6 +33,7 @@
- 	.ns.ops = &ipcns_operations,
+--- a/ipc/msgutil.c~	2025-11-30 23:42:10.000000000 +0100
++++ b/ipc/msgutil.c	2025-12-03 18:50:45.802371237 +0100
+@@ -35,6 +35,7 @@ struct ipc_namespace init_ipc_ns = {
  #endif
+ 	.ns.ns_type = ns_common_type(&init_ipc_ns),
  };
 +EXPORT_SYMBOL_GPL(init_ipc_ns);
  
@@ -165,3 +167,16 @@
  
  static struct vm_area_struct *lock_next_vma_under_mmap_lock(struct mm_struct *mm,
  							    struct vma_iterator *vmi,
+
+--- a/drivers/android/binder.c~	2025-11-30 23:42:10.000000000 +0100
++++ b/drivers/android/binder.c	2025-12-03 19:11:49.969621371 +0100
+@@ -78,6 +78,9 @@
+ #include "binder_internal.h"
+ #include "binder_trace.h"
+ 
++MODULE_DESCRIPTION("Android Binder");
++MODULE_LICENSE("GPL");
++
+ static HLIST_HEAD(binder_deferred_list);
+ static DEFINE_MUTEX(binder_deferred_lock);
+ 
