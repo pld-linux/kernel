@@ -174,7 +174,6 @@ Patch7000:	kernel-inittmpfs.patch
 
 # ARM only
 Patch8000:	rpi-sound.patch
-Patch8001:	kernel-pinebook-pro.patch
 Patch8004:	ath-regd.patch
 Patch8005:	rkvdec-hevc.patch
 # Patch8005-md5:	be31dd14250cc9e4eb496a5471e88d0f
@@ -577,7 +576,6 @@ cd linux-%{basever}
 
 %ifarch %{arm} aarch64
 %patch -P8000 -p1
-%patch -P8001 -p1
 %patch -P8004 -p1
 %patch -P8005 -p1
 %endif
