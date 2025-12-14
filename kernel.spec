@@ -53,7 +53,7 @@
 
 %define		rel		1
 %define		basever		6.18
-%define		postver		.0
+%define		postver		.1
 
 # define this to '-%{basever}' for longterm branch
 %define		versuffix	%{nil}
@@ -107,7 +107,7 @@ Source0:	https://www.kernel.org/pub/linux/kernel/v6.x/linux-%{basever}.tar.xz
 # Source0-md5:	9207ae77b0d63c22dc4646554963cfc7
 %if "%{postver}" != ".0"
 Patch0:		https://www.kernel.org/pub/linux/kernel/v6.x/patch-%{version}.xz
-# Patch0-md5:	f49ae8d0918f492ee3969d7323c2c2d6
+# Patch0-md5:	dac2a9e84973152d0e92cf9a887aefdb
 %endif
 Source1:	kernel.sysconfig
 
@@ -177,7 +177,7 @@ Patch8000:	rpi-sound.patch
 Patch8001:	kernel-pinebook-pro.patch
 Patch8004:	ath-regd.patch
 Patch8005:	rkvdec-hevc.patch
-# Patch8005-md5:       be31dd14250cc9e4eb496a5471e88d0f
+# Patch8005-md5:	be31dd14250cc9e4eb496a5471e88d0f
 
 URL:		https://www.kernel.org/
 AutoReqProv:	no
