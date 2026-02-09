@@ -51,9 +51,12 @@
 %define		have_drm	0
 %endif
 
-%define		rel		1
-%define		basever		6.18
-%define		postver		.9
+# make oldconfig doesn't complain about any new symbols while make listnewconfig lists them,
+# so something is broken or has different bahaviour in 6.19 - don't set rel 1 before figuring that out
+# and restoring old behaviour for our builds
+%define		rel		0.1
+%define		basever		6.19
+%define		postver		.0
 
 # define this to '-%{basever}' for longterm branch
 %define		versuffix	%{nil}
@@ -104,7 +107,7 @@ Epoch:		3
 License:	GPL v2
 Group:		Base/Kernel
 Source0:	https://www.kernel.org/pub/linux/kernel/v6.x/linux-%{basever}.tar.xz
-# Source0-md5:	9207ae77b0d63c22dc4646554963cfc7
+# Source0-md5:	59c1e1f9c69a6fa9051450ba2ca38200
 %if "%{postver}" != ".0"
 Patch0:		https://www.kernel.org/pub/linux/kernel/v6.x/patch-%{version}.xz
 # Patch0-md5:	66fef677469cf55464bb1248eb975dc6
@@ -618,8 +621,8 @@ find -name '*.py' -print0 | \
 	scripts/dtc/dt-extract-compatibles \
 	scripts/jobserver-exec \
 	scripts/show_delta \
-	scripts/sphinx-pre-install \
-	scripts/sphinx-build-wrapper \
+	tools/docs/sphinx-pre-install \
+	tools/docs/sphinx-build-wrapper \
 	tools/hv/lsvmbus \
 	tools/hv/vmbus_testing \
 	tools/kvm/kvm_stat/kvm_stat \
@@ -633,11 +636,10 @@ find -name '*.pl' -print0 | \
 	scripts/dtc/dt_to_config \
 	scripts/cleanfile \
 	scripts/cleanpatch \
-	scripts/documentation-file-ref-check \
 	scripts/get_dvb_firmware \
 	scripts/kernel-doc \
-	scripts/sphinx-pre-install \
-	scripts/stackdelta
+	scripts/stackdelta \
+	tools/docs/documentation-file-ref-check
 
 %{__sed} -i -e '1s,/usr/bin/env sh,%{__sh},' \
 	samples/check-exec/run-script-ask.sh
@@ -648,6 +650,7 @@ find -name '*.pl' -print0 | \
 	scripts/coccicheck \
 	scripts/config \
 	scripts/decode_stacktrace.sh \
+	scripts/faddr2line \
 	tools/testing/selftests/drivers/net/*.sh \
 	tools/testing/selftests/drivers/net/bonding/netcons_over_bonding.sh \
 	tools/testing/selftests/exec/check-exec-tests.sh \
@@ -857,6 +860,21 @@ install -d arch/%{target_arch_dir}
 BuildConfig > %{defconfig}
 ln -sf %{defconfig} .config
 cd -
+
+# check config consistency
+NC=$(%{__make} \
+	-s \
+	TARGETOBJ=%{targetobj} \
+	V=0 \
+	KCONFIG_WERROR=1 \
+	listnewconfig)
+
+if [ -n "$NC" ]; then
+	echo "New configuration options:"
+	echo "$NC"
+	echo "New configuration options (listed above) detected."
+	sleep 60
+fi
 
 %{__make} \
 	TARGETOBJ=%{targetobj} \
