@@ -873,7 +873,7 @@ if [ -n "$NC" ]; then
 	echo "New configuration options:"
 	echo "$NC"
 	echo "New configuration options (listed above) detected."
-	sleep 60
+	exit 1
 fi
 
 %{__make} \
