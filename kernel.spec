@@ -177,7 +177,6 @@ Patch8000:	rpi-sound.patch
 Patch8001:	arm-reloc.patch
 Patch8002:	pinebook-pro-wifi.patch
 Patch8004:	ath-regd.patch
-Patch8005:	rkvdec-hevc.patch
 # Patch8005-md5:	e799c9b66de63e0127d4afceeb2f1a6c
 
 URL:		https://www.kernel.org/
@@ -581,7 +580,6 @@ cd linux-%{basever}
 %patch -P8001 -p1
 %patch -P8002 -p1 -R
 %patch -P8004 -p1
-%patch -P8005 -p1
 %endif
 
 %if %{with rt}
