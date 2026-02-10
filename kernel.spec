@@ -858,6 +858,21 @@ BuildConfig > %{defconfig}
 ln -sf %{defconfig} .config
 cd -
 
+# check config consistency
+NC=$(%{__make} \
+    -s \
+    TARGETOBJ=%{targetobj} \
+    V=0 \
+    KCONFIG_WERROR=1 \
+    listnewconfig)
+
+if [ -n "$NC" ]; then
+    echo "New configuration options:"
+    echo "$NC"
+    echo "New configuration options (listed above) detected."
+    exit 1
+fi
+
 %{__make} \
 	TARGETOBJ=%{targetobj} \
 	%{?with_verbose:V=1} \
