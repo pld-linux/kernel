@@ -51,10 +51,7 @@
 %define		have_drm	0
 %endif
 
-# make oldconfig doesn't complain about any new symbols while make listnewconfig lists them,
-# so something is broken or has different bahaviour in 6.19 - don't set rel 1 before figuring that out
-# and restoring old behaviour for our builds
-%define		rel		0.1
+%define		rel		1
 %define		basever		6.19
 %define		postver		.0
 
