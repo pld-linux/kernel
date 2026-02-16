@@ -53,7 +53,7 @@
 
 %define		rel		1
 %define		basever		6.12
-%define		postver		.71
+%define		postver		.72
 
 # define this to '-%{basever}' for longterm branch
 %define		versuffix	-%{basever}
@@ -107,7 +107,7 @@ Source0:	https://www.kernel.org/pub/linux/kernel/v6.x/linux-%{basever}.tar.xz
 # Source0-md5:	844fae6a58c7f43af44d8cea8484b4a1
 %if "%{postver}" != ".0"
 Patch0:		https://www.kernel.org/pub/linux/kernel/v6.x/patch-%{version}.xz
-# Patch0-md5:	423fd730d79d8f21125bc74d550969a8
+# Patch0-md5:	866e07aa445508f109ff521bfa5107cb
 %endif
 Source1:	kernel.sysconfig
 
@@ -836,6 +836,21 @@ install -d arch/%{target_arch_dir}
 BuildConfig > %{defconfig}
 ln -sf %{defconfig} .config
 cd -
+
+# check config consistency
+NC=$(%{__make} \
+        -s \
+        TARGETOBJ=%{targetobj} \
+        V=0 \
+        KCONFIG_WERROR=1 \
+        listnewconfig)
+
+if [ -n "$NC" ]; then
+        echo "New configuration options:"
+        echo "$NC"
+        echo "New configuration options (listed above) detected."
+        exit 1
+fi
 
 %{__make} \
 	TARGETOBJ=%{targetobj} \
