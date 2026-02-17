@@ -167,6 +167,7 @@ Patch500:	kernel-rt.patch
 
 Patch2000:	kernel-small_fixes.patch
 Patch2001:	kernel-pwc-uncompress.patch
+Patch2002:	revert-kvm-symbol-exports-for-vbox.patch
 
 # for rescuecd
 # based on ftp://ftp.leg.uct.ac.za/pub/linux/rip/tmpfs_root-2.6.30.diff.gz
@@ -596,6 +597,7 @@ rm -f localversion-rt
 # Small fixes:
 #%%patch -P2000 -p1
 %patch -P2001 -p1
+%patch -P2002 -p1
 
 chmod 755 tools/objtool/sync-check.sh
 
