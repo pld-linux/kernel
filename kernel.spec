@@ -53,7 +53,7 @@
 
 %define		rel		1
 %define		basever		6.19
-%define		postver		.4
+%define		postver		.5
 
 # define this to '-%{basever}' for longterm branch
 %define		versuffix	%{nil}
@@ -107,7 +107,7 @@ Source0:	https://www.kernel.org/pub/linux/kernel/v6.x/linux-%{basever}.tar.xz
 # Source0-md5:	59c1e1f9c69a6fa9051450ba2ca38200
 %if "%{postver}" != ".0"
 Patch0:		https://www.kernel.org/pub/linux/kernel/v6.x/patch-%{version}.xz
-# Patch0-md5:	d115399129ec4b28d58d5b18115bed37
+# Patch0-md5:	1a88b0480c5767dff936313a97f3be19
 %endif
 Source1:	kernel.sysconfig
 
@@ -133,7 +133,6 @@ Source44:	kernel-rt.config
 
 Source58:	kernel-inittmpfs.config
 
-Patch1:		netfilter-fix.patch
 Patch2:		android-enable-building-binder-as-module.patch
 # http://dev.gentoo.org/~spock/projects/fbcondecor/archive/fbcondecor-0.9.4-2.6.25-rc6.patch
 Patch3:		kernel-fbcondecor.patch
@@ -546,7 +545,6 @@ cd linux-%{basever}
 %endif
 
 %if %{without vanilla}
-%patch -P1 -p1
 %patch -P2 -p1
 
 %if %{with fbcondecor}
