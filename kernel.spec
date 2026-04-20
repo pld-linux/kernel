@@ -51,9 +51,9 @@
 %define		have_drm	0
 %endif
 
-%define		rel		1
-%define		basever		6.19
-%define		postver		.11
+%define		rel		0.1
+%define		basever		7.0
+%define		postver		.0
 
 # define this to '-%{basever}' for longterm branch
 %define		versuffix	%{nil}
@@ -103,10 +103,10 @@ Release:	%{rel}
 Epoch:		3
 License:	GPL v2
 Group:		Base/Kernel
-Source0:	https://www.kernel.org/pub/linux/kernel/v6.x/linux-%{basever}.tar.xz
-# Source0-md5:	59c1e1f9c69a6fa9051450ba2ca38200
+Source0:	https://www.kernel.org/pub/linux/kernel/v7.x/linux-%{basever}.tar.xz
+# Source0-md5:	1d35f79af3a784f986e4c3a154c0ecf5
 %if "%{postver}" != ".0"
-Patch0:		https://www.kernel.org/pub/linux/kernel/v6.x/patch-%{version}.xz
+Patch0:		https://www.kernel.org/pub/linux/kernel/v7.x/patch-%{version}.xz
 # Patch0-md5:	b6d512946c3f7173a462a972981abdd7
 %endif
 Source1:	kernel.sysconfig
@@ -616,10 +616,13 @@ find -name '*.py' -print0 | \
 	    -e '1s,/usr/bin/env python$,%{__python},' \
 	    -e '1s,/usr/bin/env python3$,%{__python3},' \
 	scripts/bloat-o-meter \
+	scripts/container \
 	scripts/diffconfig \
 	scripts/dtc/dt-extract-compatibles \
 	scripts/jobserver-exec \
+	scripts/kernel-doc \
 	scripts/show_delta \
+	tools/docs/kernel-doc \
 	tools/docs/sphinx-pre-install \
 	tools/docs/sphinx-build-wrapper \
 	tools/hv/lsvmbus \
@@ -650,8 +653,8 @@ find -name '*.pl' -print0 | \
 	scripts/config \
 	scripts/decode_stacktrace.sh \
 	scripts/faddr2line \
-	tools/testing/selftests/drivers/net/*.sh \
 	tools/testing/selftests/drivers/net/bonding/netcons_over_bonding.sh \
+	tools/testing/selftests/drivers/net/netconsole/*.sh \
 	tools/testing/selftests/exec/check-exec-tests.sh \
 	tools/testing/selftests/powerpc/security/mitigation-patching.sh \
 	tools/testing/selftests/sysctl/sysctl.sh
