@@ -156,6 +156,7 @@ Patch59:	kernel-rndis_host-wm5.patch
 
 # see update-source.sh
 Patch145:	kernel-aufs.patch
+Patch146:	kernel-aufs-exports.patch
 Patch147:	kernel-aufs-make.patch
 
 # Show normal colors in menuconfig with ncurses ABI 6
@@ -567,6 +568,7 @@ cd linux-%{basever}
 %if %{with aufs}
 # aufs
 %patch -P145 -p1
+%patch -P146 -p1
 %patch -P147 -p1
 %endif
 
