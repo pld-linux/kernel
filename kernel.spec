@@ -53,7 +53,7 @@
 
 %define		rel		1
 %define		basever		6.18
-%define		postver		.32
+%define		postver		.33
 
 # define this to '-%{basever}' for longterm branch
 %define		versuffix	-%{basever}
@@ -107,7 +107,7 @@ Source0:	https://www.kernel.org/pub/linux/kernel/v6.x/linux-%{basever}.tar.xz
 # Source0-md5:	9207ae77b0d63c22dc4646554963cfc7
 %if "%{postver}" != ".0"
 Patch0:		https://www.kernel.org/pub/linux/kernel/v6.x/patch-%{version}.xz
-# Patch0-md5:	0d87d90fbbc7ccf67a681c63f502fee8
+# Patch0-md5:	b6aea8e1973825d5e9a9a2cab94ad4fe
 %endif
 Source1:	kernel.sysconfig
 
@@ -594,7 +594,7 @@ rm -f localversion-rt
 %endif # vanilla
 
 # Small fixes:
-%patch -P2000 -p1
+#patch -P2000 -p1
 %patch -P2001 -p1
 
 chmod 755 tools/objtool/sync-check.sh
