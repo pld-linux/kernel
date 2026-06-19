@@ -132,23 +132,15 @@
 --- linux-6.3/mm/memory.c.orig	2023-04-23 21:02:52.000000000 +0200
 +++ linux-6.3/mm/memory.c	2023-04-26 10:57:23.873394940 +0200
 @@ -2050,6 +2050,7 @@ void zap_page_range_single(struct vm_are
- 	zap_page_range_single_batched(&tlb, vma, address, size, details);
+ 	zap_vma_range_batched(&tlb, vma, address, size, NULL);
  	tlb_finish_mmu(&tlb);
  }
-+EXPORT_SYMBOL_GPL(zap_page_range_single);
++EXPORT_SYMBOL_GPL(zap_vma_range);
  
  /**
-  * zap_vma_ptes - remove ptes mapping the vma
+  * zap_special_vma_range - zap all page table entries in a special vma range
 --- linux-6.14/mm/list_lru.c.orig	2025-03-24 15:02:41.000000000 +0100
 +++ linux-6.14/mm/list_lru.c	2025-04-04 15:00:26.574714908 +0200
-@@ -175,6 +175,7 @@
- 	unlock_list_lru(l, false);
- 	return false;
- }
-+EXPORT_SYMBOL_GPL(list_lru_add);
- 
- bool list_lru_add_obj(struct list_lru *lru, struct list_head *item)
- {
 @@ -212,6 +213,7 @@
  	unlock_list_lru(l, false);
  	return false;

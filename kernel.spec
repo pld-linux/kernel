@@ -51,9 +51,9 @@
 %define		have_drm	0
 %endif
 
-%define		rel		1
-%define		basever		7.0
-%define		postver		.11
+%define		rel		0.1
+%define		basever		7.1
+%define		postver		.0
 
 # define this to '-%{basever}' for longterm branch
 %define		versuffix	%{nil}
@@ -104,7 +104,7 @@ Epoch:		3
 License:	GPL v2
 Group:		Base/Kernel
 Source0:	https://www.kernel.org/pub/linux/kernel/v7.x/linux-%{basever}.tar.xz
-# Source0-md5:	1d35f79af3a784f986e4c3a154c0ecf5
+# Source0-md5:	b6b169bbd9c9c19857ad16db2ddf8def
 %if "%{postver}" != ".0"
 Patch0:		https://www.kernel.org/pub/linux/kernel/v7.x/patch-%{version}.xz
 # Patch0-md5:	a3e8736bfcfc91cff30949815238e345
@@ -619,6 +619,7 @@ find -name '*.py' -print0 | \
 	scripts/jobserver-exec \
 	scripts/kernel-doc \
 	scripts/show_delta \
+	tools/docs/kdoc_diff \
 	tools/docs/kernel-doc \
 	tools/docs/sphinx-pre-install \
 	tools/docs/sphinx-build-wrapper \
