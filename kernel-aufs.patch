@@ -37367,7 +37367,7 @@ diff -urN /usr/share/empty/fs/aufs/xino.c linux/fs/aufs/xino.c
 +}
 diff -urN /usr/share/empty/include/uapi/linux/aufs_type.h linux/include/uapi/linux/aufs_type.h
 --- /usr/share/empty/include/uapi/linux/aufs_type.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux/include/uapi/linux/aufs_type.h	2026-06-20 09:58:16.176588071 +0200
++++ linux/include/uapi/linux/aufs_type.h	2026-07-07 08:23:07.147713636 +0200
 @@ -0,0 +1,434 @@
 +/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
 +/*
@@ -37398,7 +37398,7 @@ diff -urN /usr/share/empty/include/uapi/linux/aufs_type.h linux/include/uapi/lin
 +#include <limits.h>
 +#endif /* __KERNEL__ */
 +
-+#define AUFS_VERSION	"7.x-rcN-20260525"
++#define AUFS_VERSION	"7.1-20260622"
 +
 +/* todo? move this to linux-2.6.19/include/magic.h */
 +#define AUFS_SUPER_MAGIC	('a' << 24 | 'u' << 16 | 'f' << 8 | 's')
@@ -37804,7 +37804,7 @@ diff -urN /usr/share/empty/include/uapi/linux/aufs_type.h linux/include/uapi/lin
 +
 +#endif /* __AUFS_TYPE_H__ */
 SPDX-License-Identifier: GPL-2.0
-aufs7.x-rcN kbuild patch
+aufs7.1 kbuild patch
 
 diff --git a/fs/Kconfig b/fs/Kconfig
 index 43cb06de297ff..2ee4a03843dbc 100644
@@ -37828,13 +37828,13 @@ index ae1b07f9c6a0c..a2d17bc51a7a4 100644
  obj-$(CONFIG_RESCTRL_FS)	+= resctrl/
 +obj-$(CONFIG_AUFS_FS)		+= aufs/
 SPDX-License-Identifier: GPL-2.0
-aufs7.x-rcN base patch
+aufs7.1 base patch
 
 diff --git a/MAINTAINERS b/MAINTAINERS
-index c2c6d79275c6e..17da34936613d 100644
+index c8d4b913f26c1..f97c062d0309c 100644
 --- a/MAINTAINERS
 +++ b/MAINTAINERS
-@@ -4249,6 +4249,19 @@ F:	kernel/audit*
+@@ -4253,6 +4253,19 @@ F:	kernel/audit*
  F:	lib/*audit.c
  K:	\baudit_[a-z_0-9]\+\b
  
@@ -37951,7 +37951,7 @@ index beab8080badf6..c9e5300ff82b8 100644
  		return error;
  
 diff --git a/fs/fhandle.c b/fs/fhandle.c
-index 642e3d5694972..ac33be836512e 100644
+index 1ca7eb3a6cb51..54702ef282bc1 100644
 --- a/fs/fhandle.c
 +++ b/fs/fhandle.c
 @@ -156,6 +156,9 @@ SYSCALL_DEFINE5(name_to_handle_at, int, dfd, const char __user *, name,
@@ -37979,7 +37979,7 @@ index ae19e51365986..3725f6730b8e5 100644
  			 (flags & FSPICK_EMPTY_PATH) ? LOOKUP_EMPTY : 0);
  	ret = filename_lookup(dfd, filename, lookup_flags, &target, NULL);
 diff --git a/fs/namei.c b/fs/namei.c
-index c7fac83c9a85e..106ba5cffdf48 100644
+index 4787244ca4a75..11779f7cfc892 100644
 --- a/fs/namei.c
 +++ b/fs/namei.c
 @@ -3781,7 +3781,7 @@ static struct dentry *lock_two_directories(struct dentry *p1, struct dentry *p2)
@@ -38001,10 +38001,10 @@ index c7fac83c9a85e..106ba5cffdf48 100644
  	inode_unlock(p1->d_inode);
  	if (p1 != p2) {
 diff --git a/fs/namespace.c b/fs/namespace.c
-index fe919abd2f011..87ced06314001 100644
+index 341ddd353b3a8..61e16b4a3252c 100644
 --- a/fs/namespace.c
 +++ b/fs/namespace.c
-@@ -3207,6 +3207,9 @@ static struct file *vfs_open_tree(int dfd, const char __user *filename, unsigned
+@@ -3210,6 +3210,9 @@ static struct file *vfs_open_tree(int dfd, const char __user *filename, unsigned
  		lookup_flags &= ~LOOKUP_AUTOMOUNT;
  	if (flags & AT_SYMLINK_NOFOLLOW)
  		lookup_flags &= ~LOOKUP_FOLLOW;
@@ -38014,7 +38014,7 @@ index fe919abd2f011..87ced06314001 100644
  
  	/*
  	 * If we create a new mount namespace with the cloned mount tree we
-@@ -5150,6 +5153,9 @@ SYSCALL_DEFINE5(mount_setattr, int, dfd, const char __user *, path,
+@@ -5153,6 +5156,9 @@ SYSCALL_DEFINE5(mount_setattr, int, dfd, const char __user *, path,
  		lookup_flags &= ~LOOKUP_AUTOMOUNT;
  	if (flags & AT_SYMLINK_NOFOLLOW)
  		lookup_flags &= ~LOOKUP_FOLLOW;
@@ -38257,7 +38257,7 @@ index ee69dd9d970e5..22ecfa69b9711 100644
  uses-libc += asm/sigcontext.h
  endif
 SPDX-License-Identifier: GPL-2.0
-aufs7.x-rcN mmap patch
+aufs7.1 mmap patch
 
 diff --git a/fs/Makefile b/fs/Makefile
 index a2d17bc51a7a4..2f446b8f9f61f 100644
@@ -38435,7 +38435,7 @@ index 391dfb0ca7719..f00a7f9efa825 100644
  }
  
 SPDX-License-Identifier: GPL-2.0
-aufs7.x-rcN standalone patch
+aufs7.1 standalone patch
 
 diff --git a/fs/dcache.c b/fs/dcache.c
 index fa77362b92bc3..6155fe0eaa1f5 100644
@@ -38486,7 +38486,7 @@ index 16e52e7fc2ace..2446dc5dc2df0 100644
  /*
   * Variant of alloc_empty_file() that doesn't check and modify nr_files.
 diff --git a/fs/namei.c b/fs/namei.c
-index 106ba5cffdf48..09fc6abab9c8d 100644
+index 11779f7cfc892..b6be82d516b7e 100644
 --- a/fs/namei.c
 +++ b/fs/namei.c
 @@ -3791,6 +3791,7 @@ struct dentry *lock_rename(struct dentry *p1, struct dentry *p2)
@@ -38506,10 +38506,10 @@ index 106ba5cffdf48..09fc6abab9c8d 100644
  /**
   * __start_renaming - lookup and lock names for rename
 diff --git a/fs/namespace.c b/fs/namespace.c
-index 87ced06314001..b41fdccd95665 100644
+index 61e16b4a3252c..a7a399303224a 100644
 --- a/fs/namespace.c
 +++ b/fs/namespace.c
-@@ -6323,6 +6323,7 @@ bool our_mnt(struct vfsmount *mnt)
+@@ -6326,6 +6326,7 @@ bool our_mnt(struct vfsmount *mnt)
  {
  	return check_mnt(real_mount(mnt));
  }
@@ -38699,7 +38699,7 @@ index 4e999f0236516..8fd4da7c55768 100644
  /**
   * security_task_alloc() - Allocate a task's LSM blob
 SPDX-License-Identifier: GPL-2.0
-aufs7.x-rcN loopback patch
+aufs7.1 loopback patch
 
 diff --git a/drivers/block/loop.c b/drivers/block/loop.c
 index f016a310ca460..403de57f05174 100644
