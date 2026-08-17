@@ -51,9 +51,9 @@
 %define		have_drm	0
 %endif
 
-%define		rel		1
-%define		basever		7.1
-%define		postver		.8
+%define		rel			1
+%define		basever		7.2
+%define		postver		.0
 
 # define this to '-%{basever}' for longterm branch
 %define		versuffix	%{nil}
@@ -104,7 +104,7 @@ Epoch:		3
 License:	GPL v2
 Group:		Base/Kernel
 Source0:	https://www.kernel.org/pub/linux/kernel/v7.x/linux-%{basever}.tar.xz
-# Source0-md5:	b6b169bbd9c9c19857ad16db2ddf8def
+# Source0-md5:	381ae4b20294dcf4b8f63f1fd1bb7017
 %if "%{postver}" != ".0"
 Patch0:		https://www.kernel.org/pub/linux/kernel/v7.x/patch-%{version}.xz
 # Patch0-md5:	b1ce8f709f38bb0844f2e15828710c5f
@@ -145,11 +145,6 @@ Patch6:		linux-wistron-nx.patch
 Patch10:	kernel-pom-ng-IPV4OPTSSTRIP.patch
 
 ### End netfilter
-
-# by Baggins request:
-# derived from ftp://ftp.cmf.nrl.navy.mil/pub/chas/linux-atm/vbr/vbr-kernel-diffs
-Patch55:	kernel-atm-vbr.patch
-Patch56:	kernel-atmdd.patch
 
 # http://synce.svn.sourceforge.net/svnroot/synce/trunk/patches/linux-2.6.22-rndis_host-wm5.patch
 Patch59:	kernel-rndis_host-wm5.patch
@@ -558,9 +553,6 @@ cd linux-%{basever}
 ##
 # end of netfilter
 
-%patch -P55 -p1
-%patch -P56 -p1
-
 # kernel-rndis_host-wm5.patch
 %patch -P59 -p1
 
@@ -613,6 +605,7 @@ find -name '*.py' -print0 | \
 	scripts/bloat-o-meter \
 	scripts/container \
 	scripts/diffconfig \
+	scripts/dtc/dt-check-style \
 	scripts/dtc/dt-extract-compatibles \
 	scripts/jobserver-exec \
 	scripts/kernel-doc \
