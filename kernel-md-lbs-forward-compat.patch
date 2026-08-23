@@ -1,0 +1,124 @@
+Subject: md: understand the logical_block_size superblock field
+
+Kernels >= 6.19 carve logical_block_size out of mdp_superblock_1.pad3
+(upstream 62ed1b582246 "md: allow configuring logical block size") and
+record it in every array they create, as well as in any array whose
+logical block size an admin pins through md/logical_block_size.  Kernels
+of this vintage reject any superblock with non-zero padding in
+super_1_load(), so such an array does not assemble here at all:
+
+  md: sdb4 does not have a valid v1.2 superblock, not importing!
+  md: md_import_device returned -22
+
+mdadm --examine calls the superblock healthy and nothing is logged, so
+the failure reads like broken disks.  Upstream treats it as expected
+(a4166f1c4893): a kernel that does not know the field would assemble the
+array with a different logical block size and lose data.
+
+So learn the field rather than ignore it.  Backport the metadata-reading
+half of 62ed1b582246: the recorded size is followed when stacking queue
+limits, exactly as >= 6.19 does, so the array comes up with the same
+logical block size on both.  That is what makes assembling it here safe.
+The field is deliberately never introduced here and there is no sysfs
+knob to set it - this kernel only follows what a newer one recorded.
+
+Also give the padding check a pr_warn (from upstream 9c47127a807d) so the
+next forward-incompatible feature is diagnosable rather than silent.
+
+--- a/drivers/md/md.c
++++ b/drivers/md/md.c
+@@ -1866,9 +1866,12 @@
+ 	}
+ 	if (sb->pad0 ||
+ 	    sb->pad3[0] ||
+-	    memcmp(sb->pad3, sb->pad3+1, sizeof(sb->pad3) - sizeof(sb->pad3[1])))
++	    memcmp(sb->pad3, sb->pad3+1, sizeof(sb->pad3) - sizeof(sb->pad3[1]))) {
+ 		/* Some padding is non-zero, might be a new feature */
++		pr_warn("md: some padding is non-zero on %pg, might be a new feature\n",
++			rdev->bdev);
+ 		return -EINVAL;
++	}
+ 
+ 	rdev->preferred_minor = 0xffff;
+ 	rdev->data_offset = le64_to_cpu(sb->data_offset);
+@@ -2009,6 +2012,7 @@
+ 		mddev->layout = le32_to_cpu(sb->layout);
+ 		mddev->raid_disks = le32_to_cpu(sb->raid_disks);
+ 		mddev->dev_sectors = le64_to_cpu(sb->size);
++		mddev->logical_block_size = le32_to_cpu(sb->logical_block_size);
+ 		mddev->events = ev1;
+ 		mddev->bitmap_info.offset = 0;
+ 		mddev->bitmap_info.space = 0;
+@@ -2218,6 +2222,13 @@
+ 	sb->chunksize = cpu_to_le32(mddev->chunk_sectors);
+ 	sb->level = cpu_to_le32(mddev->level);
+ 	sb->layout = cpu_to_le32(mddev->layout);
++	/*
++	 * Keep an already recorded size in sync across members, but never
++	 * record one here: kernels that do not know this field reject every
++	 * superblock whose padding is non-zero.
++	 */
++	if (mddev->logical_block_size)
++		sb->logical_block_size = cpu_to_le32(mddev->logical_block_size);
+ 	if (test_bit(FailFast, &rdev->flags))
+ 		sb->devflags |= FailFast1;
+ 	else
+@@ -6098,6 +6109,14 @@
+ {
+ 	struct md_rdev *rdev;
+ 
++	/*
++	 * Honour the size recorded by a newer kernel so the array comes up
++	 * with the same logical block size there and here.  Members can only
++	 * raise it further, exactly as on those kernels.
++	 */
++	if (mddev->logical_block_size > lim->logical_block_size)
++		lim->logical_block_size = mddev->logical_block_size;
++
+ 	rdev_for_each(rdev, mddev) {
+ 		queue_limits_stack_bdev(lim, rdev->bdev, rdev->data_offset,
+ 					mddev->gendisk->disk_name);
+@@ -6106,6 +6125,13 @@
+ 			return -EINVAL;
+ 	}
+ 
++	/* metadata I/O is done in single pages, so it cannot exceed one */
++	if (lim->logical_block_size > PAGE_SIZE) {
++		pr_err("%s: logical_block_size must not be larger than PAGE_SIZE\n",
++			mdname(mddev));
++		return -EINVAL;
++	}
++
+ 	return 0;
+ }
+ EXPORT_SYMBOL_GPL(mddev_stack_rdev_limits);
+@@ -6860,6 +6886,7 @@
+ 	mddev->chunk_sectors = 0;
+ 	mddev->ctime = mddev->utime = 0;
+ 	mddev->layout = 0;
++	mddev->logical_block_size = 0;
+ 	mddev->max_disks = 0;
+ 	mddev->events = 0;
+ 	mddev->can_decrease_events = 0;
+--- a/drivers/md/md.h
++++ b/drivers/md/md.h
+@@ -439,6 +439,7 @@
+ 	sector_t			array_sectors; /* exported array size */
+ 	int				external_size; /* size managed
+ 							* externally */
++	unsigned int			logical_block_size;
+ 	__u64				events;
+ 	/* If the last 'event' was simply a clean->dirty transition, and
+ 	 * we didn't write it to the spares, then it is safe and simple
+--- a/include/uapi/linux/raid/md_p.h
++++ b/include/uapi/linux/raid/md_p.h
+@@ -291,7 +291,8 @@
+ 	__le64	resync_offset;	/* data before this offset (from data_offset) known to be in sync */
+ 	__le32	sb_csum;	/* checksum up to devs[max_dev] */
+ 	__le32	max_dev;	/* size of devs[] array to consider */
+-	__u8	pad3[64-32];	/* set to 0 when writing */
++	__le32  logical_block_size;	/* same as q->limits->logical_block_size */
++	__u8	pad3[64-36];	/* set to 0 when writing */
+ 
+ 	/* device state information. Indexed by dev_number.
+ 	 * 2 bytes per device
