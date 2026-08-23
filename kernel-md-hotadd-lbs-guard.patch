@@ -1,0 +1,37 @@
+Subject: md: prevent adding disks with larger logical_block_size to active arrays
+
+Upstream 6c6b66f65e55 ("md: prevent adding disks with larger
+logical_block_size to active arrays"), verbatim.
+
+mddev_stack_new_rdev() stacks the new member's queue limits into the
+array's, and blk_stack_limits() takes the maximum logical block size.
+Hot-adding a 4Kn disk to a 512-byte array therefore raises the logical
+block size of the live array, which makes its partition table unreadable:
+
+  mdadm -CRq /dev/md0 -l1 -n3 /dev/sd[de] missing --assume-clean
+  parted -s /dev/md0 mklabel gpt mkpart primary 1MiB 100%
+  mdadm --add -q /dev/md0 /dev/sdf	# sdf has 4096 byte LBS
+  partprobe /dev/md0			# md0p1 is gone
+
+The bug predates 2.6.12 and is reachable for every array that assembles
+here.  kernel-md-lbs-forward-compat.patch widens that set to arrays
+created under >= 6.19, so carry the upstream fix next to it.
+
+Fixed upstream in 6.19; 6.18.y has not picked it up.
+
+--- a/drivers/md/md.c
++++ b/drivers/md/md.c
+@@ -6144,6 +6144,13 @@
+ 	if (mddev_is_dm(mddev))
+ 		return 0;
+ 
++	if (queue_logical_block_size(rdev->bdev->bd_disk->queue) >
++	    queue_logical_block_size(mddev->gendisk->queue)) {
++		pr_err("%s: incompatible logical_block_size, can not add\n",
++		       mdname(mddev));
++		return -EINVAL;
++	}
++
+ 	lim = queue_limits_start_update(mddev->gendisk->queue);
+ 	queue_limits_stack_bdev(&lim, rdev->bdev, rdev->data_offset,
+ 				mddev->gendisk->disk_name);
