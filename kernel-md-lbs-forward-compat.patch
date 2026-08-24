@@ -11,23 +11,51 @@ super_1_load(), so such an array does not assemble here at all:
   md: md_import_device returned -22
 
 mdadm --examine calls the superblock healthy and nothing is logged, so
-the failure reads like broken disks.  Upstream treats it as expected
-(a4166f1c4893): a kernel that does not know the field would assemble the
-array with a different logical block size and lose data.
+the failure reads like broken disks.  This matters in practice: rescue
+media run >= 6.19 kernels, and an array created there must still
+assemble on this kernel.
 
-So learn the field rather than ignore it.  Backport the metadata-reading
-half of 62ed1b582246: the recorded size is followed when stacking queue
-limits, exactly as >= 6.19 does, so the array comes up with the same
-logical block size on both.  That is what makes assembling it here safe.
-The field is deliberately never introduced here and there is no sysfs
-knob to set it - this kernel only follows what a newer one recorded.
+Backport the metadata-reading subset of 62ed1b582246: the recorded size
+seeds each personality's queue limits exactly as on >= 6.19, so the
+array comes up with the same logical block size on both.  Member devices
+can only raise it (blk_stack_limits takes the max), also as upstream.
 
-Also give the padding check a pr_warn (from upstream 9c47127a807d) so the
-next forward-incompatible feature is diagnosable rather than silent.
+Deliberate deviations from upstream.  This kernel follows and propagates
+what the metadata already carries, but never introduces a non-zero value
+into an array whose reference superblock carries zero - only a >= 6.19
+kernel can do that:
+- no md/logical_block_size sysfs store, and mddev->logical_block_size is
+  never set from the stacked limits (upstream stamps new arrays there);
+  its only source here is the superblock itself.  super_1_sync() writes
+  the field unconditionally, so it stays zero for arrays that never had
+  it and a stale value cannot survive on an individual member,
+- super_1_load() validates the recorded value (0, or a power of two in
+  [SECTOR_SIZE, PAGE_SIZE]) so on-disk garbage is rejected with a
+  message instead of reaching queue_limits validation,
+- raid5_set_limits() stops ignoring mddev_stack_rdev_limits() errors,
+  otherwise the PAGE_SIZE cap would not be enforced for raid456
+  (upstream has the same hole),
+- the padding rejection in super_1_load() gains the pr_warn from
+  upstream 9c47127a807d, without the check_new_feature bypass.
 
+Accepted behaviour change: the PAGE_SIZE cap applies to the stacked
+result, so an array whose member devices report a logical block size
+above PAGE_SIZE no longer starts (same as >= 6.19).  With 1.x or 0.90
+metadata such members were never usable here anyway - the 4 KiB
+superblock read is not aligned to their logical block size - so this
+can only affect external-metadata setups.
+---
 --- a/drivers/md/md.c
 +++ b/drivers/md/md.c
-@@ -1866,9 +1866,12 @@
+@@ -1813,6 +1813,7 @@
+ 	sector_t sb_start;
+ 	sector_t sectors;
+ 	int bmask;
++	u32 lbs;
+ 	bool spare_disk = true;
+ 
+ 	/*
+@@ -1866,9 +1867,18 @@
  	}
  	if (sb->pad0 ||
  	    sb->pad3[0] ||
@@ -36,12 +64,18 @@ next forward-incompatible feature is diagnosable rather than silent.
  		/* Some padding is non-zero, might be a new feature */
 +		pr_warn("md: some padding is non-zero on %pg, might be a new feature\n",
 +			rdev->bdev);
++		return -EINVAL;
++	}
++	lbs = le32_to_cpu(sb->logical_block_size);
++	if (lbs && (!is_power_of_2(lbs) || lbs < SECTOR_SIZE || lbs > PAGE_SIZE)) {
++		pr_warn("md: bogus logical_block_size %u on %pg\n",
++			lbs, rdev->bdev);
  		return -EINVAL;
 +	}
  
  	rdev->preferred_minor = 0xffff;
  	rdev->data_offset = le64_to_cpu(sb->data_offset);
-@@ -2009,6 +2012,7 @@
+@@ -2009,6 +2019,7 @@
  		mddev->layout = le32_to_cpu(sb->layout);
  		mddev->raid_disks = le32_to_cpu(sb->raid_disks);
  		mddev->dev_sectors = le64_to_cpu(sb->size);
@@ -49,40 +83,23 @@ next forward-incompatible feature is diagnosable rather than silent.
  		mddev->events = ev1;
  		mddev->bitmap_info.offset = 0;
  		mddev->bitmap_info.space = 0;
-@@ -2218,6 +2222,13 @@
+@@ -2218,6 +2229,8 @@
  	sb->chunksize = cpu_to_le32(mddev->chunk_sectors);
  	sb->level = cpu_to_le32(mddev->level);
  	sb->layout = cpu_to_le32(mddev->layout);
-+	/*
-+	 * Keep an already recorded size in sync across members, but never
-+	 * record one here: kernels that do not know this field reject every
-+	 * superblock whose padding is non-zero.
-+	 */
-+	if (mddev->logical_block_size)
-+		sb->logical_block_size = cpu_to_le32(mddev->logical_block_size);
++	/* zero for arrays that never had it - keeps unpatched kernels accepting them */
++	sb->logical_block_size = cpu_to_le32(mddev->logical_block_size);
  	if (test_bit(FailFast, &rdev->flags))
  		sb->devflags |= FailFast1;
  	else
-@@ -6098,6 +6109,14 @@
- {
- 	struct md_rdev *rdev;
- 
-+	/*
-+	 * Honour the size recorded by a newer kernel so the array comes up
-+	 * with the same logical block size there and here.  Members can only
-+	 * raise it further, exactly as on those kernels.
-+	 */
-+	if (mddev->logical_block_size > lim->logical_block_size)
-+		lim->logical_block_size = mddev->logical_block_size;
-+
- 	rdev_for_each(rdev, mddev) {
- 		queue_limits_stack_bdev(lim, rdev->bdev, rdev->data_offset,
- 					mddev->gendisk->disk_name);
-@@ -6106,6 +6125,13 @@
+@@ -6106,6 +6119,16 @@
  			return -EINVAL;
  	}
  
-+	/* metadata I/O is done in single pages, so it cannot exceed one */
++	/*
++	 * Before RAID adding folio support, the logical_block_size
++	 * should be smaller than the page size.
++	 */
 +	if (lim->logical_block_size > PAGE_SIZE) {
 +		pr_err("%s: logical_block_size must not be larger than PAGE_SIZE\n",
 +			mdname(mddev));
@@ -92,7 +109,7 @@ next forward-incompatible feature is diagnosable rather than silent.
  	return 0;
  }
  EXPORT_SYMBOL_GPL(mddev_stack_rdev_limits);
-@@ -6860,6 +6886,7 @@
+@@ -6860,6 +6883,7 @@
  	mddev->chunk_sectors = 0;
  	mddev->ctime = mddev->utime = 0;
  	mddev->layout = 0;
@@ -110,6 +127,74 @@ next forward-incompatible feature is diagnosable rather than silent.
  	__u64				events;
  	/* If the last 'event' was simply a clean->dirty transition, and
  	 * we didn't write it to the spares, then it is safe and simple
+--- a/drivers/md/md-linear.c
++++ b/drivers/md/md-linear.c
+@@ -72,6 +72,7 @@
+ 
+ 	md_init_stacking_limits(&lim);
+ 	lim.max_hw_sectors = mddev->chunk_sectors;
++	lim.logical_block_size = mddev->logical_block_size;
+ 	lim.max_write_zeroes_sectors = mddev->chunk_sectors;
+ 	lim.max_hw_wzeroes_unmap_sectors = mddev->chunk_sectors;
+ 	lim.io_min = mddev->chunk_sectors << 9;
+--- a/drivers/md/raid0.c
++++ b/drivers/md/raid0.c
+@@ -385,6 +385,7 @@
+ 	lim.max_hw_sectors = mddev->chunk_sectors;
+ 	lim.max_write_zeroes_sectors = mddev->chunk_sectors;
+ 	lim.max_hw_wzeroes_unmap_sectors = mddev->chunk_sectors;
++	lim.logical_block_size = mddev->logical_block_size;
+ 	lim.io_min = mddev->chunk_sectors << 9;
+ 	lim.io_opt = lim.io_min * mddev->raid_disks;
+ 	lim.chunk_sectors = mddev->chunk_sectors;
+--- a/drivers/md/raid1.c
++++ b/drivers/md/raid1.c
+@@ -3225,6 +3225,7 @@
+ 	md_init_stacking_limits(&lim);
+ 	lim.max_write_zeroes_sectors = 0;
+ 	lim.max_hw_wzeroes_unmap_sectors = 0;
++	lim.logical_block_size = mddev->logical_block_size;
+ 	lim.features |= BLK_FEAT_ATOMIC_WRITES;
+ 	err = mddev_stack_rdev_limits(mddev, &lim, MDDEV_STACK_INTEGRITY);
+ 	if (err)
+--- a/drivers/md/raid10.c
++++ b/drivers/md/raid10.c
+@@ -4003,6 +4003,7 @@
+ 	md_init_stacking_limits(&lim);
+ 	lim.max_write_zeroes_sectors = 0;
+ 	lim.max_hw_wzeroes_unmap_sectors = 0;
++	lim.logical_block_size = mddev->logical_block_size;
+ 	lim.io_min = mddev->chunk_sectors << 9;
+ 	lim.chunk_sectors = mddev->chunk_sectors;
+ 	lim.io_opt = lim.io_min * raid10_nr_stripes(conf);
+--- a/drivers/md/raid5.c
++++ b/drivers/md/raid5.c
+@@ -7756,6 +7756,7 @@
+ 	struct r5conf *conf = mddev->private;
+ 	struct queue_limits lim;
+ 	int data_disks, stripe;
++	int err;
+ 	struct md_rdev *rdev;
+ 
+ 	/*
+@@ -7771,13 +7772,16 @@
+ 	stripe = roundup_pow_of_two(data_disks * (mddev->chunk_sectors << 9));
+ 
+ 	md_init_stacking_limits(&lim);
++	lim.logical_block_size = mddev->logical_block_size;
+ 	lim.io_min = mddev->chunk_sectors << 9;
+ 	lim.io_opt = lim.io_min * (conf->raid_disks - conf->max_degraded);
+ 	lim.features |= BLK_FEAT_RAID_PARTIAL_STRIPES_EXPENSIVE;
+ 	lim.discard_granularity = stripe;
+ 	lim.max_write_zeroes_sectors = 0;
+ 	lim.max_hw_wzeroes_unmap_sectors = 0;
+-	mddev_stack_rdev_limits(mddev, &lim, 0);
++	err = mddev_stack_rdev_limits(mddev, &lim, 0);
++	if (err)
++		return err;
+ 	rdev_for_each(rdev, mddev)
+ 		queue_limits_stack_bdev(&lim, rdev->bdev, rdev->new_data_offset,
+ 				mddev->gendisk->disk_name);
 --- a/include/uapi/linux/raid/md_p.h
 +++ b/include/uapi/linux/raid/md_p.h
 @@ -291,7 +291,8 @@

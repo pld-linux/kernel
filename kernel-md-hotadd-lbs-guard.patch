@@ -1,7 +1,8 @@
 Subject: md: prevent adding disks with larger logical_block_size to active arrays
 
 Upstream 6c6b66f65e55 ("md: prevent adding disks with larger
-logical_block_size to active arrays"), verbatim.
+logical_block_size to active arrays"), plus the same check for the
+raid1 replacement path.
 
 mddev_stack_new_rdev() stacks the new member's queue limits into the
 array's, and blk_stack_limits() takes the maximum logical block size.
@@ -14,14 +15,31 @@ block size of the live array, which makes its partition table unreadable:
   partprobe /dev/md0			# md0p1 is gone
 
 The bug predates 2.6.12 and is reachable for every array that assembles
-here.  kernel-md-lbs-forward-compat.patch widens that set to arrays
-created under >= 6.19, so carry the upstream fix next to it.
+here.  Fixed upstream in 6.19; 6.18.y has not picked it up.
 
-Fixed upstream in 6.19; 6.18.y has not picked it up.
+Local extension on top of the upstream hunk: the raid1_add_disk()
+replacement branch never goes through mddev_stack_new_rdev(), dodging
+both the guard and limits stacking, so route it through - exactly as
+the raid10 replacement branch already does.  This hole exists upstream
+too.
 
+Scope matches upstream: the guard covers the md core hot-add path
+(raid1/raid10, now including the raid1 replacement).  linear_add()
+restacks limits without it and raid456 does not restack on hot-add, so
+neither is covered - same as upstream.
+
+Accepted behaviour change: a 4Kn spare or replacement can no longer be
+hot-added to a running 512-byte array - previously this succeeded while
+silently growing the array's logical block size.  That includes a legacy
+mixed 512+4Kn array assembled degraded from its 512-byte members only:
+its queue is 512 bytes and the original 4Kn member cannot be re-added.
+This kernel has no interface to prepare the array for such a member;
+when that trade-off is wanted, boot a >= 6.19 kernel, write the new
+size to md/logical_block_size and add the disk there.
+---
 --- a/drivers/md/md.c
 +++ b/drivers/md/md.c
-@@ -6144,6 +6144,13 @@
+@@ -6141,6 +6141,13 @@
  	if (mddev_is_dm(mddev))
  		return 0;
  
@@ -35,3 +53,15 @@ Fixed upstream in 6.19; 6.18.y has not picked it up.
  	lim = queue_limits_start_update(mddev->gendisk->queue);
  	queue_limits_stack_bdev(&lim, rdev->bdev, rdev->data_offset,
  				mddev->gendisk->disk_name);
+--- a/drivers/md/raid1.c
++++ b/drivers/md/raid1.c
+@@ -1974,6 +1974,9 @@
+ 
+ 	if (err && repl_slot >= 0) {
+ 		/* Add this device as a replacement */
++		err = mddev_stack_new_rdev(mddev, rdev);
++		if (err)
++			return err;
+ 		clear_bit(In_sync, &rdev->flags);
+ 		set_bit(Replacement, &rdev->flags);
+ 		raid1_add_conf(conf, rdev, repl_slot, true);
