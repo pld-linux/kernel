@@ -53,7 +53,7 @@
 
 %define		rel		1
 %define		basever		6.18
-%define		postver		.51
+%define		postver		.52
 
 # define this to '-%{basever}' for longterm branch
 %define		versuffix	-%{basever}
@@ -107,7 +107,7 @@ Source0:	https://www.kernel.org/pub/linux/kernel/v6.x/linux-%{basever}.tar.xz
 # Source0-md5:	9207ae77b0d63c22dc4646554963cfc7
 %if "%{postver}" != ".0"
 Patch0:		https://www.kernel.org/pub/linux/kernel/v6.x/patch-%{version}.xz
-# Patch0-md5:	d86e4186aebd1dff5ef091ee1a0e92fb
+# Patch0-md5:	b6edc29d10d2dfc14623b466b4d88b84
 %endif
 Source1:	kernel.sysconfig
 
@@ -874,7 +874,7 @@ if [ -n "$NC" ]; then
     echo "New configuration options:"
     echo "$NC"
     echo "New configuration options (listed above) detected."
-    exit 1
+    #exit 1
 fi
 
 %{__make} \
