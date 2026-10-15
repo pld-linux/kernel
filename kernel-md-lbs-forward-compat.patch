@@ -47,7 +47,7 @@ can only affect external-metadata setups.
 ---
 --- a/drivers/md/md.c
 +++ b/drivers/md/md.c
-@@ -1813,6 +1813,7 @@
+@@ -1807,6 +1807,7 @@
  	sector_t sb_start;
  	sector_t sectors;
  	int bmask;
@@ -55,7 +55,7 @@ can only affect external-metadata setups.
  	bool spare_disk = true;
  
  	/*
-@@ -1866,9 +1867,18 @@
+@@ -1860,9 +1861,18 @@
  	}
  	if (sb->pad0 ||
  	    sb->pad3[0] ||
@@ -75,7 +75,7 @@ can only affect external-metadata setups.
  
  	rdev->preferred_minor = 0xffff;
  	rdev->data_offset = le64_to_cpu(sb->data_offset);
-@@ -2009,6 +2019,7 @@
+@@ -2010,6 +2020,7 @@
  		mddev->layout = le32_to_cpu(sb->layout);
  		mddev->raid_disks = le32_to_cpu(sb->raid_disks);
  		mddev->dev_sectors = le64_to_cpu(sb->size);
@@ -83,7 +83,7 @@ can only affect external-metadata setups.
  		mddev->events = ev1;
  		mddev->bitmap_info.offset = 0;
  		mddev->bitmap_info.space = 0;
-@@ -2218,6 +2229,8 @@
+@@ -2219,6 +2230,8 @@
  	sb->chunksize = cpu_to_le32(mddev->chunk_sectors);
  	sb->level = cpu_to_le32(mddev->level);
  	sb->layout = cpu_to_le32(mddev->layout);
@@ -92,7 +92,7 @@ can only affect external-metadata setups.
  	if (test_bit(FailFast, &rdev->flags))
  		sb->devflags |= FailFast1;
  	else
-@@ -6106,6 +6119,16 @@
+@@ -6118,6 +6131,16 @@
  			return -EINVAL;
  	}
  
@@ -109,7 +109,7 @@ can only affect external-metadata setups.
  	return 0;
  }
  EXPORT_SYMBOL_GPL(mddev_stack_rdev_limits);
-@@ -6860,6 +6883,7 @@
+@@ -6870,6 +6893,7 @@
  	mddev->chunk_sectors = 0;
  	mddev->ctime = mddev->utime = 0;
  	mddev->layout = 0;
@@ -119,7 +119,7 @@ can only affect external-metadata setups.
  	mddev->can_decrease_events = 0;
 --- a/drivers/md/md.h
 +++ b/drivers/md/md.h
-@@ -439,6 +439,7 @@
+@@ -441,6 +441,7 @@
  	sector_t			array_sectors; /* exported array size */
  	int				external_size; /* size managed
  							* externally */
@@ -129,9 +129,9 @@ can only affect external-metadata setups.
  	 * we didn't write it to the spares, then it is safe and simple
 --- a/drivers/md/md-linear.c
 +++ b/drivers/md/md-linear.c
-@@ -72,6 +72,7 @@
- 
+@@ -73,6 +73,7 @@
  	md_init_stacking_limits(&lim);
+ 	lim.features |= BLK_FEAT_NOWAIT;
  	lim.max_hw_sectors = mddev->chunk_sectors;
 +	lim.logical_block_size = mddev->logical_block_size;
  	lim.max_write_zeroes_sectors = mddev->chunk_sectors;
@@ -139,7 +139,7 @@ can only affect external-metadata setups.
  	lim.io_min = mddev->chunk_sectors << 9;
 --- a/drivers/md/raid0.c
 +++ b/drivers/md/raid0.c
-@@ -385,6 +385,7 @@
+@@ -386,6 +386,7 @@
  	lim.max_hw_sectors = mddev->chunk_sectors;
  	lim.max_write_zeroes_sectors = mddev->chunk_sectors;
  	lim.max_hw_wzeroes_unmap_sectors = mddev->chunk_sectors;
@@ -149,7 +149,7 @@ can only affect external-metadata setups.
  	lim.chunk_sectors = mddev->chunk_sectors;
 --- a/drivers/md/raid1.c
 +++ b/drivers/md/raid1.c
-@@ -3225,6 +3225,7 @@
+@@ -3185,6 +3185,7 @@
  	md_init_stacking_limits(&lim);
  	lim.max_write_zeroes_sectors = 0;
  	lim.max_hw_wzeroes_unmap_sectors = 0;
@@ -159,7 +159,7 @@ can only affect external-metadata setups.
  	if (err)
 --- a/drivers/md/raid10.c
 +++ b/drivers/md/raid10.c
-@@ -4003,6 +4003,7 @@
+@@ -3971,6 +3971,7 @@
  	md_init_stacking_limits(&lim);
  	lim.max_write_zeroes_sectors = 0;
  	lim.max_hw_wzeroes_unmap_sectors = 0;
@@ -169,7 +169,7 @@ can only affect external-metadata setups.
  	lim.io_opt = lim.io_min * raid10_nr_stripes(conf);
 --- a/drivers/md/raid5.c
 +++ b/drivers/md/raid5.c
-@@ -7756,6 +7756,7 @@
+@@ -7768,6 +7768,7 @@
  	struct r5conf *conf = mddev->private;
  	struct queue_limits lim;
  	int data_disks, stripe;
@@ -177,7 +177,7 @@ can only affect external-metadata setups.
  	struct md_rdev *rdev;
  
  	/*
-@@ -7771,13 +7772,16 @@
+@@ -7783,13 +7784,16 @@
  	stripe = roundup_pow_of_two(data_disks * (mddev->chunk_sectors << 9));
  
  	md_init_stacking_limits(&lim);
