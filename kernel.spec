@@ -52,8 +52,8 @@
 %endif
 
 %define		rel		1
-%define		basever		7.2
-%define		postver		.11
+%define		basever		7.3
+%define		postver		.0
 
 # define this to '-%{basever}' for longterm branch
 %define		versuffix	%{nil}
@@ -104,7 +104,7 @@ Epoch:		3
 License:	GPL v2
 Group:		Base/Kernel
 Source0:	https://www.kernel.org/pub/linux/kernel/v7.x/linux-%{basever}.tar.xz
-# Source0-md5:	381ae4b20294dcf4b8f63f1fd1bb7017
+# Source0-md5:	b38587333374ecce1141b9b5886c4fcf
 %if "%{postver}" != ".0"
 Patch0:		https://www.kernel.org/pub/linux/kernel/v7.x/patch-%{version}.xz
 # Patch0-md5:	eea8855ac968044d2669adfe1bf3fce1
@@ -645,6 +645,7 @@ find -name '*.pl' -print0 | \
 	tools/testing/selftests/drivers/net/bonding/netcons_over_bonding.sh \
 	tools/testing/selftests/drivers/net/netconsole/*.sh \
 	tools/testing/selftests/exec/check-exec-tests.sh \
+	tools/testing/selftests/net/big_tcp_tunnels.sh \
 	tools/testing/selftests/powerpc/security/mitigation-patching.sh \
 	tools/testing/selftests/sysctl/sysctl.sh
 
@@ -1328,6 +1329,7 @@ fi
 %dir %{_docdir}/%{name}-%{version}
 
 %{_docdir}/%{name}-%{version}/[!jkz]*
+%{_docdir}/%{name}-%{version}/.renames.txt
 %{_docdir}/%{name}-%{version}/kbuild
 %{_docdir}/%{name}-%{version}/kernel-hacking
 %endif
@@ -1400,6 +1402,7 @@ fi
 %{_kernelsrcdir}/usr
 %{_kernelsrcdir}/COPYING
 %{_kernelsrcdir}/CREDITS
+%{_kernelsrcdir}/LICENSES
 %{_kernelsrcdir}/MAINTAINERS
 %{_kernelsrcdir}/README
 %endif
