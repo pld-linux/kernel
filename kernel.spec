@@ -1035,6 +1035,7 @@ mv $RPM_BUILD_ROOT{%{_kernelsrcdir}/Documentation,%{_docdir}/%{name}-%{version}}
 
 %{__rm} $RPM_BUILD_ROOT%{_docdir}/%{name}-%{version}/Makefile
 %{__rm} $RPM_BUILD_ROOT%{_docdir}/%{name}-%{version}/*/*/Makefile
+%{__rm} $RPM_BUILD_ROOT%{_docdir}/%{name}-%{version}/.renames.txt
 %else
 %{__rm} -r $RPM_BUILD_ROOT%{_kernelsrcdir}/Documentation
 %endif
@@ -1329,7 +1330,6 @@ fi
 %dir %{_docdir}/%{name}-%{version}
 
 %{_docdir}/%{name}-%{version}/[!jkz]*
-%{_docdir}/%{name}-%{version}/.renames.txt
 %{_docdir}/%{name}-%{version}/kbuild
 %{_docdir}/%{name}-%{version}/kernel-hacking
 %endif
