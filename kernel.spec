@@ -53,7 +53,7 @@
 
 %define		rel		1
 %define		basever		6.18
-%define		postver		.57
+%define		postver		.60
 
 # define this to '-%{basever}' for longterm branch
 %define		versuffix	-%{basever}
@@ -107,7 +107,7 @@ Source0:	https://www.kernel.org/pub/linux/kernel/v6.x/linux-%{basever}.tar.xz
 # Source0-md5:	9207ae77b0d63c22dc4646554963cfc7
 %if "%{postver}" != ".0"
 Patch0:		https://www.kernel.org/pub/linux/kernel/v6.x/patch-%{version}.xz
-# Patch0-md5:	fdffb3beab95c936c3d374a2806c28cb
+# Patch0-md5:	7b06a6467dafd56b89979ea04388b566
 %endif
 Source1:	kernel.sysconfig
 
@@ -157,6 +157,7 @@ Patch59:	kernel-rndis_host-wm5.patch
 # see update-source.sh
 Patch145:	kernel-aufs.patch
 Patch147:	kernel-aufs-make.patch
+Patch148:	kernel-aufs-dirren-overflow.patch
 
 # Show normal colors in menuconfig with ncurses ABI 6
 Patch250:	kernel-fix_256colors_menuconfig.patch
@@ -177,7 +178,6 @@ Patch7000:	kernel-inittmpfs.patch
 # ARM only
 Patch8000:	rpi-sound.patch
 Patch8001:	arm-reloc.patch
-Patch8002:	pinebook-pro-wifi.patch
 Patch8004:	ath-regd.patch
 Patch8005:	rkvdec-hevc.patch
 # Patch8005-md5:	e799c9b66de63e0127d4afceeb2f1a6c
@@ -572,6 +572,7 @@ cd linux-%{basever}
 # aufs
 %patch -P145 -p1
 %patch -P147 -p1
+%patch -P148 -p1
 %endif
 
 %if %{with rescuecd}
@@ -581,7 +582,6 @@ cd linux-%{basever}
 %ifarch %{arm} aarch64
 %patch -P8000 -p1
 %patch -P8001 -p1
-%patch -P8002 -p1 -R
 %patch -P8004 -p1
 %patch -P8005 -p1
 %endif
@@ -1044,6 +1044,7 @@ mv $RPM_BUILD_ROOT{%{_kernelsrcdir}/Documentation,%{_docdir}/%{name}-%{version}}
 
 %{__rm} $RPM_BUILD_ROOT%{_docdir}/%{name}-%{version}/Makefile
 %{__rm} $RPM_BUILD_ROOT%{_docdir}/%{name}-%{version}/*/*/Makefile
+%{__rm} $RPM_BUILD_ROOT%{_docdir}/%{name}-%{version}/.renames.txt
 %else
 %{__rm} -r $RPM_BUILD_ROOT%{_kernelsrcdir}/Documentation
 %endif

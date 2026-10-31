@@ -1,0 +1,40 @@
+aufs: dirren: keep the drinfo buffer size in an unsigned int
+
+au_drinfo_store.allocated is unsigned char, so a buffer grown to 256
+bytes or more stores 0; the next au_drinfo_construct() then sizes the
+buffer by the name length alone and memcpy() writes sizeof(*f) bytes
+past it (e.g. 65-char name on one lower branch, 255-char on the next).
+Size the buffer from the full requirement and keep it in an unsigned int.
+
+diff --git a/fs/aufs/dirren.c b/fs/aufs/dirren.c
+index 6cc9e568c..36b040c4c 100644
+--- a/fs/aufs/dirren.c
++++ b/fs/aufs/dirren.c
+@@ -471,7 +471,7 @@ static int au_drinfo_name(struct au_branch *br, char *name, int len)
+  */
+ static int au_drinfo_construct(struct au_drinfo_fdata **fdata,
+ 			       struct dentry *h_dentry,
+-			       unsigned char *allocated)
++			       unsigned int *allocated)
+ {
+ 	int err, v;
+ 	struct au_drinfo_fdata *f, *p;
+@@ -487,7 +487,7 @@ static int au_drinfo_construct(struct au_drinfo_fdata **fdata,
+ 	drinfo->ino = (__force uint64_t)cpu_to_be64(h_inode->i_ino);
+ 	drinfo->oldnamelen = qname->len;
+ 	if (*allocated < sizeof(*f) + qname->len) {
+-		v = roundup_pow_of_two(*allocated + qname->len);
++		v = roundup_pow_of_two(sizeof(*f) + qname->len);
+ 		p = au_krealloc(f, v, GFP_NOFS, /*may_shrink*/0);
+ 		if (unlikely(!p)) {
+ 			err = -ENOMEM;
+@@ -598,8 +598,8 @@ struct au_drinfo_store {
+ 	char *infoname;			/* inside of whname, just after PFX */
+ 	char whname[sizeof(AUFS_WH_DR_INFO_PFX) + AUFS_DIRREN_ENV_VAL_SZ];
+ 	aufs_bindex_t btgt, btail;
++	unsigned int allocated;		/* current size of *fdata */
+ 	unsigned char no_sio,
+-		allocated,		/* current size of *fdata */
+ 		infonamelen,		/* room size for p */
+ 		whnamelen,		/* length of the generated name */
+ 		renameback;		/* renamed back */
