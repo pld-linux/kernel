@@ -486,25 +486,34 @@ index 2def55555e05..fefc5c67e96e 100644
  
  	/* Undo any partial mapping done by a device driver. */
 @@ -2813,6 +2813,9 @@ SYSCALL_DEFINE5(remap_file_pages, unsigned long, start, unsigned long, size,
- 	unsigned long populate = 0;
  	unsigned long ret = -EINVAL;
  	struct file *file;
+ 	vm_flags_t vm_flags;
 +#if IS_ENABLED(CONFIG_AUFS_FS)
 +	struct file *prfile;
 +#endif
  
  	pr_warn_once("%s (%d) uses deprecated remap_file_pages() syscall. See Documentation/mm/remap_file_pages.rst.\n",
  		     current->comm, current->pid);
-@@ -2871,14 +2874,38 @@ SYSCALL_DEFINE5(remap_file_pages, unsigned long, start, unsigned long, size,
- 	if (vma->vm_flags & VM_LOCKED)
- 		flags |= MAP_LOCKED;
+@@ -3025,7 +3028,13 @@ SYSCALL_DEFINE5(remap_file_pages, unsigned long, start, unsigned long, size,
  
+ 	/* Save vm_flags used to calculate prot and flags, and recheck later. */
+ 	vm_flags = vma->vm_flags;
 +#if IS_ENABLED(CONFIG_AUFS_FS)
 +	vma_get_file(vma);
 +	file = vma->vm_file;
 +	prfile = vma->vm_prfile;
-+	ret = do_mmap(vma->vm_file, start, size,
-+			prot, flags, pgoff, &populate, NULL);
++#else
+ 	file = get_file(vma->vm_file);
++#endif
+ 
+ 	mmap_read_unlock(mm);
+ 
+@@ -3082,9 +3091,28 @@ SYSCALL_DEFINE5(remap_file_pages, unsigned long, start, unsigned long, size,
+ 
+ 	ret = do_mmap(vma->vm_file, start, size,
+ 			prot, flags, pgoff, &populate, NULL);
++#if IS_ENABLED(CONFIG_AUFS_FS)
 +	if (!IS_ERR_VALUE(ret) && file && prfile) {
 +		struct vm_area_struct *new_vma;
 +
@@ -514,26 +523,21 @@ index 2def55555e05..fefc5c67e96e 100644
 +		if (new_vma != vma)
 +			get_file(prfile);
 +	}
++#endif
+ out:
+ 	mmap_write_unlock(mm);
+ 	fput(file);
++#if IS_ENABLED(CONFIG_AUFS_FS)
 +	/*
 +	 * two fput()s instead of vma_fput(vma),
 +	 * coz vma may not be available anymore.
 +	 */
-+	fput(file);
 +	if (prfile)
 +		fput(prfile);
-+#else
- 	file = get_file(vma->vm_file);
- 	ret = security_mmap_file(vma->vm_file, prot, flags);
- 	if (ret)
- 		goto out_fput;
- 	ret = do_mmap(vma->vm_file, start, size,
- 			prot, flags, pgoff, &populate, NULL);
- out_fput:
- 	fput(file);
-+#endif /* CONFIG_AUFS_FS */
- out:
- 	mmap_write_unlock(mm);
++#endif
  	if (populate)
+ 		mm_populate(ret, populate);
+ 	if (!IS_ERR_VALUE(ret))
 @@ -3227,7 +3254,7 @@ struct vm_area_struct *copy_vma(struct vm_area_struct **vmap,
  		if (anon_vma_clone(new_vma, vma))
  			goto out_free_mempol;
