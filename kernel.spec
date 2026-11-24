@@ -51,7 +51,7 @@
 %define		have_drm	0
 %endif
 
-%define		rel		1
+%define		rel		2
 %define		basever		7.3
 %define		postver		.6
 
@@ -151,8 +151,8 @@ Patch59:	kernel-rndis_host-wm5.patch
 
 # see update-source.sh
 Patch145:	kernel-aufs.patch
-Patch146:	kernel-aufs-exports.patch
 Patch147:	kernel-aufs-make.patch
+Patch148:	kernel-aufs-dirren-overflow.patch
 
 # Show normal colors in menuconfig with ncurses ABI 6
 Patch250:	kernel-fix_256colors_menuconfig.patch
@@ -559,8 +559,8 @@ cd linux-%{basever}
 %if %{with aufs}
 # aufs
 %patch -P145 -p1
-%patch -P146 -p1
 %patch -P147 -p1
+%patch -P148 -p1
 %endif
 
 %if %{with rescuecd}
